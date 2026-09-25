@@ -22,11 +22,11 @@ test("AppShell routes bench and build to their entry-point pages inside the main
   assert.match(appShell, /import\("\.\.\/\.\.\/pages\/BuildPage"\)/);
   assert.match(
     appShell,
-    /page === "bench" \? \(\s*<main className="route-surface route-page">\s*<BenchPage \/>/,
+    /page === "bench" \? \(\s*<div className="route-surface route-page">\s*<BenchPage \/>/,
   );
   assert.match(
     appShell,
-    /page === "build" \? \(\s*<main className="route-surface route-page">\s*<BuildPage \/>/,
+    /page === "build" \? \(\s*<div className="route-surface route-page">\s*<BuildPage \/>/,
   );
 });
 

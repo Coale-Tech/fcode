@@ -256,25 +256,25 @@ export function AppShell() {
 
                 <Suspense fallback={<RoutePending />}>
                   {page === "pulls" ? (
-                    <main className="route-surface route-page">
+                    <div className="route-surface route-page">
                       <PullRequestsPage />
-                    </main>
+                    </div>
                   ) : page === "scheduled" ? (
-                    <main className="route-surface route-page">
+                    <div className="route-surface route-page">
                       <ScheduledPage />
-                    </main>
+                    </div>
                   ) : page === "plugins" ? (
-                    <main className="route-surface route-page">
+                    <div className="route-surface route-page">
                       <PluginsPage />
-                    </main>
+                    </div>
                   ) : page === "bench" ? (
-                    <main className="route-surface route-page">
+                    <div className="route-surface route-page">
                       <BenchPage />
-                    </main>
+                    </div>
                   ) : page === "build" ? (
-                    <main className="route-surface route-page">
+                    <div className="route-surface route-page">
                       <BuildPage />
-                    </main>
+                    </div>
                   ) : (
                     <ChatSurface visible={page === "chat"} />
                   )}
