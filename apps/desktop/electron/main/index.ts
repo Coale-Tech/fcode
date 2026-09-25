@@ -22,8 +22,6 @@ import {
   KEYBOARD_SHORTCUTS,
   keybindingToElectronAccelerator,
   resolveKeybinding,
-  isActiveInProject,
-  type ActivationScope,
   type AgentEventEnvelope,
   type AppMenuCommand,
   type CloseBehavior,
@@ -36,11 +34,8 @@ import { registerAgentExtensionIpc } from "./agent-extensions-ipc";
 import { isTemplateName, scaffold } from "@pi-desktop/plugin-devkit";
 
 import { HostProcess } from "./host-process";
-import {
-  knownProjectGroups,
-  pluginWorkspaceInfo,
-  refreshProjectGroups,
-} from "./workspace-roots";
+import { currentWorkspacePath, describeError } from "./workspace-path";
+import { createWorkspaceScopeRuntime } from "./workspace-scope-runtime";
 import {
   shouldCreateTaskNotification as shouldCreateTaskNotificationPolicy,
   shouldShowNativeNotification,
@@ -673,6 +668,14 @@ const {
   announceTurnEnded,
   speech,
 } = pluginServices;
+const { rememberPluginScopes, pluginActiveInProject, broadcastPluginPanelEvent, setCurrentWorkspacePath } =
+  createWorkspaceScopeRuntime({
+    pluginScopes,
+    pluginPanels,
+    pluginViews,
+    plugins,
+    getHost: () => host,
+  });
 
 const providerCatalogRuntime = createProviderCatalogRuntime({
   getHost: () => host,
@@ -716,77 +719,6 @@ const {
   resolveEffectiveCommandShell,
   resolveAgentRuntimeLaunch,
 } = createdSessionLaunchRuntime;
-
-/**
- * Refresh the cached plugin scopes from a `plugins.list` payload.
- *
- * Anything that changes a scope goes through host-core, so every read of the
- * list is also the moment to re-learn them.
- */
-function rememberPluginScopes(list: Array<{ id?: string; scope?: ActivationScope }>): void {
-  pluginScopes.clear();
-  for (const plugin of list) {
-    if (typeof plugin?.id === "string" && plugin.scope) {
-      pluginScopes.set(plugin.id, plugin.scope);
-    }
-  }
-}
-
-/**
- * Whether a loaded plugin's contributions apply to `projectPath`.
- *
- * `enabled` is already implied — a disabled plugin is never loaded into the
- * runtime — so only the scope is consulted here. A plugin with no cached scope
- * counts as global, which is what every plugin installed before scopes existed
- * was.
- */
-function pluginActiveInProject(pluginId: string, projectPath: string | null | undefined): boolean {
-  const scope = pluginScopes.get(pluginId);
-  if (!scope) return true;
-  return isActiveInProject({ enabled: true, scope }, projectPath);
-}
-
-/**
- * The workspace the window is showing, from the cache Main keeps in sync with
- * every `workspace.get` / open-folder result. Synchronous on purpose: scope
- * filtering runs inside IPC handlers that must not await the host.
- */
-function currentWorkspacePath(): string | null {
-  return (globalThis as { __piWorkspacePath?: string | null }).__piWorkspacePath ?? null;
-}
-
-/** Push a panel event to detached windows and docked views. */
-function broadcastPluginPanelEvent(event: string, payload: unknown): void {
-  pluginPanels.broadcast(event, payload);
-  pluginViews.broadcast(event, payload);
-}
-
-function setCurrentWorkspacePath(path: string | null): void {
-  const previous = currentWorkspacePath();
-  (globalThis as { __piWorkspacePath?: string | null }).__piWorkspacePath = path;
-  if (previous === path) return;
-  const payload = pluginWorkspaceInfo(path);
-  broadcastPluginPanelEvent("workspace:changed", payload);
-  plugins.broadcastEvent("workspace:changed", [payload]);
-  // The group snapshot starts cold, so this first push can only carry the bare
-  // workspace. Fetch the project's folders once and repeat it, so a plugin that
-  // was already open sees them without waiting for the next switch; every later
-  // switch finds the snapshot warm and broadcasts exactly once (ADR 0263).
-  if (knownProjectGroups() === null) {
-    void refreshProjectGroups(host).then((changed) => {
-      if (!changed) return;
-      const enriched = pluginWorkspaceInfo(currentWorkspacePath());
-      broadcastPluginPanelEvent("workspace:changed", enriched);
-      plugins.broadcastEvent("workspace:changed", [enriched]);
-    });
-  }
-}
-
-/** One-line message for an error of unknown shape, for user-facing lists. */
-function describeError(error: unknown): string {
-  if (error instanceof Error) return error.message.slice(0, 300);
-  return String(error).slice(0, 300);
-}
 
 /** Pull the user's MCP server records from host-core into the local runtime. */
 function sendToRenderer(channel: string, payload: unknown) {
