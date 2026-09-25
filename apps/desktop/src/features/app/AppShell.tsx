@@ -42,6 +42,16 @@ const PluginsPage = lazy(() =>
     default: module.PluginsPage,
   })),
 );
+const BenchPage = lazy(() =>
+  import("../../pages/BenchPage").then((module) => ({
+    default: module.BenchPage,
+  })),
+);
+const BuildPage = lazy(() =>
+  import("../../pages/BuildPage").then((module) => ({
+    default: module.BuildPage,
+  })),
+);
 
 export function AppShell() {
   const {
@@ -246,17 +256,25 @@ export function AppShell() {
 
                 <Suspense fallback={<RoutePending />}>
                   {page === "pulls" ? (
-                    <div className="route-surface route-page">
+                    <main className="route-surface route-page">
                       <PullRequestsPage />
-                    </div>
+                    </main>
                   ) : page === "scheduled" ? (
-                    <div className="route-surface route-page">
+                    <main className="route-surface route-page">
                       <ScheduledPage />
-                    </div>
+                    </main>
                   ) : page === "plugins" ? (
-                    <div className="route-surface route-page">
+                    <main className="route-surface route-page">
                       <PluginsPage />
-                    </div>
+                    </main>
+                  ) : page === "bench" ? (
+                    <main className="route-surface route-page">
+                      <BenchPage />
+                    </main>
+                  ) : page === "build" ? (
+                    <main className="route-surface route-page">
+                      <BuildPage />
+                    </main>
                   ) : (
                     <ChatSurface visible={page === "chat"} />
                   )}
