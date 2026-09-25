@@ -591,10 +591,12 @@ export function registerAgentIpc({
               data: attachment.inlineData,
             })),
           userMessageId: userMessage.id,
-          // Per-turn permission ceiling override (R1 leftover; spec §7.3). The
-          // sidecar records it on the turn context; enforcement of a NARROWER
-          // ceiling still routes through the session's stored mode until
-          // host-core `session.beginTurn` accepts the scoped param.
+          // Per-turn permission ceiling (spec §7.3). E18: this is advisory —
+          // whether a tool call pauses for approval is decided unconditionally
+          // by omp's fixed `--approval-mode always-ask` spawn flag, never by
+          // this field. It rides along only for the escalation-refusal check
+          // in agent-host-bridge.ts and the renderer's auto-resolution of a
+          // permission card that already arrived.
           ...(req.permissionMode ? { permissionMode: req.permissionMode } : {}),
         },
       );

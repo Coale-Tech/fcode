@@ -142,3 +142,26 @@ test("a widening per-turn ceiling refuses the turn — no sidecar call reaches t
     "bridge must throw a FORBIDDEN with the widening-specific message",
   );
 });
+
+test("E18: the RACP ceiling never decides whether a tool call pauses for approval — omp's fixed --approval-mode does", async () => {
+  // Pins the authority split the plan left open (F1/E18): agent-host-bridge.ts's
+  // permissionMode ceiling is escalation-refusal plus renderer auto-resolution
+  // only. The bridge must never derive omp's spawn-time approval mode from a
+  // session or per-turn permissionMode value — that flag is a fixed constant
+  // set once when omp is launched, so this file must not compute or forward
+  // an --approval-mode value at all.
+  const bridgeSource = (await import("node:fs")).readFileSync(
+    join(here, "..", "electron", "main", "agent-host-bridge.ts"),
+    "utf8",
+  );
+  assert.doesNotMatch(
+    bridgeSource,
+    /\bapprovalMode\b/,
+    "the bridge must never compute or forward an omp approval-mode value from permissionMode",
+  );
+  assert.match(
+    bridgeSource,
+    /E18 — permission-ceiling authority, pinned/,
+    "the authority decision must be documented at the ceiling check",
+  );
+});
