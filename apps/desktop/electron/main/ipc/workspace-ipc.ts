@@ -35,6 +35,7 @@ import {
   readOpenableImage,
   resolveOpenablePath,
   resolveRealOpenablePath,
+  writeWorkspaceFile,
 } from "@pi-desktop/host-runtime";
 import { resolveChatFileRef } from "../chat-ref-resolve";
 import { getWorkspaceFileIndex } from "../fs-index";
@@ -919,6 +920,33 @@ export function registerWorkspaceIpc({
           attachments: join(dataDir, "attachments"),
         }),
       };
+    },
+  );
+
+  handle(
+    IPC.invoke.fsWrite,
+    async (input: { path?: string; content?: string; expectedMtimeMs?: number } = {}) => {
+      const path = String(input.path ?? "").trim();
+      if (!path || typeof input.content !== "string") {
+        throw Object.assign(new Error("path and content are required"), {
+          errorCode: ErrorCodes.INVALID_ARGUMENT,
+        });
+      }
+      const root = await requireWorkspaceRoot();
+      try {
+        return await writeWorkspaceFile(root, path, input.content, input.expectedMtimeMs);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (message.includes("escapes workspace root")) {
+          throw Object.assign(new Error(message), {
+            errorCode: ErrorCodes.PATH_OUTSIDE_WORKSPACE,
+          });
+        }
+        if (message.includes("changed on disk")) {
+          throw Object.assign(new Error(message), { errorCode: ErrorCodes.CONFLICT });
+        }
+        throw Object.assign(new Error(message), { errorCode: ErrorCodes.INVALID_ARGUMENT });
+      }
     },
   );
 

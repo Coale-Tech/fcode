@@ -133,7 +133,7 @@ test("updater gates delivery mode by platform and delivery policy", () => {
   assert.match(updaterSource, /autoUpdater\.on\("error"/);
   assert.match(
     updaterSource,
-    /github\.com\/vastsa\/PI-Desktop\/releases/,
+    /github\.com\/Coale-Tech\/fcode\/releases/,
     "releases fallback URL",
   );
   assert.match(

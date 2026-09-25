@@ -321,4 +321,36 @@ describe("Plan protocol contracts", () => {
     );
     expect(rpcTimeoutMs("configSync.getState", {})).toBe(130_000);
   });
+
+  it("names every new omp sidecar channel following the pi-desktop/<domain>/<verb> convention (DX14)", () => {
+    expect(IPC.invoke.ompModelsList).toBe("pi-desktop/omp/models/list");
+    expect(IPC.invoke.ompModelsSet).toBe("pi-desktop/omp/models/set");
+    expect(IPC.invoke.ompThinkingLevels).toBe("pi-desktop/omp/thinking/levels");
+    expect(IPC.invoke.ompThinkingSet).toBe("pi-desktop/omp/thinking/set");
+    expect(IPC.invoke.ompCommandsList).toBe("pi-desktop/omp/commands/list");
+    expect(IPC.invoke.ompState).toBe("pi-desktop/omp/state");
+    expect(IPC.invoke.ompLoginProviders).toBe("pi-desktop/omp/login/providers");
+    expect(IPC.invoke.ompLoginStart).toBe("pi-desktop/omp/login/start");
+    expect(IPC.invoke.ompSessionBranch).toBe("pi-desktop/omp/session/branch");
+    expect(IPC.invoke.ompSessionRename).toBe("pi-desktop/omp/session/rename");
+    for (const channel of [
+      IPC.invoke.ompModelsList,
+      IPC.invoke.ompModelsSet,
+      IPC.invoke.ompThinkingLevels,
+      IPC.invoke.ompThinkingSet,
+      IPC.invoke.ompCommandsList,
+      IPC.invoke.ompState,
+      IPC.invoke.ompLoginProviders,
+      IPC.invoke.ompLoginStart,
+      IPC.invoke.ompSessionBranch,
+      IPC.invoke.ompSessionRename,
+    ]) {
+      expect(IPC_WHITELIST.has(channel)).toBe(true);
+    }
+  });
+
+  it("adds a contained fs/write channel to the preload whitelist (E6)", () => {
+    expect(IPC.invoke.fsWrite).toBe("pi-desktop/fs/write");
+    expect(IPC_WHITELIST.has(IPC.invoke.fsWrite)).toBe(true);
+  });
 });

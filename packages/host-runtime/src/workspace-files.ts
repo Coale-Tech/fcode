@@ -1,4 +1,5 @@
-import { readFile, readdir, realpath, stat } from "node:fs/promises";
+import { constants as fsConstants } from "node:fs";
+import { mkdir, open, readFile, readdir, realpath, stat } from "node:fs/promises";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import type { FsEntry, FsImageDataUrlResult, FsReadResult } from "@pi-desktop/shared";
 
@@ -225,6 +226,123 @@ export async function resolveRealPathForCreateWithinRoot(
       cursor = parent;
     }
   }
+}
+
+/** Shared by both create-resolvers: walk up to the nearest existing ancestor,
+ * realpath it, rebuild the tail, and check containment against `rootReal`. */
+async function realpathWalkUpContained(
+  rootReal: string,
+  lexical: string,
+): Promise<string | null> {
+  const tail: string[] = [];
+  let cursor = lexical;
+  for (;;) {
+    try {
+      const real = await realpath(cursor);
+      const target = tail.length ? join(real, ...tail) : real;
+      return pathIsWithin(rootReal, target) ? target : null;
+    } catch {
+      const parent = dirname(cursor);
+      if (parent === cursor) return null;
+      tail.unshift(basename(cursor));
+      cursor = parent;
+    }
+  }
+}
+
+/**
+ * Lexical containment for a write target that may be a workspace-relative
+ * path or an absolute OS path. Unlike `resolveWithinRoot`, an absolute input
+ * is never rewritten to live under root — it must already be there, or it is
+ * rejected outright (E6: `fs/write('/tmp/escape.txt', …)` must fail, not
+ * silently redirect into the workspace).
+ */
+function lexicalWriteTarget(root: string, rawPath: string): string | null {
+  const raw = String(rawPath ?? "").trim();
+  if (!raw) return null;
+  const rootAbs = resolve(root);
+  if (isAbsolute(raw)) {
+    const candidate = resolve(raw);
+    return candidate === rootAbs || candidate.startsWith(rootAbs + sep) ? candidate : null;
+  }
+  return resolveWithinRoot(rootAbs, raw);
+}
+
+/** Same create-time containment as `resolveRealPathForCreateWithinRoot`, but
+ * for the write path's absolute-or-relative input shape. Always re-resolves
+ * from scratch — nothing is cached across calls — so a parent directory
+ * swapped out for a symlink between two writes is caught on the next one. */
+async function resolveRealPathForWriteWithinRoot(
+  root: string,
+  rawPath: string,
+): Promise<string | null> {
+  const lexical = lexicalWriteTarget(root, rawPath);
+  if (!lexical) return null;
+  let rootReal: string;
+  try {
+    rootReal = await realpath(resolve(root));
+  } catch {
+    return null;
+  }
+  return realpathWalkUpContained(rootReal, lexical);
+}
+
+export interface WriteWorkspaceFileResult {
+  size: number;
+  mtimeMs: number;
+}
+
+/**
+ * Write `content` to `rawPath` inside `root` (E6). Rejects paths that escape
+ * the resolved root, oversized content, invalid UTF-8, and — when the caller
+ * passes `expectedMtimeMs` (the mtime it last read) — a file that changed on
+ * disk since then.
+ */
+export async function writeWorkspaceFile(
+  root: string,
+  rawPath: string,
+  content: string,
+  expectedMtimeMs?: number,
+): Promise<WriteWorkspaceFileResult> {
+  const byteLength = Buffer.byteLength(content, "utf8");
+  if (byteLength > MAX_TEXT_BYTES) {
+    throw new Error(`file too large: ${byteLength} bytes exceeds ${MAX_TEXT_BYTES} byte limit`);
+  }
+  if (Buffer.from(content, "utf8").toString("utf8") !== content) {
+    throw new Error("content is not valid UTF-8");
+  }
+
+  const target = await resolveRealPathForWriteWithinRoot(root, rawPath);
+  if (!target) {
+    throw new Error(`path escapes workspace root: ${rawPath}`);
+  }
+
+  if (expectedMtimeMs !== undefined) {
+    try {
+      const current = await stat(target);
+      if (current.mtimeMs !== expectedMtimeMs) {
+        throw new Error("file changed on disk since it was loaded");
+      }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+      // Didn't exist yet: nothing to conflict with.
+    }
+  }
+
+  await mkdir(dirname(target), { recursive: true });
+  // O_NOFOLLOW guards the leaf itself: if it was swapped for a symlink after
+  // containment was resolved above, the open fails instead of following it
+  // outside the root.
+  const flags =
+    fsConstants.O_WRONLY | fsConstants.O_CREAT | fsConstants.O_TRUNC | fsConstants.O_NOFOLLOW;
+  const fileHandle = await open(target, flags, 0o644);
+  try {
+    await fileHandle.writeFile(content, "utf8");
+  } finally {
+    await fileHandle.close();
+  }
+  const after = await stat(target);
+  return { size: after.size, mtimeMs: after.mtimeMs };
 }
 
 export function isIgnoredName(name: string): boolean {

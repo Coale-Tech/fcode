@@ -1,11 +1,22 @@
-import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  rm,
+  stat,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, expect, it } from "vitest";
 import {
+  MAX_TEXT_BYTES,
   readOpenableImage,
   resolveOpenablePath,
   resolveRealOpenablePath,
+  writeWorkspaceFile,
 } from "./workspace-files.js";
 
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -160,4 +171,74 @@ it("keeps relative, absolute and workspace-boundary behavior", async () => {
   if (process.platform !== "win32") {
     expect(await resolveRealOpenablePath("/etc/passwd", root, [scratch])).toBeNull();
   }
+});
+
+it("writes a new file inside the workspace root (E6, case 1: relative path)", async () => {
+  const root = await tempDir("pi-ws-write-ok-");
+  const result = await writeWorkspaceFile(root, "notes/new.txt", "hello");
+  expect(result.size).toBe(5);
+  expect(await readFile(join(root, "notes", "new.txt"), "utf8")).toBe("hello");
+});
+
+it("rejects an absolute path outside the workspace root (E6, case 2)", async () => {
+  const root = await tempDir("pi-ws-write-abs-");
+  const outside = join(await tempDir("pi-ws-write-outside-"), "escape.txt");
+  await expect(writeWorkspaceFile(root, outside, "x")).rejects.toThrow(
+    /escapes workspace root/,
+  );
+  await expect(stat(outside)).rejects.toThrow();
+});
+
+it("rejects a .. escape from a relative path (E6, case 3)", async () => {
+  const root = await tempDir("pi-ws-write-dotdot-");
+  await expect(writeWorkspaceFile(root, "../escape.txt", "x")).rejects.toThrow(
+    /escapes workspace root/,
+  );
+});
+
+it("rejects when the parent directory is swapped to point outside root between resolve and write (E6, case 4: swapped-parent race)", async (ctx) => {
+  if (process.platform === "win32") ctx.skip();
+  const base = await tempDir("pi-ws-write-race-");
+  const root = join(base, "root");
+  const insideTarget = join(root, "docs");
+  const outsideTarget = join(base, "outside-docs");
+  await mkdir(insideTarget, { recursive: true });
+  await mkdir(outsideTarget, { recursive: true });
+
+  // First resolution is legitimate: docs/ is a real directory inside root.
+  const first = await writeWorkspaceFile(root, "docs/a.txt", "first");
+  expect(first.size).toBe(5);
+
+  // Swap docs/ for a symlink to a directory outside root, then write again
+  // through the same root/rel pair. A cached resolution would still trust
+  // the old, contained path; a fresh per-call resolve must reject it.
+  await rm(insideTarget, { recursive: true, force: true });
+  if (!(await linkOrSkip(outsideTarget, insideTarget))) {
+    ctx.skip();
+    return;
+  }
+  await expect(writeWorkspaceFile(root, "docs/b.txt", "second")).rejects.toThrow(
+    /escapes workspace root/,
+  );
+  await expect(stat(join(outsideTarget, "b.txt"))).rejects.toThrow();
+});
+
+it("caps write size and rejects invalid UTF-8 content (E6)", async () => {
+  const root = await tempDir("pi-ws-write-limits-");
+  await expect(
+    writeWorkspaceFile(root, "big.txt", "x".repeat(MAX_TEXT_BYTES + 1)),
+  ).rejects.toThrow(/too large/);
+  await expect(
+    writeWorkspaceFile(root, "bad.txt", "\uD800"),
+  ).rejects.toThrow(/UTF-8/);
+});
+
+it("detects an on-disk change since the caller's expected mtime (E6)", async () => {
+  const root = await tempDir("pi-ws-write-conflict-");
+  await writeFile(join(root, "shared.txt"), "v1");
+  const staleMtimeMs = (await stat(join(root, "shared.txt"))).mtimeMs - 1000;
+  await expect(
+    writeWorkspaceFile(root, "shared.txt", "v2", staleMtimeMs),
+  ).rejects.toThrow(/changed on disk/);
+  expect(await readFile(join(root, "shared.txt"), "utf8")).toBe("v1");
 });

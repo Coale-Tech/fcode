@@ -336,6 +336,8 @@ export const IPC = {
     fsOpen: "pi-desktop/fs/open",
     fsIndex: "pi-desktop/fs/index",
     fsResolveRef: "pi-desktop/fs/resolveRef",
+    /** Contained write: rejects any path outside the resolved workspace root (E6). */
+    fsWrite: "pi-desktop/fs/write",
     windowSetWorkPanelReservation:
       "pi-desktop/window/setWorkPanelReservation",
     windowSetWorkPanelChatWidth: "pi-desktop/window/setWorkPanelChatWidth",
@@ -346,6 +348,21 @@ export const IPC = {
     menuRendererReady: "pi-desktop/menu/rendererReady",
     traySetSessionPreferences: "pi-desktop/tray/setSessionPreferences",
     nativeMenuAction: "pi-desktop/menu/nativeAction",
+    /**
+     * Ten omp sidecar methods with no prior channel (DX14/X8). Named following
+     * the existing pi-desktop/<domain>/<verb> convention, one level deeper for
+     * the omp.<resource>.<verb> RPC shape.
+     */
+    ompModelsList: "pi-desktop/omp/models/list",
+    ompModelsSet: "pi-desktop/omp/models/set",
+    ompThinkingLevels: "pi-desktop/omp/thinking/levels",
+    ompThinkingSet: "pi-desktop/omp/thinking/set",
+    ompCommandsList: "pi-desktop/omp/commands/list",
+    ompState: "pi-desktop/omp/state",
+    ompLoginProviders: "pi-desktop/omp/login/providers",
+    ompLoginStart: "pi-desktop/omp/login/start",
+    ompSessionBranch: "pi-desktop/omp/session/branch",
+    ompSessionRename: "pi-desktop/omp/session/rename",
   },
   event: {
     pluginChanged: "pi-desktop/event/pluginChanged",
