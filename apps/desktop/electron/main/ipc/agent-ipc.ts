@@ -591,10 +591,12 @@ export function registerAgentIpc({
               data: attachment.inlineData,
             })),
           userMessageId: userMessage.id,
-          // Per-turn permission ceiling override (R1 leftover; spec §7.3). The
-          // sidecar records it on the turn context; enforcement of a NARROWER
-          // ceiling still routes through the session's stored mode until
-          // host-core `session.beginTurn` accepts the scoped param.
+          // Per-turn permission ceiling (spec §7.3). E18: this is advisory —
+          // whether a tool call pauses for approval is decided unconditionally
+          // by omp's fixed `--approval-mode always-ask` spawn flag, never by
+          // this field. It rides along only for the escalation-refusal check
+          // in agent-host-bridge.ts and the renderer's auto-resolution of a
+          // permission card that already arrived.
           ...(req.permissionMode ? { permissionMode: req.permissionMode } : {}),
         },
       );
@@ -764,18 +766,28 @@ export function registerAgentIpc({
     requestId: string;
     decision: string;
   }) => {
-    if (!host) throw new Error("host unavailable");
     logger.app("permission", "info", "permission resolved", {
       data: { requestId: resolution.requestId, decision: resolution.decision },
     });
-    const resolved = await host.call("permissions.resolve", resolution);
-    agentHostBridge?.settleApproval(resolution.requestId, {
+    const decisionPatch = {
       ...(resolution.decision === "allow-once" ||
       resolution.decision === "allow-session" ||
       resolution.decision === "deny"
-        ? { decision: resolution.decision }
+        ? { decision: resolution.decision as "allow-once" | "allow-session" | "deny" }
         : {}),
-    });
+    };
+    // A bridge-origin request (the RACP/omp approval broker) has no matching
+    // record in host-core: routing it through `permissions.resolve` would
+    // fail (or worse, throw before settlement) whenever host-core is
+    // unavailable. The bridge's own broker is the source of truth for
+    // whether it owns this id.
+    if (agentHostBridge?.agentHost.approvals.get(resolution.requestId)) {
+      agentHostBridge.settleApproval(resolution.requestId, decisionPatch);
+      return { requestId: resolution.requestId, ...decisionPatch };
+    }
+    if (!host) throw new Error("host unavailable");
+    const resolved = await host.call("permissions.resolve", resolution);
+    agentHostBridge?.settleApproval(resolution.requestId, decisionPatch);
     return resolved;
   });
 

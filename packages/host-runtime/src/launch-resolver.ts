@@ -111,6 +111,18 @@ function isHostUnavailable(error: unknown): boolean {
   return (error as { errorCode?: string } | null)?.errorCode === ErrorCodes.HOST_UNAVAILABLE;
 }
 
+// omp launch path (E2): omp resolves its own models and credentials from its
+// own config, so a PI-native provider is only required for the auxiliary
+// prompt-enhance/title-summarize helpers. A real agent turn must still start
+// when no PI provider is configured yet, has no secret, or has no model
+// selected — swap in a placeholder instead of rejecting the whole turn.
+const OMP_LAUNCH_PROVIDER: HostProviderRecord = { id: "omp", name: "omp", authKind: "none" };
+const OMP_LAUNCH_MODEL_ID = "omp";
+function isLaunchAdmissionError(error: unknown): boolean {
+  const code = (error as { errorCode?: string } | undefined)?.errorCode;
+  return code === ErrorCodes.MODEL_NOT_CONFIGURED || code === ErrorCodes.PROVIDER_SECRET_MISSING;
+}
+
 /**
  * Launch resolution for a headless Host. It is the desktop's
  * `resolveAgentRuntimeLaunch` minus the surfaces a headless machine does not
@@ -223,28 +235,47 @@ export function createHeadlessLaunchResolver(options: HeadlessLaunchResolverOpti
     }
     const defaultProviderId = typeof settings.defaultProviderId === "string" ? settings.defaultProviderId : undefined;
     const defaultModelId = typeof settings.defaultModelId === "string" ? settings.defaultModelId : undefined;
-    const provider =
-      providers.providers.find((item) => item.id === requestedProviderId) ||
-      providers.providers.find((item) => item.id === defaultProviderId) ||
-      providers.providers.find((item) => item.hasSecret || item.authKind === "none") ||
-      providers.providers[0];
-    if (!provider) throw launchError("No provider configured", ErrorCodes.MODEL_NOT_CONFIGURED);
-    if (provider.authKind === OAUTH_AUTH_KIND) {
-      throw launchError(
-        "Vendor account sign-in is not available on a headless host; configure an API key provider",
-        ErrorCodes.MODEL_NOT_CONFIGURED,
-      );
+    async function admitProviderAndModel(): Promise<{
+      provider: HostProviderRecord;
+      secretValue: string | undefined;
+      modelId: string;
+    }> {
+      const provider =
+        providers.providers.find((item) => item.id === requestedProviderId) ||
+        providers.providers.find((item) => item.id === defaultProviderId) ||
+        providers.providers.find((item) => item.hasSecret || item.authKind === "none") ||
+        providers.providers[0];
+      if (!provider) throw launchError("No provider configured", ErrorCodes.MODEL_NOT_CONFIGURED);
+      if (provider.authKind === OAUTH_AUTH_KIND) {
+        throw launchError(
+          "Vendor account sign-in is not available on a headless host; configure an API key provider",
+          ErrorCodes.MODEL_NOT_CONFIGURED,
+        );
+      }
+      const secretValue = provider.authKind === "none" ? undefined : await getSecret(provider.id);
+      if (!secretValue && provider.authKind !== "none") {
+        throw launchError("Provider API key missing", ErrorCodes.PROVIDER_SECRET_MISSING);
+      }
+      const modelId =
+        (provider.id === requestedProviderId ? overrides.modelId ?? sessionModelId : undefined) ||
+        (provider.id === defaultProviderId ? defaultModelId : undefined) ||
+        provider.models?.[0]?.id ||
+        provider.defaultModelId;
+      if (!modelId) throw launchError("No model selected for provider", ErrorCodes.MODEL_NOT_CONFIGURED);
+      return { provider, secretValue, modelId };
     }
-    const secretValue = provider.authKind === "none" ? undefined : await getSecret(provider.id);
-    if (!secretValue && provider.authKind !== "none") {
-      throw launchError("Provider API key missing", ErrorCodes.PROVIDER_SECRET_MISSING);
+
+    let provider: HostProviderRecord;
+    let secretValue: string | undefined;
+    let modelId: string;
+    try {
+      ({ provider, secretValue, modelId } = await admitProviderAndModel());
+    } catch (error) {
+      if (!isLaunchAdmissionError(error)) throw error;
+      provider = OMP_LAUNCH_PROVIDER;
+      secretValue = undefined;
+      modelId = OMP_LAUNCH_MODEL_ID;
     }
-    const modelId =
-      (provider.id === requestedProviderId ? overrides.modelId ?? sessionModelId : undefined) ||
-      (provider.id === defaultProviderId ? defaultModelId : undefined) ||
-      provider.models?.[0]?.id ||
-      provider.defaultModelId;
-    if (!modelId) throw launchError("No model selected for provider", ErrorCodes.MODEL_NOT_CONFIGURED);
 
     const { modelConfig, capabilities, storedModel } = effectiveModelConfig(provider, modelId, provider.baseUrl);
     const thinkingLevel = clampThinkingLevel(

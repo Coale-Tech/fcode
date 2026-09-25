@@ -116,29 +116,39 @@ describe("createHeadlessLaunchResolver", () => {
     expect(launch.sidecarParams.infiniteProviderRetry).toBe(true);
   });
 
-  it("falls back to the default provider and refuses a provider without a secret", async () => {
+  it("falls back to the default provider, and to the omp placeholder when a provider has no secret", async () => {
     const { host } = hostWith([provider, { ...provider, id: "p2", name: "Other", hasSecret: false }], { p1: "sk" });
     const resolver = createHeadlessLaunchResolver({ getHost: () => host, dataDir: "/data", log: () => undefined });
     const launch = await resolver.resolve("s1", {}, { defaultProviderId: "p1", defaultModelId: "gpt-a" });
     expect(launch.providerId).toBe("p1");
-    await expect(resolver.resolve("s1", { providerId: "p2", modelId: "gpt-a" }, {})).rejects.toMatchObject({
-      errorCode: "PROVIDER_SECRET_MISSING",
-    });
+    // omp launch path (E2): a provider missing its secret no longer blocks the
+    // turn — omp resolves its own credentials, so resolve() hands back the
+    // omp placeholder instead of throwing PROVIDER_SECRET_MISSING.
+    const bypassed = await resolver.resolve("s1", { providerId: "p2", modelId: "gpt-a" }, {});
+    expect(bypassed.providerId).toBe("omp");
+    expect(bypassed.modelId).toBe("omp");
   });
 
-  it("refuses vendor accounts and plugin agents, which need the desktop", async () => {
+  it("falls back to the omp placeholder for a headless-only vendor account, but still refuses plugin agents", async () => {
     const { host } = hostWith([{ ...provider, authKind: "oauth" }]);
     const resolver = createHeadlessLaunchResolver({ getHost: () => host, dataDir: "/data", log: () => undefined });
-    await expect(resolver.resolve("s1", { providerId: "p1" }, {})).rejects.toMatchObject({ errorCode: "MODEL_NOT_CONFIGURED" });
+    const bypassed = await resolver.resolve("s1", { providerId: "p1" }, {});
+    expect(bypassed.providerId).toBe("omp");
+    // Plugin-agent admission happens before the omp bypass and is unrelated
+    // to PI-native provider state, so it still refuses on a headless host.
     await expect(resolver.resolve("s1", { providerId: "extension-agent:plugin.x%2Fagent" }, {})).rejects.toMatchObject({
       errorCode: "MODEL_NOT_CONFIGURED",
     });
   });
 
-  it("fails with a typed error when no provider exists or the host is gone", async () => {
+  it("falls back to the omp placeholder when no provider is configured, but still fails typed when the host is gone", async () => {
     const { host } = hostWith([]);
     const resolver = createHeadlessLaunchResolver({ getHost: () => host, dataDir: "/data", log: () => undefined });
-    await expect(resolver.resolve("s1", {}, {})).rejects.toMatchObject({ errorCode: "MODEL_NOT_CONFIGURED" });
+    // omp launch path (E2): a fresh/provider-less install must still start a
+    // turn — omp resolves its own model and credentials from its own config.
+    const bypassed = await resolver.resolve("s1", {}, {});
+    expect(bypassed.providerId).toBe("omp");
+    expect(bypassed.modelId).toBe("omp");
     const offline = createHeadlessLaunchResolver({ getHost: () => null, dataDir: "/data", log: () => undefined });
     await expect(offline.resolve("s1", {}, {})).rejects.toMatchObject({ errorCode: "HOST_UNAVAILABLE" });
   });

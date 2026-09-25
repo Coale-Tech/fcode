@@ -42,6 +42,16 @@ const PluginsPage = lazy(() =>
     default: module.PluginsPage,
   })),
 );
+const BenchPage = lazy(() =>
+  import("../../pages/BenchPage").then((module) => ({
+    default: module.BenchPage,
+  })),
+);
+const BuildPage = lazy(() =>
+  import("../../pages/BuildPage").then((module) => ({
+    default: module.BuildPage,
+  })),
+);
 
 export function AppShell() {
   const {
@@ -256,6 +266,14 @@ export function AppShell() {
                   ) : page === "plugins" ? (
                     <div className="route-surface route-page">
                       <PluginsPage />
+                    </div>
+                  ) : page === "bench" ? (
+                    <div className="route-surface route-page">
+                      <BenchPage />
+                    </div>
+                  ) : page === "build" ? (
+                    <div className="route-surface route-page">
+                      <BuildPage />
                     </div>
                   ) : (
                     <ChatSurface visible={page === "chat"} />

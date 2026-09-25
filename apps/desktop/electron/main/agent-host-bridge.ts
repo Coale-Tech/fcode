@@ -91,13 +91,18 @@ export function createAgentHostBridge(options: AgentHostBridgeOptions) {
         // subject to `remoteMaxPermissionMode: "ask"` should never be able to
         // run a turn at `auto`. Refuse before the sidecar sees the request.
         //
-        // A NARROWER ceiling (or the same mode) is safe to accept: it can only
-        // reduce what the turn is allowed to do. The runtime still uses the
-        // session's stored mode when it enforces tool decisions, so a narrower
-        // request is not yet honoured turn-locally — that is the R1 leftover
-        // waiting on host-core to accept a `permissionMode` override on
-        // `session.beginTurn`. We plumb the parameter end-to-end anyway so the
-        // enforcement gate can flip on without another wire change.
+        // A NARROWER ceiling (or the same mode) is safe to accept and rides
+        // through as `permissionMode` on the sidecar prompt call below.
+        //
+        // E18 — permission-ceiling authority, pinned: the RACP ceiling here
+        // decides only whether a caller may attach `permissionMode` at all
+        // (escalation refusal) and what the desktop UI auto-resolves once a
+        // permission card arrives. It never decides whether a tool call PAUSES
+        // for approval — omp is spawned once with a fixed, mandatory
+        // `--approval-mode always-ask` (never derived from `permissionMode`,
+        // never varied per turn or per session), so every write/exec tool
+        // always produces a request. `permissionMode` reaches the sidecar
+        // purely as an advisory field the bridge/omp does not act on.
         if (
           summary &&
           summary.permissionMode !== request.effectivePermissionMode &&
