@@ -50,6 +50,18 @@ const ErrorCodes = {
   PLAN_PERMISSION_MODE_REQUIRED: "PLAN_PERMISSION_MODE_REQUIRED",
 } as const;
 
+// omp launch path (E2): omp resolves its own models and credentials from its
+// own config, so a PI-native provider is only required for the auxiliary
+// prompt-enhance/title-summarize helpers. A real agent turn must still start
+// when no PI provider is configured yet, has no secret, or has no model
+// selected — swap in a placeholder instead of rejecting the whole turn.
+const OMP_LAUNCH_PROVIDER: RuntimeProvider = { id: "omp", name: "omp", authKind: "none" };
+const OMP_LAUNCH_MODEL_ID = "omp";
+function isLaunchAdmissionError(error: unknown): boolean {
+  const code = (error as { errorCode?: string } | undefined)?.errorCode;
+  return code === ErrorCodes.MODEL_NOT_CONFIGURED || code === ErrorCodes.PROVIDER_SECRET_MISSING;
+}
+
 export type SessionLaunchRuntimeDependencies = {
   runtimeState: RuntimeState;
   logger: Logger;
@@ -274,53 +286,76 @@ export function createSessionLaunchRuntime({
     const extensionAgentKey = requestedProviderId
       ? trustedExtensionAgentKeyFromProviderId(requestedProviderId)
       : undefined;
-    const provider: RuntimeProvider = extensionAgentKey
-      ? {
-          id: requestedProviderId!,
-          name: "Plugin agent",
-          modelId: overrides.modelId ?? session.modelId,
-          authKind: "none",
-          extensionAgentKey,
-        }
-      : providers.providers.find((item) => item.id === requestedProviderId) ||
-        providers.providers.find((item) => item.id === settings.defaultProviderId) ||
-        providers.providers.find(
-          (item) => item.hasSecret || item.hasOauth || item.authKind === "none",
-        ) ||
-        providers.providers[0];
-    if (!provider) {
-      throw Object.assign(new Error("No provider configured"), {
-        errorCode: ErrorCodes.MODEL_NOT_CONFIGURED,
-      });
-    }
-    // Plugin-owned agents resolve credentials and transport inside the trusted
-    // extension; the host never reads or injects a secret for them.
-    const isExtensionAgent = Boolean(extensionAgentKey);
-    const isVendorAccount = !isExtensionAgent && provider.authKind === OAUTH_AUTH_KIND;
-    const secret = isExtensionAgent || isVendorAccount
-      ? { value: undefined }
-      : await runtimeState.host!.call<{ value?: string }>("providers.getSecret", {
-          id: provider.id,
+    async function admitProviderAndModel(): Promise<{
+      provider: RuntimeProvider;
+      isVendorAccount: boolean;
+      secret: { value?: string };
+      modelId: string;
+    }> {
+      const provider: RuntimeProvider = extensionAgentKey
+        ? {
+            id: requestedProviderId!,
+            name: "Plugin agent",
+            modelId: overrides.modelId ?? session.modelId,
+            authKind: "none",
+            extensionAgentKey,
+          }
+        : providers.providers.find((item) => item.id === requestedProviderId) ||
+          providers.providers.find((item) => item.id === settings.defaultProviderId) ||
+          providers.providers.find(
+            (item) => item.hasSecret || item.hasOauth || item.authKind === "none",
+          ) ||
+          providers.providers[0];
+      if (!provider) {
+        throw Object.assign(new Error("No provider configured"), {
+          errorCode: ErrorCodes.MODEL_NOT_CONFIGURED,
         });
-    if (!secret.value && !isExtensionAgent && !isVendorAccount && provider.authKind !== "none") {
-      throw Object.assign(new Error("Provider API key missing"), {
-        errorCode: ErrorCodes.PROVIDER_SECRET_MISSING,
-      });
-    }
-    const modelId = isExtensionAgent
-      ? overrides.modelId ?? session.modelId
-      : (provider.id === requestedProviderId
+      }
+      // Plugin-owned agents resolve credentials and transport inside the trusted
+      // extension; the host never reads or injects a secret for them.
+      const isExtensionAgent = Boolean(extensionAgentKey);
+      const isVendorAccount = !isExtensionAgent && provider.authKind === OAUTH_AUTH_KIND;
+      const secret = isExtensionAgent || isVendorAccount
+        ? { value: undefined }
+        : await runtimeState.host!.call<{ value?: string }>("providers.getSecret", {
+            id: provider.id,
+          });
+      if (!secret.value && !isExtensionAgent && !isVendorAccount && provider.authKind !== "none") {
+        throw Object.assign(new Error("Provider API key missing"), {
+          errorCode: ErrorCodes.PROVIDER_SECRET_MISSING,
+        });
+      }
+      const modelId = isExtensionAgent
         ? overrides.modelId ?? session.modelId
-        : undefined) ||
-      (provider.id === settings.defaultProviderId
-        ? settings.defaultModelId
-        : undefined) ||
-      provider.models?.[0]?.id ||
-      provider.defaultModelId;
-    if (!modelId) {
-      throw Object.assign(new Error("No model selected for provider"), {
-        errorCode: ErrorCodes.MODEL_NOT_CONFIGURED,
-      });
+        : (provider.id === requestedProviderId
+          ? overrides.modelId ?? session.modelId
+          : undefined) ||
+        (provider.id === settings.defaultProviderId
+          ? settings.defaultModelId
+          : undefined) ||
+        provider.models?.[0]?.id ||
+        provider.defaultModelId;
+      if (!modelId) {
+        throw Object.assign(new Error("No model selected for provider"), {
+          errorCode: ErrorCodes.MODEL_NOT_CONFIGURED,
+        });
+      }
+      return { provider, isVendorAccount, secret, modelId };
+    }
+
+    let provider: RuntimeProvider;
+    let isVendorAccount: boolean;
+    let secret: { value?: string };
+    let modelId: string;
+    try {
+      ({ provider, isVendorAccount, secret, modelId } =
+        await admitProviderAndModel());
+    } catch (error) {
+      if (!isLaunchAdmissionError(error)) throw error;
+      provider = OMP_LAUNCH_PROVIDER;
+      isVendorAccount = false;
+      secret = { value: undefined };
+      modelId = OMP_LAUNCH_MODEL_ID;
     }
     if (isImageGenerationModel(
       imageGenerationBindings(settings.imageGenerationModels, settings.imageGeneration),
