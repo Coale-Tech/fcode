@@ -764,18 +764,28 @@ export function registerAgentIpc({
     requestId: string;
     decision: string;
   }) => {
-    if (!host) throw new Error("host unavailable");
     logger.app("permission", "info", "permission resolved", {
       data: { requestId: resolution.requestId, decision: resolution.decision },
     });
-    const resolved = await host.call("permissions.resolve", resolution);
-    agentHostBridge?.settleApproval(resolution.requestId, {
+    const decisionPatch = {
       ...(resolution.decision === "allow-once" ||
       resolution.decision === "allow-session" ||
       resolution.decision === "deny"
-        ? { decision: resolution.decision }
+        ? { decision: resolution.decision as "allow-once" | "allow-session" | "deny" }
         : {}),
-    });
+    };
+    // A bridge-origin request (the RACP/omp approval broker) has no matching
+    // record in host-core: routing it through `permissions.resolve` would
+    // fail (or worse, throw before settlement) whenever host-core is
+    // unavailable. The bridge's own broker is the source of truth for
+    // whether it owns this id.
+    if (agentHostBridge?.agentHost.approvals.get(resolution.requestId)) {
+      agentHostBridge.settleApproval(resolution.requestId, decisionPatch);
+      return { requestId: resolution.requestId, ...decisionPatch };
+    }
+    if (!host) throw new Error("host unavailable");
+    const resolved = await host.call("permissions.resolve", resolution);
+    agentHostBridge?.settleApproval(resolution.requestId, decisionPatch);
     return resolved;
   });
 
