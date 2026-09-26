@@ -443,7 +443,7 @@ async function dispatchApprovedPlan(rawExecution: unknown): Promise<void> {
       execution.sessionId,
       sessionResult.session,
       settings,
-      { mode: "agent" },
+      { mode: "agent", allowOmpFallback: true },
     );
     const turn = await runtimeState.host.call<{ turnId: string }>("session.beginTurn", {
       sessionId: execution.sessionId,

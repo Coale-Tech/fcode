@@ -416,6 +416,7 @@ export function registerAgentIpc({
       req.sessionId,
       session,
       settings,
+      { allowOmpFallback: true },
     );
     sidecar.setProjectInstructionRoot(req.sessionId, launch.projectPath);
 
@@ -638,6 +639,7 @@ export function registerAgentIpc({
       req.sessionId,
       detail.session,
       settings,
+      { allowOmpFallback: true },
     );
     sidecar.setProjectInstructionRoot(req.sessionId, launch.projectPath);
     // A lost reply is not the sidecar's verdict: the sidecar keeps summarizing
