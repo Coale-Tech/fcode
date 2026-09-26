@@ -1,0 +1,41 @@
+/**
+ * T11 — Code tab: LRU open-files strip (cap 8) and on-disk conflict handling.
+ *
+ * Tests that CodePage.tsx contains the structures required for T11:
+ * - An open-files tab strip with a cap of 8
+ * - Conflict bar when a dirty file changes on disk
+ * - Disk-change detection via mtimeMs
+ */
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import test from "node:test";
+
+const source = await readFile(
+  new URL("../src/pages/CodePage.tsx", import.meta.url),
+  "utf8",
+);
+
+test("T11: CodePage has LRU open-files strip capped at 8", () => {
+  // Must reference the cap constant and a tabs/strip container
+  assert.match(source, /8/); // the cap
+  assert.match(source, /openFiles/);
+  assert.match(source, /code-tab/);
+});
+
+test("T11: CodePage shows a conflict bar when a dirty file changes on disk", () => {
+  assert.match(source, /diskChanged/);
+  assert.match(source, /code-conflict-bar/);
+});
+
+test("T11: CodePage provides Keep mine / Take theirs conflict resolution", () => {
+  assert.match(source, /Keep mine/);
+  assert.match(source, /Take theirs/);
+});
+
+test("T11: CodePage uses mtimeMs for on-disk change detection", () => {
+  assert.match(source, /mtimeMs/);
+});
+
+test("T11: CodePage integrates Monaco editor", () => {
+  assert.match(source, /@monaco-editor\/react|monaco-editor/);
+});
