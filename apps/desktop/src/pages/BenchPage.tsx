@@ -220,7 +220,8 @@ export function BenchPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <main className="bench-page" aria-label="Bench" style={PAGE_STYLE}>
+    <main className="page-frame bench-page" aria-label="Bench">
+      <div style={PAGE_STYLE}>
       {/* Master list */}
       <nav
         aria-label="Discovered benches"
@@ -272,7 +273,6 @@ export function BenchPage() {
 
       {/* Detail */}
       <section
-        // T16: cross-fade on bench selection
         key={detailKey}
         aria-label={selectedBench ? `Bench detail: ${selectedBench.path}` : "Bench detail"}
         style={{ ...DETAIL_STYLE, animation: `benchDetailFadeIn var(--motion-duration-fast) var(--motion-ease-out)` }}
@@ -297,6 +297,7 @@ export function BenchPage() {
 
       {/* T16: keyframe definition */}
       <style>{FADE_IN_KEYFRAME}</style>
+      </div>
     </main>
   );
 }
