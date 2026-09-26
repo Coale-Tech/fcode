@@ -14,27 +14,34 @@ const notarizeScript = new URL(
   import.meta.url,
 );
 
-const SIGNING_IDENTITY = "Developer ID Application: XingYu Liu (DUV63RKYTW)";
-const SIGNING_IDENTITY_NAME = "XingYu Liu (DUV63RKYTW)";
+const SIGNING_IDENTITY = "Developer ID Application: Coale Tech (FCODE_TEST_TEAM)";
+const SIGNING_IDENTITY_NAME = "Coale Tech (FCODE_TEST_TEAM)";
 const SUBMISSION_ID = "11111111-2222-3333-4444-555555555555";
 const NOTARY_ENV = {
   APPLE_ID: "release@example.com",
   APPLE_APP_SPECIFIC_PASSWORD: "app-specific-password",
-  APPLE_TEAM_ID: "DUV63RKYTW",
+  APPLE_TEAM_ID: "FCODE_TEST_TEAM",
+  FCODE_EXPECTED_TEAM_ID: "FCODE_TEST_TEAM",
 };
 
 async function writeSignedAppFixture(release) {
-  const app = join(release, "mac-arm64", "PI-Desktop.app");
-  const hostCore = join(app, "Contents", "Resources", "bin", "pi-desktop-host-core");
-  const dmg = join(release, "PI-Desktop-0.14.2-arm64.dmg");
-  await mkdir(join(app, "Contents", "Resources", "bin"), { recursive: true });
+  const app = join(release, "mac-arm64", "Fcode.app");
+  const binDir = join(app, "Contents", "Resources", "bin");
+  const hostCore = join(binDir, "pi-desktop-host-core");
+  const ompBin = join(binDir, "omp");
+  const dmg = join(release, "Fcode-0.14.2-arm64.dmg");
+  await mkdir(binDir, { recursive: true });
   await writeFile(hostCore, "fixture");
+  // Stub omp binary: passes --smoke-test with exit 0
+  await writeFile(ompBin, "#!/usr/bin/env bash\nif [[ \"$1\" == \"--smoke-test\" ]]; then exit 0; fi\nexit 0\n");
+  const { chmod } = await import("node:fs/promises");
+  await chmod(ompBin, 0o755);
   await writeFile(dmg, "fixture");
   return { app, dmg };
 }
 
 async function writeDmgFixture(release) {
-  const dmg = join(release, "PI-Desktop-0.15.1-beta.3-arm64.dmg");
+  const dmg = join(release, "Fcode-0.15.1-beta.3-arm64.dmg");
   await mkdir(release, { recursive: true });
   await writeFile(dmg, "fixture");
   return dmg;
@@ -205,7 +212,7 @@ test("the notarization step fails closed without team-scoped credentials", async
     APPLE_TEAM_ID: "WRONGTEAMID",
   });
   assert.equal(wrongTeam.status, 1);
-  assert.match(wrongTeam.stderr, /APPLE_TEAM_ID must be DUV63RKYTW/);
+  assert.match(wrongTeam.stderr, /APPLE_TEAM_ID must match FCODE_EXPECTED_TEAM_ID/);
 
   assert.equal(
     await readFile(log, "utf8").catch(() => ""),
@@ -253,7 +260,7 @@ test("macOS release verification requires a notarized Developer ID app and DMG",
 
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
   assert.match(result.stdout, /Notarized Developer ID/);
-  assert.match(result.stdout, /PI-Desktop-0\.14\.2-arm64\.dmg/);
+  assert.match(result.stdout, /Fcode-0\.14\.2-arm64\.dmg/);
   assert.match(result.stdout, /host-core sidecar/);
   assert.equal(
     await readFile(staplerLog, "utf8"),

@@ -82,6 +82,9 @@ jobs:
       - name: Rust host-core test
         run: cargo test -p host-core --locked
 
+      - name: Legal gate (identity / NOTICE.md / commercial-control-point)
+        run: node scripts/check-legal.mjs
+
   build:
     name: Build ${{ matrix.name }}
     needs: verify
@@ -106,12 +109,6 @@ jobs:
             artifact: mac-x64
             platform: macos
             dist: dist:mac
-          - name: Windows x64
-            os: windows-latest
-            arch: x64
-            artifact: windows-x64
-            platform: windows
-            dist: dist:win
           - name: Linux x64
             # Ubuntu 22.04 keeps host-core at glibc 2.35 so Ubuntu 22.04,
             # Debian 12, and Fedora 36+ can load the binary. ubuntu-latest
@@ -237,8 +234,9 @@ jobs:
             echo "::error::Add them under Settings → Secrets and variables → Actions. See docs/spec/06-delivery/06-release-runbook.md."
             exit 1
           fi
-          if [[ "${APPLE_TEAM_ID}" != "DUV63RKYTW" ]]; then
-            echo "::error::APPLE_TEAM_ID must be DUV63RKYTW (XingYu Liu Developer ID team)."
+          FCODE_EXPECTED_TEAM_ID="${{ vars.FCODE_EXPECTED_TEAM_ID }}"
+          if [[ -n "$FCODE_EXPECTED_TEAM_ID" && "${APPLE_TEAM_ID}" != "$FCODE_EXPECTED_TEAM_ID" ]]; then
+            echo "::error::APPLE_TEAM_ID must match FCODE_EXPECTED_TEAM_ID (got: ${APPLE_TEAM_ID}, expected: ${FCODE_EXPECTED_TEAM_ID})."
             exit 1
           fi
 
@@ -250,11 +248,11 @@ jobs:
           # electron-builder rejects the "Developer ID Application:" prefix on
           # identity names and resolves the certificate itself, so CSC_NAME
           # carries the bare common name only.
-          CSC_NAME: "XingYu Liu (DUV63RKYTW)"
+          CSC_NAME: ${{ secrets.CSC_NAME }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          # electron-builder prints one "signing PI-Desktop.app" line and then
+          # electron-builder prints one "signing Fcode.app" line and then
           # goes quiet: @electron/osx-sign walks Contents and codesigns every
           # Mach-O serially, builder-util silently retries a failing pass up to
           # three times, and @electron/notarize zips, uploads, and waits for
@@ -369,100 +367,10 @@ jobs:
             apps/desktop/release/*.asar
             apps/desktop/release/*.blockmap
             apps/desktop/release/latest*.yml
-
-  pi-host-bundle:
-    name: Bundle pi-host (Linux ${{ matrix.arch }})
-    needs: verify
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # Every Linux platform the desktop release publishes. The desktop
-          # matrix ships Linux x64 only today; add arm64 here in lockstep if
-          # the desktop starts publishing it.
-          - arch: x64
-            os: ubuntu-22.04
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Compare tag with apps/desktop/package.json
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
-          APP_VERSION="$(node -p "require('./apps/desktop/package.json').version")"
-          if [ "$TAG_VERSION" != "$APP_VERSION" ]; then
-            echo "::error::Tag v$TAG_VERSION does not match apps/desktop/package.json version $APP_VERSION."
-            exit 1
-          fi
-
-      - uses: pnpm/action-setup@v6
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - uses: dtolnay/rust-toolchain@stable
-
-      - uses: Swatinem/rust-cache@v2
-
-      - name: Build inputs (host-core, workspace, sidecar bundle)
-        run: |
-          set -euo pipefail
-          # Ubuntu 22.04 keeps the host-core glibc floor at 2.35, matching the
-          # desktop Linux build so the bundled binary loads on the same distros.
-          cargo build --release --locked -p host-core &
-          host_build_pid=$!
-          trap 'kill "$host_build_pid" 2>/dev/null || true' EXIT
-
-          pnpm install --frozen-lockfile
-          pnpm build:js
-          pnpm --filter @pi-desktop/agent-runtime bundle
-          pnpm --filter @pi-desktop/pi-host build
-
-          wait "$host_build_pid"
-          trap - EXIT
-
-      - name: Verify host-core glibc floor
-        run: node scripts/check-linux-host-glibc.mjs target/release/pi-desktop-host-core
-
-      - name: Assemble pi-host bundle
-        run: node apps/pi-host/scripts/bundle.mjs --platform linux --arch ${{ matrix.arch }}
-
-      - name: Archive bundle with checksum
-        run: |
-          set -euo pipefail
-          VERSION="$(node -p "require('./apps/pi-host/package.json').version")"
-          name="pi-host-${VERSION}-linux-${{ matrix.arch }}"
-          out="apps/pi-host/dist-bundle"
-          if [ ! -d "$out/$name" ]; then
-            echo "::error::expected bundle directory $out/$name"
-            ls -la "$out" || true
-            exit 1
-          fi
-          tar -czf "$out/${name}.tar.gz" -C "$out" "$name"
-          ( cd "$out" && sha256sum "${name}.tar.gz" > "${name}.tar.gz.sha256" )
-          cat "$out/${name}.tar.gz.sha256"
-
-      - name: Upload pi-host bundle
-        uses: actions/upload-artifact@v7
-        with:
-          name: pi-host-linux-${{ matrix.arch }}
-          if-no-files-found: error
-          compression-level: 0
-          path: |
-            apps/pi-host/dist-bundle/pi-host-*-linux-${{ matrix.arch }}.tar.gz
-            apps/pi-host/dist-bundle/pi-host-*-linux-${{ matrix.arch }}.tar.gz.sha256
-
   publish:
     name: Publish GitHub Release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [build, pi-host-bundle]
+    needs: [build]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
