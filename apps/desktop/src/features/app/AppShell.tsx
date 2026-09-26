@@ -16,6 +16,7 @@ import { UpdateBanner } from "../../components/UpdateBanner";
 import { cx, TooltipButton } from "../../components/ui";
 import { WindowControls } from "../../components/WindowControls";
 import { WorkPanel } from "../../components/workpanel/WorkPanel";
+import { WorkspaceBar } from "../../components/WorkspaceBar";
 import { useCopyTex } from "../../hooks/use-copy-tex";
 import { api } from "../../lib/api";
 import { PortalVisibilityProvider } from "../../lib/portal-visibility";
@@ -128,6 +129,7 @@ export function AppShell() {
             inert={page === "settings" ? true : undefined}
             aria-hidden={page === "settings" ? true : undefined}
           >
+            <WorkspaceBar />
             {!sidebarCollapsed || sidebarExiting ? (
               <Sidebar
                 className={cx(sidebarEntering && "is-entering", sidebarExiting && "is-exiting")}
