@@ -363,6 +363,12 @@ export const IPC = {
     ompLoginStart: "pi-desktop/omp/login/start",
     ompSessionBranch: "pi-desktop/omp/session/branch",
     ompSessionRename: "pi-desktop/omp/session/rename",
+    /** Bench subsystem (Approach step 6): discovery, supervision, agent access. */
+    benchList: "pi-desktop/bench/list",
+    benchStart: "pi-desktop/bench/start",
+    benchStop: "pi-desktop/bench/stop",
+    benchStatus: "pi-desktop/bench/status",
+    benchRun: "pi-desktop/bench/run",
   },
   event: {
     pluginChanged: "pi-desktop/event/pluginChanged",
@@ -403,6 +409,7 @@ export const IPC = {
     updatesState: "pi-desktop/updates/event/state",
     voiceStateChanged: "pi-desktop/voice/event/stateChanged",
     voiceModelProgress: "pi-desktop/voice/event/modelProgress",
+    benchLog: "pi-desktop/bench/log",
   },
 } as const;
 
