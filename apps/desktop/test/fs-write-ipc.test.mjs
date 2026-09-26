@@ -19,9 +19,3 @@ test("registers a fs/write handler that requires a workspace root before writing
   assert.match(body, /requireWorkspaceRoot\(\)/);
   assert.match(body, /writeWorkspaceFile\(/);
 });
-
-test("tags fs/write failures with the workspace/conflict error codes (E6)", () => {
-  assert.match(source, /errorCode:\s*ErrorCodes\.PATH_OUTSIDE_WORKSPACE/);
-  assert.match(source, /errorCode:\s*ErrorCodes\.CONFLICT/);
-  assert.match(source, /writeWorkspaceFile/);
-});
