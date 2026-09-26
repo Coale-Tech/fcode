@@ -29,9 +29,11 @@ scripts/identity-keeplist.txt:
 scripts/check-legal.mjs:
 
 # ── R-lane script deferred renames (tests in other lanes assert current names) ─
-# scripts/dev-electron.mjs APP_NAME — development-branding.test.mjs asserts "PI-Desktop"
-# will be updated by the UI lane when they update branding tests
+# scripts/dev-electron.mjs APP_NAME and DEV_BUNDLE_ID — development-branding.test.mjs asserts
+# both "PI-Desktop" and the plist bundle ID "net.aiuo.pi-desktop.dev"; updated by U lane
+# when they update development-branding.test.mjs
 scripts/dev-electron.mjs:19:
+scripts/dev-electron.mjs:20:
 
 # scripts/export-linux-asar.mjs — release-asar.test.mjs and ci-workflow.test.mjs assert
 # the PI-Desktop asar filename; updated when those tests move to their new lane
