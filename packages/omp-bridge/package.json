@@ -1,0 +1,20 @@
+{
+  "name": "@pi-desktop/omp-bridge",
+  "version": "0.15.7-fcode.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/bridge.ts",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "clean": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\""
+  },
+  "dependencies": {
+    "@pi-desktop/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
+  }
+}
