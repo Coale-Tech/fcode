@@ -198,7 +198,7 @@ interface SessionBinding {
   inputModalities: string[];
 }
 
-class OmpBridge {
+export class OmpBridge {
   private config: BridgeConfig | null = null;
   private ompProcess: ChildProcess | null = null;
   private ompPending = new Map<string, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();
@@ -209,7 +209,15 @@ class OmpBridge {
   private pendingUiRequests = new Map<string, { sessionId: string; toolCallId: string; toolName: string }>();
   /** Per-session most-recent open tool_execution_start */
   private openTools = new Map<string, { toolCallId: string; toolName: string }>();
+  /** Handshake timer — cleared when omp emits "ready" (E9 / failure-handling). */
+  private readyTimer: NodeJS.Timeout | null = null;
+  /** Optional trace writer set by main() when FCODE_BRIDGE_TRACE=1. */
+  private tracer: ((dir: string, line: string) => void) | null = null;
 
+  /** Enable raw-frame tracing to a file (FCODE_BRIDGE_TRACE=1). */
+  setTracer(fn: (dir: string, line: string) => void): void {
+    this.tracer = fn;
+  }
   /** Write a JSON-RPC response to the PI host on stdout. */
   private respond(id: string, result: unknown): void {
     const line = capNdjsonLine(JSON.stringify({ jsonrpc: "2.0", id, result }) + "\n");
@@ -235,6 +243,7 @@ class OmpBridge {
     return new Promise((resolve, reject) => {
       this.ompPending.set(id, { resolve, reject });
       const frame = JSON.stringify({ ...params, id }) + "\n";
+      this.tracer?.("out-omp", frame.trimEnd());
       this.ompProcess?.stdin?.write(frame);
     });
   }
@@ -368,9 +377,12 @@ class OmpBridge {
 
       case "agent.disposeSession": {
         const sessionId = String(p.sessionId ?? "");
-        // Cancel all pending UI requests for this session (DX3 / E9).
+        // Cancel pending UI requests for this session; tell omp so its tool turn doesn't hang (E9).
         for (const [reqId, req] of this.pendingUiRequests) {
-          if (req.sessionId === sessionId) this.pendingUiRequests.delete(reqId);
+          if (req.sessionId === sessionId) {
+            this.ompCall({ type: "extension_ui_response", requestId: reqId, cancelled: true }).catch(() => undefined);
+            this.pendingUiRequests.delete(reqId);
+          }
         }
         this.openTools.delete(sessionId);
         this.sessions.delete(sessionId);
@@ -527,6 +539,7 @@ class OmpBridge {
 
   /** Handle an NDJSON frame from omp's stdout. */
   handleOmpFrame(line: string): void {
+    this.tracer?.("in-omp", line);
     let frame: Record<string, unknown>;
     try {
       frame = JSON.parse(line) as Record<string, unknown>;
@@ -540,8 +553,11 @@ class OmpBridge {
         const reassembled = reassembleChunk(this.state.chunks, frame as unknown as Parameters<typeof reassembleChunk>[1]);
         if (reassembled) this.handleOmpFrame(reassembled);
       } catch (e) {
-        // FrameTooLargeError → emit a system warning turn (E10).
-        this.emitSystemMessage("unknown", `[fcode] Frame too large: ${String(e)}`);
+        // FrameTooLargeError → reject in-flight ompCalls then settle all active sessions (E10).
+        const errMsg = `Frame reassembly failed: ${String(e)}`;
+        for (const [, { reject }] of this.ompPending) reject(new Error(errMsg));
+        this.ompPending.clear();
+        for (const [sid] of this.sessions) this.emitSystemMessage(sid, `[fcode] ${errMsg}`);
       }
       return;
     }
@@ -559,6 +575,8 @@ class OmpBridge {
 
     // Protocol handshake (DX10).
     if (frame.type === "ready") {
+      // Clear the handshake timer — omp is alive (failure-handling).
+      if (this.readyTimer) { clearTimeout(this.readyTimer); this.readyTimer = null; }
       const versions = (frame.supportedProtocolVersions as number[] | undefined) ?? [];
       if (versions.includes(2)) {
         this.ompCall({ type: "negotiate_protocol", protocolVersion: 2 })
@@ -700,8 +718,22 @@ class OmpBridge {
 
     this.ompProcess = child;
 
+    // Handshake timeout — reject pending calls and emit sidecar.fatal if omp never says "ready".
+    this.readyTimer = setTimeout(() => {
+      this.readyTimer = null;
+      this.notify("sidecar.fatal", {
+        code: "HANDSHAKE_TIMEOUT",
+        paths: ompBinaryCandidates(opts.resourcesPath),
+        detail: "omp process did not emit 'ready' within 30 s",
+      });
+      for (const [, { reject }] of this.ompPending) reject(new Error("handshake timeout"));
+      this.ompPending.clear();
+    }, 30_000);
+    this.readyTimer.unref();
+
     child.on("error", (err) => {
       // SpawnENOENT — emit sidecar.fatal so the UI shows the blocked panel (T7).
+      if (this.readyTimer) { clearTimeout(this.readyTimer); this.readyTimer = null; }
       this.notify("sidecar.fatal", {
         code: "ENOENT",
         paths: ompBinaryCandidates(opts.resourcesPath),
@@ -709,7 +741,7 @@ class OmpBridge {
       });
     });
 
-    // Wire omp stdout → bridge frame handler.
+    // Wire omp stdout → bridge frame handler (incoming trace applied inside handleOmpFrame).
     readNdjsonLines(child.stdout!, (line) => {
       this.handleOmpFrame(line);
     });
@@ -749,18 +781,25 @@ async function main(): Promise<void> {
   }
 
   const traceEnabled = process.env.FCODE_BRIDGE_TRACE === "1";
+  let hostTracer: ((dir: string, line: string) => void) | null = null;
   if (traceEnabled) {
     const traceFile = join(dataDir, "bridge-trace.ndjson");
     const { appendFileSync } = await import("node:fs");
+    const traceFrame = (dir: string, line: string) => appendFileSync(traceFile, `${dir}: ${line}\n`);
+    // Trace outgoing frames to PI host (stdout).
     const origWrite = process.stdout.write.bind(process.stdout);
     process.stdout.write = ((data: string) => {
-      appendFileSync(traceFile, `OUT: ${data}`);
+      traceFrame("out-host", data.trimEnd());
       return origWrite(data);
     }) as typeof process.stdout.write;
+    // Trace omp↔bridge frames (in-omp, out-omp).
+    bridge.setTracer(traceFrame);
+    hostTracer = traceFrame;
   }
 
   // Wire stdin → bridge frame handler.
   readNdjsonLines(process.stdin, async (line) => {
+    hostTracer?.("in-host", line);
     let frame: unknown;
     try {
       frame = JSON.parse(line);

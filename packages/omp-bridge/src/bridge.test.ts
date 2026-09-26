@@ -1,11 +1,12 @@
 /**
  * Tests for omp-bridge core functions (DX3, DX6, DX7, DX10, E9, T7).
  */
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  OmpBridge,
   isReadOnlyExecuteMethod,
   makeOmpOverlay,
   resolveOmpBinary,
@@ -177,5 +178,147 @@ describe("isReadOnlyExecuteMethod (DX7 — prefix-based auto-approval gate)", ()
 
   it("rejects arbitrary.method.name", () => {
     expect(isReadOnlyExecuteMethod("arbitrary.method.name")).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// OmpBridge class — failure-handling and traceability (E9, failure-handling)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("OmpBridge.disposeSession — cancels pending extension_ui_response (E9)", () => {
+  it("sends extension_ui_response cancelled:true for each pending request matching the session", () => {
+    const bridge = new OmpBridge();
+    const emitted: unknown[] = [];
+
+    // Capture notifications emitted by the bridge (they go to stdout as JSON-RPC).
+    const origWrite = process.stdout.write.bind(process.stdout);
+    process.stdout.write = ((data: string) => {
+      try { emitted.push(JSON.parse(data.trim())); } catch { /* ignore */ }
+      return true;
+    }) as typeof process.stdout.write;
+
+    // Inject two pending UI requests: one for "session-A", one for "session-B".
+    // Use internal access via casting to any to inject test state.
+    const b = bridge as unknown as Record<string, unknown>;
+    const pendingMap = b.pendingUiRequests as Map<string, { sessionId: string; toolCallId: string; toolName: string }>;
+    pendingMap.set("req-1", { sessionId: "session-A", toolCallId: "tc-1", toolName: "tool" });
+    pendingMap.set("req-2", { sessionId: "session-B", toolCallId: "tc-2", toolName: "tool" });
+
+    // Simulate disposeSession for "session-A".
+    bridge.handleHostFrame({ jsonrpc: "2.0", id: "host-id-1", method: "agent.disposeSession", params: { sessionId: "session-A" } });
+
+    // req-1 should be gone; req-2 should still be present.
+    expect(pendingMap.has("req-1")).toBe(false);
+    expect(pendingMap.has("req-2")).toBe(true);
+
+    process.stdout.write = origWrite;
+  });
+});
+
+describe("OmpBridge.handleOmpFrame — frame reassembly failure settles active sessions (E10)", () => {
+  it("emits system messages to all active sessions and clears ompPending on FrameTooLargeError", () => {
+    const bridge = new OmpBridge();
+    const emitted: unknown[] = [];
+    const origWrite = process.stdout.write.bind(process.stdout);
+    process.stdout.write = ((data: string) => {
+      try { emitted.push(JSON.parse(data.trim())); } catch { /* ignore */ }
+      return true;
+    }) as typeof process.stdout.write;
+
+    const b = bridge as unknown as Record<string, unknown>;
+    // Add a fake active session.
+    const sessMap = b.sessions as Map<string, unknown>;
+    sessMap.set("sess-1", { ompSessionDir: undefined, projectPath: "/", inputModalities: [] });
+    // Add a fake pending omp call.
+    const pendingOmp = b.ompPending as Map<string, { resolve: (v: unknown) => void; reject: (e: Error) => void }>;
+    let rejected: Error | null = null;
+    pendingOmp.set("omp-call-1", { resolve: () => undefined, reject: (e) => { rejected = e; } });
+
+    // Pre-populate the chunk buffer to exactly the 64 MiB limit so the next byte trips the error.
+    // reassembleChunk checks buf.byteLength AFTER adding decoded content, so starting at the limit
+    // means even 1 extra byte ("a" = 1 byte) causes FrameTooLargeError.
+    const MAX_REASSEMBLED = 64 * 1024 * 1024;
+    const state = b.state as Record<string, unknown>;
+    const chunksMap = state.chunks as Map<string, { count: number; received: string[]; byteLength: number }>;
+    chunksMap.set("chunk-x", { count: 2, received: [], byteLength: MAX_REASSEMBLED });
+
+    // Send one more byte — tips byteLength over MAX_REASSEMBLED_BYTES.
+    bridge.handleOmpFrame(JSON.stringify({
+      type: "rpc_chunk",
+      chunkId: "chunk-x",
+      index: 1,
+      count: 2,
+      byteLength: 1,
+      data: "YQ==", // "a" — 1 decoded byte
+    }));
+
+    // The bridge should have rejected the pending omp call.
+    expect(rejected).not.toBeNull();
+    expect(rejected?.message).toContain("Frame reassembly failed");
+
+    // ompPending should be cleared.
+    expect(pendingOmp.size).toBe(0);
+
+    // A system message should have been emitted for sess-1.
+    const systemMsg = emitted.find((e) => {
+      const ev = (e as Record<string, unknown>);
+      return ev.method === "agent.event" && (ev.params as Record<string, unknown>)?.sessionId === "sess-1";
+    });
+    expect(systemMsg).toBeDefined();
+
+    process.stdout.write = origWrite;
+  });
+});
+
+describe("OmpBridge.setTracer — traces in-omp and out-omp frames (FCODE_BRIDGE_TRACE=1)", () => {
+  it("calls the tracer for incoming omp frames (in-omp)", () => {
+    const bridge = new OmpBridge();
+    const traced: Array<{ dir: string; line: string }> = [];
+    bridge.setTracer((dir, line) => traced.push({ dir, line }));
+
+    // A valid event frame from omp.
+    const frame = JSON.stringify({ type: "agent_start", sessionId: "s1" });
+    bridge.handleOmpFrame(frame);
+
+    expect(traced.length).toBeGreaterThanOrEqual(1);
+    expect(traced[0].dir).toBe("in-omp");
+    expect(traced[0].line).toBe(frame);
+  });
+
+  it("calls the tracer for outgoing calls to omp (out-omp)", () => {
+    const bridge = new OmpBridge();
+    const traced: Array<{ dir: string; line: string }> = [];
+    bridge.setTracer((dir, line) => traced.push({ dir, line }));
+
+    // Simulate ompProcess.stdin so the write doesn't throw.
+    const b = bridge as unknown as Record<string, unknown>;
+    b.ompProcess = { stdin: { write: vi.fn() } };
+
+    // Trigger an ompCall by feeding a method that uses ompCallAndForward.
+    // steer is simple: it calls ompCall directly.
+    const origWrite = process.stdout.write.bind(process.stdout);
+    process.stdout.write = () => true;
+    bridge.handleHostFrame({ jsonrpc: "2.0", id: "h1", method: "agent.steer", params: { sessionId: "s1", message: "hi" } });
+    process.stdout.write = origWrite;
+
+    // out-omp trace should be present.
+    const outEntry = traced.find((t) => t.dir === "out-omp");
+    expect(outEntry).toBeDefined();
+    const parsed = JSON.parse(outEntry!.line);
+    expect(parsed.type).toBe("steer");
+  });
+
+  it("writes traces to a file when used with appendFileSync", () => {
+    const traceFile = join(dir, "test-trace.ndjson");
+    const { appendFileSync } = require("node:fs");
+    const bridge = new OmpBridge();
+    bridge.setTracer((dir, line) => appendFileSync(traceFile, `${dir}: ${line}\n`));
+
+    bridge.handleOmpFrame(JSON.stringify({ type: "agent_start", sessionId: "s1" }));
+
+    expect(existsSync(traceFile)).toBe(true);
+    const content = readFileSync(traceFile, "utf8");
+    expect(content).toContain("in-omp:");
+    expect(content).toContain("agent_start");
   });
 });

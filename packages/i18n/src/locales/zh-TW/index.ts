@@ -580,6 +580,10 @@ export const zhTW = {
     firstPrompt: "傳送第一條訊息",
     loadPlugin: "載入開發外掛（可選）",
     dismiss: "關閉",
+    benchDiscoverCount: "{{count}} benches found",
+    benchDiscover: "Discover benches",
+    benchSelect: "Select a bench to work on",
+    benchStart: "Start your bench",
   },
   settings: {
     power: "電源",
@@ -2399,6 +2403,11 @@ sklm: {
     sessionTitleEmpty: "工作階段標題不能為空",
     projectNameLength: "專案名稱長度須為 1 到 80 個字元",
     planApprovalUnavailable: "該計畫核准已失效",
+    sidecarFatal: {
+      title: "Fcode agent not found",
+      detail: "The agent binary was not found at any of the probed paths.",
+      action: "Choose binary…",
+    },
     action: {
       openSettings: "開啟設定",
       retry: "重試",
