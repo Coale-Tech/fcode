@@ -16,20 +16,19 @@ import { APP_NAME } from "@pi-desktop/shared";
  * same single-writer database, which is the divergence D236 exists to
  * prevent. Neither is workable while someone debugs against the app they use.
  *
- * Only the development side moves, and only these two names differ. A shipped
- * installation keeps `PI-Desktop` and `~/.pi-desktop`, so no upgrade relocates
- * a user's database, secrets, plugins, or renderer-local state, and
- * `PI_DESKTOP_DATA_DIR` still overrides either profile outright.
+ * Fcode uses its own installation and data-directory names so it never opens
+ * PI-Desktop's database, secrets, plugins, or renderer-local state.
+ * `PI_DESKTOP_DATA_DIR` remains the internal compatibility override.
  */
 
 /** `userData` directory of a development installation, beside the shipped one. */
 export const DEVELOPMENT_INSTALLATION_NAME = `${APP_NAME} Dev`;
 
 /** Data directory of a shipped installation, below the user's home. */
-export const INSTALLATION_DATA_DIR_NAME = ".pi-desktop";
+export const INSTALLATION_DATA_DIR_NAME = ".fcode";
 
 /** Data directory of a development installation, below the user's home. */
-export const DEVELOPMENT_DATA_DIR_NAME = ".pi-desktop-dev";
+export const DEVELOPMENT_DATA_DIR_NAME = ".fcode-dev";
 
 export type DataDirInput = {
   /** `PI_DESKTOP_DATA_DIR`; an explicit directory wins over either profile. */

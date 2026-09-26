@@ -1,13 +1,13 @@
 {
   "name": "@pi-desktop/desktop",
-  "version": "0.15.7-beta.1",
+  "version": "0.15.7-fcode.1",
   "desktopName": "pi-desktop.desktop",
   "private": true,
-  "description": "PI-Desktop Electron application",
-  "homepage": "https://github.com/vastsa/PI-Desktop",
+  "description": "Fcode desktop IDE for Frappe development",
+  "homepage": "https://github.com/Coale-Tech/fcode",
   "author": {
-    "name": "vastsa",
-    "email": "hhxk666@gmail.com"
+    "name": "Coale-Tech",
+    "url": "https://github.com/Coale-Tech"
   },
   "main": "./out/main/index.js",
   "type": "module",
@@ -79,16 +79,16 @@
     "zustand": "^5.0.15"
   },
   "build": {
-    "appId": "net.aiuo.pi-desktop",
-    "productName": "PI-Desktop",
+    "appId": "com.coaletech.fcode",
+    "productName": "Fcode",
     "directories": {
       "output": "release"
     },
     "publish": [
       {
         "provider": "github",
-        "owner": "vastsa",
-        "repo": "PI-Desktop"
+        "owner": "Coale-Tech",
+        "repo": "fcode"
       }
     ],
     "extraMetadata": {
@@ -141,7 +141,7 @@
       }
     ],
     "mac": {
-      "artifactName": "PI-Desktop-${version}-${arch}-mac.${ext}",
+      "artifactName": "Fcode-${version}-${arch}-mac.${ext}",
       "target": [
         {
           "target": "dmg"
@@ -157,8 +157,8 @@
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",
       "extendInfo": {
-        "NSLocalNetworkUsageDescription": "PI-Desktop needs local network access so agents can reach OpenAI-compatible providers, Ollama, and other AI endpoints running on your LAN. / PI-Desktop 需要本地网络访问权限，以便助手请求同一局域网中的 OpenAI 兼容服务、Ollama 等本地 AI 端点。",
-        "NSMicrophoneUsageDescription": "PI-Desktop plugins may use the microphone after you grant them audio access. / 在你授权后，PI-Desktop 插件可以使用麦克风。",
+        "NSLocalNetworkUsageDescription": "Fcode needs local network access so agents can reach OpenAI-compatible providers, Ollama, and other AI endpoints running on your LAN. / Fcode 需要本地网络访问权限，以便助手请求同一局域网中的 OpenAI 兼容服务、Ollama 等本地 AI 端点。",
+        "NSMicrophoneUsageDescription": "Fcode plugins may use the microphone after you grant them audio access. / 在你授权后，Fcode 插件可以使用麦克风。",
         "NSBonjourServices": [
           "_http._tcp",
           "_https._tcp"
@@ -180,7 +180,7 @@
       ]
     },
     "dmg": {
-      "artifactName": "PI-Desktop-${version}-${arch}.${ext}",
+      "artifactName": "Fcode-${version}-${arch}.${ext}",
       "background": "build/dmg-background.png",
       "icon": "build/icon.icns",
       "window": {
