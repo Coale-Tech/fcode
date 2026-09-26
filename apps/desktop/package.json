@@ -178,6 +178,10 @@
         {
           "from": "build/tray-icon-mac.png",
           "to": "tray-icon-mac.png"
+        },
+        {
+          "from": "resources/bin/omp-darwin-${arch}",
+          "to": "bin/omp"
         }
       ],
       "extraDistFiles": [
@@ -293,6 +297,10 @@
         {
           "from": "../../target/release/pi-desktop-host-core",
           "to": "bin/pi-desktop-host-core"
+        },
+        {
+          "from": "resources/bin/omp-linux-${arch}",
+          "to": "bin/omp"
         }
       ]
     },

@@ -308,6 +308,10 @@ test("Windows/Linux explicit minimize paths use the native taskbar", () => {
       from: "build/tray-icon-mac.png",
       to: "tray-icon-mac.png",
     },
+    {
+      from: "resources/bin/omp-darwin-${arch}",
+      to: "bin/omp",
+    },
   ]);
   assert.match(iconScriptSource, /tray-icon-mac\.png/);
   assert.match(iconScriptSource, /ImageChops\.multiply/);
