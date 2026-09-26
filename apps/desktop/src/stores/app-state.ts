@@ -184,6 +184,12 @@ export type AppState = {
   errorCode?: string | null;
   /** Whether the current error is worth a one-click retry. */
   errorRetriable?: boolean | null;
+  /**
+   * Set when the omp binary cannot be located. The chat surface renders a
+   * blocking panel naming the three probed paths with a "Choose binary…" action.
+   * Managed as local state in ChatSurface via IPC.event.sidecarFatal.
+   */
+  sidecarFatal?: { code: string; paths: string[]; detail: string } | null;
   bootstrap: () => Promise<void>;
   refreshSessions: (options?: RefreshSessionsOptions) => Promise<void>;
   prefetchSession: (id: string) => Promise<void>;
