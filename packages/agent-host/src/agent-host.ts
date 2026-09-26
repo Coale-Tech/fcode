@@ -126,6 +126,14 @@ type TurnRecord = RacpTurn & {
   /** The runtime's own turn id when it differs from the RACP id (queued turns). */
   runtimeTurnId?: string;
   principalSubject?: string;
+  /**
+   * Set only for a turn admitted through `startTurn` (a RACP principal: a
+   * paired remote device, or the desktop's own bridge proxy). A turn the
+   * runtime started directly (the ordinary in-process prompt IPC, which
+   * never calls `startTurn`) has no origin -- `ingest` only ever mirrors
+   * those reactively via `ensureTurn`, it does not admit them.
+   */
+  origin?: "bridge";
 };
 
 type SessionState = {
@@ -306,6 +314,7 @@ export class AgentHost {
           revision: state.revision + 1,
           lifetimeMs: this.approvalLifetime(state),
           allowSession: this.allowRemoteSessionGrants,
+          origin: turn?.origin,
         });
         this.emit(state, "approval.requested", approval, meta2);
         return;
@@ -497,6 +506,7 @@ export class AgentHost {
       turn.effectivePermissionMode = effectivePermissionMode;
       turn.idempotencyKey = idempotencyKey;
       turn.principalSubject = principal.subject;
+      turn.origin = "bridge";
       this.emit(state, "turn.queued", { turn: this.toRacpTurn(state, turn) }, { turnId: turn.id });
       this.notifyQueue(state.id);
     } else {
@@ -516,6 +526,7 @@ export class AgentHost {
       turn.effectivePermissionMode = effectivePermissionMode;
       turn.idempotencyKey = idempotencyKey;
       turn.principalSubject = principal.subject;
+      turn.origin = "bridge";
       state.activeTurnId = turn.id;
       state.status = "running";
     }

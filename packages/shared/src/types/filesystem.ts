@@ -12,6 +12,8 @@ export type FsReadResult = {
   /** Base64 data URL when kind is "image". */
   dataUrl?: string;
   size: number;
+  /** Mtime at read time, echoed back as `expectedMtimeMs` on `fs/write` for optimistic-lock conflict detection. */
+  mtimeMs?: number;
 };
 
 /** Bounded in-chat image read. Non-images never include file bytes. */

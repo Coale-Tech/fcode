@@ -39,6 +39,10 @@ type PendingApproval = {
   request: RacpApprovalRequest;
   expiresAtMs: number;
   version?: number;
+  /** Set when the owning turn was admitted through `startTurn` (decision #76):
+   * host-core never issued this approval, so `permissions.resolve` must not
+   * be called for it -- only the broker's own `settle` applies. */
+  origin?: "bridge";
 };
 
 const MAX_REMEMBERED_RESULTS = 1000;
@@ -59,7 +63,14 @@ export class ApprovalBroker {
 
   fromToolPermission(
     request: ToolPermissionRequest,
-    context: { turnId: string; revision: number; lifetimeMs: number; allowSession: boolean; expiresAt?: string },
+    context: {
+      turnId: string;
+      revision: number;
+      lifetimeMs: number;
+      allowSession: boolean;
+      expiresAt?: string;
+      origin?: "bridge";
+    },
   ): RacpApprovalRequest {
     const existing = this.pending.get(request.requestId);
     if (existing) return existing.request;
@@ -82,7 +93,7 @@ export class ApprovalBroker {
         ? [...RACP_TOOL_APPROVAL_DECISIONS]
         : RACP_TOOL_APPROVAL_DECISIONS.filter((decision) => decision !== "allow-session"),
     };
-    this.pending.set(approval.id, { request: approval, expiresAtMs });
+    this.pending.set(approval.id, { request: approval, expiresAtMs, origin: context.origin });
     return approval;
   }
 
@@ -136,6 +147,12 @@ export class ApprovalBroker {
   get(approvalId: string): RacpApprovalRequest | undefined {
     return this.pending.get(approvalId)?.request;
   }
+  /** Whether the request was admitted through `startTurn` (decision #76):
+   * host-core has no record of it, so only the broker itself can settle it. */
+  originOf(approvalId: string): "bridge" | undefined {
+    return this.pending.get(approvalId)?.origin;
+  }
+
 
   result(approvalId: string): RacpApprovalResult | undefined {
     return this.results.get(approvalId);
