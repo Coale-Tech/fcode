@@ -12,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Editor from "@monaco-editor/react";
 import type { FsIndexEntry, FsIndexResult } from "@pi-desktop/shared";
 import { IPC } from "@pi-desktop/shared";
+import { buildMonacoTheme } from "../components/code/monaco-theme";
 import { api } from "../lib/api";
 import { cx } from "../components/ui";
 
@@ -56,6 +57,8 @@ export function CodePage() {
   const [dirty, setDirty] = useState<DirtyMap>({});
   /** True when the disk file changed while the current file is dirty (T11). */
   const [diskChanged, setDiskChanged] = useState(false);
+  /** Monaco theme name, set once the editor initialises (T12). */
+  const [monacoTheme, setMonacoTheme] = useState<string>("vs-dark");
   /** Updated disk content when a conflict is detected. */
   const [diskContent, setDiskContent] = useState<string | null>(null);
 
@@ -336,6 +339,11 @@ export function CodePage() {
               <Editor
                 path={activePath}
                 value={activeContent}
+                theme={monacoTheme}
+                beforeMount={(monaco) => {
+                  const name = buildMonacoTheme(monaco);
+                  setMonacoTheme(name);
+                }}
                 onChange={handleEditorChange}
                 options={{
                   minimap: { enabled: false },
