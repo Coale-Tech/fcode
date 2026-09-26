@@ -50,7 +50,7 @@ type LogLine = {
 async function invoke<T>(channel: string, args?: unknown): Promise<T> {
   const bridge = window.piDesktop;
   if (!bridge) throw new Error("piDesktop bridge unavailable");
-  const result: Result<T> = await bridge.invoke<Result<T>>(channel, args);
+  const result: Result<T> = await bridge.invoke<T>(channel, args);
   if (!result.ok) {
     throw new Error(result.error.message ?? "IPC call failed");
   }

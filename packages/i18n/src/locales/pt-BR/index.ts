@@ -762,7 +762,12 @@ export const ptBR = {
       zoomOut: "Diminuir zoom",
       toggleFullScreen: "Alternar tela completa",
       voiceToggle: "Alternar entrada de voz",
-      voiceCancel: "Cancelar entrada de voz"
+      voiceCancel: "Cancelar entrada de voz",
+      navToChat: "Ir para Chat",
+      navToCode: "Ir para o editor de código",
+      navToBuild: "Ir para Build",
+      navToBench: "Ir para Bench",
+      toggleFollowLog: "Alternar acompanhamento de log",
     },
     skills: "Habilidades",
     skillsGlobalPath: "Caminho global de habilidades",

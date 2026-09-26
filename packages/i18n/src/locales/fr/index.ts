@@ -936,7 +936,12 @@ sklm: {
       "zoomOut": "Zoom arrière",
       "toggleFullScreen": "Basculer en mode plein écran",
       "voiceToggle": "Activer/désactiver la saisie vocale",
-      "voiceCancel": "Annuler la saisie vocale"
+      "voiceCancel": "Annuler la saisie vocale",
+      "navToChat": "Aller au Chat",
+      "navToCode": "Aller à l'éditeur de code",
+      "navToBuild": "Aller à Build",
+      "navToBench": "Aller à Bench",
+      "toggleFollowLog": "Basculer le suivi du journal",
     },
     "skills": "Compétences",
     "skillsGlobalPath": "Parcours de compétences global",
