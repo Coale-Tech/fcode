@@ -74,14 +74,17 @@ import {
   IconBranch,
   IconCheck,
   IconChevronDown,
+  IconCode,
   IconCopy,
   IconCircleAlert,
   IconNewSession,
   IconFolder,
+  IconMonitor,
   IconMore,
   IconNewProject,
   IconPin,
   IconPencil,
+  IconServer,
   IconSidebar,
   IconSettings,
   IconStar,
@@ -2490,6 +2493,40 @@ export function Sidebar({
 
         <div className="sidebar-footer no-drag">
           <div className="footer-actions">
+            {/* T2: primary page nav rail — Code, Build, Bench */}
+            <TooltipButton
+              type="button"
+              className={`footer-action ${page === "code" ? "active" : ""}`}
+              data-nav="code"
+              tooltip="Code"
+              ariaLabel="Code"
+              onClick={() => setPage("code")}
+              aria-pressed={page === "code"}
+            >
+              <IconCode size={14} aria-hidden />
+            </TooltipButton>
+            <TooltipButton
+              type="button"
+              className={`footer-action ${page === "build" ? "active" : ""}`}
+              data-nav="build-canvas"
+              tooltip="Build"
+              ariaLabel="Build"
+              onClick={() => setPage("build")}
+              aria-pressed={page === "build"}
+            >
+              <IconMonitor size={14} aria-hidden />
+            </TooltipButton>
+            <TooltipButton
+              type="button"
+              className={`footer-action ${page === "bench" ? "active" : ""}`}
+              data-nav="bench"
+              tooltip="Bench"
+              ariaLabel="Bench"
+              onClick={() => setPage("bench")}
+              aria-pressed={page === "bench"}
+            >
+              <IconServer size={14} aria-hidden />
+            </TooltipButton>
             <TooltipButton
               type="button"
               className={`footer-action ${page === "settings" ? "active" : ""}`}
