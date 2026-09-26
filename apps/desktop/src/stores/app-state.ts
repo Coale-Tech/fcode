@@ -150,6 +150,9 @@ export type AppState = {
   /** Discovered model lists per provider id (composer model menu). */
   providerModels: Record<string, ModelInfo[]>;
   workspace?: ProjectWorkspace | null;
+  /** Count of benches found by the last bench discovery scan. Drives the
+   *  bench.discover step headline in OnboardingChecklist. Set by bench-ipc. */
+  discoveredBenchCount?: number | null;
   onboarding?: OnboardingState;
   plugins: PluginSummary[];
   /** Themes contributed by loaded plugins, with their sanitized CSS. */
