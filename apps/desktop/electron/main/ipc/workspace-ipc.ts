@@ -936,16 +936,13 @@ export function registerWorkspaceIpc({
       try {
         return await writeWorkspaceFile(root, path, input.content, input.expectedMtimeMs);
       } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        if (message.includes("escapes workspace root")) {
-          throw Object.assign(new Error(message), {
-            errorCode: ErrorCodes.PATH_OUTSIDE_WORKSPACE,
-          });
-        }
-        if (message.includes("changed on disk")) {
-          throw Object.assign(new Error(message), { errorCode: ErrorCodes.CONFLICT });
-        }
-        throw Object.assign(new Error(message), { errorCode: ErrorCodes.INVALID_ARGUMENT });
+        // writeWorkspaceFile tags every throw with an errorCode; trust it
+        // instead of pattern-matching the message, which breaks silently the
+        // moment the message wording changes.
+        if (error instanceof Error && "errorCode" in error) throw error;
+        throw Object.assign(new Error(error instanceof Error ? error.message : String(error)), {
+          errorCode: ErrorCodes.INVALID_ARGUMENT,
+        });
       }
     },
   );

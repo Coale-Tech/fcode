@@ -1,6 +1,7 @@
 import {
   mkdir,
   mkdtemp,
+  open,
   readFile,
   realpath,
   rm,
@@ -10,9 +11,11 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterAll, expect, it } from "vitest";
+import { afterAll, afterEach, expect, it, vi } from "vitest";
+import { ErrorCodes } from "@pi-desktop/shared";
 import {
   MAX_TEXT_BYTES,
+  previewFile,
   readOpenableImage,
   resolveOpenablePath,
   resolveRealOpenablePath,
@@ -28,8 +31,17 @@ async function tempDir(prefix: string): Promise<string> {
   return dir;
 }
 
+vi.mock("node:fs/promises", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:fs/promises")>();
+  return { ...actual, open: vi.fn(actual.open) };
+});
+
 afterAll(async () => {
   await Promise.all(temps.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
+});
+
+afterEach(() => {
+  vi.mocked(open).mockClear();
 });
 
 /** Creating links is not always permitted; callers skip then. */
@@ -183,20 +195,22 @@ it("writes a new file inside the workspace root (E6, case 1: relative path)", as
 it("rejects an absolute path outside the workspace root (E6, case 2)", async () => {
   const root = await tempDir("pi-ws-write-abs-");
   const outside = join(await tempDir("pi-ws-write-outside-"), "escape.txt");
-  await expect(writeWorkspaceFile(root, outside, "x")).rejects.toThrow(
-    /escapes workspace root/,
-  );
+  await expect(writeWorkspaceFile(root, outside, "x")).rejects.toMatchObject({
+    message: expect.stringMatching(/escapes workspace root/),
+    errorCode: ErrorCodes.PATH_OUTSIDE_WORKSPACE,
+  });
   await expect(stat(outside)).rejects.toThrow();
 });
 
 it("rejects a .. escape from a relative path (E6, case 3)", async () => {
   const root = await tempDir("pi-ws-write-dotdot-");
-  await expect(writeWorkspaceFile(root, "../escape.txt", "x")).rejects.toThrow(
-    /escapes workspace root/,
-  );
+  await expect(writeWorkspaceFile(root, "../escape.txt", "x")).rejects.toMatchObject({
+    message: expect.stringMatching(/escapes workspace root/),
+    errorCode: ErrorCodes.PATH_OUTSIDE_WORKSPACE,
+  });
 });
 
-it("rejects when the parent directory is swapped to point outside root between resolve and write (E6, case 4: swapped-parent race)", async (ctx) => {
+it("rejects a parent directory swapped to point outside root on the next write through the same root/rel pair (E6, case 4: parent-swap race)", async (ctx) => {
   if (process.platform === "win32") ctx.skip();
   const base = await tempDir("pi-ws-write-race-");
   const root = join(base, "root");
@@ -210,27 +224,70 @@ it("rejects when the parent directory is swapped to point outside root between r
   expect(first.size).toBe(5);
 
   // Swap docs/ for a symlink to a directory outside root, then write again
-  // through the same root/rel pair. A cached resolution would still trust
-  // the old, contained path; a fresh per-call resolve must reject it.
+  // through the same root/rel pair. A cached resolution -- or a check that
+  // trusted the walk-up result without re-validating the parent right
+  // before opening -- would still trust the old, contained path; a fresh
+  // per-call resolve plus the pre-open re-check must reject it.
   await rm(insideTarget, { recursive: true, force: true });
   if (!(await linkOrSkip(outsideTarget, insideTarget))) {
     ctx.skip();
     return;
   }
-  await expect(writeWorkspaceFile(root, "docs/b.txt", "second")).rejects.toThrow(
-    /escapes workspace root/,
-  );
+  await expect(writeWorkspaceFile(root, "docs/b.txt", "second")).rejects.toMatchObject({
+    message: expect.stringMatching(/escapes workspace root/),
+    errorCode: ErrorCodes.PATH_OUTSIDE_WORKSPACE,
+  });
   await expect(stat(join(outsideTarget, "b.txt"))).rejects.toThrow();
+});
+
+it("rejects a parent directory swapped to point outside root inside a single write call (E6, case 5: in-flight race)", async (ctx) => {
+  if (process.platform === "win32") ctx.skip();
+  const base = await tempDir("pi-ws-write-inflight-race-");
+  const root = join(base, "root");
+  const insideTarget = join(root, "docs");
+  const outsideTarget = join(base, "outside-docs");
+  await mkdir(insideTarget, { recursive: true });
+  await mkdir(outsideTarget, { recursive: true });
+
+  // The swap happens *inside* the one writeWorkspaceFile call, right before
+  // the real open() syscall runs -- after path resolution already trusted
+  // docs/ as a real, contained directory. This is the window O_NOFOLLOW
+  // alone does not cover (it only guards the leaf, not this parent).
+  let swapped = false;
+  vi.mocked(open).mockImplementationOnce(async (...args) => {
+    await rm(insideTarget, { recursive: true, force: true });
+    swapped = await linkOrSkip(outsideTarget, insideTarget);
+    return open(...(args as Parameters<typeof open>));
+  });
+
+  await expect(writeWorkspaceFile(root, "docs/b.txt", "second")).rejects.toMatchObject({
+    message: expect.stringMatching(/escapes workspace root/),
+    errorCode: ErrorCodes.PATH_OUTSIDE_WORKSPACE,
+  });
+  if (!swapped) {
+    ctx.skip();
+    return;
+  }
+  // O_CREAT unavoidably creates the (empty) file before the post-open
+  // identity check can run -- Node has no atomic "verify then create"
+  // primitive. What matters is that the write's *content* never lands
+  // outside root: the escaped file must not exist with the payload written.
+  const leaked = await readFile(join(outsideTarget, "b.txt"), "utf8").catch(() => null);
+  expect(leaked).not.toBe("second");
 });
 
 it("caps write size and rejects invalid UTF-8 content (E6)", async () => {
   const root = await tempDir("pi-ws-write-limits-");
   await expect(
     writeWorkspaceFile(root, "big.txt", "x".repeat(MAX_TEXT_BYTES + 1)),
-  ).rejects.toThrow(/too large/);
-  await expect(
-    writeWorkspaceFile(root, "bad.txt", "\uD800"),
-  ).rejects.toThrow(/UTF-8/);
+  ).rejects.toMatchObject({
+    message: expect.stringMatching(/too large/),
+    errorCode: ErrorCodes.INVALID_ARGUMENT,
+  });
+  await expect(writeWorkspaceFile(root, "bad.txt", "\uD800")).rejects.toMatchObject({
+    message: expect.stringMatching(/UTF-8/),
+    errorCode: ErrorCodes.INVALID_ARGUMENT,
+  });
 });
 
 it("detects an on-disk change since the caller's expected mtime (E6)", async () => {
@@ -239,6 +296,18 @@ it("detects an on-disk change since the caller's expected mtime (E6)", async () 
   const staleMtimeMs = (await stat(join(root, "shared.txt"))).mtimeMs - 1000;
   await expect(
     writeWorkspaceFile(root, "shared.txt", "v2", staleMtimeMs),
-  ).rejects.toThrow(/changed on disk/);
+  ).rejects.toMatchObject({
+    message: expect.stringMatching(/changed on disk/),
+    errorCode: ErrorCodes.CONFLICT,
+  });
   expect(await readFile(join(root, "shared.txt"), "utf8")).toBe("v1");
+});
+
+it("round-trips mtimeMs from previewFile so a caller can supply expectedMtimeMs on write (E6)", async () => {
+  const root = await tempDir("pi-ws-read-mtime-");
+  await writeFile(join(root, "note.txt"), "v1");
+  const onDisk = await stat(join(root, "note.txt"));
+  const preview = await previewFile(join(root, "note.txt"), "note.txt");
+  expect(preview.kind).toBe("text");
+  expect(preview.mtimeMs).toBe(onDisk.mtimeMs);
 });

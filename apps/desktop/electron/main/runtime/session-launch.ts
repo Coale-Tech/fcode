@@ -273,6 +273,18 @@ export function createSessionLaunchRuntime({
       providerId?: string;
       modelId?: string;
       thinkingLevel?: SessionThinkingLevel;
+      /**
+       * E2: only the real sidecar turn (agentPrompt, agentCompact, plan
+       * execution) may fall back to the "omp" placeholder when no PI-native
+       * provider is admitted -- the omp bridge resolves its own credentials.
+       * promptEnhance, sessionSummarizeTitle and plugin completeOneShot make
+       * a direct HTTP call with `launch.sidecarParams.provider`, so handing
+       * them the placeholder trades a clean MODEL_NOT_CONFIGURED for an
+       * opaque network failure and silently skips promptEnhance's existing
+       * pinned-provider-unavailable fallback. Leave this false (default) for
+       * every caller except the three that hand off to the sidecar.
+       */
+      allowOmpFallback?: boolean;
     } = {},
   ) {
     if (!runtimeState.host) throw new Error("host unavailable");
@@ -351,7 +363,7 @@ export function createSessionLaunchRuntime({
       ({ provider, isVendorAccount, secret, modelId } =
         await admitProviderAndModel());
     } catch (error) {
-      if (!isLaunchAdmissionError(error)) throw error;
+      if (!isLaunchAdmissionError(error) || !overrides.allowOmpFallback) throw error;
       provider = OMP_LAUNCH_PROVIDER;
       isVendorAccount = false;
       secret = { value: undefined };

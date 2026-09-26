@@ -1,7 +1,7 @@
 import { constants as fsConstants } from "node:fs";
 import { mkdir, open, readFile, readdir, realpath, stat } from "node:fs/promises";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
-import type { FsEntry, FsImageDataUrlResult, FsReadResult } from "@pi-desktop/shared";
+import { ErrorCodes, type FsEntry, type FsImageDataUrlResult, type FsReadResult } from "@pi-desktop/shared";
 
 /**
  * Read-only workspace file access for the work panel files tab
@@ -210,22 +210,7 @@ export async function resolveRealPathForCreateWithinRoot(
   } catch {
     return null;
   }
-  const tail: string[] = [];
-  let cursor = lexical;
-  for (;;) {
-    try {
-      const real = await realpath(cursor);
-      const target = tail.length ? join(real, ...tail) : real;
-      return pathIsWithin(rootReal, target) ? target : null;
-    } catch {
-      const parent = dirname(cursor);
-      // Ran out of ancestors before finding one that exists: the path is not
-      // under anything we can vouch for.
-      if (parent === cursor) return null;
-      tail.unshift(basename(cursor));
-      cursor = parent;
-    }
-  }
+  return realpathWalkUpContained(rootReal, lexical);
 }
 
 /** Shared by both create-resolvers: walk up to the nearest existing ancestor,
@@ -275,7 +260,7 @@ function lexicalWriteTarget(root: string, rawPath: string): string | null {
 async function resolveRealPathForWriteWithinRoot(
   root: string,
   rawPath: string,
-): Promise<string | null> {
+): Promise<{ target: string; rootReal: string } | null> {
   const lexical = lexicalWriteTarget(root, rawPath);
   if (!lexical) return null;
   let rootReal: string;
@@ -284,12 +269,19 @@ async function resolveRealPathForWriteWithinRoot(
   } catch {
     return null;
   }
-  return realpathWalkUpContained(rootReal, lexical);
+  const target = await realpathWalkUpContained(rootReal, lexical);
+  return target ? { target, rootReal } : null;
 }
 
 export interface WriteWorkspaceFileResult {
   size: number;
   mtimeMs: number;
+}
+
+function pathEscapeError(rawPath: string): Error {
+  return Object.assign(new Error(`path escapes workspace root: ${rawPath}`), {
+    errorCode: ErrorCodes.PATH_OUTSIDE_WORKSPACE,
+  });
 }
 
 /**
@@ -306,22 +298,28 @@ export async function writeWorkspaceFile(
 ): Promise<WriteWorkspaceFileResult> {
   const byteLength = Buffer.byteLength(content, "utf8");
   if (byteLength > MAX_TEXT_BYTES) {
-    throw new Error(`file too large: ${byteLength} bytes exceeds ${MAX_TEXT_BYTES} byte limit`);
+    throw Object.assign(
+      new Error(`file too large: ${byteLength} bytes exceeds ${MAX_TEXT_BYTES} byte limit`),
+      { errorCode: ErrorCodes.INVALID_ARGUMENT },
+    );
   }
   if (Buffer.from(content, "utf8").toString("utf8") !== content) {
-    throw new Error("content is not valid UTF-8");
+    throw Object.assign(new Error("content is not valid UTF-8"), {
+      errorCode: ErrorCodes.INVALID_ARGUMENT,
+    });
   }
 
-  const target = await resolveRealPathForWriteWithinRoot(root, rawPath);
-  if (!target) {
-    throw new Error(`path escapes workspace root: ${rawPath}`);
-  }
+  const resolved = await resolveRealPathForWriteWithinRoot(root, rawPath);
+  if (!resolved) throw pathEscapeError(rawPath);
+  const { target, rootReal } = resolved;
 
   if (expectedMtimeMs !== undefined) {
     try {
       const current = await stat(target);
       if (current.mtimeMs !== expectedMtimeMs) {
-        throw new Error("file changed on disk since it was loaded");
+        throw Object.assign(new Error("file changed on disk since it was loaded"), {
+          errorCode: ErrorCodes.CONFLICT,
+        });
       }
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
@@ -330,19 +328,44 @@ export async function writeWorkspaceFile(
   }
 
   await mkdir(dirname(target), { recursive: true });
-  // O_NOFOLLOW guards the leaf itself: if it was swapped for a symlink after
-  // containment was resolved above, the open fails instead of following it
-  // outside the root.
-  const flags =
-    fsConstants.O_WRONLY | fsConstants.O_CREAT | fsConstants.O_TRUNC | fsConstants.O_NOFOLLOW;
+  // No O_TRUNC here: truncating before the identity check below could
+  // destroy a wrong (swapped) file's contents before the swap is even
+  // detected. Truncate explicitly, only after the check passes.
+  const flags = fsConstants.O_WRONLY | fsConstants.O_CREAT | fsConstants.O_NOFOLLOW;
   const fileHandle = await open(target, flags, 0o644);
   try {
+    // O_NOFOLLOW only guards `target`'s own leaf component: a *parent*
+    // directory swapped for a symlink between the walk-up resolution above
+    // and this open still lands the fd outside root under the same leaf
+    // name, and a file's dev always equals its (possibly swapped) parent's
+    // -- comparing those is a no-op, not a check. Re-resolve `target`
+    // through realpath again, which walks the *current* filesystem state,
+    // and compare the fd's own identity (dev+ino) against whatever now sits
+    // at that resolved path -- if a swap happened, either the fresh
+    // realpath lands outside root (caught below) or it names a different
+    // object than the fd we already hold (caught by the dev/ino mismatch).
+    const opened = await fileHandle.stat();
+    let realNow: string;
+    try {
+      realNow = await realpath(target);
+    } catch {
+      throw pathEscapeError(rawPath);
+    }
+    if (!pathIsWithin(rootReal, realNow)) throw pathEscapeError(rawPath);
+    const atPath = await stat(realNow);
+    if (atPath.dev !== opened.dev || atPath.ino !== opened.ino) throw pathEscapeError(rawPath);
+
+    await fileHandle.truncate(0);
     await fileHandle.writeFile(content, "utf8");
+    // From the fd, not a path-based stat: a path-based re-stat after write
+    // reopens the same race for the metadata this unlocks the next
+    // `expectedMtimeMs` check with -- an external write to the path in that
+    // gap would otherwise be silently adopted as "ours".
+    const after = await fileHandle.stat();
+    return { size: after.size, mtimeMs: after.mtimeMs };
   } finally {
     await fileHandle.close();
   }
-  const after = await stat(target);
-  return { size: after.size, mtimeMs: after.mtimeMs };
 }
 
 export function isIgnoredName(name: string): boolean {
@@ -455,7 +478,7 @@ export async function previewFile(
   if (looksBinary(buffer)) {
     return { kind: "binary", size: info.size };
   }
-  return { kind: "text", content: buffer.toString("utf8"), size: info.size };
+  return { kind: "text", content: buffer.toString("utf8"), size: info.size, mtimeMs: info.mtimeMs };
 }
 
 export async function readWorkspaceFile(
