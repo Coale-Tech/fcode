@@ -940,7 +940,12 @@ sklm: {
       "zoomOut": "Zoom out",
       "toggleFullScreen": "Alternar pantalla completa",
       "voiceToggle": "Alternar entrada de voz",
-      "voiceCancel": "Cancelar entrada de voz"
+      "voiceCancel": "Cancelar entrada de voz",
+      "navToChat": "Ir a Chat",
+      "navToCode": "Ir al editor de código",
+      "navToBuild": "Ir a Build",
+      "navToBench": "Ir a Bench",
+      "toggleFollowLog": "Activar seguimiento de registro",
     },
     "skills": "Habilidades",
     "skillsGlobalPath": "Ruta de habilidades globales",

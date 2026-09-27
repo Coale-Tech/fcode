@@ -940,7 +940,12 @@ sklm: {
       "zoomOut": "Verkleinern",
       "toggleFullScreen": "Vollbild umschalten",
       "voiceToggle": "Spracheingabe umschalten",
-      "voiceCancel": "Spracheingabe abbrechen"
+      "voiceCancel": "Spracheingabe abbrechen",
+      "navToChat": "Zu Chat wechseln",
+      "navToCode": "Zum Code-Editor wechseln",
+      "navToBuild": "Zu Build wechseln",
+      "navToBench": "Zu Bench wechseln",
+      "toggleFollowLog": "Protokoll-Mitlauf umschalten",
     },
     "skills": "Fähigkeiten",
     "skillsGlobalPath": "Globaler Kompetenzpfad",

@@ -339,7 +339,7 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     withGitBranch,
     stripWinLongPrefix,
   });
-  registerBenchIpc({ registrar });
+  registerBenchIpc({ registrar, mainWindow: getMainWindow });
 
   registerAgentExtensionIpc({
     handle,
