@@ -277,6 +277,7 @@ export class BenchSupervisor extends EventEmitter {
     proc.child = child;
 
     const onData = (chunk: Buffer | string) => {
+      if (proc.child !== child) return; // superseded by a later start()/stop() — ignore this process's events
       const text = String(chunk);
       for (const line of text.split("\n")) {
         if (!line) continue;
@@ -300,6 +301,7 @@ export class BenchSupervisor extends EventEmitter {
     child.stderr?.on("data", onData);
 
     child.on("error", (err: NodeJS.ErrnoException) => {
+      if (proc.child !== child) return; // superseded by a later start()/stop() — ignore this process's events
       const failure = classifyBenchFailure(err.code ?? null, err.message, "bench");
       this.status = "failed";
       this.emit("status", this.status);
@@ -309,6 +311,7 @@ export class BenchSupervisor extends EventEmitter {
     });
 
     child.on("close", (code) => {
+      if (proc.child !== child) return; // superseded by a later start()/stop() — ignore this process's events
       proc.child = null;
       if (this.status !== "stopped") {
         const lastLines = proc.buffer.all().slice(-20).map((l) => l.text).join("\n");
@@ -413,6 +416,7 @@ export class BenchSupervisor extends EventEmitter {
     proc.child = child;
 
     const onData = (chunk: Buffer | string) => {
+      if (proc.child !== child) return; // superseded by a later startWatcher()/stopWatcher() — ignore this process's events
       const text = String(chunk);
       for (const line of text.split("\n")) {
         if (!line) continue;
@@ -424,6 +428,7 @@ export class BenchSupervisor extends EventEmitter {
     child.stderr?.on("data", onData);
 
     child.on("error", (err: NodeJS.ErrnoException) => {
+      if (proc.child !== child) return; // superseded by a later startWatcher()/stopWatcher() — ignore this process's events
       proc.child = null;
       const output = err.message;
       proc.buffer.push(`[error] ${output}`);
@@ -434,6 +439,7 @@ export class BenchSupervisor extends EventEmitter {
     });
 
     child.on("close", (code) => {
+      if (proc.child !== child) return; // superseded by a later startWatcher()/stopWatcher() — ignore this process's events
       proc.child = null;
       const lastOutput = proc.buffer.all().slice(-10).map((l) => l.text).join("\n");
       const failure = classifyBenchFailure(null, lastOutput, "watch-studio");

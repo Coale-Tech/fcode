@@ -3,7 +3,9 @@
  */
 import assert from "node:assert/strict";
 import test from "node:test";
-import { register } from "node:module";
+import childProcess from "node:child_process";
+import { EventEmitter } from "node:events";
+import { register, syncBuiltinESMExports } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -153,4 +155,81 @@ test("failure payload from classifyBenchFailure has all required T6 Gap1 fields"
   assert.ok(Object.prototype.hasOwnProperty.call(f, "cause"), "must have cause");
   assert.ok(Object.prototype.hasOwnProperty.call(f, "fix"), "must have fix");
   assert.ok(Object.prototype.hasOwnProperty.call(f, "docsUrl"), "must have docsUrl");
+});
+
+// ── Race regression: stale (superseded) child events must not corrupt state ──
+
+function fakeSpawn(t, children) {
+  t.mock.method(childProcess, "spawn", () => {
+    const child = new EventEmitter();
+    child.stdout = new EventEmitter();
+    child.stderr = new EventEmitter();
+    child.kill = () => {};
+    children.push(child);
+    return child;
+  });
+  syncBuiltinESMExports();
+}
+
+test("BenchSupervisor: stale child's close event after stop()+start() does not fail the new process", async (t) => {
+  const { BenchSupervisor } = await import("../electron/main/bench/supervisor.ts");
+  const children = [];
+  fakeSpawn(t, children);
+
+  const sup = new BenchSupervisor();
+  const statuses = [];
+  const failures = [];
+  sup.on("status", (s) => statuses.push(s));
+  sup.on("failure", (f) => failures.push(f));
+
+  await sup.start("/tmp/bench-a");
+  const childA = children[0];
+  sup.stop();
+  await sup.start("/tmp/bench-a");
+  const childB = children[1];
+  assert.equal(children.length, 2);
+
+  // childA's real OS-level exit arrives late, after childB already took the
+  // "start" slot. Before the fix this clobbered proc.child and reported the
+  // brand-new process as failed.
+  statuses.length = 0;
+  failures.length = 0;
+  childA.emit("close", 143);
+
+  assert.deepEqual(failures, [], "stale child A's close must not emit a failure");
+  assert.deepEqual(statuses, [], "stale child A's close must not change status");
+
+  // childB's own close still works normally — the guard only skips stale events.
+  childB.emit("close", 1);
+  assert.equal(failures.length, 1, "current child B's close must still report failure");
+  assert.equal(statuses.at(-1), "failed");
+});
+
+test("BenchSupervisor: stale watcher child's close event after startWatcher()+startWatcher() does not spawn a phantom restart", async (t) => {
+  const { BenchSupervisor } = await import("../electron/main/bench/supervisor.ts");
+  const children = [];
+  fakeSpawn(t, children);
+
+  const sup = new BenchSupervisor();
+  const exits = [];
+  sup.on("watcher:exit", (e) => exits.push(e));
+
+  sup.startWatcher("/tmp/bench-a", "site-a");
+  const childA = children[0];
+  sup.startWatcher("/tmp/bench-a", "site-a"); // internally stops A, spawns B
+  const childB = children[1];
+  assert.equal(children.length, 2);
+
+  // childA's real exit arrives late, after childB already took the watcher
+  // slot. Before the fix this reset restarts/backoff for B's slot and could
+  // spawn a duplicate watcher process.
+  childA.emit("close", 1);
+
+  assert.equal(children.length, 2, "stale child A's close must not spawn a phantom restart");
+  assert.deepEqual(exits, [], "stale child A's close must not emit watcher:exit");
+
+  // childB's own close still drives the real restart-with-backoff logic.
+  childB.emit("close", 1);
+  assert.equal(exits.length, 1, "current child B's close must still be observed");
+  assert.equal(exits[0].willRetry, true);
 });
