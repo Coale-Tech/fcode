@@ -41,6 +41,7 @@ import type {
   FsImageDataUrlResult,
   FsIndexResult,
   FsReadResult,
+  FsWriteResult,
   HostHealth,
   HostStatusEvent,
   MarketSource,
@@ -1322,6 +1323,12 @@ export const api = {
     invoke<FsReadResult>(IPC.invoke.fsRead, {
       path,
       ...(mimeType ? { mimeType } : {}),
+    }),
+  fsWrite: (path: string, content: string, expectedMtimeMs?: number) =>
+    invoke<FsWriteResult>(IPC.invoke.fsWrite, {
+      path,
+      content,
+      ...(expectedMtimeMs !== undefined ? { expectedMtimeMs } : {}),
     }),
   fsReadImageDataUrl: (ref: string, mimeType?: string) =>
     invoke<FsImageDataUrlResult>(IPC.invoke.fsReadImageDataUrl, {

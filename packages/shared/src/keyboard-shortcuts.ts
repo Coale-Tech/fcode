@@ -17,6 +17,11 @@ export const KEYBOARD_SHORTCUT_IDS = [
   "toggleFullScreen",
   "voiceToggle",
   "voiceCancel",
+  "navToChat",
+  "navToCode",
+  "navToBuild",
+  "navToBench",
+  "toggleFollowLog",
 ] as const;
 
 export type KeyboardShortcutId = (typeof KEYBOARD_SHORTCUT_IDS)[number];
@@ -75,6 +80,11 @@ export const KEYBOARD_SHORTCUTS: readonly KeyboardShortcutDefinition[] = [
     group: "agent",
     defaultBinding: "Escape",
   },
+  { id: "navToChat", group: "navigation", defaultBinding: "Mod+1" },
+  { id: "navToCode", group: "navigation", defaultBinding: "Mod+2" },
+  { id: "navToBuild", group: "navigation", defaultBinding: "Mod+3" },
+  { id: "navToBench", group: "navigation", defaultBinding: "Mod+4" },
+  { id: "toggleFollowLog", group: "navigation", defaultBinding: "Mod+Shift+B" },
 ] as const;
 
 /**

@@ -16,6 +16,12 @@ export type FsReadResult = {
   mtimeMs?: number;
 };
 
+export type FsWriteResult = {
+  size: number;
+  /** Mtime after the write — cache this as the next write's `expectedMtimeMs`. */
+  mtimeMs: number;
+};
+
 /** Bounded in-chat image read. Non-images never include file bytes. */
 export type FsImageDataUrlResult = {
   kind: "image" | "missing" | "notImage" | "tooLarge";

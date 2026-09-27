@@ -276,8 +276,8 @@
   --ds-switch-ring-off: color-mix(in oklab, #1a1c1f 20%, transparent);
   --ds-switch-knob-off: #ffffff;
   --ds-switch-knob-on: #ffffff;
-  --ds-success: #00a240;
-  --ds-warning: #e25507;
+  --ds-success: #006b2b;
+  --ds-warning: #c14800;
   --ds-error: #e02e2a;
   --ds-info: #5d5d5d;
   --ds-purple: #7c3aed;
