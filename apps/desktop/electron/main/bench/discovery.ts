@@ -140,6 +140,10 @@ function isBench(dir: string): boolean {
 /**
  * Discover all Frappe benches under the given roots.
  *
+ * Returns `{ benches, failedRoots }`.  `failedRoots` lists every root that
+ * could not be read (missing directory, permission denied, etc.) so the UI can
+ * surface a PARTIAL or ERROR state instead of silently dropping results.
+ *
  * Options:
  *  - `roots`: directories to search (defaults to `~/ERPNext`)
  *  - `signal`: AbortSignal to cancel the scan (E11)
@@ -147,11 +151,12 @@ function isBench(dir: string): boolean {
 export async function discoverBenches(options: {
   roots?: string[];
   signal?: AbortSignal;
-} = {}): Promise<BenchSummary[]> {
+} = {}): Promise<{ benches: BenchSummary[]; failedRoots: Array<{ root: string; reason: string }> }> {
   const { roots = DEFAULT_ROOTS, signal } = options;
-  if (signal?.aborted) return [];
+  if (signal?.aborted) return { benches: [], failedRoots: [] };
 
   const results: BenchSummary[] = [];
+  const failedRoots: Array<{ root: string; reason: string }> = [];
   const seen = new Set<string>();
 
   // Process roots in batches of CONCURRENCY (E11 — concurrency limit).
@@ -163,9 +168,13 @@ export async function discoverBenches(options: {
       batch.map((root) => scanRoot(root, signal)),
     );
 
-    for (const items of batchResults) {
+    for (let j = 0; j < batch.length; j++) {
+      const { benches, failed } = batchResults[j];
+      if (failed) {
+        failedRoots.push(failed);
+      }
       if (signal?.aborted) break;
-      for (const bench of items) {
+      for (const bench of benches) {
         const resolved = resolve(bench.path);
         if (!seen.has(resolved)) {
           seen.add(resolved);
@@ -175,23 +184,30 @@ export async function discoverBenches(options: {
     }
   }
 
-  return results;
+  return { benches: results, failedRoots };
 }
 
 /**
  * Scan a single root directory for bench subdirectories.
  * Only direct children are checked (depth cap, E11).
+ *
+ * Returns `{ benches, failed }` — `failed` is non-null when the root itself
+ * could not be read (Gap 4 / T6: surface per-root errors to the UI).
  */
-async function scanRoot(root: string, signal?: AbortSignal): Promise<BenchSummary[]> {
-  if (signal?.aborted) return [];
+async function scanRoot(
+  root: string,
+  signal?: AbortSignal,
+): Promise<{ benches: BenchSummary[]; failed: { root: string; reason: string } | null }> {
+  if (signal?.aborted) return { benches: [], failed: null };
   const results: BenchSummary[] = [];
 
   let entries: string[];
   try {
     entries = readdirSync(root);
-  } catch {
-    // root missing or unreadable — skip silently (E11 stale-result guard)
-    return [];
+  } catch (err) {
+    // root missing or unreadable — report it (E11 / T6 Gap 4)
+    const reason = err instanceof Error ? err.message : String(err);
+    return { benches: [], failed: { root, reason } };
   }
 
   for (const name of entries) {
@@ -209,5 +225,5 @@ async function scanRoot(root: string, signal?: AbortSignal): Promise<BenchSummar
     });
   }
 
-  return results;
+  return { benches: results, failed: null };
 }

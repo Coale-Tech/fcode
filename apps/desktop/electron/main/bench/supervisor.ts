@@ -288,6 +288,11 @@ export class BenchSupervisor extends EventEmitter {
           this.status = "running";
           this.emit("status", this.status);
         }
+
+        // Gap 5 / T6: non-fatal port-conflict warning while otherwise running
+        if (line.includes("EADDRINUSE") || line.toLowerCase().includes("failed to bind")) {
+          this.emit("warning", { process: "start", message: line.trim() });
+        }
       }
     };
 
@@ -298,7 +303,8 @@ export class BenchSupervisor extends EventEmitter {
       const failure = classifyBenchFailure(err.code ?? null, err.message, "bench");
       this.status = "failed";
       this.emit("status", this.status);
-      this.emit("failure", { process: "start", failure });
+      // Gap 1 / T6: include logTail so the renderer can show the last output
+      this.emit("failure", { process: "start", failure, logTail: err.message });
       proc.child = null;
     });
 
@@ -309,7 +315,8 @@ export class BenchSupervisor extends EventEmitter {
         const failure = classifyBenchFailure(null, lastLines, "bench start");
         this.status = "failed";
         this.emit("status", this.status);
-        this.emit("failure", { process: "start", failure, exitCode: code });
+        // Gap 1 / T6: include logTail so the renderer can show the last output
+        this.emit("failure", { process: "start", failure, exitCode: code, logTail: lastLines });
       }
     });
   }

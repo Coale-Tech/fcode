@@ -58,7 +58,7 @@ test("discoverBenches finds a bench and returns summary without secrets (E12)", 
 
   makeBench(root, { name: "coale_v16", version: "16.0.0", sites: ["v16.local"] });
 
-  const results = await discoverBenches({ roots: [root] });
+  const { benches: results } = await discoverBenches({ roots: [root] });
   assert.equal(results.length, 1);
   assert.equal(results[0].version, 16);
   assert.ok(results[0].sites.length > 0);
@@ -79,7 +79,7 @@ test("discoverBenches handles version 15 and 17 (E11)", async (t) => {
   makeBench(root, { name: "v15bench", version: "15.4.1" });
   makeBench(root, { name: "v17bench", version: "17.0.0-dev" });
 
-  const results = await discoverBenches({ roots: [root] });
+  const { benches: results } = await discoverBenches({ roots: [root] });
   const versions = results.map((b) => b.version).sort();
   assert.deepEqual(versions, [15, 17]);
 });
@@ -90,7 +90,7 @@ test("discoverBenches badges an unparseable version as 'unknown' (DX10)", async 
 
   makeBench(root, { name: "badbench", version: "not-a-version" });
 
-  const results = await discoverBenches({ roots: [root] });
+  const { benches: results } = await discoverBenches({ roots: [root] });
   assert.equal(results.length, 1);
   assert.equal(results[0].version, "unknown");
 });
@@ -104,7 +104,7 @@ test("discoverBenches skips directories without apps/ and sites/ (E11)", async (
   mkdirSync(join(notABench, "apps"), { recursive: true });
   // No sites/
 
-  const results = await discoverBenches({ roots: [root] });
+  const { benches: results } = await discoverBenches({ roots: [root] });
   assert.equal(results.length, 0);
 });
 
@@ -144,7 +144,26 @@ test("discoverBenches aborts when AbortSignal is signalled (E11)", async (t) => 
   ac.abort(); // abort immediately
 
   // Should resolve (not throw) with an empty or partial result when aborted
-  const results = await discoverBenches({ roots: [root], signal: ac.signal });
+  const { benches: results } = await discoverBenches({ roots: [root], signal: ac.signal });
   // May return 0 results since we aborted immediately; must not throw.
   assert.ok(Array.isArray(results));
+});
+
+// Gap 4 / T6: unreadable root appears in failedRoots, readable roots still work
+test("discoverBenches returns failedRoots for unreadable directories (T6 Gap4)", async (t) => {
+  const goodRoot = mkdtempSync(join(tmpdir(), "bench-disc-good-"));
+  t.after(() => rmSync(goodRoot, { recursive: true, force: true }));
+  makeBench(goodRoot, { name: "okbench", version: "16.0.0" });
+
+  const badRoot = "/nonexistent/bench/root/t6test";
+
+  const { benches, failedRoots } = await discoverBenches({ roots: [goodRoot, badRoot] });
+  // The good root bench is found
+  assert.equal(benches.length, 1);
+  assert.equal(benches[0].version, 16);
+  // The bad root is surfaced in failedRoots
+  assert.ok(failedRoots.length >= 1, "failedRoots must include the unreadable path");
+  const failed = failedRoots.find((f) => f.root === badRoot);
+  assert.ok(failed, "badRoot must appear in failedRoots");
+  assert.ok(typeof failed.reason === "string" && failed.reason.length > 0, "reason must be non-empty");
 });
