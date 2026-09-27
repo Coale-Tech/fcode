@@ -14,7 +14,7 @@ import { AgentSidecar } from "../agent-sidecar";
 import { relaxedNetworkPolicyEnabled } from "../endpoint-policy";
 import { OAUTH_AUTH_KIND, type VendorOAuth } from "../oauth";
 import type { AgentExtensionBridge } from "../agent-extensions";
-import type { BrowserHost } from "../browser-host";
+import { withAgentCanvasOwnership, type BrowserHost } from "../browser-host";
 import type { InflightCheckpointer } from "@pi-desktop/host-runtime";
 import { summarizeToolResult, type Logger } from "../logger";
 import type { ModelsDevCatalog } from "../models-dev-catalog";
@@ -730,45 +730,54 @@ export function createSidecarRuntime({
       return { ok: false, isError: true, content: "fcode_canvas: args must be an object" };
     }
     const action = "action" in args ? String(args.action) : "";
-    switch (action) {
-      case "navigate": {
-        const url = "url" in args ? String(args.url ?? "") : "";
-        if (!url) return { ok: false, isError: true, content: "fcode_canvas navigate: url is required" };
-        const state = await browserHost.navigate({ url });
-        return { ok: true, content: state };
+    // Every fcode_canvas action mutates the shared canvas (navigate/reload/
+    // click/fill/evaluate), so it force-acquires ownership for the call and
+    // hands it back after — visible via the browserCanvasOwner banner (E13).
+    return withAgentCanvasOwnership(browserHost, async () => {
+      switch (action) {
+        case "navigate": {
+          const url = "url" in args ? String(args.url ?? "") : "";
+          if (!url) return { ok: false, isError: true, content: "fcode_canvas navigate: url is required" };
+          const state = await browserHost.navigate({ url });
+          return { ok: true, content: state };
+        }
+        case "reload": {
+          browserHost.action("reload");
+          return { ok: true, content: null };
+        }
+        case "click": {
+          const uid = "uid" in args ? String(args.uid ?? "") : "";
+          if (!uid) return { ok: false, isError: true, content: "fcode_canvas click: uid is required" };
+          await browserHost.click(uid);
+          return { ok: true, content: null };
+        }
+        case "fill": {
+          const uid = "uid" in args ? String(args.uid ?? "") : "";
+          const text = "text" in args ? String(args.text ?? "") : "";
+          if (!uid) return { ok: false, isError: true, content: "fcode_canvas fill: uid is required" };
+          await browserHost.fill(uid, text);
+          return { ok: true, content: null };
+        }
+        case "evaluate": {
+          const expression = "expression" in args ? String(args.expression ?? "") : "";
+          if (!expression) return { ok: false, isError: true, content: "fcode_canvas evaluate: expression is required" };
+          const result = await browserHost.evaluate(expression);
+          return { ok: true, content: result };
+        }
+        default:
+          return {
+            ok: false,
+            isError: true,
+            content: `fcode_canvas: unknown action '${action}'. Allowed: navigate, reload, click, fill, evaluate`,
+          };
       }
-      case "reload": {
-        browserHost.action("reload");
-        return { ok: true, content: null };
-      }
-      case "click": {
-        const uid = "uid" in args ? String(args.uid ?? "") : "";
-        if (!uid) return { ok: false, isError: true, content: "fcode_canvas click: uid is required" };
-        await browserHost.click(uid);
-        return { ok: true, content: null };
-      }
-      case "fill": {
-        const uid = "uid" in args ? String(args.uid ?? "") : "";
-        const text = "text" in args ? String(args.text ?? "") : "";
-        if (!uid) return { ok: false, isError: true, content: "fcode_canvas fill: uid is required" };
-        await browserHost.fill(uid, text);
-        return { ok: true, content: null };
-      }
-      case "evaluate": {
-        const expression = "expression" in args ? String(args.expression ?? "") : "";
-        if (!expression) return { ok: false, isError: true, content: "fcode_canvas evaluate: expression is required" };
-        const result = await browserHost.evaluate(expression);
-        return { ok: true, content: result };
-      }
-      default:
-        return {
-          ok: false,
-          isError: true,
-          content: `fcode_canvas: unknown action '${action}'. Allowed: navigate, reload, click, fill, evaluate`,
-        };
-    }
+    });
   });
 
+  // fcode_canvas_read only inspects whatever is currently rendered (snapshot/
+  // console/screenshot) — it never navigates or mutates the shared canvas, so
+  // it does not force-acquire ownership (E13); only fcode_canvas's mutating
+  // actions do.
   s.setLocalTool("fcode_canvas_read", async (ctx) => {
     if (!browserHost) {
       return { ok: false, isError: true, content: "fcode_canvas_read: Build canvas is not available" };

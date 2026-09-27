@@ -514,6 +514,10 @@ export function createPluginServices({
     pluginPanels.broadcast("browser:state", state);
     pluginViews.broadcast("browser:state", state);
   };
+  /** Push canvas ownership changes so BuildPage can show a takeover banner (E13). */
+  const emitCanvasOwner = (owner: string | null) => {
+    sendToRenderer(IPC.event.browserCanvasOwner, { owner });
+  };
   /**
    * Tell the plugin surfaces that a host turn reached a terminal state. The
    * three surfaces are independent: a failure to reach one of them must not
@@ -580,6 +584,7 @@ export function createPluginServices({
       return join(dataDir, "scratch", sessionId);
     },
     onState: emitBrowserState,
+    onOwnerChange: emitCanvasOwner,
   });
   pluginViews.onSurface = (surface) => {
     browserHost.setChromeSurface(surface);

@@ -91,6 +91,8 @@ export class BrowserPane {
   private nativeNavigationPending = false;
   /** Canvas ownership: id of the current owner, or null when free (E13). */
   private canvasOwner: string | null = null;
+  /** Bumped on every ownership mutation; lets `withAgentCanvasOwnership` detect a handoff that raced its call (E13). */
+  private canvasGeneration = 0;
 
   constructor(onState: (state: BrowserState) => void) {
     this.onState = onState;
@@ -111,8 +113,11 @@ export class BrowserPane {
 
   /**
    * Release ownership. No-op if the caller does not currently own it (E13).
+   * Generation still bumps on a no-op release so a caller that force-acquired
+   * around this call can tell its hold was contended even though nothing changed.
    */
   releaseCanvas(ownerId: string): void {
+    this.canvasGeneration++;
     if (this.canvasOwner === ownerId) this.canvasOwner = null;
   }
 
@@ -121,12 +126,18 @@ export class BrowserPane {
    * Use only for user-initiated surface switches, not for tool calls.
    */
   forceAcquireCanvas(ownerId: string): void {
+    this.canvasGeneration++;
     this.canvasOwner = ownerId;
   }
 
   /** Return the current canvas owner id, or null when free (E13). */
   currentOwner(): string | null {
     return this.canvasOwner;
+  }
+
+  /** Return the current ownership generation counter (E13 race-safety). */
+  currentGeneration(): number {
+    return this.canvasGeneration;
   }
 
 
