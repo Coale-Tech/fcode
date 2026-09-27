@@ -785,6 +785,21 @@ export function useAppShellRuntime() {
           case "toggleFullScreen":
             void api.nativeMenuAction(id);
             break;
+          case "navToChat":
+            useAppStore.getState().setPage("chat");
+            break;
+          case "navToCode":
+            useAppStore.getState().setPage("code");
+            break;
+          case "navToBuild":
+            useAppStore.getState().setPage("build");
+            break;
+          case "navToBench":
+            useAppStore.getState().setPage("bench");
+            break;
+          case "toggleFollowLog":
+            useAppStore.getState().toggleBenchLogFollowTail();
+            break;
         }
       };
       runShortcut(shortcut.id);

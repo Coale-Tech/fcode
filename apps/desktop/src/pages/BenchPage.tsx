@@ -20,6 +20,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { IPC, type Result } from "@pi-desktop/shared";
+import { useAppStore } from "../stores/app-store";
 import { LogView } from "../components/bench/LogView";
 
 // ── Types (mirrored from discovery.ts / supervisor.ts) ───────────────────────
@@ -69,7 +70,10 @@ export function BenchPage() {
   const [status, setStatus] = useState<BenchStatus>("stopped");
   const [activeBenchPath, setActiveBenchPath] = useState<string | null>(null);
   const [logLines, setLogLines] = useState<LogLine[]>([]);
-  const [followTail, setFollowTail] = useState(true);
+  // Bench log follow-tail is shell-global state (toggleFollowLog / Mod+Shift+B
+  // must reach it from useAppShellRuntime, outside this component).
+  const followTail = useAppStore((s) => s.benchLogFollowTail);
+  const setFollowTail = useAppStore((s) => s.setBenchLogFollowTail);
 
   // T16: cross-fade key for bench selection transition
   const [detailKey, setDetailKey] = useState(0);
