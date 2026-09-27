@@ -250,6 +250,14 @@ export function BenchPage() {
   const displayStatus: BenchStatus =
     selectedBench && selectedBench.path === activeBenchPath ? status : "stopped";
 
+  // A different bench is running/starting while this one is selected —
+  // Start must be disabled, or clicking it either no-ops or (bench-ipc.ts)
+  // throws a CONFLICT the user never asked for (cross-bench Start bug).
+  const anotherBenchRunning =
+    (status === "running" || status === "starting") &&
+    activeBenchPath !== null &&
+    (!selectedBench || selectedBench.path !== activeBenchPath);
+
   // Gap 3 / T6: tick the elapsed timer while the displayed bench is active
   useEffect(() => {
     if (displayStatus !== "starting" && displayStatus !== "running") return;
@@ -487,6 +495,7 @@ export function BenchPage() {
           <BenchDetail
             bench={selectedBench}
             status={displayStatus}
+            anotherBenchRunning={anotherBenchRunning}
             logLines={logLines}
             followTail={followTail}
             onFollowTailChange={setFollowTail}
@@ -530,6 +539,7 @@ export function BenchPage() {
 function BenchDetail({
   bench,
   status,
+  anotherBenchRunning,
   logLines,
   followTail,
   onFollowTailChange,
@@ -543,6 +553,7 @@ function BenchDetail({
 }: {
   bench: BenchSummary;
   status: BenchStatus;
+  anotherBenchRunning: boolean;
   logLines: LogLine[];
   followTail: boolean;
   onFollowTailChange: (v: boolean) => void;
@@ -569,6 +580,7 @@ function BenchDetail({
         <SiteList sites={bench.sites} />
         <ProcessPanel
           status={status}
+          anotherBenchRunning={anotherBenchRunning}
           onStart={onStart}
           onStop={onStop}
           elapsedLabel={elapsedLabel}
@@ -679,12 +691,14 @@ function SiteList({ sites }: { sites: BenchSite[] }) {
 
 function ProcessPanel({
   status,
+  anotherBenchRunning,
   onStart,
   onStop,
   elapsedLabel,
   startFailure,
   warnings,
 }: {
+  anotherBenchRunning: boolean;
   status: BenchStatus;
   onStart: () => void;
   onStop: () => void;
@@ -719,7 +733,7 @@ function ProcessPanel({
 
       <div style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap" }}>
         {status === "stopped" || status === "failed" ? (
-          <button type="button" style={ACTION_BTN_STYLE} onClick={onStart}>
+          <button type="button" style={ACTION_BTN_STYLE} onClick={onStart} disabled={anotherBenchRunning}>
             Start bench
           </button>
         ) : (
@@ -756,7 +770,7 @@ function ProcessPanel({
             </a>
           )}
           <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
-            <button type="button" style={ACTION_BTN_STYLE} onClick={onStart}>
+            <button type="button" style={ACTION_BTN_STYLE} onClick={onStart} disabled={anotherBenchRunning}>
               Retry
             </button>
             {startFailure.logTail && (

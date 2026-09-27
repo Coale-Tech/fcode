@@ -233,3 +233,37 @@ test("BenchSupervisor: stale watcher child's close event after startWatcher()+st
   assert.equal(exits.length, 1, "current child B's close must still be observed");
   assert.equal(exits[0].willRetry, true);
 });
+
+// ── Cross-bench Start conflict: start() must distinguish same-bench no-op ────
+// from a different bench already active (see bench-ipc.ts's benchStart).
+
+test("BenchSupervisor.start: a different bench while one is active reports a conflict and does not spawn", async (t) => {
+  const { BenchSupervisor } = await import("../electron/main/bench/supervisor.ts");
+  const children = [];
+  fakeSpawn(t, children);
+
+  const sup = new BenchSupervisor();
+  const first = await sup.start("/tmp/bench-a");
+  assert.equal(first.conflict, false);
+  assert.equal(children.length, 1);
+
+  const second = await sup.start("/tmp/bench-b");
+  assert.equal(second.conflict, true, "starting a different bench while one is active is a conflict");
+  assert.equal(children.length, 1, "must not spawn a second bench process");
+  assert.equal(sup.activeBenchPath, "/tmp/bench-a", "bench A stays active");
+});
+
+test("BenchSupervisor.start: the same bench again while it is running is an idempotent no-op", async (t) => {
+  const { BenchSupervisor } = await import("../electron/main/bench/supervisor.ts");
+  const children = [];
+  fakeSpawn(t, children);
+
+  const sup = new BenchSupervisor();
+  const first = await sup.start("/tmp/bench-a");
+  assert.equal(first.conflict, false);
+  assert.equal(children.length, 1);
+
+  const second = await sup.start("/tmp/bench-a");
+  assert.equal(second.conflict, false, "restarting the same bench is not a conflict");
+  assert.equal(children.length, 1, "must not spawn a duplicate process for the same bench");
+});
