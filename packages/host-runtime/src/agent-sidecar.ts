@@ -76,6 +76,12 @@ const HOST_PROXY_ALLOWED = new Set([
   "session.fork",
   "session.queuePush",
   "session.queuePrioritize",
+  // T7: Fcode host tools dispatched by method name (not via tools.execute).
+  "fcode_bench_execute",
+  "fcode_bench_execute_read",
+  "fcode_bench_run",
+  "fcode_canvas",
+  "fcode_canvas_read",
 ]);
 
 /** Host-side answers for the `extensions.*` proxy methods. */
@@ -534,12 +540,14 @@ export class AgentSidecar {
         }
         // Host-local tools short-circuit before host-core (which doesn't
         // know them); everything else proxies through unchanged.
+        // T7: fcode_ tools are registered by method name (not via tools.execute).
         const localTool =
           method === "tools.execute"
             ? this.localTools.get(requestedToolName)
-            : undefined;
+            : this.localTools.get(method);
         if (localTool) {
-          const toolName = requestedToolName;
+          // For fcode_ tools the method IS the tool name; requestedToolName is empty.
+          const toolName = requestedToolName || method;
           // Local tools can bypass host-core's permission boundary. Plan mode
           // therefore permits only the read-only BrowserPreview bridge; every
           // other host-local tool fails closed even if a stale runtime asks for

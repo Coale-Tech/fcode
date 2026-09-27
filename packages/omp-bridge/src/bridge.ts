@@ -134,6 +134,8 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
     "  approval:",
     "    # DX7: auto-approve read-only fcode_bench_execute calls.",
     "    fcode_bench_execute_read: allow",
+    "    # T7: auto-approve read-only canvas inspection calls.",
+    "    fcode_canvas_read: allow",
     "",
     "skills:",
     `  customDirectories:`,
@@ -198,10 +200,82 @@ interface SessionBinding {
   inputModalities: string[];
 }
 
+/** Tool schemas registered with omp so it can call Fcode host tools (T7). */
+const HOST_TOOL_SCHEMAS = [
+  {
+    name: "fcode_bench_execute",
+    description: "Execute a whitelisted Frappe Python method on the active site via bench execute. For mutating methods only; use fcode_bench_execute_read for read-only calls.",
+    parameters: {
+      type: "object",
+      properties: {
+        method: { type: "string", description: "Dotted Python method path, e.g. frappe.client.set_value" },
+        site: { type: "string", description: "Frappe site name; defaults to the active site" },
+        kwargs: { type: "object", description: "Keyword arguments forwarded to the method" },
+      },
+      required: ["method"],
+    },
+  },
+  {
+    name: "fcode_bench_execute_read",
+    description: "Execute a read-only Frappe Python method on the active site. Accepts only methods whose prefix is read-only (frappe.client.get, frappe.db.get_value, etc.).",
+    parameters: {
+      type: "object",
+      properties: {
+        method: { type: "string" },
+        site: { type: "string" },
+        kwargs: { type: "object" },
+      },
+      required: ["method"],
+    },
+  },
+  {
+    name: "fcode_bench_run",
+    description: "Run an allow-listed bench command (migrate, clear-cache, build, build-studio-app, list-apps, install-app) on the active bench.",
+    parameters: {
+      type: "object",
+      properties: {
+        command: { type: "string", enum: ["migrate", "clear-cache", "build", "build-studio-app", "list-apps", "install-app"] },
+        site: { type: "string" },
+        args: { type: "array", items: { type: "string" } },
+      },
+      required: ["command"],
+    },
+  },
+  {
+    name: "fcode_canvas",
+    description: "Drive the Build-tab WebContentsView canvas (navigate, click, fill, evaluate). Requires user approval.",
+    parameters: {
+      type: "object",
+      properties: {
+        action: { type: "string", enum: ["navigate", "reload", "click", "fill", "evaluate"] },
+        url: { type: "string" },
+        uid: { type: "string" },
+        text: { type: "string" },
+        expression: { type: "string" },
+      },
+      required: ["action"],
+    },
+  },
+  {
+    name: "fcode_canvas_read",
+    description: "Read-only canvas inspection: snapshot AX tree, read console, take screenshot. Auto-approved.",
+    parameters: {
+      type: "object",
+      properties: {
+        action: { type: "string", enum: ["snapshot", "console", "screenshot"] },
+        limit: { type: "number" },
+      },
+      required: ["action"],
+    },
+  },
+] as const;
+
 export class OmpBridge {
   private config: BridgeConfig | null = null;
   private ompProcess: ChildProcess | null = null;
   private ompPending = new Map<string, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();
+  /** Pending host.proxy calls the bridge made to the PI host (keyed by request id). */
+  private hostPending = new Map<string, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();
   private sessions = new Map<string, SessionBinding>();
   private sessionStore: SessionStore | null = null;
   private state = createBridgeState(homedir());
@@ -240,12 +314,26 @@ export class OmpBridge {
   /** Send a command to omp and wait for the response. */
   private ompCall(params: Record<string, unknown>): Promise<unknown> {
     const id = randomUUID();
-    return new Promise((resolve, reject) => {
-      this.ompPending.set(id, { resolve, reject });
-      const frame = JSON.stringify({ ...params, id }) + "\n";
-      this.tracer?.("out-omp", frame.trimEnd());
-      this.ompProcess?.stdin?.write(frame);
-    });
+    const { promise, resolve, reject } = Promise.withResolvers<unknown>();
+    this.ompPending.set(id, { resolve, reject });
+    const frame = JSON.stringify({ ...params, id }) + "\n";
+    this.tracer?.("out-omp", frame.trimEnd());
+    this.ompProcess?.stdin?.write(frame);
+    return promise;
+  }
+
+  /**
+   * Send a host.proxy call to the PI host via process.stdout and await the
+   * response that arrives on process.stdin (T7: fcode_ tool dispatch).
+   */
+  private hostCall(method: string, params: Record<string, unknown>): Promise<unknown> {
+    const id = randomUUID();
+    const { promise, resolve, reject } = Promise.withResolvers<unknown>();
+    this.hostPending.set(id, { resolve, reject });
+    const frame = JSON.stringify({ jsonrpc: "2.0", method: "host.proxy", params: { method, params }, id }) + "\n";
+    this.tracer?.("out-host", frame.trimEnd());
+    process.stdout.write(frame);
+    return promise;
   }
 
   /** Emit a system message as an agent.event notification. */
@@ -277,8 +365,24 @@ export class OmpBridge {
       params?: Record<string, unknown>;
     };
 
-    // Response to a call we made (host.proxy result — not used by bridge yet).
-    if (id !== undefined && !method) return;
+    // Response to a host.proxy call the bridge made (T7: fcode_ tool dispatch).
+    if (id !== undefined && !method) {
+      const pend = this.hostPending.get(String(id));
+      if (pend) {
+        this.hostPending.delete(String(id));
+        if (msg && typeof msg === "object" && "error" in msg && msg.error) {
+          const errObj = msg.error;
+          const errMsg = errObj && typeof errObj === "object" && "message" in errObj
+            ? String(errObj.message)
+            : String(errObj);
+          pend.reject(new Error(errMsg));
+        } else {
+          const result = msg && typeof msg === "object" && "result" in msg ? msg.result : undefined;
+          pend.resolve(result);
+        }
+      }
+      return;
+    }
 
     if (!method || id === undefined) return;
     const p = (params ?? {}) as Record<string, unknown>;
@@ -593,6 +697,8 @@ export class OmpBridge {
               });
             } else {
               this.state.protocolVersion = 2;
+              // T7: Announce Fcode host tools so omp can call them via host_tool_call.
+              this.registerHostTools().catch(() => undefined);
             }
           })
           .catch(() => {
@@ -604,6 +710,34 @@ export class OmpBridge {
         this.state.protocolVersion = 1;
         this.state.readOnly = true;
       }
+      return;
+    }
+
+
+    // T7: omp calls a registered Fcode host tool.
+    if (frame.type === "host_tool_call") {
+      const toolCallId = String(frame.toolCallId ?? frame.id ?? "");
+      const toolName = String(frame.toolName ?? "");
+      const args = (frame.args ?? {}) as Record<string, unknown>;
+      // Use the first active session's ID, or fall back to empty string.
+      const sessionId = frame.sessionId != null
+        ? String(frame.sessionId)
+        : (this.sessions.keys().next().value ?? "");
+      this.hostCall(toolName, { sessionId, toolCallId, args })
+        .then((result) => {
+          const resp = JSON.stringify({ type: "host_tool_result", toolCallId, result }) + "\n";
+          this.tracer?.("out-omp", resp.trimEnd());
+          this.ompProcess?.stdin?.write(resp);
+        })
+        .catch((e: unknown) => {
+          const resp = JSON.stringify({
+            type: "host_tool_result",
+            toolCallId,
+            result: { ok: false, isError: true, content: String((e as Error)?.message ?? e) },
+          }) + "\n";
+          this.tracer?.("out-omp", resp.trimEnd());
+          this.ompProcess?.stdin?.write(resp);
+        });
       return;
     }
 
@@ -688,6 +822,11 @@ export class OmpBridge {
       ts: new Date().toISOString(),
       event: mapped,
     });
+  }
+
+  /** Register Fcode host tools with omp so it can invoke them via host_tool_call (T7). */
+  private async registerHostTools(): Promise<void> {
+    await this.ompCall({ type: "set_host_tools", tools: HOST_TOOL_SCHEMAS });
   }
 
   /**

@@ -322,3 +322,172 @@ describe("OmpBridge.setTracer — traces in-omp and out-omp frames (FCODE_BRIDGE
     expect(content).toContain("agent_start");
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// T7 — host tool dispatch (fcode_ tools via host_tool_call / set_host_tools)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("makeOmpOverlay (T7 — fcode_canvas_read auto-approved)", () => {
+  it("auto-approves fcode_canvas_read (read-only canvas inspection)", () => {
+    const overlay = makeOmpOverlay({
+      dataDir: dir,
+      resourcesPath: "/app/resources",
+      screenshotsDir: join(dir, "screenshots"),
+    });
+    expect(overlay).toContain("fcode_canvas_read");
+    expect(overlay).toContain("allow");
+  });
+});
+
+describe("OmpBridge.handleOmpFrame — host_tool_call dispatches to host and returns result (T7)", () => {
+  it("writes host.proxy to stdout for host_tool_call, then writes host_tool_result to omp stdin after host responds", async () => {
+    const bridge = new OmpBridge();
+    const b = bridge as unknown as Record<string, unknown>;
+
+    // Capture writes to process.stdout (host calls).
+    const hostFrames: unknown[] = [];
+    const origWrite = process.stdout.write.bind(process.stdout);
+    process.stdout.write = ((data: string) => {
+      try { hostFrames.push(JSON.parse(data.trim())); } catch { /* ignore */ }
+      return true;
+    }) as typeof process.stdout.write;
+
+    // Capture writes to omp stdin (host_tool_result).
+    const ompStdinWrites: unknown[] = [];
+    b.ompProcess = { stdin: { write: vi.fn((data: string) => { try { ompStdinWrites.push(JSON.parse(data.trim())); } catch { /* ignore */ } }) } };
+
+    // Register a session so the bridge has a sessionId to fall back on.
+    const sessMap = b.sessions as Map<string, unknown>;
+    sessMap.set("sess-A", { ompSessionDir: undefined, projectPath: "/", inputModalities: [] });
+
+    // Feed a host_tool_call frame (as omp would send it).
+    bridge.handleOmpFrame(JSON.stringify({
+      type: "host_tool_call",
+      toolCallId: "tc1",
+      toolName: "fcode_bench_execute",
+      args: { method: "frappe.utils.now", kwargs: {} },
+    }));
+
+    // The bridge should have written a host.proxy call to stdout.
+    const hostCall = hostFrames.find((f) => (f as Record<string, unknown>).method === "host.proxy");
+    expect(hostCall).toBeDefined();
+    const hc = hostCall as Record<string, unknown>;
+    expect((hc.params as Record<string, unknown>).method).toBe("fcode_bench_execute");
+    const callId = String(hc.id);
+
+    // Simulate the host responding (via handleHostFrame).
+    bridge.handleHostFrame({
+      jsonrpc: "2.0",
+      id: callId,
+      result: { ok: true, content: "2025-01-01 00:00:00" },
+    });
+
+    // Give the promise chain a microtask to resolve.
+    await Promise.resolve();
+
+    // omp stdin should now have received the host_tool_result.
+    const resultFrame = ompStdinWrites.find((f) => (f as Record<string, unknown>).type === "host_tool_result");
+    expect(resultFrame).toBeDefined();
+    const rf = resultFrame as Record<string, unknown>;
+    expect(rf.toolCallId).toBe("tc1");
+    expect((rf.result as Record<string, unknown>).ok).toBe(true);
+
+    process.stdout.write = origWrite;
+  });
+
+  it("writes host_tool_result with error content when host rejects (T7 error path)", async () => {
+    const bridge = new OmpBridge();
+    const b = bridge as unknown as Record<string, unknown>;
+
+    const hostFrames: unknown[] = [];
+    const origWrite = process.stdout.write.bind(process.stdout);
+    process.stdout.write = ((data: string) => {
+      try { hostFrames.push(JSON.parse(data.trim())); } catch { /* ignore */ }
+      return true;
+    }) as typeof process.stdout.write;
+
+    const ompStdinWrites: unknown[] = [];
+    b.ompProcess = { stdin: { write: vi.fn((data: string) => { try { ompStdinWrites.push(JSON.parse(data.trim())); } catch { /* ignore */ } }) } };
+
+    bridge.handleOmpFrame(JSON.stringify({
+      type: "host_tool_call",
+      toolCallId: "tc2",
+      toolName: "fcode_bench_run",
+      args: { command: "migrate" },
+    }));
+
+    const hostCall = hostFrames.find((f) => (f as Record<string, unknown>).method === "host.proxy");
+    expect(hostCall).toBeDefined();
+    const callId = String((hostCall as Record<string, unknown>).id);
+
+    // Simulate host error response.
+    bridge.handleHostFrame({
+      jsonrpc: "2.0",
+      id: callId,
+      error: { code: -32603, message: "no active bench" },
+    });
+
+    // Rejection propagates: reject P1 → skip .then → .catch fires — 3 ticks needed.
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const resultFrame = ompStdinWrites.find((f) => (f as Record<string, unknown>).type === "host_tool_result");
+    expect(resultFrame).toBeDefined();
+    const rf = resultFrame as Record<string, unknown>;
+    expect(rf.toolCallId).toBe("tc2");
+    expect((rf.result as Record<string, unknown>).isError).toBe(true);
+    expect(String((rf.result as Record<string, unknown>).content)).toContain("no active bench");
+
+    process.stdout.write = origWrite;
+  });
+});
+
+describe("OmpBridge — registerHostTools sends set_host_tools after v2 negotiation (T7)", () => {
+  it("writes set_host_tools with 5 fcode_ tool names to omp stdin after protocol negotiation", async () => {
+    const bridge = new OmpBridge();
+    const b = bridge as unknown as Record<string, unknown>;
+    // Clear any handshake timer that start() would set (not invoked here).
+
+    const ompStdinWrites: unknown[] = [];
+    const stdinMock = vi.fn((data: string) => {
+      try { ompStdinWrites.push(JSON.parse(data.trim())); } catch { /* ignore */ }
+    });
+    b.ompProcess = { stdin: { write: stdinMock } };
+
+    // Silence stdout (negotiate call is written there — no, ompCall writes to omp stdin).
+    // Actually ompCall writes to ompProcess.stdin, which we've mocked above.
+
+    // Feed a ready frame to trigger handshake.
+    bridge.handleOmpFrame(JSON.stringify({
+      type: "ready",
+      protocolVersion: 1,
+      supportedProtocolVersions: [1, 2],
+      maxFrameBytes: 1048576,
+      maxReassembledFrameBytes: 67108864,
+    }));
+
+    // Find the negotiate_protocol call written to omp stdin.
+    const negotiateCall = ompStdinWrites.find((f) => (f as Record<string, unknown>).type === "negotiate_protocol");
+    expect(negotiateCall).toBeDefined();
+    const negotiateId = String((negotiateCall as Record<string, unknown>).id);
+
+    // Simulate omp responding with protocol v2.
+    bridge.handleOmpFrame(JSON.stringify({ id: negotiateId, result: { protocolVersion: 2 } }));
+
+    // Give microtasks a chance to run (ompCall .then handler + registerHostTools).
+    await Promise.resolve();
+    await Promise.resolve();
+
+    // Find the set_host_tools call.
+    const setToolsCall = ompStdinWrites.find((f) => (f as Record<string, unknown>).type === "set_host_tools");
+    expect(setToolsCall).toBeDefined();
+    const tools = (setToolsCall as Record<string, unknown>).tools as Array<{ name: string }>;
+    const names = tools.map((t) => t.name);
+    expect(names).toContain("fcode_bench_execute");
+    expect(names).toContain("fcode_bench_execute_read");
+    expect(names).toContain("fcode_bench_run");
+    expect(names).toContain("fcode_canvas");
+    expect(names).toContain("fcode_canvas_read");
+  });
+});

@@ -48,3 +48,25 @@ test("T8: PermissionCard retains its own auto-deny timer (unchanged)", () => {
   // The PermissionCard auto-deny at lines 63-67 must still be present
   assert.match(permCard, /void resolve\("deny"\)/);
 });
+
+// T7: PermissionCard renders DestructiveActionDialog for bench-destructive tools.
+test("T7: PermissionCard imports DestructiveActionDialog", () => {
+  assert.match(permCard, /DestructiveActionDialog/);
+});
+
+test("T7: PermissionCard has isBenchDestructive for fcode_bench_run and fcode_bench_execute", () => {
+  assert.match(permCard, /isBenchDestructive/);
+  assert.match(permCard, /fcode_bench_run/);
+  assert.match(permCard, /fcode_bench_execute/);
+});
+
+test("T7: PermissionCard auto-deny useEffect skips bench-destructive tools", () => {
+  assert.match(permCard, /if \(isBenchDestructive\) return/);
+});
+
+test("T7: PermissionCard renders DestructiveActionDialog with site/command/consequence props", () => {
+  assert.match(permCard, /<DestructiveActionDialog/);
+  assert.match(permCard, /site=/);
+  assert.match(permCard, /command=/);
+  assert.match(permCard, /consequence=/);
+});
