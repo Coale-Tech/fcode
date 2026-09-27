@@ -49,3 +49,29 @@ test("ProcessPanel disables both Start-triggering buttons while another bench ru
     assert.match(button, /disabled=\{anotherBenchRunning\}/);
   }
 });
+
+test("BenchPage's invoke() preserves errorCode from a rejected IPC result", () => {
+  // Without this, handleStart's catch has no way to tell a CONFLICT apart
+  // from any other rejection — the errorCode set by bench-ipc.ts's
+  // Object.assign(new Error(...), { errorCode }) would be silently dropped.
+  const fn = source.slice(
+    source.indexOf("async function invoke"),
+    source.indexOf("async function invoke") + 400,
+  );
+  assert.match(fn, /Object\.assign\(new Error\(result\.error\.message/);
+  assert.match(fn, /errorCode:\s*result\.error\.code/);
+});
+
+test("handleStart surfaces a CONFLICT rejection via startFailure instead of only logging", () => {
+  // A stray Start click that still reaches the backend (race between render
+  // and click) must not be silently swallowed by console.error: the user
+  // sees nothing in that case even though the backend correctly refused.
+  const fn = source.slice(
+    source.indexOf("const handleStart"),
+    source.indexOf("const handleStop"),
+  );
+  assert.match(fn, /errorCode === ErrorCodes\.CONFLICT/);
+  assert.match(fn, /setStartFailure\(\{/);
+  // Genuinely unexpected errors still fall back to logging.
+  assert.match(fn, /console\.error\("\[BenchPage\] start failed"/);
+});

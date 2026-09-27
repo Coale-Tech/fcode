@@ -34,6 +34,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { IPC, type Result } from "@pi-desktop/shared";
 import type { Precondition } from "../components/PreconditionList";
 import { PreconditionList } from "../components/PreconditionList";
+import { useAppStore } from "../stores/app-store";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -57,6 +58,7 @@ async function invoke<T>(channel: string, args?: unknown): Promise<T> {
 
 export function BuildPage() {
   const [canvas, setCanvas] = useState<Canvas>("studio");
+  const setPage = useAppStore((s) => s.setPage);
 
   // Bench status (polled every 2s)
   const [benchStatus, setBenchStatus] = useState<BenchStatus>("stopped");
@@ -457,7 +459,7 @@ export function BuildPage() {
               <button
                 type="button"
                 style={LINK_BTN_STYLE}
-                onClick={() => void invoke(IPC.invoke.benchStart, {})}
+                onClick={() => setPage("bench")}
               >
                 Start bench
               </button>
@@ -554,7 +556,7 @@ export function BuildPage() {
           studioInstalled={studioInstalled}
           builderInstalled={builderInstalled}
           syncDimmed={syncStatus === "loading"}
-          onStartBench={() => void invoke(IPC.invoke.benchStart, {})}
+          onStartBench={() => setPage("bench")}
           onRetryApps={() => void loadApps()}
         />
       </div>

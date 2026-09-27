@@ -19,7 +19,7 @@
  *   - Focus returned to list on dialog close.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { IPC, type Result } from "@pi-desktop/shared";
+import { ErrorCodes, IPC, type Result } from "@pi-desktop/shared";
 import { useAppStore } from "../stores/app-store";
 import { LogView } from "../components/bench/LogView";
 import { DestructiveActionDialog } from "../components/DestructiveActionDialog";
@@ -68,7 +68,9 @@ async function invoke<T>(channel: string, args?: unknown): Promise<T> {
   if (!bridge) throw new Error("piDesktop bridge unavailable");
   const result: Result<T> = await bridge.invoke<T>(channel, args);
   if (!result.ok) {
-    throw new Error(result.error.message ?? "IPC call failed");
+    throw Object.assign(new Error(result.error.message ?? "IPC call failed"), {
+      errorCode: result.error.code,
+    });
   }
   return result.data;
 }
@@ -310,7 +312,20 @@ export function BenchPage() {
       setActiveBenchPath(selectedBench.path);
     } catch (err) {
       startMsRef.current = null;
-      console.error("[BenchPage] start failed", err);
+      const errorCode = err instanceof Error ? (err as Error & { errorCode?: string }).errorCode : undefined;
+      if (errorCode === ErrorCodes.CONFLICT) {
+        setStartFailure({
+          failure: {
+            code: ErrorCodes.CONFLICT,
+            problem: "Can't start this bench",
+            cause: err instanceof Error ? err.message : String(err),
+            fix: "Stop the running bench, then retry.",
+            docsUrl: "",
+          },
+        });
+      } else {
+        console.error("[BenchPage] start failed", err);
+      }
     }
   }, [selectedBench]);
 
