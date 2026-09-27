@@ -15,11 +15,23 @@
  */
 
 import { execFileSync, spawnSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { cpSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const PINNED_OMP_COMMIT = "ba344f5e69f28535e7e9a2cf09e5af3643861b73";
+// SHA256 of the darwin-x64 `bin/omp` built from the commit above, checked by
+// apps/desktop/test/omp-protocol-smoke.test.mjs as a drift guard.
+// NOTE: Bun's --compile output here is NOT byte-reproducible across rebuilds
+// of the identical commit — packages/coding-agent's generate-client-bundle.ts
+// regenerates the embedded web client fresh every build and does not embed it
+// deterministically (confirmed: two back-to-back builds of this exact commit
+// on the same machine differed in ~1.4MB of the ~364MB binary). A later
+// rebuild of this same pinned commit is expected to need a fresh hash here,
+// not to reproduce this one — re-run this script and copy the printed
+// SHA256 whenever this constant needs updating.
+const OMP_BINARY_SHA256 = "24bc28b65cb897248738781aef207cbbbd2e18b57c94bc15b09b1d6da52705c7";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 // scripts/ lives at repo root; oh-my-pi is a sibling checkout
@@ -53,45 +65,70 @@ if (!actualCommit.startsWith(PINNED_OMP_COMMIT)) {
   process.exit(1);
 }
 
-// ── Build ────────────────────────────────────────────────────────────────────
-console.log(`build-omp: building omp from ${ompSource} (${PINNED_OMP_COMMIT.slice(0, 12)})`);
-
-const result = spawnSync("bun", ["run", "build"], {
-  cwd: ompSource,
-  stdio: "inherit",
-  env: { ...process.env },
-});
-
-if (result.status !== 0) {
-  console.error("build-omp: bun run build failed");
-  process.exit(result.status ?? 1);
+// ── Verify dependencies installed ────────────────────────────────────────────
+if (!existsSync(join(ompSource, "node_modules"))) {
+  console.error(
+    `build-omp: oh-my-pi dependencies are not installed\n` +
+      `  Run: (cd ${ompSource} && bun install)`,
+  );
+  process.exit(1);
 }
 
-// ── Stage binaries ───────────────────────────────────────────────────────────
-// The omp build script emits platform binaries.  We expect them at the paths
-// documented in oh-my-pi/packages/coding-agent/scripts/build-binary.ts:
-//   dist/omp-darwin-arm64, dist/omp-darwin-x64,
-//   dist/omp-linux-arm64,  dist/omp-linux-x64
-//   dist/omp-win32-x64.exe  (not staged — Windows unsupported)
-const distDir = join(ompSource, "packages", "coding-agent", "dist");
+// ── Build + stage per target ─────────────────────────────────────────────────
+// Each target is built by setting CROSS_TARGET before invoking coding-agent's
+// own build script — Bun's --compile cross-compiles without needing that
+// platform's hardware (packages/coding-agent/scripts/build-binary.ts). Binaries
+// are staged immediately after each build so one target's failure never
+// discards another target's already-built, already-staged binary.
+console.log(`build-omp: building omp from ${ompSource} (${PINNED_OMP_COMMIT.slice(0, 12)})`);
 
-/** @type {Array<{ src: string; dest: string }>} */
-const targets = [
-  { src: join(distDir, "omp-darwin-arm64"), dest: join(destDir, "omp-darwin-arm64") },
-  { src: join(distDir, "omp-darwin-x64"), dest: join(destDir, "omp-darwin-x64") },
-  { src: join(distDir, "omp-linux-arm64"), dest: join(destDir, "omp-linux-arm64") },
-  { src: join(distDir, "omp-linux-x64"), dest: join(destDir, "omp-linux-x64") },
-];
+const codingAgentDir = join(ompSource, "packages", "coding-agent");
+const distDir = join(codingAgentDir, "dist");
+const hostTarget = `${process.platform}-${process.arch}`;
+// Host target first so a later cross-target failure never costs us the one
+// binary this dev machine can actually run and test locally.
+const ALL_TARGETS = ["darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64"];
+const crossTargets = [hostTarget, ...ALL_TARGETS.filter((t) => t !== hostTarget)];
 
 mkdirSync(destDir, { recursive: true });
 
-for (const { src, dest } of targets) {
-  if (!existsSync(src)) {
-    console.warn(`build-omp: expected binary not found: ${src} (skipping)`);
+const staged = [];
+for (const crossTarget of crossTargets) {
+  console.log(`build-omp: building omp for ${crossTarget}`);
+  const result = spawnSync("bun", ["run", "build"], {
+    cwd: codingAgentDir,
+    stdio: "inherit",
+    env: { ...process.env, CROSS_TARGET: crossTarget },
+  });
+  if (result.status !== 0) {
+    console.warn(`build-omp: build failed for ${crossTarget} (status ${result.status}) — skipping`);
     continue;
   }
+  const src = join(distDir, `omp-${crossTarget}`);
+  if (!existsSync(src)) {
+    console.warn(`build-omp: build reported success but ${src} is missing — skipping`);
+    continue;
+  }
+  const dest = join(destDir, `omp-${crossTarget}`);
   cpSync(src, dest);
   console.log(`build-omp: staged ${src} → ${dest}`);
+  staged.push(crossTarget);
 }
 
-console.log("build-omp: done");
+if (!staged.includes(hostTarget)) {
+  console.error(`build-omp: host target ${hostTarget} failed to build — no local binary available`);
+  process.exit(1);
+}
+
+// Also stage a bare `omp` matching this host, for local dev/test use —
+// apps/desktop/test/omp-protocol-smoke.test.mjs resolves exactly this path.
+// electron-builder does the equivalent per-arch rename at packaging time via
+// apps/desktop/package.json's extraResources "omp-${arch}" → "bin/omp".
+const hostBareDest = join(destDir, "omp");
+cpSync(join(destDir, `omp-${hostTarget}`), hostBareDest);
+const sha256 = createHash("sha256").update(readFileSync(hostBareDest)).digest("hex");
+console.log(`build-omp: staged host binary → ${hostBareDest}`);
+console.log(`build-omp: ${hostTarget} SHA256 = ${sha256}`);
+console.log("build-omp: if bumping PINNED_OMP_COMMIT, update OMP_BINARY_SHA256 below to the value above");
+
+console.log(`build-omp: done (${staged.length}/${crossTargets.length} targets staged: ${staged.join(", ")})`);

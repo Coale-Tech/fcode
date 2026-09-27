@@ -124,9 +124,9 @@ test(
             continue; // ignore non-JSON lines (e.g. startup noise)
           }
 
-          if (msg.method === "ready") {
+          if (msg.type === "ready") {
             // omp must advertise protocol version 2
-            const supported = msg.params?.supportedProtocolVersions ?? [];
+            const supported = msg.supportedProtocolVersions ?? [];
             try {
               assert.ok(
                 Array.isArray(supported) && supported.includes(2),
@@ -136,21 +136,23 @@ test(
               return cleanup(e);
             }
 
-            // reply with negotiate_protocol
+            // reply with negotiate_protocol — flat envelope, matches
+            // oh-my-pi packages/coding-agent/src/modes/rpc/rpc-types.ts
             omp.stdin.write(
               JSON.stringify({
-                id: 1,
-                method: "negotiate_protocol",
-                params: { protocolVersion: 2 },
+                id: "1",
+                type: "negotiate_protocol",
+                protocolVersion: 2,
               }) + "\n",
             );
-          } else if (msg.id === 1 && !negotiated) {
+          } else if (msg.type === "response" && msg.command === "negotiate_protocol" && !negotiated) {
             negotiated = true;
             try {
+              assert.equal(msg.success, true, `negotiate_protocol must succeed; got ${JSON.stringify(msg)}`);
               assert.equal(
-                msg.result?.protocolVersion,
+                msg.data?.protocolVersion,
                 2,
-                `negotiate_protocol must return {protocolVersion:2}; got ${JSON.stringify(msg.result)}`,
+                `negotiate_protocol must return {protocolVersion:2}; got ${JSON.stringify(msg.data)}`,
               );
             } catch (e) {
               return cleanup(e);
@@ -187,14 +189,11 @@ test("omp protocol contract: mock handshake confirms bridge sends negotiate_prot
     // Inline mock omp process: emits ready, expects negotiate_protocol{v:2}
     const mockOmpScript = /* js */ `
       process.stdout.write(JSON.stringify({
-        id: null,
-        method: "ready",
-        params: {
-          protocolVersion: 1,
-          supportedProtocolVersions: [1, 2],
-          maxFrameBytes: 1048576,
-          maxReassembledFrameBytes: 67108864
-        }
+        type: "ready",
+        protocolVersion: 1,
+        supportedProtocolVersions: [1, 2],
+        maxFrameBytes: 1048576,
+        maxReassembledFrameBytes: 67108864
       }) + "\\n");
 
       let buf = "";
@@ -209,14 +208,14 @@ test("omp protocol contract: mock handshake confirms bridge sends negotiate_prot
           let msg;
           try { msg = JSON.parse(line); } catch { continue; }
 
-          if (msg.method === "negotiate_protocol") {
-            const v = msg.params?.protocolVersion;
+          if (msg.type === "negotiate_protocol") {
+            const v = msg.protocolVersion;
             if (v !== 2) {
               process.stderr.write("FAIL: expected protocolVersion:2, got " + v + "\\n");
               process.exit(1);
             }
             // echo back the accepted version
-            process.stdout.write(JSON.stringify({ id: msg.id, result: { protocolVersion: 2 } }) + "\\n");
+            process.stdout.write(JSON.stringify({ id: msg.id, type: "response", command: "negotiate_protocol", success: true, data: { protocolVersion: 2 } }) + "\\n");
             process.exit(0);
           }
         }
@@ -247,15 +246,16 @@ test("omp protocol contract: mock handshake confirms bridge sends negotiate_prot
         let msg;
         try { msg = JSON.parse(line); } catch { continue; }
 
-        if (msg.method === "ready") {
+        if (msg.type === "ready") {
           readyReceived = true;
           // simulate what the bridge does: send negotiate_protocol v2
           mockOmp.stdin.write(
-            JSON.stringify({ id: 1, method: "negotiate_protocol", params: { protocolVersion: 2 } }) + "\n",
+            JSON.stringify({ id: "1", type: "negotiate_protocol", protocolVersion: 2 }) + "\n",
           );
-        } else if (msg.id === 1 && msg.result) {
+        } else if (msg.type === "response" && msg.command === "negotiate_protocol") {
           try {
-            assert.equal(msg.result.protocolVersion, 2,
+            assert.equal(msg.success, true, "mock omp must report success:true");
+            assert.equal(msg.data?.protocolVersion, 2,
               "mock omp must confirm protocolVersion:2");
           } catch (e) {
             return fail(e);
