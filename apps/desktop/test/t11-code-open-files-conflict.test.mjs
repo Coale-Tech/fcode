@@ -36,6 +36,30 @@ test("T11: CodePage uses mtimeMs for on-disk change detection", () => {
   assert.match(source, /mtimeMs/);
 });
 
+test("T11: saveFile threads expectedMtimeMs into the write call for optimistic-lock conflict detection", () => {
+  const saveFileBody = source.match(
+    /const saveFile = useCallback\(async \(\) => \{[\s\S]*?\n  \}, \[activePath, dirty\]\);/,
+  )?.[0] ?? "";
+  assert.notEqual(saveFileBody, "", "expected to find the saveFile callback");
+  assert.match(saveFileBody, /const expectedMtimeMs = fileCache\.current\[activePath\]\?\.mtimeMs/);
+  assert.match(saveFileBody, /api\.fsWrite\(activePath, content, expectedMtimeMs\)/);
+});
+
+test("T11: saveFile only clears dirty state after a successful write, never on conflict or error", () => {
+  const saveFileBody = source.match(
+    /const saveFile = useCallback\(async \(\) => \{[\s\S]*?\n  \}, \[activePath, dirty\]\);/,
+  )?.[0] ?? "";
+  const [tryBlock, catchBlock] = saveFileBody.split(/\} catch \(error\) \{/);
+  assert.match(tryBlock, /setDirty\(\(prev\)/);
+  // A write conflict re-reads disk and reuses the same conflict bar as the
+  // background poll; it must never fall through to the dirty-clearing code,
+  // or a failed save due to an external edit would silently discard it.
+  assert.match(catchBlock, /code === "CONFLICT"/);
+  assert.doesNotMatch(catchBlock, /setDirty\(/);
+  // Every failure path reports something instead of pretending success.
+  assert.match(catchBlock, /setSaveError\(/);
+});
+
 test("T11: CodePage integrates Monaco editor", () => {
   assert.match(source, /@monaco-editor\/react|monaco-editor/);
 });

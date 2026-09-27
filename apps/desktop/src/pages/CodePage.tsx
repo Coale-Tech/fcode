@@ -11,7 +11,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Editor from "@monaco-editor/react";
 import type { FsIndexEntry, FsIndexResult } from "@pi-desktop/shared";
-import { IPC } from "@pi-desktop/shared";
 import { buildMonacoTheme } from "../components/code/monaco-theme";
 import { api } from "../lib/api";
 import { cx } from "../components/ui";
@@ -61,6 +60,8 @@ export function CodePage() {
   const [monacoTheme, setMonacoTheme] = useState<string>("vs-dark");
   /** Updated disk content when a conflict is detected. */
   const [diskContent, setDiskContent] = useState<string | null>(null);
+  /** Message from the last failed save, cleared on retry or file switch. */
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const loadIndex = useCallback(async () => {
     try {
@@ -94,6 +95,7 @@ export function CodePage() {
     setActivePath(path);
     setDiskChanged(false);
     setDiskContent(null);
+    setSaveError(null);
   }, []);
 
   // ── disk-change polling (T11) ──────────────────────────────────────────────
@@ -144,17 +146,10 @@ export function CodePage() {
   const saveFile = useCallback(async () => {
     if (!activePath) return;
     const content = dirty[activePath] ?? fileCache.current[activePath]?.content ?? "";
+    const expectedMtimeMs = fileCache.current[activePath]?.mtimeMs;
     try {
-      await window.piDesktop?.invoke(IPC.invoke.fsWrite, { path: activePath, content });
-      const result = await api.fsRead(activePath);
-      const cached = fileCache.current[activePath];
-      if (cached) {
-        fileCache.current[activePath] = {
-          ...cached,
-          content,
-          mtimeMs: result.mtimeMs ?? 0,
-        };
-      }
+      const result = await api.fsWrite(activePath, content, expectedMtimeMs);
+      fileCache.current[activePath] = { path: activePath, content, mtimeMs: result.mtimeMs };
       setDirty((prev) => {
         const next = { ...prev };
         delete next[activePath];
@@ -162,8 +157,29 @@ export function CodePage() {
       });
       setDiskChanged(false);
       setDiskContent(null);
-    } catch {
-      // TODO: surface save error to user
+      setSaveError(null);
+    } catch (error) {
+      // A write conflict means the disk moved since our last read — surface
+      // the same conflict bar the background poll uses instead of losing
+      // either side. Any other failure keeps the edits and reports why.
+      if ((error as { code?: string }).code === "CONFLICT") {
+        try {
+          const fresh = await api.fsRead(activePath);
+          const freshContent = typeof fresh.content === "string" ? fresh.content : "";
+          fileCache.current[activePath] = {
+            path: activePath,
+            content: freshContent,
+            mtimeMs: fresh.mtimeMs ?? 0,
+          };
+          setDiskChanged(true);
+          setDiskContent(freshContent);
+          setSaveError(null);
+        } catch (readError) {
+          setSaveError(readError instanceof Error ? readError.message : String(readError));
+        }
+        return;
+      }
+      setSaveError(error instanceof Error ? error.message : String(error));
     }
   }, [activePath, dirty]);
 
@@ -321,12 +337,21 @@ export function CodePage() {
           </div>
         )}
 
+        {saveError && !diskChanged && (
+          <div className="code-save-error" role="alert" aria-live="assertive">
+            <span>Save failed: {saveError}</span>
+            <button type="button" onClick={() => void saveFile()}>
+              Retry
+            </button>
+          </div>
+        )}
+
         {/* ── Monaco editor (T11) ────────────────────────────────────────── */}
         <section className="code-editor-area">
           {activePath ? (
             <>
               <div className="code-editor-actions">
-                {activePath in dirty && (
+                {activePath in dirty && !diskChanged && (
                   <button
                     type="button"
                     className="code-save-btn"
