@@ -4,19 +4,28 @@
  *
  * A source-regex assertion (bench-page-start-identity.test.mjs) can only
  * prove the gating tokens exist somewhere in the file; it would still pass
- * if the comparison were inverted or wired to the wrong variable. This loads
- * the real exported selector through Vite's SSR module loader — the same
- * technique sidebar-pinned-rendering.test.mjs uses to execute real TSX
- * exports under `node --test` — and asserts on its real return value across
- * the representative user path (AGENTS.md §12): bench A fails, the user
- * looks at bench B, then returns to bench A.
+ * if the comparison were inverted or wired to the wrong variable. The unit
+ * tests below load the real exported selector through Vite's SSR module
+ * loader and assert on its return value for each branch and edge case.
+ *
+ * Selector coverage alone is not the representative user path AGENTS.md §12
+ * requires ("not only extracted pure functions... a real sequence of user
+ * actions, state transitions, and visible results"): it proves the decision
+ * but not that it drives real visible output. The last test renders the real
+ * ProcessPanel component — the same technique sidebar-pinned-rendering.test.mjs
+ * uses to execute real TSX exports under `node --test` — through the selector
+ * across bench A failing, the user looking at bench B, and returning to bench
+ * A, asserting on the actual `role="alert"` markup the user would see at
+ * each step.
  */
 import assert from "node:assert/strict";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { createServer } from "vite";
 
-async function loadSelector() {
+async function loadBenchPageModule() {
   const server = await createServer({
     root: fileURLToPath(new URL("..", import.meta.url)),
     configFile: false,
@@ -26,8 +35,7 @@ async function loadSelector() {
     optimizeDeps: { noDiscovery: true, include: [] },
   });
   try {
-    const { selectVisibleStartFailure } = await server.ssrLoadModule("/src/pages/BenchPage.tsx");
-    return selectVisibleStartFailure;
+    return await server.ssrLoadModule("/src/pages/BenchPage.tsx");
   } finally {
     await server.close();
   }
@@ -39,7 +47,7 @@ const failureForA = {
   benchPath: "/benches/a",
   failure: {
     code: "CONFLICT",
-    problem: "Can't start this bench",
+    problem: "Bench failed to start",
     cause: "port in use",
     fix: "Stop the running bench, then retry.",
     docsUrl: "",
@@ -47,24 +55,52 @@ const failureForA = {
 };
 
 test("selectVisibleStartFailure returns the failure when it matches the selected bench", async () => {
-  const selectVisibleStartFailure = await loadSelector();
+  const { selectVisibleStartFailure } = await loadBenchPageModule();
   assert.equal(selectVisibleStartFailure(failureForA, benchA), failureForA);
 });
 
 test("selectVisibleStartFailure hides the failure once a different bench is selected", async () => {
-  const selectVisibleStartFailure = await loadSelector();
+  const { selectVisibleStartFailure } = await loadBenchPageModule();
   assert.equal(selectVisibleStartFailure(failureForA, benchB), null);
 });
 
-test("representative user path: A fails, user checks B, user returns to A — the panel reappears", async () => {
-  const selectVisibleStartFailure = await loadSelector();
+test("selectVisibleStartFailure's decision follows a bench-switch sequence: A, then B, then A again", async () => {
+  const { selectVisibleStartFailure } = await loadBenchPageModule();
   assert.equal(selectVisibleStartFailure(failureForA, benchA), failureForA);
   assert.equal(selectVisibleStartFailure(failureForA, benchB), null);
   assert.equal(selectVisibleStartFailure(failureForA, benchA), failureForA);
 });
 
 test("no active failure and no selected bench both resolve to null", async () => {
-  const selectVisibleStartFailure = await loadSelector();
+  const { selectVisibleStartFailure } = await loadBenchPageModule();
   assert.equal(selectVisibleStartFailure(null, benchA), null);
   assert.equal(selectVisibleStartFailure(failureForA, null), null);
+});
+
+test("representative user path: the visible failure banner follows the selected bench, not the one that failed", async () => {
+  const { selectVisibleStartFailure, ProcessPanel } = await loadBenchPageModule();
+  const renderFor = (selectedBench) =>
+    renderToStaticMarkup(
+      createElement(ProcessPanel, {
+        status: "failed",
+        anotherBenchRunning: false,
+        onStart() {},
+        onStop() {},
+        elapsedLabel: "",
+        warnings: [],
+        startFailure: selectVisibleStartFailure(failureForA, selectedBench),
+      }),
+    );
+
+  const onA = renderFor(benchA);
+  assert.match(onA, /role="alert"/, "A's own failure is visible while A is selected");
+  assert.match(onA, /Bench failed to start/);
+  assert.match(onA, />Retry</);
+
+  const onB = renderFor(benchB);
+  assert.doesNotMatch(onB, /role="alert"/, "B never shows a failure that was never its own");
+
+  const onAAgain = renderFor(benchA);
+  assert.match(onAAgain, /role="alert"/, "reselecting A restores the same panel");
+  assert.match(onAAgain, /Bench failed to start/);
 });

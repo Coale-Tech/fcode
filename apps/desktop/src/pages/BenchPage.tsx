@@ -725,7 +725,10 @@ function SiteList({ sites }: { sites: BenchSite[] }) {
   );
 }
 
-function ProcessPanel({
+// Exported so the failure banner it renders (role="alert", Retry) can be
+// verified as real rendered markup (AGENTS.md §12), not only through the
+// selectVisibleStartFailure selector that decides its `startFailure` prop.
+export function ProcessPanel({
   status,
   anotherBenchRunning,
   onStart,
