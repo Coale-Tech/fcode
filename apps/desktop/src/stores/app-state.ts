@@ -150,6 +150,9 @@ export type AppState = {
   /** Discovered model lists per provider id (composer model menu). */
   providerModels: Record<string, ModelInfo[]>;
   workspace?: ProjectWorkspace | null;
+  /** Count of benches found by the last bench discovery scan. Drives the
+   *  bench.discover step headline in OnboardingChecklist. Set by bench-ipc. */
+  discoveredBenchCount?: number | null;
   onboarding?: OnboardingState;
   plugins: PluginSummary[];
   /** Themes contributed by loaded plugins, with their sanitized CSS. */
@@ -184,6 +187,12 @@ export type AppState = {
   errorCode?: string | null;
   /** Whether the current error is worth a one-click retry. */
   errorRetriable?: boolean | null;
+  /**
+   * Set when the omp binary cannot be located. The chat surface renders a
+   * blocking panel naming the three probed paths with a "Choose binary…" action.
+   * Managed as local state in ChatSurface via IPC.event.sidecarFatal.
+   */
+  sidecarFatal?: { code: string; paths: string[]; detail: string } | null;
   bootstrap: () => Promise<void>;
   refreshSessions: (options?: RefreshSessionsOptions) => Promise<void>;
   prefetchSession: (id: string) => Promise<void>;

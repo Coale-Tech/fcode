@@ -65,7 +65,7 @@ test("a bridge-origin permission resolves through the bridge alone when host-cor
   const agentHostBridge = {
     agentHost: {
       approvals: {
-        get: (id) => (id === "racp-1" ? { requestId: id } : undefined),
+        originOf: (id) => (id === "racp-1" ? "bridge" : undefined),
       },
     },
     settleApproval: (id, outcome) => settled.push({ id, outcome }),
@@ -86,7 +86,7 @@ test("a host-core-origin permission still routes through permissions.resolve (E1
     },
   };
   const agentHostBridge = {
-    agentHost: { approvals: { get: () => undefined } },
+    agentHost: { approvals: { originOf: () => undefined } },
     settleApproval: (id, outcome) => settled.push({ id, outcome }),
   };
   const resolve = mount({ host, agentHostBridge });
@@ -100,7 +100,7 @@ test("a host-core-origin permission still routes through permissions.resolve (E1
 
 test("a host-core-origin permission still throws when host is unavailable (E1, unchanged behavior)", async () => {
   const agentHostBridge = {
-    agentHost: { approvals: { get: () => undefined } },
+    agentHost: { approvals: { originOf: () => undefined } },
     settleApproval: () => {},
   };
   const resolve = mount({ host: null, agentHostBridge });
@@ -108,4 +108,36 @@ test("a host-core-origin permission still throws when host is unavailable (E1, u
     resolve({ requestId: "host-2", decision: "deny" }),
     /host unavailable/,
   );
+});
+
+test("a copied host-core-origin approval present in the broker still routes through permissions.resolve (E1 gate must check origin, not presence)", async () => {
+  const settled = [];
+  const hostCalls = [];
+  // Simulates agent-host.ts syncPendingTools/ingest copying an ordinary
+  // host-core-origin request into the broker for a late attach: the id is
+  // present (`.get()` is truthy) but no origin was ever recorded for it, so
+  // `originOf` returns undefined. The gate must key off `originOf`, not
+  // presence, or a copied request wrongly skips `permissions.resolve`.
+  const agentHostBridge = {
+    agentHost: {
+      approvals: {
+        get: (id) => (id === "copied-1" ? { requestId: id } : undefined),
+        originOf: () => undefined,
+      },
+    },
+    settleApproval: (id, outcome) => settled.push({ id, outcome }),
+  };
+  const host = {
+    async call(method, params) {
+      hostCalls.push({ method, params });
+      return { ok: true };
+    },
+  };
+  const resolve = mount({ host, agentHostBridge });
+
+  const result = await resolve({ requestId: "copied-1", decision: "allow-once" });
+  assert.deepEqual(result, { ok: true });
+  assert.equal(hostCalls.length, 1);
+  assert.equal(hostCalls[0].method, "permissions.resolve");
+  assert.deepEqual(settled, [{ id: "copied-1", outcome: { decision: "allow-once" } }]);
 });

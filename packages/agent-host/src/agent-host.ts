@@ -87,6 +87,11 @@ export type QueueEntryView = {
   priority?: number;
 };
 
+export type BenchBinding = {
+  benchPath: string;
+  site: string;
+};
+
 export type StartTurnParams = {
   sessionId: string;
   idempotencyKey?: string;
@@ -99,6 +104,12 @@ export type StartTurnParams = {
     userMessageId?: string;
   };
   context: RacpRequestContext;
+  /**
+   * E3: The bench path and site bound at the moment this turn was admitted.
+   * Tools read this, never the live supervisor selection, so a mid-turn bench
+   * switch cannot retarget an in-flight command.
+   */
+  benchBinding?: BenchBinding;
 };
 
 export type StartTurnResult = { accepted: true; turn: RacpTurn; cursor: RacpCursor };
@@ -134,6 +145,8 @@ type TurnRecord = RacpTurn & {
    * those reactively via `ensureTurn`, it does not admit them.
    */
   origin?: "bridge";
+  /** E3: bench/site bound at turn admission; immutable after startTurn returns. */
+  benchBinding?: BenchBinding;
 };
 
 type SessionState = {
@@ -507,6 +520,7 @@ export class AgentHost {
       turn.idempotencyKey = idempotencyKey;
       turn.principalSubject = principal.subject;
       turn.origin = "bridge";
+      if (params.benchBinding) turn.benchBinding = params.benchBinding;
       this.emit(state, "turn.queued", { turn: this.toRacpTurn(state, turn) }, { turnId: turn.id });
       this.notifyQueue(state.id);
     } else {
@@ -527,6 +541,7 @@ export class AgentHost {
       turn.idempotencyKey = idempotencyKey;
       turn.principalSubject = principal.subject;
       turn.origin = "bridge";
+      if (params.benchBinding) turn.benchBinding = params.benchBinding;
       state.activeTurnId = turn.id;
       state.status = "running";
     }
@@ -538,6 +553,15 @@ export class AgentHost {
     const state = this.stateForTurn(turnId);
     return this.toRacpTurn(state, state.turns.get(turnId)!);
   }
+  /** E3: Return the bench+site bound at turn admission, or null if none was set. */
+  getBenchBinding(turnId: string): BenchBinding | null {
+    for (const state of this.states.values()) {
+      const turn = state.turns.get(turnId);
+      if (turn) return turn.benchBinding ?? null;
+    }
+    return null;
+  }
+
 
   async stopTurn(principal: Principal, turnId: string): Promise<RacpTurn> {
     this.requireRole(principal, "turn/stop");

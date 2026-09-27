@@ -5,10 +5,10 @@
 set -euo pipefail
 
 RELEASE_DIR="${1:-apps/desktop/release}"
-PRODUCT_NAME="PI-Desktop"
-# Accepts either the bare common name ("XingYu Liu (DUV63RKYTW)") or the full
-# certificate label ("Developer ID Application: XingYu Liu (DUV63RKYTW)").
-IDENTITY_NAME="${MAC_SIGNING_IDENTITY:-XingYu Liu (DUV63RKYTW)}"
+PRODUCT_NAME="Fcode"
+# Accepts either the bare common name or the full certificate label.
+# Set MAC_SIGNING_IDENTITY to the common name from the Coale-Tech Developer ID cert.
+IDENTITY_NAME="${MAC_SIGNING_IDENTITY:-}"
 IDENTITY_NAME="${IDENTITY_NAME#Developer ID Application: }"
 EXPECTED_IDENTITY="Developer ID Application: ${IDENTITY_NAME}"
 
@@ -68,5 +68,20 @@ fi
 echo "==> Validating stapled notarization tickets"
 xcrun stapler validate "$APP"
 xcrun stapler validate "$DMG"
+
+echo "==> Running omp binary smoke test with isolated HOME"
+OMP_BIN="$APP/Contents/Resources/bin/omp"
+if [[ ! -x "$OMP_BIN" ]]; then
+  echo "error: omp binary not found or not executable at $OMP_BIN" >&2
+  exit 1
+fi
+OMP_SMOKE_HOME="$(mktemp -d)"
+HOME="$OMP_SMOKE_HOME" XDG_DATA_HOME="$OMP_SMOKE_HOME/xdg" "$OMP_BIN" --smoke-test
+OMP_SMOKE_EXIT=$?
+rm -rf "$OMP_SMOKE_HOME"
+if [[ $OMP_SMOKE_EXIT -ne 0 ]]; then
+  echo "error: omp --smoke-test exited $OMP_SMOKE_EXIT; the hardened-runtime binary may be missing an entitlement." >&2
+  exit 1
+fi
 
 echo "==> macOS release verification passed: $APP and $DMG"

@@ -9,7 +9,6 @@ const [
   releaseWorkflowSource,
   desktopPackageSource,
   linuxPackageWorkflowSource,
-  mirrorToCnbWorkflowSource,
   agentRuntimePackageSource,
   i18nPackageSource,
   pluginSdkPackageSource,
@@ -21,7 +20,6 @@ const [
   read("../../../.github/workflows/release.yml"),
   read("../package.json"),
   read("../../../.github/workflows/linux-package.yml"),
-  read("../../../.github/workflows/mirror-to-cnb.yml"),
   read("../../../packages/agent-runtime/package.json"),
   read("../../../packages/i18n/package.json"),
   read("../../../packages/plugin-sdk/package.json"),
@@ -232,7 +230,7 @@ test("macOS release signing is required on tag pushes", () => {
     releaseWorkflowSource,
     /Require macOS signing and notarization secrets[\s\S]*?Missing GitHub Actions secrets for macOS signing/,
   );
-  assert.match(releaseWorkflowSource, /APPLE_TEAM_ID must be DUV63RKYTW/);
+  assert.match(releaseWorkflowSource, /APPLE_TEAM_ID must match FCODE_EXPECTED_TEAM_ID/);
 
   const signedBlock = releaseWorkflowSource.match(
     /- name: Package signed and notarized macOS installer[\s\S]*?(?=\n      - name:)/,
@@ -251,11 +249,11 @@ test("macOS release signing is required on tag pushes", () => {
   // electron-builder throws InvalidConfigurationError when an identity name
   // keeps the "Developer ID Application:" prefix, so CSC_NAME carries the bare
   // common name and the CLI must not pass -c.mac.identity.
-  assert.match(signedBlock, /CSC_NAME: "XingYu Liu \(DUV63RKYTW\)"/);
+  assert.match(signedBlock, /CSC_NAME: \$\{\{\s*secrets\.CSC_NAME\s*\}\}/);
   assert.doesNotMatch(signedBlock, /-c\.mac\.identity=/);
   assert.doesNotMatch(signedBlock, /CSC_NAME: "Developer ID Application:/);
   assert.match(signedBlock, /-c\.mac\.notarize=true/);
-  // The single "signing PI-Desktop.app" line electron-builder prints does not
+  // The single "signing Fcode.app" line electron-builder prints does not
   // tell walking, per-file codesign, silent retries, and the Apple
   // notarization wait apart; the signing trace and the watchdog carry the rest.
   assert.match(
@@ -313,7 +311,7 @@ test("the signed local macOS lane selects the native runner architecture", () =>
   assert.match(releaseMacScriptSource, /MAC_ARCH="\$\{MAC_ARCH:-\$DEFAULT_MAC_ARCH\}"/);
   assert.match(releaseMacScriptSource, /must match the host/);
   assert.match(releaseMacScriptSource, /electron-builder --mac "--\$\{MAC_ARCH\}"/);
-  assert.match(releaseMacScriptSource, /XingYu Liu \(DUV63RKYTW\)/);
+  assert.match(releaseMacScriptSource, /FCODE_EXPECTED_TEAM_ID/);
   assert.match(
     releaseMacScriptSource,
     /MAC_SIGNING_IDENTITY="\$\{MAC_SIGNING_IDENTITY#Developer ID Application: \}"/,
@@ -398,38 +396,13 @@ test("macOS signing instrumentation stays out of the Windows and Linux lanes", (
   assert.doesNotMatch(unsignedBlock, instrumentation);
 });
 
-test("GitHub releases trigger the CNB mirror pipeline with a JSON payload", () => {
-  assert.match(
-    mirrorToCnbWorkflowSource,
-    /release:\s+types:\s+\[published, edited\]/,
-  );
-  assert.match(
-    mirrorToCnbWorkflowSource,
-    /workflow_dispatch:\s+inputs:\s+tag:/,
-  );
-  assert.match(
-    mirrorToCnbWorkflowSource,
-    /if: github\.repository == 'vastsa\/PI-Desktop'/,
-  );
-  assert.match(
-    mirrorToCnbWorkflowSource,
-    /CNB_MIRROR_TOKEN: \$\{\{\s*secrets\.CNB_MIRROR_TOKEN\s*\}\}/,
-  );
-  assert.match(
-    mirrorToCnbWorkflowSource,
-    /Missing repository secret CNB_MIRROR_TOKEN/,
-  );
-  assert.match(
-    mirrorToCnbWorkflowSource,
-    /https:\/\/api\.cnb\.cool\/aixk\/Pi-Desktop\/-\/build\/start/,
-  );
-  assert.match(mirrorToCnbWorkflowSource, /event: "api_trigger_mirror"/);
-  assert.match(mirrorToCnbWorkflowSource, /env: \{ MIRROR_TAGS: \$tag \}/);
-  assert.match(mirrorToCnbWorkflowSource, /jq -n --arg tag "\$MIRROR_TAG"/);
-  assert.match(mirrorToCnbWorkflowSource, /curl --fail-with-body/);
-  assert.doesNotMatch(
-    mirrorToCnbWorkflowSource,
-    /-d ".*github\.event\.release\.tag_name/,
-    "JSON payload must not interpolate the release tag through YAML string escaping",
+test("the upstream CNB mirror workflow is deleted (Fcode does not mirror to the original owner's registry)", async () => {
+  const { access, constants } = await import("node:fs/promises");
+  const { fileURLToPath } = await import("node:url");
+  const mirrorFile = fileURLToPath(new URL("../../../.github/workflows/mirror-to-cnb.yml", import.meta.url));
+  await assert.rejects(
+    () => access(mirrorFile, constants.F_OK),
+    { code: "ENOENT" },
+    "mirror-to-cnb.yml must be deleted; it mirrors releases to the upstream owner's registry",
   );
 });

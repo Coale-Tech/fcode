@@ -575,7 +575,11 @@ export const es = {
     "openProject": "Abra una carpeta de proyecto",
     "firstPrompt": "Envíe su primer mensaje",
     "loadPlugin": "Cargue un complemento de desarrollo (opcional)",
-    "dismiss": "Descartar"
+    "dismiss": "Descartar",
+    "benchDiscoverCount": "{{count}} benches found",
+    "benchDiscover": "Discover benches",
+    "benchSelect": "Select a bench to work on",
+    "benchStart": "Start your bench",
   },
   "settings": {
     "power": "Energía",
@@ -936,7 +940,12 @@ sklm: {
       "zoomOut": "Zoom out",
       "toggleFullScreen": "Alternar pantalla completa",
       "voiceToggle": "Alternar entrada de voz",
-      "voiceCancel": "Cancelar entrada de voz"
+      "voiceCancel": "Cancelar entrada de voz",
+      "navToChat": "Ir a Chat",
+      "navToCode": "Ir al editor de código",
+      "navToBuild": "Ir a Build",
+      "navToBench": "Ir a Bench",
+      "toggleFollowLog": "Activar seguimiento de registro",
     },
     "skills": "Habilidades",
     "skillsGlobalPath": "Ruta de habilidades globales",
@@ -2410,6 +2419,11 @@ sklm: {
     "sessionTitleEmpty": "El título de la sesión no puede estar vacío",
     "projectNameLength": "El nombre del proyecto debe tener entre 1 y 80 caracteres",
     "planApprovalUnavailable": "La aprobación del plan ya no está disponible",
+    "sidecarFatal": {
+      "title": "Fcode agent not found",
+      "detail": "The agent binary was not found at any of the probed paths.",
+      "action": "Choose binary…",
+    },
     "action": {
       "openSettings": "Abrir configuración",
       "retry": "Inténtalo de nuevo",
