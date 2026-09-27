@@ -5398,6 +5398,8 @@ eleven-tool-round desktop paths are verified by
 | E — 工具与权限（能力跨级别迁移） | E2E-CAPABILITY-move-across-levels |
 | F — 持久化（能力跨级别迁移） | E2E-CAPABILITY-move-across-levels |
 | 品质（能力跨级别迁移） | E2E-CAPABILITY-move-across-levels |
+| D — 工作区（bench 启动失败范围界定） | E2E-BENCH-start-failure-scoped-to-selected-bench |
+| 品质（bench 启动失败范围界定） | E2E-BENCH-start-failure-scoped-to-selected-bench |
 
 | 里程碑 | 应用场景 |
 |---|---|
@@ -5453,6 +5455,7 @@ eleven-tool-round desktop paths are verified by
 | 品质（崩溃上报） | E2E-PLUGIN-crash-report-names-the-exit-code |
 | F — 持久化（存储的模型绑定数组） | E2E-PROVIDER-stored-binding-array-reads-entry-by-entry |
 | 品质（存储的模型绑定数组） | E2E-PROVIDER-stored-binding-array-reads-entry-by-entry |
+| M6+（bench 启动失败范围界定） | E2E-BENCH-start-failure-scoped-to-selected-bench |
 
 `US-UI-*` 视觉场景（§UI shell 视觉场景）追踪到
 [决策日志 §D](/zh-CN/spec/08-meta/decisions-log) 中的法典平价决策
