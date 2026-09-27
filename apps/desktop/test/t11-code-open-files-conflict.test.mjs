@@ -63,3 +63,24 @@ test("T11: saveFile only clears dirty state after a successful write, never on c
 test("T11: CodePage integrates Monaco editor", () => {
   assert.match(source, /@monaco-editor\/react|monaco-editor/);
 });
+
+// ── T6 (code) — Wave-2 interaction-state gaps ─────────────────────────────
+
+test("T6 (code): FileTree renders 'No files in this workspace' when entries is empty", () => {
+  assert.match(source, /No files in this workspace/);
+  assert.match(source, /entries\.length === 0/);
+});
+
+test("T6 (code): saveFile has a saving state that drives a spinner on the Save button", () => {
+  assert.match(source, /const \[saving, setSaving\]/);
+  assert.match(source, /setSaving\(true\)/);
+  assert.match(source, /setSaving\(false\)/);
+  assert.match(source, /tool-spinner/);
+  assert.match(source, /disabled=\{saving\}/);
+});
+
+test("T6 (code): conflict bar includes a Diff button that opens a DiffEditor", () => {
+  assert.match(source, /DiffEditor/);
+  assert.match(source, /showDiff/);
+  assert.match(source, /"Diff"/);
+});
