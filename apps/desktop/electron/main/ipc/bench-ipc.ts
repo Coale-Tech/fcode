@@ -54,7 +54,21 @@ export function registerBenchIpc({ registrar, mainWindow }: BenchIpcDependencies
     return { started: true };
   });
 
-  handle(IPC.invoke.benchStop, async () => {
+  handle(IPC.invoke.benchStop, async (input: { benchPath?: string } = {}) => {
+    const benchPath = String(input.benchPath ?? "").trim();
+    if (!benchPath) {
+      throw Object.assign(new Error("benchPath is required"), {
+        errorCode: ErrorCodes.INVALID_ARGUMENT,
+      });
+    }
+    if (benchSupervisor.activeBenchPath !== benchPath) {
+      // The caller's idea of "the active bench" is stale (e.g. it selected a
+      // different bench in the UI) — refuse instead of stopping whichever
+      // bench the supervisor actually has running (cross-bench Stop bug).
+      throw Object.assign(new Error(`bench "${benchPath}" is not the active bench`), {
+        errorCode: ErrorCodes.CONFLICT,
+      });
+    }
     benchSupervisor.stop();
     return { stopped: true };
   });
