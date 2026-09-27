@@ -85,7 +85,28 @@ test("T6: BuildPage shows canvas 15s timeout escalation", () => {
 test("T6: BuildPage shows 'Start bench' CTA when bench stopped", () => {
   // Covers the EMPTY canvas state
   assert.match(buildPage, /Start bench/);
-  assert.match(buildPage, /benchStart/);
+});
+
+test("T6: Start-bench CTAs navigate to the Bench page instead of guessing a path", () => {
+  // BuildPage has no bench-selection state and no access to activeBenchPath
+  // while stopped, so it cannot supply the benchPath that IPC.invoke.benchStart
+  // now requires. Calling it with {} used to be silently swallowed by
+  // `void invoke(...)` (bench-ipc.ts rejects with INVALID_ARGUMENT). Both
+  // CTAs must route to the Bench page instead, matching the existing
+  // bench.start precedent in OnboardingChecklist.tsx.
+  const redirects = buildPage.match(
+    /(?:onClick|onStartBench)=\{\(\) => setPage\("bench"\)\}/g,
+  ) ?? [];
+  assert.equal(
+    redirects.length,
+    2,
+    "expected both the timeout-escalation link and the CanvasOverlay CTA to redirect",
+  );
+  assert.doesNotMatch(
+    buildPage,
+    /invoke\(IPC\.invoke\.benchStart/,
+    "benchStart must no longer be called directly from BuildPage without a benchPath",
+  );
 });
 
 test("T6: BuildPage shows watcher status for Studio", () => {

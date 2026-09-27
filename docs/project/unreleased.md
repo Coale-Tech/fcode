@@ -2,9 +2,11 @@
 
 - The bench cockpit's Start and Retry actions are now disabled while a
   different bench is already running or starting, instead of staying
-  clickable and silently doing nothing. A start request that still
-  reaches the backend for a non-active bench is now rejected with a
-  conflict error instead of being ignored.
+  clickable and silently doing nothing. A start request that still reaches
+  the backend for a non-active bench is rejected with a conflict error, and
+  the cockpit now shows that failure instead of only logging it. The Build
+  tab's "Start bench" prompts now open the Bench page instead of silently
+  failing, since they have no bench path of their own to start.
 
 - Subagent topology cards and their live process rows now follow the main
   conversation's responsive width behavior: long descriptions, paths,
