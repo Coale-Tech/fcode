@@ -99,13 +99,12 @@ test("Both startFailure writers (handleStart's catch and the benchFailure listen
   assert.match(listenerFn, /setStartFailure\(\{ failure, exitCode, logTail, benchPath \}\)/);
 });
 
-test("BenchDetail only receives startFailure when it matches the selected bench (cross-bench Start-failure leak)", () => {
-  // Without this gate, a CONFLICT (or supervisor crash) failure for bench A
-  // keeps rendering — role="alert" panel and all — after the user selects
-  // bench B, and B's Retry button would start B while the panel still talks
-  // about A.
+test("BenchDetail's startFailure prop is wired through selectVisibleStartFailure (cross-bench Start-failure leak)", () => {
+  // The gating logic itself has a real behavioral test in
+  // bench-page-start-failure-scoping.test.mjs; this proves BenchPage's JSX
+  // actually calls it with the live state, not just any expression.
   assert.match(
     source,
-    /startFailure=\{startFailure && startFailure\.benchPath === selectedBench\.path \? startFailure : null\}/,
+    /startFailure=\{selectVisibleStartFailure\(startFailure, selectedBench\)\}/,
   );
 });

@@ -62,6 +62,21 @@ type OneshotEntry = {
   output?: string;
 };
 
+// ── Selectors ─────────────────────────────────────────────────────────────────
+
+// Gap 1 / T6 follow-up: stale failures from a different bench must not
+// follow the selection into BenchDetail or Retry's onStart (cross-bench
+// start-failure leak). Extracted so the gate has a direct behavioral test
+// (AGENTS.md §12) instead of only a regex on the JSX call site.
+export function selectVisibleStartFailure(
+  startFailure: StartFailureState | null,
+  selectedBench: BenchSummary | null,
+): StartFailureState | null {
+  return startFailure && selectedBench && startFailure.benchPath === selectedBench.path
+    ? startFailure
+    : null;
+}
+
 // ── IPC helpers ───────────────────────────────────────────────────────────────
 
 async function invoke<T>(channel: string, args?: unknown): Promise<T> {
@@ -523,8 +538,8 @@ export function BenchPage() {
             elapsedLabel={elapsedLabel}
             // Stale failures from a different bench must not follow the
             // selection here or into Retry's onStart (cross-bench Start-
-            // failure leak) — gate identically to displayStatus above.
-            startFailure={startFailure && startFailure.benchPath === selectedBench.path ? startFailure : null}
+            // failure leak) — see selectVisibleStartFailure above.
+            startFailure={selectVisibleStartFailure(startFailure, selectedBench)}
             warnings={warnings}
             oneshotState={oneshotState}
           />

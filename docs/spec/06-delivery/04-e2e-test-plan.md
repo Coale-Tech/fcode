@@ -8477,6 +8477,35 @@ must keep splitting are covered by `markdown-blocks.test.mjs`.
   `pnpm test:e2e:settings-scroll`; full renderer-driven password persistence
   assertions and checkpoint-level local recovery fault injection remain.
 
+### E2E-BENCH-start-failure-scoped-to-selected-bench
+
+- **Preconditions**: Two discovered benches, A and B, in the master-detail
+  Bench page; the supervisor is idle (no bench running).
+- **Steps**: Select bench A and start it in a way the supervisor rejects or
+  that crashes immediately (a CONFLICT from another already-running bench,
+  or the child process exiting/erroring). Observe the failure panel. Without
+  dismissing it, select bench B in the master list. Reselect bench A.
+- **Expected**: While A is selected, the failure panel (problem, cause, fix,
+  Retry, Copy log; `role="alert"`) is visible and Retry restarts A. Selecting
+  B hides the panel — B never shows a failure that was never its own, and its
+  Start is not blocked by A's failure. Reselecting A restores the same panel.
+- **Specs linked**: `apps/desktop/electron/main/bench/supervisor.ts`,
+  `apps/desktop/src/pages/BenchPage.tsx`.
+- **Acceptance criterion**: D (Workspace) / Quality.
+- **Milestone**: M6+.
+- **Status**: Automated. `selectVisibleStartFailure` (the pure selector
+  BenchPage's JSX uses to gate the panel) is exercised end to end — matching
+  failure kept, hidden on a different selection, restored on reselection,
+  no-failure/no-selection edges — in
+  `apps/desktop/test/bench-page-start-failure-scoping.test.mjs`. The failure
+  event carrying the originating `benchPath` through two concurrent bench
+  starts is covered in `apps/desktop/test/bench-supervisor.test.mjs`. A full
+  Electron/Chromium run is not warranted: `bench-ipc.ts` forwards the
+  supervisor's failure payload verbatim (no reconstruction), so there is no
+  cross-process risk beyond what these two suites already prove (AGENTS.md
+  §12 reserves Electron E2E for real cross-process risk lower layers cannot
+  prove).
+
 ## 8. Traceability Matrix
 
 | Acceptance | Scenarios |
@@ -8544,6 +8573,8 @@ must keep splitting are covered by `markdown-blocks.test.mjs`.
 | E — Tools & permissions (capability level move) | E2E-CAPABILITY-move-across-levels |
 | F — Persistence (capability level move) | E2E-CAPABILITY-move-across-levels |
 | Quality (capability level move) | E2E-CAPABILITY-move-across-levels |
+| D — Workspace (bench start-failure scoping) | E2E-BENCH-start-failure-scoped-to-selected-bench |
+| Quality (bench start-failure scoping) | E2E-BENCH-start-failure-scoped-to-selected-bench |
 
 | Milestone | Scenarios |
 |---|---|
@@ -8599,6 +8630,7 @@ must keep splitting are covered by `markdown-blocks.test.mjs`.
 | Quality (loop context ownership) | E2E-RUNTIME-loop-context-ownership |
 | G — Plugin host lifecycle (crash report) | E2E-PLUGIN-crash-report-names-the-exit-code |
 | Quality (crash report) | E2E-PLUGIN-crash-report-names-the-exit-code |
+| M6+ (bench start-failure scoping) | E2E-BENCH-start-failure-scoped-to-selected-bench |
 
 The `US-UI-*` visual scenarios (§UI shell visual scenarios) trace to the
 Codex parity decisions in [decisions-log §D](../08-meta/decisions-log.md)
