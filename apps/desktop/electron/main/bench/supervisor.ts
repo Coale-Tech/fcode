@@ -257,8 +257,13 @@ export class BenchSupervisor extends EventEmitter {
   /**
    * Start `bench start` in the active bench (E4: argv spawn, shell:false).
    */
-  async start(benchPath: string): Promise<void> {
-    if (this.status === "running" || this.status === "starting") return;
+  async start(benchPath: string): Promise<{ conflict: boolean }> {
+    if (this.status === "running" || this.status === "starting") {
+      // Same bench already running/starting is a harmless idempotent no-op;
+      // a DIFFERENT bench is a conflict the caller must surface, not silently
+      // swallow (cross-bench Start bug — mirrors the Stop guard in bench-ipc.ts).
+      return { conflict: this.activeBenchPath !== benchPath };
+    }
     this.activeBenchPath = benchPath;
     this.status = "starting";
     this.emit("status", this.status);
@@ -322,6 +327,7 @@ export class BenchSupervisor extends EventEmitter {
         this.emit("failure", { process: "start", failure, exitCode: code, logTail: lastLines });
       }
     });
+    return { conflict: false };
   }
 
   stop(): void {

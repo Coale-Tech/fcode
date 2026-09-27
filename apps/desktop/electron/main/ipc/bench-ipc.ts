@@ -61,7 +61,15 @@ export function registerBenchIpc({ registrar, mainWindow }: BenchIpcDependencies
         errorCode: ErrorCodes.INVALID_ARGUMENT,
       });
     }
-    await benchSupervisor.start(benchPath);
+    const result = await benchSupervisor.start(benchPath);
+    if (result.conflict) {
+      // A different bench is already running/starting — refuse instead of
+      // silently no-op'ing while claiming success (cross-bench Start bug).
+      throw Object.assign(
+        new Error(`bench "${benchSupervisor.activeBenchPath}" is already running; stop it before starting "${benchPath}"`),
+        { errorCode: ErrorCodes.CONFLICT },
+      );
+    }
     return { started: true };
   });
 
