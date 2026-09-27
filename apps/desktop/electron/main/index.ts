@@ -1227,6 +1227,7 @@ function registerIpc() {
     isQuitting: () => quitting,
     isDevelopmentBuild,
     browserHost,
+    browserPane,
     clipboardHistory,
     recordPastedClipboardFiles,
     currentWorkspacePath,

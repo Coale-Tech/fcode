@@ -369,6 +369,32 @@ export const IPC = {
     benchStop: "pi-desktop/bench/stop",
     benchStatus: "pi-desktop/bench/status",
     benchRun: "pi-desktop/bench/run",
+    /** Build tab: query installed apps on the active bench/site. */
+    buildListApps: "pi-desktop/build/listApps",
+    /** Build tab canvas — acquire exclusive ownership of the shared BrowserPane. */
+    buildCanvasAcquire: "pi-desktop/build/canvas/acquire",
+    /** Build tab canvas — release ownership of the shared BrowserPane. */
+    buildCanvasRelease: "pi-desktop/build/canvas/release",
+    /** Build tab canvas — navigate to a URL. */
+    buildCanvasNavigate: "pi-desktop/build/canvas/navigate",
+    /** Build tab canvas — set bounds (window-relative pixels). */
+    buildCanvasSetBounds: "pi-desktop/build/canvas/setBounds",
+    /** Build tab canvas — show or hide the WebContentsView. */
+    buildCanvasSetVisible: "pi-desktop/build/canvas/setVisible",
+    /** Build tab canvas — get the current BrowserState. */
+    buildCanvasGetState: "pi-desktop/build/canvas/getState",
+    /** Build tab canvas — back/forward/reload/stop action. */
+    buildCanvasAction: "pi-desktop/build/canvas/action",
+    /** Build tab — start the watch-studio watcher for live Studio sync. */
+    buildStartWatcher: "pi-desktop/build/watcher/start",
+    /** Build tab — stop the watch-studio watcher. */
+    buildStopWatcher: "pi-desktop/build/watcher/stop",
+    /** Build tab — run the Builder "Sync files → site" one-shot. */
+    buildSync: "pi-desktop/build/sync",
+    /** Build tab — check whether developer_mode is enabled on a site. */
+    buildCheckDeveloperMode: "pi-desktop/build/checkDeveloperMode",
+    /** Build tab — check whether the watchdog Python package is installed. */
+    buildCheckWatchdog: "pi-desktop/build/checkWatchdog",
   },
   event: {
     pluginChanged: "pi-desktop/event/pluginChanged",
@@ -414,6 +440,8 @@ export const IPC = {
     benchFailure: "pi-desktop/bench/failure",
     /** Emitted on non-fatal port-conflict lines during bench start (Gap 5 / T6). */
     benchWarning: "pi-desktop/bench/warning",
+    buildWatcherLog: "pi-desktop/build/watcher/event/log",
+    buildWatcherExit: "pi-desktop/build/watcher/event/exit",
     sidecarFatal: "pi-desktop/sidecar/event/fatal",
   },
 } as const;
