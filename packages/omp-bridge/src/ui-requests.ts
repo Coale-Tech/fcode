@@ -41,8 +41,7 @@ export interface MappedAskToolRequest {
   sessionId: string;
   toolCallId: string;
   questions: Array<{
-    id: string;
-    label: string;
+    question: string;
     options: string[];
     multiSelect: boolean;
   }>;
@@ -114,8 +113,7 @@ export function mapExtensionUiRequest(
         toolCallId,
         questions: [
           {
-            id: req.id,
-            label: req.message ?? req.title ?? "",
+            question: req.message ?? req.title ?? "",
             options,
             multiSelect: false,
           },

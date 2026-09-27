@@ -787,6 +787,21 @@ export function registerAgentIpc({
     // origin is "bridge" was ever issued by the bridge itself.
     if (agentHostBridge?.agentHost.approvals.originOf(resolution.requestId) === "bridge") {
       agentHostBridge.settleApproval(resolution.requestId, decisionPatch);
+      // settleApproval only updates Agent Host's own bookkeeping; it never
+      // reaches the omp process. Tell the sidecar directly so the paused
+      // tool call inside omp can proceed (or be denied).
+      if (sidecar) {
+        try {
+          await sidecar.call("tool_permission.resolve", {
+            requestId: resolution.requestId,
+            decision: resolution.decision,
+          });
+        } catch (error) {
+          logger.app("permission", "warn", "sidecar permission resolve failed", {
+            data: { requestId: resolution.requestId, error: String(error) },
+          });
+        }
+      }
       return { requestId: resolution.requestId, ...decisionPatch };
     }
     if (!host) throw new Error("host unavailable");

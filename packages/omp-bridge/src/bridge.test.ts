@@ -473,7 +473,13 @@ describe("OmpBridge — registerHostTools sends set_host_tools after v2 negotiat
     const negotiateId = String((negotiateCall as Record<string, unknown>).id);
 
     // Simulate omp responding with protocol v2.
-    bridge.handleOmpFrame(JSON.stringify({ id: negotiateId, result: { protocolVersion: 2 } }));
+    bridge.handleOmpFrame(JSON.stringify({
+      id: negotiateId,
+      type: "response",
+      command: "negotiate_protocol",
+      success: true,
+      data: { protocolVersion: 2 },
+    }));
 
     // Give microtasks a chance to run (ompCall .then handler + registerHostTools).
     await Promise.resolve();
