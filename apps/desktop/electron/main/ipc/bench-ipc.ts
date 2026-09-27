@@ -18,7 +18,7 @@ export type BenchIpcDependencies = {
 export function registerBenchIpc({ registrar, mainWindow }: BenchIpcDependencies): void {
   const { handle } = registrar;
 
-  // Forward supervisor log events to the renderer
+  // Forward supervisor events to the renderer
   benchSupervisor.on("log", ({ process: proc, line }) => {
     mainWindow()?.webContents.send(IPC.event.benchLog, { process: proc, line });
   });
@@ -30,8 +30,19 @@ export function registerBenchIpc({ registrar, mainWindow }: BenchIpcDependencies
     });
   });
 
+  // Gap 1 / T6: forward start-failure to renderer so it can show error UI
+  benchSupervisor.on("failure", (payload) => {
+    mainWindow()?.webContents.send(IPC.event.benchFailure, payload);
+  });
+
+  // Gap 5 / T6: forward port-conflict warnings to renderer
+  benchSupervisor.on("warning", (payload) => {
+    mainWindow()?.webContents.send(IPC.event.benchWarning, payload);
+  });
+
   handle(IPC.invoke.benchList, async () => {
-    return { benches: await discoverBenches() };
+    // Gap 4 / T6: return failedRoots so the renderer can show PARTIAL/ERROR state
+    return discoverBenches();
   });
 
   handle(IPC.invoke.benchStatus, async () => {

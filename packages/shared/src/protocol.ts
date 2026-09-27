@@ -410,6 +410,10 @@ export const IPC = {
     voiceStateChanged: "pi-desktop/voice/event/stateChanged",
     voiceModelProgress: "pi-desktop/voice/event/modelProgress",
     benchLog: "pi-desktop/bench/log",
+    /** Emitted when bench start fails (Gap 1 / T6). */
+    benchFailure: "pi-desktop/bench/failure",
+    /** Emitted on non-fatal port-conflict lines during bench start (Gap 5 / T6). */
+    benchWarning: "pi-desktop/bench/warning",
     sidecarFatal: "pi-desktop/sidecar/event/fatal",
   },
 } as const;

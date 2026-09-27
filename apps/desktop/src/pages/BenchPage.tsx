@@ -22,6 +22,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { IPC, type Result } from "@pi-desktop/shared";
 import { useAppStore } from "../stores/app-store";
 import { LogView } from "../components/bench/LogView";
+import { DestructiveActionDialog } from "../components/DestructiveActionDialog";
 
 // ── Types (mirrored from discovery.ts / supervisor.ts) ───────────────────────
 
@@ -46,6 +47,20 @@ type LogLine = {
   text: string;
 };
 
+// ── T6 gap types ─────────────────────────────────────────────────────────────
+
+type StartFailureState = {
+  failure: { code: string; problem: string; cause: string; fix: string; docsUrl: string };
+  exitCode?: number | null;
+  logTail?: string;
+};
+
+type OneshotEntry = {
+  status: "idle" | "running" | "ok" | "error";
+  elapsed?: string;
+  output?: string;
+};
+
 // ── IPC helpers ───────────────────────────────────────────────────────────────
 
 async function invoke<T>(channel: string, args?: unknown): Promise<T> {
@@ -65,6 +80,8 @@ export function BenchPage() {
   const [benches, setBenches] = useState<BenchSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Gap 4 / T6: failed roots surfaced by discovery
+  const [failedRoots, setFailedRoots] = useState<Array<{ root: string; reason: string }>>([]);
 
   // Supervisor state
   const [status, setStatus] = useState<BenchStatus>("stopped");
@@ -74,6 +91,26 @@ export function BenchPage() {
   // must reach it from useAppShellRuntime, outside this component).
   const followTail = useAppStore((s) => s.benchLogFollowTail);
   const setFollowTail = useAppStore((s) => s.setBenchLogFollowTail);
+
+  // Gap 1 / T6: bench-start failure from supervisor
+  const [startFailure, setStartFailure] = useState<StartFailureState | null>(null);
+  // Gap 5 / T6: port-conflict warnings
+  const [warnings, setWarnings] = useState<string[]>([]);
+  // Gap 3 / T6: elapsed timer
+  const startMsRef = useRef<number | null>(null);
+  const [elapsedLabel, setElapsedLabel] = useState("");
+  // Gap 2 / T6: per-verb one-shot state (Map — runtime insertion/deletion)
+  const [oneshotState, setOneshotState] = useState<Map<string, OneshotEntry>>(new Map());
+  // T8 / T14: DestructiveActionDialog — pending confirmation + focus management
+  const [pendingConfirm, setPendingConfirm] = useState<{
+    verb: string;
+    site: string;
+    consequence: string;
+    onConfirm: () => void;
+  } | null>(null);
+  // Ref to the trigger button so focus can be restored after dialog closes (T14)
+  const dialogTriggerRef = useRef<HTMLButtonElement | null>(null);
+
 
   // T16: cross-fade key for bench selection transition
   const [detailKey, setDetailKey] = useState(0);
@@ -85,8 +122,13 @@ export function BenchPage() {
   const loadBenches = useCallback(async () => {
     setLoading(true);
     try {
-      const { benches: discovered } = await invoke<{ benches: BenchSummary[] }>(IPC.invoke.benchList);
+      // Gap 4 / T6: discoverBenches now returns { benches, failedRoots }
+      const { benches: discovered, failedRoots: failed } = await invoke<{
+        benches: BenchSummary[];
+        failedRoots: Array<{ root: string; reason: string }>;
+      }>(IPC.invoke.benchList);
       setBenches(discovered);
+      setFailedRoots(failed ?? []);
       if (discovered.length > 0 && !selectedId) {
         setSelectedId(discovered[0].id);
       }
@@ -151,6 +193,46 @@ export function BenchPage() {
     return () => off?.();
   }, []);
 
+  // Gap 1 / T6: bench-start failure event from supervisor
+  useEffect(() => {
+    const bridge = window.piDesktop;
+    if (!bridge) return;
+    const off = bridge.on(IPC.event.benchFailure, (data: unknown) => {
+      if (data && typeof data === "object" && "failure" in data) {
+        const { failure, exitCode, logTail } = data as {
+          failure: { code: string; problem: string; cause: string; fix: string; docsUrl: string };
+          exitCode?: number | null;
+          logTail?: string;
+        };
+        setStartFailure({ failure, exitCode, logTail });
+      }
+    });
+    return () => off?.();
+  }, []);
+
+  // Gap 5 / T6: port-conflict warning event
+  useEffect(() => {
+    const bridge = window.piDesktop;
+    if (!bridge) return;
+    const off = bridge.on(IPC.event.benchWarning, (data: unknown) => {
+      if (data && typeof data === "object" && "message" in data) {
+        setWarnings((prev) => [...prev, String((data as { message: string }).message)]);
+      }
+    });
+    return () => off?.();
+  }, []);
+
+  // Gap 3 / T6: prime startMs when status becomes starting/running (e.g. after restart)
+  useEffect(() => {
+    if ((status === "starting" || status === "running") && startMsRef.current === null) {
+      startMsRef.current = Date.now();
+    } else if (status === "stopped") {
+      startMsRef.current = null;
+      setElapsedLabel("");
+    }
+  }, [status]);
+
+
   // ── Bench selection ───────────────────────────────────────────────────────
 
   const selectBench = useCallback((id: string) => {
@@ -167,6 +249,21 @@ export function BenchPage() {
   // Stop bug).
   const displayStatus: BenchStatus =
     selectedBench && selectedBench.path === activeBenchPath ? status : "stopped";
+
+  // Gap 3 / T6: tick the elapsed timer while the displayed bench is active
+  useEffect(() => {
+    if (displayStatus !== "starting" && displayStatus !== "running") return;
+    const id = setInterval(() => {
+      if (startMsRef.current !== null) {
+        const secs = Math.floor((Date.now() - startMsRef.current) / 1000);
+        const mm = String(Math.floor(secs / 60)).padStart(2, "0");
+        const ss = String(secs % 60).padStart(2, "0");
+        setElapsedLabel(`${mm}:${ss}`);
+      }
+    }, 1000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayStatus]);
 
   // ── Roving tabindex ───────────────────────────────────────────────────────
 
@@ -195,11 +292,16 @@ export function BenchPage() {
 
   const handleStart = useCallback(async () => {
     if (!selectedBench) return;
+    // Gap 1 / T6: clear previous failure; Gap 5: clear warnings; Gap 3: start timer
+    setStartFailure(null);
+    setWarnings([]);
+    startMsRef.current = Date.now();
     try {
       await invoke(IPC.invoke.benchStart, { benchPath: selectedBench.path });
       setStatus("starting");
       setActiveBenchPath(selectedBench.path);
     } catch (err) {
+      startMsRef.current = null;
       console.error("[BenchPage] start failed", err);
     }
   }, [selectedBench]);
@@ -210,28 +312,95 @@ export function BenchPage() {
       await invoke(IPC.invoke.benchStop, { benchPath: selectedBench.path });
       setStatus("stopped");
       setActiveBenchPath(null);
+      // Gap 3 / T6: clear timer on explicit stop
+      startMsRef.current = null;
+      setElapsedLabel("");
+      // Gap 1 / T6: clear failure on explicit stop
+      setStartFailure(null);
     } catch (err) {
       console.error("[BenchPage] stop failed", err);
     }
   }, [selectedBench]);
 
-  // ── Run one-shot ──────────────────────────────────────────────────────────
+  // Gap 2 / T6: track per-verb one-shot state (result of runOneShot)
+  // Consequences for destructive verbs (T8 — plan D14)
+  const DESTRUCTIVE_CONSEQUENCES: Record<string, string> = {
+    migrate: "alters the database schema",
+    "install-app": "installs a Frappe app and alters the database",
+  };
 
-  const handleRun = useCallback(
-    async (verb: string) => {
+  const runVerb = useCallback(
+    async (verb: string, site: string | undefined) => {
       if (!selectedBench) return;
+      const t0 = Date.now();
+      setOneshotState((prev) => {
+        const next = new Map(prev);
+        next.set(verb, { status: "running" });
+        return next;
+      });
       try {
-        await invoke(IPC.invoke.benchRun, {
+        const result = await invoke<{ exitCode: number; output: string }>(IPC.invoke.benchRun, {
           benchPath: selectedBench.path,
-          site: selectedBench.sites.find((s) => s.isDefault)?.name,
+          site,
           verb,
         });
+        const elapsed = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+        if (result.exitCode === 0) {
+          setOneshotState((prev) => {
+            const next = new Map(prev);
+            next.set(verb, { status: "ok", elapsed });
+            return next;
+          });
+        } else {
+          const tail = result.output.split("\n").slice(-20).join("\n");
+          setOneshotState((prev) => {
+            const next = new Map(prev);
+            next.set(verb, { status: "error", elapsed, output: tail });
+            return next;
+          });
+        }
       } catch (err) {
-        console.error(`[BenchPage] ${verb} failed`, err);
+        const elapsed = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
+        setOneshotState((prev) => {
+          const next = new Map(prev);
+          next.set(verb, { status: "error", elapsed, output: String(err) });
+          return next;
+        });
       }
     },
     [selectedBench],
   );
+
+  const handleRun = useCallback(
+    (verb: string, triggerEl?: HTMLButtonElement | null) => {
+      if (!selectedBench) return;
+      const site = selectedBench.sites.find((s) => s.isDefault)?.name ?? "";
+      const consequence = DESTRUCTIVE_CONSEQUENCES[verb];
+      if (consequence) {
+        // T8 / T14: gate destructive verbs through dialog; save trigger for focus restore
+        if (triggerEl) dialogTriggerRef.current = triggerEl;
+        setPendingConfirm({
+          verb,
+          site,
+          consequence,
+          onConfirm: () => {
+            setPendingConfirm(null);
+            dialogTriggerRef.current?.focus(); // T14: restore focus on confirm
+            void runVerb(verb, site);
+          },
+        });
+      } else {
+        void runVerb(verb, site);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedBench, runVerb],
+  );
+
+  const handleDialogCancel = useCallback(() => {
+    setPendingConfirm(null);
+    dialogTriggerRef.current?.focus(); // T14: restore focus on cancel
+  }, []);
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -250,10 +419,31 @@ export function BenchPage() {
           )}
         </div>
 
+        {/* Gap 4 / T6: banner for partial or total discovery failures */}
+        {!loading && failedRoots.length > 0 && (
+          <div style={FAILED_ROOTS_BANNER_STYLE} role="alert">
+            {benches.length > 0
+              ? `${failedRoots.length} root${failedRoots.length > 1 ? "s" : ""} unreadable — fix permissions and refresh.`
+              : "All discovery roots unreadable — fix permissions and refresh."}
+          </div>
+        )}
+
         {loading ? (
           <BenchListSkeleton />
-        ) : benches.length === 0 ? (
+        ) : benches.length === 0 && failedRoots.length === 0 ? (
           <ZeroBenchState />
+        ) : benches.length === 0 ? (
+          /* All roots failed */
+          <div style={EMPTY_BENCH_STYLE} role="alert">
+            <p style={{ fontWeight: 600, color: "var(--ds-error)" }}>
+              Could not read any bench roots.
+            </p>
+            {failedRoots.map((fr) => (
+              <div key={fr.root} style={FAILED_ROOT_ROW_STYLE}>
+                <code style={CODE_STYLE_INLINE}>{fr.root}</code>: {fr.reason}
+              </div>
+            ))}
+          </div>
         ) : (
           <ul
             ref={listRef}
@@ -303,6 +493,10 @@ export function BenchPage() {
             onStart={handleStart}
             onStop={handleStop}
             onRun={handleRun}
+            elapsedLabel={elapsedLabel}
+            startFailure={startFailure}
+            warnings={warnings}
+            oneshotState={oneshotState}
           />
         ) : (
           <div style={EMPTY_DETAIL_STYLE}>
@@ -314,6 +508,19 @@ export function BenchPage() {
       {/* T16: keyframe definition */}
       <style>{FADE_IN_KEYFRAME}</style>
       </div>
+
+      {/* T8 / T14: DestructiveActionDialog overlay — no auto-deny timer (plan D14/D31) */}
+      {pendingConfirm && (
+        <div style={DIALOG_OVERLAY_STYLE}>
+          <DestructiveActionDialog
+            site={pendingConfirm.site}
+            command={pendingConfirm.verb}
+            consequence={pendingConfirm.consequence}
+            onConfirm={pendingConfirm.onConfirm}
+            onCancel={handleDialogCancel}
+          />
+        </div>
+      )}
     </main>
   );
 }
@@ -329,6 +536,10 @@ function BenchDetail({
   onStart,
   onStop,
   onRun,
+  elapsedLabel,
+  startFailure,
+  warnings,
+  oneshotState,
 }: {
   bench: BenchSummary;
   status: BenchStatus;
@@ -337,7 +548,11 @@ function BenchDetail({
   onFollowTailChange: (v: boolean) => void;
   onStart: () => void;
   onStop: () => void;
-  onRun: (verb: string) => void;
+  onRun: (verb: string, triggerEl?: HTMLButtonElement | null) => void;
+  elapsedLabel: string;
+  startFailure: StartFailureState | null;
+  warnings: string[];
+  oneshotState: Map<string, OneshotEntry>;
 }) {
   return (
     <div style={DETAIL_INNER_STYLE}>
@@ -352,23 +567,66 @@ function BenchDetail({
       {/* Sites + processes row */}
       <div style={SITES_ROW_STYLE}>
         <SiteList sites={bench.sites} />
-        <ProcessPanel status={status} onStart={onStart} onStop={onStop} />
+        <ProcessPanel
+          status={status}
+          onStart={onStart}
+          onStop={onStop}
+          elapsedLabel={elapsedLabel}
+          startFailure={startFailure}
+          warnings={warnings}
+        />
       </div>
 
-      {/* One-shot commands */}
+      {/* One-shot commands — Gap 2 / T6 */}
       <div style={ONESHOT_ROW_STYLE}>
-        {ONESHOT_VERBS.map((verb) => (
-          <button
-            key={verb}
-            type="button"
-            style={ONESHOT_BTN_STYLE}
-            onClick={() => onRun(verb)}
-            disabled={status !== "running"}
-            title={verb}
-          >
-            {verb}
-          </button>
-        ))}
+        {ONESHOT_VERBS.map((verb) => {
+          const vs = oneshotState.get(verb);
+          return (
+            <div key={verb} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <button
+                type="button"
+                style={{
+                  ...ONESHOT_BTN_STYLE,
+                  ...(vs?.status === "running" ? { opacity: 0.7 } : {}),
+                }}
+                onClick={(e) => onRun(verb, e.currentTarget)}
+                disabled={status !== "running" || vs?.status === "running"}
+                title={verb}
+              >
+                {vs?.status === "running" ? `${verb} …` : vs?.status === "ok" ? `✓ ${verb}` : vs?.status === "error" ? `✗ ${verb}` : verb}
+              </button>
+              {vs?.status === "ok" && vs.elapsed && (
+                <span style={{ fontSize: "var(--text-3xs)", color: "var(--ds-success)" }}>
+                  {vs.elapsed} · exit 0
+                </span>
+              )}
+              {vs?.status === "error" && (
+                <div style={ERROR_OUTPUT_STYLE}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                    <span style={{ color: "var(--ds-error)", fontSize: "var(--text-3xs)" }}>
+                      exit {vs.elapsed}
+                    </span>
+                    {vs.output && (
+                      <button
+                        type="button"
+                        style={COPY_BTN_STYLE}
+                        onClick={() => navigator.clipboard.writeText(vs.output ?? "")}
+                        title="Copy error output"
+                      >
+                        Copy
+                      </button>
+                    )}
+                  </div>
+                  {vs.output && (
+                    <pre style={{ margin: 0, fontSize: "var(--text-3xs)", whiteSpace: "pre-wrap", overflowWrap: "break-word" }}>
+                      {vs.output}
+                    </pre>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Log viewer (T5) */}
@@ -423,19 +681,43 @@ function ProcessPanel({
   status,
   onStart,
   onStop,
+  elapsedLabel,
+  startFailure,
+  warnings,
 }: {
   status: BenchStatus;
   onStart: () => void;
   onStop: () => void;
+  elapsedLabel: string;
+  startFailure: StartFailureState | null;
+  warnings: string[];
 }) {
   return (
     <div style={PANEL_BOX_STYLE}>
       <div style={PANEL_LABEL_STYLE}>Processes</div>
+      {/* Gap 3 / T6: status + elapsed */}
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <StatusDot status={status} />
         <span style={{ fontSize: "var(--text-sm)" }}>{STATUS_LABELS[status]}</span>
+        {elapsedLabel && (
+          <span style={{ fontSize: "var(--text-2xs)", color: "var(--ds-text-tertiary)" }}>
+            {elapsedLabel}
+          </span>
+        )}
       </div>
-      <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
+
+      {/* Gap 5 / T6: port-conflict warnings */}
+      {warnings.length > 0 && (
+        <div style={{ marginTop: 6 }}>
+          {warnings.map((w, i) => (
+            <div key={i} style={WARNING_ROW_STYLE}>
+              <span style={{ color: "var(--ds-warning)" }}>⚠</span> {w}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap" }}>
         {status === "stopped" || status === "failed" ? (
           <button type="button" style={ACTION_BTN_STYLE} onClick={onStart}>
             Start bench
@@ -451,6 +733,52 @@ function ProcessPanel({
           </button>
         )}
       </div>
+
+      {/* Gap 1 / T6: bench-start failure panel */}
+      {startFailure && (
+        <div style={FAILURE_PANEL_STYLE} role="alert">
+          <div style={{ fontWeight: 600, color: "var(--ds-error)", marginBottom: 4 }}>
+            {startFailure.failure.problem}
+          </div>
+          <div style={{ fontSize: "var(--text-sm)", marginBottom: 4 }}>
+            <span style={{ color: "var(--ds-text-secondary)" }}>Cause:</span> {startFailure.failure.cause}
+          </div>
+          <div style={{ fontSize: "var(--text-sm)", marginBottom: 8 }}>
+            <span style={{ color: "var(--ds-text-secondary)" }}>Fix:</span> {startFailure.failure.fix}
+          </div>
+          {startFailure.failure.docsUrl && (
+            <a
+              href={startFailure.failure.docsUrl}
+              style={{ fontSize: "var(--text-sm)", color: "var(--ds-text-link)" }}
+              onClick={(e) => { e.preventDefault(); window.open(startFailure.failure.docsUrl); }}
+            >
+              Docs ↗
+            </a>
+          )}
+          <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+            <button type="button" style={ACTION_BTN_STYLE} onClick={onStart}>
+              Retry
+            </button>
+            {startFailure.logTail && (
+              <button
+                type="button"
+                style={COPY_BTN_STYLE}
+                onClick={() => navigator.clipboard.writeText(startFailure.logTail ?? "")}
+              >
+                Copy log
+              </button>
+            )}
+          </div>
+          {startFailure.logTail && (
+            <details style={{ marginTop: 6 }}>
+              <summary style={{ fontSize: "var(--text-3xs)", color: "var(--ds-text-tertiary)", cursor: "pointer" }}>
+                Last log lines
+              </summary>
+              <pre style={LOG_TAIL_PRE_STYLE}>{startFailure.logTail}</pre>
+            </details>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -826,4 +1154,75 @@ const COPY_BTN_STYLE: React.CSSProperties = {
   color: "var(--ds-text-primary)",
   fontSize: "var(--text-sm)",
   cursor: "pointer",
+};
+
+// ── T6 gap styles ─────────────────────────────────────────────────────────────
+
+const FAILED_ROOTS_BANNER_STYLE: React.CSSProperties = {
+  padding: "6px 8px",
+  marginBottom: 6,
+  borderRadius: "var(--radius-xs)",
+  background: "color-mix(in srgb, var(--ds-warning) 15%, transparent)",
+  color: "var(--ds-warning)",
+  fontSize: "var(--text-2xs)",
+};
+
+const FAILED_ROOT_ROW_STYLE: React.CSSProperties = {
+  fontSize: "var(--text-2xs)",
+  color: "var(--ds-text-secondary)",
+  marginBottom: 4,
+};
+
+const CODE_STYLE_INLINE: React.CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  background: "var(--ds-bg-secondary, rgba(0,0,0,0.3))",
+  borderRadius: "var(--radius-3xs)",
+  padding: "0 3px",
+};
+
+const WARNING_ROW_STYLE: React.CSSProperties = {
+  display: "flex",
+  gap: 4,
+  alignItems: "flex-start",
+  fontSize: "var(--text-2xs)",
+  color: "var(--ds-text-secondary)",
+  padding: "2px 0",
+};
+
+const FAILURE_PANEL_STYLE: React.CSSProperties = {
+  marginTop: 8,
+  padding: 10,
+  borderRadius: "var(--radius-xs)",
+  border: "1px solid var(--ds-error)",
+  background: "color-mix(in srgb, var(--ds-error) 10%, transparent)",
+};
+
+const ERROR_OUTPUT_STYLE: React.CSSProperties = {
+  marginTop: 4,
+  padding: "6px 8px",
+  borderRadius: "var(--radius-xs)",
+  background: "color-mix(in srgb, var(--ds-error) 10%, transparent)",
+  border: "1px solid color-mix(in srgb, var(--ds-error) 30%, transparent)",
+};
+
+const LOG_TAIL_PRE_STYLE: React.CSSProperties = {
+  margin: 0,
+  marginTop: 6,
+  fontSize: "var(--text-3xs)",
+  fontFamily: "var(--font-mono)",
+  whiteSpace: "pre-wrap",
+  overflowWrap: "break-word",
+  maxHeight: 120,
+  overflow: "auto",
+  color: "var(--ds-text-secondary)",
+};
+
+const DIALOG_OVERLAY_STYLE: React.CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  background: "rgba(0,0,0,0.6)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  zIndex: 9999,
 };
