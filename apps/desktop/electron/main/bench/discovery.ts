@@ -43,6 +43,8 @@ export interface SiteConfigAllowed {
   webserverPort?: number;
   builderPath?: string;
   defaultSite?: string;
+  /** developer_mode flag (needed for Studio precondition check, T6). */
+  developerMode?: boolean;
 }
 
 /** Default discovery roots when none are configured. */
@@ -60,6 +62,7 @@ export function parseSiteConfig(raw: Record<string, unknown>): SiteConfigAllowed
   const result: SiteConfigAllowed = {};
   if (typeof raw.webserver_port === "number") result.webserverPort = raw.webserver_port;
   if (typeof raw.builder_path === "string") result.builderPath = raw.builder_path;
+  if (raw.developer_mode === 1 || raw.developer_mode === true) result.developerMode = true;
   return result;
 }
 

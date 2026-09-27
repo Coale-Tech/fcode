@@ -10,6 +10,7 @@ import { readNpmPath, writeNpmPath } from "../npm-preferences";
 import { registerAgentIpc } from "./agent-ipc";
 import { registerAppIpc } from "./app-ipc";
 import { registerBenchIpc } from "./bench-ipc";
+import { registerBuildIpc } from "./build-ipc";
 import { registerDiagnosticsIpc } from "./diagnostics-ipc";
 import { registerMarketIpc } from "./market-ipc";
 import { registerMcpIpc } from "./mcp-ipc";
@@ -340,6 +341,7 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     stripWinLongPrefix,
   });
   registerBenchIpc({ registrar, mainWindow: getMainWindow });
+  registerBuildIpc({ registrar, mainWindow: getMainWindow, browserPane: dependencies.browserPane });
 
   registerAgentExtensionIpc({
     handle,
