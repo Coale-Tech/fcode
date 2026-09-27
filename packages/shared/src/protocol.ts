@@ -410,6 +410,7 @@ export const IPC = {
     voiceStateChanged: "pi-desktop/voice/event/stateChanged",
     voiceModelProgress: "pi-desktop/voice/event/modelProgress",
     benchLog: "pi-desktop/bench/log",
+    sidecarFatal: "pi-desktop/sidecar/event/fatal",
   },
 } as const;
 
