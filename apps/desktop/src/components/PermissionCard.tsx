@@ -8,6 +8,7 @@ import { useAppStore } from "../stores/app-store";
 import { buildToolPresentation } from "../lib/tool-presentation";
 import { ToolDetailBlocks } from "./ToolDetails";
 import { Button } from "./ui";
+import { DestructiveActionDialog } from "./DestructiveActionDialog";
 
 export function PermissionCard({
   permission,
@@ -28,6 +29,12 @@ export function PermissionCard({
   );
   const [resolving, setResolving] = useState(false);
   const timeoutHandled = useRef(false);
+  // fcode_bench_run and fcode_bench_execute use DestructiveActionDialog (T8, D14:
+  // no auto-deny timer; names site, command and consequence explicitly).
+  // fcode_bench_execute_read is auto-approved and never reaches this card.
+  const isBenchDestructive =
+    permission.toolName === "fcode_bench_run" ||
+    permission.toolName === "fcode_bench_execute";
 
   const restoreComposerFocus = () => {
     window.requestAnimationFrame(() => {
@@ -61,10 +68,12 @@ export function PermissionCard({
   }, [permission.receivedAt, permission.requestId]);
 
   useEffect(() => {
+    // Bench-destructive tools use DestructiveActionDialog; no timer here.
+    if (isBenchDestructive) return;
     if (secondsLeft > 0 || timeoutHandled.current || resolving) return;
     timeoutHandled.current = true;
     void resolve("deny");
-  }, [resolving, secondsLeft]);
+  }, [isBenchDestructive, resolving, secondsLeft]);
 
   // Same structured presentation as the transcript tool rows: a command reads
   // as shell, file content as code, everything else as labeled fields.
@@ -77,6 +86,30 @@ export function PermissionCard({
     [permission.argsPreview, permission.toolName],
   );
   const risk = (permission.risk || "high") as "low" | "medium" | "high";
+  // fcode_bench_run / fcode_bench_execute: render the dedicated dialog that
+  // names site, command and consequence without an auto-deny timer (plan D14).
+  if (isBenchDestructive) {
+    const p = permission.argsPreview;
+    const isObj = p != null && typeof p === "object";
+    const site = isObj && "site" in p && p.site != null ? String(p.site) : "active site";
+    const rawCommand =
+      permission.toolName === "fcode_bench_run"
+        ? (isObj && "command" in p ? String(p.command) : permission.toolName)
+        : (isObj && "method" in p ? String(p.method) : permission.toolName);
+    const consequence =
+      permission.toolName === "fcode_bench_run"
+        ? (rawCommand === "migrate" ? "alters the database schema" : "alters bench state")
+        : "modifies the database";
+    return (
+      <DestructiveActionDialog
+        site={site}
+        command={rawCommand}
+        consequence={consequence}
+        onConfirm={() => { restoreComposerFocus(); void resolve("allow-once"); }}
+        onCancel={() => { restoreComposerFocus(); void resolve("deny"); }}
+      />
+    );
+  }
 
   return (
     <section

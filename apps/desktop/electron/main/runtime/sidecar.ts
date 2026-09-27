@@ -22,6 +22,8 @@ import type { PluginRuntime } from "../plugin-runtime";
 import type { UserMcpRuntime } from "../user-mcp";
 import type { RuntimeState } from "./context";
 import type { FinishTurn } from "./plans";
+import { benchSupervisor, ALLOWED_BENCH_VERBS } from "../bench/supervisor";
+import { isReadOnlyBenchMethod } from "../bench/approval";
 
 export type SidecarRuntimeDependencies = {
   runtimeState: RuntimeState;
@@ -601,6 +603,201 @@ export function createSidecarRuntime({
       }
       sendToRenderer(IPC.event.pluginChanged,{ reason: "scaffold" });
     },
+  });
+
+  // T7: Fcode host tools — registered by method name so the bridge can
+  // dispatch host_tool_call frames directly without going through tools.execute.
+
+  s.setLocalTool("fcode_bench_execute", async (ctx) => {
+    const args = ctx.args;
+    if (!args || typeof args !== "object") {
+      return { ok: false, isError: true, content: "fcode_bench_execute: args must be an object" };
+    }
+    const method = "method" in args ? String(args.method) : "";
+    if (!method) {
+      return { ok: false, isError: true, content: "fcode_bench_execute: method is required" };
+    }
+    const benchPath = benchSupervisor.activeBenchPath;
+    if (!benchPath) {
+      return { ok: false, isError: true, content: "fcode_bench_execute: no active bench" };
+    }
+    const site = "site" in args && args.site != null ? String(args.site) : benchSupervisor.activeSite;
+    const kwargs = "kwargs" in args && args.kwargs ? args.kwargs : {};
+    const result = await benchSupervisor.runOneShot({
+      benchPath,
+      site,
+      verb: "execute",
+      args: [method, "--kwargs", JSON.stringify(kwargs)],
+    });
+    if (result.exitCode !== 0) {
+      return {
+        ok: false,
+        isError: true,
+        content: result.failure
+          ? `${result.failure.problem}\n\nFix: ${result.failure.fix}`
+          : result.output,
+      };
+    }
+    return { ok: true, content: result.output };
+  });
+
+  s.setLocalTool("fcode_bench_execute_read", async (ctx) => {
+    const args = ctx.args;
+    if (!args || typeof args !== "object") {
+      return { ok: false, isError: true, content: "fcode_bench_execute_read: args must be an object" };
+    }
+    const method = "method" in args ? String(args.method) : "";
+    if (!method) {
+      return { ok: false, isError: true, content: "fcode_bench_execute_read: method is required" };
+    }
+    if (!isReadOnlyBenchMethod(method)) {
+      return {
+        ok: false,
+        isError: true,
+        content: `fcode_bench_execute_read: '${method}' is not a read-only method. Use fcode_bench_execute for mutating calls.`,
+      };
+    }
+    const benchPath = benchSupervisor.activeBenchPath;
+    if (!benchPath) {
+      return { ok: false, isError: true, content: "fcode_bench_execute_read: no active bench" };
+    }
+    const site = "site" in args && args.site != null ? String(args.site) : benchSupervisor.activeSite;
+    const kwargs = "kwargs" in args && args.kwargs ? args.kwargs : {};
+    const result = await benchSupervisor.runOneShot({
+      benchPath,
+      site,
+      verb: "execute",
+      args: [method, "--kwargs", JSON.stringify(kwargs)],
+    });
+    if (result.exitCode !== 0) {
+      return {
+        ok: false,
+        isError: true,
+        content: result.failure
+          ? `${result.failure.problem}\n\nFix: ${result.failure.fix}`
+          : result.output,
+      };
+    }
+    return { ok: true, content: result.output };
+  });
+
+  s.setLocalTool("fcode_bench_run", async (ctx) => {
+    const args = ctx.args;
+    if (!args || typeof args !== "object") {
+      return { ok: false, isError: true, content: "fcode_bench_run: args must be an object" };
+    }
+    const command = "command" in args ? String(args.command) : "";
+    if (!command) {
+      return { ok: false, isError: true, content: "fcode_bench_run: command is required" };
+    }
+    if (!ALLOWED_BENCH_VERBS.has(command)) {
+      return {
+        ok: false,
+        isError: true,
+        content: `fcode_bench_run: '${command}' is not allowed. Allowed verbs: ${[...ALLOWED_BENCH_VERBS].join(", ")}`,
+      };
+    }
+    const benchPath = benchSupervisor.activeBenchPath;
+    if (!benchPath) {
+      return { ok: false, isError: true, content: "fcode_bench_run: no active bench" };
+    }
+    const site = "site" in args && args.site != null ? String(args.site) : benchSupervisor.activeSite;
+    const extraArgs = "args" in args && Array.isArray(args.args) ? args.args.map(String) : [];
+    const result = await benchSupervisor.runOneShot({
+      benchPath,
+      site,
+      verb: command,
+      args: extraArgs,
+    });
+    if (result.exitCode !== 0) {
+      return {
+        ok: false,
+        isError: true,
+        content: result.failure
+          ? `${result.failure.problem}\n\nFix: ${result.failure.fix}`
+          : result.output,
+      };
+    }
+    return { ok: true, content: result.output };
+  });
+
+  s.setLocalTool("fcode_canvas", async (ctx) => {
+    if (!browserHost) {
+      return { ok: false, isError: true, content: "fcode_canvas: Build canvas is not available" };
+    }
+    const args = ctx.args;
+    if (!args || typeof args !== "object") {
+      return { ok: false, isError: true, content: "fcode_canvas: args must be an object" };
+    }
+    const action = "action" in args ? String(args.action) : "";
+    switch (action) {
+      case "navigate": {
+        const url = "url" in args ? String(args.url ?? "") : "";
+        if (!url) return { ok: false, isError: true, content: "fcode_canvas navigate: url is required" };
+        const state = await browserHost.navigate({ url });
+        return { ok: true, content: state };
+      }
+      case "reload": {
+        browserHost.action("reload");
+        return { ok: true, content: null };
+      }
+      case "click": {
+        const uid = "uid" in args ? String(args.uid ?? "") : "";
+        if (!uid) return { ok: false, isError: true, content: "fcode_canvas click: uid is required" };
+        await browserHost.click(uid);
+        return { ok: true, content: null };
+      }
+      case "fill": {
+        const uid = "uid" in args ? String(args.uid ?? "") : "";
+        const text = "text" in args ? String(args.text ?? "") : "";
+        if (!uid) return { ok: false, isError: true, content: "fcode_canvas fill: uid is required" };
+        await browserHost.fill(uid, text);
+        return { ok: true, content: null };
+      }
+      case "evaluate": {
+        const expression = "expression" in args ? String(args.expression ?? "") : "";
+        if (!expression) return { ok: false, isError: true, content: "fcode_canvas evaluate: expression is required" };
+        const result = await browserHost.evaluate(expression);
+        return { ok: true, content: result };
+      }
+      default:
+        return {
+          ok: false,
+          isError: true,
+          content: `fcode_canvas: unknown action '${action}'. Allowed: navigate, reload, click, fill, evaluate`,
+        };
+    }
+  });
+
+  s.setLocalTool("fcode_canvas_read", async (ctx) => {
+    if (!browserHost) {
+      return { ok: false, isError: true, content: "fcode_canvas_read: Build canvas is not available" };
+    }
+    const args = ctx.args;
+    if (!args || typeof args !== "object") {
+      return { ok: false, isError: true, content: "fcode_canvas_read: args must be an object" };
+    }
+    const action = "action" in args ? String(args.action) : "";
+    switch (action) {
+      case "snapshot": {
+        const result = await browserHost.snapshot();
+        return { ok: true, content: result };
+      }
+      case "console": {
+        const limit = "limit" in args && typeof args.limit === "number" ? args.limit : undefined;
+        return { ok: true, content: browserHost.console(limit) };
+      }
+      case "screenshot": {
+        const shot = await browserHost.screenshot({}, ctx.sessionId);
+        return { ok: true, content: shot };
+      }
+      default:
+        return {
+          ok: false,
+          isError: true,
+          content: `fcode_canvas_read: unknown action '${action}'. Allowed: snapshot, console, screenshot`,
+        };
+    }
   });
   runtimeState.sidecar = s;
   if (runtimeState.host) s.setHost(runtimeState.host);
