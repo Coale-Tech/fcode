@@ -175,6 +175,8 @@ export type AppState = {
   notifications: AppNotification[];
   unreadNotificationCount: number;
   page: "chat" | "pulls" | "scheduled" | "plugins" | "settings" | "code" | "build" | "bench";
+  /** Bench log view follows new output while true; toggleFollowLog (Mod+Shift+B) flips it. */
+  benchLogFollowTail: boolean;
   /** Tab ids come from the shared settings index. */
   settingsTab: SettingsTabId;
   /** Pending row anchor (i18n key) to flash after landing on a settings tab. */
@@ -340,6 +342,8 @@ export type AppState = {
   setPage: (page: AppState["page"], opts?: { record?: boolean }) => void;
   setSettingsTab: (tab: AppState["settingsTab"]) => void;
   setSettingsAnchor: (key: string | null) => void;
+  setBenchLogFollowTail: (follow: boolean) => void;
+  toggleBenchLogFollowTail: () => void;
   navBack: () => void;
   navForward: () => void;
   canNavBack: () => boolean;

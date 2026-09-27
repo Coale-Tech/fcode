@@ -73,6 +73,7 @@ export function createInitialState(): AppStateData {
     pendingPlans: {},
     planCheckpoints: {},
     page: "bench",
+    benchLogFollowTail: true,
     settingsTab: "general",
     settingsAnchor: null,
     settingsTabNonce: 0,
