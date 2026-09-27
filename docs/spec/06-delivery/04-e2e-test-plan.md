@@ -8493,18 +8493,22 @@ must keep splitting are covered by `markdown-blocks.test.mjs`.
   `apps/desktop/src/pages/BenchPage.tsx`.
 - **Acceptance criterion**: D (Workspace) / Quality.
 - **Milestone**: M6+.
-- **Status**: Automated. `selectVisibleStartFailure` (the pure selector
-  BenchPage's JSX uses to gate the panel) is exercised end to end — matching
-  failure kept, hidden on a different selection, restored on reselection,
-  no-failure/no-selection edges — in
-  `apps/desktop/test/bench-page-start-failure-scoping.test.mjs`. The failure
-  event carrying the originating `benchPath` through two concurrent bench
-  starts is covered in `apps/desktop/test/bench-supervisor.test.mjs`. A full
-  Electron/Chromium run is not warranted: `bench-ipc.ts` forwards the
-  supervisor's failure payload verbatim (no reconstruction), so there is no
-  cross-process risk beyond what these two suites already prove (AGENTS.md
-  §12 reserves Electron E2E for real cross-process risk lower layers cannot
-  prove).
+- **Status**: Automated at the component level.
+  `apps/desktop/test/bench-page-start-failure-scoping.test.mjs` renders the
+  real, exported `ProcessPanel` component (the one that produces the
+  `role="alert"` panel and Retry button) through the real
+  `selectVisibleStartFailure` selector across the representative path — A
+  fails and shows the panel, B is selected and the panel disappears, A is
+  reselected and the panel reappears — asserting on the actual rendered
+  markup, not only the selector's return value. `selectVisibleStartFailure`
+  also has direct unit coverage for its branches and edge cases in the same
+  file. The failure event carrying the originating `benchPath` through two
+  concurrent bench starts is covered in
+  `apps/desktop/test/bench-supervisor.test.mjs`. A full Electron/Chromium run
+  is not warranted: `bench-ipc.ts` forwards the supervisor's failure payload
+  verbatim (no reconstruction), so there is no cross-process risk beyond what
+  these two suites already prove (AGENTS.md §12 reserves Electron E2E for
+  real cross-process risk lower layers cannot prove).
 
 ## 8. Traceability Matrix
 

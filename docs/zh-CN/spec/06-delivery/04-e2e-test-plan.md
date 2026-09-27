@@ -8947,3 +8947,27 @@ the latest destination. These assertions measure work counts, not device FPS.
 - **里程碑：** 提供商配置维护。
 - **状态：** `pnpm test:e2e:provider-api-style`、`official-native-search.test.ts`；
   共享路由测试覆盖伪装域名、不安全地址和未知中转站。未验证线上服务或 Host/SQLite 保存。
+
+## E2E-BENCH-start-failure-scoped-to-selected-bench
+
+- **前提：** 主从结构 Bench 页面中有两个已发现的 bench A 和 B；supervisor 处于
+  空闲状态（没有 bench 正在运行）。
+- **步骤：** 选择 bench A 并以 supervisor 会拒绝或立即崩溃的方式启动它（另一个
+  已运行 bench 造成的 CONFLICT，或子进程退出/报错）。观察失败面板。不关闭它，
+  在主列表中选择 bench B，再重新选择 bench A。
+- **预期：** A 被选中时，失败面板（问题、原因、修复建议、Retry、Copy log；
+  `role="alert"`）可见，Retry 会重启 A。选择 B 会隐藏该面板——B 不会显示从未
+  属于自己的失败，其 Start 也不会被 A 的失败阻塞。重新选择 A 会恢复同一面板。
+- **规格：** `apps/desktop/electron/main/bench/supervisor.ts`、
+  `apps/desktop/src/pages/BenchPage.tsx`。
+- **验收：** D（工作区）／品质。
+- **里程碑：** M6+。
+- **状态：** `apps/desktop/test/bench-page-start-failure-scoping.test.mjs`
+  渲染真实导出的 `ProcessPanel` 组件（生成 `role="alert"` 面板与 Retry 按钮的
+  组件），并通过真实的 `selectVisibleStartFailure` 选择器走完代表性路径——A
+  失败并显示面板、选中 B 后面板消失、重新选中 A 后面板恢复——断言的是真实
+  渲染出的 markup，而不仅是选择器的返回值；该选择器自身的分支与边界情况也有
+  直接单元测试覆盖。失败事件携带发生来源 `benchPath`、经过两个并发 bench
+  启动的情形由 `apps/desktop/test/bench-supervisor.test.mjs` 覆盖。完整的
+  Electron/Chromium 验证并非必要：`bench-ipc.ts` 原样转发 supervisor 的失败
+  载荷（无重建），因此不存在这两个测试套件之外的跨进程风险。
