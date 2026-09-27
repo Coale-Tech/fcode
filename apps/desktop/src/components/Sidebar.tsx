@@ -2492,11 +2492,11 @@ export function Sidebar({
         </div>
 
         <div className="sidebar-footer no-drag">
-          <div className="footer-actions">
+          <div className="nav-rail-actions">
             {/* T2: primary page nav rail — Code, Build, Bench */}
             <TooltipButton
               type="button"
-              className={`footer-action ${page === "code" ? "active" : ""}`}
+              className={`nav-rail-action ${page === "code" ? "active" : ""}`}
               data-nav="code"
               tooltip="Code"
               ariaLabel="Code"
@@ -2507,7 +2507,7 @@ export function Sidebar({
             </TooltipButton>
             <TooltipButton
               type="button"
-              className={`footer-action ${page === "build" ? "active" : ""}`}
+              className={`nav-rail-action ${page === "build" ? "active" : ""}`}
               data-nav="build-canvas"
               tooltip="Build"
               ariaLabel="Build"
@@ -2518,7 +2518,7 @@ export function Sidebar({
             </TooltipButton>
             <TooltipButton
               type="button"
-              className={`footer-action ${page === "bench" ? "active" : ""}`}
+              className={`nav-rail-action ${page === "bench" ? "active" : ""}`}
               data-nav="bench"
               tooltip="Bench"
               ariaLabel="Bench"
@@ -2527,6 +2527,9 @@ export function Sidebar({
             >
               <IconServer size={14} aria-hidden />
             </TooltipButton>
+          </div>
+
+          <div className="footer-actions">
             <TooltipButton
               type="button"
               className={`footer-action ${page === "settings" ? "active" : ""}`}
