@@ -26,8 +26,8 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join, resolve } from "node:path";
-import { readNdjsonLines } from "@pi-desktop/shared";
+import { dirname, join, resolve } from "node:path";
+import { ErrorCodes, readNdjsonLines } from "@pi-desktop/shared";
 import { capNdjsonLine, reassembleChunk } from "./chunks.js";
 import { SessionStore } from "./sessions.js";
 import { createBridgeState } from "./state.js";
@@ -174,6 +174,14 @@ const PASSTHROUGH_EVENTS = new Set([
   "error",
 ]);
 
+/** omp's tool lifecycle events use "_execution_" naming; PI's AgentEvent uses
+ * the shorter names already listed in PASSTHROUGH_EVENTS above. */
+const TOOL_EVENT_RENAME: Record<string, string> = {
+  tool_execution_start: "tool_start",
+  tool_execution_update: "tool_update",
+  tool_execution_end: "tool_end",
+};
+
 /** omp event types to drop silently (no PI counterpart). */
 const DROP_EVENTS = new Set([
   "notice", "irc_message", "todo_reminder", "todo_auto_clear",
@@ -283,6 +291,8 @@ export class OmpBridge {
   private pendingUiRequests = new Map<string, { sessionId: string; toolCallId: string; toolName: string }>();
   /** Per-session most-recent open tool_execution_start */
   private openTools = new Map<string, { toolCallId: string; toolName: string }>();
+  /** Tracks in-flight `prompt` calls awaiting their terminal prompt_result frame. */
+  private promptResultPending = new Map<string, { sessionId: string; turnId: string }>();
   /** Handshake timer — cleared when omp emits "ready" (E9 / failure-handling). */
   private readyTimer: NodeJS.Timeout | null = null;
   /** Optional trace writer set by main() when FCODE_BRIDGE_TRACE=1. */
@@ -311,14 +321,23 @@ export class OmpBridge {
     process.stdout.write(line + "\n");
   }
 
-  /** Send a command to omp and wait for the response. */
-  private ompCall(params: Record<string, unknown>): Promise<unknown> {
-    const id = randomUUID();
+  /** Write a raw frame to omp's stdin; fire-and-forget, no response awaited
+   * (omp never sends a `response` frame back for e.g. extension_ui_response). */
+  private sendToOmp(frame: Record<string, unknown>): void {
+    const line = JSON.stringify(frame) + "\n";
+    this.tracer?.("out-omp", line.trimEnd());
+    this.ompProcess?.stdin?.write(line);
+  }
+
+  /**
+   * Send a command to omp and wait for its response. An explicit `id` lets the
+   * caller correlate a later out-of-band frame (e.g. prompt_result) to this
+   * same request; omp otherwise gets a fresh random one.
+   */
+  private ompCall(params: Record<string, unknown>, id: string = randomUUID()): Promise<unknown> {
     const { promise, resolve, reject } = Promise.withResolvers<unknown>();
     this.ompPending.set(id, { resolve, reject });
-    const frame = JSON.stringify({ ...params, id }) + "\n";
-    this.tracer?.("out-omp", frame.trimEnd());
-    this.ompProcess?.stdin?.write(frame);
+    this.sendToOmp({ ...params, id });
     return promise;
   }
 
@@ -340,7 +359,7 @@ export class OmpBridge {
   private emitSystemMessage(sessionId: string, text: string): void {
     this.notify("agent.event", {
       sessionId,
-      ts: new Date().toISOString(),
+      ts: Date.now(),
       event: {
         type: "message_start",
         message: {
@@ -484,7 +503,7 @@ export class OmpBridge {
         // Cancel pending UI requests for this session; tell omp so its tool turn doesn't hang (E9).
         for (const [reqId, req] of this.pendingUiRequests) {
           if (req.sessionId === sessionId) {
-            this.ompCall({ type: "extension_ui_response", requestId: reqId, cancelled: true }).catch(() => undefined);
+            this.sendToOmp({ type: "extension_ui_response", id: reqId, cancelled: true });
             this.pendingUiRequests.delete(reqId);
           }
         }
@@ -498,17 +517,26 @@ export class OmpBridge {
         const requestId = String(p.requestId ?? "");
         const answers = (p.answers ?? []) as Array<string[] | null>;
         const value = serializeAskAnswers(answers);
-        try {
-          await this.ompCall({
-            type: "extension_ui_response",
-            requestId,
-            ...(value !== null ? { value } : { cancelled: true }),
-          });
-          this.pendingUiRequests.delete(requestId);
-          this.respond(id, {});
-        } catch (e) {
-          this.respondError(id, String(e));
-        }
+        this.sendToOmp({
+          type: "extension_ui_response",
+          id: requestId,
+          ...(value !== null ? { value } : { cancelled: true }),
+        });
+        this.pendingUiRequests.delete(requestId);
+        this.respond(id, {});
+        break;
+      }
+
+      case "tool_permission.resolve": {
+        const requestId = String(p.requestId ?? "");
+        const decision = String(p.decision ?? "");
+        this.sendToOmp({
+          type: "extension_ui_response",
+          id: requestId,
+          confirmed: decision !== "deny",
+        });
+        this.pendingUiRequests.delete(requestId);
+        this.respond(id, {});
         break;
       }
 
@@ -594,9 +622,16 @@ export class OmpBridge {
       }
     }
 
+    // omp has no per-session cwd/project field on new_session or open_session:
+    // cwd is fixed once at process spawn for the bridge's whole lifetime
+    // (start(), below). A single shared ompProcess also means open_session's
+    // "most recent session in this directory" resume can race if two
+    // PI-Desktop sessions ever share a project.
+    // ponytail: single-cwd-per-process ceiling; upgrade path is one omp child
+    // per session (tracked as a follow-up to this fix).
     const sessionCmd: Record<string, unknown> = sessionType === "open_session" && sessionDir
       ? { type: "open_session", sessionDir }
-      : { type: "new_session", cwd: this.state.cwd };
+      : { type: "new_session" };
 
     // Try to open existing session; fall back to new if omp GC'd it (E14).
     if (sessionType === "open_session") {
@@ -607,38 +642,47 @@ export class OmpBridge {
         sessionType = "new_session";
         sessionDir = undefined;
         if (store) store.delete(sessionId);
-        await this.ompCall({ type: "new_session", cwd: projectPath });
+        await this.ompCall({ type: "new_session" });
       }
     } else {
       await this.ompCall(sessionCmd);
     }
 
-    // Persist the session mapping.
+    // new_session/open_session responses carry no session identifier; learn it
+    // from get_state so the *next* prompt for this sessionId can resume this
+    // same omp session instead of starting over (E14, E19).
+    if (sessionType === "new_session") {
+      const state = (await this.ompCall({ type: "get_state" })) as { sessionFile?: string };
+      if (state?.sessionFile) sessionDir = dirname(state.sessionFile);
+    }
+
     this.sessions.set(sessionId, {
       ompSessionDir: sessionDir,
       projectPath,
       inputModalities: existing?.inputModalities ?? [],
     });
-
-    // Now send the actual prompt.
-    const promptResult = await this.ompCall({
-      type: "prompt",
-      message: content,
-      turnId,
-    }) as { accepted?: boolean; sessionDir?: string };
-
-    // Update the session store with the session directory omp assigned (E14, E19).
-    if (promptResult?.sessionDir) {
-      const entry = {
-        sessionDir: promptResult.sessionDir,
+    if (store && sessionDir) {
+      store.set(sessionId, {
+        sessionDir,
         projectPath,
         inputModalities: existing?.inputModalities ?? [],
-      };
-      this.sessions.set(sessionId, { ...entry, ompSessionDir: promptResult.sessionDir });
-      if (store) store.set(sessionId, entry);
+      });
     }
 
-    return { accepted: promptResult?.accepted !== false, turnId };
+    // Send the actual prompt. Its immediate response is only an ack
+    // ({agentInvoked}); the real outcome arrives later as a separate
+    // prompt_result frame correlated on the same id (see handleOmpFrame).
+    const promptId = randomUUID();
+    this.promptResultPending.set(promptId, { sessionId, turnId });
+    const ack = (await this.ompCall({ type: "prompt", message: content, turnId }, promptId)) as {
+      agentInvoked?: boolean;
+    };
+    if (ack?.agentInvoked === false) {
+      // Completed locally (e.g. a slash command); no prompt_result is coming.
+      this.promptResultPending.delete(promptId);
+    }
+
+    return { accepted: true, turnId };
   }
 
   /** Handle an NDJSON frame from omp's stdout. */
@@ -666,13 +710,44 @@ export class OmpBridge {
       return;
     }
 
-    // RPC response to a bridge call.
-    if (frame.id && !frame.type) {
+    // RPC response to a bridge call (real shape: {id, type:"response", ...}).
+    if (frame.type === "response" && frame.id !== undefined) {
       const pending = this.ompPending.get(String(frame.id));
       if (pending) {
         this.ompPending.delete(String(frame.id));
-        if (frame.error) pending.reject(new Error(String((frame.error as Record<string, unknown>)?.message ?? frame.error)));
-        else pending.resolve(frame.result);
+        if (frame.success === false) pending.reject(new Error(String(frame.error ?? "omp call failed")));
+        else pending.resolve(frame.data);
+      }
+      return;
+    }
+
+    // Terminal outcome of a prompt (E5/E19): the "response" above only acks
+    // that omp accepted it; this frame, correlated on the same id, reports how
+    // the turn actually ended. omp's own agent_end/message_end events
+    // (passthrough below) already cover the success case, so this only needs
+    // to surface what nothing else does: aborts and errors.
+    if (frame.type === "prompt_result") {
+      const promptId = String(frame.id ?? "");
+      const pending = this.promptResultPending.get(promptId);
+      this.promptResultPending.delete(promptId);
+      if (pending) {
+        const status = String(frame.status ?? "");
+        if (status === "error" || status === "aborted") {
+          const promptError = frame.error as { message?: string; retryable?: boolean } | undefined;
+          this.notify("agent.event", {
+            sessionId: pending.sessionId,
+            turnId: pending.turnId,
+            ts: Date.now(),
+            event: {
+              type: "error",
+              error: {
+                code: status === "aborted" ? ErrorCodes.TURN_ABORTED : ErrorCodes.PROVIDER_ERROR,
+                message: promptError?.message ?? "omp prompt failed",
+                retriable: promptError?.retryable,
+              },
+            },
+          });
+        }
       }
       return;
     }
@@ -748,19 +823,34 @@ export class OmpBridge {
     }
 
     // Agent events: map omp events to PI-Desktop agent.event notifications.
-    const eventType = String(frame.type ?? "");
-    if (DROP_EVENTS.has(eventType)) return;
+    const rawType = String(frame.type ?? "");
+    if (DROP_EVENTS.has(rawType)) return;
+    const eventType = TOOL_EVENT_RENAME[rawType] ?? rawType;
+    if (eventType !== rawType) frame.type = eventType;
+
+    // Same type name, different fields: omp's agent_end/turn_end carry the
+    // full message payload, but PI's AgentEvent expects a slimmer summary.
+    if (eventType === "agent_end") {
+      const messages = Array.isArray(frame.messages) ? frame.messages : [];
+      frame.messageIds = messages.map((m: any) => String(m?.id ?? ""));
+      delete frame.messages;
+      delete frame.telemetry;
+      delete frame.coverage;
+    } else if (eventType === "turn_end") {
+      delete frame.message;
+      delete frame.toolResults;
+    }
 
     if (PASSTHROUGH_EVENTS.has(eventType)) {
       // Track open tool calls (for synthesizing toolCallId when ui_request arrives).
-      if (eventType === "tool_start" || eventType === "tool_execution_start") {
+      if (eventType === "tool_start") {
         const sessionId = String(frame.sessionId ?? "");
         this.openTools.set(sessionId, {
           toolCallId: String(frame.toolCallId ?? frame.id ?? ""),
           toolName: String(frame.toolName ?? ""),
         });
       }
-      if (eventType === "tool_end" || eventType === "tool_execution_end") {
+      if (eventType === "tool_end") {
         const sessionId = String(frame.sessionId ?? "");
         this.openTools.delete(sessionId);
       }
@@ -768,7 +858,7 @@ export class OmpBridge {
       this.notify("agent.event", {
         sessionId: frame.sessionId,
         turnId: frame.turnId,
-        ts: new Date().toISOString(),
+        ts: Date.now(),
         event: frame,
       });
     }
@@ -784,18 +874,14 @@ export class OmpBridge {
       if (req.method === "cancel") {
         this.pendingUiRequests.delete(req.id);
         // Also send a response to omp so it doesn't block.
-        this.ompCall({ type: "extension_ui_response", requestId: req.id, cancelled: true }).catch(() => undefined);
+        this.sendToOmp({ type: "extension_ui_response", id: req.id, cancelled: true });
       }
       return;
     }
 
     if (mapped.type === "editor_refusal") {
       // Immediately respond with a refusal so the tool turn doesn't hang (E9).
-      this.ompCall({
-        type: "extension_ui_response",
-        requestId: req.id,
-        cancelled: true,
-      }).catch(() => undefined);
+      this.sendToOmp({ type: "extension_ui_response", id: req.id, cancelled: true });
       return;
     }
 
@@ -810,17 +896,19 @@ export class OmpBridge {
       return;
     }
 
-    // tool_permission_request and asktool_request — track and forward.
+    // tool_permission_request and asktool_request — track and forward, nested
+    // as PI's AgentEvent expects ({type, request}), not the mapper's flat shape.
     this.pendingUiRequests.set(req.id, {
       sessionId,
       toolCallId: openTool?.toolCallId ?? req.id,
       toolName: openTool?.toolName ?? req.title ?? "tool",
     });
 
+    const { type, ...request } = mapped;
     this.notify("agent.event", {
       sessionId,
-      ts: new Date().toISOString(),
-      event: mapped,
+      ts: Date.now(),
+      event: { type, request },
     });
   }
 
