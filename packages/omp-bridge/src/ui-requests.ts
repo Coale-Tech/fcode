@@ -1,5 +1,5 @@
 /**
- * omp extension_ui_request → PI-Desktop event mapper (E9, E20).
+ * omp extension_ui_request → Fcode event mapper (E9, E20).
  *
  * omp's extension_ui_request.method values and their PI equivalents:
  * - "confirm"  → tool_permission_request (PermissionCard)
@@ -74,7 +74,7 @@ export type MappedUiRequest =
   | null; // null = cancel or ignored method
 
 /**
- * Map one omp extension_ui_request frame to its PI-Desktop equivalent.
+ * Map one omp extension_ui_request frame to its Fcode equivalent.
  * Returns null for methods that are cleared (cancel) or safely ignored.
  *
  * @param req - The omp frame
