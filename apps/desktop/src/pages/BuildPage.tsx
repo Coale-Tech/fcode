@@ -370,8 +370,8 @@ export function BuildPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <main style={PAGE_STYLE} aria-label="Build">
-      {/* ── Control strip ─────────────────────────────────────────────────── */}
+    <main className="page-frame build-page" aria-label="Build">
+      <div style={PAGE_STYLE}>
       <div style={STRIP_STYLE} role="toolbar" aria-label="Build controls" className="build-control-strip">
 
         {/* Studio / Builder switch */}
@@ -535,6 +535,7 @@ export function BuildPage() {
           onStartBench={() => void invoke(IPC.invoke.benchStart, {})}
           onRetryApps={() => void loadApps()}
         />
+      </div>
       </div>
     </main>
   );
