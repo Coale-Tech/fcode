@@ -219,6 +219,14 @@ test("packaging keeps only shipped locales and excludes non-runtime artifacts", 
       from: "resources/models.dev",
       to: "models.dev",
     },
+    // Fcode-specific skills shipped as a separate resource directory so the
+    // overlay can point skills.customDirectories at it without colliding with
+    // the PI-Desktop skills format (skills/fcode-skills would not match the
+    // overlay path <resourcesPath>/fcode-skills).
+    {
+      from: "resources/fcode-skills",
+      to: "fcode-skills",
+    },
   ]);
   assert.doesNotMatch(JSON.stringify(packageJson.build), /node-pty/);
 });

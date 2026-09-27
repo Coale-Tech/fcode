@@ -69,7 +69,14 @@
     "test:e2e:session-completion": "node scripts/e2e-session-completion.mjs",
     "test:e2e:remote-host": "node scripts/e2e-remote-host.mjs",
     "test:e2e:shortcut-settings": "node scripts/test-shortcut-settings.mjs",
-    "test:e2e:dialog-overflow": "node scripts/test-dialog-overflow.mjs"
+    "test:e2e:dialog-overflow": "node scripts/test-dialog-overflow.mjs",
+    "fcode:doctor": "node scripts/fcode-doctor.mjs",
+    "fcode:dev": "pnpm fcode:doctor && pnpm install && pnpm build:js && pnpm --filter @pi-desktop/desktop dev",
+    "test:bridge-unit": "pnpm -C packages/omp-bridge test",
+    "test:protocol-smoke": "node --test apps/desktop/test/omp-protocol-smoke.test.mjs",
+    "test:typecheck": "pnpm --filter @pi-desktop/desktop typecheck",
+    "test:bench-fixture": "node --test apps/desktop/test/bench-discovery.test.mjs",
+    "test:package-smoke": "pnpm -r --if-present test"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.13",
