@@ -14,17 +14,49 @@ const STEP_LOCALE_KEY: Record<string, string> = {
 
 /** First-run inline checklist (D021): rendered on the empty chat home until
  * every step is done or the user dismisses it. State comes from the host
- * (app.getOnboarding); actions deep-link into the relevant surface. */
+ * (app.getOnboarding); actions deep-link into the relevant surface.
+ * Bench-specific steps (bench.discover / bench.select / bench.start) are
+ * sourced from the renderer store — host-core is frozen and cannot own them. */
 export function OnboardingChecklist() {
   const { t } = useTranslation();
   const onboarding = useAppStore((s) => s.onboarding);
+  const workspace = useAppStore((s) => s.workspace);
+  const discoveredBenchCount = useAppStore((s) => s.discoveredBenchCount);
   const setPage = useAppStore((s) => s.setPage);
   const setSettingsTab = useAppStore((s) => s.setSettingsTab);
   const openProject = useAppStore((s) => s.openProject);
 
-  if (!onboarding?.showChecklist) return null;
-  const steps = onboarding.steps ?? [];
-  if (steps.length === 0 || steps.every((s) => s.done)) return null;
+  // Bench steps sourced from renderer store (not host-core).
+  // Discovery runs automatically at launch so bench.discover is always done.
+  const benchSelected = workspace != null;
+  const benchDiscoverTitle =
+    discoveredBenchCount != null && discoveredBenchCount > 0
+      ? t("onboarding.benchDiscoverCount", "{{count}} benches found", {
+          count: discoveredBenchCount,
+        })
+      : t("onboarding.benchDiscover", "Discover benches");
+  const benchSteps = [
+    { id: "bench.discover", title: benchDiscoverTitle, done: true },
+    {
+      id: "bench.select",
+      title: t("onboarding.benchSelect", "Select a bench to work on"),
+      done: benchSelected,
+    },
+    {
+      id: "bench.start",
+      title: t("onboarding.benchStart", "Start your bench"),
+      done: false,
+    },
+  ];
+  const allBenchDone = benchSelected; // select implies start will happen from Bench tab
+
+  const hostSteps = onboarding?.showChecklist ? (onboarding.steps ?? []) : [];
+  const allHostDone = hostSteps.length === 0 || hostSteps.every((s) => s.done);
+
+  // Show checklist when bench onboarding is incomplete OR host steps are pending.
+  if (allBenchDone && allHostDone) return null;
+  // If host-core says no checklist and all bench steps done, stay hidden.
+  if (allBenchDone && !onboarding?.showChecklist) return null;
 
   const stepLabel = (id: string, fallback: string) => {
     const key = `onboarding.${STEP_LOCALE_KEY[id] ?? id}`;
@@ -55,6 +87,11 @@ export function OnboardingChecklist() {
       case "plugins.open":
       case "loadPlugin":
         setPage("plugins");
+        break;
+      case "bench.discover":
+      case "bench.select":
+      case "bench.start":
+        setPage("bench");
         break;
       default:
         break;
@@ -93,12 +130,12 @@ export function OnboardingChecklist() {
         </button>
       </div>
       <ul className="flex flex-col gap-1.5">
-        {steps.map((step) => (
+        {[...benchSteps, ...hostSteps].map((step) => (
           <li key={step.id}>
             <button
               type="button"
               disabled={step.done}
-              onClick={() => runAction(step.action || step.id)}
+              onClick={() => runAction("action" in step ? (step as { action?: string; id: string }).action ?? step.id : step.id)}
               className={`flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-md ${
                 step.done
                   ? "cursor-default text-text-muted line-through"

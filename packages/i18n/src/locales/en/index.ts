@@ -583,6 +583,10 @@ export const en = {
     firstPrompt: "Send your first message",
     loadPlugin: "Load a development plugin (optional)",
     dismiss: "Dismiss",
+    benchDiscoverCount: "{{count}} benches found",
+    benchDiscover: "Discover benches",
+    benchSelect: "Select a bench to work on",
+    benchStart: "Start your bench",
   },
   settings: {
     power: "Power",
@@ -2460,6 +2464,11 @@ importConfirm: "Imported extensions run inside the agent process with the same a
     sessionTitleEmpty: "Session title must not be empty",
     projectNameLength: "Project name must be between 1 and 80 characters",
     planApprovalUnavailable: "Plan approval is no longer available",
+    sidecarFatal: {
+      title: "Fcode agent not found",
+      detail: "The agent binary was not found at any of the probed paths.",
+      action: "Choose binary…",
+    },
     action: {
       openSettings: "Open settings",
       retry: "Try again",

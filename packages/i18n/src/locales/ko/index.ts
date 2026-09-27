@@ -585,6 +585,10 @@ export const ko = {
     firstPrompt: "첫 메시지 보내기",
     loadPlugin: "개발 플러그인 불러오기 (선택 사항)",
     dismiss: "닫기",
+    benchDiscoverCount: "{{count}} benches found",
+    benchDiscover: "Discover benches",
+    benchSelect: "Select a bench to work on",
+    benchStart: "Start your bench",
   },
   settings: {
     power: "전원",
@@ -2455,6 +2459,11 @@ importConfirm: "가져온 확장은 에이전트 프로세스 안에서 에이�
     sessionTitleEmpty: "세션 제목은 비워 둘 수 없습니다",
     projectNameLength: "프로젝트 이름은 1~80자여야 합니다",
     planApprovalUnavailable: "계획 승인을 더 이상 사용할 수 없습니다",
+    sidecarFatal: {
+      title: "Fcode agent not found",
+      detail: "The agent binary was not found at any of the probed paths.",
+      action: "Choose binary…",
+    },
     action: {
       openSettings: "설정 열기",
       retry: "다시 시도",

@@ -122,7 +122,7 @@ child.on("close", (code) => {
   if (
     code === 0 &&
     probe?.ok &&
-    probe.appName === "PI-Desktop" &&
+    probe.appName === "Fcode" &&
     probe.platform === process.platform &&
     (process.platform === "darwin" || probe.maximized === true) &&
     menuContractOk &&

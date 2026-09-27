@@ -89,10 +89,46 @@ export class BrowserPane {
   private stateEventsEpoch: number | null = null;
   private stateUrl: string | null = null;
   private nativeNavigationPending = false;
+  /** Canvas ownership: id of the current owner, or null when free (E13). */
+  private canvasOwner: string | null = null;
 
   constructor(onState: (state: BrowserState) => void) {
     this.onState = onState;
   }
+
+  /**
+   * Attempt to acquire exclusive ownership of the canvas (E13).
+   * Returns true if successful (no owner, or caller already owns it).
+   * Returns false if another owner holds it.
+   */
+  acquireCanvas(ownerId: string): boolean {
+    if (this.canvasOwner === null || this.canvasOwner === ownerId) {
+      this.canvasOwner = ownerId;
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Release ownership. No-op if the caller does not currently own it (E13).
+   */
+  releaseCanvas(ownerId: string): void {
+    if (this.canvasOwner === ownerId) this.canvasOwner = null;
+  }
+
+  /**
+   * Force-acquire ownership even if another owner holds it (explicit handoff, E13).
+   * Use only for user-initiated surface switches, not for tool calls.
+   */
+  forceAcquireCanvas(ownerId: string): void {
+    this.canvasOwner = ownerId;
+  }
+
+  /** Return the current canvas owner id, or null when free (E13). */
+  currentOwner(): string | null {
+    return this.canvasOwner;
+  }
+
 
   setWindow(window: BrowserWindow | null): void {
     if (this.window === window) return;

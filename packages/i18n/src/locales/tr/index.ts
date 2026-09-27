@@ -585,6 +585,10 @@ export const tr = {
     firstPrompt: "İlk iletinizi gönderin",
     loadPlugin: "Geliştirme eklentisi yükleyin (isteğe bağlı)",
     dismiss: "Kapat",
+    benchDiscoverCount: "{{count}} benches found",
+    benchDiscover: "Discover benches",
+    benchSelect: "Select a bench to work on",
+    benchStart: "Start your bench",
   },
   settings: {
     power: "Güç",
@@ -2445,6 +2449,11 @@ importConfirm: "İçe aktarılan uzantılar ajan sürecinde, ajanın kendi araç
     sessionTitleEmpty: "Oturum başlığı boş olamaz",
     projectNameLength: "Proje adı 1 ile 80 karakter arasında olmalıdır",
     planApprovalUnavailable: "Plan onayı artık kullanılamıyor",
+    sidecarFatal: {
+      title: "Fcode agent not found",
+      detail: "The agent binary was not found at any of the probed paths.",
+      action: "Choose binary…",
+    },
     action: {
       openSettings: "Ayarları aç",
       retry: "Yeniden dene",

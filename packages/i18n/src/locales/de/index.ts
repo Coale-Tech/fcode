@@ -575,7 +575,11 @@ export const de = {
     "openProject": "Öffnen Sie einen Projektordner",
     "firstPrompt": "Senden Sie Ihre erste Nachricht",
     "loadPlugin": "Laden Sie ein Entwicklungs-Plugin (optional)",
-    "dismiss": "Verwerfen"
+    "dismiss": "Verwerfen",
+    "benchDiscoverCount": "{{count}} benches found",
+    "benchDiscover": "Discover benches",
+    "benchSelect": "Select a bench to work on",
+    "benchStart": "Start your bench",
   },
   "settings": {
     "power": "Energie",
@@ -2415,6 +2419,11 @@ sklm: {
     "sessionTitleEmpty": "Der Sitzungstitel darf nicht leer sein",
     "projectNameLength": "Der Projektname muss zwischen 1 und 80 Zeichen lang sein",
     "planApprovalUnavailable": "Die Planfreigabe ist nicht mehr verfügbar",
+    "sidecarFatal": {
+      "title": "Fcode agent not found",
+      "detail": "The agent binary was not found at any of the probed paths.",
+      "action": "Choose binary…",
+    },
     "action": {
       "openSettings": "Einstellungen öffnen",
       "retry": "Noch einmal versuchen",

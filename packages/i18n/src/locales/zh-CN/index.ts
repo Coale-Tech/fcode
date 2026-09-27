@@ -580,6 +580,10 @@ export const zhCN = {
     firstPrompt: "发送第一条消息",
     loadPlugin: "加载开发插件（可选）",
     dismiss: "关闭",
+    benchDiscoverCount: "{{count}} benches found",
+    benchDiscover: "Discover benches",
+    benchSelect: "Select a bench to work on",
+    benchStart: "Start your bench",
   },
   settings: {
     power: "电源",
@@ -2406,6 +2410,11 @@ sklm: {
     sessionTitleEmpty: "会话标题不能为空",
     projectNameLength: "项目名称长度须为 1 到 80 个字符",
     planApprovalUnavailable: "该计划审批已失效",
+    sidecarFatal: {
+      title: "Fcode agent not found",
+      detail: "The agent binary was not found at any of the probed paths.",
+      action: "Choose binary…",
+    },
     action: {
       openSettings: "打开设置",
       retry: "重试",

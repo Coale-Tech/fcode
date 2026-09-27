@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   messageHasTranscriptContent,
@@ -15,6 +15,7 @@ import { ConversationWidthHandles } from "./ConversationWidthHandles";
 import { useAppStore } from "../stores/app-store";
 import { headPermission } from "../lib/pending-permissions";
 import { headAsk } from "../lib/pending-asks";
+import { IPC } from "@pi-desktop/shared";
 
 const StableComposer = memo(Composer);
 
@@ -64,6 +65,22 @@ export const ChatSurface = memo(function ChatSurface({
   const [hiddenVendorModelKey, setHiddenVendorModelKey] = useState<string | null>(
     null,
   );
+  const [sidecarFatal, setSidecarFatal] = useState<{
+    code: string;
+    paths: string[];
+    detail: string;
+  } | null>(null);
+
+  // Subscribe to sidecar.fatal events from the omp bridge. When the omp binary
+  // cannot be located the bridge emits this before exit, and we render a full
+  // blocking panel so the user can point to their own binary.
+  useEffect(() => {
+    const bridge = window.piDesktop;
+    if (!bridge) return;
+    return bridge.on(IPC.event.sidecarFatal, (params) => {
+      setSidecarFatal(params as { code: string; paths: string[]; detail: string });
+    });
+  }, []);
   const providers = useAppStore((state) => state.providers);
   const activeSession = useAppStore((state) =>
     state.activeSessionId
@@ -146,6 +163,40 @@ export const ChatSurface = memo(function ChatSurface({
       className={`chat-surface route-surface${sessionSwitching ? " session-switching" : ""}`}
       aria-busy={sessionSwitching}
     >
+      {sidecarFatal ? (
+        <div className="chat-sidecar-fatal" role="alert" aria-live="assertive">
+          <div className="chat-sidecar-fatal-inner">
+            <h2>{t("errors.sidecarFatal.title", "Fcode agent not found")}</h2>
+            <p>
+              {t(
+                "errors.sidecarFatal.detail",
+                "The omp binary could not be located. Probed paths:",
+              )}
+            </p>
+            <ul>
+              {sidecarFatal.paths.map((p) => (
+                <li key={p}>
+                  <code>{p}</code>
+                </li>
+              ))}
+            </ul>
+            {sidecarFatal.detail ? (
+              <p className="chat-sidecar-fatal-detail">{sidecarFatal.detail}</p>
+            ) : null}
+            <button
+              type="button"
+              className="chat-error-action"
+              onClick={() => {
+                // TODO: open a file picker to choose the omp binary path.
+                // For now dismiss so the user can set OMP_BIN env and relaunch.
+                setSidecarFatal(null);
+              }}
+            >
+              {t("errors.sidecarFatal.action", "Choose binary…")}
+            </button>
+          </div>
+        </div>
+      ) : null}
       {sessionSwitching ? (
         <div className="session-switch-progress" aria-hidden>
           <span />

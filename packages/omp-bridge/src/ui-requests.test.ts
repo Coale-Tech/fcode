@@ -1,0 +1,135 @@
+/**
+ * Tests for extension_ui_request mapping and multi-select serialization (E9, E20).
+ */
+import { describe, expect, it } from "vitest";
+import { mapExtensionUiRequest, serializeAskAnswers } from "./ui-requests.js";
+
+const openTool = { toolCallId: "tc1", toolName: "bash" };
+
+describe("mapExtensionUiRequest", () => {
+  it("maps confirm → tool_permission_request", () => {
+    const result = mapExtensionUiRequest(
+      { id: "r1", method: "confirm", title: "bench execute frappe.utils.now", message: "Allow?" },
+      "s1",
+      openTool,
+    );
+    expect(result?.type).toBe("tool_permission_request");
+    if (result?.type !== "tool_permission_request") return;
+    expect(result.requestId).toBe("r1");
+    expect(result.sessionId).toBe("s1");
+    expect(result.toolCallId).toBe("tc1");
+    expect(result.toolName).toBe("bash");
+    expect(result.risk).toBe("high");
+  });
+
+  it("maps select → asktool_request", () => {
+    const result = mapExtensionUiRequest(
+      {
+        id: "r2",
+        method: "select",
+        message: "Choose option",
+        options: [{ value: "a", label: "A" }, { value: "b", label: "B" }],
+      },
+      "s1",
+      openTool,
+    );
+    expect(result?.type).toBe("asktool_request");
+    if (result?.type !== "asktool_request") return;
+    expect(result.questions[0].options).toEqual(["a", "b"]);
+    expect(result.questions[0].multiSelect).toBe(false);
+  });
+
+  it("maps input → asktool_request", () => {
+    const result = mapExtensionUiRequest(
+      { id: "r3", method: "input", message: "Enter value" },
+      "s1",
+      openTool,
+    );
+    expect(result?.type).toBe("asktool_request");
+    if (result?.type !== "asktool_request") return;
+    expect(result.questions[0].options).toEqual([]);
+  });
+
+  it("maps editor → editor_refusal so turn does not hang (E9)", () => {
+    const result = mapExtensionUiRequest(
+      { id: "r4", method: "editor" },
+      "s1",
+      openTool,
+    );
+    expect(result?.type).toBe("editor_refusal");
+    if (result?.type !== "editor_refusal") return;
+    expect(result.requestId).toBe("r4");
+  });
+
+  it("maps cancel → null so the pending-request map entry is cleared (E9)", () => {
+    const result = mapExtensionUiRequest(
+      { id: "r5", method: "cancel" },
+      "s1",
+      openTool,
+    );
+    expect(result).toBeNull();
+  });
+
+  it("maps notify → system_message", () => {
+    const result = mapExtensionUiRequest(
+      { id: "r6", method: "notify", message: "Hello from omp" },
+      "s1",
+      openTool,
+    );
+    expect(result?.type).toBe("system_message");
+    if (result?.type !== "system_message") return;
+    expect(result.text).toBe("Hello from omp");
+  });
+
+  it("maps open_url → open_url with the launchUrl preferred", () => {
+    const result = mapExtensionUiRequest(
+      { id: "r7", method: "open_url", url: "https://fallback", launchUrl: "https://preferred" },
+      "s1",
+      openTool,
+    );
+    expect(result?.type).toBe("open_url");
+    if (result?.type !== "open_url") return;
+    expect(result.url).toBe("https://preferred");
+  });
+
+  it("drops setStatus / setWidget / setTitle → null", () => {
+    for (const method of ["setStatus", "setWidget", "setTitle"]) {
+      const result = mapExtensionUiRequest(
+        { id: "rx", method },
+        "s1",
+        openTool,
+      );
+      expect(result).toBeNull();
+    }
+  });
+
+  it("falls back to req.id as toolCallId when no open tool is present", () => {
+    const result = mapExtensionUiRequest(
+      { id: "r8", method: "confirm", message: "Allow?" },
+      "s1",
+      undefined,
+    );
+    expect(result?.type).toBe("tool_permission_request");
+    if (result?.type !== "tool_permission_request") return;
+    expect(result.toolCallId).toBe("r8");
+  });
+});
+
+describe("serializeAskAnswers (E20 — multi-select wire format)", () => {
+  it("joins multi-select answers with NUL delimiter", () => {
+    const result = serializeAskAnswers([["a", "b", "c"]]);
+    expect(result).toBe("a\0b\0c");
+  });
+
+  it("returns the single value for a single-select answer", () => {
+    expect(serializeAskAnswers([["yes"]])).toBe("yes");
+  });
+
+  it("returns null for a cancelled answer (null entry)", () => {
+    expect(serializeAskAnswers([null])).toBeNull();
+  });
+
+  it("returns null for an empty answers array", () => {
+    expect(serializeAskAnswers([])).toBeNull();
+  });
+});
