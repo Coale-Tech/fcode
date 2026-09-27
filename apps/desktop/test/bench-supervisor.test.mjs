@@ -205,6 +205,32 @@ test("BenchSupervisor: stale child's close event after stop()+start() does not f
   assert.equal(statuses.at(-1), "failed");
 });
 
+test("BenchSupervisor: a start failure carries the benchPath it was for", async (t) => {
+  // The renderer scopes its startFailure UI to whichever bench is selected
+  // (startFailure.benchPath === selectedBench.path) so a failure for one
+  // bench can't leak onto another bench's panel and Retry button
+  // (cross-bench Start-failure leak). That only works if every "failure"
+  // event actually carries the bench it happened for.
+  const { BenchSupervisor } = await import("../electron/main/bench/supervisor.ts");
+  const children = [];
+  fakeSpawn(t, children);
+
+  const sup = new BenchSupervisor();
+  const failures = [];
+  sup.on("failure", (f) => failures.push(f));
+
+  await sup.start("/tmp/bench-a");
+  children[0].emit("error", Object.assign(new Error("spawn bench ENOENT"), { code: "ENOENT" }));
+  assert.equal(failures.length, 1);
+  assert.equal(failures[0].benchPath, "/tmp/bench-a");
+
+  sup.stop();
+  await sup.start("/tmp/bench-b");
+  children[1].emit("close", 1);
+  assert.equal(failures.length, 2);
+  assert.equal(failures[1].benchPath, "/tmp/bench-b");
+});
+
 test("BenchSupervisor: stale watcher child's close event after startWatcher()+startWatcher() does not spawn a phantom restart", async (t) => {
   const { BenchSupervisor } = await import("../electron/main/bench/supervisor.ts");
   const children = [];

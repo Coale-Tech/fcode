@@ -50,6 +50,7 @@ type LogLine = {
 // ── T6 gap types ─────────────────────────────────────────────────────────────
 
 type StartFailureState = {
+  benchPath: string;
   failure: { code: string; problem: string; cause: string; fix: string; docsUrl: string };
   exitCode?: number | null;
   logTail?: string;
@@ -201,12 +202,13 @@ export function BenchPage() {
     if (!bridge) return;
     const off = bridge.on(IPC.event.benchFailure, (data: unknown) => {
       if (data && typeof data === "object" && "failure" in data) {
-        const { failure, exitCode, logTail } = data as {
+        const { failure, exitCode, logTail, benchPath } = data as {
           failure: { code: string; problem: string; cause: string; fix: string; docsUrl: string };
           exitCode?: number | null;
           logTail?: string;
+          benchPath: string;
         };
-        setStartFailure({ failure, exitCode, logTail });
+        setStartFailure({ failure, exitCode, logTail, benchPath });
       }
     });
     return () => off?.();
@@ -315,6 +317,7 @@ export function BenchPage() {
       const errorCode = err instanceof Error ? (err as Error & { errorCode?: string }).errorCode : undefined;
       if (errorCode === ErrorCodes.CONFLICT) {
         setStartFailure({
+          benchPath: selectedBench.path,
           failure: {
             code: ErrorCodes.CONFLICT,
             problem: "Can't start this bench",
@@ -518,7 +521,10 @@ export function BenchPage() {
             onStop={handleStop}
             onRun={handleRun}
             elapsedLabel={elapsedLabel}
-            startFailure={startFailure}
+            // Stale failures from a different bench must not follow the
+            // selection here or into Retry's onStart (cross-bench Start-
+            // failure leak) — gate identically to displayStatus above.
+            startFailure={startFailure && startFailure.benchPath === selectedBench.path ? startFailure : null}
             warnings={warnings}
             oneshotState={oneshotState}
           />

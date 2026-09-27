@@ -75,3 +75,37 @@ test("handleStart surfaces a CONFLICT rejection via startFailure instead of only
   // Genuinely unexpected errors still fall back to logging.
   assert.match(fn, /console\.error\("\[BenchPage\] start failed"/);
 });
+
+test("StartFailureState carries the benchPath it belongs to", () => {
+  const decl = source.slice(
+    source.indexOf("type StartFailureState"),
+    source.indexOf("type StartFailureState") + 200,
+  );
+  assert.match(decl, /benchPath:\s*string/);
+});
+
+test("Both startFailure writers (handleStart's catch and the benchFailure listener) set benchPath", () => {
+  const startFn = source.slice(
+    source.indexOf("const handleStart"),
+    source.indexOf("const handleStop"),
+  );
+  assert.match(startFn, /setStartFailure\(\{\s*benchPath:\s*selectedBench\.path/);
+
+  const listenerFn = source.slice(
+    source.indexOf("Gap 1 / T6: bench-start failure event"),
+    source.indexOf("Gap 1 / T6: bench-start failure event") + 700,
+  );
+  assert.match(listenerFn, /const \{ failure, exitCode, logTail, benchPath \} = data as/);
+  assert.match(listenerFn, /setStartFailure\(\{ failure, exitCode, logTail, benchPath \}\)/);
+});
+
+test("BenchDetail only receives startFailure when it matches the selected bench (cross-bench Start-failure leak)", () => {
+  // Without this gate, a CONFLICT (or supervisor crash) failure for bench A
+  // keeps rendering — role="alert" panel and all — after the user selects
+  // bench B, and B's Retry button would start B while the panel still talks
+  // about A.
+  assert.match(
+    source,
+    /startFailure=\{startFailure && startFailure\.benchPath === selectedBench\.path \? startFailure : null\}/,
+  );
+});

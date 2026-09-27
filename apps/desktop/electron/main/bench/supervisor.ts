@@ -311,7 +311,7 @@ export class BenchSupervisor extends EventEmitter {
       this.status = "failed";
       this.emit("status", this.status);
       // Gap 1 / T6: include logTail so the renderer can show the last output
-      this.emit("failure", { process: "start", failure, logTail: err.message });
+      this.emit("failure", { process: "start", benchPath, failure, logTail: err.message });
       proc.child = null;
     });
 
@@ -324,7 +324,7 @@ export class BenchSupervisor extends EventEmitter {
         this.status = "failed";
         this.emit("status", this.status);
         // Gap 1 / T6: include logTail so the renderer can show the last output
-        this.emit("failure", { process: "start", failure, exitCode: code, logTail: lastLines });
+        this.emit("failure", { process: "start", benchPath, failure, exitCode: code, logTail: lastLines });
       }
     });
     return { conflict: false };
