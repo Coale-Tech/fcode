@@ -59,6 +59,8 @@ export type BrowserHostDeps = {
   getFileRoot: (sessionId?: string) => Promise<string | null>;
   getScratchDir?: (sessionId?: string) => string | null;
   onState: (state: BrowserState) => void;
+  /** Canvas ownership changed; owner id, or null when released (E13). */
+  onOwnerChange?: (owner: string | null) => void;
 };
 
 type ChromeSurface = {
@@ -67,6 +69,39 @@ type ChromeSurface = {
   visible: boolean;
   bounds: BrowserRect;
 };
+
+/**
+ * Minimal surface `withAgentCanvasOwnership` needs — satisfied structurally by
+ * `BrowserHost` (E13). Kept separate so ownership handoff is testable without
+ * constructing a full host.
+ */
+export type CanvasOwnership = {
+  currentOwner(): string | null;
+  forceAcquireCanvas(ownerId: string): void;
+  releaseCanvas(ownerId: string): void;
+};
+
+/**
+ * Run `fn` with the canvas force-acquired as "agent", then hand ownership
+ * back to whoever held it before (or release it if nobody did). Never
+ * refuses — the agent's tool call always proceeds, matching E13's chosen
+ * "visible banner, not blocked" behavior — but restoring the prior owner
+ * (instead of always releasing) keeps a foreground Build tab's own
+ * navigate/action calls from breaking after the agent's call returns.
+ */
+export async function withAgentCanvasOwnership<T>(
+  canvas: CanvasOwnership,
+  fn: () => Promise<T>,
+): Promise<T> {
+  const previousOwner = canvas.currentOwner();
+  canvas.forceAcquireCanvas("agent");
+  try {
+    return await fn();
+  } finally {
+    if (previousOwner) canvas.forceAcquireCanvas(previousOwner);
+    else canvas.releaseCanvas("agent");
+  }
+}
 
 /**
  * Public `pi.browser.*` implementation: one host-owned guest WebContentsView,
@@ -87,6 +122,26 @@ export class BrowserHost {
   constructor(deps: BrowserHostDeps) {
     this.deps = deps;
     this.pane = deps.pane;
+  }
+
+  /** Current canvas owner id, or null when free (E13). */
+  currentOwner(): string | null {
+    return this.pane.currentOwner();
+  }
+
+  /**
+   * Force-acquire canvas ownership and notify the renderer so a visible
+   * indicator can show while a non-previous owner holds it (E13).
+   */
+  forceAcquireCanvas(ownerId: string): void {
+    this.pane.forceAcquireCanvas(ownerId);
+    this.deps.onOwnerChange?.(ownerId);
+  }
+
+  /** Release ownership (no-op if the caller does not hold it) and notify (E13). */
+  releaseCanvas(ownerId: string): void {
+    this.pane.releaseCanvas(ownerId);
+    this.deps.onOwnerChange?.(this.pane.currentOwner());
   }
 
   setChromeSurface(surface: ChromeSurface | null): void {

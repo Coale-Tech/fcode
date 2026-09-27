@@ -13,6 +13,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Three new IDE surfaces: Code tab (Monaco), Build tab (Studio/Builder), Bench tab
 - Bench discovery: auto-scans configured roots for Frappe benches
 - `fcode_bench_execute`, `fcode_bench_run`, `fcode_canvas`, `fcode_canvas_read` host tools
+- `fcode_canvas` force-acquires the shared canvas for agent-driven actions and shows a visible "Agent is using this canvas" banner in the Build tab, restoring the previous owner afterward
 - Developer ID signed and notarized macOS distribution under Coale-Tech
 - Legal attribution (`NOTICE.md`) and commercial-control-point decision record
 - `scripts/check-legal.mjs` gates every release against upstream identity leakage

@@ -73,6 +73,7 @@ export function BuildPage() {
   const [canvasTimedOut, setCanvasTimedOut] = useState(false);
   const [canvasOwned, setCanvasOwned] = useState(false);
   const [canvasFocused, setCanvasFocused] = useState(false);
+  const [agentUsingCanvas, setAgentUsingCanvas] = useState(false);
 
   // Studio watcher
   const [watcherStatus, setWatcherStatus] = useState<WatcherStatus>("stopped");
@@ -204,6 +205,20 @@ export function BuildPage() {
           setCanvasTimedOut(false);
         }
       }
+    });
+    return () => off?.();
+  }, []);
+
+  // Track agent canvas takeover via browserCanvasOwner events (E13)
+  useEffect(() => {
+    const bridge = window.piDesktop;
+    if (!bridge) return;
+    const off = bridge.on(IPC.event.browserCanvasOwner, (data: unknown) => {
+      const owner =
+        data !== null && typeof data === "object" && "owner" in data
+          ? (data.owner as string | null)
+          : null;
+      setAgentUsingCanvas(owner === "agent");
     });
     return () => off?.();
   }, []);
@@ -397,6 +412,13 @@ export function BuildPage() {
             Builder
           </button>
         </div>
+
+        {/* Agent is actively driving the shared canvas (E13) */}
+        {agentUsingCanvas && (
+          <span style={WARN_INLINE_STYLE} role="status" aria-live="polite">
+            ⚡ Agent is using this canvas
+          </span>
+        )}
 
         {/* list-apps loading/error feedback */}
         {listAppsStatus === "loading" && (
