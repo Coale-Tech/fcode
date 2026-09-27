@@ -77,29 +77,60 @@ type ChromeSurface = {
  */
 export type CanvasOwnership = {
   currentOwner(): string | null;
+  currentGeneration(): number;
   forceAcquireCanvas(ownerId: string): void;
   releaseCanvas(ownerId: string): void;
 };
+
+type OwnershipLease = {
+  depth: number;
+  previousOwner: string | null;
+  baseGeneration: number;
+};
+
+/** One lease per canvas so overlapping agent calls share a single hold (E13). */
+const ownershipLeases = new WeakMap<CanvasOwnership, OwnershipLease>();
 
 /**
  * Run `fn` with the canvas force-acquired as "agent", then hand ownership
  * back to whoever held it before (or release it if nobody did). Never
  * refuses — the agent's tool call always proceeds, matching E13's chosen
- * "visible banner, not blocked" behavior — but restoring the prior owner
- * (instead of always releasing) keeps a foreground Build tab's own
- * navigate/action calls from breaking after the agent's call returns.
+ * "visible banner, not blocked" behavior.
+ *
+ * Overlapping calls (concurrent tool dispatch) share one lease keyed by
+ * `depth`: only the first caller snapshots the previous owner and
+ * force-acquires; only the last caller to finish attempts a restore. That
+ * restore is skipped — in favor of a plain "release agent", a no-op unless
+ * we are still the current owner — whenever the pane's generation counter
+ * has moved past what the lease captured, which means something else
+ * (a Build tab unmount/remount racing the agent) touched ownership while
+ * the lease was held and the snapshot is stale.
  */
 export async function withAgentCanvasOwnership<T>(
   canvas: CanvasOwnership,
   fn: () => Promise<T>,
 ): Promise<T> {
-  const previousOwner = canvas.currentOwner();
-  canvas.forceAcquireCanvas("agent");
+  let lease = ownershipLeases.get(canvas);
+  if (!lease) {
+    const previousOwner = canvas.currentOwner();
+    canvas.forceAcquireCanvas("agent");
+    lease = { depth: 0, previousOwner, baseGeneration: canvas.currentGeneration() };
+    ownershipLeases.set(canvas, lease);
+  }
+  lease.depth++;
   try {
     return await fn();
   } finally {
-    if (previousOwner) canvas.forceAcquireCanvas(previousOwner);
-    else canvas.releaseCanvas("agent");
+    lease.depth--;
+    if (lease.depth === 0) {
+      ownershipLeases.delete(canvas);
+      if (canvas.currentGeneration() === lease.baseGeneration) {
+        if (lease.previousOwner) canvas.forceAcquireCanvas(lease.previousOwner);
+        else canvas.releaseCanvas("agent");
+      } else {
+        canvas.releaseCanvas("agent");
+      }
+    }
   }
 }
 
@@ -127,6 +158,11 @@ export class BrowserHost {
   /** Current canvas owner id, or null when free (E13). */
   currentOwner(): string | null {
     return this.pane.currentOwner();
+  }
+
+  /** Current canvas ownership generation; passthrough for E13 race-safety. */
+  currentGeneration(): number {
+    return this.pane.currentGeneration();
   }
 
   /**

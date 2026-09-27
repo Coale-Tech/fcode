@@ -169,3 +169,54 @@ test("withAgentCanvasOwnership restores the previous owner even when the action 
   );
   assert.equal(host.currentOwner(), "build-tab");
 });
+
+test("withAgentCanvasOwnership ignores a build-tab release that races the call, avoiding a ghost restore (E13)", async () => {
+  const pane = new BrowserPane(() => {});
+  const host = new BrowserHost({
+    pane,
+    isPluginLoaded: () => false,
+    getFileRoot: async () => null,
+    onState: () => {},
+  });
+  pane.forceAcquireCanvas("build-tab");
+  let releaseGate;
+  const gate = new Promise((resolve) => { releaseGate = resolve; });
+  const call = withAgentCanvasOwnership(host, async () => {
+    await gate;
+    return "done";
+  });
+  assert.equal(host.currentOwner(), "agent");
+  // Simulate BuildPage unmounting mid-call: build-ipc.ts's release handler
+  // calls this directly on the pane. It no-ops against the pane (owner is
+  // "agent" now) but must still be visible so the restore below doesn't
+  // resurrect a "build-tab" owner nothing claims anymore.
+  pane.releaseCanvas("build-tab");
+  releaseGate();
+  assert.equal(await call, "done");
+  assert.equal(host.currentOwner(), null);
+});
+
+test("withAgentCanvasOwnership shares one lease across overlapping calls; only the last restores (E13)", async () => {
+  const pane = new BrowserPane(() => {});
+  const host = new BrowserHost({
+    pane,
+    isPluginLoaded: () => false,
+    getFileRoot: async () => null,
+    onState: () => {},
+  });
+  pane.forceAcquireCanvas("build-tab");
+  let resolveA, resolveB;
+  const gateA = new Promise((resolve) => { resolveA = resolve; });
+  const gateB = new Promise((resolve) => { resolveB = resolve; });
+  const callA = withAgentCanvasOwnership(host, async () => { await gateA; return "a"; });
+  const callB = withAgentCanvasOwnership(host, async () => { await gateB; return "b"; });
+  assert.equal(host.currentOwner(), "agent");
+  resolveA();
+  assert.equal(await callA, "a");
+  // A finished first but B is still in flight — must not restore yet.
+  assert.equal(host.currentOwner(), "agent");
+  resolveB();
+  assert.equal(await callB, "b");
+  // Only the last call to finish restores the pre-agent owner.
+  assert.equal(host.currentOwner(), "build-tab");
+});
