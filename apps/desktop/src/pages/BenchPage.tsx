@@ -67,6 +67,7 @@ export function BenchPage() {
 
   // Supervisor state
   const [status, setStatus] = useState<BenchStatus>("stopped");
+  const [activeBenchPath, setActiveBenchPath] = useState<string | null>(null);
   const [logLines, setLogLines] = useState<LogLine[]>([]);
   const [followTail, setFollowTail] = useState(true);
 
@@ -104,8 +105,9 @@ export function BenchPage() {
     const poll = async () => {
       if (cancelled) return;
       try {
-        const s = await invoke<{ status: BenchStatus }>(IPC.invoke.benchStatus);
+        const s = await invoke<{ status: BenchStatus; benchPath: string | null }>(IPC.invoke.benchStatus);
         setStatus(s.status);
+        setActiveBenchPath(s.benchPath);
       } catch { /* ignore */ }
     };
     poll();
@@ -155,6 +157,13 @@ export function BenchPage() {
 
   const selectedBench = benches.find((b) => b.id === selectedId) ?? null;
 
+  // A bench's process status only describes the bench the supervisor is
+  // actually running; showing it for any other selected bench would let that
+  // bench's Stop button target — and kill — a different bench (cross-bench
+  // Stop bug).
+  const displayStatus: BenchStatus =
+    selectedBench && selectedBench.path === activeBenchPath ? status : "stopped";
+
   // ── Roving tabindex ───────────────────────────────────────────────────────
 
   const handleListKeyDown = useCallback(
@@ -185,19 +194,22 @@ export function BenchPage() {
     try {
       await invoke(IPC.invoke.benchStart, { benchPath: selectedBench.path });
       setStatus("starting");
+      setActiveBenchPath(selectedBench.path);
     } catch (err) {
       console.error("[BenchPage] start failed", err);
     }
   }, [selectedBench]);
 
   const handleStop = useCallback(async () => {
+    if (!selectedBench) return;
     try {
-      await invoke(IPC.invoke.benchStop);
+      await invoke(IPC.invoke.benchStop, { benchPath: selectedBench.path });
       setStatus("stopped");
+      setActiveBenchPath(null);
     } catch (err) {
       console.error("[BenchPage] stop failed", err);
     }
-  }, []);
+  }, [selectedBench]);
 
   // ── Run one-shot ──────────────────────────────────────────────────────────
 
@@ -280,7 +292,7 @@ export function BenchPage() {
         {selectedBench ? (
           <BenchDetail
             bench={selectedBench}
-            status={status}
+            status={displayStatus}
             logLines={logLines}
             followTail={followTail}
             onFollowTailChange={setFollowTail}
