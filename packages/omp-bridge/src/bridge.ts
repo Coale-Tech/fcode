@@ -2,7 +2,7 @@
  * omp-bridge — sidecar process that replaces pi-agent-core as the AI brain.
  *
  * This file is the entry point run by Electron with ELECTRON_RUN_AS_NODE=1.
- * It speaks PI-Desktop's sidecar NDJSON JSON-RPC on stdin/stdout and drives
+ * It speaks Fcode's sidecar NDJSON JSON-RPC on stdin/stdout and drives
  * a bundled `omp --mode rpc` child process.
  *
  * Key design decisions (from the plan and review phases):
@@ -201,7 +201,7 @@ interface BridgeConfig {
   networkProxy?: string;
 }
 
-/** PI-Desktop → omp session map key. */
+/** Fcode → omp session map key. */
 interface SessionBinding {
   ompSessionDir?: string;
   projectPath: string;
@@ -626,7 +626,7 @@ export class OmpBridge {
     // cwd is fixed once at process spawn for the bridge's whole lifetime
     // (start(), below). A single shared ompProcess also means open_session's
     // "most recent session in this directory" resume can race if two
-    // PI-Desktop sessions ever share a project.
+    // Fcode sessions ever share a project.
     // ponytail: single-cwd-per-process ceiling; upgrade path is one omp child
     // per session (tracked as a follow-up to this fix).
     const sessionCmd: Record<string, unknown> = sessionType === "open_session" && sessionDir
@@ -822,7 +822,7 @@ export class OmpBridge {
       return;
     }
 
-    // Agent events: map omp events to PI-Desktop agent.event notifications.
+    // Agent events: map omp events to Fcode agent.event notifications.
     const rawType = String(frame.type ?? "");
     if (DROP_EVENTS.has(rawType)) return;
     const eventType = TOOL_EVENT_RENAME[rawType] ?? rawType;
