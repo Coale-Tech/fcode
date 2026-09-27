@@ -9,7 +9,7 @@
  * while the editor holds unsaved edits.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import Editor from "@monaco-editor/react";
+import Editor, { DiffEditor } from "@monaco-editor/react";
 import type { FsIndexEntry, FsIndexResult } from "@pi-desktop/shared";
 import { buildMonacoTheme } from "../components/code/monaco-theme";
 import { api } from "../lib/api";
@@ -63,6 +63,10 @@ export function CodePage() {
   /** Message from the last failed save, cleared on retry or file switch. */
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  /** True while a save is in flight — drives the Save button spinner. */
+  const [saving, setSaving] = useState(false);
+  /** True when the inline diff view is open for conflict inspection. */
+  const [showDiff, setShowDiff] = useState(false);
   const loadIndex = useCallback(async () => {
     try {
       const result = await api.fsIndex();
@@ -96,6 +100,7 @@ export function CodePage() {
     setDiskChanged(false);
     setDiskContent(null);
     setSaveError(null);
+    setShowDiff(false);
   }, []);
 
   // ── disk-change polling (T11) ──────────────────────────────────────────────
@@ -147,6 +152,7 @@ export function CodePage() {
     if (!activePath) return;
     const content = dirty[activePath] ?? fileCache.current[activePath]?.content ?? "";
     const expectedMtimeMs = fileCache.current[activePath]?.mtimeMs;
+    setSaving(true);
     try {
       const result = await api.fsWrite(activePath, content, expectedMtimeMs);
       fileCache.current[activePath] = { path: activePath, content, mtimeMs: result.mtimeMs };
@@ -180,12 +186,15 @@ export function CodePage() {
         return;
       }
       setSaveError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setSaving(false);
     }
   }, [activePath, dirty]);
 
   // ── conflict resolution (T11) ──────────────────────────────────────────────
   const keepMine = useCallback(() => {
     setDiskChanged(false);
+    setShowDiff(false);
     setDiskContent(null);
   }, []);
 
@@ -202,6 +211,7 @@ export function CodePage() {
     });
     setDiskChanged(false);
     setDiskContent(null);
+    setShowDiff(false);
   }, [activePath, diskContent]);
 
   // ── close tab ──────────────────────────────────────────────────────────────
@@ -334,6 +344,9 @@ export function CodePage() {
             <button type="button" onClick={takeTheirs}>
               Take theirs
             </button>
+            <button type="button" onClick={() => setShowDiff((v) => !v)}>
+              {showDiff ? "Hide diff" : "Diff"}
+            </button>
           </div>
         )}
 
@@ -356,27 +369,50 @@ export function CodePage() {
                     type="button"
                     className="code-save-btn"
                     onClick={() => void saveFile()}
+                    disabled={saving}
                   >
-                    Save
+                    {saving ? (
+                      <span className="tool-spinner" aria-hidden="true" />
+                    ) : (
+                      "Save"
+                    )}
                   </button>
                 )}
               </div>
-              <Editor
-                path={activePath}
-                value={activeContent}
-                theme={monacoTheme}
-                beforeMount={(monaco) => {
-                  const name = buildMonacoTheme(monaco);
-                  setMonacoTheme(name);
-                }}
-                onChange={handleEditorChange}
-                options={{
-                  minimap: { enabled: false },
-                  scrollBeyondLastLine: false,
-                  wordWrap: "on",
-                  fontFamily: "var(--font-mono)",
-                }}
-              />
+              {showDiff && diskChanged ? (
+                <DiffEditor
+                  original={diskContent ?? ""}
+                  modified={activeContent}
+                  theme={monacoTheme}
+                  beforeMount={(monaco) => {
+                    const name = buildMonacoTheme(monaco);
+                    setMonacoTheme(name);
+                  }}
+                  options={{
+                    readOnly: true,
+                    minimap: { enabled: false },
+                    scrollBeyondLastLine: false,
+                    fontFamily: "var(--font-mono)",
+                  }}
+                />
+              ) : (
+                <Editor
+                  path={activePath}
+                  value={activeContent}
+                  theme={monacoTheme}
+                  beforeMount={(monaco) => {
+                    const name = buildMonacoTheme(monaco);
+                    setMonacoTheme(name);
+                  }}
+                  onChange={handleEditorChange}
+                  options={{
+                    minimap: { enabled: false },
+                    scrollBeyondLastLine: false,
+                    wordWrap: "on",
+                    fontFamily: "var(--font-mono)",
+                  }}
+                />
+              )}
             </>
           ) : (
             <div className="code-empty">
