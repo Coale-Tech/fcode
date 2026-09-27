@@ -191,10 +191,10 @@ test("packaging keeps only shipped locales and excludes non-runtime artifacts", 
     ),
     "third-party license and notice files must remain packageable",
   );
-  // The agent-runtime dist-bundle mapping must remain a directory copy: the
-  // bundle emits dist-bundle/package.json with "type":"module" so the ESM
-  // sidecar.js loads in packaged installs (issue #507). Contract tests live
-  // in agent-runtime-bundle-package.test.mjs.
+  // The agent-runtime and omp-bridge dist-bundle mappings must remain
+  // directory copies: each bundle emits dist-bundle/package.json with
+  // "type":"module" so the ESM entry loads in packaged installs (issue
+  // #507). Contract tests live in agent-runtime-bundle-package.test.mjs.
   assert.deepEqual(packageJson.build.extraResources, [
     {
       from: "build/icon.png",
@@ -203,6 +203,10 @@ test("packaging keeps only shipped locales and excludes non-runtime artifacts", 
     {
       from: "../../packages/agent-runtime/dist-bundle",
       to: "agent-runtime",
+    },
+    {
+      from: "../../packages/omp-bridge/dist-bundle",
+      to: "omp-bridge",
     },
     // Built-in skills stay outside the asar so they read as plain files.
     {

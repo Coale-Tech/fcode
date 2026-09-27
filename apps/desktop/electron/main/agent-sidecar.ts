@@ -18,13 +18,13 @@ export type {
 function resolveSidecarEntry(): string {
   const candidates = [
     join(process.resourcesPath || "", "omp-bridge/bridge.js"),
-    join(__dirname, "../../../omp-bridge/dist/bridge.js"),
-    join(__dirname, "../../../../packages/omp-bridge/dist/bridge.js"),
+    join(__dirname, "../../../omp-bridge/dist-bundle/bridge.js"),
+    join(__dirname, "../../../../packages/omp-bridge/dist-bundle/bridge.js"),
   ];
   for (const c of candidates) {
     if (c && existsSync(c)) return c;
   }
-  return join(__dirname, "../../../../packages/omp-bridge/dist/bridge.js");
+  return join(__dirname, "../../../../packages/omp-bridge/dist-bundle/bridge.js");
 }
 
 function fallbackStderrLogger(text: string): void {
