@@ -17,7 +17,7 @@ const inventoryScript = fileURLToPath(
   new URL("../../../scripts/macos-bundle-inventory.mjs", import.meta.url),
 );
 
-const SIGNING_IDENTITY_NAME = "XingYu Liu (DUV63RKYTW)";
+const SIGNING_IDENTITY_NAME = "Coale Tech (FCODE_TEST_TEAM)";
 const SIGNING_IDENTITY = `Developer ID Application: ${SIGNING_IDENTITY_NAME}`;
 const NO_IDENTITIES = "  0 valid identities found";
 const MATCHING_IDENTITY = `echo '  1) 0123456789ABCDEF "Developer ID Application: ${SIGNING_IDENTITY_NAME}"'
@@ -41,6 +41,8 @@ for (const name of [
 ]) {
   delete BASE_ENV[name];
 }
+// Default to the test identity so tests that check identity name get the fixture value.
+BASE_ENV.MAC_SIGNING_IDENTITY = SIGNING_IDENTITY_NAME;
 
 async function writeShim(bin, name, body) {
   await mkdir(bin, { recursive: true });
@@ -184,7 +186,7 @@ async function writeBinaryResource(file, bytes, mode = 0o644) {
 }
 
 function appFixturePath(release) {
-  return join(release, "mac-arm64", "PI-Desktop.app");
+  return join(release, "mac-arm64", "Fcode.app");
 }
 
 async function tempRoot(t, prefix) {
@@ -195,7 +197,7 @@ async function tempRoot(t, prefix) {
 
 /**
  * The bundle used by the counting tests:
- *   Contents/MacOS/PI-Desktop                            mach-o, executable
+ *   Contents/MacOS/Fcode                                  mach-o, executable
  *   Contents/Frameworks/Foo.framework/Versions/A/Foo     mach-o in a framework
  *   Contents/Frameworks/Foo.framework/Versions/Current   symlink to A
  *   Contents/Frameworks/Helper.app/Contents/MacOS/Helper text, nested bundle
@@ -210,7 +212,7 @@ async function tempRoot(t, prefix) {
  */
 async function writeBundleFixture(release) {
   const app = appFixturePath(release);
-  await writeMachO(join(app, "Contents", "MacOS", "PI-Desktop"), 4100);
+  await writeMachO(join(app, "Contents", "MacOS", "Fcode"), 4100);
   await writeMachO(
     join(app, "Contents", "Frameworks", "Foo.framework", "Versions", "A", "Foo"),
     516,
@@ -318,7 +320,7 @@ test("diagnostics never echo signing secrets", async (t) => {
       CSC_KEY_PASSWORD: CSC_PASSWORD_SENTINEL,
       APPLE_ID: APPLE_ID_SENTINEL,
       APPLE_APP_SPECIFIC_PASSWORD: APPLE_PASSWORD_SENTINEL,
-      APPLE_TEAM_ID: "DUV63RKYTW",
+      APPLE_TEAM_ID: "FCODE_TEST_TEAM",
     },
   });
 
@@ -345,7 +347,7 @@ test("inventory counts the signing payload of a release directory", async (t) =>
 
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
   assert.ok(
-    result.stdout.includes(`==> PI-Desktop.app inventory: ${app}`),
+    result.stdout.includes(`==> Fcode.app inventory: ${app}`),
     result.stdout,
   );
   assert.match(result.stdout, /^entries: 21 \(files: 9, directories: 11, symlinks: 1\)$/m);
@@ -367,7 +369,7 @@ test("inventory counts the signing payload of a release directory", async (t) =>
   assert.match(result.stdout, /^top-level-cost: Contents\/MacOS=\d+, Contents\/Resources=\d+$/m);
   assert.match(
     result.stdout,
-    /^slowest-likely: Contents\/MacOS\/PI-Desktop \(4100 bytes\), Contents\/Resources\/bin\/pi-desktop-host-core \(2052 bytes\)$/m,
+    /^slowest-likely: Contents\/MacOS\/Fcode \(4100 bytes\), Contents\/Resources\/bin\/pi-desktop-host-core \(2052 bytes\)$/m,
   );
   assert.match(result.stdout, /^warning: non-Mach-O regular file in Contents\/Resources\/bin: Contents\/Resources\/bin\/run\.sh$/m);
 
@@ -389,7 +391,7 @@ test("inventory counts the signing payload of a release directory", async (t) =>
   assert.equal(json.signingCandidates, 5);
   assert.equal(json.topLevelCost.length, 2);
   assert.equal(json.slowestLikely.length, 2);
-  assert.equal(json.slowestLikely[0].path, "Contents/MacOS/PI-Desktop");
+  assert.equal(json.slowestLikely[0].path, "Contents/MacOS/Fcode");
   assert.equal(json.slowestLikely[0].bytes, 4100);
   assert.equal(json.resources.bin.files, 2);
   assert.equal(json.resources["models.dev"], null);
@@ -402,7 +404,7 @@ test("inventory counts binary-looking resources as signing candidates", async (t
   // One Mach-O, one NUL-carrying resource, one text resource and one nested
   // bundle: osx-sign signs all of those except the text resource, so the total
   // is 1 + 1 + 1 = 3.
-  await writeMachO(join(app, "Contents", "MacOS", "PI-Desktop"), 512);
+  await writeMachO(join(app, "Contents", "MacOS", "Fcode"), 512);
   await writeBinaryResource(
     join(app, "Contents", "Frameworks", "Electron Framework.framework", "Resources", "icudtl.dat"),
     256,
@@ -488,11 +490,11 @@ test("inventory requires exactly one app bundle under the given path", async (t)
 
   const twoApps = join(root, "two-release");
   await writeFileWithParents(
-    join(twoApps, "mac-arm64", "PI-Desktop.app", "Contents", "Info.plist"),
+    join(twoApps, "mac-arm64", "Fcode.app", "Contents", "Info.plist"),
     "<plist/>",
   );
   await writeFileWithParents(
-    join(twoApps, "mac-x64", "PI-Desktop.app", "Contents", "Info.plist"),
+    join(twoApps, "mac-x64", "Fcode.app", "Contents", "Info.plist"),
     "<plist/>",
   );
   const twoResult = runInventory([twoApps]);
@@ -503,7 +505,7 @@ test("inventory requires exactly one app bundle under the given path", async (t)
   assert.equal(missingResult.status, 1);
   assert.match(missingResult.stderr, /path does not exist/);
 
-  const fileResult = runInventory([join(root, "two-release", "mac-arm64", "PI-Desktop.app", "Contents", "Info.plist")]);
+  const fileResult = runInventory([join(root, "two-release", "mac-arm64", "Fcode.app", "Contents", "Info.plist")]);
   assert.equal(fileResult.status, 1);
   assert.match(fileResult.stderr, /not a directory/);
 });
@@ -512,7 +514,7 @@ test("inventory survives a symlink cycle without hanging or double counting", as
   const root = await tempRoot(t, "pi-desktop-bundle-symlink-");
   const release = join(root, "release");
   const app = appFixturePath(release);
-  await writeFileWithParents(join(app, "Contents", "MacOS", "PI-Desktop"), "not-mach-o");
+  await writeFileWithParents(join(app, "Contents", "MacOS", "Fcode"), "not-mach-o");
   await mkdir(join(app, "Contents", "Resources"), { recursive: true });
   await symlink(
     join("..", ".."),

@@ -2,9 +2,9 @@
 
 # Fcode
 
-### A desktop workspace for Frappe and ERPNext development
+### AI coding agent for Frappe and ERPNext developers
 
-**Local projects, persistent AI sessions, and an evolving Frappe-focused toolchain in one Electron application.**
+**Fcode is a desktop AI coding agent for Frappe/ERPNext developers — forked from [PI-Desktop](https://github.com/vastsa/PI-Desktop) and powered by omp, giving you a supervised local bench, a Monaco code editor, and Studio/Builder canvas integration alongside a persistent AI agent that understands Frappe's anatomy.**
 
 [![Release](https://img.shields.io/github/v/release/Coale-Tech/fcode?include_prereleases&label=release)](https://github.com/Coale-Tech/fcode/releases)
 [![CI](https://github.com/Coale-Tech/fcode/actions/workflows/ci.yml/badge.svg)](https://github.com/Coale-Tech/fcode/actions/workflows/ci.yml)
@@ -12,7 +12,8 @@
 
 [Download](https://github.com/Coale-Tech/fcode/releases/tag/v0.15.7-fcode.1) ·
 [Releases](https://github.com/Coale-Tech/fcode/releases) ·
-[Issues](https://github.com/Coale-Tech/fcode/issues)
+[Issues](https://github.com/Coale-Tech/fcode/issues) ·
+[Developer docs](docs/fcode/README.md)
 
 </div>
 
@@ -135,6 +136,6 @@ Unsigned preview artifacts do not provide Apple notarization or publisher-identi
 
 ## Upstream and license
 
-Fcode is forked from [vastsa/PI-Desktop](https://github.com/vastsa/PI-Desktop). The current preview retains substantial PI-Desktop code and its legacy agent runtime while the Fcode-specific architecture is implemented.
+Fcode is a fork of [vastsa/PI-Desktop](https://github.com/vastsa/PI-Desktop), the open-source desktop agent shell by XingYu Liu. Substantial PI-Desktop code — the Electron shell, Rust host-core, agent-host turn queue, and shared protocol — is retained in this fork. See [`NOTICE.md`](NOTICE.md) for the full attribution and modification record required by LGPL-3.0 §4a.
 
 Licensed under the [GNU Lesser General Public License v3.0](LICENSE). Upstream copyright and license obligations remain in force.

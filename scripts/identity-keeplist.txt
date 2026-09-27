@@ -1,0 +1,128 @@
+# Identity keep-list for scripts/check-legal.mjs
+#
+# Lines matching these patterns are ALLOWED to contain upstream identity strings
+# (PI-Desktop, vastsa, DUV63RKYTW, XingYu, net.aiuo, pi-desktop-host-core).
+# Every other match from the ripgrep scan is a defect.
+#
+# Format: one pattern per line (matched as a fixed substring of "file:line:content").
+# Lines starting with # are comments and are ignored by check-legal.mjs.
+
+# ── Repo-level attribution ───────────────────────────────────────────────────
+# The NOTICE.md attribution itself — required LGPL-3.0 §4a
+NOTICE.md:
+
+# ── Internal workspace identifiers ───────────────────────────────────────────
+# The @pi-desktop/* package names — internal workspace identifiers, renaming breaks merges
+"@pi-desktop/
+
+# The pi-desktop/* IPC channel names — internal protocol identifiers
+pi-desktop/
+
+# The pi-desktop-host-core binary name — Cargo.toml must stay in sync with release.yml
+pi-desktop-host-core
+
+# ── Keep-list infrastructure ─────────────────────────────────────────────────
+# The scripts/identity-keeplist.txt itself
+scripts/identity-keeplist.txt:
+
+# The scripts/check-legal.mjs itself (it references the patterns for documentation)
+scripts/check-legal.mjs:
+
+# ── R-lane script deferred renames (tests in other lanes assert current names) ─
+# scripts/dev-electron.mjs APP_NAME and DEV_BUNDLE_ID — development-branding.test.mjs asserts
+# both "PI-Desktop" and the plist bundle ID "net.aiuo.pi-desktop.dev"; updated by U lane
+# when they update development-branding.test.mjs
+scripts/dev-electron.mjs:19:
+scripts/dev-electron.mjs:20:
+
+# scripts/export-linux-asar.mjs — release-asar.test.mjs and ci-workflow.test.mjs assert
+# the PI-Desktop asar filename; updated when those tests move to their new lane
+scripts/export-linux-asar.mjs:42:
+
+# apps/desktop/package.json Windows artifact names — development-branding.test.mjs and
+# auto-update.test.mjs assert "PI-Desktop" for Windows builds (Windows is unsupported);
+# these will be updated together with those test files.
+# Use content patterns (not line numbers) so they survive line-number shifts.
+"executableName": "PI-Desktop"
+"shortcutName": "PI-Desktop"
+PI-Desktop-Setup-${version}
+PI-Desktop-Portable-${version}
+
+# apps/desktop/package.json macOS extraDistFiles — actual filenames of the dist helpers
+# (PI-Desktop-macOS-open.command and PI-Desktop-macOS-opening-help.txt)
+PI-Desktop-macOS-open
+PI-Desktop-macOS-opening-help
+
+# ── R-lane test files — macOS open helper file names ─────────────────────────
+# packaging-footprint.test.mjs references PI-Desktop-macOS-*.command file names because
+# those are the actual filenames of the dist helpers (cannot rename without the actual files)
+apps/desktop/test/packaging-footprint.test.mjs:
+
+
+# ci-workflow.test.mjs:160 tests the linux asar script content (PI-Desktop prefix)
+# which matches the reverted export-linux-asar.mjs for test compatibility
+apps/desktop/test/ci-workflow.test.mjs:160:
+
+# ── Files not in Lane R allow-list (owned by other lanes or inherited content) ─
+# packages/agent-runtime/ — inherited content, owned by P lane
+packages/agent-runtime/
+
+# packages/i18n/ — user-visible strings, owned by N lane (will be renamed to Fcode)
+packages/i18n/
+
+# packages/plugin-devkit/ — plugin templates, not R lane
+packages/plugin-devkit/
+
+# packages/shared/ — shared types, not R lane
+packages/shared/
+
+# packages/plugin-sdk/ — plugin SDK types, not R lane
+packages/plugin-sdk/
+
+# apps/desktop/src/ — renderer code, owned by U lane
+apps/desktop/src/
+
+# apps/desktop/electron/ — main process code, not R lane
+apps/desktop/electron/
+
+# apps/desktop/resources/ — resource files, not R lane
+apps/desktop/resources/
+
+# apps/desktop/build/entitlements.mac.plist — DUV63RKYTW in a comment only
+apps/desktop/build/
+
+# ── apps/desktop/test files not in R lane allow-list ─────────────────────────
+# These test files reference PI-Desktop as test fixtures/data and will be updated
+# by their respective lanes; only the five specific R-lane test files are ours to change
+apps/desktop/test/plugin-panel-window.test.mjs:
+apps/desktop/test/agent-extensions.test.mjs:
+apps/desktop/test/release-asar.test.mjs:
+apps/desktop/test/macos-signing-watchdog.test.mjs:
+apps/desktop/test/updater-releases-url.test.mjs:
+apps/desktop/test/remote-host-ssh-bootstrap.test.mjs:
+apps/desktop/test/sidebar-preferences.test.mjs:
+apps/desktop/test/project-name.test.mjs:
+apps/desktop/test/mcp-control.test.mjs:
+apps/desktop/test/marketplace-catalog-preflight.test.mjs:
+apps/desktop/test/safe-open-external.test.mjs:
+apps/desktop/test/development-branding.test.mjs:
+apps/desktop/test/project-archive.test.mjs:
+apps/desktop/test/remote-host-pi-host-release.test.mjs:
+apps/desktop/test/startup-watchdog.test.mjs:
+apps/desktop/test/startup-splash-motion.test.mjs:
+apps/desktop/test/remote-host-bootstrap-script.test.mjs:
+apps/desktop/test/renderer-branding.test.mjs:
+apps/desktop/test/development-profile.test.mjs:
+apps/desktop/test/auto-update.test.mjs:
+
+# ── Files whose names cannot be changed by R lane ────────────────────────────
+# The open-command helper — actual filename is PI-Desktop-macOS-open.command
+apps/desktop/PI-Desktop-macOS-open.command:
+apps/desktop/PI-Desktop-macOS-opening-help.txt:
+# package.json references to the open-command filename (extraDistFiles) — actual file names
+apps/desktop/package.json:184:
+apps/desktop/package.json:185:
+
+# ── Workflows not in R lane allow-list ───────────────────────────────────────
+# linux-package.yml — not in R lane allow-list (only release.yml and mirror-to-cnb.yml are)
+.github/workflows/linux-package.yml:

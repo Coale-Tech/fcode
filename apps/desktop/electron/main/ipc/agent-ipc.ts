@@ -781,9 +781,11 @@ export function registerAgentIpc({
     // A bridge-origin request (the RACP/omp approval broker) has no matching
     // record in host-core: routing it through `permissions.resolve` would
     // fail (or worse, throw before settlement) whenever host-core is
-    // unavailable. The bridge's own broker is the source of truth for
-    // whether it owns this id.
-    if (agentHostBridge?.agentHost.approvals.get(resolution.requestId)) {
+    // unavailable. `syncPendingTools`/`ingest` also copy ordinary
+    // host-core-origin requests into this same broker for late attach, so
+    // presence in the broker is not sufficient — only an id whose recorded
+    // origin is "bridge" was ever issued by the bridge itself.
+    if (agentHostBridge?.agentHost.approvals.originOf(resolution.requestId) === "bridge") {
       agentHostBridge.settleApproval(resolution.requestId, decisionPatch);
       return { requestId: resolution.requestId, ...decisionPatch };
     }
