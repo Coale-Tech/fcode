@@ -6,7 +6,8 @@
   "description": "Fcode desktop IDE for Frappe development",
   "homepage": "https://github.com/Coale-Tech/fcode",
   "author": {
-    "name": "Coale-Tech",
+    "name": "CoaleTech",
+    "email": "support@coale.tech",
     "url": "https://github.com/Coale-Tech"
   },
   "main": "./out/main/index.js",
