@@ -1,7 +1,7 @@
 # Changelog
 
 All notable changes to Fcode are documented here.
-Fcode is a fork of [PI-Desktop](https://github.com/vastsa/PI-Desktop) with the agent brain replaced by [omp](https://github.com/coaletech/oh-my-pi).
+Fcode is a fork of [PI-Desktop](https://github.com/vastsa/PI-Desktop) with the agent brain replaced by [omp](https://github.com/can1357/oh-my-pi).
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -20,6 +20,8 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `scripts/build-omp.mjs` builds and stages the omp binary from a pinned oh-my-pi commit
 - `pnpm fcode:doctor` contributor setup checker
 - `pnpm fcode:dev` single-command contributor workflow
+- Windows x64 packaging: `scripts/build-omp.mjs` cross-compiles the omp binary for `win32-x64`, and the release pipeline builds an NSIS installer, portable EXE, and ZIP (the Bench tab remains macOS/Linux-only — no POSIX bench transport exists on Windows)
+- Release CI provisions Bun and the pinned oh-my-pi sibling checkout before packaging, so `bundle:runtime` actually runs in a release build
 
 ### Changed
 - `appId`: `net.aiuo.pi-desktop` → `com.coaletech.fcode`
@@ -30,7 +32,6 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Skills pack shipped as a separate `fcode-skills` resource directory
 
 ### Removed
-- Windows build target (no bench transport available; will be added in a future release)
 - `mirror-to-cnb.yml` workflow (mirrored to upstream owner's registry)
 - `pi-host-bundle` release job (bundled the replaced Pi brain)
 

@@ -37,7 +37,7 @@ A full list of changed files is available via `git log` in this repository.
 ### omp (oh-my-pi)
 
 The `omp` binary bundled in the release artifacts is built from the
-[oh-my-pi](https://github.com/Coale-Tech/oh-my-pi) project, which is distributed under the
+[oh-my-pi](https://github.com/can1357/oh-my-pi) project, which is distributed under the
 MIT License.
 
 ```

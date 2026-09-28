@@ -217,8 +217,8 @@
       ]
     },
     "win": {
-      "executableName": "PI-Desktop",
-      "artifactName": "PI-Desktop-Portable-${version}.${ext}",
+      "executableName": "Fcode",
+      "artifactName": "Fcode-Portable-${version}.${ext}",
       "target": [
         {
           "target": "nsis",
@@ -248,17 +248,21 @@
         {
           "from": "build/icon.ico",
           "to": "app-icon.ico"
+        },
+        {
+          "from": "resources/bin/omp-win32-${arch}.exe",
+          "to": "bin/omp.exe"
         }
       ]
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "shortcutName": "PI-Desktop",
-      "artifactName": "PI-Desktop-Setup-${version}.${ext}"
+      "shortcutName": "Fcode",
+      "artifactName": "Fcode-Setup-${version}.${ext}"
     },
     "portable": {
-      "artifactName": "PI-Desktop-Portable-${version}.${ext}"
+      "artifactName": "Fcode-Portable-${version}.${ext}"
     },
     "deb": {
       "packageName": "pi-desktop",

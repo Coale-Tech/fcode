@@ -1,6 +1,6 @@
 # Fcode — Developer Reference
 
-Fcode is a desktop AI coding agent for Frappe/ERPNext developers. It forks [PI-Desktop](https://github.com/vastsa/PI-Desktop) and replaces the agent brain with [omp (oh-my-pi)](https://github.com/Coale-Tech/oh-my-pi), adds a supervised local bench, a Monaco code editor, and Studio/Builder canvas integration.
+Fcode is a desktop AI coding agent for Frappe/ERPNext developers. It forks [PI-Desktop](https://github.com/vastsa/PI-Desktop) and replaces the agent brain with [omp (oh-my-pi)](https://github.com/can1357/oh-my-pi), adds a supervised local bench, a Monaco code editor, and Studio/Builder canvas integration.
 
 ---
 
@@ -14,11 +14,11 @@ Fcode is a desktop AI coding agent for Frappe/ERPNext developers. It forks [PI-D
 | pnpm | `>= 10` | `npm i -g pnpm` |
 | Rust (stable) | latest stable | [rustup.rs](https://rustup.rs/) |
 | Bun | `>= 1.2` | [bun.sh](https://bun.sh/) |
-| oh-my-pi | sibling checkout | `git clone https://github.com/Coale-Tech/oh-my-pi ../oh-my-pi` |
+| oh-my-pi | sibling checkout | `git clone https://github.com/can1357/oh-my-pi ../oh-my-pi` |
 
 oh-my-pi must be cloned as a sibling of the Fcode checkout (`../oh-my-pi`) because `scripts/build-omp.mjs` references it at that relative path.
 
-**Supported platforms:** macOS and Linux. Windows is not supported in v1 — the bench supervisor spawns `bench` via the system PATH and relies on login-shell env setup that does not exist on Windows.
+**Supported platforms:** macOS, Linux, and Windows are all packaged by the release pipeline. The Bench tab is macOS/Linux only — its supervisor spawns `bench` via the system PATH and relies on login-shell env setup that does not exist on Windows, so a Windows build ships without a working Bench tab.
 
 ### Clone and build
 

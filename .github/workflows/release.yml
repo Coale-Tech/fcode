@@ -14,13 +14,6 @@
 # electron-updater latest*.yml feeds — are published to the GitHub Release
 # (D126/D285/D364/D603). macOS tag artifacts are Developer ID-signed, notarized, and
 # stapled before upload (D450 / ADR 0289).
-#
-# It also builds the headless `pi-host` bundle for every Linux platform the
-# desktop publishes (currently x64) and publishes it as
-# pi-host-<version>-linux-<arch>.tar.gz plus a .sha256 sidecar. The desktop's
-# SSH bootstrap downloads that asset at the desktop's version and verifies the
-# published checksum before installing on the remote machine (rollout
-# 06-delivery/07-remote-control-rollout.md §6 acceptance 4; D375 / ADR 0284).
 
 name: Release
 
@@ -118,6 +111,12 @@ jobs:
             artifact: linux-x64
             platform: linux
             dist: dist:linux
+          - name: Windows x64
+            os: windows-2022
+            arch: x64
+            artifact: win-x64
+            platform: windows
+            dist: dist:win
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     defaults:
@@ -172,6 +171,20 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - uses: Swatinem/rust-cache@v2
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Checkout pinned oh-my-pi (sibling)
+        # scripts/build-omp.mjs (invoked by pnpm run bundle:runtime, part of
+        # every dist:* script below) requires a sibling checkout at
+        # ../oh-my-pi built from its own PINNED_OMP_COMMIT. Reading the pin
+        # from that file instead of duplicating it here keeps it single-sourced.
+        run: |
+          set -euo pipefail
+          commit="$(node -e "const s=require('fs').readFileSync('scripts/build-omp.mjs','utf8'); const m=s.match(/PINNED_OMP_COMMIT\s*=\s*\"([0-9a-f]+)\"/); if(!m)throw new Error('PINNED_OMP_COMMIT not found'); console.log(m[1])")"
+          git clone --quiet https://github.com/can1357/oh-my-pi ../oh-my-pi
+          git -C ../oh-my-pi checkout --quiet "$commit"
+          (cd ../oh-my-pi && bun install --frozen-lockfile)
 
       - name: Prepare package inputs
         run: |

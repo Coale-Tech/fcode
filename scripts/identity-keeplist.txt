@@ -39,15 +39,6 @@ scripts/dev-electron.mjs:20:
 # the PI-Desktop asar filename; updated when those tests move to their new lane
 scripts/export-linux-asar.mjs:42:
 
-# apps/desktop/package.json Windows artifact names — development-branding.test.mjs and
-# auto-update.test.mjs assert "PI-Desktop" for Windows builds (Windows is unsupported);
-# these will be updated together with those test files.
-# Use content patterns (not line numbers) so they survive line-number shifts.
-"executableName": "PI-Desktop"
-"shortcutName": "PI-Desktop"
-PI-Desktop-Setup-${version}
-PI-Desktop-Portable-${version}
-
 # apps/desktop/package.json macOS extraDistFiles — actual filenames of the dist helpers
 # (PI-Desktop-macOS-open.command and PI-Desktop-macOS-opening-help.txt)
 PI-Desktop-macOS-open
