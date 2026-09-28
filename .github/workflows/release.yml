@@ -118,7 +118,7 @@ jobs:
             platform: windows
             dist: dist:win
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 120
     defaults:
       run:
         shell: bash
@@ -174,27 +174,51 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
 
-      - name: Checkout pinned oh-my-pi (sibling)
-        # scripts/build-omp.mjs (invoked by pnpm run bundle:runtime, part of
-        # every dist:* script below) requires a sibling checkout at
-        # ../oh-my-pi built from its own PINNED_OMP_COMMIT, plus that
-        # checkout's native pi_natives addon compiled for this runner's host
-        # platform (embed-native.ts refuses to embed a target it can't find
-        # prebuilt — it never builds one itself). `build:native` resolves its
-        # own Rust nightly via oh-my-pi's rust-toolchain.toml (rustup
-        # auto-installs it on first use) and needs no bazel: the `host`
-        # target takes the local cargo/napi path. The `ci` cargo profile
-        # skips incremental state and strips symbols, matching what
-        # bazel-natives.ts documents release CI using. Reading the commit pin
-        # from that file instead of duplicating it here keeps it
-        # single-sourced.
+      - name: Resolve pinned oh-my-pi commit
+        # Single-sourced from scripts/build-omp.mjs's PINNED_OMP_COMMIT so
+        # the sibling checkout below and the native-addon cache key below
+        # can't drift from what build-omp.mjs itself will require.
+        id: omp-commit
         run: |
           set -euo pipefail
           commit="$(node -e "const s=require('fs').readFileSync('scripts/build-omp.mjs','utf8'); const m=s.match(/PINNED_OMP_COMMIT\s*=\s*\"([0-9a-f]+)\"/); if(!m)throw new Error('PINNED_OMP_COMMIT not found'); console.log(m[1])")"
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+
+      - name: Cache oh-my-pi native addon
+        # The compile below takes ~5min on arm64 but ~42min on every x64
+        # runner class (macOS Intel, Linux, Windows alike — an x64 GH-hosted
+        # CPU-class gap, not a platform bug), which otherwise leaves the
+        # signed macOS path no headroom for notarization inside the job
+        # timeout. The addon only depends on the pinned commit, the OS, and
+        # the arch, so it's identical across runs until the pin moves.
+        id: omp-native-cache
+        uses: actions/cache@v4
+        with:
+          path: ../oh-my-pi/packages/natives/native/*.node
+          key: omp-native-${{ runner.os }}-${{ runner.arch }}-ci-${{ steps.omp-commit.outputs.commit }}
+
+      - name: Checkout pinned oh-my-pi (sibling)
+        # scripts/build-omp.mjs (invoked by pnpm run bundle:runtime, part of
+        # every dist:* script below) requires a sibling checkout at
+        # ../oh-my-pi built from its own PINNED_OMP_COMMIT regardless of
+        # whether the native addon above was restored from cache.
+        run: |
+          set -euo pipefail
           git clone --quiet https://github.com/can1357/oh-my-pi ../oh-my-pi
-          git -C ../oh-my-pi checkout --quiet "$commit"
+          git -C ../oh-my-pi checkout --quiet "${{ steps.omp-commit.outputs.commit }}"
           (cd ../oh-my-pi && bun install --frozen-lockfile)
-          (cd ../oh-my-pi && OMP_NATIVE_CARGO_PROFILE=ci bun run build:native)
+
+      - name: Build oh-my-pi native addon
+        # Skipped on a cache hit. embed-native.ts refuses to embed a target
+        # it can't find prebuilt — it never builds one itself — so this only
+        # runs when the cache above didn't already restore the file it
+        # needs. build:native resolves its own Rust nightly via oh-my-pi's
+        # rust-toolchain.toml (rustup auto-installs it on first use) and
+        # needs no bazel: the `host` target takes the local cargo/napi path.
+        # The `ci` cargo profile skips incremental state and strips symbols,
+        # matching what bazel-natives.ts documents release CI using.
+        if: steps.omp-native-cache.outputs.cache-hit != 'true'
+        run: (cd ../oh-my-pi && OMP_NATIVE_CARGO_PROFILE=ci bun run build:native)
 
       - name: Prepare package inputs
         run: |
@@ -289,7 +313,7 @@ jobs:
           # top of that.
           DEBUG: "electron-osx-sign*,electron-notarize*"
           # 30 minutes keeps a stuck signing/notarization phase reported by the
-          # watchdog (diagnostics + summary) inside the 60-minute job budget.
+          # watchdog (diagnostics + summary) inside the 120-minute job budget.
           PI_SIGNING_TIMEOUT_SECONDS: "1800"
           PI_SIGNING_STALL_SECONDS: "300"
         run: |

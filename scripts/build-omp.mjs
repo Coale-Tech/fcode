@@ -87,9 +87,14 @@ const codingAgentDir = join(ompSource, "packages", "coding-agent");
 const distDir = join(codingAgentDir, "dist");
 const hostTarget = `${process.platform}-${process.arch}`;
 // Host target first so a later cross-target failure never costs us the one
-// binary this dev machine can actually run and test locally.
+// binary this dev machine can actually run and test locally. In CI, each
+// release.yml matrix job packages only its own platform, so the other 4
+// targets would just be discarded, guaranteed-to-fail noise in the log —
+// skip them there and only build the one target that job actually ships.
 const ALL_TARGETS = ["darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64", "win32-x64"];
-const crossTargets = [hostTarget, ...ALL_TARGETS.filter((t) => t !== hostTarget)];
+const crossTargets = process.env.CI
+  ? [hostTarget]
+  : [hostTarget, ...ALL_TARGETS.filter((t) => t !== hostTarget)];
 // Bun's --compile always appends .exe for a Windows target regardless of the
 // outfile given (oh-my-pi build-binary.ts requests "omp-<target>" with no
 // extension) — every staged filename for that target must carry it too.
