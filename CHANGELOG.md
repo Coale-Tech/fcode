@@ -21,7 +21,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `pnpm fcode:doctor` contributor setup checker
 - `pnpm fcode:dev` single-command contributor workflow
 - Windows x64 packaging: `scripts/build-omp.mjs` cross-compiles the omp binary for `win32-x64`, and the release pipeline builds an NSIS installer, portable EXE, and ZIP (the Bench tab remains macOS/Linux-only — no POSIX bench transport exists on Windows)
-- Release CI provisions Bun and the pinned oh-my-pi sibling checkout before packaging, so `bundle:runtime` actually runs in a release build
+- Release CI provisions Bun, the pinned oh-my-pi sibling checkout, and its native `pi_natives` addon (built via oh-my-pi's own local cargo/napi `host` path — no bazel needed) before packaging, so `bundle:runtime` actually runs in a release build
 
 ### Changed
 - `appId`: `net.aiuo.pi-desktop` → `com.coaletech.fcode`
