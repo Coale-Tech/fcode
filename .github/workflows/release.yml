@@ -184,29 +184,32 @@ jobs:
           commit="$(node -e "const s=require('fs').readFileSync('scripts/build-omp.mjs','utf8'); const m=s.match(/PINNED_OMP_COMMIT\s*=\s*\"([0-9a-f]+)\"/); if(!m)throw new Error('PINNED_OMP_COMMIT not found'); console.log(m[1])")"
           echo "commit=$commit" >> "$GITHUB_OUTPUT"
 
-      - name: Cache oh-my-pi native addon
+      - name: Checkout pinned oh-my-pi (sibling)
+        # scripts/build-omp.mjs (invoked by pnpm run bundle:runtime, part of
+        # every dist:* script below) requires a sibling checkout at
+        # ../oh-my-pi built from its own PINNED_OMP_COMMIT regardless of
+        # whether the native addon below gets restored from cache. Must run
+        # before the cache restore below: git clone refuses a non-empty
+        # destination, and a cache hit would already have populated
+        # ../oh-my-pi/packages/natives/native/ if this ran second.
+        run: |
+          set -euo pipefail
+          git clone --quiet https://github.com/can1357/oh-my-pi ../oh-my-pi
+          git -C ../oh-my-pi checkout --quiet "${{ steps.omp-commit.outputs.commit }}"
+          (cd ../oh-my-pi && bun install --frozen-lockfile)
+
+      - name: Restore cached native addon
         # The compile below takes ~5min on arm64 but ~42min on every x64
         # runner class (macOS Intel, Linux, Windows alike — an x64 GH-hosted
         # CPU-class gap, not a platform bug), which otherwise leaves the
         # signed macOS path no headroom for notarization inside the job
         # timeout. The addon only depends on the pinned commit, the OS, and
         # the arch, so it's identical across runs until the pin moves.
-        id: omp-native-cache
-        uses: actions/cache@v4
+        id: omp-native-restore
+        uses: actions/cache/restore@v4
         with:
           path: ../oh-my-pi/packages/natives/native/*.node
           key: omp-native-${{ runner.os }}-${{ runner.arch }}-ci-${{ steps.omp-commit.outputs.commit }}
-
-      - name: Checkout pinned oh-my-pi (sibling)
-        # scripts/build-omp.mjs (invoked by pnpm run bundle:runtime, part of
-        # every dist:* script below) requires a sibling checkout at
-        # ../oh-my-pi built from its own PINNED_OMP_COMMIT regardless of
-        # whether the native addon above was restored from cache.
-        run: |
-          set -euo pipefail
-          git clone --quiet https://github.com/can1357/oh-my-pi ../oh-my-pi
-          git -C ../oh-my-pi checkout --quiet "${{ steps.omp-commit.outputs.commit }}"
-          (cd ../oh-my-pi && bun install --frozen-lockfile)
 
       - name: Build oh-my-pi native addon
         # Skipped on a cache hit. embed-native.ts refuses to embed a target
@@ -217,8 +220,44 @@ jobs:
         # needs no bazel: the `host` target takes the local cargo/napi path.
         # The `ci` cargo profile skips incremental state and strips symbols,
         # matching what bazel-natives.ts documents release CI using.
-        if: steps.omp-native-cache.outputs.cache-hit != 'true'
-        run: (cd ../oh-my-pi && OMP_NATIVE_CARGO_PROFILE=ci bun run build:native)
+        #
+        # x64 legs force the baseline (non-AVX2) instruction set and rename
+        # the output to match: build-bindings.ts otherwise auto-detects the
+        # *build host's* CPU (always AVX2 on GitHub-hosted x64 runners) and
+        # would ship a -modern.node that SIGILLs on any end user's non-AVX2
+        # x64 machine. This matches oh-my-pi's own scripts/bazel-natives.ts
+        # hostTargetName(), which always pins darwin-x64/win32-x64 release
+        # builds to baseline regardless of the build host. arm64 has no such
+        # split (x64Variant is null there).
+        if: steps.omp-native-restore.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          if [ "${{ matrix.arch }}" = "x64" ]; then
+            export RUSTFLAGS="-C target-cpu=x86-64-v2"
+            if [ "${{ matrix.platform }}" = "windows" ]; then
+              export RUSTFLAGS="$RUSTFLAGS -C target-feature=+crt-static"
+            fi
+          fi
+          (cd ../oh-my-pi && OMP_NATIVE_CARGO_PROFILE=ci bun run build:native)
+          if [ "${{ matrix.arch }}" = "x64" ]; then
+            for f in ../oh-my-pi/packages/natives/native/*-modern.node; do
+              [ -e "$f" ] || continue
+              mv "$f" "${f/-modern.node/-baseline.node}"
+            done
+          fi
+
+      - name: Save native addon cache
+        # actions/cache's combined action only reliably saves its post-step
+        # when every later step in the job also succeeds (actions/cache#1315)
+        # — exactly the case this exists for is a later step (packaging,
+        # signing) failing or timing out after a good compile. Split
+        # restore/save and force this with always() so a good compile still
+        # gets cached even when something downstream in the same run fails.
+        if: always() && steps.omp-native-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ../oh-my-pi/packages/natives/native/*.node
+          key: omp-native-${{ runner.os }}-${{ runner.arch }}-ci-${{ steps.omp-commit.outputs.commit }}
 
       - name: Prepare package inputs
         run: |
