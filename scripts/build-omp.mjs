@@ -10,8 +10,9 @@
  * (apps/desktop/test/omp-protocol-smoke.test.mjs) to confirm protocol v2 is
  * still negotiated successfully.
  *
- * Platform support: macOS (arm64 + x64) and Linux (arm64 + x64).
- * Windows is explicitly unsupported until a bench transport exists there.
+ * Platform support: macOS (arm64 + x64), Linux (arm64 + x64), and Windows (x64).
+ * The omp runtime itself is cross-platform; Fcode's own bench supervisor still
+ * requires a POSIX shell, so Windows builds ship without working Bench support.
  */
 
 import { execFileSync, spawnSync } from "node:child_process";
@@ -44,7 +45,7 @@ if (!existsSync(ompSource)) {
   console.error(
     `build-omp: oh-my-pi checkout not found at ${ompSource}\n` +
       "Clone it as a sibling of this repo:\n" +
-      "  git clone https://github.com/coaletech/oh-my-pi ../oh-my-pi",
+      "  git clone https://github.com/can1357/oh-my-pi ../oh-my-pi",
   );
   process.exit(1);
 }
@@ -86,9 +87,18 @@ const codingAgentDir = join(ompSource, "packages", "coding-agent");
 const distDir = join(codingAgentDir, "dist");
 const hostTarget = `${process.platform}-${process.arch}`;
 // Host target first so a later cross-target failure never costs us the one
-// binary this dev machine can actually run and test locally.
-const ALL_TARGETS = ["darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64"];
-const crossTargets = [hostTarget, ...ALL_TARGETS.filter((t) => t !== hostTarget)];
+// binary this dev machine can actually run and test locally. In CI, each
+// release.yml matrix job packages only its own platform, so the other 4
+// targets would just be discarded, guaranteed-to-fail noise in the log —
+// skip them there and only build the one target that job actually ships.
+const ALL_TARGETS = ["darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64", "win32-x64"];
+const crossTargets = process.env.CI
+  ? [hostTarget]
+  : [hostTarget, ...ALL_TARGETS.filter((t) => t !== hostTarget)];
+// Bun's --compile always appends .exe for a Windows target regardless of the
+// outfile given (oh-my-pi build-binary.ts requests "omp-<target>" with no
+// extension) — every staged filename for that target must carry it too.
+const exeSuffix = (target) => (target.startsWith("win32-") ? ".exe" : "");
 
 mkdirSync(destDir, { recursive: true });
 
@@ -104,12 +114,13 @@ for (const crossTarget of crossTargets) {
     console.warn(`build-omp: build failed for ${crossTarget} (status ${result.status}) — skipping`);
     continue;
   }
-  const src = join(distDir, `omp-${crossTarget}`);
+  const suffix = exeSuffix(crossTarget);
+  const src = join(distDir, `omp-${crossTarget}${suffix}`);
   if (!existsSync(src)) {
     console.warn(`build-omp: build reported success but ${src} is missing — skipping`);
     continue;
   }
-  const dest = join(destDir, `omp-${crossTarget}`);
+  const dest = join(destDir, `omp-${crossTarget}${suffix}`);
   cpSync(src, dest);
   console.log(`build-omp: staged ${src} → ${dest}`);
   staged.push(crossTarget);
@@ -124,8 +135,9 @@ if (!staged.includes(hostTarget)) {
 // apps/desktop/test/omp-protocol-smoke.test.mjs resolves exactly this path.
 // electron-builder does the equivalent per-arch rename at packaging time via
 // apps/desktop/package.json's extraResources "omp-${arch}" → "bin/omp".
-const hostBareDest = join(destDir, "omp");
-cpSync(join(destDir, `omp-${hostTarget}`), hostBareDest);
+const hostSuffix = exeSuffix(hostTarget);
+const hostBareDest = join(destDir, `omp${hostSuffix}`);
+cpSync(join(destDir, `omp-${hostTarget}${hostSuffix}`), hostBareDest);
 const sha256 = createHash("sha256").update(readFileSync(hostBareDest)).digest("hex");
 console.log(`build-omp: staged host binary → ${hostBareDest}`);
 console.log(`build-omp: ${hostTarget} SHA256 = ${sha256}`);

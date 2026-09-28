@@ -6,7 +6,8 @@
   "description": "Fcode desktop IDE for Frappe development",
   "homepage": "https://github.com/Coale-Tech/fcode",
   "author": {
-    "name": "Coale-Tech",
+    "name": "CoaleTech",
+    "email": "support@coale.tech",
     "url": "https://github.com/Coale-Tech"
   },
   "main": "./out/main/index.js",
@@ -217,8 +218,8 @@
       ]
     },
     "win": {
-      "executableName": "PI-Desktop",
-      "artifactName": "PI-Desktop-Portable-${version}.${ext}",
+      "executableName": "Fcode",
+      "artifactName": "Fcode-Portable-${version}.${ext}",
       "target": [
         {
           "target": "nsis",
@@ -248,17 +249,21 @@
         {
           "from": "build/icon.ico",
           "to": "app-icon.ico"
+        },
+        {
+          "from": "resources/bin/omp-win32-${arch}.exe",
+          "to": "bin/omp.exe"
         }
       ]
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "shortcutName": "PI-Desktop",
-      "artifactName": "PI-Desktop-Setup-${version}.${ext}"
+      "shortcutName": "Fcode",
+      "artifactName": "Fcode-Setup-${version}.${ext}"
     },
     "portable": {
-      "artifactName": "PI-Desktop-Portable-${version}.${ext}"
+      "artifactName": "Fcode-Portable-${version}.${ext}"
     },
     "deb": {
       "packageName": "pi-desktop",

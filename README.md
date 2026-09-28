@@ -21,19 +21,14 @@
 
 ## Current status
 
-Fcode is being built from the PI-Desktop Electron shell. The current preview provides the renamed **Fcode** application, isolated Fcode data directories, project opening, persistent sessions, model-provider configuration, permissions, plugins, and the existing desktop agent workflow.
+Fcode has replaced the legacy Pi agent runtime with **omp** ([oh-my-pi](https://github.com/can1357/oh-my-pi)) and added the Code (Monaco editor), Build (Studio/Builder canvas), and Bench (Frappe bench cockpit) surfaces, Frappe bench discovery and supervision, and Frappe-specific skills and bench tools — on top of the inherited shell (isolated Fcode data directories, project opening, persistent sessions, model-provider configuration, permissions, plugins).
 
-The following planned work is **not complete in this preview**:
+The release pipeline is wired to build macOS (arm64 + x64), Linux (x64), and Windows (x64) artifacts. Two things remain incomplete:
 
-- the omp RPC bridge and bundled omp runtime;
-- production Code, Build, and Bench surfaces;
-- Frappe bench discovery and supervision;
-- Studio and Builder canvas integration;
-- Frappe-specific skills and bench tools;
-- signed and notarized distribution;
-- Apple Silicon, Linux, and Windows Fcode artifacts.
+- **Signed and notarized distribution.** Apple Developer ID signing and notarization run in CI, but the required secrets are not yet configured, so no signed release has shipped.
+- **Bench on Windows.** The Bench tab's supervisor spawns the Frappe `bench` CLI through a POSIX login shell, which does not exist on Windows, so a Windows build ships without a working Bench tab.
 
-The preview still bundles PI-Desktop's legacy agent runtime. Do not evaluate it as the finished omp-powered Fcode product.
+The only published release, [v0.15.7-fcode.1](https://github.com/Coale-Tech/fcode/releases/tag/v0.15.7-fcode.1), predates all of this: it is an unsigned Intel-macOS-only build of the renamed shell without the omp bridge. See [CHANGELOG.md](CHANGELOG.md) for the full history.
 
 ## Download and install
 
@@ -67,10 +62,11 @@ The installed application uses:
 
 ### Requirements
 
-- macOS or Linux
+- macOS, Linux, or Windows
 - Node.js `>=22.19`
 - pnpm `>=10`
 - a stable Rust toolchain
+- Bun `>=1.2` and a sibling [oh-my-pi](https://github.com/can1357/oh-my-pi) checkout (`../oh-my-pi`) — see [Developer docs](docs/fcode/README.md) for setup
 
 ```bash
 git clone https://github.com/Coale-Tech/fcode.git
@@ -116,6 +112,7 @@ Fcode
 ├── packages/agent-host       Turn queue, approvals, and event handling
 ├── packages/agent-runtime    Legacy preview agent runtime
 ├── packages/host-runtime     Sidecar process integration
+├── packages/omp-bridge       omp (oh-my-pi) RPC bridge — the current agent brain
 └── packages/shared           Shared protocol and application identity
 ```
 

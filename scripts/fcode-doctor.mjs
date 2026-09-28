@@ -127,7 +127,7 @@ if (process.platform === "win32") {
     fail(
       "oh-my-pi: sibling checkout not found",
       `Clone it alongside this repo:\n` +
-        `       git clone https://github.com/coaletech/oh-my-pi ${resolve(repoRoot, "..", "oh-my-pi")}`,
+        `       git clone https://github.com/can1357/oh-my-pi ${resolve(repoRoot, "..", "oh-my-pi")}`,
     );
   } else {
     const sha = tryExec("git", ["-C", ompPath, "rev-parse", "--short", "HEAD"]) ?? "unknown";
