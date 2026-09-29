@@ -2,6 +2,15 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const koEntries: ChangelogEntry[] = [
   {
+    version: "0.16.0",
+    date: "2026-09-29",
+    highlights: [
+      "Fcode가 이제 omp 에이전트로 동작합니다. 입력창과 설정에서 모델과 사고 수준 선택, 컨텍스트 사용량 확인, 슬래시 명령, 세션 분기 및 이름 변경을 바로 사용할 수 있습니다.",
+      "Fcode에 설정한 제공자 키가 omp로 자동 전달되어, omp 자체 설정을 수정하지 않아도 해당 제공자의 모델을 사용할 수 있습니다.",
+      "코드 탭이 완전한 IDE 화면이 되었습니다. 파일 트리, 오프라인 Monaco 편집기, 이번 세션의 변경 내역(비교 및 되돌리기), 마이그레이션 실행 버튼이 있는 Frappe DocType 탐색기를 제공합니다.",
+    ],
+  },
+  {
     version: "0.15.6",
     date: "2026-09-23",
     highlights: [

@@ -2,6 +2,15 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const ptBREntries: ChangelogEntry[] = [
   {
+    "version": "0.16.0",
+    "date": "2026-09-29",
+    "highlights": [
+      "O Fcode agora roda no agente omp: escolha modelos e níveis de raciocínio, veja o uso de contexto e use comandos com barra, ramificação e renomeação de sessões no compositor e nas configurações.",
+      "As chaves de provedor do Fcode são repassadas ao omp automaticamente, então os modelos dos provedores configurados no Fcode ficam disponíveis sem editar a configuração própria do omp.",
+      "A aba Code virou uma interface de IDE completa: árvore de arquivos, editor Monaco offline, alterações desta sessão com diff e reversão, e um navegador de DocTypes do Frappe com botão para executar migrate.",
+    ],
+  },
+  {
     "version": "0.15.6",
     "date": "2026-09-23",
     "highlights": [

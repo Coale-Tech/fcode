@@ -30,6 +30,16 @@ export type ChangelogEntry = {
 
 const enEntries: ChangelogEntry[] = [
   {
+    version: "0.16.0",
+    date: "2026-09-29",
+    highlights: [
+      "Fcode now runs on the omp agent: pick models and thinking levels, see context usage, and use slash commands, session branching and renaming directly from the composer and settings.",
+      "Your Fcode provider keys are passed to omp automatically, so models from providers you configured in Fcode are available without editing omp's own config.",
+      "The Code tab is a full IDE surface: file tree, offline Monaco editor, changes made this session with diff and revert, and a Frappe DocType browser with a Run migrate button.",
+    ],
+  },
+
+  {
     version: "0.15.6",
     date: "2026-09-23",
     highlights: [
@@ -843,6 +853,15 @@ const enEntries: ChangelogEntry[] = [
 
 const zhCNEntries: ChangelogEntry[] = [
   {
+    version: "0.16.0",
+    date: "2026-09-29",
+    highlights: [
+      "Fcode 现在基于 omp 智能体运行：可在输入框和设置中直接选择模型与思考强度、查看上下文用量、使用斜杠命令以及会话分支与重命名。",
+      "Fcode 中配置的服务商密钥会自动传给 omp，无需修改 omp 自身配置即可使用这些服务商的模型。",
+      "代码标签页升级为完整的 IDE 界面：文件树、离线 Monaco 编辑器、本次会话改动（支持对比与还原），以及带“运行迁移”按钮的 Frappe DocType 浏览器。",
+    ],
+  },
+  {
     version: "0.15.6",
     date: "2026-09-23",
     highlights: [
@@ -1655,6 +1674,15 @@ const zhCNEntries: ChangelogEntry[] = [
 ];
 
 const zhTWEntries: ChangelogEntry[] = [
+  {
+    version: "0.16.0",
+    date: "2026-09-29",
+    highlights: [
+      "Fcode 現在以 omp 智慧代理運行：可在輸入框與設定中直接選擇模型與思考強度、檢視上下文用量、使用斜線指令以及工作階段分支與重新命名。",
+      "Fcode 中設定的服務商金鑰會自動傳給 omp，無須修改 omp 本身的設定即可使用這些服務商的模型。",
+      "程式碼分頁升級為完整的 IDE 介面：檔案樹、離線 Monaco 編輯器、本次工作階段的變更（支援比對與還原），以及附「執行遷移」按鈕的 Frappe DocType 瀏覽器。",
+    ],
+  },
   {
     version: "0.15.6",
     date: "2026-09-23",

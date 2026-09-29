@@ -9,6 +9,17 @@ The two early previews used `0.15.7-fcode.N` (PI-Desktop 0.15.7 plus a prereleas
 The PI-Desktop release each version is based on is listed in its Compatibility table.
 
 ## [Unreleased]
+
+## [0.16.0] — 2026-09-29
+
+### Compatibility
+
+| Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
+|-------|-----------------|-----------|-----------------|--------|
+| 0.16.0 | 0.15.7 | `ba344f5e69f2` | v2 (v1 read-only fallback) | v15, v16 |
+
+### Changes
+
 - Stop shipping `packages/agent-runtime/dist-bundle` as `Resources/agent-runtime`; omp-bridge is the only bundled agent runtime.
 - Code tab rebuilt as a full IDE surface: nested collapsible file tree with filter, Monaco editor loaded
   fully offline (no cdn.jsdelivr.net), tab strip, breadcrumb, status bar (branch/Ln/Col/language),
@@ -82,6 +93,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Fcode application identity (`com.coaletech.fcode`) and a separate `~/.fcode` data directory
 - Intel macOS preview build (unsigned ZIP plus SHA-256)
 
+[0.16.0]: https://github.com/Coale-Tech/fcode/releases/tag/v0.16.0
 [0.15.7-fcode.2]: https://github.com/Coale-Tech/fcode/releases/tag/v0.15.7-fcode.2
 [0.15.7-fcode.1]: https://github.com/Coale-Tech/fcode/releases/tag/v0.15.7-fcode.1
 

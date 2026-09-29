@@ -2,6 +2,15 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const esEntries: ChangelogEntry[] = [
   {
+    "version": "0.16.0",
+    "date": "2026-09-29",
+    "highlights": [
+      "Fcode ahora funciona con el agente omp: elige modelos y niveles de razonamiento, consulta el uso de contexto y usa comandos con barra, bifurcación y renombrado de sesiones desde el compositor y los ajustes.",
+      "Las claves de proveedor de Fcode se pasan a omp automáticamente, así que los modelos de los proveedores configurados en Fcode están disponibles sin editar la configuración propia de omp.",
+      "La pestaña Code es una interfaz IDE completa: árbol de archivos, editor Monaco sin conexión, cambios de esta sesión con diff y reversión, y un explorador de DocTypes de Frappe con botón para ejecutar migrate.",
+    ],
+  },
+  {
     "version": "0.15.6",
     "date": "2026-09-23",
     "highlights": [
