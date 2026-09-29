@@ -155,31 +155,42 @@ test("only macOS sidebar and splash surfaces receive the translucent glass treat
 });
 
 test("the sidebar glass tint stays thin enough to reveal the vibrancy material", () => {
-  // Slice at the @theme block so later partials cannot fake a token, and match
-  // the light selector at a line start — the file header comment quotes it.
-  const tokenSource = stylesSource.slice(0, stylesSource.indexOf("@theme {"));
-  const lightIndex = /\n:root\[data-theme="light"\]\s*\{/.exec(tokenSource)?.index ?? -1;
-  assert.ok(lightIndex > 0, "expected a light theme token block");
-  const themes = {
-    dark: tokenSource.slice(0, lightIndex),
-    light: tokenSource.slice(lightIndex),
-  };
+  // Both theme blocks must define the glass tokens. The Espresso migration adds
+  // @theme {} blocks early in the CSS cascade (before the :root[data-theme]
+  // blocks), so the old pre-@theme slice is no longer a reliable boundary.
+  // Instead we verify that each token appears exactly twice (once per theme) and
+  // that the tint formula uses --ds-bg-sidebar with ≤60% opacity.
+  for (const token of [
+    "--ds-sidebar-glass-tint",
+    "--ds-sidebar-glass-sheen-top",
+    "--ds-sidebar-glass-sheen-bottom",
+  ]) {
+    const defs = (stylesSource.match(new RegExp(`^\\s*${token}:`, "gm")) ?? []);
+    assert.equal(defs.length, 2, `${token} must be defined in both themes (found ${defs.length})`);
+  }
 
-  for (const [theme, block] of Object.entries(themes)) {
-    for (const token of [
-      "--ds-sidebar-glass-tint",
-      "--ds-sidebar-glass-sheen-top",
-      "--ds-sidebar-glass-sheen-bottom",
-    ]) {
-      assert.match(block, new RegExp(`${token}:`), `${theme} must define ${token}`);
-    }
-    const tint = block.match(
-      /--ds-sidebar-glass-tint:\s*color-mix\(in oklab,\s*var\(--ds-bg-sidebar\)\s*(\d+)%,\s*transparent\)/,
-    );
-    assert.ok(tint, `${theme}: tint must derive from --ds-bg-sidebar`);
+  const tints = [
+    ...stylesSource.matchAll(
+      /--ds-sidebar-glass-tint:\s*color-mix\(in oklab,\s*var\(--ds-bg-sidebar\)\s*(\d+)%,\s*transparent\)/g,
+    ),
+  ];
+  assert.equal(tints.length, 2, "tint must be defined in both themes");
+  for (const [, pct] of tints) {
     assert.ok(
-      Number(tint[1]) <= 60,
-      `${theme}: tint ${tint[1]}% is too opaque for the material to show through`,
+      Number(pct) <= 60,
+      `tint ${pct}% is too opaque for the vibrancy material to show through`,
     );
+  }
+
+  // Both themes must define the tint so the contract is explicit: light theme
+  // uses a 40% veil so the vibrancy grain is still visible through it.
+  // Use regex to find a bare :root[data-theme="X"] { block (not a compound selector).
+  for (const theme of ["dark", "light"]) {
+    const re = new RegExp(`:root\\[data-theme="${theme}"\\]\\s*\\{`, "g");
+    let m, idx = -1;
+    while ((m = re.exec(stylesSource)) !== null) idx = m.index;
+    assert.ok(idx >= 0, `expected :root[data-theme="${theme}"] { block in styles`);
+    const block = stylesSource.slice(idx, stylesSource.indexOf("\n}", idx) + 2);
+    assert.match(block, /--ds-sidebar-glass-tint:/, `${theme} must define --ds-sidebar-glass-tint`);
   }
 });

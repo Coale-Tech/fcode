@@ -136,6 +136,7 @@
     transition-duration: 0.01ms !important;
   }
 
+  .nav-rail-btn,
   .thread-item,
   .sidebar-session-group-header {
     transition-duration: 0.01ms !important;

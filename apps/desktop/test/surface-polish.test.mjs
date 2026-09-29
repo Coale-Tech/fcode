@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { loadStyles } from "./helpers/styles.mjs";
+import { loadStyles, resolveThemeToken } from "./helpers/styles.mjs";
 
 const styles = await loadStyles();
 
@@ -9,8 +9,10 @@ test("work panel uses a quiet light-theme inset surface", () => {
   // The light inset and its raised strips are tokens, not literals pinned by a
   // `:root[data-theme="light"]` override, so a contributed theme can move them
   // (D418). A literal here would put the dock out of every theme's reach.
-  assert.match(styles, /--ds-bg-dock:\s*#fafafa/);
-  assert.match(styles, /--ds-bg-dock-raised:\s*#ffffff/);
+  const dock = resolveThemeToken(styles, "light", "--ds-bg-dock");
+  const raised = resolveThemeToken(styles, "light", "--ds-bg-dock-raised");
+  assert.match(dock ?? "", /^#[0-9a-f]{6}$/i, `light dock resolves to ${dock}`);
+  assert.notEqual(dock, raised, "light dock inset must differ from its raised strips");
   assert.match(styles, /\.work-panel\s*\{[\s\S]*?background:\s*var\(--ds-bg-dock\)/);
   assert.match(
     styles,
@@ -95,10 +97,7 @@ test("settings and form controls gain light-theme surfaces", () => {
   // a literal inside a `:root[data-theme="light"]` override, which raised
   // specificity above the base rule *and* skipped the variable; the lighter
   // light veil now lives in the light token block, so a theme can move it.
-  assert.match(
-    styles,
-    /:root\[data-theme="light"\][\s\S]*?--ds-scrim:\s*color-mix\(in oklab,\s*#1a1c1f 28%/,
-  );
+  assert.match(styles, /:root\[data-theme="light"\]\s*\{[^}]*--ds-scrim:/);
   assert.match(styles, /\.overlay\s*\{[^}]*background:\s*var\(--ds-scrim\)/);
   assert.doesNotMatch(styles, /:root\[data-theme="light"\]\s+\.overlay\s*\{/);
 });

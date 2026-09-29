@@ -7,6 +7,10 @@ const sidebarSource = await readFile(
   new URL("../src/components/Sidebar.tsx", import.meta.url),
   "utf8",
 );
+const railSource = await readFile(
+  new URL("../src/components/NavRail.tsx", import.meta.url),
+  "utf8",
+);
 const globalStyles = await loadStyles();
 const zhLocale = await readFile(
   new URL("../../../packages/i18n/src/locales/zh-CN/index.ts", import.meta.url),
@@ -31,50 +35,42 @@ test("the sidebar footer is an action bar, not a fabricated identity", () => {
   }
 });
 
-test("footer exposes settings, plugins, scheduled tasks and notifications in one row", () => {
-  assert.match(sidebarSource, /className="footer-actions"/);
-  assert.match(sidebarSource, /data-nav="settings"/);
-  assert.match(sidebarSource, /data-nav="plugins"/);
-  const pluginsAction = sidebarSource.match(
-    /<TooltipButton[\s\S]*?data-nav="plugins"[\s\S]*?<\/TooltipButton>/,
-  )?.[0] ?? "";
-  assert.match(pluginsAction, /<IconPlug size=\{14\} aria-hidden \/>/);
-  assert.doesNotMatch(sidebarSource, /data-nav="theme"/);
-  assert.match(
-    sidebarSource,
-    /<NotificationCenter onBeforeOpen=\{\(\) => closeMenus\(false\)\} \/>/,
-  );
-  // Logs live in Settings → About; the footer stays down to daily controls.
-  assert.doesNotMatch(sidebarSource, /openLogs/);
+test("the nav rail exposes settings, plugins, scheduled tasks and notifications", () => {
+  assert.match(railSource, /data-nav="settings"/);
+  assert.match(railSource, /data-nav="plugins"/);
+  assert.doesNotMatch(railSource, /data-nav="theme"/);
+  assert.match(railSource, /<NotificationCenter \/>/);
+  // Logs live in Settings → About; the rail stays down to daily controls.
+  assert.doesNotMatch(railSource, /openLogs/);
+  // The footer keeps only the build chip; destinations moved to the rail.
+  assert.doesNotMatch(sidebarSource, /data-nav="(?:settings|plugins|scheduled|code|bench|build-canvas)"/);
   // Every action is icon-only, so each needs a label for pointer and AT users.
-  const actions = sidebarSource
-    .split("<TooltipButton")
-    .filter((chunk) => /className=(?:"footer-action"|\{`footer-action )/.test(chunk));
-  assert.equal(actions.length, 3);
+  const actions = railSource.split("<TooltipButton").slice(1);
+  assert.equal(actions.length, 7);
   for (const action of actions) {
     const attrs = action.slice(0, action.indexOf(">"));
     assert.match(attrs, /tooltip=/);
     assert.match(attrs, /ariaLabel=/);
   }
+  // Plugins toggles back on a second activation instead of re-entering itself.
+  assert.match(
+    railSource,
+    /page === "plugins"\s*\? \(canNavBack\(\) \? navBack\(\) : setPage\("chat"\)\)\s*: setPage\("plugins"\)/,
+  );
   // All footer destinations report their active state to assistive tech; the
   // Plugins button also reports the Back toggle a second activation performs.
   const footerAttributes = (marker) => {
-    const at = sidebarSource.indexOf(marker);
+    const at = railSource.indexOf(marker);
     if (at < 0) return "";
-    return sidebarSource.slice(
-      sidebarSource.lastIndexOf("<TooltipButton", at),
-      sidebarSource.indexOf("</TooltipButton>", at),
+    return railSource.slice(
+      railSource.lastIndexOf("<TooltipButton", at),
+      railSource.indexOf("</TooltipButton>", at),
     );
   };
-  assert.match(
-    footerAttributes('data-nav="settings"'),
-    /aria-pressed=\{page === "settings"\}/,
-  );
-  assert.match(
-    footerAttributes('data-nav="plugins"'),
-    /aria-pressed=\{page === "plugins"\}/,
-  );
-  assert.match(footerAttributes('data-nav="scheduled"'), /aria-pressed=\{page === "scheduled"\}/);
+  for (const nav of ["chat", "code", "bench", "settings", "plugins", "scheduled"]) {
+    assert.match(footerAttributes(`data-nav="${nav}"`), new RegExp(`aria-pressed=\\{page === "${nav}"\\}`));
+  }
+  assert.match(footerAttributes('data-nav="build-canvas"'), /aria-pressed=\{page === "build"\}/);
 });
 
 test("footer sits on the sidebar content grid without a hairline", () => {
@@ -87,8 +83,8 @@ test("footer sits on the sidebar content grid without a hairline", () => {
   assert.match(globalStyles, /\.footer-build\s*\{[^}]*padding:\s*5px 8px/s);
 });
 
-test("footer action buttons share the notification trigger's hit target", () => {
-  const block = globalStyles.match(/\.footer-action\s*\{[^}]+\}/)?.[0] ?? "";
+test("rail buttons share the notification trigger's hit target", () => {
+  const block = globalStyles.match(/\.nav-rail-btn,\s*\.nav-rail \.notification-trigger\s*\{[^}]+\}/)?.[0] ?? "";
   assert.match(block, /width:\s*32px/);
   assert.match(block, /height:\s*32px/);
   assert.match(block, /transition:[^;]*var\(--motion-duration-fast\)/);

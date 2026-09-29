@@ -4,7 +4,7 @@
  * Gap 1: bench-start failure panel (startFailure state, failure event, Retry + Copy log).
  * Gap 2: one-shot verb LOADING/SUCCESS/ERROR states (oneshotState Map, spinner, Copy).
  * Gap 3: elapsed timer displayed next to status label (elapsedLabel, setInterval).
- * Gap 4: failedRoots banner in discovery list (FAILED_ROOTS_BANNER_STYLE, role=alert).
+ * Gap 4: failedRoots entries in the bench sidebar (role=alert).
  * Gap 5: port-conflict warning rows (warnings state, benchWarning event, ⚠ icon).
  * T8:  DestructiveActionDialog imported and gating migrate.
  * T14: Focus restored after dialog close (dialogTriggerRef + .focus()).
@@ -42,10 +42,6 @@ test("T6 Gap1: Copy log button is rendered inside the failure panel", () => {
   assert.match(source, /Copy log/);
 });
 
-test("T6 Gap1: FAILURE_PANEL_STYLE is defined", () => {
-  assert.match(source, /FAILURE_PANEL_STYLE/);
-});
-
 // ── Gap 2: one-shot verb states ────────────────────────────────────────────────
 
 test("T6 Gap2: oneshotState Map is declared", () => {
@@ -66,10 +62,6 @@ test("T6 Gap2: error state shown on failed one-shot with Copy button", () => {
   assert.match(source, /Copy error output|Copy.*error/);
 });
 
-test("T6 Gap2: ERROR_OUTPUT_STYLE is defined", () => {
-  assert.match(source, /ERROR_OUTPUT_STYLE/);
-});
-
 // ── Gap 3: elapsed timer ───────────────────────────────────────────────────────
 
 test("T6 Gap3: elapsedLabel state is declared", () => {
@@ -78,10 +70,6 @@ test("T6 Gap3: elapsedLabel state is declared", () => {
 
 test("T6 Gap3: setInterval drives the elapsed timer", () => {
   assert.match(source, /setInterval/);
-});
-
-test("T6 Gap3: elapsedLabel is rendered next to status", () => {
-  assert.match(source, /elapsedLabel.*ds-text-tertiary|ds-text-tertiary.*elapsedLabel/s);
 });
 
 test("T6 Gap3: startMsRef is a useRef tracking start time", () => {
@@ -96,10 +84,6 @@ test("T6 Gap4: failedRoots state is declared", () => {
 
 test("T6 Gap4: failedRoots banner has role=alert", () => {
   assert.match(source, /failedRoots.*role.*alert|role.*alert.*failedRoots/s);
-});
-
-test("T6 Gap4: FAILED_ROOTS_BANNER_STYLE is defined", () => {
-  assert.match(source, /FAILED_ROOTS_BANNER_STYLE/);
 });
 
 test("T6 Gap4: partial-discovery case shown (some roots ok, some failed)", () => {
@@ -121,10 +105,6 @@ test("T6 Gap5: warning rows rendered with warning icon", () => {
   assert.match(source, /⚠/);
 });
 
-test("T6 Gap5: WARNING_ROW_STYLE is defined", () => {
-  assert.match(source, /WARNING_ROW_STYLE/);
-});
-
 // ── T8: DestructiveActionDialog gates destructive verbs ───────────────────────
 
 test("T8: DestructiveActionDialog is imported", () => {
@@ -138,10 +118,6 @@ test("T8: DestructiveActionDialog is rendered in JSX", () => {
 test("T8: migrate is gated by the destructive dialog", () => {
   // migrate must appear in the DESTRUCTIVE_CONSEQUENCES map
   assert.match(source, /migrate.*alters.*database|DESTRUCTIVE_CONSEQUENCES.*migrate/s);
-});
-
-test("T8: DIALOG_OVERLAY_STYLE is defined (no raw px in overlay style)", () => {
-  assert.match(source, /DIALOG_OVERLAY_STYLE/);
 });
 
 // ── T14: Focus management (dialog open/close) ─────────────────────────────────

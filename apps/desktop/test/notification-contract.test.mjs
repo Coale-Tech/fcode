@@ -18,7 +18,7 @@ const [
   storeSource,
   appSource,
   shellRuntimeSource,
-  sidebarSource,
+  railSource,
   pluginRuntimeSource,
 ] =
   await Promise.all([
@@ -28,7 +28,7 @@ const [
     readStoreSource(),
     readAppSource(),
     read("../src/features/app/useAppShellRuntime.tsx"),
-    read("../src/components/Sidebar.tsx"),
+    read("../src/components/NavRail.tsx"),
     read("../electron/main/plugin-runtime.ts"),
   ]);
 
@@ -65,7 +65,7 @@ test("terminal notifications flow from host completion to the renderer", () => {
   assert.match(storeSource, /receiveNotification:/);
   assert.match(storeSource, /unreadNotificationCount/);
   assert.match(appSource, /api\.onNotificationChanged/);
-  assert.match(sidebarSource, /<NotificationCenter onBeforeOpen=\{\(\) => closeMenus\(false\)\} \/>/);
+  assert.match(railSource, /<NotificationCenter \/>/);
   assert.doesNotMatch(appSource, /<NotificationCenter \/>/);
   const changedHandler = appSource.match(
     /api\.onNotificationChanged[\s\S]*?\n\s*\}\);/,

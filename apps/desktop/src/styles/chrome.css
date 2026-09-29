@@ -462,9 +462,8 @@
   align-items: center;
   margin-right: auto;
   /* The row already pads 12px, so the title only adds the difference between
-     that and the traffic-light reserve. Platforms with no native traffic
-     lights, and fullscreen, resolve to the row's own padding. */
-  padding-left: max(0px, calc(var(--ds-window-lead-inset) - 12px));
+     that and what of the traffic-light reserve the rail leaves over. */
+  padding-left: max(0px, calc(var(--ds-pane-lead-inset) - 12px));
 }
 
 /* Preview- and route-band actions take the shared chrome-control geometry from
@@ -522,7 +521,8 @@
   background: var(--ds-bg-primary);
   /* Keep the conversation surface visually continuous with the titlebar. */
   border-bottom: 0;
-  /* Where the returning dock toggle sits; platform rules below override it. */
+  /* Where the returning dock toggle sits; the darwin rule below clears the
+     traffic lights the rail does not cover. */
   --ct-lead-inset: 12px;
   /*
    * The collapsed lead-in (traffic-light inset + dock toggle) must grow at the
@@ -711,8 +711,8 @@
  * Linux keep the 0px default from tokens.css and use their renderer-drawn
  * controls instead.
  *
- * Only the inset moves per platform — the collapsed padding below derives the
- * title's offset from it, so the two can never drift apart. */
+ * The E frame's nav rail takes the window's left edge, so surfaces beside it
+ * read `--ds-pane-lead-inset`: whatever of the reserve the rail leaves over. */
 :root[data-platform="darwin"] {
   --ds-window-lead-inset: calc(
     var(--ds-traffic-light-edge) + var(--ds-traffic-light-gap)
@@ -723,8 +723,16 @@
   --ds-window-lead-inset: 8px;
 }
 
+:root {
+  --nav-rail-width: 60px;
+  --ds-pane-lead-inset: max(
+    8px,
+    calc(var(--ds-window-lead-inset) - var(--nav-rail-width))
+  );
+}
+
 :root[data-platform="darwin"] .conversation-topbar.ct-collapsed {
-  --ct-lead-inset: var(--ds-window-lead-inset);
+  --ct-lead-inset: var(--ds-pane-lead-inset);
 }
 
 /*
@@ -744,10 +752,8 @@
    * The title's edge is `padding-left`; this button must stay exactly 36px to
    * its left (28px button + .ct-left's 8px gap) at EVERY frame, not just at the
    * two endpoints. Deriving `left` from the same inset keeps both ranges
-   * identical (112px on darwin, 36px elsewhere), so the pair interpolates in
-   * lockstep. Offsetting instead of transitioning 12px->88px matters: that range
-   * is only 76px against padding's 112px, and the icon drifts onto the title
-   * mid-flight. Expanded it lands off the pane's left edge, where it is
+   * identical, so the pair interpolates in lockstep instead of the icon
+   * drifting onto the title. Expanded it lands off the pane's left edge, where it is
    * invisible anyway, and slides in rather than materialising over the title.
    */
   left: calc(var(--ct-lead-inset) - 36px);
@@ -757,7 +763,7 @@
   align-items: center;
   /*
    * Out of flow, so .ct-left's no-drag box no longer covers it: .ct-left starts
-   * at the padding edge (x=124 collapsed) while this sits at x=88. Without its
+   * at the padding edge (inset + 36px collapsed) while this sits at the inset. Without its
    * own carve-out the button falls inside the top bar's drag region, which on
    * macOS swallows the click and keeps the arrow cursor instead of the pointer.
    */
@@ -1158,7 +1164,7 @@
 }
 
 :root[data-platform="darwin"] .sidebar-header {
-  padding-left: var(--ds-window-lead-inset);
+  padding-left: var(--ds-pane-lead-inset);
 }
 
 :root[data-platform="darwin"] .sidebar-header > .brand {
@@ -1220,7 +1226,7 @@
 }
 
 :root[data-platform="darwin"] .app-shell.work-panel-maximized.sidebar-collapsed {
-  --preview-chrome-inset: var(--ds-window-lead-inset);
+  --preview-chrome-inset: var(--ds-pane-lead-inset);
 }
 
 /* Match the scenic backdrop's child-layer specificity so preview navigation
@@ -1229,7 +1235,7 @@
   position: absolute;
   top: 0;
   right: 0;
-  left: 0;
+  left: var(--nav-rail-width);
   z-index: 200;
   display: flex;
   height: var(--ds-toolbar-height);
@@ -1239,7 +1245,7 @@
 }
 
 .window-chrome-row.sidebar-expanded {
-  left: var(--ds-sidebar-width);
+  left: calc(var(--nav-rail-width) + var(--ds-sidebar-width));
 }
 
 .window-chrome-row button {
@@ -1251,4 +1257,100 @@
 .window-chrome-drag {
   flex: 1 1 auto;
   align-self: stretch;
+}
+
+/* ── E frame ──────────────────────────────────────────────────────────────
+ * Global icon rail, the sidebar backdrop the Island sits on, and the
+ * `.context-sidebar` + `.island` pair Bench and Build compose themselves. */
+.app-shell {
+  background-color: var(--ds-bg-sidebar, var(--ds-bg-primary));
+}
+
+.nav-rail {
+  display: flex;
+  width: var(--nav-rail-width);
+  height: 100%;
+  flex: 0 0 var(--nav-rail-width);
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0 12px;
+  /* The empty rail drags the window; its button groups opt out. */
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+/* Keep destinations below the traffic lights, inside the titlebar band. */
+:root[data-platform="darwin"]:not([data-fullscreen="true"]) .nav-rail {
+  padding-top: var(--ds-toolbar-height);
+}
+
+.nav-rail-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.nav-rail-btn,
+.nav-rail .notification-trigger {
+  position: relative;
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-4);
+  color: var(--ink-gray-5);
+  transition: background var(--motion-duration-fast) var(--motion-ease-out),
+    color var(--motion-duration-fast) var(--motion-ease-out);
+}
+
+.nav-rail-btn:hover,
+.nav-rail .notification-trigger:hover {
+  background: var(--surface-gray-3);
+  color: var(--ink-gray-7);
+}
+
+.nav-rail-btn.active,
+.nav-rail .notification-trigger.active {
+  background: var(--surface-gray-4);
+  color: var(--ink-gray-9);
+}
+
+/* Active destination marker, flush with the rail's left edge. */
+.nav-rail-btn.active::before {
+  position: absolute;
+  top: 50%;
+  left: calc((32px - var(--nav-rail-width)) / 2);
+  width: 4px;
+  height: 20px;
+  border-radius: 0 var(--radius-full) var(--radius-full) 0;
+  background: var(--ink-gray-9);
+  content: "";
+  transform: translateY(-50%);
+}
+
+.nav-rail .notification-badge {
+  border-color: var(--ds-bg-sidebar, var(--ds-bg-primary));
+}
+
+.context-sidebar {
+  display: flex;
+  width: 256px;
+  min-height: 0;
+  flex: 0 0 256px;
+  flex-direction: column;
+  overflow-y: auto;
+  border-right: 1px solid var(--outline-gray-2);
+  background: var(--surface-sidebar);
+}
+
+.island {
+  min-width: 0;
+  overflow: hidden;
+  border-radius: var(--radius-6);
+  background: var(--surface-base);
+  box-shadow: var(--shadow-chat-area);
 }

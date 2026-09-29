@@ -112,50 +112,44 @@ export function OnboardingChecklist() {
       });
   };
 
+  const steps = [...benchSteps, ...hostSteps];
+  const doneCount = steps.filter((s) => s.done).length;
+  const currentId = steps.find((s) => !s.done)?.id;
+
   return (
-    <div
-      className="home-onboarding-checklist mx-auto w-full max-w-[560px] rounded-lg-plus border border-border-subtle bg-bg-elevated-opaque p-4 text-left shadow-none"
-      data-testid="onboarding-checklist"
-    >
-      <div className="mb-2 flex items-center justify-between">
-        <span className="text-md-plus font-medium text-text-primary">
-          {t("onboarding.title")}
-        </span>
-        <button
-          type="button"
-          className="rounded-md px-1.5 py-0.5 text-xs-plus text-text-muted hover:bg-bg-hover hover:text-text-primary"
-          onClick={dismiss}
-        >
+    <div className="home-onboarding-checklist wb-onboarding" data-testid="onboarding-checklist">
+      <div className="wb-onboarding-hd">
+        <span className="wb-onboarding-title">{t("onboarding.title")}</span>
+        <span className="wb-muted">{doneCount}/{steps.length}</span>
+        <span className="wb-spacer" />
+        <button type="button" className="wb-btn wb-btn-ghost wb-btn-sm" onClick={dismiss}>
           {t("onboarding.dismiss")}
         </button>
       </div>
-      <ul className="flex flex-col gap-1.5">
-        {[...benchSteps, ...hostSteps].map((step) => (
-          <li key={step.id}>
-            <button
-              type="button"
-              disabled={step.done}
-              onClick={() => runAction("action" in step ? (step as { action?: string; id: string }).action ?? step.id : step.id)}
-              className={`flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-md ${
-                step.done
-                  ? "cursor-default text-text-muted line-through"
-                  : "text-text-secondary hover:bg-bg-hover hover:text-text-primary"
-              }`}
-            >
-              <span
-                className={`flex h-4.5 w-4.5 flex-none items-center justify-center rounded-full border ${
-                  step.done
-                    ? "border-success bg-success/15 text-success"
-                    : "border-border-strong text-transparent"
-                }`}
-                aria-hidden
-              >
-                <IconCheck size={10} />
-              </span>
-              {stepLabel(step.id, step.title)}
-            </button>
-          </li>
+      <div className="wb-progress" aria-hidden>
+        {steps.map((step) => (
+          <span key={step.id} className={`wb-progress-seg${step.done ? " is-filled" : ""}`} />
         ))}
+      </div>
+      <ul className="wb-steps">
+        {steps.map((step) => {
+          const state = step.done ? "is-done" : step.id === currentId ? "is-current" : "is-pending";
+          return (
+            <li key={step.id}>
+              <button
+                type="button"
+                disabled={step.done}
+                onClick={() => runAction("action" in step ? (step as { action?: string; id: string }).action ?? step.id : step.id)}
+                className={`wb-step ${state}`}
+              >
+                <span className={`wb-step-check ${state}`} aria-hidden>
+                  {step.done && <IconCheck size={11} />}
+                </span>
+                <span className="wb-step-title">{stepLabel(step.id, step.title)}</span>
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
