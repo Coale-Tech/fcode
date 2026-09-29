@@ -4,6 +4,7 @@ import {
   AgentSidecar as RuntimeAgentSidecar,
   type StderrHandler,
 } from "@pi-desktop/host-runtime";
+import { desktopDataDir } from "./data-paths";
 import { redactValue } from "./logger";
 
 export type {
@@ -58,6 +59,8 @@ export class AgentSidecar extends RuntimeAgentSidecar {
         env: {
           ...process.env,
           ELECTRON_RUN_AS_NODE: "1",
+          FCODE_DATA_DIR: desktopDataDir(),
+          ...(process.resourcesPath ? { FCODE_RESOURCES_PATH: process.resourcesPath } : {}),
         },
       },
       onStderr: onStderr ?? fallbackStderrLogger,
