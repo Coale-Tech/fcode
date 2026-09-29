@@ -15,7 +15,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Editor, { DiffEditor, loader } from "@monaco-editor/react";
 import * as monacoNS from "monaco-editor";
-import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
+import EditorWorker from "monaco-editor/editor/editor.worker?worker";
 import type { FsIndexEntry, FsIndexResult } from "@pi-desktop/shared";
 import { buildMonacoTheme } from "../components/code/monaco-theme";
 import { FileTree } from "../components/code/FileTree";
