@@ -30,7 +30,7 @@ export const PLACEHOLDER_KEYS = {
   ],
 } as const;
 
-export const MODE_CYCLE: readonly Mode[] = ["agent", "plan", "goal"];
+export const MODE_CYCLE: readonly Mode[] = ["agent"];
 
 export const MODE_LABEL_KEYS: Record<Mode, string> = {
   agent: "settings.modeAgent",

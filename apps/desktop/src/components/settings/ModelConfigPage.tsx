@@ -40,6 +40,7 @@ import { ImageGenerationModelRow } from "./ImageGenerationModelRow";
 import { ProviderSetupDialog } from "./ProviderSetupDialog";
 import { useProviderReorder } from "./useProviderReorder";
 import { VendorAccountsSection } from "./VendorAccountsSection";
+import { OmpAccountsSection } from "./OmpAccountsSection";
 
 const DELETE_CONFIRM_MS = 3000;
 
@@ -834,6 +835,7 @@ export function ModelConfigPage() {
       </section>
 
       <VendorAccountsSection />
+      <OmpAccountsSection />
 
       <div className="model-catalog-status">
         <span className="model-catalog-status-text">

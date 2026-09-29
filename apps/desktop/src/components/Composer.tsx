@@ -21,7 +21,6 @@ import {
 import { api } from "../lib/api";
 import { useAppStore } from "../stores/app-store";
 import { latestTurnContextInspector } from "../lib/latest-turn-context";
-import { isActivePlanExecution } from "../lib/plan-mode-state";
 import { headAsk, queuedAskCount } from "../lib/pending-asks";
 import type { QueuedPrompt } from "../lib/queued-prompts";
 import { composerModelDisplayName, sameComposerModelId } from "../lib/composer-models";
@@ -34,7 +33,6 @@ import {
 } from "../hooks/use-composer-autocomplete";
 import { ComposerAutocomplete } from "./ComposerAutocomplete";
 import { AskToolCard } from "./AskToolCard";
-import { PlanApprovalBar } from "./PlanApprovalBar";
 import {
   COMPOSER_MAX_VISIBLE_ROWS,
   COMPOSER_MIN_HEIGHT_PX,
@@ -90,9 +88,6 @@ export function Composer({
   const sendQueuedNow = useAppStore((s) => s.sendQueuedNow);
   const abort = useAppStore((s) => s.abort);
   const isRunning = useAppStore((s) => s.isRunning);
-  const planningState = useAppStore((s) =>
-    s.activeSessionId ? s.planningStates[s.activeSessionId] : undefined,
-  );
   const settings = useAppStore((s) => s.settings);
   const imageGenerationCandidates = useMemo(
     () => imageGenerationBindings(settings?.imageGenerationModels, settings?.imageGeneration),
@@ -136,9 +131,6 @@ export function Composer({
   const showToast = useAppStore((s) => s.showToast);
   const composerPrefill = useAppStore((s) => s.composerPrefill);
   const clearComposerPrefill = useAppStore((s) => s.clearComposerPrefill);
-  const planCheckpoint = useAppStore((s) =>
-    s.activeSessionId ? s.planCheckpoints[s.activeSessionId] : undefined,
-  );
   const pendingAsk = useAppStore((s) =>
     headAsk(s.pendingAsks, s.activeSessionId),
   );
@@ -171,7 +163,7 @@ export function Composer({
     prefill,
     t,
     invalidatePromptEnhancement,
-    inputBlocked: planCheckpoint?.status === "pending" || nativeInputBlocked,
+    inputBlocked: nativeInputBlocked,
   });
   const {
     ref,
@@ -202,12 +194,11 @@ export function Composer({
     handleInput,
   } = draft;
 
-  const approvalPending = planCheckpoint?.status === "pending";
   const largePasteThreshold = normalizeLargePasteThreshold(
     settings?.largePasteThreshold,
   );
   const attachments = useComposerAttachments({
-    inputBlocked: approvalPending || nativeSession,
+    inputBlocked: nativeSession,
     activeSessionId,
     draftKey,
     largePasteThreshold,
@@ -235,11 +226,10 @@ export function Composer({
     insertDroppedDirectoryPaths,
     dismissDroppedDirectories,
   } = attachments;
-  const executionActive = isActivePlanExecution(planCheckpoint);
-  const runActive = isRunning || executionActive;
-  const inputBlocked = approvalPending || pasting || nativeInputBlocked;
-  const controlsBlocked = approvalPending || nativeSession;
-  const sendBlocked = approvalPending || pasting || nativeInputBlocked;
+  const runActive = isRunning;
+  const inputBlocked = pasting || nativeInputBlocked;
+  const controlsBlocked = nativeSession;
+  const sendBlocked = pasting || nativeInputBlocked;
   const enhancementDraft = stripInlineComposerFileReferenceTokens(
     value,
     activeFileReferences,
@@ -317,10 +307,6 @@ export function Composer({
   const mode: Mode = activeSession
     ? activeSession.mode
     : (draftConfiguration?.mode ?? settings?.defaultMode ?? "agent");
-  const planningLive =
-    isRunning &&
-    planningState === "planning" &&
-    (mode === "plan" || mode === "goal");
   // Permission mode (D115/D132): inherited sessions still resolve through the
   // global setting, but the composer presents only the effective mode.
   const globalPermissionMode: PermissionMode =
@@ -336,8 +322,7 @@ export function Composer({
     sessionPermissionMode === "inherit"
       ? (globalPermissionMode as Exclude<PermissionMode, "inherit">)
       : sessionPermissionMode;
-  const composerPermissionMode: Exclude<PermissionMode, "inherit"> =
-    mode === "goal" ? "auto" : effectivePermissionMode;
+  const composerPermissionMode = effectivePermissionMode;
   const provider = providers.find(
     (candidate) =>
       candidate.id ===
@@ -537,15 +522,12 @@ export function Composer({
       data-composer-dock={variant}
     >
       <div className="composer-stack">
-        {planCheckpoint?.status === "pending" ? (
-          <PlanApprovalBar proposal={planCheckpoint} />
-        ) : null}
         {pendingAsk ? (
           <AskToolCard key={pendingAsk.requestId} request={pendingAsk} queued={queuedAsks} />
         ) : null}
         {nativeReadOnly ? (
           <div className="composer-status" role="status">
-            Native Pi session is read-only: {activeSessionSummary?.readOnlyReason ?? "continuation unavailable"}.
+            omp session is read-only: {activeSessionSummary?.readOnlyReason ?? "continuation unavailable"}.
           </div>
         ) : null}
         <ComposerStatus
@@ -555,7 +537,7 @@ export function Composer({
           moveQueuedPrompt={moveQueuedPrompt}
           editQueuedPrompt={handleEditQueuedPrompt}
           sendQueuedNow={sendQueuedNow}
-          approvalPending={approvalPending}
+          approvalPending={false}
           enhancementError={enhancementError}
           clearEnhancementError={clearEnhancementError}
           droppedDirectories={droppedDirectories}
@@ -612,7 +594,7 @@ export function Composer({
           <ComposerToolbar
             t={t}
             mode={mode}
-            planningLive={planningLive}
+            planningLive={false}
             providerId={provider?.id}
             modelId={modelId}
             thinkingLevel={thinkingLevel}
