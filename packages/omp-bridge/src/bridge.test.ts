@@ -805,3 +805,71 @@ describe("OmpBridge.handleSubagentFrame — lifecycle and progress frames map to
     restore();
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DX10 / T7 — handshake logging (protocol version + tool registration)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Complete a v2 handshake capturing stdout notifications emitted to the host. */
+async function negotiateV2(bridge: OmpBridge): Promise<{
+  ompStdinWrites: unknown[];
+  emitted: unknown[];
+  origStdout: typeof process.stdout.write;
+}> {
+  const b = bridge as unknown as Record<string, unknown>;
+  const ompStdinWrites: unknown[] = [];
+  b.ompProcess = { stdin: { write: vi.fn((data: string) => {
+    try { ompStdinWrites.push(JSON.parse(data.trim())); } catch { /* ignore */ }
+  }) } };
+
+  const emitted: unknown[] = [];
+  const origStdout = process.stdout.write.bind(process.stdout);
+  process.stdout.write = ((data: string) => {
+    try { emitted.push(JSON.parse(data.trim())); } catch { /* ignore */ }
+    return true;
+  }) as typeof process.stdout.write;
+
+  bridge.handleOmpFrame(JSON.stringify({
+    type: "ready", protocolVersion: 1,
+    supportedProtocolVersions: [1, 2], maxFrameBytes: 1048576, maxReassembledFrameBytes: 67108864,
+  }));
+
+  const negotiateCall = ompStdinWrites.find((f) => (f as Record<string, unknown>).type === "negotiate_protocol");
+  const negotiateId = String((negotiateCall as Record<string, unknown>).id);
+
+  bridge.handleOmpFrame(JSON.stringify({
+    id: negotiateId, type: "response", command: "negotiate_protocol", success: true,
+    data: { protocolVersion: 2 },
+  }));
+
+  await Promise.resolve(); await Promise.resolve();
+  return { ompStdinWrites, emitted, origStdout };
+}
+
+describe("OmpBridge — registration failure emits HOST_TOOL_REGISTRATION_FAILED notification (DX10, T7)", () => {
+  it("emits sidecar.notification when set_host_tools fails", async () => {
+    const bridge = new OmpBridge();
+    const { ompStdinWrites, emitted, origStdout } = await negotiateV2(bridge);
+    try {
+      const setToolsCall = ompStdinWrites.find((f) => (f as Record<string, unknown>).type === "set_host_tools");
+      const setToolsId = String((setToolsCall as Record<string, unknown>).id);
+
+      bridge.handleOmpFrame(JSON.stringify({
+        id: setToolsId, type: "response", command: "set_host_tools", success: false,
+        error: "set_host_tools unsupported",
+      }));
+      // Rejection propagates: ompCall→registerHostTools→.then(skip)→.catch — 4 flushes.
+      await Promise.resolve(); await Promise.resolve();
+      await Promise.resolve(); await Promise.resolve();
+
+      const notification = emitted.find((e) => {
+        const ev = e as Record<string, unknown>;
+        return ev.method === "sidecar.notification" &&
+          (ev.params as Record<string, unknown>)?.code === "HOST_TOOL_REGISTRATION_FAILED";
+      });
+      expect(notification).toBeDefined();
+    } finally {
+      process.stdout.write = origStdout;
+    }
+  });
+});

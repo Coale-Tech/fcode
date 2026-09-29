@@ -247,10 +247,13 @@ export function createSidecarRuntime({
     // omp-bridge open_url (emitted during omp.login.start OAuth flow): open in
     // the system browser with the same http(s)-only allowlist used everywhere.
     if (method === "sidecar.notification") {
-      const n = params as { type?: string; url?: string };
+      const n = params as { type?: string; url?: string; message?: string };
       if (n.type === "open_url") {
         const url = parseAllowedExternalUrl(n.url);
         if (url) void shell.openExternal(url);
+      } else if (n.type === "system" && n.message) {
+        // PROTOCOL_DOWNGRADE, HOST_TOOL_REGISTRATION_FAILED, …
+        sendToRenderer(IPC.event.toast, { message: n.message });
       }
       return;
     }

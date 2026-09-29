@@ -773,6 +773,7 @@ export class OmpBridge {
               // DX10: v1 fallback — emit warning and mark read-only.
               this.state.protocolVersion = 1;
               this.state.readOnly = true;
+              process.stderr.write(`[omp-bridge] handshake: protocol=v1 (negotiate returned ${String(negotiated)})\n`);
               this.notify("sidecar.notification", {
                 type: "system",
                 code: "PROTOCOL_DOWNGRADE",
@@ -780,18 +781,33 @@ export class OmpBridge {
               });
             } else {
               this.state.protocolVersion = 2;
+              process.stderr.write(`[omp-bridge] handshake: protocol=v2\n`);
               // T7: Announce Fcode host tools so omp can call them via host_tool_call.
-              this.registerHostTools().catch(() => undefined);
+              this.registerHostTools()
+                .then((names) => {
+                  process.stderr.write(`[omp-bridge] handshake: registered host tools: ${names.join(", ")}\n`);
+                })
+                .catch((e: unknown) => {
+                  const msg = String((e as Error)?.message ?? e);
+                  process.stderr.write(`[omp-bridge] handshake: host tool registration failed: ${msg}\n`);
+                  this.notify("sidecar.notification", {
+                    type: "system",
+                    code: "HOST_TOOL_REGISTRATION_FAILED",
+                    message: `Fcode host tools failed to register with omp: ${msg}. Host tools will not be available this session.`,
+                  });
+                });
             }
           })
-          .catch(() => {
+          .catch((e: unknown) => {
             this.state.protocolVersion = 1;
             this.state.readOnly = true;
+            process.stderr.write(`[omp-bridge] handshake: protocol=v1 (negotiate_protocol failed: ${String((e as Error)?.message ?? e)})\n`);
           });
       } else {
         // DX10: omp doesn't offer v2.
         this.state.protocolVersion = 1;
         this.state.readOnly = true;
+        process.stderr.write(`[omp-bridge] handshake: protocol=v1 (omp offers ${versions.join(",") || "none"})\n`);
       }
       return;
     }
@@ -927,8 +943,10 @@ export class OmpBridge {
   }
 
   /** Register Fcode host tools with omp so it can invoke them via host_tool_call (T7). */
-  private async registerHostTools(): Promise<void> {
-    await this.ompCall({ type: "set_host_tools", tools: HOST_TOOL_SCHEMAS });
+  private async registerHostTools(): Promise<string[]> {
+    const result = await this.ompCall({ type: "set_host_tools", tools: HOST_TOOL_SCHEMAS });
+    const data = result as Record<string, unknown> | undefined;
+    return (data?.toolNames as string[] | undefined) ?? HOST_TOOL_SCHEMAS.map((t) => t.name);
   }
 
   /**
@@ -1016,6 +1034,7 @@ export class OmpBridge {
     cwd: string;
     env: NodeJS.ProcessEnv;
   }): Promise<void> {
+    process.stderr.write(`[omp-bridge] starting: binary=${opts.ompBinary}\n`);
     this.state.cwd = opts.cwd;
     this.sessionStore = new SessionStore(opts.dataDir);
 
