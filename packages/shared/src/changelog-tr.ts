@@ -2,6 +2,15 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const trEntries: ChangelogEntry[] = [
   {
+    "version": "0.16.0",
+    "date": "2026-09-29",
+    "highlights": [
+      "Fcode artık omp ajanı üzerinde çalışıyor: model ve düşünme düzeyi seçin, bağlam kullanımını görün, eğik çizgi komutlarını, oturum dallandırmayı ve yeniden adlandırmayı doğrudan yazma alanından ve ayarlardan kullanın.",
+      "Fcode'da yapılandırdığınız sağlayıcı anahtarları otomatik olarak omp'ye aktarılır; omp'nin kendi yapılandırmasını düzenlemeden bu sağlayıcıların modellerini kullanabilirsiniz.",
+      "Kod sekmesi tam bir IDE yüzeyi oldu: dosya ağacı, çevrimdışı Monaco düzenleyici, bu oturumdaki değişiklikler (karşılaştırma ve geri alma) ve migrate çalıştırma düğmeli Frappe DocType tarayıcısı.",
+    ],
+  },
+  {
     "version": "0.15.6",
     "date": "2026-09-23",
     "highlights": [

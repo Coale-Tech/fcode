@@ -2,6 +2,15 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const deEntries: ChangelogEntry[] = [
   {
+    "version": "0.16.0",
+    "date": "2026-09-29",
+    "highlights": [
+      "Fcode läuft jetzt auf dem omp-Agenten: Modelle und Denkstufen wählen, Kontextverbrauch sehen sowie Slash-Befehle, Sitzungsverzweigung und Umbenennung direkt im Eingabefeld und in den Einstellungen nutzen.",
+      "Deine Fcode-Provider-Schlüssel werden automatisch an omp übergeben, sodass Modelle der in Fcode eingerichteten Provider ohne Änderung an omps eigener Konfiguration verfügbar sind.",
+      "Der Code-Tab ist eine vollwertige IDE-Oberfläche: Dateibaum, Offline-Monaco-Editor, Änderungen dieser Sitzung mit Diff und Zurücksetzen sowie ein Frappe-DocType-Browser mit Schaltfläche „Migrate ausführen“.",
+    ],
+  },
+  {
     "version": "0.15.6",
     "date": "2026-09-23",
     "highlights": [
