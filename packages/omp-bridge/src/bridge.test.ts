@@ -497,3 +497,311 @@ describe("OmpBridge — registerHostTools sends set_host_tools after v2 negotiat
     expect(names).toContain("fcode_canvas_read");
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §9 — set_subagent_subscription + subagent frame mapping
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Drive the ompPrompt async chain: new_session → get_state → set_subagent_subscription → prompt. */
+async function driveNewSessionPrompt(
+  bridge: OmpBridge,
+  ompStdinWrites: unknown[],
+  opts: { sessionId: string; turnId: string; alreadySubscribed?: boolean },
+): Promise<void> {
+  const findCall = (type: string) =>
+    ompStdinWrites.findLast((f) => (f as Record<string, unknown>).type === type) as
+      | Record<string, unknown>
+      | undefined;
+
+  const respondOmp = (type: string, data: unknown) => {
+    const call = findCall(type);
+    if (!call) throw new Error(`driveNewSessionPrompt: no ${type} call found`);
+    bridge.handleOmpFrame(
+      JSON.stringify({ id: call.id, type: "response", command: type, success: true, data }),
+    );
+  };
+
+  // Respond to new_session then get_state (only for new sessions).
+  respondOmp("new_session", { cancelled: false });
+  await Promise.resolve();
+  respondOmp("get_state", { sessionFile: "/data/sessions/s.json" });
+  await Promise.resolve();
+
+  if (!opts.alreadySubscribed) {
+    respondOmp("set_subagent_subscription", { level: "progress" });
+    // .catch() wrapper on ompCall needs an extra microtask tick to propagate
+    await Promise.resolve();
+    await Promise.resolve();
+  }
+
+  respondOmp("prompt", { agentInvoked: true });
+  await Promise.resolve();
+}
+
+describe("OmpBridge — set_subagent_subscription sent once on session open (§9)", () => {
+  it("sends set_subagent_subscription{level:progress} before the first prompt", async () => {
+    const bridge = new OmpBridge();
+    const b = bridge as unknown as Record<string, unknown>;
+    const ompStdinWrites: unknown[] = [];
+    b.ompProcess = {
+      stdin: {
+        write: vi.fn((data: string) => {
+          try { ompStdinWrites.push(JSON.parse(data.trim())); } catch { /* ignore */ }
+        }),
+      },
+    };
+    const origWrite = process.stdout.write.bind(process.stdout);
+    process.stdout.write = () => true;
+
+    bridge.handleHostFrame({
+      jsonrpc: "2.0", id: "h1", method: "agent.prompt",
+      params: { sessionId: "s1", turnId: "t1", content: "hello", projectPath: "/p" },
+    });
+
+    await driveNewSessionPrompt(bridge, ompStdinWrites, { sessionId: "s1", turnId: "t1" });
+
+    const subCall = ompStdinWrites.find(
+      (f) => (f as Record<string, unknown>).type === "set_subagent_subscription",
+    ) as Record<string, unknown> | undefined;
+    expect(subCall).toBeDefined();
+    expect(subCall?.level).toBe("progress");
+
+    // Subscription must precede the prompt.
+    const subIdx = ompStdinWrites.findIndex(
+      (f) => (f as Record<string, unknown>).type === "set_subagent_subscription",
+    );
+    const promptIdx = ompStdinWrites.findIndex(
+      (f) => (f as Record<string, unknown>).type === "prompt",
+    );
+    expect(subIdx).toBeGreaterThanOrEqual(0);
+    expect(promptIdx).toBeGreaterThan(subIdx);
+
+    process.stdout.write = origWrite;
+  });
+
+  it("does not send set_subagent_subscription a second time for a subsequent prompt", async () => {
+    const bridge = new OmpBridge();
+    const b = bridge as unknown as Record<string, unknown>;
+    const ompStdinWrites: unknown[] = [];
+    b.ompProcess = {
+      stdin: {
+        write: vi.fn((data: string) => {
+          try { ompStdinWrites.push(JSON.parse(data.trim())); } catch { /* ignore */ }
+        }),
+      },
+    };
+    const origWrite = process.stdout.write.bind(process.stdout);
+    process.stdout.write = () => true;
+
+    // First prompt (new session).
+    bridge.handleHostFrame({
+      jsonrpc: "2.0", id: "h1", method: "agent.prompt",
+      params: { sessionId: "s1", turnId: "t1", content: "first", projectPath: "/p" },
+    });
+    await driveNewSessionPrompt(bridge, ompStdinWrites, { sessionId: "s1", turnId: "t1" });
+
+    const countBefore = ompStdinWrites.filter(
+      (f) => (f as Record<string, unknown>).type === "set_subagent_subscription",
+    ).length;
+    expect(countBefore).toBe(1);
+
+    // Second prompt (open existing session — bridge already knows ompSessionDir).
+    bridge.handleHostFrame({
+      jsonrpc: "2.0", id: "h2", method: "agent.prompt",
+      params: { sessionId: "s1", turnId: "t2", content: "second", projectPath: "/p" },
+    });
+
+    // open_session + prompt only (no new_session/get_state/subscribe).
+    const findCall = (type: string) =>
+      ompStdinWrites.findLast((f) => (f as Record<string, unknown>).type === type) as
+        | Record<string, unknown>
+        | undefined;
+    const respondOmp = (type: string, data: unknown) => {
+      const call = findCall(type);
+      if (!call) throw new Error(`no ${type} call`);
+      bridge.handleOmpFrame(
+        JSON.stringify({ id: call.id, type: "response", command: type, success: true, data }),
+      );
+    };
+    respondOmp("open_session", { resumed: true });
+    await Promise.resolve();
+    respondOmp("prompt", { agentInvoked: true });
+    await Promise.resolve();
+
+    const countAfter = ompStdinWrites.filter(
+      (f) => (f as Record<string, unknown>).type === "set_subagent_subscription",
+    ).length;
+    expect(countAfter).toBe(1); // still only once
+
+    process.stdout.write = origWrite;
+  });
+});
+
+describe("OmpBridge.handleSubagentFrame — lifecycle and progress frames map to agent.event (§9)", () => {
+  // Helper: capture agent.event notifications emitted to stdout.
+  function captureAgentEvents(): { events: unknown[]; restore: () => void } {
+    const events: unknown[] = [];
+    const origWrite = process.stdout.write.bind(process.stdout);
+    process.stdout.write = ((data: string) => {
+      try {
+        const msg = JSON.parse(data.trim()) as Record<string, unknown>;
+        if (msg.method === "agent.event") events.push(msg.params);
+      } catch { /* ignore */ }
+      return true;
+    }) as typeof process.stdout.write;
+    return { events, restore: () => { process.stdout.write = origWrite; } };
+  }
+
+  it("lifecycle started → tool_start with parentToolCallId and agentName", () => {
+    const bridge = new OmpBridge();
+    const b = bridge as unknown as Record<string, unknown>;
+    const sessMap = b.sessions as Map<string, unknown>;
+    sessMap.set("sess-A", { ompSessionDir: undefined, projectPath: "/", inputModalities: [] });
+
+    const { events, restore } = captureAgentEvents();
+
+    bridge.handleOmpFrame(JSON.stringify({
+      type: "subagent_lifecycle",
+      payload: {
+        id: "sub-1",
+        agent: "coder",
+        agentSource: "builtin",
+        status: "started",
+        index: 0,
+        parentToolCallId: "task-call-99",
+        description: "Write tests",
+      },
+    }));
+
+    expect(events).toHaveLength(1);
+    const env = events[0] as Record<string, unknown>;
+    expect(env.sessionId).toBe("sess-A");
+    expect(env.parentToolCallId).toBe("task-call-99");
+    expect(env.agentName).toBe("coder");
+    const evt = env.event as Record<string, unknown>;
+    expect(evt.type).toBe("tool_start");
+    expect(evt.toolCallId).toBe("sub-1");
+    expect(evt.toolName).toBe("task");
+
+    restore();
+  });
+
+  it("lifecycle completed → tool_end with parentToolCallId and agentName", () => {
+    const bridge = new OmpBridge();
+    const b = bridge as unknown as Record<string, unknown>;
+    (b.sessions as Map<string, unknown>).set("sess-A", { ompSessionDir: undefined, projectPath: "/", inputModalities: [] });
+
+    const { events, restore } = captureAgentEvents();
+
+    bridge.handleOmpFrame(JSON.stringify({
+      type: "subagent_lifecycle",
+      payload: {
+        id: "sub-2",
+        agent: "reviewer",
+        agentSource: "builtin",
+        status: "completed",
+        index: 1,
+        parentToolCallId: "task-call-7",
+      },
+    }));
+
+    expect(events).toHaveLength(1);
+    const env = events[0] as Record<string, unknown>;
+    expect(env.parentToolCallId).toBe("task-call-7");
+    expect(env.agentName).toBe("reviewer");
+    const evt = env.event as Record<string, unknown>;
+    expect(evt.type).toBe("tool_end");
+    expect(evt.toolCallId).toBe("sub-2");
+    expect(evt.isError).toBe(false);
+
+    restore();
+  });
+
+  it("lifecycle failed → tool_end with isError:true", () => {
+    const bridge = new OmpBridge();
+    const b = bridge as unknown as Record<string, unknown>;
+    (b.sessions as Map<string, unknown>).set("sess-A", { ompSessionDir: undefined, projectPath: "/", inputModalities: [] });
+
+    const { events, restore } = captureAgentEvents();
+
+    bridge.handleOmpFrame(JSON.stringify({
+      type: "subagent_lifecycle",
+      payload: {
+        id: "sub-3",
+        agent: "tester",
+        agentSource: "builtin",
+        status: "failed",
+        index: 2,
+        parentToolCallId: "tc-fail",
+      },
+    }));
+
+    expect(events).toHaveLength(1);
+    const evt = (events[0] as Record<string, unknown>).event as Record<string, unknown>;
+    expect(evt.type).toBe("tool_end");
+    expect(evt.isError).toBe(true);
+
+    restore();
+  });
+
+  it("progress frame → tool_update with parentToolCallId and agentName", () => {
+    const bridge = new OmpBridge();
+    const b = bridge as unknown as Record<string, unknown>;
+    (b.sessions as Map<string, unknown>).set("sess-A", { ompSessionDir: undefined, projectPath: "/", inputModalities: [] });
+
+    const { events, restore } = captureAgentEvents();
+
+    bridge.handleOmpFrame(JSON.stringify({
+      type: "subagent_progress",
+      payload: {
+        index: 0,
+        agent: "coder",
+        agentSource: "builtin",
+        task: "Write unit tests for auth module",
+        parentToolCallId: "task-call-99",
+        progress: {
+          id: "sub-1",
+          status: "running",
+          description: "In progress",
+        },
+      },
+    }));
+
+    expect(events).toHaveLength(1);
+    const env = events[0] as Record<string, unknown>;
+    expect(env.parentToolCallId).toBe("task-call-99");
+    expect(env.agentName).toBe("coder");
+    const evt = env.event as Record<string, unknown>;
+    expect(evt.type).toBe("tool_update");
+    expect(evt.toolCallId).toBe("sub-1");
+    expect(evt.partialResult).toBe("Write unit tests for auth module");
+
+    restore();
+  });
+
+  it("lifecycle without parentToolCallId omits parentToolCallId from envelope", () => {
+    const bridge = new OmpBridge();
+    const b = bridge as unknown as Record<string, unknown>;
+    (b.sessions as Map<string, unknown>).set("sess-A", { ompSessionDir: undefined, projectPath: "/", inputModalities: [] });
+
+    const { events, restore } = captureAgentEvents();
+
+    bridge.handleOmpFrame(JSON.stringify({
+      type: "subagent_lifecycle",
+      payload: {
+        id: "sub-orphan",
+        agent: "solo",
+        agentSource: "builtin",
+        status: "started",
+        index: 0,
+        // no parentToolCallId
+      },
+    }));
+
+    const env = events[0] as Record<string, unknown>;
+    expect("parentToolCallId" in env).toBe(false);
+    expect(env.agentName).toBe("solo");
+
+    restore();
+  });
+});

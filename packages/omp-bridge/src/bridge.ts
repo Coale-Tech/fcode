@@ -297,6 +297,8 @@ export class OmpBridge {
   private readyTimer: NodeJS.Timeout | null = null;
   /** Optional trace writer set by main() when FCODE_BRIDGE_TRACE=1. */
   private tracer: ((dir: string, line: string) => void) | null = null;
+  /** Whether set_subagent_subscription{progress} has been sent for this omp process (§9). */
+  private subagentSubscribed = false;
 
   /** Enable raw-frame tracing to a file (FCODE_BRIDGE_TRACE=1). */
   setTracer(fn: (dir: string, line: string) => void): void {
@@ -669,6 +671,12 @@ export class OmpBridge {
       });
     }
 
+    // Subscribe to subagent progress once per omp process; idempotent, harmless to retry (§9).
+    if (!this.subagentSubscribed) {
+      this.subagentSubscribed = true;
+      await this.ompCall({ type: "set_subagent_subscription", level: "progress" }).catch(() => undefined);
+    }
+
     // Send the actual prompt. Its immediate response is only an ack
     // ({agentInvoked}); the real outcome arrives later as a separate
     // prompt_result frame correlated on the same id (see handleOmpFrame).
@@ -822,6 +830,12 @@ export class OmpBridge {
       return;
     }
 
+    // Subagent lifecycle/progress frames → agent.event rows (§9).
+    if (frame.type === "subagent_lifecycle" || frame.type === "subagent_progress") {
+      this.handleSubagentFrame(frame);
+      return;
+    }
+
     // Agent events: map omp events to Fcode agent.event notifications.
     const rawType = String(frame.type ?? "");
     if (DROP_EVENTS.has(rawType)) return;
@@ -915,6 +929,79 @@ export class OmpBridge {
   /** Register Fcode host tools with omp so it can invoke them via host_tool_call (T7). */
   private async registerHostTools(): Promise<void> {
     await this.ompCall({ type: "set_host_tools", tools: HOST_TOOL_SCHEMAS });
+  }
+
+  /**
+   * Map omp subagent frames to agent.event notifications (§9).
+   *
+   * Uses the first active session (single-omp-process architecture; see ompPrompt ponytail note).
+   * `parentToolCallId` and `agentName` go in the envelope so the renderer's events-slice
+   * picks them up as UiMessage fields (ADR 0062).
+   */
+  private handleSubagentFrame(frame: Record<string, unknown>): void {
+    const sessionId = this.sessions.keys().next().value ?? "";
+
+    if (frame.type === "subagent_lifecycle") {
+      const payload = (frame.payload ?? {}) as Record<string, unknown>;
+      const toolCallId = String(payload.id ?? "");
+      const agentName = String(payload.agent ?? "");
+      const parentToolCallId = payload.parentToolCallId != null
+        ? String(payload.parentToolCallId)
+        : undefined;
+      const status = String(payload.status ?? "");
+
+      if (status === "started") {
+        this.notify("agent.event", {
+          sessionId,
+          ts: Date.now(),
+          ...(parentToolCallId ? { parentToolCallId } : {}),
+          agentName,
+          event: {
+            type: "tool_start",
+            toolCallId,
+            toolName: "task",
+            args: { task: payload.task ?? payload.description },
+          },
+        });
+      } else {
+        // completed, failed, aborted
+        this.notify("agent.event", {
+          sessionId,
+          ts: Date.now(),
+          ...(parentToolCallId ? { parentToolCallId } : {}),
+          agentName,
+          event: {
+            type: "tool_end",
+            toolCallId,
+            result: { status, description: payload.description },
+            isError: status === "failed",
+          },
+        });
+      }
+      return;
+    }
+
+    if (frame.type === "subagent_progress") {
+      const payload = (frame.payload ?? {}) as Record<string, unknown>;
+      const progress = (payload.progress ?? {}) as Record<string, unknown>;
+      const toolCallId = String(progress.id ?? "");
+      const agentName = String(payload.agent ?? "");
+      const parentToolCallId = payload.parentToolCallId != null
+        ? String(payload.parentToolCallId)
+        : undefined;
+
+      this.notify("agent.event", {
+        sessionId,
+        ts: Date.now(),
+        ...(parentToolCallId ? { parentToolCallId } : {}),
+        agentName,
+        event: {
+          type: "tool_update",
+          toolCallId,
+          partialResult: String(payload.task ?? ""),
+        },
+      });
+    }
   }
 
   /**
