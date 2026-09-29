@@ -33,9 +33,9 @@
 @import "./model-config.css";
 @import "./chat-links.css";
 @import "./composer-autocomplete.css";
+@import "./code.css";
 @import "./plugins.css";
 @import "./extensions.css";
 @import "./plugin-launcher.css";
 @import "./workbench.css";
-@import "./code.css";
 @import "./responsive.css";

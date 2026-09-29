@@ -100,9 +100,7 @@ export function NavRail() {
           ariaLabel={t("nav.plugins")}
           onClick={() =>
             page === "plugins"
-              ? canNavBack()
-                ? navBack()
-                : setPage("chat")
+              ? (canNavBack() ? navBack() : setPage("chat"))
               : setPage("plugins")
           }
           aria-pressed={page === "plugins"}

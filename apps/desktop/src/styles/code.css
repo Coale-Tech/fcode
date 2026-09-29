@@ -411,7 +411,6 @@
   flex: 0 0 auto;
   overflow-x: auto;
   border-bottom: 1px solid var(--outline-gray-2);
-  scrollbar-width: none;
 }
 
 .code-tabs::-webkit-scrollbar {
