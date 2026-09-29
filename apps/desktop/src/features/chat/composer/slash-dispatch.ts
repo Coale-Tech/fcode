@@ -43,19 +43,19 @@ export type SlashDispatch =
 
 /**
  * Decide the fate of one submission. Templates, unknown aliases, and
- * command entries without a dispatchable id keep the prompt path — that is
- * older behavior than the source-failure branch — while an unreadable source
- * blocks the submission so a control command is never degraded into prompt
- * text.
+ * command entries without a dispatchable id keep the prompt path.
+ *
+ * When the command source is unavailable (IPC error), the submission travels
+ * to omp as prompt text — omp executes every slash command internally and
+ * handles unknown names gracefully, so failing-closed is no longer required.
  */
 export function resolveSlashDispatch(
   submission: SlashSubmission | null,
   resolution: ComposerCommandResolution | null,
 ): SlashDispatch {
   if (!submission || !resolution) return { action: "prompt" };
-  if (resolution.status === "unavailable") {
-    return { action: "blocked", error: resolution.error };
-  }
+  // Source unavailable → let omp handle the command as prompt text.
+  if (resolution.status === "unavailable") return { action: "prompt" };
   if (resolution.status === "unknown") return { action: "prompt" };
   const { command } = resolution;
   const { id } = command;

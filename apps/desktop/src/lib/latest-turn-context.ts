@@ -36,6 +36,7 @@ export function latestTurnContextInspector(
   providerModels: Record<string, ModelInfo[]>,
   providers: ProviderPublic[],
   compactions: readonly ContextCompactionMark[] = [],
+  ompContext?: { tokensTotal?: number; tokensUsed?: number; tokensAvailable?: number } | null,
 ): LatestTurnContextInspector | undefined {
   // Delegate rows carry their own usage; remaining capacity is a parent-session
   // number, so those snapshots must not steal the composer ring.
@@ -53,18 +54,24 @@ export function latestTurnContextInspector(
     .reverse()
     .find((message) => message.usage);
 
+  // When omp provides a context snapshot, prefer its authoritative window size
+  // over the stale catalog estimate.
+  const contextWindow =
+    ompContext?.tokensTotal ??
+    resolveContextWindow(
+      latestUsageMessage?.providerId,
+      latestUsageMessage?.modelId,
+      providerModels,
+      providers,
+    );
+
   return {
     // Occupancy and provider cache/input/output use this last request.
     // turnUsage remains the visual-turn sum for completed-turn speed.
     usage: latestUsage,
     turnUsage:
       (latestTurn ? assistantTurnUsage(latestTurn) : undefined) ?? latestUsage,
-    contextWindow: resolveContextWindow(
-      latestUsageMessage?.providerId,
-      latestUsageMessage?.modelId,
-      providerModels,
-      providers,
-    ),
+    contextWindow,
     tools: latestTurn ? assistantTurnTools(latestTurn) : [],
     responseDurationMs: latestTurn
       ? assistantTurnResponseDuration(latestTurn)

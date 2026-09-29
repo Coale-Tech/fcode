@@ -8,6 +8,7 @@ import {
 import { useTranslation } from "react-i18next";
 import type {
   Mode,
+  OmpStateResult,
   PermissionMode,
 } from "@pi-desktop/shared";
 import {
@@ -17,6 +18,7 @@ import {
   normalizeLargePasteThreshold,
   stripInlineComposerFileReferenceTokens,
 } from "@pi-desktop/shared";
+import { api } from "../lib/api";
 import { useAppStore } from "../stores/app-store";
 import { latestTurnContextInspector } from "../lib/latest-turn-context";
 import { isActivePlanExecution } from "../lib/plan-mode-state";
@@ -113,6 +115,12 @@ export function Composer({
     s.activeSessionId ? s.sessionCompactions[s.activeSessionId] : undefined,
   );
   // One inspector in the composer toolbar, always the newest turn with usage.
+  // After each turn ends, refresh context window from omp state for accurate occupancy.
+  const [ompContextUsage, setOmpContextUsage] = useState<OmpStateResult["contextUsage"] | null>(null);
+  useEffect(() => {
+    if (isRunning) return;
+    void api.ompState().then((s) => setOmpContextUsage(s.contextUsage ?? null)).catch(() => {});
+  }, [isRunning]);
   const composerContextUsage = useMemo(
     () =>
       latestTurnContextInspector(
@@ -120,8 +128,9 @@ export function Composer({
         providerModels,
         providers,
         sessionCompactions,
+        ompContextUsage,
       ),
-    [liveMessages, providerModels, providers, sessionCompactions],
+    [liveMessages, providerModels, providers, sessionCompactions, ompContextUsage],
   );
   const configureActiveSession = useAppStore((s) => s.configureActiveSession);
   const showToast = useAppStore((s) => s.showToast);
@@ -389,6 +398,7 @@ export function Composer({
     thinkingProvider,
     thinkingLevel,
     controlsBlocked,
+    ompSession: true,
   });
   const modelReady = nativeSession
     ? activeSessionSummary.capabilities?.canPrompt === true

@@ -45,7 +45,7 @@ function useWorkspace(path) {
   useAppStore.setState({ workspace: { path } });
 }
 
-test("an unreadable command source refuses the submission instead of sending it", async () => {
+test("an unreadable command source passes the submission to omp as prompt text", async () => {
   useWorkspace("/pi-795-source-unavailable");
   await withCommandSource(
     async () => {
@@ -60,9 +60,10 @@ test("an unreadable command source refuses the submission instead of sending it"
       );
       assert.equal(resolution.error.message, "composer/commands unavailable");
 
+      // omp executes slash commands internally, so a source blip is no longer
+      // a reason to block the submission — it travels to omp as prompt text.
       const decision = resolveSlashDispatch(parseSlashSubmission("/compact"), resolution);
-      assert.equal(decision.action, "blocked");
-      assert.equal(decision.error, resolution.error);
+      assert.equal(decision.action, "prompt");
     },
   );
 });

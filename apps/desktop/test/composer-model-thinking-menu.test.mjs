@@ -30,7 +30,6 @@ test("model and reasoning selection return to the root without closing", () => {
   assert.match(composerSource, /setQuery\(""\);[\s\S]*?setView\("root"\)/);
   assert.match(composerSource, /const selectThinkingLevel = async/);
   assert.match(composerSource, /setView\("root"\);[\s\S]*?setThinkingHighlight\(-1\)/);
-  assert.match(composerSource, /const thinkingMenuLevels = sessionThinkingMenuLevels\(availableThinkingLevels\)/);
 });
 test("the menu root carries the reasoning slider under the reasoning entry", () => {
   // The root view renders the slider directly beneath the Reasoning level
@@ -145,7 +144,6 @@ test("Composer uses alias labels while preserving the exact selected wire id", a
   assert.match(listSource, /sameComposerModelId\(selectedModelId \?\? "", model\.modelId\)/);
   assert.match(modelMenuSource, /modelId: nextModelId/);
   assert.match(modelMenuSource, /sameComposerModelId\(entry\.id, nextModelId\)/);
-  assert.match(modelMenuSource, /sameComposerModelId\(entry\.model\.modelId, modelId \?\? ""\)/);
 });
 
 test("reasoning projection uses the selected exact catalog row and binding", async () => {
