@@ -10,41 +10,40 @@
 [![CI](https://github.com/Coale-Tech/fcode/actions/workflows/ci.yml/badge.svg)](https://github.com/Coale-Tech/fcode/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/Coale-Tech/fcode)](LICENSE)
 
-[Download](https://github.com/Coale-Tech/fcode/releases/tag/v0.15.7-fcode.1) ·
+[Download](https://github.com/Coale-Tech/fcode/releases/tag/v0.15.7-fcode.2) ·
 [Releases](https://github.com/Coale-Tech/fcode/releases) ·
 [Issues](https://github.com/Coale-Tech/fcode/issues) ·
 [Developer docs](docs/fcode/README.md)
 
 </div>
 
-> **Early preview.** The first Fcode release is an unsigned Intel macOS build. It proves the renamed desktop shell and local packaging path; it is not the completed Frappe IDE described by the project roadmap.
+> **Early preview.** Fcode 0.15.7-fcode.2 is an unsigned preview for macOS, Windows, and Linux. It ships the omp agent and the Code, Build, and Bench surfaces; it is not yet the completed Frappe IDE described by the project roadmap.
 
 ## Current status
 
 Fcode has replaced the legacy Pi agent runtime with **omp** ([oh-my-pi](https://github.com/can1357/oh-my-pi)) and added the Code (Monaco editor), Build (Studio/Builder canvas), and Bench (Frappe bench cockpit) surfaces, Frappe bench discovery and supervision, and Frappe-specific skills and bench tools — on top of the inherited shell (isolated Fcode data directories, project opening, persistent sessions, model-provider configuration, permissions, plugins).
 
-The release pipeline is wired to build macOS (arm64 + x64), Linux (x64), and Windows (x64) artifacts. Two things remain incomplete:
+The release pipeline builds macOS (arm64 + x64), Linux (x64), and Windows (x64) artifacts. Two things remain incomplete:
 
 - **Signed and notarized distribution.** Apple Developer ID signing and notarization run in CI, but the required secrets are not yet configured, so no signed release has shipped.
 - **Bench on Windows.** The Bench tab requires a Frappe bench, which is not supported natively on Windows. The app itself builds and runs on Windows; use WSL2, macOS, or Linux for bench work. PATH is inherited from the parent process on Windows (not sourced from a POSIX login shell).
 
-The only published release, [v0.15.7-fcode.1](https://github.com/Coale-Tech/fcode/releases/tag/v0.15.7-fcode.1), predates all of this: it is an unsigned Intel-macOS-only build of the renamed shell without the omp bridge. See [CHANGELOG.md](CHANGELOG.md) for the full history.
+The current preview is [v0.15.7-fcode.2](https://github.com/Coale-Tech/fcode/releases/tag/v0.15.7-fcode.2). See [CHANGELOG.md](CHANGELOG.md) for the full history.
 
 ## Download and install
 
-The current artifact supports **Intel macOS (`x64`)** only.
+Download the asset for your platform from the [Fcode 0.15.7-fcode.2 preview release](https://github.com/Coale-Tech/fcode/releases/tag/v0.15.7-fcode.2):
 
-1. Download `Fcode-0.15.7-fcode.1-x64-mac.zip` and its `.sha256` file from the [Fcode 0.15.7 preview release](https://github.com/Coale-Tech/fcode/releases/tag/v0.15.7-fcode.1).
-2. Verify the download:
+| Platform | Asset |
+| --- | --- |
+| macOS Apple silicon | `Fcode-0.15.7-fcode.2-arm64-mac.dmg` (or `.zip`) |
+| macOS Intel | `Fcode-0.15.7-fcode.2-x64-mac.dmg` (or `.zip`) |
+| Windows x64 | `Fcode-Setup-0.15.7-fcode.2.exe`, or the portable `.exe` / `.zip` |
+| Linux x64 | `.AppImage`, `.deb`, or `.rpm` |
 
-   ```bash
-   shasum -a 256 -c Fcode-0.15.7-fcode.1-x64-mac.zip.sha256
-   ```
+On macOS, open the DMG (or extract the ZIP), move `Fcode.app` to `/Applications`, and open it from Finder.
 
-3. Extract the archive and move `Fcode.app` to `/Applications`.
-4. Open Fcode from Finder.
-
-This preview is unsigned because no Coale-Tech Apple Developer ID certificate is configured yet. macOS may block the first launch. After verifying the checksum and confirming that the archive came from this repository, right-click **Fcode.app**, choose **Open**, and confirm the prompt. If macOS still retains the download quarantine:
+This preview is unsigned because no Coale-Tech Apple Developer ID certificate is configured yet. macOS may block the first launch. After confirming that the download came from this repository's release page, right-click **Fcode.app**, choose **Open**, and confirm the prompt. If macOS still retains the download quarantine:
 
 ```bash
 xattr -dr com.apple.quarantine /Applications/Fcode.app

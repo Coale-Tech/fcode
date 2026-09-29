@@ -244,7 +244,7 @@ Restart Fcode after changing the omp config. The model menu is populated from `o
 | Fcode release | Pinned omp commit | Bridge protocol | Frappe v15 | Frappe v16 | Frappe v17 |
 | --- | --- | --- | --- | --- | --- |
 | 0.15.7-fcode.1 (preview) | — | — | not tested | not tested | not tested |
-| _(next release)_ | _(to be pinned in `scripts/build-omp.mjs`)_ | v2 | planned | planned | planned |
+| 0.15.7-fcode.2 (preview) | `ba344f5e69f2` | v2 (v1 read-only fallback) | not tested | not tested | not tested |
 
 The protocol smoke test (`apps/desktop/test/omp-protocol-smoke.test.mjs`) asserts that the pinned omp binary negotiates exactly protocol version 2. A pinned commit that stops offering v2 fails the release gate automatically.
 

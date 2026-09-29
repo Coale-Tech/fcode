@@ -8,13 +8,21 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.15.7-fcode.2] — 2026-09-29
+
+### Compatibility
+
+| Fcode | omp commit | Bridge protocol | Frappe |
+|-------|-----------|-----------------|--------|
+| 0.15.7-fcode.2 | `ba344f5e69f2` | v2 (v1 read-only fallback) | v15, v16 |
+
 ### Added
 - omp (oh-my-pi) replaces the Pi agent brain via `packages/omp-bridge`
 - Three new IDE surfaces: Code tab (Monaco), Build tab (Studio/Builder), Bench tab
 - Bench discovery: auto-scans configured roots for Frappe benches
 - `fcode_bench_execute`, `fcode_bench_run`, `fcode_canvas`, `fcode_canvas_read` host tools
 - `fcode_canvas` force-acquires the shared canvas for agent-driven actions and shows a visible "Agent is using this canvas" banner in the Build tab, restoring the previous owner afterward
-- Developer ID signed and notarized macOS distribution under Coale-Tech
+- Release pipeline for Developer ID signed and notarized macOS builds under Coale-Tech (needs the signing secrets in Actions; this preview ships unsigned)
 - Legal attribution (`NOTICE.md`) and commercial-control-point decision record
 - `scripts/check-legal.mjs` gates every release against upstream identity leakage
 - `scripts/build-omp.mjs` builds and stages the omp binary from a pinned oh-my-pi commit
@@ -42,6 +50,8 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `pnpm fcode:doctor` no longer exits on Windows: it warns that the Bench tab needs macOS, Linux, or WSL2 and runs the remaining checks
 - The "bench command not found" failure on Windows now says bench is not supported natively and points to WSL2/macOS/Linux instead of `source env/bin/activate`
 - Docs: Windows runs the app but not the Bench tab, and inherits PATH from the parent process instead of reading a POSIX login shell
+
+[0.15.7-fcode.2]: https://github.com/Coale-Tech/fcode/releases/tag/v0.15.7-fcode.2
 
 ---
 
