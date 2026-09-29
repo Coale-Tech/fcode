@@ -1334,6 +1334,7 @@ sklm: {
     apiStylePiMessages: "Pi Messages (Radius)",
     close: "Kapat",
     vendorAccounts: "Satıcı hesapları",
+    ompAccounts: "omp hesapları",
     vendorAddAccount: "Hesap ekle",
     vendorNoAccounts: "Henüz oturum açılmış satıcı hesabı yok.",
     vendorPickTitle: "Satıcı seçin",

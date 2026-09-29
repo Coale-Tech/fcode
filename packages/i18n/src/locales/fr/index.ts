@@ -1331,6 +1331,7 @@ sklm: {
     "apiStylePiMessages": "Pi Messages (Radius)",
     "close": "Fermer",
     "vendorAccounts": "Comptes fournisseurs",
+    "ompAccounts": "Comptes omp",
     "vendorAddAccount": "Ajouter un compte",
     "vendorNoAccounts": "Aucun compte fournisseur n'est encore connecté.",
     "vendorPickTitle": "Choisissez un fournisseur",

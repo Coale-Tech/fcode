@@ -1344,6 +1344,7 @@ sklm: {
     apiStylePiMessages: "Pi Messages (Radius)",
     close: "닫기",
     vendorAccounts: "벤더 계정",
+    ompAccounts: "omp 계정",
     vendorAddAccount: "계정 추가",
     vendorNoAccounts: "로그인한 벤더 계정이 아직 없습니다.",
     vendorPickTitle: "벤더 선택",

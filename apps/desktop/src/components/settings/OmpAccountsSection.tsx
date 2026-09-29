@@ -47,7 +47,7 @@ export function OmpAccountsSection() {
             <div className="model-provider-name">
               <span>{p.name}</span>
               {p.authenticated ? (
-                <Badge tone="success">{t("settings.connected")}</Badge>
+                <Badge tone="success">{t("settings.vendorConnected")}</Badge>
               ) : null}
             </div>
             <div className="model-provider-actions">
@@ -58,9 +58,7 @@ export function OmpAccountsSection() {
                   disabled={busy === p.id}
                   onClick={() => void handleLogin(p.id)}
                 >
-                  {p.authenticated
-                    ? t("settings.reconnect")
-                    : t("settings.connect")}
+                  {t("settings.vendorSignInTo", { vendor: p.name })}
                 </Button>
               ) : null}
             </div>

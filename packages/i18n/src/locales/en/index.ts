@@ -1346,6 +1346,7 @@ sklm: {
     apiStylePiMessages: "Pi Messages (Radius)",
     close: "Close",
     vendorAccounts: "Vendor accounts",
+    ompAccounts: "omp accounts",
     vendorAddAccount: "Add account",
     vendorNoAccounts: "No vendor account is signed in yet.",
     vendorPickTitle: "Choose a vendor",
