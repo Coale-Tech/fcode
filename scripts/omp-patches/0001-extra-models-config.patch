@@ -1,0 +1,164 @@
+From 00f61c71e667778eede76025aa1a9063af4097fc Mon Sep 17 00:00:00 2001
+From: Sajmustafake <sajmustafa@hotmail.com>
+Date: Tue, 29 Sep 2026 14:10:58 +0300
+Subject: [PATCH] feat: add --models-config / OMP_EXTRA_MODELS_CONFIG extra
+ provider source
+
+Add a --models-config <file> CLI flag (and OMP_EXTRA_MODELS_CONFIG env
+var fallback) that makes ModelRegistry load an additional models.yml-
+schema file alongside ~/.omp/agent/models.yml.
+
+Providers in the extra file are merged in #loadCustomModels() after the
+user's own providers are processed. If a provider id already exists in
+the user's file, the extra-file entry is skipped so user config always
+wins. The user's models.yml is never modified or moved.
+
+Use case: embedding apps (e.g. Fcode) can inject their own provider
+entries (with env-var-resolved apiKey values) without touching the
+user's omp state directory.
+---
+ packages/coding-agent/src/cli/args.ts         |  1 +
+ packages/coding-agent/src/cli/flag-tables.ts  |  3 +
+ .../coding-agent/src/config/model-registry.ts | 60 ++++++++++++++++++-
+ packages/coding-agent/src/main.ts             |  6 +-
+ 4 files changed, 68 insertions(+), 2 deletions(-)
+
+diff --git a/packages/coding-agent/src/cli/args.ts b/packages/coding-agent/src/cli/args.ts
+index 76362577ce..d9bce4b4c6 100644
+--- a/packages/coding-agent/src/cli/args.ts
++++ b/packages/coding-agent/src/cli/args.ts
+@@ -32,6 +32,7 @@ export interface Args {
+ 	provider?: string;
+ 	model?: string;
+ 	config?: string[];
++	modelsConfig?: string;
+ 	smol?: string;
+ 	slow?: string;
+ 	plan?: string;
+diff --git a/packages/coding-agent/src/cli/flag-tables.ts b/packages/coding-agent/src/cli/flag-tables.ts
+index c1a4dd6166..4cc31fdfd6 100644
+--- a/packages/coding-agent/src/cli/flag-tables.ts
++++ b/packages/coding-agent/src/cli/flag-tables.ts
+@@ -128,6 +128,9 @@ export const STRING_SETTERS: Record<string, StringSetter> = {
+ 	"--fork": (result, value) => {
+ 		result.fork = value;
+ 	},
++	"--models-config": (result, value) => {
++		result.modelsConfig = value;
++	},
+ 	"--provider": (result, value) => {
+ 		result.provider = value;
+ 	},
+diff --git a/packages/coding-agent/src/config/model-registry.ts b/packages/coding-agent/src/config/model-registry.ts
+index cd15117916..96d7e33bda 100644
+--- a/packages/coding-agent/src/config/model-registry.ts
++++ b/packages/coding-agent/src/config/model-registry.ts
+@@ -267,6 +267,7 @@ export class ModelRegistry {
+ 	#modelOverrides: Map<string, Map<string, ModelOverride>> = new Map();
+ 	#configError: ConfigError | undefined = undefined;
+ 	#modelsConfigFile: ConfigFile<ModelsConfig>;
++	#extraModelsConfigFile: ConfigFile<ModelsConfig> | null = null;
+ 	#lastStaticLoadMtime: number | null = null;
+ 	#registeredProviderSources: Set<string> = new Set();
+ 	#providerDiscoveryStates: Map<string, ProviderDiscoveryState> = new Map();
+@@ -421,6 +422,13 @@ export class ModelRegistry {
+ 			/** Model discovery cache database. Defaults beside an explicit models config. */
+ 			cacheDbPath?: string;
+ 			fetch?: FetchImpl;
++			/**
++			 * Path to an additional models.yml-format file loaded alongside the
++			 * user's ~/.omp/agent/models.yml. Providers in this file are merged
++			 * after the user file; user file wins on provider-id conflicts.
++			 * Accepts OMP_EXTRA_MODELS_CONFIG env var as fallback.
++			 */
++			extraModelsPath?: string;
+ 		},
+ 	) {
+ 		this.#ignoreLocalModelConfig = options?.ignoreLocalModelConfig ?? false;
+@@ -431,6 +439,10 @@ export class ModelRegistry {
+ 				? () => Promise.reject(new Error("network disabled in model-registry runtime test"))
+ 				: wrapFetchForExtraCa(fetch));
+ 		this.#modelsConfigFile = ModelsConfigFile.relocate(modelsPath ?? path.join(getAgentDir(), "models.yml"));
++		const extraModelsPath = options?.extraModelsPath ?? process.env["OMP_EXTRA_MODELS_CONFIG"];
++		if (extraModelsPath) {
++			this.#extraModelsConfigFile = ModelsConfigFile.relocate(extraModelsPath);
++		}
+ 		this.#cacheDbPath =
+ 			options?.cacheDbPath ?? (modelsPath ? path.join(path.dirname(modelsPath), "models.db") : undefined);
+ 		this.authStorage.keys.setResolver(resolveConfigValue);
+@@ -1623,8 +1635,54 @@ export class ModelRegistry {
+ 			if (commandConfigs.size > 0) this.#commandConfigsByProvider.set(providerName, commandConfigs);
+ 		}
+ 
++		// Merge providers from the extra models config (--models-config /
++		// OMP_EXTRA_MODELS_CONFIG). Providers whose id already exists in the
++		// user's own models.yml are skipped so user config always wins.
++		const extraModelOverlays: CustomModelOverlay[] = [];
++		if (this.#extraModelsConfigFile) {
++			const extra = this.#extraModelsConfigFile.tryLoad();
++			if (extra.status === "ok" && extra.value) {
++				for (const [providerName, providerConfig] of Object.entries(extra.value.providers ?? {})) {
++					if (configuredProviders.has(providerName)) continue;
++					configuredProviders.add(providerName);
++					const commandConfigs = new Set<string>();
++					this.#collectCommandConfigValues(commandConfigs, providerConfig.apiKey, providerConfig.headers);
++					if (
++						providerConfig.baseUrl ||
++						providerConfig.headers ||
++						providerConfig.apiKey ||
++						providerConfig.authHeader !== undefined ||
++						providerConfig.compat ||
++						providerConfig.disableStrictTools ||
++						providerConfig.transport
++					) {
++						overrides.set(providerName, {
++							baseUrl: providerConfig.baseUrl,
++							headers: providerConfig.headers,
++							apiKey: providerConfig.apiKey,
++							authHeader: providerConfig.authHeader,
++							compat: mergeCompat(providerConfig.compat, undefined),
++							transport: providerConfig.transport,
++						});
++					}
++					const authMode = (providerConfig.auth ?? "apiKey") as ProviderAuthMode;
++					if (authMode === "none") keylessProviders.add(providerName);
++					if (providerConfig.apiKey) this.#installProviderApiKey(providerName, providerConfig.apiKey);
++					if (providerConfig.modelOverrides) {
++						const perModel = new Map<string, ModelOverride>();
++						for (const [modelId, override] of Object.entries(providerConfig.modelOverrides)) {
++							this.#collectCommandConfigValues(commandConfigs, undefined, override.headers);
++							perModel.set(modelId, override);
++						}
++						allModelOverrides.set(providerName, perModel);
++					}
++					if (commandConfigs.size > 0) this.#commandConfigsByProvider.set(providerName, commandConfigs);
++				}
++				extraModelOverlays.push(...this.#parseModels(extra.value));
++			}
++		}
+ 		return {
+-			models: this.#parseModels(value),
++			models: [...this.#parseModels(value), ...extraModelOverlays],
+ 			overrides,
+ 			modelOverrides: allModelOverrides,
+ 			keylessProviders,
+diff --git a/packages/coding-agent/src/main.ts b/packages/coding-agent/src/main.ts
+index 48f857adf9..6389d1362f 100644
+--- a/packages/coding-agent/src/main.ts
++++ b/packages/coding-agent/src/main.ts
+@@ -1833,7 +1833,11 @@ export async function runRootCommand(
+ 		// extended-context window caps, so it must receive the finalized settings.
+ 		const modelRegistry = logger.time(
+ 			"modelRegistry:init",
+-			() => new ModelRegistry(authStorage, undefined, { settings: settingsInstance }),
++			() =>
++				new ModelRegistry(authStorage, undefined, {
++					settings: settingsInstance,
++					extraModelsPath: parsedArgs.modelsConfig,
++				}),
+ 		);
+ 		if (parsedArgs.noPty || parsedArgs.mode === "rpc-ui") {
+ 			Bun.env.PI_NO_PTY = "1";
+-- 
+2.55.0
+

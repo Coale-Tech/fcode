@@ -56,6 +56,9 @@ export type ProviderIpcDependencies = {
   listRuntimeProviders: () => Promise<RuntimeProvider[]>;
   enrichProviderList: (result: { providers: RuntimeProvider[] }) => Promise<unknown>;
   bindingForModel: (provider: Pick<RuntimeProvider, "models">, modelId: string) => ModelBinding | undefined;
+  /** Called after any provider mutation (create/update/setSecret/delete) so
+   *  the omp sidecar can be restarted with updated provider env vars. */
+  onProviderMutation?: () => void;
 };
 
 /** Register provider catalog, model discovery, OAuth and secret channels. */
@@ -69,6 +72,7 @@ export function registerProviderIpc({
   listRuntimeProviders,
   enrichProviderList,
   bindingForModel,
+  onProviderMutation,
 }: ProviderIpcDependencies): void {
   let host: HostProcess | null = null;
   const handle = (channel: string, fn: (...args: any[]) => Promise<any>) => {
@@ -134,6 +138,7 @@ export function registerProviderIpc({
       input,
     );
     await modelsDevCatalog.ensureLoaded();
+    onProviderMutation?.();
     return { ...result, provider: enrichProvider(result.provider) };
   });
   handle(IPC.invoke.providersUpdate, async (input: unknown) => {
@@ -143,6 +148,7 @@ export function registerProviderIpc({
       input,
     );
     await modelsDevCatalog.ensureLoaded();
+    onProviderMutation?.();
     return result.provider
       ? { ...result, provider: enrichProvider(result.provider) }
       : result;
@@ -156,6 +162,7 @@ export function registerProviderIpc({
         input,
       );
       await modelsDevCatalog.ensureLoaded();
+      onProviderMutation?.();
       return result.provider
         ? { ...result, provider: enrichProvider(result.provider) }
         : result;
@@ -163,6 +170,7 @@ export function registerProviderIpc({
   );
   handle(IPC.invoke.providersDelete, async (id: string) => {
     if (!host) throw new Error("host unavailable");
+    onProviderMutation?.();
     return host.call("providers.delete", { id });
   });
   handle(IPC.invoke.providersTest, async (id: string) => {

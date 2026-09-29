@@ -1258,6 +1258,7 @@ function registerIpc() {
     isDeveloperMode: () => developerMode,
     sendToRenderer,
     voiceService,
+    onProviderMutation: () => { void superviseRestart("sidecar"); },
   });
 }
 

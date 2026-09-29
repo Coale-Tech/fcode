@@ -1,3 +1,5 @@
+import { writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { IPC, type AgentEventEnvelope, type UiMessage } from "@pi-desktop/shared";
 import {
   findSubagentProviderSource,
@@ -95,6 +97,63 @@ export function createSidecarRuntime({
   wireSidecar: (sidecar: AgentSidecar) => void;
   startSidecar: () => Promise<void>;
 } {
+
+// ── Fcode provider injection ─────────────────────────────────────────────────
+
+/** Map Fcode apiStyle values → omp's `api` field. */
+const FCODE_API_STYLE_MAP: Record<string, string> = {
+  anthropic_messages: "anthropic-messages",
+  chat_completions: "openai-completions",
+  responses: "openai-responses",
+  openai_codex_responses: "openai-codex-responses",
+  google_generative_ai: "google-generative-ai",
+};
+
+/**
+ * Collect Fcode provider secrets and build the fcode-providers.yml content.
+ * The YAML stores env var NAMES (not values) as apiKey so keys are never
+ * written to disk. The actual secrets are returned in `providerEnv`.
+ */
+async function buildFcodeProvidersConfig(
+  host: { call: <T>(method: string, params?: unknown) => Promise<T> },
+  providers: Array<{
+    id: string;
+    baseUrl?: string;
+    apiStyle?: string;
+    models?: Array<{ id: string }>;
+    authKind?: string;
+    hasOauth?: boolean;
+    enabled?: boolean;
+  }>,
+): Promise<{ yaml: string; providerEnv: Record<string, string> } | null> {
+  const providerEnv: Record<string, string> = {};
+  const lines = ["# Fcode-injected providers — generated on each launch, do not edit.", "providers:"];
+  let any = false;
+  for (const p of providers) {
+    if (p.authKind === "none" || p.hasOauth) continue;
+    const envKey = `FCODE_PROVIDER_${p.id.toUpperCase().replace(/[^A-Z0-9]/g, "_")}_KEY`;
+    let secret: string | undefined;
+    try {
+      const r = await host.call<{ value?: string }>("providers.getSecret", { id: p.id });
+      secret = r.value;
+    } catch { continue; }
+    if (!secret) continue;
+    providerEnv[envKey] = secret;
+    lines.push(`  fcode-${p.id}:`);
+    if (p.baseUrl) lines.push(`    baseUrl: "${p.baseUrl}"`);
+    const api = FCODE_API_STYLE_MAP[p.apiStyle ?? "chat_completions"] ?? "openai-completions";
+    lines.push(`    api: ${api}`);
+    lines.push(`    apiKey: ${envKey}`);
+    const models = p.models ?? [];
+    if (models.length) {
+      lines.push(`    models:`);
+      for (const m of models) lines.push(`      - id: "${m.id}"`);
+    }
+    any = true;
+  }
+  return any ? { yaml: lines.join("\n") + "\n", providerEnv } : null;
+}
+
   const emitAgentEvent = (envelope: AgentEventEnvelope) => {
     // A terminal event for a turn that no longer owns its session must not clear
     // the current turn's state in Agent Host or the renderer. Persistence is a
@@ -322,8 +381,24 @@ export function createSidecarRuntime({
   });
   };
   const startSidecar = async (): Promise<void> => {
-
-  const s = new AgentSidecar((text) => logger.child("agent", text));
+  // Inject Fcode providers into omp via --models-config. Secrets go into env
+  // vars (FCODE_PROVIDER_<ID>_KEY); the config file only stores var names so
+  // keys are never written to disk.
+  let providerEnv: Record<string, string> = {};
+  if (runtimeState.host) {
+    try {
+      const allProviders = await listRuntimeProviders(false);
+      const injected = await buildFcodeProvidersConfig(runtimeState.host, allProviders);
+      if (injected) {
+        const configPath = join(dataDir, "fcode-providers.yml");
+        writeFileSync(configPath, injected.yaml, "utf8");
+        providerEnv = { ...injected.providerEnv, FCODE_MODELS_CONFIG: configPath };
+      }
+    } catch {
+      // Non-fatal — omp starts without Fcode provider injection.
+    }
+  }
+  const s = new AgentSidecar((text) => logger.child("agent", text), providerEnv);
   wireSidecar(s);
   s.setProjectInstructionResolver(async ({ projectPath, path }) => {
     // The root is registered by Electron main from the host-owned session
