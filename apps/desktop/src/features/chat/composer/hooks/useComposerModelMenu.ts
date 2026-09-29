@@ -142,14 +142,25 @@ export function useComposerModelMenu({
     : sessionThinkingMenuLevels(availableThinkingLevels);
 
   // Build omp model groups: fcode-* providers first, labeled "Fcode · <name>".
+  // omp may return provider as a string id or as { id, name } object — handle both.
   const ompModelGroups = useMemo(() => {
     if (!ompSession || !ompModelList) return null;
     const providerMap = new Map<string, { name: string; models: OmpModel[] }>();
     for (const model of ompModelList) {
-      const pid = model.provider.id;
+      const raw = model.provider as unknown;
+      let pid: string;
+      let pname: string;
+      if (typeof raw === "string") {
+        pid = raw; pname = raw;
+      } else if (raw && typeof raw === "object" && "id" in raw) {
+        pid = String(raw.id);
+        pname = "name" in raw ? String(raw.name) : pid;
+      } else {
+        continue;  // skip malformed entries
+      }
       let entry = providerMap.get(pid);
       if (!entry) {
-        entry = { name: model.provider.name as string, models: [] };
+        entry = { name: pname, models: [] };
         providerMap.set(pid, entry);
       }
       entry.models.push(model);
@@ -269,11 +280,16 @@ export function useComposerModelMenu({
   // When in omp mode: load models, current state, and thinking levels on open.
   useEffect(() => {
     if (!open || !ompSession) return;
+    const extractProviderId = (raw: unknown): string | null => {
+      if (typeof raw === "string") return raw;
+      if (raw && typeof raw === "object" && "id" in raw) return String(raw.id);
+      return null;
+    };
     void Promise.all([
       api.ompModelsList().then((r) => setOmpModelList(r.models)),
       api.ompState().then((r) => {
         setOmpCurrentModelId(r.model?.id ?? null);
-        setOmpCurrentProviderId(r.model?.provider.id as string ?? null);
+        setOmpCurrentProviderId(extractProviderId(r.model?.provider));
       }),
       api.ompThinkingLevels().then((r) => setOmpThinkingLevelList(r.levels)),
     ]).catch(() => {/* sidecar not yet ready; gracefully show empty list */});
@@ -355,7 +371,12 @@ export function useComposerModelMenu({
         // Refresh omp current model after selection.
         const state = await api.ompState();
         setOmpCurrentModelId(state.model?.id ?? null);
-        setOmpCurrentProviderId(state.model?.provider.id as string ?? null);
+        const rawProv = state.model?.provider as unknown;
+        setOmpCurrentProviderId(
+          typeof rawProv === "string" ? rawProv
+          : rawProv && typeof rawProv === "object" && "id" in rawProv ? String(rawProv.id)
+          : null,
+        );
       } else {
         if (isImageGenerationModel(
           imageGenerationBindings(

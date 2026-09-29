@@ -36,7 +36,7 @@ export function latestTurnContextInspector(
   providerModels: Record<string, ModelInfo[]>,
   providers: ProviderPublic[],
   compactions: readonly ContextCompactionMark[] = [],
-  ompContext?: { tokensTotal?: number; tokensUsed?: number; tokensAvailable?: number } | null,
+  ompContext?: { tokensTotal?: number; tokensUsed?: number; tokensAvailable?: number; [key: string]: unknown } | null,
 ): LatestTurnContextInspector | undefined {
   // Delegate rows carry their own usage; remaining capacity is a parent-session
   // number, so those snapshots must not steal the composer ring.
@@ -56,8 +56,10 @@ export function latestTurnContextInspector(
 
   // When omp provides a context snapshot, prefer its authoritative window size
   // over the stale catalog estimate.
+  // omp may use tokensTotal (spec) or contextWindow (observed wire format).
+  const rawOmpWindow = ompContext?.tokensTotal ?? ompContext?.["contextWindow"];
   const contextWindow =
-    ompContext?.tokensTotal ??
+    (typeof rawOmpWindow === "number" ? rawOmpWindow : undefined) ??
     resolveContextWindow(
       latestUsageMessage?.providerId,
       latestUsageMessage?.modelId,

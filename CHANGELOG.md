@@ -13,6 +13,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Pass `FCODE_DATA_DIR` and `FCODE_RESOURCES_PATH` to the omp bridge sidecar so the packaged app uses the bundled `Resources/bin/omp` binary and writes its overlay to the app data directory instead of the `~/.fcode-dev` default
 
 - Wire ten omp sidecar methods end-to-end: `ompModelsList`, `ompModelsSet`, `ompThinkingLevels`, `ompThinkingSet`, `ompCommandsList`, `ompState`, `ompLoginProviders`, `ompLoginStart`, `ompSessionBranch`, `ompSessionRename` via new `omp-ipc.ts` registrar and `api.ts` exports; handle `sidecar.fatal` and `open_url` notifications in `wireSidecar`.
+- Wire composer UI to omp: model picker sources from `omp.models.list` (fcode-* providers first), selection via `omp.models.set`; thinking levels from `omp.thinking.levels`, committed via `omp.thinking.set`; context window from `omp.state` after each turn; slash autocomplete merges `omp.commands.list` (Pi commands take precedence); unknown slash commands pass through to omp as prompt text.
 - omp-bridge logs binary path, negotiated protocol version, and host-tool registration result to stderr; failed registration (and protocol downgrade) surfaces as an app toast
 
 ## [0.15.7-fcode.2] — 2026-09-29
