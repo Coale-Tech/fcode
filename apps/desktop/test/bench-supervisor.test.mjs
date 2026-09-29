@@ -30,6 +30,14 @@ test("classifyBenchFailure: bench not on PATH", () => {
   assert.ok(result.docsUrl.startsWith("https://"), "docsUrl is a URL");
 });
 
+test("classifyBenchFailure: bench not found on win32 points to WSL2, not POSIX venv activation", () => {
+  const result = classifyBenchFailure("ENOENT", "", "bench", "win32");
+  assert.equal(result.code, BENCH_FAILURE_CODES.BENCH_NOT_FOUND);
+  assert.ok(!`${result.cause} ${result.fix}`.includes("source env/bin/activate"));
+  assert.match(result.fix, /WSL2/);
+  assert.match(classifyBenchFailure("ENOENT", "", "bench", "linux").fix, /source env\/bin\/activate/);
+});
+
 test("classifyBenchFailure: port already bound", () => {
   const result = classifyBenchFailure(null, "address already in use", "");
   assert.equal(result.code, BENCH_FAILURE_CODES.PORT_BOUND);

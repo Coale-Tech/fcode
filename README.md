@@ -26,7 +26,7 @@ Fcode has replaced the legacy Pi agent runtime with **omp** ([oh-my-pi](https://
 The release pipeline is wired to build macOS (arm64 + x64), Linux (x64), and Windows (x64) artifacts. Two things remain incomplete:
 
 - **Signed and notarized distribution.** Apple Developer ID signing and notarization run in CI, but the required secrets are not yet configured, so no signed release has shipped.
-- **Bench on Windows.** The Bench tab's supervisor spawns the Frappe `bench` CLI through a POSIX login shell, which does not exist on Windows, so a Windows build ships without a working Bench tab.
+- **Bench on Windows.** The Bench tab requires a Frappe bench, which is not supported natively on Windows. The app itself builds and runs on Windows; use WSL2, macOS, or Linux for bench work. PATH is inherited from the parent process on Windows (not sourced from a POSIX login shell).
 
 The only published release, [v0.15.7-fcode.1](https://github.com/Coale-Tech/fcode/releases/tag/v0.15.7-fcode.1), predates all of this: it is an unsigned Intel-macOS-only build of the renamed shell without the omp bridge. See [CHANGELOG.md](CHANGELOG.md) for the full history.
 
@@ -62,7 +62,7 @@ The installed application uses:
 
 ### Requirements
 
-- macOS, Linux, or Windows
+- macOS, Linux, or Windows (Bench tab requires macOS, Linux, or WSL2)
 - Node.js `>=22.19`
 - pnpm `>=10`
 - a stable Rust toolchain

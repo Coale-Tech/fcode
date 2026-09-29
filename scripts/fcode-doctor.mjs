@@ -10,7 +10,7 @@
  *   • Rust stable toolchain (cargo)
  *   • Bun >= 1.2
  *   • oh-my-pi sibling checkout present
- *   • Platform (macOS or Linux; Windows unsupported)
+ *   • Platform (macOS, Linux, or Windows; Bench tab needs macOS/Linux/WSL2)
  *
  * Exits 0 if all checks pass, 1 if any check fails.
  */
@@ -41,9 +41,20 @@ function fail(label, detail) {
   allPassed = false;
 }
 
-function tryExec(cmd, args) {
+function warn(label, detail) {
+  console.warn(`  ⚠  ${label}`);
+  if (detail) console.warn(`       ${detail}`);
+}
+
+function tryExec(cmd, args, cwd) {
   try {
-    return execFileSync(cmd, args, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    // Windows needs a shell to run .cmd shims (pnpm, npm-installed bun); keep args literal (paths go via cwd).
+    return execFileSync(cmd, args, {
+      cwd,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+      shell: process.platform === "win32",
+    }).trim();
   } catch {
     return null;
   }
@@ -60,13 +71,11 @@ console.log("\nFcode contributor prerequisite check\n");
 
 // ── Platform ─────────────────────────────────────────────────────────────────
 if (process.platform === "win32") {
-  fail(
+  warn(
     "Platform: Windows",
-    "Windows is not supported in v1 — no bench transport exists.\n" +
-      "       Use macOS or Linux.",
+    "The app builds and runs on Windows, but the Bench tab requires a Frappe bench,\n" +
+      "       which is not supported natively on Windows. Use WSL2, macOS, or Linux for bench work.",
   );
-  // Hard exit: remaining checks are meaningless on Windows
-  process.exit(1);
 } else {
   pass(`Platform: ${process.platform}`);
 }
@@ -130,7 +139,7 @@ if (process.platform === "win32") {
         `       git clone https://github.com/can1357/oh-my-pi ${resolve(repoRoot, "..", "oh-my-pi")}`,
     );
   } else {
-    const sha = tryExec("git", ["-C", ompPath, "rev-parse", "--short", "HEAD"]) ?? "unknown";
+    const sha = tryExec("git", ["rev-parse", "--short", "HEAD"], ompPath) ?? "unknown";
     pass(`oh-my-pi: found at ${ompPath} (${sha})`);
   }
 }
