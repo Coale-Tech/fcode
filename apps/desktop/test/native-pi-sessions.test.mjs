@@ -277,26 +277,23 @@ test("global session search merges native sidecar hits with Desktop results", as
   assert.deepEqual(hostCalls, [{ method: "search.sessions", input: { query: "side chat", offset: 0 } }]);
 });
 
-test("native fork routes to the sidecar and never to the Desktop host", async () => {
+test("native fork branches through omp and never calls the Desktop host", async () => {
   const { handle, hostCalls, sidecarCalls } = forkHarness({
     host: () => ({ call: () => { throw new Error("native fork must not call the host"); } }),
     sidecar: (calls) => ({
       call: async (method, input) => {
         calls.push({ method, input });
-        return { session: { id: "native-pi:child", title: "Side chat" } };
+        return method === "omp.state" ? { sessionId: "child", sessionName: "Side chat" } : { cancelled: false };
       },
     }),
   });
-  const result = await handle({
-    sessionId: " native-pi:parent ",
-    title: " Side  chat ",
-    throughMessageId: " a1 ",
-  });
+  const result = await handle({ sessionId: " native-pi:parent ", throughMessageId: " a1 " });
   assert.equal(result.session.id, "native-pi:child");
-  assert.deepEqual(sidecarCalls, [{
-    method: "native.session.fork",
-    input: { id: "native-pi:parent", title: "Side chat", throughMessageId: "a1" },
-  }]);
+  assert.equal(result.session.title, "Side chat");
+  assert.deepEqual(sidecarCalls, [
+    { method: "omp.session.branch", input: { entryId: "a1" } },
+    { method: "omp.state", input: undefined },
+  ]);
   assert.deepEqual(hostCalls, []);
 });
 
