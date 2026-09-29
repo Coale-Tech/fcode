@@ -135,10 +135,10 @@ test("manual Linux package validation covers the RPM desktop identity", () => {
   assert.match(linuxPackageWorkflowSource, /build-id/);
   assert.match(
     linuxPackageWorkflowSource,
-    /usr\/share\/applications\/pi-desktop\.desktop/,
+    /usr\/share\/applications\/fcode\.desktop/,
   );
-  assert.match(linuxPackageWorkflowSource, /Icon=pi-desktop/);
-  assert.match(linuxPackageWorkflowSource, /StartupWMClass=pi-desktop/);
+  assert.match(linuxPackageWorkflowSource, /Icon=fcode/);
+  assert.match(linuxPackageWorkflowSource, /StartupWMClass=fcode/);
   assert.match(
     linuxPackageWorkflowSource,
     /uses: actions\/upload-artifact@v7[\s\S]*path: apps\/desktop\/release\/\*\.rpm/,
@@ -157,7 +157,7 @@ test("release workflow publishes the Linux ASAR beside installers", () => {
   );
   assert.match(
     releaseAsarScriptSource,
-    /PI-Desktop-\$\{releaseVersion\}-linux-x64\.asar/,
+    /Fcode-\$\{releaseVersion\}-linux-x64\.asar/,
   );
 });
 

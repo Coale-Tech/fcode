@@ -4,7 +4,9 @@ All notable changes to Fcode are documented here.
 Fcode is a fork of [PI-Desktop](https://github.com/vastsa/PI-Desktop) with the agent brain replaced by [omp](https://github.com/can1357/oh-my-pi).
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) on Fcode's own line, starting at 0.16.0.
+The two early previews used `0.15.7-fcode.N` (PI-Desktop 0.15.7 plus a prerelease suffix). That scheme sorted below upstream 0.15.7 and was always a prerelease, so the in-app updater (stable releases only) never offered it.
+The PI-Desktop release each version is based on is listed in its Compatibility table.
 
 ## [Unreleased]
 - Stop shipping `packages/agent-runtime/dist-bundle` as `Resources/agent-runtime`; omp-bridge is the only bundled agent runtime.
@@ -18,7 +20,8 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Subscribe to omp subagent progress on session open; map `subagent_lifecycle`/`subagent_progress` frames to `agent.event` rows with `parentToolCallId`+`agentName` for SubagentTopology UI
 - Public Frappe skill set: nine `fcode-*` skills under `apps/desktop/resources/fcode-skills/` covering routing, DocType development, API development, app hooks, bench operations, frappe-ui, Fcode host tools, Studio, and Builder
 - Pass `FCODE_DATA_DIR` and `FCODE_RESOURCES_PATH` to the omp bridge sidecar so the packaged app uses the bundled `Resources/bin/omp` binary and writes its overlay to the app data directory instead of the `~/.fcode-dev` default
-
+- Linux packages, executable, desktop entry, and system-Electron ASAR are named `fcode` / `Fcode-<version>-linux-x64.asar` instead of `pi-desktop` / `PI-Desktop-…`
+- GitHub releases are titled `Fcode <version>`
 - Wire ten omp sidecar methods end-to-end: `ompModelsList`, `ompModelsSet`, `ompThinkingLevels`, `ompThinkingSet`, `ompCommandsList`, `ompState`, `ompLoginProviders`, `ompLoginStart`, `ompSessionBranch`, `ompSessionRename` via new `omp-ipc.ts` registrar and `api.ts` exports; handle `sidecar.fatal` and `open_url` notifications in `wireSidecar`.
 - Wire composer UI to omp: model picker sources from `omp.models.list` (fcode-* providers first), selection via `omp.models.set`; thinking levels from `omp.thinking.levels`, committed via `omp.thinking.set`; context window from `omp.state` after each turn; slash autocomplete merges `omp.commands.list` (Pi commands take precedence); unknown slash commands pass through to omp as prompt text.
 - omp-bridge logs binary path, negotiated protocol version, and host-tool registration result to stderr; failed registration (and protocol downgrade) surfaces as an app toast
@@ -28,9 +31,9 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Compatibility
 
-| Fcode | omp commit | Bridge protocol | Frappe |
-|-------|-----------|-----------------|--------|
-| 0.15.7-fcode.2 | `ba344f5e69f2` | v2 (v1 read-only fallback) | v15, v16 |
+| Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
+|-------|-----------------|-----------|-----------------|--------|
+| 0.15.7-fcode.2 | 0.15.7 | `ba344f5e69f2` | v2 (v1 read-only fallback) | v15, v16 |
 
 ### Added
 - omp (oh-my-pi) replaces the Pi agent brain via `packages/omp-bridge`
@@ -67,7 +70,20 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The "bench command not found" failure on Windows now says bench is not supported natively and points to WSL2/macOS/Linux instead of `source env/bin/activate`
 - Docs: Windows runs the app but not the Bench tab, and inherits PATH from the parent process instead of reading a POSIX login shell
 
+## [0.15.7-fcode.1] — 2026-09-26
+
+### Compatibility
+
+| Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
+|-------|-----------------|-----------|-----------------|--------|
+| 0.15.7-fcode.1 | 0.15.7 | — (PI agent runtime) | — | — |
+
+### Added
+- Fcode application identity (`com.coaletech.fcode`) and a separate `~/.fcode` data directory
+- Intel macOS preview build (unsigned ZIP plus SHA-256)
+
 [0.15.7-fcode.2]: https://github.com/Coale-Tech/fcode/releases/tag/v0.15.7-fcode.2
+[0.15.7-fcode.1]: https://github.com/Coale-Tech/fcode/releases/tag/v0.15.7-fcode.1
 
 ---
 
@@ -79,9 +95,9 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Compatibility
 
-| Fcode | omp commit | Bridge protocol | Frappe |
-|-------|-----------|-----------------|--------|
-| X.Y.Z | `<sha12>` | v2 | v15, v16, v17 |
+| Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
+|-------|-----------------|-----------|-----------------|--------|
+| X.Y.Z | 0.15.7 | `<sha12>` | v2 | v15, v16, v17 |
 
 ### Added
 -

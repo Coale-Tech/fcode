@@ -68,24 +68,24 @@ jobs:
             echo 'RPM must not ship global build-id links for bundled Electron binaries'
             exit 1
           fi
-          grep -Fx '/opt/PI-Desktop/resources/app.asar' "$rpm_file_list" >/dev/null
-          grep -Fx '/opt/PI-Desktop/resources/bin/pi-desktop-host-core' "$rpm_file_list" >/dev/null
-          grep -Fx '/usr/share/applications/pi-desktop.desktop' "$rpm_file_list" >/dev/null
-          grep -Fx '/usr/share/icons/hicolor/512x512/apps/pi-desktop.png' "$rpm_file_list" >/dev/null
+          grep -Fx '/opt/Fcode/resources/app.asar' "$rpm_file_list" >/dev/null
+          grep -Fx '/opt/Fcode/resources/bin/pi-desktop-host-core' "$rpm_file_list" >/dev/null
+          grep -Fx '/usr/share/applications/fcode.desktop' "$rpm_file_list" >/dev/null
+          grep -Fx '/usr/share/icons/hicolor/512x512/apps/fcode.png' "$rpm_file_list" >/dev/null
 
           desktop_root=$(mktemp -d)
           (
             cd "$desktop_root"
-            rpm2cpio "$rpm_package" | cpio --quiet -id './usr/share/applications/pi-desktop.desktop'
+            rpm2cpio "$rpm_package" | cpio --quiet -id './usr/share/applications/fcode.desktop'
           )
-          desktop_entry="$desktop_root/usr/share/applications/pi-desktop.desktop"
-          grep -Fx 'Icon=pi-desktop' "$desktop_entry" >/dev/null
-          grep -Fx 'StartupWMClass=pi-desktop' "$desktop_entry" >/dev/null
+          desktop_entry="$desktop_root/usr/share/applications/fcode.desktop"
+          grep -Fx 'Icon=fcode' "$desktop_entry" >/dev/null
+          grep -Fx 'StartupWMClass=fcode' "$desktop_entry" >/dev/null
 
       - name: Upload RPM package
         uses: actions/upload-artifact@v7
         with:
-          name: pi-desktop-linux-x64-rpm
+          name: fcode-linux-x64-rpm
           if-no-files-found: error
           retention-days: 7
           path: apps/desktop/release/*.rpm
