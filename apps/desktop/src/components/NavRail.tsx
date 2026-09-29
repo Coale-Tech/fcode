@@ -17,6 +17,10 @@ import { TooltipButton, cx } from "./ui";
  * on top, daily footer actions (settings, plugins, scheduled, notifications)
  * at the bottom. The top band is a window drag region that also keeps the
  * macOS traffic lights clear; every button opts out with `no-drag`.
+ *
+ * Primary nav items (Chat, Code, Build, Bench) show a visible text label
+ * below the icon; no tooltip is needed for labelled items and none is shown.
+ * Footer items remain icon-only with tooltips.
  */
 export function NavRail() {
   const { t } = useTranslation();
@@ -28,53 +32,55 @@ export function NavRail() {
   return (
     <nav className="nav-rail sidebar-surface" aria-label="Primary">
       <div className="nav-rail-group no-drag">
-        <TooltipButton
+        {/* Labelled primary destinations — no tooltip needed */}
+        <button
           type="button"
-          className={cx("nav-rail-btn", page === "chat" && "active")}
+          className={cx("nav-rail-btn nav-rail-labeled", page === "chat" && "active")}
           data-nav="chat"
-          tooltip="Chat"
-          ariaLabel="Chat"
-          onClick={() => setPage("chat")}
+          aria-label="Chat"
           aria-pressed={page === "chat"}
+          onClick={() => setPage("chat")}
         >
           <IconChat size={16} aria-hidden />
-        </TooltipButton>
-        <TooltipButton
+          <span className="nav-rail-label">Chat</span>
+        </button>
+        <button
           type="button"
-          className={cx("nav-rail-btn", page === "code" && "active")}
+          className={cx("nav-rail-btn nav-rail-labeled", page === "code" && "active")}
           data-nav="code"
-          tooltip="Code"
-          ariaLabel="Code"
-          onClick={() => setPage("code")}
+          aria-label="Code"
           aria-pressed={page === "code"}
+          onClick={() => setPage("code")}
         >
           <IconCode size={16} aria-hidden />
-        </TooltipButton>
-        <TooltipButton
+          <span className="nav-rail-label">Code</span>
+        </button>
+        <button
           type="button"
-          className={cx("nav-rail-btn", page === "build" && "active")}
+          className={cx("nav-rail-btn nav-rail-labeled", page === "build" && "active")}
           data-nav="build-canvas"
-          tooltip="Build"
-          ariaLabel="Build"
-          onClick={() => setPage("build")}
+          aria-label="Build"
           aria-pressed={page === "build"}
+          onClick={() => setPage("build")}
         >
           <IconMonitor size={16} aria-hidden />
-        </TooltipButton>
-        <TooltipButton
+          <span className="nav-rail-label">Build</span>
+        </button>
+        <button
           type="button"
-          className={cx("nav-rail-btn", page === "bench" && "active")}
+          className={cx("nav-rail-btn nav-rail-labeled", page === "bench" && "active")}
           data-nav="bench"
-          tooltip="Bench"
-          ariaLabel="Bench"
-          onClick={() => setPage("bench")}
+          aria-label="Bench"
           aria-pressed={page === "bench"}
+          onClick={() => setPage("bench")}
         >
           <IconServer size={16} aria-hidden />
-        </TooltipButton>
+          <span className="nav-rail-label">Bench</span>
+        </button>
       </div>
 
       <div className="nav-rail-group nav-rail-footer no-drag">
+        {/* Footer items: icon-only with tooltips */}
         <TooltipButton
           type="button"
           className={cx("nav-rail-btn", page === "scheduled" && "active")}
@@ -92,9 +98,11 @@ export function NavRail() {
           data-nav="plugins"
           tooltip={t("nav.plugins")}
           ariaLabel={t("nav.plugins")}
-          onClick={() => page === "plugins"
-            ? (canNavBack() ? navBack() : setPage("chat"))
-            : setPage("plugins")}
+          onClick={() =>
+            page === "plugins"
+              ? (canNavBack() ? navBack() : setPage("chat"))
+              : setPage("plugins")
+          }
           aria-pressed={page === "plugins"}
         >
           <IconPlug size={16} aria-hidden />

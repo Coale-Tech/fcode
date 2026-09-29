@@ -8,6 +8,12 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 - Stop shipping `packages/agent-runtime/dist-bundle` as `Resources/agent-runtime`; omp-bridge is the only bundled agent runtime.
+- Code tab rebuilt as a full IDE surface: nested collapsible file tree with filter, Monaco editor loaded
+  fully offline (no cdn.jsdelivr.net), tab strip, breadcrumb, status bar (branch/Ln/Col/language),
+  Cmd+S save, Cmd+P quick-open palette; "Changed this session" right panel with DiffEditor vs git HEAD
+  and per-file Keep/Revert; Frappe DocType browser (app→module→DocType grouping, migrate badge for
+  git-dirty doctype JSONs, Run migrate button wired to bench run); nav rail adds text labels under Chat /
+  Code / Build / Bench icons and removes the stuck tooltip on labelled items
 - Subscribe to omp subagent progress on session open; map `subagent_lifecycle`/`subagent_progress` frames to `agent.event` rows with `parentToolCallId`+`agentName` for SubagentTopology UI
 - Public Frappe skill set: nine `fcode-*` skills under `apps/desktop/resources/fcode-skills/` covering routing, DocType development, API development, app hooks, bench operations, frappe-ui, Fcode host tools, Studio, and Builder
 - Pass `FCODE_DATA_DIR` and `FCODE_RESOURCES_PATH` to the omp bridge sidecar so the packaged app uses the bundled `Resources/bin/omp` binary and writes its overlay to the app data directory instead of the `~/.fcode-dev` default
