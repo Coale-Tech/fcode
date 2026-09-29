@@ -17,7 +17,6 @@ import {
 import { pluginViewIcon } from "../../lib/plugin-view-icons";
 import {
   IconArchive,
-  IconBookOpen,
   IconBot,
   IconChevronLeft,
   IconDownload,
@@ -27,7 +26,6 @@ import {
   IconKeyboard,
   IconPalette,
   IconSearch,
-  IconServer,
   IconSliders,
   IconSparkles,
   IconCloudDown,
@@ -44,9 +42,6 @@ import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect
 import { ThemeRow } from "../../components/settings/ThemeRow";
 import { NetworkProxySection } from "../../components/settings/NetworkProxySection";
 import { ProjectsPage } from "../../pages/ProjectsPage";
-import { AgentSkillsPage } from "../../components/settings/AgentSkillsPage";
-import { AgentMcpPage } from "../../components/settings/AgentMcpPage";
-import { AgentSubagentsPage } from "../../components/settings/AgentSubagentsPage";
 import { RemoteHostsPage } from "../../components/settings/RemoteHostsPage";
 import { VoiceSettingsSection } from "./voice/VoiceSettingsSection";
 import {
@@ -225,9 +220,6 @@ export function SettingsPage() {
       shortcuts: <IconKeyboard size={14} />,
       instructions: <IconFileText size={14} />,
       agent: <IconBot size={14} />,
-      skills: <IconBookOpen size={14} />,
-      mcp: <IconServer size={14} />,
-      subagents: <IconBot size={14} />,
       import: <IconDownload size={14} />,
       projects: <IconArchive size={14} />,
       sync: <IconCloudDown size={14} />,
@@ -547,12 +539,6 @@ export function SettingsPage() {
           )}
 
           {tab === "agent" && <ModelConfigPage />}
-
-          {tab === "skills" && <AgentSkillsPage />}
-
-          {tab === "mcp" && <AgentMcpPage />}
-
-          {tab === "subagents" && <AgentSubagentsPage />}
 
           {tab === "instructions" && <AgentInstructionsSection />}
 

@@ -1318,6 +1318,7 @@ sklm: {
     apiStylePiMessages: "Pi Messages (Radius)",
     close: "关闭",
     vendorAccounts: "厂商账户",
+    ompAccounts: "omp 账户",
     vendorAddAccount: "添加账户",
     vendorNoAccounts: "还没有登录任何厂商账户。",
     vendorPickTitle: "选择厂商",

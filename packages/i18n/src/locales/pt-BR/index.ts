@@ -1293,6 +1293,7 @@ export const ptBR = {
     apiStylePiMessages: "Mensagens Pi (Radius)",
     close: "Fechar",
     vendorAccounts: "Contas de provedores",
+    ompAccounts: "Contas omp",
     vendorAddAccount: "Adicionar conta",
     vendorNoAccounts: "Nenhuma conta conectada.",
     vendorPickTitle: "Conectar conta",

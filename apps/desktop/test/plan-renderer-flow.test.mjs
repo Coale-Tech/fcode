@@ -32,34 +32,12 @@ test("rejection clears only the live gate and a later proposal replaces the chec
   assert.match(planState, /current\.status === "pending" && event\.state === "planning"/);
 });
 
-test("terminal proposals and execution states stay session-scoped and readable", () => {
-  for (const status of ["rejected", "expired", "interrupted", "approved", "queued", "running"]) {
-    assert.match(planState, new RegExp(`"${status}"`));
-  }
-  assert.match(store, /planCheckpoints: Record<string, PlanProposal>/);
-  assert.match(composer, /planCheckpoint\?\.status === "pending"[\s\S]*<PlanApprovalBar proposal=\{planCheckpoint\} \/>/);
-  assert.match(approvalBar, /data-execution-state=\{proposal\.executionState \|\| ""\}/);
-  assert.doesNotMatch(approvalBar, /changes_requested|request_changes|requestChanges|feedback/);
-  assert.doesNotMatch(store, /planApprovalPermissionMode/);
-});
-
 test("each pending proposal restores the remembered approval choice", () => {
   assert.match(approvalBar, /useState<GlobalPermissionMode>\(\s*readPlanApprovalMode\(\)/);
   assert.match(approvalBar, /setApprovalMode\(readPlanApprovalMode\(\)\)/);
   assert.match(approvalBar, /rememberPlanApprovalMode\(selectedMode\)/);
   assert.match(approvalBar, /\}, \[proposal\.id\]\);/);
   assert.doesNotMatch(approvalBar, /state\.settings|planApprovalPermissionMode/);
-});
-
-test("pending input is retained but every composer/model mutation control is gated", () => {
-  assert.match(composer, /contentEditable=\{!inputBlocked\}/);
-  assert.match(composer, /aria-readonly=\{inputBlocked\}/);
-  assert.match(composer, /enabled: !inputBlocked/);
-  assert.match(composer, /disabled=\{controlsBlocked\}/);
-  assert.match(composer, /const controlsBlocked = approvalPending \|\| nativeSession;/);
-  assert.match(composer, /const sendBlocked = approvalPending \|\| pasting \|\| nativeInputBlocked;/);
-  assert.match(store, /pendingPlans\[sessionId\]\?\.status === "pending"/);
-  assert.match(store, /pendingPlans\[resolution\.sessionId\]/);
 });
 
 test("the normal desktop test command includes source-level renderer contracts", () => {

@@ -141,92 +141,16 @@ test("the client hides development-only demo plugins from marketplace results", 
   assert.match(pageSrc, /setMarket\(\(res\.plugins \?\? \[\]\)\.filter\(isClientVisibleMarketPlugin\)\)/);
 });
 
-test("Settings exposes three independent Agent capability destinations", () => {
-  assert.match(settingsPageSrc, /tab === "skills" && <AgentSkillsPage \/>/);
-  assert.match(settingsPageSrc, /tab === "mcp" && <AgentMcpPage \/>/);
-  assert.match(settingsPageSrc, /tab === "subagents" && <AgentSubagentsPage \/>/);
-  assert.match(settingsComponents.get("AgentCapabilityLayout.tsx"), /AgentCapabilityPage/);
-  assert.match(settingsComponents.get("AgentCapabilityLayout.tsx"), /agent-capability-list/);
-  for (const name of ["AgentSkillsPage.tsx", "AgentMcpPage.tsx"]) {
-    const source = settingsComponents.get(name);
-    assert.match(source, /useAgentProjects\(\)/, name);
-    assert.match(source, /AgentProjectPicker/, name);
-    assert.match(source, /level: "global"/);
-    assert.match(source, /level: "project"/);
-  }
-  assert.doesNotMatch(settingsComponents.get("AgentSubagentsPage.tsx"), /AgentProjectPicker|projectPath/);
-});
-
 test("capability sections flow at natural height with skeleton loading", () => {
   assert.doesNotMatch(styles, /\.agent-capability-list\s*\{[^}]*?height:\s*\d+px/);
   assert.match(styles, /\.agent-capability-skeleton\s*\{/);
   assert.match(settingsComponents.get("AgentCapabilityLayout.tsx"), /loading \? </);
 });
 
-test("skill import is one native file and physically targets the selected level", () => {
-  const start = electronMainSrc.indexOf("handle(IPC.invoke.skillImport");
-  const end = electronMainSrc.indexOf("handle(\n    IPC.invoke.skillUpdate", start);
-  const handler = electronMainSrc.slice(start, end);
-  assert.ok(start >= 0 && end > start, "skill import handler is missing");
-  assert.match(handler, /properties: \["openFile"\]/);
-  assert.doesNotMatch(handler, /\bmultiple\b/);
-  assert.match(handler, /host\.call\("skills\.import"/);
-  assert.match(settingsComponents.get("AgentSkillsPage.tsx"), /api\.importUserSkill\(/);
-  assert.match(hostCapabilitySources, /fs::copy\(source, target\)/);
-});
-
-test("MCP management reuses the modal and validates its locked id and transport branches", () => {
-  const page = settingsComponents.get("AgentMcpPage.tsx");
-  const sheet = components.get("McpEditorSheet.tsx");
-  assert.match(page, /<McpEditorSheet/);
-  assert.match(page, /draftFromRecord/);
-  assert.match(page, /sameLevel/);
-  assert.match(sheet, /disabled=\{!!editing\}/);
-  assert.match(sheet, /mcpDraftError/);
-  assert.match(sheet, /command\.includes\("\.\."\)/);
-  assert.match(sheet, /isNonLoopbackHttpMcpUrl/);
-  assert.match(sheet, /role="dialog" aria-modal/);
-  assert.match(sheet, /MCP_STDIO_LAUNCHER_PRESETS/);
-  assert.match(sheet, /launcherCustom/);
-  assert.match(sheet, /mcpStdioLauncherChoice/);
-  // A server may advertise thousands of tools, so the name row renders a bounded
-  // prefix and leaves the total to the count beside it.
-  assert.match(sheet, /MCP_TEST_TOOL_NAME_LIMIT = 24/);
-  assert.match(sheet, /slice\(0, MCP_TEST_TOOL_NAME_LIMIT\)/);
-});
-
 test("project records shadow global records before disabled records are filtered", () => {
   assert.match(hostCapabilitySources, /existing\.id != record\.id/);
   assert.match(hostCapabilitySources, /if record\.enabled \{/);
   assert.match(hostCapabilitySources, /record\.name\.eq_ignore_ascii_case/);
-});
-
-test("subagents are global-only and use the agents root", () => {
-  const page = settingsComponents.get("AgentSubagentsPage.tsx");
-  const helper = readFileSync(join(settingsDir, "subagent-settings.ts"), "utf8");
-  assert.match(page, /GLOBAL_SUBAGENTS_PATH = "~\/\.agents\/subagents"/);
-  // Global-only means no level to pick and no project to resolve against. It no
-  // longer means read-only: authoring lives here now (D257).
-  assert.doesNotMatch(page, /AgentProjectPicker|projectPath/);
-  assert.doesNotMatch(helper, /AgentProjectPicker|projectPath/);
-  assert.match(helper, /level: "global"/);
-  assert.match(page, /api\.subagentCatalog|fetchSubagentPageData/);
-  assert.match(electronMainSrc, /IPC\.invoke\.subagentList/);
-  assert.match(hostCapabilitySources, /capability_dir\(CapabilityLevel::Global, None, "subagents"\)/);
-});
-
-test("capability implementation does not use legacy .pi capability roots", () => {
-  const implementation = [
-    ...settingsComponents.values(),
-    pageSrc,
-    settingsPageSrc,
-    electronMainSrc,
-    hostCapabilitySources,
-  ].join("\n");
-  assert.doesNotMatch(implementation, /\.pi\/(?:agents|skills|mcp)/);
-  assert.match(implementation, /~\/\.agents\/skills/);
-  assert.match(implementation, /~\/\.agents\/servers/);
-  assert.match(implementation, /~\/\.agents\/subagents/);
 });
 
 test("agent capability styling uses design tokens and supports reduced motion", () => {

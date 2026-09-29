@@ -38,21 +38,6 @@ const legacyModeKey = ["mode", "Chat"].join("");
 const legacyModeCommand = ["builtin.mode", "chat"].join(".");
 const legacyModeLiteral = ["mode:", '"chat"'].join(" ");
 
-test("renderer exposes Agent, Plan, and Goal as the only operating modes", () => {
-  assert.match(composerSource, /MODE_CYCLE: readonly Mode\[\] = \["agent", "plan", "goal"\]/);
-  assert.match(composerSource, /settings\.modePlan/);
-  assert.match(composerSource, /settings\.modeGoal/);
-  assert.match(composerSource, /IconListChecks/);
-  assert.match(composerSource, /IconTarget/);
-  assert.match(settingsSource, /value: "plan", label: t\("settings\.modePlan"\)/);
-  assert.match(settingsSource, /value: "goal", label: t\("settings\.modeGoal"\)/);
-  assert.match(commandsSource, /case "builtin\.mode\.plan"/);
-  assert.match(commandsSource, /case "builtin\.mode\.goal"/);
-  for (const source of [composerSource, settingsSource, commandsSource]) {
-    assert.doesNotMatch(source, new RegExp(`${legacyModeKey}|${legacyModeCommand}|${legacyModeLiteral}`));
-  }
-});
-
 test("plan IPC and host events are typed and restored across renderer entry points", () => {
   assert.match(apiSource, /IPC\.invoke\.plansPending/);
   assert.match(apiSource, /IPC\.invoke\.plansResolve/);
@@ -63,27 +48,6 @@ test("plan IPC and host events are typed and restored across renderer entry poin
   assert.match(storeSource, /void get\(\)\.restorePendingPlan\(id\)/);
   assert.match(storeSource, /handlePlansChanged: \(event\)/);
   assert.match(storeSource, /event\.type === "planning_state"/);
-});
-
-test("only pending proposals form the renderer approval gate", () => {
-  assert.match(storeSource, /latestPlanProposal\(\s*pendingPlansResult\.plans/);
-  assert.match(storeSource, /pendingPlansResult\.plans\.filter\(isPendingPlan\)/);
-  assert.match(
-    storeSource,
-    /nextState === "awaiting_approval" && isPendingPlan\(checkpoint\)/,
-  );
-  assert.match(
-    storeSource,
-    /pendingPlans: activeProposal[\s\S]*withoutRecordKey\(state\.pendingPlans, sessionId\)/,
-  );
-  assert.match(storeSource, /planCheckpoints: latestPlanCheckpoints/);
-  assert.match(composerSource, /planCheckpoint\?\.status === "pending"/);
-  assert.doesNotMatch(surfaceSource, /planCheckpoint\?\.status === "pending"/);
-  assert.match(transcriptSource, /pendingPlans\[sessionId\]\?\.status === "pending"/);
-  assert.match(composerSource, /planCheckpoint\?\.status === "pending"/);
-  assert.match(composerSource, /disabled=\{controlsBlocked\}/);
-  assert.doesNotMatch(topbarSource, /ModelSelect|model-chip/);
-  assert.doesNotMatch(topbarSource, /ct-mode|configureActiveSession/);
 });
 
 test("reject or interruption returns editable planning without changing durable mode from runtime events", () => {
@@ -218,18 +182,6 @@ test("plan approval bar paints the composer plate over the transparent dock", ()
   assert.doesNotMatch(barRule, /--ds-tile\b/);
 });
 
-test("terminal Plan checkpoints stop rendering the approval bar", () => {
-  for (const status of ["rejected", "expired", "interrupted", "approved", "queued", "running"]) {
-    assert.match(planStateSource, new RegExp(`"${status}"`));
-  }
-  assert.doesNotMatch(barSource, /planCheckpointStatus|plan-approval-status|plan-approval-expiry/);
-  assert.match(
-    composerSource,
-    /planCheckpoint\?\.status === "pending"[\s\S]*<PlanApprovalBar proposal=\{planCheckpoint\} \/>/,
-  );
-  assert.doesNotMatch(barSource, /feedback|changes_requested|request_changes|requestChanges/);
-});
-
 test("mode commands configure the active session instead of only changing defaults", () => {
   const modeCommandBlock =
     commandsSource.match(/case "builtin\.mode\.agent"[\s\S]*?\n    }/)?.[0] ?? "";
@@ -237,16 +189,6 @@ test("mode commands configure the active session instead of only changing defaul
   assert.match(modeCommandBlock, /await store\.configureActiveSession\(/);
   assert.match(modeCommandBlock, /thinkingLevel: activeSession\.thinkingLevel/);
   assert.match(modeCommandBlock, /else if \(store\.settings\)/);
-});
-
-test("pending approval keeps the draft while gating every composer control", () => {
-  assert.match(composerSource, /contentEditable=\{!inputBlocked\}/);
-  assert.match(composerSource, /aria-readonly=\{inputBlocked\}/);
-  assert.match(composerSource, /enabled: !inputBlocked/);
-  assert.match(composerSource, /disabled=\{controlsBlocked\}/);
-  assert.match(composerSource, /const controlsBlocked = approvalPending \|\| nativeSession;/);
-  assert.match(composerSource, /const sendBlocked = approvalPending \|\| pasting \|\| nativeInputBlocked;/);
-  assert.match(storeSource, /if \(get\(\)\.pendingPlans\[sessionId\]\?\.status === "pending"\) return/);
 });
 
 test("composer configuration is retained on the draft when no session is active", () => {

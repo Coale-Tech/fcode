@@ -179,10 +179,8 @@ export function registerSessionIpc({
     ) => {
       const sessionId = String(input.sessionId ?? "").trim();
       if (sessionId.startsWith("native-pi:")) {
-        // Native forks read the canonical JSONL and publish a new child file in
-        // the sidecar; the Rust host and the Desktop queue are never involved.
+        // omp.session.branch is the supported branch path for omp-managed sessions.
         if (!sidecar) throw new Error("sidecar unavailable");
-        const title = typeof input.title === "string" ? input.title.trim().replace(/\s+/g, " ").slice(0, 200) : "";
         const throughMessageId =
           typeof input.throughMessageId === "string" ? input.throughMessageId.trim() : "";
         if (throughMessageId.length > 256) {
@@ -190,19 +188,33 @@ export function registerSessionIpc({
             errorCode: ErrorCodes.INVALID_ARGUMENT,
           });
         }
-        const result = await sidecar.call<{ session?: RuntimeSession | null }>(
-          "native.session.fork",
-          {
-            id: sessionId,
-            ...(title ? { title } : {}),
-            ...(throughMessageId ? { throughMessageId } : {}),
-          },
+        const branchResult = await sidecar.call<{ text?: string; cancelled?: boolean }>(
+          "omp.session.branch",
+          throughMessageId ? { entryId: throughMessageId } : {},
         );
-        logger.app("session", "info", "native session forked", {
-          sessionId: (result.session as { id?: string } | null)?.id,
+        if (branchResult.cancelled) return { session: null };
+        // Read omp state to build a synthetic Fcode session entry for the branch.
+        const state = await sidecar.call<{ sessionId: string; sessionName?: string }>("omp.state");
+        const now = new Date().toISOString();
+        const newSessionId = `native-pi:${state.sessionId}`;
+        logger.app("session", "info", "native session branched via omp", {
+          sessionId: newSessionId,
           data: { sourceSessionId: sessionId },
         });
-        return result;
+        return {
+          session: {
+            id: newSessionId,
+            title: state.sessionName || String(input.title ?? "").trim() || "",
+            source: "pi-native",
+            mode: "agent" as const,
+            thinkingLevel: "auto" as const,
+            permissionMode: "inherit" as const,
+            messageCount: 0,
+            updatedAt: now,
+            createdAt: now,
+            messages: [],
+          },
+        };
       }
       if (!host) throw new Error("host unavailable");
       if (!sessionId) {
@@ -346,9 +358,9 @@ export function registerSessionIpc({
   });
   handle(IPC.invoke.sessionRename, async (id: string, title: string) => {
     if (id.startsWith("native-pi:")) {
-      throw Object.assign(new Error("Native Pi session rename is not supported"), {
-        errorCode: ErrorCodes.INVALID_ARGUMENT,
-      });
+      if (!sidecar) throw new Error("sidecar unavailable");
+      await sidecar.call("omp.session.rename", { name: title });
+      return { ok: true };
     }
     if (!host) throw new Error("host unavailable");
     return host.call("session.rename", { id, title });

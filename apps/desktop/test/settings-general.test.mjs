@@ -408,33 +408,6 @@ test("settings nav keeps a flat searchable index with titled visual groups", () 
   );
 });
 
-test("settings rail uses short parallel labels and descriptive page titles", () => {
-  const navKeys = [
-    "settings.nav.general",
-    "settings.nav.ai",
-    "settings.nav.shortcuts",
-    "settings.nav.instructions",
-    "settings.nav.models",
-    "settings.nav.skills",
-    "settings.nav.mcp",
-    "settings.nav.subagents",
-    "settings.nav.import",
-    "settings.nav.projects",
-    "settings.nav.info",
-  ];
-  for (const key of navKeys) {
-    assert.match(settingsSearchSource, new RegExp(key.replaceAll(".", "\\.")));
-    assert.match(enLocaleSource, new RegExp(`${key.split(".").at(-1)}:`));
-    assert.match(zhLocaleSource, new RegExp(`${key.split(".").at(-1)}:`));
-    assert.match(zhTWLocaleSource, new RegExp(`${key.split(".").at(-1)}:`));
-    assert.match(trLocaleSource, new RegExp(`${key.split(".").at(-1)}:`));
-  }
-  assert.match(settingsSearchSource, /titleKey: "settings\.configuration"/);
-  assert.match(settingsSearchSource, /titleKey: "settings\.projectArchive"/);
-  assert.match(settingsPageSource, /activeTitleKey/);
-  assert.match(settingsPageSource, /titleKey: entry\.titleKey/);
-});
-
 test("marketplace source settings live inside the Plugins marketplace surface", () => {
   assert.match(pluginsPageSource, /<MarketplaceSourceSettings/);
   assert.match(marketplaceSettingsSource, /api\.marketRefresh\(true\)/);

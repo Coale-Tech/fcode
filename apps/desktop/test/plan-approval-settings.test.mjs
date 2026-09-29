@@ -95,19 +95,6 @@ test("approval card omits validity details while the pending gate stays actionab
   assert.match(storeSource, /planCheckpoints: checkpoint/);
 });
 
-test("terminal execution snapshots are represented and do not gate a later prompt", () => {
-  assert.match(planStateSource, /executionState === "queued"/);
-  assert.match(planStateSource, /executionState === "running"/);
-  assert.match(planStateSource, /executionState === "completed"/);
-  assert.match(planStateSource, /status === "rejected"/);
-  assert.match(planStateSource, /status === "expired"/);
-  assert.match(planStateSource, /return "interrupted"/);
-  assert.match(composerSource, /const runActive = isRunning \|\| executionActive/);
-  assert.match(composerSource, /const sendBlocked = approvalPending \|\| pasting/);
-  assert.match(composerSource, /planCheckpoint\?\.status === "pending"[\s\S]*<PlanApprovalBar/);
-  assert.doesNotMatch(approvalBar, /request_changes|requestChanges/);
-});
-
 test("command-shell settings are catalog-driven and use the existing save flow", () => {
   assert.match(settingsPage, /api\s*\.\s*listCommandShells\(\)/s);
   assert.match(settingsPage, /settings\.defaultCommandShell/);

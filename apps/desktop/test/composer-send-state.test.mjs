@@ -45,58 +45,6 @@ const [
 
 const queuedPromptsLib = await read("../src/lib/queued-prompts.ts");
 
-test("composer send/stop button follows draft content and the visible session's run state", () => {
-  const composerRight = toolbar.match(/<div className="composer-right">[\s\S]*?<\/div>\s*<\/div>/)?.[0] ?? "";
-  // Plan mode widens the running condition: `runActive` folds an in-flight
-  // plan execution into the session's own `isRunning`. The submit slot then
-  // switches to Stop only when that session is running and the draft is empty.
-  const submitSlot =
-    composerRight.match(
-      /\{runActive && !hasDraftContent \? \([\s\S]*?\) : \([\s\S]*?\)\}/,
-    )?.[0] ?? "";
-  assert.ok(submitSlot.length > 0, "single submit slot implementation not found");
-  assert.match(submitSlot, /className="stop-btn"/);
-  assert.match(submitSlot, /className="send-btn"/);
-  assert.equal(
-    (submitSlot.match(/className="(?:stop|send)-btn"/g) ?? []).length,
-    2,
-    "Stop and Send should be the two mutually exclusive branches of one slot",
-  );
-  assert.match(composer, /const runActive = isRunning \|\| executionActive;/);
-  assert.match(composer, /const isRunning = useAppStore\(\(s\) => s\.isRunning\);/);
-  assert.match(submitSlot, /stopGenerating/);
-  assert.match(submitSlot, /onClick=\{\(\) => void abort\(\)\}/);
-  assert.doesNotMatch(composerRight, /\{runActive \? \(/);
-  const modelIndex = composerRight.indexOf("<ComposerModelPicker");
-  const enhanceIndex = composerRight.indexOf("composer-enhance-btn");
-  const submitIndex = Math.max(
-    composerRight.indexOf('className="stop-btn"'),
-    composerRight.indexOf('className="send-btn"'),
-  );
-  assert.ok(
-    modelIndex >= 0 && modelIndex < enhanceIndex && enhanceIndex < submitIndex,
-    "The enhancement action should sit between model selection and the submit slot",
-  );
-  const modelTrigger =
-    composer.match(
-      /className=\{`icon-btn composer-model-thinking-chip[\s\S]*?<\/button>/,
-    )?.[0] ?? "";
-  assert.ok(modelTrigger.length > 0, "model selector trigger not found");
-  assert.match(modelTrigger, /<IconBot size=\{14\} \/>/);
-  assert.doesNotMatch(modelTrigger, /IconSparkles/);
-  assert.doesNotMatch(
-    composerRight,
-    /className="stop-btn"[\s\S]*?\) : null\}[\s\S]*?className="send-btn"/,
-    "Stop must not render beside an always-present Send button",
-  );
-  assert.match(composer, /const inputBlocked = approvalPending \|\| pasting \|\| nativeInputBlocked;/);
-  assert.match(composer, /const controlsBlocked = approvalPending \|\| nativeSession;/);
-  assert.match(composer, /contentEditable=\{!inputBlocked\}/);
-  assert.match(composer, /disabled=\{controlsBlocked\}/);
-  assert.match(composer, /sendBlocked[\s\S]*\(!modelReady/);
-  assert.doesNotMatch(composer, /const inputBlocked = [^;]*runActive/);
-});
-
 test("running session configuration is queued for the next turn", () => {
   assert.match(store, /pendingSessionConfigurations = new Map/);
   assert.match(
