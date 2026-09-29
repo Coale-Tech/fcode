@@ -13,6 +13,7 @@ import {
   type ComposerTrigger,
   type FsIndexEntry,
   type FuzzyMatch,
+  type OmpSlashCommand,
 } from "@pi-desktop/shared";
 import { api } from "../lib/api";
 import { useAppStore } from "../stores/app-store";
@@ -117,12 +118,39 @@ export type ComposerCommandResolution =
   | { status: "unknown" }
   | { status: "unavailable"; error: Error };
 
-/**
- * Resolve a typed "/name" against the merged command and skill list at send
- * time (builtin/plugin dispatch and skill validation); templates, non-command
- * names, and unknown names stay on the prompt path. Reuses the menu's TTL cache
- * when warm, so a warm cache keeps resolving through a source blip.
- */
+/** Convert an omp slash command to a ComposerCommand for autocomplete. */
+function ompCommandToComposer(cmd: OmpSlashCommand): ComposerCommand {
+  const isSkill = cmd.source.startsWith("skill:");
+  return {
+    name: cmd.name,
+    kind: isSkill ? "skill" : "builtin",
+    title: cmd.name,
+    ...(cmd.description ? { description: cmd.description } : {}),
+    ...(cmd.input?.hint ? { argumentHint: cmd.input.hint } : {}),
+  };
+}
+
+/** Fetch and merge Pi + omp commands into the module-level cache. */
+async function fetchMergedCommands(key: string): Promise<ComposerCommand[]> {
+  const [piResult, ompResult] = await Promise.allSettled([
+    api.composerCommands(),
+    api.ompCommandsList(),
+  ]);
+  if (piResult.status === "rejected") {
+    throw piResult.reason instanceof Error ? piResult.reason : new Error(String(piResult.reason));
+  }
+  const piCommands = piResult.value.commands;
+  const ompCommands =
+    ompResult.status === "fulfilled"
+      ? ompResult.value.commands.map(ompCommandToComposer)
+      : [];
+  // Pi commands take precedence; omp-only names fill the gaps.
+  const seen = new Set(piCommands.map((c) => c.name));
+  const merged = [...piCommands, ...ompCommands.filter((c) => !seen.has(c.name))];
+  commandsCache = { key, at: Date.now(), commands: merged };
+  return merged;
+}
+
 export async function resolveComposerCommand(
   name: string,
 ): Promise<ComposerCommandResolution> {
@@ -133,8 +161,7 @@ export async function resolveComposerCommand(
     Date.now() - commandsCache.at > SOURCE_TTL_MS
   ) {
     try {
-      const res = await api.composerCommands();
-      commandsCache = { key, at: Date.now(), commands: res.commands };
+      await fetchMergedCommands(key);
     } catch (error) {
       // Deliberately leaves the cache cold: the next attempt re-reads the
       // source, which is what makes the refusal retriable.
@@ -144,7 +171,7 @@ export async function resolveComposerCommand(
       };
     }
   }
-  const command = commandsCache.commands.find((c) => c.name === name);
+  const command = commandsCache!.commands.find((c) => c.name === name);
   return command ? { status: "resolved", command } : { status: "unknown" };
 }
 
@@ -203,11 +230,9 @@ export function useComposerAutocomplete({
         return;
       }
       let cancelled = false;
-      void api
-        .composerCommands()
-        .then((res) => {
-          commandsCache = { key: workspaceKey, at: Date.now(), commands: res.commands };
-          if (!cancelled) setCommands(res.commands);
+      void fetchMergedCommands(workspaceKey)
+        .then((merged) => {
+          if (!cancelled) setCommands(merged);
         })
         .catch(() => {
           if (!cancelled) setCommands([]);

@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import type {
   Mode,
+  ModelInfo,
+  OmpModel,
+  OmpThinkingLevel,
   ProviderPublic,
   SessionThinkingLevel,
 } from "@pi-desktop/shared";
@@ -9,6 +12,7 @@ import {
   imageGenerationBindings,
   isImageGenerationModel,
 } from "@pi-desktop/shared";
+import { api } from "../../../../lib/api";
 import { useAppStore } from "../../../../stores/app-store";
 import {
   composerModelBinding,
@@ -28,7 +32,6 @@ import {
   type ComposerMenuView,
 } from "../model";
 import { createLatestCommitQueue } from "../thinking-commit-queue";
-
 type UseComposerModelMenuOptions = {
   mode: Mode;
   activeSessionId: string | null | undefined;
@@ -40,6 +43,8 @@ type UseComposerModelMenuOptions = {
   configureActiveSession: (configuration: {
     mode: Mode; providerId?: string; modelId?: string; thinkingLevel: SessionThinkingLevel;
   }) => Promise<void>;
+  /** When true, model list and selection route through the omp sidecar. */
+  ompSession?: boolean;
 };
 
 export function useComposerModelMenu({
@@ -51,6 +56,7 @@ export function useComposerModelMenu({
   thinkingLevel,
   controlsBlocked,
   configureActiveSession,
+  ompSession = false,
 }: UseComposerModelMenuOptions) {
   const providers = useAppStore((s) => s.providers);
   const imageGeneration = useAppStore((s) => s.settings?.imageGeneration);
@@ -71,6 +77,16 @@ export function useComposerModelMenu({
   const modelSearchRef = useRef<HTMLInputElement>(null);
   const modelListRef = useRef<HTMLDivElement>(null);
   const thinkingListRef = useRef<HTMLDivElement>(null);
+
+  // omp state: loaded lazily when the menu opens in ompSession mode.
+  const [ompModelList, setOmpModelList] = useState<OmpModel[] | null>(null);
+  const [ompCurrentModelId, setOmpCurrentModelId] = useState<string | null>(null);
+  const [ompCurrentProviderId, setOmpCurrentProviderId] = useState<string | null>(null);
+  const [ompThinkingLevelList, setOmpThinkingLevelList] = useState<readonly OmpThinkingLevel[] | null>(null);
+
+  const ompSessionRef = useRef(ompSession);
+  ompSessionRef.current = ompSession;
+
   const thinkingConfigRef = useRef({
     mode,
     providerId: provider?.id,
@@ -91,13 +107,17 @@ export function useComposerModelMenu({
   if (!thinkingQueueRef.current) {
     thinkingQueueRef.current = createLatestCommitQueue<SessionThinkingLevel>({
       send: async (level) => {
-        const current = thinkingConfigRef.current;
-        await current.configureActiveSession({
-          mode: current.mode,
-          providerId: current.providerId,
-          modelId: current.modelId,
-          thinkingLevel: level,
-        });
+        if (ompSessionRef.current) {
+          await api.ompThinkingSet(level);
+        } else {
+          const current = thinkingConfigRef.current;
+          await current.configureActiveSession({
+            mode: current.mode,
+            providerId: current.providerId,
+            modelId: current.modelId,
+            thinkingLevel: level,
+          });
+        }
       },
       onError: (error) => {
         const current = thinkingConfigRef.current;
@@ -116,7 +136,66 @@ export function useComposerModelMenu({
       provider ? providerModels[provider.id] : undefined,
     );
   const availableThinkingLevels = providerThinkingLevels(thinkingProvider);
-  const thinkingMenuLevels = sessionThinkingMenuLevels(availableThinkingLevels);
+  // omp provides its own thinking ladder; fall back to provider catalog when not in omp mode.
+  const thinkingMenuLevels = ompSession && ompThinkingLevelList
+    ? (ompThinkingLevelList as SessionThinkingLevel[])
+    : sessionThinkingMenuLevels(availableThinkingLevels);
+
+  // Build omp model groups: fcode-* providers first, labeled "Fcode · <name>".
+  // omp may return provider as a string id or as { id, name } object — handle both.
+  const ompModelGroups = useMemo(() => {
+    if (!ompSession || !ompModelList) return null;
+    const providerMap = new Map<string, { name: string; models: OmpModel[] }>();
+    for (const model of ompModelList) {
+      const raw = model.provider as unknown;
+      let pid: string;
+      let pname: string;
+      if (typeof raw === "string") {
+        pid = raw; pname = raw;
+      } else if (raw && typeof raw === "object" && "id" in raw) {
+        pid = String(raw.id);
+        pname = "name" in raw ? String(raw.name) : pid;
+      } else {
+        continue;  // skip malformed entries
+      }
+      let entry = providerMap.get(pid);
+      if (!entry) {
+        entry = { name: pname, models: [] };
+        providerMap.set(pid, entry);
+      }
+      entry.models.push(model);
+    }
+    const groups: Array<{
+      provider: ProviderPublic;
+      providerDisplayName: string;
+      providerSearchText: string;
+      models: ModelInfo[];
+    }> = [];
+    const isFcode = (pid: string) => pid.startsWith("fcode-");
+    // fcode providers first, then others; within each group insertion order.
+    const sorted = [...providerMap.entries()].sort(([a], [b]) => {
+      if (isFcode(a) === isFcode(b)) return 0;
+      return isFcode(a) ? -1 : 1;
+    });
+    for (const [pid, { name, models }] of sorted) {
+      const displayName = isFcode(pid) ? `Fcode · ${name}` : name;
+      groups.push({
+        // Cast to satisfy ComposerModelList's ProviderPublic slot; only .id is read.
+        provider: { id: pid, name, models: [], enabled: true, authKind: "none", hasSecret: false } as unknown as ProviderPublic,
+        providerDisplayName: displayName,
+        providerSearchText: displayName.toLowerCase(),
+        models: models.map((m): ModelInfo => ({
+          modelId: m.id,
+          displayName: m.name as string,
+          providerId: pid,
+          capabilities: ["text"],
+          source: "user",
+        })),
+      });
+    }
+    return groups;
+  }, [ompSession, ompModelList]);
+
   const modelGroups = useMemo(
     () =>
       providers
@@ -142,10 +221,11 @@ export function useComposerModelMenu({
     [providers, providerModels, imageGenerationCandidates],
   );
   const queryNeedle = query.trim().toLowerCase();
+  const activeGroups = ompModelGroups ?? modelGroups;
   const filteredModelGroups = useMemo(
     () =>
       queryNeedle
-        ? modelGroups
+        ? activeGroups
             .map((group) => ({
               ...group,
               models: group.models.filter((model) =>
@@ -158,8 +238,8 @@ export function useComposerModelMenu({
               ),
             }))
             .filter((group) => group.models.length > 0)
-        : modelGroups,
-    [modelGroups, queryNeedle],
+        : activeGroups,
+    [activeGroups, queryNeedle],
   );
   const flatModels = useMemo(
     () =>
@@ -172,14 +252,17 @@ export function useComposerModelMenu({
     () => flatModels.map((entry) => `${entry.provider.id}:${entry.model.modelId}`).join("|"),
     [flatModels],
   );
+  // For omp sessions use the live omp current model; otherwise use the session store values.
+  const activeProviderId = ompSession ? (ompCurrentProviderId ?? provider?.id) : provider?.id;
+  const activeModelId = ompSession ? (ompCurrentModelId ?? modelId) : modelId;
   const activeFlatIndex = useMemo(
     () =>
       flatModels.findIndex(
         (entry) =>
-          entry.provider.id === provider?.id &&
-          sameComposerModelId(entry.model.modelId, modelId ?? ""),
+          entry.provider.id === activeProviderId &&
+          sameComposerModelId(entry.model.modelId, activeModelId ?? ""),
       ),
-    [flatModels, provider?.id, modelId],
+    [flatModels, activeProviderId, activeModelId],
   );
 
   useEffect(() => {
@@ -194,6 +277,25 @@ export function useComposerModelMenu({
     );
   }, [open, thinkingLevel, thinkingMenuLevels, view]);
 
+  // When in omp mode: load models, current state, and thinking levels on open.
+  useEffect(() => {
+    if (!open || !ompSession) return;
+    const extractProviderId = (raw: unknown): string | null => {
+      if (typeof raw === "string") return raw;
+      if (raw && typeof raw === "object" && "id" in raw) return String(raw.id);
+      return null;
+    };
+    void Promise.all([
+      api.ompModelsList().then((r) => setOmpModelList(r.models)),
+      api.ompState().then((r) => {
+        setOmpCurrentModelId(r.model?.id ?? null);
+        setOmpCurrentProviderId(extractProviderId(r.model?.provider));
+      }),
+      api.ompThinkingLevels().then((r) => setOmpThinkingLevelList(r.levels)),
+    ]).catch(() => {/* sidecar not yet ready; gracefully show empty list */});
+  }, [open, ompSession]);
+
+  // When not in omp mode: preload provider model metadata.
   useEffect(() => {
     if (!open) return;
     for (const candidate of providers) {
@@ -263,35 +365,48 @@ export function useComposerModelMenu({
   const selectModel = async (candidate: ProviderPublic, nextModelId: string) => {
     thinkingQueueRef.current?.invalidate();
     await thinkingQueueRef.current?.idle();
-    if (isImageGenerationModel(
-      imageGenerationBindings(
-        useAppStore.getState().settings?.imageGenerationModels,
-        useAppStore.getState().settings?.imageGeneration,
-      ),
-      candidate.id,
-      nextModelId,
-    )) return;
     try {
-      const nextModelProvider = thinkingProviderForModel(
-        candidate,
-        nextModelId,
-        providerModels[candidate.id],
-      );
-      const nextBinding = candidate.models.find((entry) =>
-        sameComposerModelId(entry.id, nextModelId),
-      );
-      const nextThinkingLevel = activeSessionId
-        ? thinkingLevelForProvider(nextModelProvider, thinkingLevel)
-        : initialThinkingLevelForBinding(
-            nextBinding,
-            nextModelProvider?.supportedThinkingLevels,
-          );
-      await configureActiveSession({
-        mode,
-        providerId: candidate.id,
-        modelId: nextModelId,
-        thinkingLevel: nextThinkingLevel,
-      });
+      if (ompSession) {
+        await api.ompModelsSet(candidate.id, nextModelId);
+        // Refresh omp current model after selection.
+        const state = await api.ompState();
+        setOmpCurrentModelId(state.model?.id ?? null);
+        const rawProv = state.model?.provider as unknown;
+        setOmpCurrentProviderId(
+          typeof rawProv === "string" ? rawProv
+          : rawProv && typeof rawProv === "object" && "id" in rawProv ? String(rawProv.id)
+          : null,
+        );
+      } else {
+        if (isImageGenerationModel(
+          imageGenerationBindings(
+            useAppStore.getState().settings?.imageGenerationModels,
+            useAppStore.getState().settings?.imageGeneration,
+          ),
+          candidate.id,
+          nextModelId,
+        )) return;
+        const nextModelProvider = thinkingProviderForModel(
+          candidate,
+          nextModelId,
+          providerModels[candidate.id],
+        );
+        const nextBinding = candidate.models.find((entry) =>
+          sameComposerModelId(entry.id, nextModelId),
+        );
+        const nextThinkingLevel = activeSessionId
+          ? thinkingLevelForProvider(nextModelProvider, thinkingLevel)
+          : initialThinkingLevelForBinding(
+              nextBinding,
+              nextModelProvider?.supportedThinkingLevels,
+            );
+        await configureActiveSession({
+          mode,
+          providerId: candidate.id,
+          modelId: nextModelId,
+          thinkingLevel: nextThinkingLevel,
+        });
+      }
       setQuery("");
       setView("root");
       setModelHighlight(-1);
