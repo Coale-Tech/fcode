@@ -36,10 +36,10 @@ Download the asset for your platform from the [Fcode 0.15.7-fcode.2 preview rele
 
 | Platform | Asset |
 | --- | --- |
-| macOS Apple silicon | `Fcode-0.15.7-fcode.2-arm64-mac.dmg` (or `.zip`) |
-| macOS Intel | `Fcode-0.15.7-fcode.2-x64-mac.dmg` (or `.zip`) |
-| Windows x64 | `Fcode-Setup-0.15.7-fcode.2.exe`, or the portable `.exe` / `.zip` |
-| Linux x64 | `.AppImage`, `.deb`, or `.rpm` |
+| macOS Apple silicon | `Fcode-<version>-arm64.dmg` (or `-arm64-mac.zip`) |
+| macOS Intel | `Fcode-<version>-x64.dmg` (or `-x64-mac.zip`) |
+| Windows x64 | `Fcode-Setup-<version>.exe`, or `Fcode-Portable-<version>.exe` / `.zip` |
+| Linux x64 | `Fcode-<version>.AppImage`, `fcode_<version>_amd64.deb`, or `fcode-<version>-x86_64.rpm` |
 
 On macOS, open the DMG (or extract the ZIP), move `Fcode.app` to `/Applications`, and open it from Finder.
 

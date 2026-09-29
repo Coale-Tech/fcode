@@ -1,7 +1,7 @@
 {
   "name": "@pi-desktop/desktop",
   "version": "0.15.7-fcode.2",
-  "desktopName": "pi-desktop.desktop",
+  "desktopName": "fcode.desktop",
   "private": true,
   "description": "Fcode desktop IDE for Frappe development",
   "homepage": "https://github.com/Coale-Tech/fcode",
@@ -262,19 +262,19 @@
       "artifactName": "Fcode-Portable-${version}.${ext}"
     },
     "deb": {
-      "packageName": "pi-desktop",
-      "artifactName": "pi-desktop_${version}_${arch}.${ext}"
+      "packageName": "fcode",
+      "artifactName": "fcode_${version}_${arch}.${ext}"
     },
     "rpm": {
-      "packageName": "pi-desktop",
-      "artifactName": "pi-desktop-${version}-${arch}.${ext}",
+      "packageName": "fcode",
+      "artifactName": "fcode-${version}-${arch}.${ext}",
       "fpm": [
         "--rpm-rpmbuild-define",
         "_build_id_links none"
       ]
     },
     "linux": {
-      "executableName": "pi-desktop",
+      "executableName": "fcode",
       "syncDesktopName": true,
       "target": [
         {
