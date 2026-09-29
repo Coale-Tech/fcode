@@ -60,7 +60,6 @@ const DEFAULT_TOP = 5;
 const MAX_LISTED_WARNINGS = 10;
 
 const RESOURCE_DIRECTORIES = [
-  "agent-runtime",
   "plugins",
   "skills",
   "models.dev",
