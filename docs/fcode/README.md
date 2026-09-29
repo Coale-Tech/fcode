@@ -18,7 +18,7 @@ Fcode is a desktop AI coding agent for Frappe/ERPNext developers. It forks [PI-D
 
 oh-my-pi must be cloned as a sibling of the Fcode checkout (`../oh-my-pi`) because `scripts/build-omp.mjs` references it at that relative path.
 
-**Supported platforms:** macOS, Linux, and Windows are all packaged by the release pipeline. The Bench tab is macOS/Linux only — its supervisor spawns `bench` via the system PATH and relies on login-shell env setup that does not exist on Windows, so a Windows build ships without a working Bench tab.
+**Supported platforms:** macOS, Linux, and Windows are all packaged by the release pipeline. The Bench tab requires macOS, Linux, or WSL2 — Frappe bench is not supported natively on Windows. On Windows, PATH is inherited from the parent process rather than sourced from a login shell.
 
 ### Clone and build
 
@@ -53,7 +53,7 @@ pnpm fcode:doctor   # checks Node, pnpm, Rust, Bun, sibling oh-my-pi checkout, p
 pnpm fcode:dev      # runs the full dev setup in sequence
 ```
 
-`fcode:doctor` fails fast on unsupported platforms before any confusion.
+`fcode:doctor` warns on Windows (Bench tab unavailable natively) and fails fast on missing toolchain prerequisites.
 
 ---
 
@@ -190,8 +190,8 @@ Discovery scans `~/ERPNext` (and any configured additional roots) at launch. A b
 
 | Condition | Problem | Fix |
 | --- | --- | --- |
-| `bench` not on PATH | process spawned without login-shell env | Run Fcode from the terminal first, or add bench to the PATH in your shell profile |
-| Wrong Python env | virtualenv not activated | The supervisor uses login-shell env (`-l`); ensure `.bashrc`/`.zshrc` activates the virtualenv |
+| `bench` not on PATH | PATH not inherited from a login-shell env; or bench is not installed | Run Fcode from the terminal, or ensure bench's `bin/` is on your PATH |
+| Wrong Python env | virtualenv not activated (POSIX) | Ensure `.bashrc`/`.zshrc` activates the virtualenv; PATH is inherited directly on Windows |
 | Port already bound | another bench is running | Stop the other process or change `webserver_port` in `sites/common_site_config.json` |
 | Redis down | `redis-server` not running | `brew services start redis` |
 | MariaDB down | `mysql.server` not running | `brew services start mariadb` |

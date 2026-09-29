@@ -78,10 +78,20 @@ export function classifyBenchFailure(
   spawnCode: string | null,
   output: string,
   command: string,
+  platform: string = process.platform,
 ): BenchFailure {
   const out = output.toLowerCase();
 
   if (spawnCode === "ENOENT" || out.includes("bench: command not found") || command === "bench" && spawnCode === "ENOENT") {
+    if (platform === "win32") {
+      return {
+        code: BENCH_FAILURE_CODES.BENCH_NOT_FOUND,
+        problem: "bench command not found",
+        cause: "Frappe bench is not supported natively on Windows.",
+        fix: "Use WSL2, macOS, or Linux to run Frappe bench.",
+        docsUrl: `${FRAPPE_DOCS}user/en/installation`,
+      };
+    }
     return {
       code: BENCH_FAILURE_CODES.BENCH_NOT_FOUND,
       problem: "bench command not found",
@@ -333,6 +343,7 @@ export class BenchSupervisor extends EventEmitter {
   stop(): void {
     const proc = this.processes.get("start");
     if (proc?.child) {
+      // ponytail: SIGTERM kills only the direct child on Windows; use taskkill /T /F /PID if native Windows bench ever lands
       proc.child.kill("SIGTERM");
       proc.child = null;
     }
@@ -406,6 +417,7 @@ export class BenchSupervisor extends EventEmitter {
     clearTimeout(proc.restartTimer);
     proc.restartTimer = undefined;
     if (proc.child) {
+      // ponytail: SIGTERM kills only the direct child on Windows; use taskkill /T /F /PID if native Windows bench ever lands
       proc.child.kill("SIGTERM");
       proc.child = null;
     }

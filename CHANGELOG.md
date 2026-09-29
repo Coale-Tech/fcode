@@ -35,6 +35,11 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `mirror-to-cnb.yml` workflow (mirrored to upstream owner's registry)
 - `pi-host-bundle` release job (bundled the replaced Pi brain)
 
+### Fixed
+- `pnpm fcode:doctor` no longer exits on Windows: it warns that the Bench tab needs macOS, Linux, or WSL2 and runs the remaining checks
+- The "bench command not found" failure on Windows now says bench is not supported natively and points to WSL2/macOS/Linux instead of `source env/bin/activate`
+- Docs: Windows runs the app but not the Bench tab, and inherits PATH from the parent process instead of reading a POSIX login shell
+
 ---
 
 ## Release note template
