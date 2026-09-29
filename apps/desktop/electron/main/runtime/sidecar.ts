@@ -24,6 +24,8 @@ import type { RuntimeState } from "./context";
 import type { FinishTurn } from "./plans";
 import { benchSupervisor, ALLOWED_BENCH_VERBS } from "../bench/supervisor";
 import { isReadOnlyBenchMethod } from "../bench/approval";
+import { shell } from "electron";
+import { parseAllowedExternalUrl } from "../safe-open-external";
 
 export type SidecarRuntimeDependencies = {
   runtimeState: RuntimeState;
@@ -235,6 +237,22 @@ export function createSidecarRuntime({
           event: { type: "message_end", message: persistedMessage },
         } satisfies AgentEventEnvelope);
       }
+    }
+    // omp-bridge fatal: forward to renderer so ChatSurface can render the
+    // blocking "omp binary not found" panel (IPC.event.sidecarFatal).
+    if (method === "sidecar.fatal") {
+      sendToRenderer(IPC.event.sidecarFatal, params);
+      return;
+    }
+    // omp-bridge open_url (emitted during omp.login.start OAuth flow): open in
+    // the system browser with the same http(s)-only allowlist used everywhere.
+    if (method === "sidecar.notification") {
+      const n = params as { type?: string; url?: string };
+      if (n.type === "open_url") {
+        const url = parseAllowedExternalUrl(n.url);
+        if (url) void shell.openExternal(url);
+      }
+      return;
     }
     // permissions.request reaches the renderer once, via wireHost; the
     // sidecar no longer relays it (agent-sidecar.setHost filters it out).

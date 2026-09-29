@@ -123,6 +123,14 @@ import type {
   TrustedExtensionStatusEvent,
   TrustedExtensionUiPrompt,
   TrustedExtensionUiPromptResponse,
+  OmpModelsListResult,
+  OmpModelsSetResult,
+  OmpThinkingLevelsResult,
+  OmpCommandsListResult,
+  OmpStateResult,
+  OmpLoginProvidersResult,
+  OmpLoginStartResult,
+  OmpSessionBranchResult,
 } from "@pi-desktop/shared";
 import {
   defaultCommandShellForPlatform,
@@ -1601,4 +1609,40 @@ export const api = {
     if (!window.piDesktop?.on) return () => undefined;
     return window.piDesktop.on(IPC.event.pluginLauncherShown, () => listener());
   },
+
+  // --- omp sidecar methods (DX14 / plan §9) ----------------------------------
+  /** List models available in the current omp session. */
+  ompModelsList: () =>
+    invoke<OmpModelsListResult>(IPC.invoke.ompModelsList),
+  /** Switch the active model for the current omp session. */
+  ompModelsSet: (provider: string, modelId: string) =>
+    invoke<OmpModelsSetResult>(IPC.invoke.ompModelsSet, { provider, modelId }),
+  /** List thinking levels the active model supports. */
+  ompThinkingLevels: () =>
+    invoke<OmpThinkingLevelsResult>(IPC.invoke.ompThinkingLevels),
+  /** Set the thinking level for the current omp session. */
+  ompThinkingSet: (level: string) =>
+    invoke<void>(IPC.invoke.ompThinkingSet, { level }),
+  /** List slash commands available in the current omp session. */
+  ompCommandsList: () =>
+    invoke<OmpCommandsListResult>(IPC.invoke.ompCommandsList),
+  /** Get the current omp session state snapshot. */
+  ompState: () =>
+    invoke<OmpStateResult>(IPC.invoke.ompState),
+  /** List login providers known to omp. */
+  ompLoginProviders: () =>
+    invoke<OmpLoginProvidersResult>(IPC.invoke.ompLoginProviders),
+  /**
+   * Start an OAuth login flow for the given provider. May cause the bridge to
+   * emit a `sidecar.notification { type: "open_url" }` which the main process
+   * routes to `shell.openExternal`.
+   */
+  ompLoginStart: (providerId: string) =>
+    invoke<OmpLoginStartResult>(IPC.invoke.ompLoginStart, { providerId }),
+  /** Branch the omp session at the given entry (fork history). */
+  ompSessionBranch: (entryId: string) =>
+    invoke<OmpSessionBranchResult>(IPC.invoke.ompSessionBranch, { entryId }),
+  /** Rename the current omp session. */
+  ompSessionRename: (name: string) =>
+    invoke<void>(IPC.invoke.ompSessionRename, { name }),
 };

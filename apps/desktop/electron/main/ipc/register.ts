@@ -35,6 +35,7 @@ import { registerComposerIpc } from "./composer-ipc";
 import { registerSpeechIpc } from "./speech-ipc";
 import { registerVoiceIpc } from "./voice-ipc";
 import type { IpcRegistrar } from "./types";
+import { registerOmpIpc } from "./omp-ipc";
 import type { createTraySessions } from "../tray-sessions";
 import type { createTaskbarUnreadBadge } from "../taskbar-unread-badge";
 
@@ -342,6 +343,7 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
   });
   registerBenchIpc({ registrar, mainWindow: getMainWindow });
   registerBuildIpc({ registrar, mainWindow: getMainWindow, browserPane: dependencies.browserPane });
+  registerOmpIpc({ registrar, getSidecar });
 
   registerAgentExtensionIpc({
     handle,
