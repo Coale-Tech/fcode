@@ -1,6 +1,6 @@
 {
   "name": "@pi-desktop/plugin-sdk",
-  "version": "0.15.7-fcode.1",
+  "version": "0.15.7-fcode.2",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
