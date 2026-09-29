@@ -1,37 +1,36 @@
 /**
- * T13 — Measure status tokens against --ds-bg-primary on both themes.
- *
- * Dark bg #181818, light bg #ffffff.
- * Required: ≥ 4.5:1 contrast for every status token on its theme's bg.
- *
- * Luminance formula: WCAG 2.x relative luminance.
+ * T13 — status tokens must stay legible: every --ds-{success,warning,error}
+ * resolves to a colour with ≥ 4.5:1 WCAG 2.x contrast against
+ * --ds-bg-primary, in both themes, through the Espresso var() chain.
  */
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { loadStyles, resolveThemeToken } from "./helpers/styles.mjs";
 
-const tokensSource = await readFile(
-  new URL("../src/styles/tokens.css", import.meta.url),
-  "utf8",
-);
+const styles = await loadStyles();
 
-test("T13: dark theme status tokens retain passing values", () => {
-  // dark bg #181818: success #40c977 ≈ 8.32:1, warning #ff8549 ≈ 7.36:1, error #ff6764 ≈ 6.24:1
-  assert.match(tokensSource, /--ds-success: #40c977/);
-  assert.match(tokensSource, /--ds-warning: #ff8549/);
-  assert.match(tokensSource, /--ds-error: #ff6764/);
-});
+function luminance(hex) {
+  const h = hex.replace("#", "").slice(0, 6);
+  return [0, 2, 4]
+    .map((i) => parseInt(h.slice(i, i + 2), 16) / 255)
+    .map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
+    .reduce((sum, c, i) => sum + c * [0.2126, 0.7152, 0.0722][i], 0);
+}
 
-test("T13: light theme --ds-success is darkened to pass 4.5:1 on #ffffff", () => {
-  // #006b2b ≈ 6.69:1 on white (was #00a240 ≈ 3.36:1 — fails)
-  assert.match(tokensSource, /--ds-success: #006b2b/);
-});
+function contrast(a, b) {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+}
 
-test("T13: light theme --ds-warning is darkened to pass 4.5:1 on #ffffff", () => {
-  // #c14800 ≈ 5.01:1 on white (was #e25507 ≈ 3.79:1 — fails)
-  assert.match(tokensSource, /--ds-warning: #c14800/);
-});
-
-test("T13: light theme --ds-error keeps #e02e2a (already passes 4.57:1)", () => {
-  assert.match(tokensSource, /--ds-error: #e02e2a/);
-});
+for (const theme of ["light", "dark"]) {
+  const bg = resolveThemeToken(styles, theme, "--ds-bg-primary");
+  for (const status of ["success", "warning", "error"]) {
+    test(`T13: ${theme} --ds-${status} passes 4.5:1 on --ds-bg-primary`, () => {
+      const ink = resolveThemeToken(styles, theme, `--ds-${status}`);
+      assert.match(bg ?? "", /^#[0-9a-f]{6}$/i, `${theme} bg resolves to ${bg}`);
+      assert.match(ink ?? "", /^#[0-9a-f]{6}$/i, `${theme} ${status} resolves to ${ink}`);
+      const ratio = contrast(ink, bg);
+      assert.ok(ratio >= 4.5, `${theme} ${status} ${ink} on ${bg} = ${ratio.toFixed(2)}:1`);
+    });
+  }
+}

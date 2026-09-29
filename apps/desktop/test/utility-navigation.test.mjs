@@ -8,10 +8,10 @@ register(new URL("./helpers/ts-import-hooks.mjs", import.meta.url));
 const { createInteractionSlice } = await import("../src/stores/slices/interaction-slice.ts");
 const { usePluginBrowseState } = await import("../src/features/plugins/browse-state.ts");
 
-// Execute the actual footer handler against the real history slice. Native
+// Execute the actual rail handler against the real history slice. Native
 // rendering and retained composer behavior are covered by the manual UI journey.
-const source = ts.createSourceFile("Sidebar.tsx",
-  readFileSync(new URL("../src/components/Sidebar.tsx", import.meta.url), "utf8"),
+const source = ts.createSourceFile("NavRail.tsx",
+  readFileSync(new URL("../src/components/NavRail.tsx", import.meta.url), "utf8"),
   ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
 const handlers = [];
 function visit(node) {

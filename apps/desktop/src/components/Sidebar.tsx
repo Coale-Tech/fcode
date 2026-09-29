@@ -1,4 +1,3 @@
-import { IconClock } from "./icons";
 import {
   useCallback,
   useEffect,
@@ -60,7 +59,6 @@ import {
   sidebarResetWidth,
 } from "../lib/sidebar-resize";
 import { BrandLogo } from "./BrandLogo";
-import { NotificationCenter } from "./NotificationCenter";
 import { ProjectEditDialog } from "./ProjectEditDialog";
 import { useArmedDelete } from "../hooks/use-armed-delete";
 import { ProjectDeleteDialog } from "./ProjectDeleteDialog";
@@ -70,23 +68,18 @@ import {
   IconArchive,
   IconArchiveRestore,
   IconArrowUpDown,
-  IconPlug,
   IconBranch,
   IconCheck,
   IconChevronDown,
-  IconCode,
   IconCopy,
   IconCircleAlert,
   IconNewSession,
   IconFolder,
-  IconMonitor,
   IconMore,
   IconNewProject,
   IconPin,
   IconPencil,
-  IconServer,
   IconSidebar,
-  IconSettings,
   IconStar,
   IconTrash,
   IconX,
@@ -241,8 +234,6 @@ export function Sidebar({
   const sessionOutcomes = useAppStore((s) => s.sessionOutcomes);
   const pendingPermissions = useAppStore((s) => s.pendingPermissions);
   const setPage = useAppStore((s) => s.setPage);
-  const navBack = useAppStore((s) => s.navBack);
-  const canNavBack = useAppStore((s) => s.canNavBack);
   const page = useAppStore((s) => s.page);
   const settings = useAppStore((s) => s.settings);
   const prefetchSession = useAppStore((s) => s.prefetchSession);
@@ -2492,82 +2483,6 @@ export function Sidebar({
         </div>
 
         <div className="sidebar-footer no-drag">
-          <div className="nav-rail-actions">
-            {/* T2: primary page nav rail — Code, Build, Bench */}
-            <TooltipButton
-              type="button"
-              className={`nav-rail-action ${page === "code" ? "active" : ""}`}
-              data-nav="code"
-              tooltip="Code"
-              ariaLabel="Code"
-              onClick={() => setPage("code")}
-              aria-pressed={page === "code"}
-            >
-              <IconCode size={14} aria-hidden />
-            </TooltipButton>
-            <TooltipButton
-              type="button"
-              className={`nav-rail-action ${page === "build" ? "active" : ""}`}
-              data-nav="build-canvas"
-              tooltip="Build"
-              ariaLabel="Build"
-              onClick={() => setPage("build")}
-              aria-pressed={page === "build"}
-            >
-              <IconMonitor size={14} aria-hidden />
-            </TooltipButton>
-            <TooltipButton
-              type="button"
-              className={`nav-rail-action ${page === "bench" ? "active" : ""}`}
-              data-nav="bench"
-              tooltip="Bench"
-              ariaLabel="Bench"
-              onClick={() => setPage("bench")}
-              aria-pressed={page === "bench"}
-            >
-              <IconServer size={14} aria-hidden />
-            </TooltipButton>
-          </div>
-
-          <div className="footer-actions">
-            <TooltipButton
-              type="button"
-              className={`footer-action ${page === "settings" ? "active" : ""}`}
-              data-nav="settings"
-              tooltip={t("nav.settings")}
-              ariaLabel={t("nav.settings")}
-              onClick={() => setPage("settings")}
-              aria-pressed={page === "settings"}
-            >
-              <IconSettings size={14} aria-hidden />
-            </TooltipButton>
-            <TooltipButton
-              type="button"
-              className={`footer-action ${page === "plugins" ? "active" : ""}`}
-              data-nav="plugins"
-              tooltip={t("nav.plugins")}
-              ariaLabel={t("nav.plugins")}
-              onClick={() => page === "plugins"
-                ? (canNavBack() ? navBack() : setPage("chat"))
-                : setPage("plugins")}
-              aria-pressed={page === "plugins"}
-            >
-              <IconPlug size={14} aria-hidden />
-            </TooltipButton>
-            <TooltipButton
-              type="button"
-              className={`footer-action ${page === "scheduled" ? "active" : ""}`}
-              data-nav="scheduled"
-              tooltip={t("scheduled.title")}
-              ariaLabel={t("scheduled.title")}
-              onClick={() => setPage("scheduled")}
-              aria-pressed={page === "scheduled"}
-            >
-              <IconClock size={14} aria-hidden />
-            </TooltipButton>
-            <NotificationCenter onBeforeOpen={() => closeMenus(false)} />
-          </div>
-
           <TooltipButton
             type="button"
             className={`footer-build ${updateReady ? "has-update" : ""}`}

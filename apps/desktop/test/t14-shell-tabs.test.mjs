@@ -36,7 +36,7 @@ test("BenchPage and BuildPage are landmarked entry points, not bare divs", async
     readFile(new URL("../src/pages/BuildPage.tsx", import.meta.url), "utf8"),
   ]);
   assert.match(bench, /export function BenchPage\(\)/);
-  assert.match(bench, /<main className="page-frame bench-page" aria-label="Bench">/);
+  assert.match(bench, /<main className="wb-page bench-page" aria-label="Bench">/);
   assert.match(build, /export function BuildPage\(\)/);
-  assert.match(build, /<main className="page-frame build-page" aria-label="Build">/);
+  assert.match(build, /<main className="wb-page build-page" aria-label="Build">/);
 });

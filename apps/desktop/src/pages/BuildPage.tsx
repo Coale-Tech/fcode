@@ -30,7 +30,7 @@
  * T14 a11y: the canvas is an opaque embedded site — announce focus via
  * aria-live so screen-reader users know they entered a web page.
  */
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { IPC, type Result } from "@pi-desktop/shared";
 import type { Precondition } from "../components/PreconditionList";
 import { PreconditionList } from "../components/PreconditionList";
@@ -386,124 +386,103 @@ export function BuildPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────
 
+  const benchBadge = BENCH_BADGES[benchStatus];
+  const watcherHue = watcherStatus === "running" ? "green" : watcherStatus === "failed" ? "red" : "amber";
+
   return (
-    <main className="page-frame build-page" aria-label="Build">
-      <div style={PAGE_STYLE}>
-      <div style={STRIP_STYLE} role="toolbar" aria-label="Build controls" className="build-control-strip">
-
-        {/* Studio / Builder switch */}
-        <div role="group" aria-label="Canvas" style={SWITCH_GROUP_STYLE}>
-          <button
-            type="button"
-            style={switchBtnStyle(canvas === "studio", !studioInstalled && listAppsStatus === "loaded")}
-            aria-pressed={canvas === "studio"}
-            disabled={listAppsStatus === "loading"}
-            onClick={() => setCanvas("studio")}
-            title={!studioInstalled && listAppsStatus === "loaded" ? "Studio not installed" : undefined}
-          >
-            Studio
-          </button>
-          <button
-            type="button"
-            style={switchBtnStyle(canvas === "builder", !builderInstalled && listAppsStatus === "loaded")}
-            aria-pressed={canvas === "builder"}
-            disabled={listAppsStatus === "loading"}
-            onClick={() => setCanvas("builder")}
-            title={!builderInstalled && listAppsStatus === "loaded" ? "Builder not installed" : undefined}
-          >
-            Builder
-          </button>
-        </div>
-
-        {/* Agent is actively driving the shared canvas (E13) */}
-        {agentUsingCanvas && (
-          <span style={WARN_INLINE_STYLE} role="status" aria-live="polite">
-            ⚡ Agent is using this canvas
-          </span>
-        )}
-
-        {/* list-apps loading/error feedback */}
-        {listAppsStatus === "loading" && (
-          <span style={MUTED_STYLE} aria-live="polite">Checking installed apps…</span>
-        )}
-        {listAppsStatus === "error" && (
-          <span style={ERROR_INLINE_STYLE} aria-live="polite">
-            Could not read installed apps.{" "}
-            <button type="button" style={LINK_BTN_STYLE} onClick={() => void loadApps()}>Retry</button>
-          </span>
-        )}
-
-        {/* Watcher status (Studio) */}
-        {canvas === "studio" && watcherStatus !== "stopped" && (
-          <span
-            style={watcherStatus === "running" ? SUCCESS_INLINE_STYLE : watcherStatus === "failed" ? ERROR_INLINE_STYLE : MUTED_STYLE}
-            aria-live="polite"
-          >
-            {watcherStatus === "starting" && "watch-studio starting…"}
-            {watcherStatus === "running" && `● watching${watcherLastImport ? ` · last import ${watcherLastImport}` : ""}`}
-            {watcherStatus === "failed" && "watch-studio stopped (see preconditions)"}
-          </span>
-        )}
-        {/* developer_mode off warning (amber) */}
-        {canvas === "studio" && watcherStatus === "running" && developerMode === false && (
-          <span style={WARN_INLINE_STYLE} role="alert">
-            ⚠ developer_mode is off — imports are disabled
-          </span>
-        )}
-
-        {/* Canvas 15s timeout note */}
-        {canvasTimedOut && (
-          <span style={WARN_INLINE_STYLE} aria-live="polite">
-            Still loading — the site may not be running.{" "}
-            {benchStatus !== "running" && (
-              <button
-                type="button"
-                style={LINK_BTN_STYLE}
-                onClick={() => setPage("bench")}
-              >
-                Start bench
-              </button>
+    <main className="wb-page build-page" aria-label="Build">
+      {/* Context sidebar: the supervised bench and the apps installed on it */}
+      <aside className="context-sidebar">
+        <div className="wb-sidebar-nav">
+          <div className="wb-sidebar-hd"><span>Bench</span></div>
+          <div className="wb-row is-static">
+            <div className="wb-row-top">
+              <span className="wb-row-name">Local bench</span>
+              <span className={`wb-badge wb-badge-${benchBadge.hue}`}>
+                <span className={`wb-dot wb-dot-${benchBadge.hue}`} aria-hidden="true" />
+                {benchBadge.label}
+              </span>
+            </div>
+            {benchStatus === "running" && listAppsStatus === "loaded" && (
+              <div className="wb-row-meta">localhost:{webserverPort}</div>
             )}
-          </span>
-        )}
+          </div>
 
-        {/* Canvas navigating indicator */}
-        {canvasNavigating && !canvasTimedOut && (
-          <span style={MUTED_STYLE} aria-live="polite" aria-busy="true">Loading…</span>
-        )}
+          <div className="wb-sidebar-hd"><span>Installed apps</span></div>
+          {listAppsStatus === "loaded" ? (
+            <ul className="wb-list">
+              {installedApps.map((app) => (
+                <li key={app} className="wb-row is-static">
+                  <span className="wb-row-name">{app}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="wb-sidebar-note">
+              {benchStatus !== "running" ? "Bench not running" : listAppsStatus === "error" ? "Could not read installed apps." : "Checking installed apps…"}
+            </p>
+          )}
+        </div>
+      </aside>
 
-        {/* Sync status (Builder) */}
-        {canvas === "builder" && syncStatus === "success" && syncMsg && (
-          <span style={SUCCESS_INLINE_STYLE} aria-live="polite">{syncMsg}</span>
-        )}
+      <section className="island">
+        {/* Studio / Builder underline tabs */}
+        <div className="wb-tabs">
+          <div role="group" aria-label="Canvas" className="wb-tab-group">
+            <button
+              type="button"
+              className={`wb-tab${canvas === "studio" ? " is-active" : ""}${!studioInstalled && listAppsStatus === "loaded" ? " is-dimmed" : ""}`}
+              aria-pressed={canvas === "studio"}
+              disabled={listAppsStatus === "loading"}
+              onClick={() => setCanvas("studio")}
+              title={!studioInstalled && listAppsStatus === "loaded" ? "Studio not installed" : undefined}
+            >
+              Studio
+            </button>
+            <button
+              type="button"
+              className={`wb-tab${canvas === "builder" ? " is-active" : ""}${!builderInstalled && listAppsStatus === "loaded" ? " is-dimmed" : ""}`}
+              aria-pressed={canvas === "builder"}
+              disabled={listAppsStatus === "loading"}
+              onClick={() => setCanvas("builder")}
+              title={!builderInstalled && listAppsStatus === "loaded" ? "Builder not installed" : undefined}
+            >
+              Builder
+            </button>
+          </div>
+          <span className="wb-spacer" />
 
-        {/* Right-side actions */}
-        <div style={{ marginLeft: "auto", display: "flex", gap: "var(--ds-space-1)", alignItems: "center" }}>
-          {/* Builder sync note */}
-          {canvas === "builder" && listAppsStatus === "loaded" && (
-            <span style={{ ...MUTED_STYLE, fontSize: "var(--text-2xs)" }}>
-              Files are the source; sync to apply
+          {/* Agent is actively driving the shared canvas (E13) */}
+          {agentUsingCanvas && (
+            <span className="wb-note wb-text-amber" role="status" aria-live="polite">
+              ⚡ Agent is using this canvas
             </span>
           )}
 
-          {canvas === "builder" && (
-            <button
-              type="button"
-              style={ACTION_BTN_STYLE}
-              disabled={
-                syncStatus === "loading" ||
-                !builderInstalled ||
-                benchStatus !== "running"
-              }
-              onClick={() => void doSync()}
-              aria-label="Sync Builder files to site database"
-            >
-              {syncStatus === "loading" ? "Syncing…" : "Sync files → site"}
-            </button>
+          {/* Canvas 15s timeout note */}
+          {canvasTimedOut && (
+            <span className="wb-note wb-text-amber" aria-live="polite">
+              Still loading — the site may not be running.{" "}
+              {benchStatus !== "running" && (
+                <button
+                  type="button"
+                  className="wb-link-btn"
+                  onClick={() => setPage("bench")}
+                >
+                  Start bench
+                </button>
+              )}
+            </span>
           )}
+
+          {/* Canvas navigating indicator */}
+          {canvasNavigating && !canvasTimedOut && (
+            <span className="wb-note wb-muted" aria-live="polite" aria-busy="true">Loading…</span>
+          )}
+
           <button
             type="button"
-            style={ACTION_BTN_STYLE}
+            className="wb-btn wb-btn-ghost wb-btn-sm"
             disabled={benchStatus !== "running"}
             onClick={handleReload}
             aria-label="Reload canvas"
@@ -511,56 +490,110 @@ export function BuildPage() {
             ⟳ Reload
           </button>
         </div>
-      </div>
 
-      {/* Sync error */}
-      {canvas === "builder" && syncStatus === "error" && syncError && (
-        <div style={ERROR_BANNER_STYLE} role="alert">
-          <span>Sync failed.</span>
-          <pre style={ERROR_CODE_STYLE}>{syncError}</pre>
-          <button type="button" style={LINK_BTN_STYLE} onClick={() => setSyncStatus("idle")}>
-            Dismiss
-          </button>
+        {/* ── Canvas area ───────────────────────────────────────────────────── */}
+        {/* T14 a11y: announce canvas focus */}
+        <div aria-live="polite" aria-atomic="true" className="sr-only">
+          {canvasFocused ? `${canvas === "studio" ? "Studio" : "Builder"} canvas focused` : ""}
         </div>
-      )}
 
-      {/* Studio precondition checklist (only when any fail) */}
-      {canvas === "studio" && (
-        <PreconditionList items={preconditions} />
-      )}
+        <div
+          ref={canvasAreaRef}
+          className="wb-canvas"
+          role="region"
+          aria-label={`${canvas === "studio" ? "Studio" : "Builder"} canvas`}
+          onFocus={() => setCanvasFocused(true)}
+          onBlur={() => setCanvasFocused(false)}
+        >
+          {/* Renderer-side overlays (shown when canvas WebContentsView is hidden) */}
+          <CanvasOverlay
+            canvas={canvas}
+            benchStatus={benchStatus}
+            listAppsStatus={listAppsStatus}
+            listAppsError={listAppsError}
+            studioInstalled={studioInstalled}
+            builderInstalled={builderInstalled}
+            syncDimmed={syncStatus === "loading"}
+            onStartBench={() => setPage("bench")}
+            onRetryApps={() => void loadApps()}
+          />
+        </div>
 
-      {/* ── Canvas area ───────────────────────────────────────────────────── */}
-      {/* T14 a11y: announce canvas focus */}
-      <div
-        aria-live="polite"
-        aria-atomic="true"
-        style={{ position: "absolute", width: 1, height: 1, overflow: "hidden" }}
-      >
-        {canvasFocused ? `${canvas === "studio" ? "Studio" : "Builder"} canvas focused` : ""}
-      </div>
+        {/* Bottom control strip: watcher / sync state + preconditions */}
+        <div className="wb-strip">
+          <div role="toolbar" aria-label="Build controls" className="wb-strip-row build-control-strip">
+            {/* list-apps loading/error feedback */}
+            {listAppsStatus === "loading" && (
+              <span className="wb-note wb-muted" aria-live="polite">Checking installed apps…</span>
+            )}
+            {listAppsStatus === "error" && (
+              <span className="wb-note wb-text-red" aria-live="polite">
+                Could not read installed apps.{" "}
+                <button type="button" className="wb-link-btn" onClick={() => void loadApps()}>Retry</button>
+              </span>
+            )}
 
-      <div
-        ref={canvasAreaRef}
-        style={CANVAS_AREA_STYLE}
-        role="region"
-        aria-label={`${canvas === "studio" ? "Studio" : "Builder"} canvas`}
-        onFocus={() => setCanvasFocused(true)}
-        onBlur={() => setCanvasFocused(false)}
-      >
-        {/* Renderer-side overlays (shown when canvas WebContentsView is hidden) */}
-        <CanvasOverlay
-          canvas={canvas}
-          benchStatus={benchStatus}
-          listAppsStatus={listAppsStatus}
-          listAppsError={listAppsError}
-          studioInstalled={studioInstalled}
-          builderInstalled={builderInstalled}
-          syncDimmed={syncStatus === "loading"}
-          onStartBench={() => setPage("bench")}
-          onRetryApps={() => void loadApps()}
-        />
-      </div>
-      </div>
+            {/* Watcher status (Studio) */}
+            {canvas === "studio" && watcherStatus !== "stopped" && (
+              <span className="wb-note" aria-live="polite">
+                <span className={`wb-dot wb-dot-${watcherHue}`} aria-hidden="true" />
+                {watcherStatus === "starting" && "watch-studio starting…"}
+                {watcherStatus === "running" && `watching${watcherLastImport ? ` · last import ${watcherLastImport}` : ""}`}
+                {watcherStatus === "failed" && "watch-studio stopped (see preconditions)"}
+              </span>
+            )}
+            {/* developer_mode off warning (amber) */}
+            {canvas === "studio" && watcherStatus === "running" && developerMode === false && (
+              <span className="wb-note wb-text-amber" role="alert">
+                ⚠ developer_mode is off — imports are disabled
+              </span>
+            )}
+
+            {/* Sync status (Builder) */}
+            {canvas === "builder" && syncStatus === "success" && syncMsg && (
+              <span className="wb-note wb-text-green" aria-live="polite">{syncMsg}</span>
+            )}
+
+            <span className="wb-spacer" />
+
+            {/* Builder sync note */}
+            {canvas === "builder" && listAppsStatus === "loaded" && (
+              <span className="wb-note wb-muted">Files are the source; sync to apply</span>
+            )}
+            {canvas === "builder" && (
+              <button
+                type="button"
+                className="wb-btn wb-btn-solid wb-btn-sm"
+                disabled={
+                  syncStatus === "loading" ||
+                  !builderInstalled ||
+                  benchStatus !== "running"
+                }
+                onClick={() => void doSync()}
+                aria-label="Sync Builder files to site database"
+              >
+                {syncStatus === "loading" ? "Syncing…" : "Sync files → site"}
+              </button>
+            )}
+          </div>
+
+          {/* Sync error */}
+          {canvas === "builder" && syncStatus === "error" && syncError && (
+            <div className="wb-failure" role="alert">
+              <span className="wb-failure-title">Sync failed.</span>
+              <pre className="wb-pre">{syncError}</pre>
+              <button type="button" className="wb-link-btn" onClick={() => setSyncStatus("idle")}>
+                Dismiss
+              </button>
+            </div>
+          )}
+
+          {/* Studio precondition checklist (only when any fail) */}
+          {canvas === "studio" && (
+            <PreconditionList items={preconditions} />
+          )}
+        </div>
+      </section>
     </main>
   );
 }
@@ -591,9 +624,9 @@ function CanvasOverlay({
   // Bench not running → most prominent message
   if (benchStatus !== "running") {
     return (
-      <div style={OVERLAY_STYLE}>
-        <p style={OVERLAY_HEADING_STYLE}>Bench not running</p>
-        <button type="button" style={CTA_BTN_STYLE} onClick={onStartBench}>
+      <div className="wb-overlay">
+        <p className="wb-empty-title">Bench not running</p>
+        <button type="button" className="wb-btn wb-btn-solid" onClick={onStartBench}>
           Start bench
         </button>
       </div>
@@ -603,10 +636,10 @@ function CanvasOverlay({
   // list-apps loading
   if (listAppsStatus === "loading") {
     return (
-      <div style={OVERLAY_STYLE} aria-busy="true">
-        <div style={SKELETON_LINE_STYLE} />
-        <div style={{ ...SKELETON_LINE_STYLE, width: "60%" }} />
-        <p style={MUTED_STYLE}>Checking installed apps…</p>
+      <div className="wb-overlay" aria-busy="true">
+        <div className="wb-skeleton" />
+        <div className="wb-skeleton is-short" />
+        <p className="wb-muted">Checking installed apps…</p>
       </div>
     );
   }
@@ -614,10 +647,10 @@ function CanvasOverlay({
   // list-apps error
   if (listAppsStatus === "error") {
     return (
-      <div style={OVERLAY_STYLE}>
-        <p style={ERROR_INLINE_STYLE}>Could not read installed apps.</p>
-        {listAppsError && <pre style={ERROR_CODE_STYLE}>{listAppsError}</pre>}
-        <button type="button" style={CTA_BTN_STYLE} onClick={onRetryApps}>
+      <div className="wb-overlay">
+        <p className="wb-text-red">Could not read installed apps.</p>
+        {listAppsError && <pre className="wb-pre">{listAppsError}</pre>}
+        <button type="button" className="wb-btn wb-btn-solid" onClick={onRetryApps}>
           Retry
         </button>
       </div>
@@ -625,7 +658,6 @@ function CanvasOverlay({
   }
 
   // App not installed
-  const appKey = canvas === "studio" ? "studio" : "builder";
   const isInstalled = canvas === "studio" ? studioInstalled : builderInstalled;
 
   if (!isInstalled) {
@@ -634,20 +666,16 @@ function CanvasOverlay({
         ? "bench get-app studio && bench --site <site> install-app studio"
         : "bench get-app builder && bench --site <site> install-app builder";
     return (
-      <div style={OVERLAY_STYLE}>
-        <p style={OVERLAY_HEADING_STYLE}>
+      <div className="wb-overlay">
+        <p className="wb-empty-title">
           {canvas === "studio" ? "Studio" : "Builder"} is not installed
         </p>
-        <p style={MUTED_STYLE}>Run this command then reload:</p>
-        <code
-          style={INSTALL_CMD_STYLE}
-          // biome-ignore lint: userSelect is intentional for copy-paste
-          title="Copy to install"
-        >
+        <p className="wb-muted">Run this command then reload:</p>
+        <code className="wb-code-block" title="Copy to install">
           {installCmd}
         </code>
         {canvas === "builder" && (
-          <p style={{ ...MUTED_STYLE, marginTop: "var(--ds-space-2)" }}>
+          <p className="wb-muted">
             Note: Builder files are the source of truth — file edits need "Sync files → site" to apply.
           </p>
         )}
@@ -659,8 +687,8 @@ function CanvasOverlay({
   // for Builder so users know the Frappe login page is not an error.
   if (canvas === "builder") {
     return (
-      <div style={{ ...OVERLAY_STYLE, opacity: syncDimmed ? 0.3 : 1 }}>
-        <p style={MUTED_STYLE}>
+      <div className={`wb-overlay${syncDimmed ? " is-dimmed" : ""}`}>
+        <p className="wb-muted">
           Frappe login here is expected on first load. Builder file edits require
           "Sync files → site" to take effect.
         </p>
@@ -672,159 +700,10 @@ function CanvasOverlay({
   return null;
 }
 
-// ── Styles (design tokens only, no raw px) ────────────────────────────────────
-
-const PAGE_STYLE: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  height: "100%",
-  background: "var(--ds-bg-primary)",
-  color: "var(--ds-text-primary)",
-  overflow: "hidden",
+// Status hues: Espresso reserves hue for status only (subtle badge + dot).
+const BENCH_BADGES: Record<BenchStatus, { hue: "green" | "amber" | "red" | "gray"; label: string }> = {
+  running: { hue: "green", label: "Running" },
+  starting: { hue: "amber", label: "Starting…" },
+  failed: { hue: "red", label: "Failed" },
+  stopped: { hue: "gray", label: "Stopped" },
 };
-
-const STRIP_STYLE: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: "var(--ds-space-2)",
-  padding: "var(--ds-space-1) var(--ds-space-2)",
-  borderBottom: "1px solid var(--ds-border-primary)",
-  flexShrink: 0,
-  flexWrap: "wrap",
-  minHeight: "var(--ds-toolbar-height, 40px)",
-};
-
-const SWITCH_GROUP_STYLE: React.CSSProperties = {
-  display: "flex",
-  gap: "var(--ds-space-1)",
-};
-
-const CANVAS_AREA_STYLE: React.CSSProperties = {
-  flex: 1,
-  position: "relative",
-  overflow: "hidden",
-};
-
-const OVERLAY_STYLE: React.CSSProperties = {
-  position: "absolute",
-  inset: 0,
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "var(--ds-space-2)",
-  padding: "var(--ds-space-4)",
-  textAlign: "center",
-};
-
-const OVERLAY_HEADING_STYLE: React.CSSProperties = {
-  fontSize: "var(--text-base)",
-  fontWeight: 500,
-  color: "var(--ds-text-secondary)",
-  margin: 0,
-};
-
-const CTA_BTN_STYLE: React.CSSProperties = {
-  padding: "var(--ds-space-1) var(--ds-space-3)",
-  borderRadius: "var(--radius-sm)",
-  background: "var(--ds-bg-secondary)",
-  border: "1px solid var(--ds-border-primary)",
-  color: "var(--ds-text-primary)",
-  cursor: "pointer",
-  fontSize: "var(--text-sm)",
-};
-
-const ACTION_BTN_STYLE: React.CSSProperties = {
-  padding: "var(--ds-space-1) var(--ds-space-2)",
-  borderRadius: "var(--radius-xs)",
-  background: "var(--ds-bg-secondary)",
-  border: "1px solid var(--ds-border-primary)",
-  color: "var(--ds-text-primary)",
-  cursor: "pointer",
-  fontSize: "var(--text-sm)",
-};
-
-const LINK_BTN_STYLE: React.CSSProperties = {
-  background: "none",
-  border: "none",
-  color: "var(--ds-text-accent, var(--ds-text-secondary))",
-  cursor: "pointer",
-  fontSize: "inherit",
-  padding: 0,
-  textDecoration: "underline",
-};
-
-const MUTED_STYLE: React.CSSProperties = {
-  color: "var(--ds-text-tertiary)",
-  fontSize: "var(--text-sm)",
-  margin: 0,
-};
-
-const ERROR_INLINE_STYLE: React.CSSProperties = {
-  color: "var(--ds-error)",
-  fontSize: "var(--text-sm)",
-};
-
-const SUCCESS_INLINE_STYLE: React.CSSProperties = {
-  color: "var(--ds-success)",
-  fontSize: "var(--text-sm)",
-};
-
-const WARN_INLINE_STYLE: React.CSSProperties = {
-  color: "var(--ds-warning)",
-  fontSize: "var(--text-sm)",
-};
-
-const ERROR_BANNER_STYLE: React.CSSProperties = {
-  padding: "var(--ds-space-2)",
-  background: "color-mix(in srgb, var(--ds-error) 10%, var(--ds-bg-primary))",
-  borderBottom: "1px solid var(--ds-border-primary)",
-  fontSize: "var(--text-sm)",
-  display: "flex",
-  flexDirection: "column",
-  gap: "var(--ds-space-1)",
-};
-
-const ERROR_CODE_STYLE: React.CSSProperties = {
-  fontFamily: "var(--font-mono)",
-  fontSize: "var(--text-2xs)",
-  whiteSpace: "pre-wrap",
-  wordBreak: "break-all",
-  margin: 0,
-  maxHeight: "6em",
-  overflow: "auto",
-};
-
-const SKELETON_LINE_STYLE: React.CSSProperties = {
-  height: "var(--text-base)",
-  width: "80%",
-  borderRadius: "var(--radius-2xs)",
-  background: "var(--ds-bg-secondary)",
-  animation: "pulse 1.5s ease-in-out infinite",
-};
-
-const INSTALL_CMD_STYLE: React.CSSProperties = {
-  display: "block",
-  fontFamily: "var(--font-mono)",
-  fontSize: "var(--text-sm)",
-  padding: "var(--ds-space-2)",
-  background: "var(--ds-bg-secondary)",
-  borderRadius: "var(--radius-sm)",
-  userSelect: "all",
-  cursor: "text",
-  wordBreak: "break-all",
-};
-
-function switchBtnStyle(active: boolean, dimmed: boolean): React.CSSProperties {
-  return {
-    padding: "var(--ds-space-1) var(--ds-space-2)",
-    borderRadius: "var(--radius-xs)",
-    border: "1px solid var(--ds-border-primary)",
-    background: active ? "var(--ds-bg-secondary)" : "transparent",
-    color: dimmed ? "var(--ds-text-tertiary)" : "var(--ds-text-primary)",
-    cursor: dimmed ? "default" : "pointer",
-    opacity: dimmed ? 0.5 : 1,
-    fontSize: "var(--text-sm)",
-    fontWeight: active ? 500 : 400,
-  };
-}

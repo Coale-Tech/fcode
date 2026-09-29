@@ -79,22 +79,37 @@ test("every shell surface reserves the shared lead inset", () => {
     1,
     "the reserve is composed in exactly one place",
   );
-  // The four surfaces that reach the window's left edge consume it.
+  // The nav rail owns the window's left edge: it drops its buttons below the
+  // lights, and surfaces beside it consume only what the rail leaves over.
   assert.match(
     chromeSource,
-    /:root\[data-platform="darwin"\] \.sidebar-header \{[\s\S]*?padding-left:\s*var\(--ds-window-lead-inset\);/,
+    /:root\[data-platform="darwin"\]:not\(\[data-fullscreen="true"\]\) \.nav-rail \{\s*padding-top:\s*var\(--ds-toolbar-height\);/,
   );
   assert.match(
     chromeSource,
-    /:root\[data-platform="darwin"\] \.app-shell\.work-panel-maximized\.sidebar-collapsed \{[^}]*--preview-chrome-inset:\s*var\(--ds-window-lead-inset\);/,
+    /--ds-pane-lead-inset:\s*max\(\s*8px,\s*calc\(var\(--ds-window-lead-inset\) - var\(--nav-rail-width\)\)\s*\);/,
   );
   assert.match(
     chromeSource,
-    /\.window-chrome-row \{[^}]*padding-left:\s*var\(--preview-chrome-inset\);/,
+    /:root\[data-platform="darwin"\] \.sidebar-header \{[\s\S]*?padding-left:\s*var\(--ds-pane-lead-inset\);/,
   );
   assert.match(
     chromeSource,
-    /:root\[data-platform="darwin"\] \.conversation-topbar\.ct-collapsed \{[\s\S]*?--ct-lead-inset:\s*var\(--ds-window-lead-inset\)/,
+    /:root\[data-platform="darwin"\] \.app-shell\.work-panel-maximized\.sidebar-collapsed \{[^}]*--preview-chrome-inset:\s*var\(--ds-pane-lead-inset\);/,
+  );
+  assert.match(
+    chromeSource,
+    /\.window-chrome-row \{[^}]*left:\s*var\(--nav-rail-width\);[^}]*padding-left:\s*var\(--preview-chrome-inset\);/,
+  );
+  assert.match(
+    chromeSource,
+    /:root\[data-platform="darwin"\] \.conversation-topbar\.ct-collapsed \{[\s\S]*?--ct-lead-inset:\s*var\(--ds-pane-lead-inset\)/,
+  );
+  // The titlebar row already pads 12px, so its title adds only the difference,
+  // clamped so a platform without native lights never goes negative.
+  assert.match(
+    chromeSource,
+    /\.main-titlebar-left \{[\s\S]*?padding-left:\s*max\(0px, calc\(var\(--ds-pane-lead-inset\) - 12px\)\);/,
   );
   assert.match(
     workPanelSource,
@@ -110,13 +125,6 @@ test("the reserve collapses where there are no native traffic lights", () => {
   assert.match(
     chromeSource,
     /:root\[data-platform="darwin"\]\[data-fullscreen="true"\] \{\s*--ds-window-lead-inset: 8px;/,
-  );
-  // The titlebar row already pads 12px, so its title adds only the difference —
-  // clamped, because a platform without native lights (or fullscreen) resolves
-  // the reserve to 0 or 8px and the difference must not go negative.
-  assert.match(
-    chromeSource,
-    /\.main-titlebar-left \{[\s\S]*?padding-left:\s*max\(0px, calc\(var\(--ds-window-lead-inset\) - 12px\)\);/,
   );
   // Windows/Linux draw their own controls on the right and reserve nothing on
   // the left.

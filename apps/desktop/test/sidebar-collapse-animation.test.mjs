@@ -23,7 +23,7 @@ test("the sidebar forwards collapse-animation props to the aside element", () =>
 });
 
 test("collapsing keeps the sidebar mounted until its exit animation ends", () => {
-  assert.match(appSource, /!sidebarCollapsed \|\| sidebarExiting \?/);
+  assert.match(appSource, /!workbench && \(!sidebarCollapsed \|\| sidebarExiting\) \?/);
   assert.match(appSource, /className=\{cx\(sidebarEntering && "is-entering", sidebarExiting && "is-exiting"\)\}/);
   assert.match(appSource, /onAnimationEnd=\{handleSidebarAnimationEnd\}/);
   assert.match(appSource, /event\.target !== event\.currentTarget/);
@@ -176,12 +176,12 @@ test("the top bar's collapsed lead-in tracks the dock instead of snapping", () =
   const topbarBaseBlock =
     globalStyles.match(/\.conversation-topbar\s*\{[\s\S]*?\}/)?.[0] ?? "";
   assert.match(topbarBaseBlock, /--ct-lead-inset:\s*12px/);
-  // The collapsed inset is the shared traffic-light reserve; its darwin value
-  // (native footprint + gap, 8px in fullscreen) lives in one place, asserted by
+  // The collapsed inset is what the rail leaves of the shared traffic-light
+  // reserve; its geometry lives in one place, asserted by
   // test/traffic-light-reserve.test.mjs.
   assert.match(
     globalStyles,
-    /:root\[data-platform="darwin"\] \.conversation-topbar\.ct-collapsed\s*\{[^}]*--ct-lead-inset:\s*var\(--ds-window-lead-inset\)/,
+    /:root\[data-platform="darwin"\] \.conversation-topbar\.ct-collapsed\s*\{[^}]*--ct-lead-inset:\s*var\(--ds-pane-lead-inset\)/,
   );
 
   // The button stays mounted so it can cross-fade with the dock's own toggle;

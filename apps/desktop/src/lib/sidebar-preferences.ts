@@ -44,7 +44,7 @@ export type SidebarPreferences = {
 export const SIDEBAR_PREFERENCES_KEY = "pi.desktop.sidebarPreferences";
 export const SIDEBAR_WIDTH_KEY = "pi.desktop.sidebarWidth";
 export const SIDEBAR_WIDTH_MIN = 240;
-export const SIDEBAR_WIDTH_DEFAULT = 275;
+export const SIDEBAR_WIDTH_DEFAULT = 256;
 export const SIDEBAR_WIDTH_MAX = 520;
 
 export function clampSidebarWidth(value: number, max = SIDEBAR_WIDTH_MAX): number {

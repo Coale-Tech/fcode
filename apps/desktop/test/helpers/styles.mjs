@@ -36,3 +36,31 @@ export function loadStylesSync() {
     readFileSync(new URL(`../../src/styles/${name}`, import.meta.url), "utf8"),
   );
 }
+
+/**
+ * Resolve a custom property to its final literal for one theme, following
+ * `var()` chains (and fallbacks) through `:root`, `@theme` and
+ * `:root[data-theme="<theme>"]` blocks; the theme block wins over `:root`.
+ * Returns null when the chain ends in an undefined name.
+ */
+export function resolveThemeToken(styles, theme, name) {
+  const scopes = { root: {}, theme: {} };
+  const css = styles.replace(/\/\*[\s\S]*?\*\//g, "");
+  for (const [, rawSel, body] of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const sel = rawSel.trim();
+    const scope = sel === `:root[data-theme="${theme}"]`
+      ? "theme"
+      : /^(:root|@theme( inline)?)$/.test(sel) ? "root" : null;
+    if (!scope) continue;
+    for (const [, key, value] of body.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) {
+      scopes[scope][key] = value.trim();
+    }
+  }
+  const walk = (value, depth) => {
+    const ref = value.match(/^var\((--[\w-]+)(?:\s*,\s*(.+))?\)$/);
+    if (!ref || depth > 20) return ref ? null : value;
+    const next = scopes.theme[ref[1]] ?? scopes.root[ref[1]] ?? ref[2];
+    return next === undefined ? null : walk(next, depth + 1);
+  };
+  return walk(`var(${name})`, 0);
+}

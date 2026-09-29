@@ -26,13 +26,19 @@ const shortcutSource = await readFile(
   new URL("../../../packages/shared/src/keyboard-shortcuts.ts", import.meta.url),
   "utf8",
 );
-test("home sidebar exposes only the supported destination entries", () => {
+test("home sidebar and nav rail expose only the supported destination entries", async () => {
+  const railSource = await readFile(
+    new URL("../src/components/NavRail.tsx", import.meta.url),
+    "utf8",
+  );
   assert.match(sidebarSource, /data-nav="home"/);
-  assert.match(sidebarSource, /data-nav="plugins"/);
-  assert.doesNotMatch(sidebarSource, /data-nav="projects"/);
-  assert.doesNotMatch(sidebarSource, /data-nav="pulls"/);
-  assert.match(sidebarSource, /data-nav="scheduled"/);
-  assert.doesNotMatch(sidebarSource, /t\("nav\.(?:pullRequests|scheduled)"\)/);
+  assert.match(railSource, /data-nav="plugins"/);
+  assert.match(railSource, /data-nav="scheduled"/);
+  for (const source of [sidebarSource, railSource]) {
+    assert.doesNotMatch(source, /data-nav="projects"/);
+    assert.doesNotMatch(source, /data-nav="pulls"/);
+    assert.doesNotMatch(source, /t\("nav\.(?:pullRequests|scheduled)"\)/);
+  }
 });
 
 test("sidebar brand returns to the chat home", () => {
@@ -86,7 +92,7 @@ test("macOS hides sidebar branding and keeps header actions beside traffic light
   assert.doesNotMatch(sidebarSource, /sidebar-macos-drag-row/);
   assert.match(
     globalStyles,
-    /:root\[data-platform="darwin"\] \.sidebar-header\s*\{[^}]*padding-left:\s*var\(--ds-window-lead-inset\);/s,
+    /:root\[data-platform="darwin"\] \.sidebar-header\s*\{[^}]*padding-left:\s*var\(--ds-pane-lead-inset\);/s,
   );
   assert.match(
     globalStyles,
@@ -352,13 +358,14 @@ test("a blurred window releases latched row hover and actions", () => {
 test("sidebar rows share one hover surface and workspace context never paints selection", () => {
   assert.match(
     globalStyles,
-    /\.thread-item,\s*\.sidebar-session-group-header\s*\{[^}]*border-radius:\s*var\(--radius-sm\);[^}]*transition:/,
+    /\.thread-item,\s*\.sidebar-session-group-header\s*\{[^}]*border-radius:\s*var\(--radius-4\);[^}]*transition:/,
   );
   assert.match(
     globalStyles,
-    /\.thread-item:hover,\s*\.thread-item.active,\s*\.project-group > \.sidebar-session-group-header:hover\s*\{[^}]*background:\s*var\(--ds-bg-hover\);/,
+    /\.thread-item:hover,\s*\.thread-item.active,\s*\.project-group > \.sidebar-session-group-header:hover\s*\{[^}]*background:\s*var\(--surface-gray-3\);/,
   );
-  assert.match(globalStyles, /\.thread-item.active\s*\{[^}]*background:\s*var\(--ds-bg-active\);/);
+  // Selection is an elevated tile, distinct from the shared hover wash.
+  assert.match(globalStyles, /\.thread-item.active\s*\{[^}]*background:\s*var\(--surface-elevation-3\);[^}]*box-shadow:\s*var\(--shadow-sm\);/);
   assert.match(globalStyles, /\.sidebar-session-group-title\s*\{[^}]*background:\s*transparent;[^}]*color:\s*inherit;/);
   assert.doesNotMatch(globalStyles, /\.project-group\.active/);
   assert.doesNotMatch(globalStyles, /\.sidebar-session-group-title\.project-toggle:hover/);

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { nextSidebarTransition } from "../src/features/app/useSidebarTransition.ts";
-import { loadStyles } from "./helpers/styles.mjs";
+import { loadStyles, resolveThemeToken } from "./helpers/styles.mjs";
 
 const idle = (collapsed = false, presented = true) => ({ collapsed, presented, phase: "idle" });
 
@@ -75,9 +75,11 @@ test("home and settings use the same material without animating the settings pla
   assert.doesNotMatch(styles, /\.settings-shell-full \.settings-nav\s*\{[^}]*background:/);
   assert.match(styles, /\.route-surface,\s*\.settings-content-enter\s*\{[^}]*animation:\s*route-surface-in/);
   assert.doesNotMatch(styles, /\.route-surface,\s*\.settings-shell-full\s*\{/);
-  assert.match(styles, /--ds-bg-sidebar:\s*var\(--ds-settings-rail-bg, var\(--ds-bg-under\)\)/);
-  assert.match(styles, /--ds-bg-sidebar:\s*var\(--ds-settings-rail-bg, #f3f3f3\)/);
-  assert.match(styles, /--ds-settings-rail-bg:\s*var\(--ds-bg-under\)/);
-  assert.match(styles, /--ds-settings-rail-bg:\s*#f3f3f3/);
+  // Home sidebar and settings rail are one material in each theme.
+  for (const theme of ["light", "dark"]) {
+    const rail = resolveThemeToken(styles, theme, "--ds-settings-rail-bg");
+    assert.match(rail ?? "", /^#[0-9a-f]{6}$/i, `${theme} rail resolves to ${rail}`);
+    assert.equal(resolveThemeToken(styles, theme, "--ds-bg-sidebar"), rail);
+  }
   assert.doesNotMatch(styles, /--ds-settings-rail-bg:\s*var\(--ds-bg-sidebar/);
 });

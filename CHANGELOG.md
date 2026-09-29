@@ -30,6 +30,9 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - macOS artifact name: `Fcode-${version}-${arch}-mac.${ext}`
 - Signing identity: Coale-Tech Developer ID (replaces upstream DUV63RKYTW)
 - Skills pack shipped as a separate `fcode-skills` resource directory
+- Renderer adopts Frappe's Espresso design system (Raven primitives, InterVariable font) with light and dark themes; the `system` default is unchanged
+- App frame: a 60px nav rail (Chat, Code, Build, Bench; Scheduled, Plugins, Notifications, Settings) beside a 256px context sidebar and a rounded content island; Bench and Build render their own context sidebar and island
+- Status and accent colours resolve from Espresso tokens; the primary button is solid gray and hues are reserved for status
 
 ### Removed
 - `mirror-to-cnb.yml` workflow (mirrored to upstream owner's registry)

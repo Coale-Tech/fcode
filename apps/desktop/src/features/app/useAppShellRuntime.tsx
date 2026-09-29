@@ -41,6 +41,8 @@ const MODIFIER_ONLY_KEYS = new Set([
 ]);
 
 const PLUGIN_THEME_STYLE_ID = "pi-plugin-theme";
+/** `--nav-rail-width` (60px) plus the Island's 8px margin on both sides (chrome.css, chat-shell.css). */
+const SHELL_CHROME_WIDTH = 60 + 16;
 
 export function useAppShellRuntime() {
   const { t } = useTranslation();
@@ -95,11 +97,14 @@ export function useAppShellRuntime() {
 
   // The shell is a fixed client area: the three-column budget needs its real
   // measured width, not the native window bounds, because the reservation seam
-  // stays at zero.
+  // stays at zero. The E frame's nav rail and the Island's 8px inset on each
+  // side are never available to the columns.
+  const columnsWidth = (shell: HTMLElement) =>
+    Math.max(0, Math.round(shell.clientWidth) - SHELL_CHROME_WIDTH);
   useLayoutEffect(() => {
     const shell = appShellRef.current;
     if (!shell) return;
-    const update = () => setShellWidth(Math.round(shell.clientWidth));
+    const update = () => setShellWidth(columnsWidth(shell));
     update();
     if (typeof ResizeObserver === "undefined") {
       window.addEventListener("resize", update);
@@ -111,7 +116,7 @@ export function useAppShellRuntime() {
   }, []);
   const resolveSidebarMax = () =>
     sidebarWidthBudget({
-      containerWidth: appShellRef.current?.clientWidth || shellWidthRef.current,
+      containerWidth: (appShellRef.current && columnsWidth(appShellRef.current)) || shellWidthRef.current,
       workPanelOpen: workPanelOpenRef.current,
       workPanelWidth: workPanelWidthRef.current,
       workPanelMaximized: workPanelMaximizedRef.current,
@@ -139,7 +144,7 @@ export function useAppShellRuntime() {
     if (workPanelOpenRef.current && !workPanelMaximizedRef.current) {
       const currentPanelWidth = workPanelWidthRef.current;
       const width =
-        appShellRef.current?.clientWidth ||
+        (appShellRef.current && columnsWidth(appShellRef.current)) ||
         shellWidthRef.current ||
         currentPanelWidth + MAIN_PANE_MIN_WIDTH;
       const nextPanelWidth = workPanelWidthForSidebarReopen({

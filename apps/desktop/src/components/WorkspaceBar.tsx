@@ -1,5 +1,5 @@
 /**
- * WorkspaceBar — persistent 32px context strip above all surfaces (T1).
+ * WorkspaceBar — persistent context strip at the foot of the main pane (T1).
  *
  * Shows: active bench name ▾ · active site ▾ · bench run state · agent state.
  *
@@ -7,7 +7,7 @@
  * Until that merges, those props are optional and fall back to placeholder text,
  * so WorkspaceBar renders safely without the bench domain being wired.
  *
- * Height comes from `--ds-toolbar-height` (46px) via the CSS class `.workspace-bar`.
+ * Styled (28px, Espresso ink) by `.workspace-bar` in chat-shell.css.
  */
 import { useAppStore } from "../stores/app-store";
 

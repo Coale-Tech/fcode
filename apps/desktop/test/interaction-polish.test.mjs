@@ -11,7 +11,7 @@ test("high-traffic chrome uses shared motion tokens on hover fills", () => {
     ".stop-btn",
     ".composer-plus-item",
     ".search-item",
-    ".footer-action",
+    ".nav-rail-btn",
     ".notification-item",
     ".work-panel-tab-close",
   ]) {

@@ -33,7 +33,9 @@ export type BuiltinTheme = {
  * `contributes.windowAppearance.backgroundColor` (ADR 0248).
  */
 const BUILTIN_THEME_BY_ID: Record<ThemeColorScheme, BuiltinTheme> = {
+  // Espresso light: --surface-sidebar = --gray-50 ≈ #f3f3f3; native window uses pure white
   light: { id: "light", base: "light", windowBackground: "#ffffff" },
+  // Espresso dark: --surface-base = --gray-950 = #171717; native window slightly darker
   dark: { id: "dark", base: "dark", windowBackground: "#181818" },
 };
 

@@ -7,6 +7,7 @@ import {
   IconPanel,
   IconPanelOpen,
 } from "../../components/icons";
+import { NavRail } from "../../components/NavRail";
 import { ProjectCreateDialog } from "../../components/ProjectCreateDialog";
 import { SearchDialog } from "../../components/SearchDialog";
 import { Sidebar } from "../../components/Sidebar";
@@ -118,6 +119,10 @@ export function AppShell() {
       />
     );
 
+  // Bench and Build own their context sidebar and islands (E frame), so the
+  // sessions dock stays out and the pane is a transparent host.
+  const workbench = page === "bench" || page === "build";
+
   let shell: ReactNode = null;
   if (ready) {
     shell = (
@@ -129,8 +134,8 @@ export function AppShell() {
             inert={page === "settings" ? true : undefined}
             aria-hidden={page === "settings" ? true : undefined}
           >
-            <WorkspaceBar />
-            {!sidebarCollapsed || sidebarExiting ? (
+            <NavRail />
+            {!workbench && (!sidebarCollapsed || sidebarExiting) ? (
               <Sidebar
                 className={cx(sidebarEntering && "is-entering", sidebarExiting && "is-exiting")}
                 onAnimationEnd={handleSidebarAnimationEnd}
@@ -150,7 +155,7 @@ export function AppShell() {
               <div
                 className={cx(
                   "window-chrome-row",
-                  !sidebarCollapsed && "sidebar-expanded",
+                  !sidebarCollapsed && !workbench && "sidebar-expanded",
                 )}
               >
                 {sidebarCollapsed && (
@@ -177,7 +182,7 @@ export function AppShell() {
             )}
 
             {!workPanelMaximized && (
-              <section className="main-pane">
+              <section className={cx("main-pane", workbench && "is-workbench")}>
                 {page === "chat" ? (
                   <ConversationTopbar
                     sidebarCollapsed={sidebarCollapsed}
@@ -193,7 +198,7 @@ export function AppShell() {
                       presentedWorkPanelOpen && "work-panel-open",
                     )}
                   >
-                    {sidebarCollapsed && (
+                    {sidebarCollapsed && !workbench && (
                       <div className="main-titlebar-left no-drag">
                         <CollapsedTitlebarActions
                           onToggleSidebar={reopenSidebar}
@@ -290,6 +295,7 @@ export function AppShell() {
                     <ChatSurface visible={page === "chat"} />
                   )}
                 </Suspense>
+                <WorkspaceBar />
               </section>
             )}
 

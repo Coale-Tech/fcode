@@ -1,10 +1,9 @@
 /**
  * T4 — Bench cockpit: master-detail bench browser.
  *
- * Layout (all widths reference tokens, see plan design-phase D29):
- *   < 1200px  → list collapses to a dropdown in the workspace bar; detail full width.
- *   1200–1600 → master list (280px) on the left, detail on the right.
- *   > 1600px  → bench detail splits sites | processes side by side.
+ * Layout (Espresso E frame): context sidebar (256px bench list, with
+ * unreadable discovery roots as failed entries) + island (selected bench:
+ * header, sites/processes/one-shot commands on top, log console below).
  *
  * T16 — the bench detail pane cross-fades on bench selection at
  *         --motion-duration-fast / --motion-ease-out.
@@ -23,6 +22,7 @@ import { ErrorCodes, IPC, type Result } from "@pi-desktop/shared";
 import { useAppStore } from "../stores/app-store";
 import { LogView } from "../components/bench/LogView";
 import { DestructiveActionDialog } from "../components/DestructiveActionDialog";
+import { IconPlay, IconSquare } from "../components/icons";
 
 // ── Types (mirrored from discovery.ts / supervisor.ts) ───────────────────────
 
@@ -446,83 +446,82 @@ export function BenchPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <main className="page-frame bench-page" aria-label="Bench">
-      <div style={PAGE_STYLE}>
-      {/* Master list */}
-      <nav
-        aria-label="Discovered benches"
-        style={LIST_NAV_STYLE}
-      >
-        <div style={LIST_HEADER_STYLE}>
-          <span style={{ fontWeight: 600 }}>Benches</span>
-          {!loading && (
-            <span style={COUNT_BADGE_STYLE}>{benches.length}</span>
+    <main className="wb-page bench-page" aria-label="Bench">
+      <aside className="context-sidebar">
+        <nav aria-label="Discovered benches" className="wb-sidebar-nav">
+          <div className="wb-sidebar-hd">
+            <span>Benches</span>
+            {!loading && <span className="wb-count">{benches.length}</span>}
+          </div>
+
+          {loading ? (
+            <BenchListSkeleton />
+          ) : (
+            benches.length > 0 && (
+              <ul
+                ref={listRef}
+                role="listbox"
+                aria-label="Select a bench"
+                aria-activedescendant={selectedId ? `bench-item-${selectedId}` : undefined}
+                onKeyDown={handleListKeyDown}
+                className="wb-list"
+              >
+                {benches.map((bench) => {
+                  const isSelected = bench.id === selectedId;
+                  const defaultSite = bench.sites.find((s) => s.isDefault)?.name;
+                  return (
+                    <li
+                      key={bench.id}
+                      id={`bench-item-${bench.id}`}
+                      role="option"
+                      aria-selected={isSelected}
+                      tabIndex={isSelected ? 0 : -1}
+                      onClick={() => selectBench(bench.id)}
+                      className={`wb-row${isSelected ? " is-active" : ""}`}
+                    >
+                      <div className="wb-row-top">
+                        <span className="wb-row-name">{baseName(bench.path)}</span>
+                        <StatusBadge status={bench.path === activeBenchPath ? status : "stopped"} />
+                      </div>
+                      <div className="wb-row-meta">
+                        {defaultSite && <span className="wb-truncate">{defaultSite}</span>}
+                        <VersionBadge version={bench.version} />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )
           )}
-        </div>
 
-        {/* Gap 4 / T6: banner for partial or total discovery failures */}
-        {!loading && failedRoots.length > 0 && (
-          <div style={FAILED_ROOTS_BANNER_STYLE} role="alert">
-            {benches.length > 0
-              ? `${failedRoots.length} root${failedRoots.length > 1 ? "s" : ""} unreadable — fix permissions and refresh.`
-              : "All discovery roots unreadable — fix permissions and refresh."}
-          </div>
-        )}
+          {/* Gap 4 / T6: discovery roots that could not be read, as failed entries */}
+          {!loading && failedRoots.length > 0 && (
+            <div className="wb-failed-roots" role="alert">
+              <p className="wb-sidebar-note">
+                {benches.length > 0
+                  ? `${failedRoots.length} root${failedRoots.length > 1 ? "s" : ""} unreadable — fix permissions and refresh.`
+                  : "All discovery roots unreadable — fix permissions and refresh."}
+              </p>
+              {failedRoots.map((fr) => (
+                <div key={fr.root} className="wb-row is-static" title={fr.root}>
+                  <div className="wb-row-top">
+                    <span className="wb-row-name">{baseName(fr.root)}</span>
+                    <StatusBadge status="failed" />
+                  </div>
+                  <div className="wb-row-error">{fr.reason}</div>
+                  <code className="wb-row-meta wb-mono wb-truncate">{fr.root}</code>
+                </div>
+              ))}
+            </div>
+          )}
+        </nav>
+      </aside>
 
-        {loading ? (
-          <BenchListSkeleton />
-        ) : benches.length === 0 && failedRoots.length === 0 ? (
-          <ZeroBenchState />
-        ) : benches.length === 0 ? (
-          /* All roots failed */
-          <div style={EMPTY_BENCH_STYLE} role="alert">
-            <p style={{ fontWeight: 600, color: "var(--ds-error)" }}>
-              Could not read any bench roots.
-            </p>
-            {failedRoots.map((fr) => (
-              <div key={fr.root} style={FAILED_ROOT_ROW_STYLE}>
-                <code style={CODE_STYLE_INLINE}>{fr.root}</code>: {fr.reason}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <ul
-            ref={listRef}
-            role="listbox"
-            aria-label="Select a bench"
-            aria-activedescendant={selectedId ? `bench-item-${selectedId}` : undefined}
-            onKeyDown={handleListKeyDown}
-            style={LIST_STYLE}
-          >
-            {benches.map((bench) => {
-              const isSelected = bench.id === selectedId;
-              return (
-                <li
-                  key={bench.id}
-                  id={`bench-item-${bench.id}`}
-                  role="option"
-                  aria-selected={isSelected}
-                  tabIndex={isSelected ? 0 : -1}
-                  onClick={() => selectBench(bench.id)}
-                  style={{
-                    ...LIST_ITEM_STYLE,
-                    ...(isSelected ? LIST_ITEM_SELECTED_STYLE : {}),
-                  }}
-                >
-                  <span style={BENCH_PATH_STYLE}>{bench.path.split("/").pop()}</span>
-                  <VersionBadge version={bench.version} />
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </nav>
-
-      {/* Detail */}
+      {/* Detail — T16: keyed so the fade-in replays on bench selection */}
       <section
         key={detailKey}
+        className="island wb-fade-in"
         aria-label={selectedBench ? `Bench detail: ${selectedBench.path}` : "Bench detail"}
-        style={{ ...DETAIL_STYLE, animation: `benchDetailFadeIn var(--motion-duration-fast) var(--motion-ease-out)` }}
       >
         {selectedBench ? (
           <BenchDetail
@@ -543,20 +542,20 @@ export function BenchPage() {
             warnings={warnings}
             oneshotState={oneshotState}
           />
+        ) : loading ? null : benches.length === 0 && failedRoots.length === 0 ? (
+          <ZeroBenchState />
         ) : (
-          <div style={EMPTY_DETAIL_STYLE}>
-            <p style={{ color: "var(--ds-text-tertiary)" }}>Select a bench</p>
+          <div className="wb-empty">
+            <p className="wb-muted">
+              {benches.length === 0 ? "Could not read any bench roots." : "Select a bench"}
+            </p>
           </div>
         )}
       </section>
 
-      {/* T16: keyframe definition */}
-      <style>{FADE_IN_KEYFRAME}</style>
-      </div>
-
       {/* T8 / T14: DestructiveActionDialog overlay — no auto-deny timer (plan D14/D31) */}
       {pendingConfirm && (
-        <div style={DIALOG_OVERLAY_STYLE}>
+        <div className="wb-dialog-overlay">
           <DestructiveActionDialog
             site={pendingConfirm.site}
             command={pendingConfirm.verb}
@@ -602,90 +601,79 @@ function BenchDetail({
   oneshotState: Map<string, OneshotEntry>;
 }) {
   return (
-    <div style={DETAIL_INNER_STYLE}>
+    <>
       {/* Header */}
-      <div style={DETAIL_HEADER_STYLE}>
-        <span style={{ fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {bench.path}
-        </span>
-        <StatusDot status={status} />
-      </div>
+      <header className="wb-island-hd">
+        <span className="wb-island-title">{baseName(bench.path)}</span>
+        <VersionBadge version={bench.version} />
+        <span className="wb-path wb-truncate" title={bench.path}>{bench.path}</span>
+      </header>
 
-      {/* Sites + processes row */}
-      <div style={SITES_ROW_STYLE}>
-        <SiteList sites={bench.sites} />
-        <ProcessPanel
-          status={status}
-          anotherBenchRunning={anotherBenchRunning}
-          onStart={onStart}
-          onStop={onStop}
-          elapsedLabel={elapsedLabel}
-          startFailure={startFailure}
-          warnings={warnings}
-        />
-      </div>
+      {/* Top of the console split: sites, processes, one-shot commands */}
+      <div className="wb-detail-body">
+        <div className="wb-panels">
+          <SiteList sites={bench.sites} />
+          <ProcessPanel
+            status={status}
+            anotherBenchRunning={anotherBenchRunning}
+            onStart={onStart}
+            onStop={onStop}
+            elapsedLabel={elapsedLabel}
+            startFailure={startFailure}
+            warnings={warnings}
+          />
+        </div>
 
-      {/* One-shot commands — Gap 2 / T6 */}
-      <div style={ONESHOT_ROW_STYLE}>
-        {ONESHOT_VERBS.map((verb) => {
-          const vs = oneshotState.get(verb);
-          return (
-            <div key={verb} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <button
-                type="button"
-                style={{
-                  ...ONESHOT_BTN_STYLE,
-                  ...(vs?.status === "running" ? { opacity: 0.7 } : {}),
-                }}
-                onClick={(e) => onRun(verb, e.currentTarget)}
-                disabled={status !== "running" || vs?.status === "running"}
-                title={verb}
-              >
-                {vs?.status === "running" ? `${verb} …` : vs?.status === "ok" ? `✓ ${verb}` : vs?.status === "error" ? `✗ ${verb}` : verb}
-              </button>
-              {vs?.status === "ok" && vs.elapsed && (
-                <span style={{ fontSize: "var(--text-3xs)", color: "var(--ds-success)" }}>
-                  {vs.elapsed} · exit 0
-                </span>
-              )}
-              {vs?.status === "error" && (
-                <div style={ERROR_OUTPUT_STYLE}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                    <span style={{ color: "var(--ds-error)", fontSize: "var(--text-3xs)" }}>
-                      exit {vs.elapsed}
-                    </span>
-                    {vs.output && (
-                      <button
-                        type="button"
-                        style={COPY_BTN_STYLE}
-                        onClick={() => navigator.clipboard.writeText(vs.output ?? "")}
-                        title="Copy error output"
-                      >
-                        Copy
-                      </button>
-                    )}
+        {/* One-shot commands — Gap 2 / T6 */}
+        <div className="wb-sec-lbl">One-shot commands</div>
+        <div className="wb-cmds">
+          {ONESHOT_VERBS.map((verb) => {
+            const vs = oneshotState.get(verb);
+            return (
+              <div key={verb} className="wb-cmd">
+                <button
+                  type="button"
+                  className="wb-btn wb-btn-subtle"
+                  onClick={(e) => onRun(verb, e.currentTarget)}
+                  disabled={status !== "running" || vs?.status === "running"}
+                  title={verb}
+                >
+                  {vs?.status === "running" ? `${verb} …` : vs?.status === "ok" ? `✓ ${verb}` : vs?.status === "error" ? `✗ ${verb}` : verb}
+                </button>
+                {vs?.status === "ok" && vs.elapsed && (
+                  <span className="wb-cmd-ok">{vs.elapsed} · exit 0</span>
+                )}
+                {vs?.status === "error" && (
+                  <div className="wb-error-output">
+                    <div className="wb-error-output-hd">
+                      <span>exit {vs.elapsed}</span>
+                      {vs.output && (
+                        <button
+                          type="button"
+                          className="wb-btn wb-btn-ghost wb-btn-sm"
+                          onClick={() => navigator.clipboard.writeText(vs.output ?? "")}
+                          title="Copy error output"
+                        >
+                          Copy
+                        </button>
+                      )}
+                    </div>
+                    {vs.output && <pre className="wb-pre">{vs.output}</pre>}
                   </div>
-                  {vs.output && (
-                    <pre style={{ margin: 0, fontSize: "var(--text-3xs)", whiteSpace: "pre-wrap", overflowWrap: "break-word" }}>
-                      {vs.output}
-                    </pre>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Log viewer (T5) */}
-      <div style={LOG_CONTAINER_STYLE}>
-        <div style={LOG_TOOLBAR_STYLE}>
-          <span style={{ fontSize: "var(--text-2xs)", color: "var(--ds-text-tertiary)" }}>
-            Log
-          </span>
+      {/* Bottom of the console split: log viewer (T5) */}
+      <div className="wb-log">
+        <div className="wb-island-hd">
+          <span className="wb-log-title">Log</span>
           <button
             type="button"
-            style={{ ...ONESHOT_BTN_STYLE, fontSize: "var(--text-2xs)" }}
+            className="wb-btn wb-btn-ghost wb-btn-sm"
             onClick={() => onFollowTailChange(!followTail)}
           >
             {followTail ? "⇊ following" : "⇊ follow"}
@@ -698,25 +686,23 @@ function BenchDetail({
           className="bench-log-view"
         />
       </div>
-    </div>
+    </>
   );
 }
 
 function SiteList({ sites }: { sites: BenchSite[] }) {
   return (
-    <div style={PANEL_BOX_STYLE}>
-      <div style={PANEL_LABEL_STYLE}>Sites</div>
+    <div className="wb-panel">
+      <div className="wb-sec-lbl">Sites</div>
       {sites.length === 0 ? (
-        <p style={{ color: "var(--ds-text-tertiary)", fontSize: "var(--text-sm)" }}>No sites found</p>
+        <p className="wb-muted">No sites found</p>
       ) : (
-        <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+        <ul className="wb-plain-list">
           {sites.map((s) => (
-            <li key={s.name} style={SITE_ITEM_STYLE}>
-              <span style={s.isDefault ? { color: "var(--ds-success)" } : {}}>●</span>
-              <span>{s.name}</span>
-              {s.isDefault && (
-                <span style={{ fontSize: "var(--text-3xs)", color: "var(--ds-text-tertiary)" }}>default</span>
-              )}
+            <li key={s.name} className="wb-site">
+              <span className={`wb-dot ${s.isDefault ? "wb-dot-green" : "wb-dot-gray"}`} aria-hidden="true" />
+              <span className="wb-truncate">{s.name}</span>
+              {s.isDefault && <span className="wb-badge wb-badge-gray">default</span>}
             </li>
           ))}
         </ul>
@@ -746,76 +732,69 @@ export function ProcessPanel({
   warnings: string[];
 }) {
   return (
-    <div style={PANEL_BOX_STYLE}>
-      <div style={PANEL_LABEL_STYLE}>Processes</div>
+    <div className="wb-panel">
+      <div className="wb-sec-lbl">Processes</div>
       {/* Gap 3 / T6: status + elapsed */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <StatusDot status={status} />
-        <span style={{ fontSize: "var(--text-sm)" }}>{STATUS_LABELS[status]}</span>
-        {elapsedLabel && (
-          <span style={{ fontSize: "var(--text-2xs)", color: "var(--ds-text-tertiary)" }}>
-            {elapsedLabel}
-          </span>
-        )}
-      </div>
-
-      {/* Gap 5 / T6: port-conflict warnings */}
-      {warnings.length > 0 && (
-        <div style={{ marginTop: 6 }}>
-          {warnings.map((w, i) => (
-            <div key={i} style={WARNING_ROW_STYLE}>
-              <span style={{ color: "var(--ds-warning)" }}>⚠</span> {w}
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap" }}>
+      <div className="wb-status-line">
+        <StatusBadge status={status} />
+        {elapsedLabel && <span className="wb-muted">{elapsedLabel}</span>}
+        <span className="wb-spacer" />
         {status === "stopped" || status === "failed" ? (
-          <button type="button" style={ACTION_BTN_STYLE} onClick={onStart} disabled={anotherBenchRunning}>
+          <button type="button" className="wb-btn wb-btn-solid" onClick={onStart} disabled={anotherBenchRunning}>
+            <IconPlay size={14} aria-hidden="true" />
             Start bench
           </button>
         ) : (
           <button
             type="button"
-            style={{ ...ACTION_BTN_STYLE, background: "var(--ds-error)" }}
+            className="wb-btn wb-btn-subtle"
             onClick={onStop}
             disabled={status === "starting"}
           >
+            <IconSquare size={14} aria-hidden="true" />
             Stop
           </button>
         )}
       </div>
 
+      {/* Gap 5 / T6: port-conflict warnings */}
+      {warnings.length > 0 && (
+        <div className="wb-warnings">
+          {warnings.map((w, i) => (
+            <div key={i} className="wb-warning">
+              <span aria-hidden="true">⚠</span> {w}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Gap 1 / T6: bench-start failure panel */}
       {startFailure && (
-        <div style={FAILURE_PANEL_STYLE} role="alert">
-          <div style={{ fontWeight: 600, color: "var(--ds-error)", marginBottom: 4 }}>
-            {startFailure.failure.problem}
+        <div className="wb-failure" role="alert">
+          <div className="wb-failure-title">{startFailure.failure.problem}</div>
+          <div className="wb-failure-line">
+            <span className="wb-muted">Cause:</span> {startFailure.failure.cause}
           </div>
-          <div style={{ fontSize: "var(--text-sm)", marginBottom: 4 }}>
-            <span style={{ color: "var(--ds-text-secondary)" }}>Cause:</span> {startFailure.failure.cause}
-          </div>
-          <div style={{ fontSize: "var(--text-sm)", marginBottom: 8 }}>
-            <span style={{ color: "var(--ds-text-secondary)" }}>Fix:</span> {startFailure.failure.fix}
+          <div className="wb-failure-line">
+            <span className="wb-muted">Fix:</span> {startFailure.failure.fix}
           </div>
           {startFailure.failure.docsUrl && (
             <a
               href={startFailure.failure.docsUrl}
-              style={{ fontSize: "var(--text-sm)", color: "var(--ds-text-link)" }}
+              className="wb-link"
               onClick={(e) => { e.preventDefault(); window.open(startFailure.failure.docsUrl); }}
             >
               Docs ↗
             </a>
           )}
-          <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
-            <button type="button" style={ACTION_BTN_STYLE} onClick={onStart} disabled={anotherBenchRunning}>
+          <div className="wb-actions">
+            <button type="button" className="wb-btn wb-btn-solid wb-btn-sm" onClick={onStart} disabled={anotherBenchRunning}>
               Retry
             </button>
             {startFailure.logTail && (
               <button
                 type="button"
-                style={COPY_BTN_STYLE}
+                className="wb-btn wb-btn-subtle wb-btn-sm"
                 onClick={() => navigator.clipboard.writeText(startFailure.logTail ?? "")}
               >
                 Copy log
@@ -823,11 +802,9 @@ export function ProcessPanel({
             )}
           </div>
           {startFailure.logTail && (
-            <details style={{ marginTop: 6 }}>
-              <summary style={{ fontSize: "var(--text-3xs)", color: "var(--ds-text-tertiary)", cursor: "pointer" }}>
-                Last log lines
-              </summary>
-              <pre style={LOG_TAIL_PRE_STYLE}>{startFailure.logTail}</pre>
+            <details className="wb-details">
+              <summary>Last log lines</summary>
+              <pre className="wb-pre wb-log-tail">{startFailure.logTail}</pre>
             </details>
           )}
         </div>
@@ -839,43 +816,29 @@ export function ProcessPanel({
 function VersionBadge({ version }: { version: BenchVersion }) {
   if (version === null) {
     return (
-      <span style={{ ...BADGE_STYLE, background: "var(--ds-warning)", color: "#000" }} title="Frappe version undetected">
+      <span className="wb-badge wb-badge-amber" title="Frappe version undetected">
         ?
       </span>
     );
   }
-  return (
-    <span style={BADGE_STYLE}>v{version}</span>
-  );
+  return <span className="wb-badge wb-badge-gray">v{version}</span>;
 }
 
-function StatusDot({ status }: { status: BenchStatus }) {
-  const color = STATUS_COLORS[status];
+function StatusBadge({ status }: { status: BenchStatus }) {
+  const hue = STATUS_HUES[status];
   return (
-    <span
-      role="img"
-      aria-label={STATUS_LABELS[status]}
-      style={{ color, fontFamily: "inherit", fontSize: "0.7em", flexShrink: 0 }}
-    >
-      ●
+    <span className={`wb-badge wb-badge-${hue}`}>
+      <span className={`wb-dot wb-dot-${hue}`} aria-hidden="true" />
+      {STATUS_LABELS[status]}
     </span>
   );
 }
 
 function BenchListSkeleton() {
   return (
-    <div aria-busy="true" aria-label="Discovering benches…" role="status" style={{ padding: "8px 0" }}>
+    <div aria-busy="true" aria-label="Discovering benches…" role="status" className="wb-skeleton-list">
       {Array.from({ length: 6 }, (_, i) => (
-        <div
-          key={i}
-          style={{
-            height: 28,
-            margin: "4px 0",
-            borderRadius: "var(--radius-2xs)",
-            background: "var(--ds-bg-secondary, var(--ds-bg-primary))",
-            opacity: 0.4 + i * 0.05,
-          }}
-        />
+        <div key={i} className="wb-skeleton" />
       ))}
     </div>
   );
@@ -899,43 +862,41 @@ function ZeroBenchState() {
   };
 
   return (
-    <div style={EMPTY_BENCH_STYLE}>
-      <p style={{ fontWeight: 600, marginBottom: 8 }}>No Frappe benches found</p>
-      <p style={{ fontSize: "var(--text-sm)", color: "var(--ds-text-secondary)", marginBottom: 16 }}>
-        Fcode scans <code style={CODE_STYLE}>~/ERPNext</code> on startup.
-        Frappe installation is outside this app's control.
-      </p>
+    <div className="wb-empty">
+      <div className="wb-empty-inner">
+        <p className="wb-empty-title">No Frappe benches found</p>
+        <p className="wb-muted">
+          Fcode scans <code className="wb-code">~/ERPNext</code> on startup.
+          Frappe installation is outside this app's control.
+        </p>
 
-      <p style={{ fontSize: "var(--text-sm)", marginBottom: 6 }}>
-        Create a bench:
-      </p>
-      <CopyCmd
-        label="bench init"
-        text="bench init frappe-bench --frappe-branch version-16"
-        copied={copied}
-        onCopy={copy}
-      />
+        <p className="wb-empty-step">Create a bench:</p>
+        <CopyCmd
+          label="bench init"
+          text="bench init frappe-bench --frappe-branch version-16"
+          copied={copied}
+          onCopy={copy}
+        />
 
-      <p style={{ fontSize: "var(--text-sm)", marginTop: 12, marginBottom: 6 }}>
-        Create a site:
-      </p>
-      <CopyCmd
-        label="bench new-site"
-        text="bench new-site site1.local --install-app frappe"
-        copied={copied}
-        onCopy={copy}
-      />
+        <p className="wb-empty-step">Create a site:</p>
+        <CopyCmd
+          label="bench new-site"
+          text="bench new-site site1.local --install-app frappe"
+          copied={copied}
+          onCopy={copy}
+        />
 
-      <p style={{ marginTop: 16, fontSize: "var(--text-sm)" }}>
-        <a
-          href="https://frappeframework.com/docs/user/en/installation"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: "var(--ds-text-link, var(--ds-text-primary))" }}
-        >
-          Frappe installation guide ↗
-        </a>
-      </p>
+        <p className="wb-empty-step">
+          <a
+            href="https://frappeframework.com/docs/user/en/installation"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="wb-link"
+          >
+            Frappe installation guide ↗
+          </a>
+        </p>
+      </div>
     </div>
   );
 }
@@ -952,11 +913,11 @@ function CopyCmd({
   onCopy: (text: string, label: string) => void;
 }) {
   return (
-    <div style={COPY_CMD_STYLE}>
-      <code style={{ ...CODE_STYLE, flex: 1, fontSize: "var(--text-sm)", whiteSpace: "pre" }}>{text}</code>
+    <div className="wb-copy-cmd">
+      <code className="wb-mono">{text}</code>
       <button
         type="button"
-        style={COPY_BTN_STYLE}
+        className="wb-btn wb-btn-subtle wb-btn-sm"
         onClick={() => onCopy(text, label)}
         aria-label={`Copy ${label} command`}
       >
@@ -970,11 +931,12 @@ function CopyCmd({
 
 const ONESHOT_VERBS = ["migrate", "clear-cache", "build"];
 
-const STATUS_COLORS: Record<BenchStatus, string> = {
-  running: "var(--ds-success)",
-  starting: "var(--ds-warning)",
-  failed: "var(--ds-error)",
-  stopped: "var(--ds-text-tertiary)",
+// Status hues: Espresso reserves hue for status only (subtle badge + dot).
+const STATUS_HUES: Record<BenchStatus, "green" | "amber" | "red" | "gray"> = {
+  running: "green",
+  starting: "amber",
+  failed: "red",
+  stopped: "gray",
 };
 
 const STATUS_LABELS: Record<BenchStatus, string> = {
@@ -984,298 +946,7 @@ const STATUS_LABELS: Record<BenchStatus, string> = {
   stopped: "Stopped",
 };
 
-// T16 — exactly one authored motion moment: bench detail cross-fade
-const FADE_IN_KEYFRAME = `
-@keyframes benchDetailFadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+/** Last path segment; discovery roots may be Windows paths. */
+function baseName(path: string): string {
+  return path.split(/[\\/]/).filter(Boolean).pop() ?? path;
 }
-`;
-
-// ── Styles (design tokens only, no raw px except where token N/A) ─────────────
-
-const PAGE_STYLE: React.CSSProperties = {
-  display: "flex",
-  height: "100%",
-  overflow: "hidden",
-  background: "var(--ds-bg-primary)",
-  color: "var(--ds-text-primary)",
-  fontSize: "var(--text-sm)",
-};
-
-const LIST_NAV_STYLE: React.CSSProperties = {
-  width: 280,
-  flexShrink: 0,
-  borderRight: "1px solid var(--ds-border-primary, var(--ds-bg-secondary, #333))",
-  display: "flex",
-  flexDirection: "column",
-  overflow: "hidden",
-  padding: 8,
-};
-
-const LIST_HEADER_STYLE: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: 6,
-  marginBottom: 8,
-  fontSize: "var(--text-sm)",
-  fontWeight: 600,
-};
-
-const COUNT_BADGE_STYLE: React.CSSProperties = {
-  background: "var(--ds-bg-secondary, #333)",
-  borderRadius: "var(--radius-2xs)",
-  fontSize: "var(--text-3xs)",
-  padding: "1px 5px",
-  color: "var(--ds-text-tertiary)",
-};
-
-const LIST_STYLE: React.CSSProperties = {
-  flex: 1,
-  overflowY: "auto",
-  margin: 0,
-  padding: 0,
-  listStyle: "none",
-};
-
-const LIST_ITEM_STYLE: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: 6,
-  padding: "5px 8px",
-  borderRadius: "var(--radius-xs)",
-  cursor: "pointer",
-  fontSize: "var(--text-sm)",
-  userSelect: "none",
-};
-
-const LIST_ITEM_SELECTED_STYLE: React.CSSProperties = {
-  background: "var(--ds-bg-secondary, rgba(255,255,255,0.07))",
-  fontWeight: 500,
-};
-
-const BENCH_PATH_STYLE: React.CSSProperties = {
-  flex: 1,
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
-};
-
-const BADGE_STYLE: React.CSSProperties = {
-  flexShrink: 0,
-  fontSize: "var(--text-3xs)",
-  background: "var(--ds-bg-secondary, #333)",
-  borderRadius: "var(--radius-3xs)",
-  padding: "0 4px",
-  color: "var(--ds-text-tertiary)",
-};
-
-const DETAIL_STYLE: React.CSSProperties = {
-  flex: 1,
-  overflow: "hidden",
-  display: "flex",
-  flexDirection: "column",
-};
-
-const DETAIL_INNER_STYLE: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  height: "100%",
-  overflow: "hidden",
-  padding: 12,
-  gap: 8,
-};
-
-const DETAIL_HEADER_STYLE: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: 8,
-  flexShrink: 0,
-};
-
-const SITES_ROW_STYLE: React.CSSProperties = {
-  display: "flex",
-  gap: 8,
-  flexShrink: 0,
-};
-
-const PANEL_BOX_STYLE: React.CSSProperties = {
-  flex: 1,
-  padding: 10,
-  borderRadius: "var(--radius-sm)",
-  border: "1px solid var(--ds-border-primary, rgba(255,255,255,0.1))",
-  overflow: "hidden",
-};
-
-const PANEL_LABEL_STYLE: React.CSSProperties = {
-  fontSize: "var(--text-3xs)",
-  color: "var(--ds-text-tertiary)",
-  textTransform: "uppercase",
-  letterSpacing: "0.05em",
-  marginBottom: 6,
-};
-
-const SITE_ITEM_STYLE: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: 6,
-  padding: "2px 0",
-  fontSize: "var(--text-sm)",
-};
-
-const ONESHOT_ROW_STYLE: React.CSSProperties = {
-  display: "flex",
-  gap: 6,
-  flexShrink: 0,
-};
-
-const ONESHOT_BTN_STYLE: React.CSSProperties = {
-  padding: "3px 10px",
-  borderRadius: "var(--radius-2xs)",
-  border: "1px solid var(--ds-border-primary, rgba(255,255,255,0.15))",
-  background: "transparent",
-  color: "var(--ds-text-primary)",
-  fontSize: "var(--text-sm)",
-  cursor: "pointer",
-};
-
-const ACTION_BTN_STYLE: React.CSSProperties = {
-  padding: "4px 12px",
-  borderRadius: "var(--radius-xs)",
-  border: "none",
-  background: "var(--ds-success)",
-  color: "#000",
-  fontSize: "var(--text-sm)",
-  fontWeight: 600,
-  cursor: "pointer",
-};
-
-const LOG_CONTAINER_STYLE: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  flex: 1,
-  minHeight: 0,
-  borderRadius: "var(--radius-sm)",
-  border: "1px solid var(--ds-border-primary, rgba(255,255,255,0.1))",
-  overflow: "hidden",
-};
-
-const LOG_TOOLBAR_STYLE: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  padding: "4px 8px",
-  borderBottom: "1px solid var(--ds-border-primary, rgba(255,255,255,0.1))",
-  flexShrink: 0,
-};
-
-const EMPTY_DETAIL_STYLE: React.CSSProperties = {
-  flex: 1,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const EMPTY_BENCH_STYLE: React.CSSProperties = {
-  padding: 16,
-  color: "var(--ds-text-primary)",
-};
-
-const CODE_STYLE: React.CSSProperties = {
-  fontFamily: "var(--font-mono)",
-  background: "var(--ds-bg-secondary, rgba(0,0,0,0.3))",
-  borderRadius: "var(--radius-3xs)",
-  padding: "1px 4px",
-};
-
-const COPY_CMD_STYLE: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: 8,
-  padding: 8,
-  borderRadius: "var(--radius-xs)",
-  border: "1px solid var(--ds-border-primary, rgba(255,255,255,0.1))",
-  background: "var(--ds-bg-secondary, rgba(0,0,0,0.2))",
-};
-
-const COPY_BTN_STYLE: React.CSSProperties = {
-  flexShrink: 0,
-  padding: "3px 10px",
-  borderRadius: "var(--radius-2xs)",
-  border: "1px solid var(--ds-border-primary, rgba(255,255,255,0.15))",
-  background: "transparent",
-  color: "var(--ds-text-primary)",
-  fontSize: "var(--text-sm)",
-  cursor: "pointer",
-};
-
-// ── T6 gap styles ─────────────────────────────────────────────────────────────
-
-const FAILED_ROOTS_BANNER_STYLE: React.CSSProperties = {
-  padding: "6px 8px",
-  marginBottom: 6,
-  borderRadius: "var(--radius-xs)",
-  background: "color-mix(in srgb, var(--ds-warning) 15%, transparent)",
-  color: "var(--ds-warning)",
-  fontSize: "var(--text-2xs)",
-};
-
-const FAILED_ROOT_ROW_STYLE: React.CSSProperties = {
-  fontSize: "var(--text-2xs)",
-  color: "var(--ds-text-secondary)",
-  marginBottom: 4,
-};
-
-const CODE_STYLE_INLINE: React.CSSProperties = {
-  fontFamily: "var(--font-mono)",
-  background: "var(--ds-bg-secondary, rgba(0,0,0,0.3))",
-  borderRadius: "var(--radius-3xs)",
-  padding: "0 3px",
-};
-
-const WARNING_ROW_STYLE: React.CSSProperties = {
-  display: "flex",
-  gap: 4,
-  alignItems: "flex-start",
-  fontSize: "var(--text-2xs)",
-  color: "var(--ds-text-secondary)",
-  padding: "2px 0",
-};
-
-const FAILURE_PANEL_STYLE: React.CSSProperties = {
-  marginTop: 8,
-  padding: 10,
-  borderRadius: "var(--radius-xs)",
-  border: "1px solid var(--ds-error)",
-  background: "color-mix(in srgb, var(--ds-error) 10%, transparent)",
-};
-
-const ERROR_OUTPUT_STYLE: React.CSSProperties = {
-  marginTop: 4,
-  padding: "6px 8px",
-  borderRadius: "var(--radius-xs)",
-  background: "color-mix(in srgb, var(--ds-error) 10%, transparent)",
-  border: "1px solid color-mix(in srgb, var(--ds-error) 30%, transparent)",
-};
-
-const LOG_TAIL_PRE_STYLE: React.CSSProperties = {
-  margin: 0,
-  marginTop: 6,
-  fontSize: "var(--text-3xs)",
-  fontFamily: "var(--font-mono)",
-  whiteSpace: "pre-wrap",
-  overflowWrap: "break-word",
-  maxHeight: 120,
-  overflow: "auto",
-  color: "var(--ds-text-secondary)",
-};
-
-const DIALOG_OVERLAY_STYLE: React.CSSProperties = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0,0,0,0.6)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: 9999,
-};
