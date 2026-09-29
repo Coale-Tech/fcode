@@ -950,7 +950,7 @@ sklm: {
       voiceToggle: "음성 입력 전환",
       voiceCancel: "음성 입력 취소",
       navToChat: "채팅으로 이동",
-      navToCode: "코드 편집기로 이동",
+      navToFiles: "파일 열기",
       navToBuild: "빌드로 이동",
       navToBench: "Bench로 이동",
       toggleFollowLog: "로그 팔로우 전환",
@@ -1777,6 +1777,12 @@ sklm: {
     },
     pluginView: {
       failed: "이 화면을 불러올 수 없습니다. 플러그인을 새로 고친 후 다시 시도하세요.",
+      viewReadOnly: "읽기 전용으로 보기",
+    },
+    noSession: {
+      title: "활성 세션 없음",
+      body: "새 작업을 시작하거나 세션을 선택하여 파일 편집기를 여세요.",
+      action: "새 작업",
     },
     empty: {
     },

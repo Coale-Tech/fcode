@@ -137,19 +137,38 @@ export function browserPluginTab(location?: string): WorkPanelTab {
  * launcher list, and callers fall back to the host file tab.
  */
 export const FILE_MANAGER_PLUGIN_TAB = {
+  pluginId: "fcode.files",
+  viewId: "manager",
+} as const;
+
+/** The old marketplace plugin id, kept to migrate saved tabs. */
+export const LEGACY_FILE_MANAGER_PLUGIN_TAB = {
   pluginId: "pi.file-manager",
   viewId: "manager",
 } as const;
 
-/** The file view, asked to show one file. */
-export function fileManagerPluginTab(location: string): WorkPanelTab {
+/** The file view, optionally asked to show one file. */
+export function fileManagerPluginTab(location?: string): WorkPanelTab {
   return {
     ...pluginWorkPanelTab(
       FILE_MANAGER_PLUGIN_TAB.pluginId,
       FILE_MANAGER_PLUGIN_TAB.viewId,
     ),
-    location,
+    ...(location ? { location } : {}),
   };
+}
+
+/**
+ * Upgrade a saved tab from the old marketplace plugin id to the source-owned
+ * fork. Returns the same reference when no migration is needed.
+ */
+export function migrateWorkPanelTab(tab: WorkPanelTab): WorkPanelTab {
+  const legacy = `${LEGACY_FILE_MANAGER_PLUGIN_TAB.pluginId}/${LEGACY_FILE_MANAGER_PLUGIN_TAB.viewId}`;
+  if (tab?.kind === "plugin" && tab.resource === legacy) {
+    const resource = `${FILE_MANAGER_PLUGIN_TAB.pluginId}/${FILE_MANAGER_PLUGIN_TAB.viewId}`;
+    return { ...tab, id: `plugin:${resource}`, resource };
+  }
+  return tab;
 }
 
 /** The identity of one plugin-contributed view, as tabs and manifests key it. */
@@ -212,18 +231,40 @@ export function isKnownWorkPanelTab(tab: WorkPanelTab): boolean {
 export function sanitizeWorkPanelTabsState(
   state: WorkPanelTabsState,
 ): WorkPanelTabsState {
-  const tabs = state.tabs.filter(isKnownWorkPanelTab);
-  if (tabs.length === state.tabs.length) return state;
-  if (
-    state.activeTabId === null ||
-    tabs.some((tab) => tab.id === state.activeTabId)
-  ) {
-    return { tabs, activeTabId: state.activeTabId };
-  }
-
-  const activeIndex = state.tabs.findIndex(
-    (tab) => tab.id === state.activeTabId,
+  // Migrate legacy plugin ids, then drop duplicates (a session may have saved
+  // both the legacy and current tab) and unknown kinds. When both exist the
+  // native tab wins: the migrated legacy one only carries a stale location.
+  const migrated = state.tabs.map(migrateWorkPanelTab);
+  const nativeIds = new Set(
+    state.tabs.filter((tab, i) => tab && migrated[i] === tab).map((tab) => tab.id),
   );
+  const seen = new Set<string>();
+  const tabs = migrated.filter((tab, i) => {
+    if (!isKnownWorkPanelTab(tab)) return false;
+    if (tab !== state.tabs[i] && nativeIds.has(tab.id)) return false;
+    if (seen.has(tab.id)) return false;
+    seen.add(tab.id);
+    return true;
+  });
+  if (
+    tabs.length === state.tabs.length &&
+    tabs.every((tab, i) => tab === state.tabs[i])
+  ) {
+    return state;
+  }
+  const activeId = state.activeTabId;
+  if (activeId === null) return { tabs, activeTabId: null };
+  if (tabs.some((tab) => tab.id === activeId)) {
+    return { tabs, activeTabId: activeId };
+  }
+  // The active tab may itself have been migrated to a new id.
+  const migratedActive = state.tabs
+    .map(migrateWorkPanelTab)
+    .find((tab, i) => state.tabs[i].id === activeId);
+  if (migratedActive && tabs.some((tab) => tab.id === migratedActive.id)) {
+    return { tabs, activeTabId: migratedActive.id };
+  }
+  const activeIndex = state.tabs.findIndex((tab) => tab.id === activeId);
   return {
     tabs,
     activeTabId:

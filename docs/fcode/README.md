@@ -1,6 +1,6 @@
 # Fcode — Developer Reference
 
-Fcode is a desktop AI coding agent for Frappe/ERPNext developers. It forks [PI-Desktop](https://github.com/vastsa/PI-Desktop) and replaces the agent brain with [omp (oh-my-pi)](https://github.com/can1357/oh-my-pi), adds a supervised local bench, a Monaco code editor, and Studio/Builder canvas integration.
+Fcode is a desktop AI coding agent for Frappe/ERPNext developers. It forks [PI-Desktop](https://github.com/vastsa/PI-Desktop) and replaces the agent brain with [omp (oh-my-pi)](https://github.com/can1357/oh-my-pi), adds a supervised local bench, an in-app file editor (Chat → Files), and Studio/Builder canvas integration.
 
 ---
 

@@ -9,7 +9,7 @@ test("app-state Page union carries the three new surfaces", async () => {
   );
   assert.match(
     appState,
-    /page: "chat" \| "pulls" \| "scheduled" \| "plugins" \| "settings" \| "code" \| "build" \| "bench";/,
+    /page: "chat" \| "pulls" \| "scheduled" \| "plugins" \| "settings" \| "build" \| "bench";/,
   );
 });
 

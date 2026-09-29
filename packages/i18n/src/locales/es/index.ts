@@ -942,7 +942,7 @@ sklm: {
       "voiceToggle": "Alternar entrada de voz",
       "voiceCancel": "Cancelar entrada de voz",
       "navToChat": "Ir a Chat",
-      "navToCode": "Ir al editor de código",
+      "navToFiles": "Abrir archivos",
       "navToBuild": "Ir a Build",
       "navToBench": "Ir a Bench",
       "toggleFollowLog": "Activar seguimiento de registro",
@@ -1760,7 +1760,13 @@ sklm: {
       "subagent": "Subagente"
     },
     "pluginView": {
-      "failed": "Esta vista no se pudo cargar. Vuelva a cargar el complemento e inténtelo de nuevo."
+      "failed": "Esta vista no se pudo cargar. Vuelva a cargar el complemento e inténtelo de nuevo.",
+      "viewReadOnly": "Ver de solo lectura"
+    },
+    "noSession": {
+      "title": "Sin sesión activa",
+      "body": "Inicia una nueva tarea o selecciona una sesión para abrir el editor de archivos.",
+      "action": "Nueva tarea"
     },
     "empty": {
     },

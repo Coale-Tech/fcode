@@ -3,6 +3,7 @@ import test from "node:test";
 
 const {
   FILE_MANAGER_PLUGIN_TAB,
+  LEGACY_FILE_MANAGER_PLUGIN_TAB,
   activateWorkPanelTabState,
   browserPluginTab,
   closeWorkPanelTabState,
@@ -174,7 +175,7 @@ test("only plugin views are launchable tools", () => {
   assert.equal(isToolWorkPanelTab(browserPluginTab()), true);
   assert.equal(isToolWorkPanelTab(toolWorkPanelTab("review")), false);
   assert.equal(isToolWorkPanelTab(fileWorkPanelTab("README.md")), false);
-  assert.equal(isToolWorkPanelTab(pluginWorkPanelTab("pi.file-manager", "manager")), true);
+  assert.equal(isToolWorkPanelTab(pluginWorkPanelTab("fcode.files", "manager")), true);
   assert.equal(isKnownWorkPanelTab({ id: "browser", kind: "browser" }), false);
   assert.equal(isKnownWorkPanelTab(newWorkPanelTab()), true);
 });
@@ -183,7 +184,7 @@ test("a host-chosen project file prefers the bundled file view", () => {
   // A plan or goal artifact is project markdown the host opens for the user, so
   // it lands in the same view the user's own file work uses. The bundle is
   // never required: without that view the host file tab remains.
-  const fileView = { pluginId: "pi.file-manager", viewId: "manager" };
+  const fileView = { pluginId: "fcode.files", viewId: "manager" };
   const openedInView = preferredFileWorkPanelTab("plans/plan.md", [fileView]);
 
   assert.equal(hasPluginView([fileView], FILE_MANAGER_PLUGIN_TAB), true);
@@ -195,7 +196,7 @@ test("a host-chosen project file prefers the bundled file view", () => {
     false,
   );
   assert.equal(openedInView.kind, "plugin");
-  assert.equal(openedInView.id, "plugin:pi.file-manager/manager");
+  assert.equal(openedInView.id, "plugin:fcode.files/manager");
   assert.equal(openedInView.location, "plans/plan.md");
   assert.deepEqual(
     preferredFileWorkPanelTab("plans/plan.md", []),
@@ -338,4 +339,31 @@ test("repeated subagent labels gain a strip-order suffix, singletons stay bare",
     ["explorer#1", "reviewer", "explorer#2", "explorer#3"],
   );
   assert.deepEqual(subagentTabDisplayLabels(["explorer"]), ["explorer"]);
+});
+
+test("a saved legacy file-manager tab is migrated to fcode.files by sanitize", () => {
+  const legacyResource = `${LEGACY_FILE_MANAGER_PLUGIN_TAB.pluginId}/${LEGACY_FILE_MANAGER_PLUGIN_TAB.viewId}`;
+  const currentResource = `${FILE_MANAGER_PLUGIN_TAB.pluginId}/${FILE_MANAGER_PLUGIN_TAB.viewId}`;
+  const state = {
+    tabs: [{ id: `plugin:${legacyResource}`, kind: "plugin", resource: legacyResource, location: "/a.ts" }],
+    activeTabId: `plugin:${legacyResource}`,
+  };
+  const result = sanitizeWorkPanelTabsState(state);
+  assert.equal(result.tabs.length, 1);
+  assert.equal(result.tabs[0].resource, currentResource);
+  assert.equal(result.activeTabId, `plugin:${currentResource}`);
+  assert.equal(result.tabs[0].location, "/a.ts");
+});
+
+test("when legacy and current file-manager tabs both exist, the current tab wins", () => {
+  const legacyResource = `${LEGACY_FILE_MANAGER_PLUGIN_TAB.pluginId}/${LEGACY_FILE_MANAGER_PLUGIN_TAB.viewId}`;
+  const currentResource = `${FILE_MANAGER_PLUGIN_TAB.pluginId}/${FILE_MANAGER_PLUGIN_TAB.viewId}`;
+  const legacy = { id: `plugin:${legacyResource}`, kind: "plugin", resource: legacyResource, location: "/stale.ts" };
+  const current = { id: `plugin:${currentResource}`, kind: "plugin", resource: currentResource, location: "/fresh.ts" };
+  for (const tabs of [[legacy, current], [current, legacy]]) {
+    const result = sanitizeWorkPanelTabsState({ tabs, activeTabId: legacy.id });
+    assert.equal(result.tabs.length, 1);
+    assert.equal(result.tabs[0].location, "/fresh.ts");
+    assert.equal(result.activeTabId, current.id);
+  }
 });

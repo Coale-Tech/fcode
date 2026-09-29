@@ -3,7 +3,6 @@ import { useAppStore } from "../stores/app-store";
 import {
   IconChat,
   IconClock,
-  IconCode,
   IconMonitor,
   IconPlug,
   IconServer,
@@ -43,17 +42,6 @@ export function NavRail() {
         >
           <IconChat size={16} aria-hidden />
           <span className="nav-rail-label">Chat</span>
-        </button>
-        <button
-          type="button"
-          className={cx("nav-rail-btn nav-rail-labeled", page === "code" && "active")}
-          data-nav="code"
-          aria-label="Code"
-          aria-pressed={page === "code"}
-          onClick={() => setPage("code")}
-        >
-          <IconCode size={16} aria-hidden />
-          <span className="nav-rail-label">Code</span>
         </button>
         <button
           type="button"

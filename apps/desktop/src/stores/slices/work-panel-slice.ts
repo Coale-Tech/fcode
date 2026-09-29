@@ -112,6 +112,7 @@ export function createWorkPanelSlice({
   | "resetWorkPanelContext"
   | "setWorkPanelWidth"
   | "openFileInWorkPanel"
+  | "requestFileInWorkPanel"
   | "openUrlInWorkPanel"
 > {
   let workPanelFileRequestSeq = 0;
@@ -126,7 +127,11 @@ export function createWorkPanelSlice({
   openWorkPanel: () => {
     const state = get();
     const sessionId = state.activeSessionId;
-    if (!sessionId) return;
+    if (!sessionId) {
+      // No session: open the panel in its empty no-session state.
+      set({ workPanelOpen: true });
+      return;
+    }
     const context = currentWorkPanelContext(state);
     set({
       workPanelOpen: true,
@@ -350,7 +355,11 @@ export function createWorkPanelSlice({
   collapseWorkPanel: () => {
     const state = get();
     const sessionId = state.activeSessionId;
-    if (!sessionId || !state.workPanelOpen) return;
+    if (!state.workPanelOpen) return;
+    if (!sessionId) {
+      set({ workPanelOpen: false });
+      return;
+    }
     set({
       workPanelOpen: false,
       workPanelContexts: {
@@ -373,6 +382,16 @@ export function createWorkPanelSlice({
     saveWorkPanelWidth(get().workPanelWidth);
   },
 
+  requestFileInWorkPanel: (tab) => {
+    const sessionId = get().activeSessionId;
+    if (sessionId) {
+      get().openWorkPanelTabForSession(sessionId, tab);
+      return;
+    }
+    // Queued until a session activates; useAppShellRuntime flushes it.
+    set({ pendingWorkPanelTab: tab });
+    get().openWorkPanel();
+  },
   openFileInWorkPanel: (path, mimeType) => {
     get().openWorkPanelTab(fileWorkPanelTab(path, mimeType));
   },

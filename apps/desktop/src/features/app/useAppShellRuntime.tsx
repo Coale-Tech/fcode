@@ -26,7 +26,7 @@ import {
   MAIN_PANE_MIN_WIDTH,
   workPanelWidthForSidebarReopen,
 } from "../../lib/work-panel-resize";
-import { browserPluginTab } from "../../lib/work-panel-tabs";
+import { browserPluginTab, fileManagerPluginTab } from "../../lib/work-panel-tabs";
 import { useAppStore } from "../../stores/app-store";
 import { useSidebarTransition } from "./useSidebarTransition";
 import { useStartupWatchdog } from "./useStartupWatchdog";
@@ -570,6 +570,35 @@ export function useAppShellRuntime() {
     void useAppStore.getState().refreshQueuedPrompts(activeSessionId);
   }, [activeSessionId]);
 
+  // A tab queued while no session was active (navToFiles before a project was
+  // selected, or a file link during startup) is flushed into the next session
+  // only if it belongs to the project that was active at request time, and is
+  // dropped when the user leaves Chat first.
+  const pendingWorkPanelTab = useAppStore((s) => s.pendingWorkPanelTab);
+  const pendingProjectRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!pendingWorkPanelTab) {
+      pendingProjectRef.current = undefined;
+    } else if (page !== "chat") {
+      useAppStore.setState({ pendingWorkPanelTab: null });
+    } else {
+      pendingProjectRef.current = useAppStore.getState().activeProjectPath;
+    }
+  }, [pendingWorkPanelTab, page]);
+
+  useEffect(() => {
+    if (!activeSessionId) return;
+    const store = useAppStore.getState();
+    const pending = store.pendingWorkPanelTab;
+    if (!pending) return;
+    useAppStore.setState({ pendingWorkPanelTab: null });
+    const requested = pendingProjectRef.current;
+    pendingProjectRef.current = undefined;
+    const sessionProject = store.sessions.find((s) => s.id === activeSessionId)?.projectPath;
+    if (requested && sessionProject && requested !== sessionProject) return;
+    store.openWorkPanelTab(pending);
+  }, [activeSessionId]);
+
   useEffect(() => {
     const offEvent = api.onAgentEvent(handleAgentEvent);
     const offQueueChanged = api.onAgentQueueChanged((event) =>
@@ -793,9 +822,14 @@ export function useAppShellRuntime() {
           case "navToChat":
             useAppStore.getState().setPage("chat");
             break;
-          case "navToCode":
-            useAppStore.getState().setPage("code");
+          case "navToFiles": {
+            const store = useAppStore.getState();
+            // Files lives beside Chat; requestFileInWorkPanel queues the tab
+            // when no session is active.
+            if (store.page !== "chat") store.setPage("chat");
+            store.requestFileInWorkPanel(fileManagerPluginTab());
             break;
+          }
           case "navToBuild":
             useAppStore.getState().setPage("build");
             break;

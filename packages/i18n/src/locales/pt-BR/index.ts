@@ -768,7 +768,7 @@ export const ptBR = {
       voiceToggle: "Alternar entrada de voz",
       voiceCancel: "Cancelar entrada de voz",
       navToChat: "Ir para Chat",
-      navToCode: "Ir para o editor de código",
+      navToFiles: "Abrir arquivos",
       navToBuild: "Ir para Build",
       navToBench: "Ir para Bench",
       toggleFollowLog: "Alternar acompanhamento de log",
@@ -1711,7 +1711,13 @@ export const ptBR = {
       subagent: "Subagente",
     },
     pluginView: {
-      failed: "Não foi possível carregar esta visualização. Recarregue o plugin e tente novamente."
+      failed: "Não foi possível carregar esta visualização. Recarregue o plugin e tente novamente.",
+      viewReadOnly: "Ver somente leitura",
+    },
+    noSession: {
+      title: "Nenhuma sessão ativa",
+      body: "Inicie uma nova tarefa ou selecione uma sessão para abrir o editor de arquivos.",
+      action: "Nova tarefa",
     },
     empty: {
     },

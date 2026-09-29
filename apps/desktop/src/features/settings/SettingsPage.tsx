@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import type {
-  AppSettings,
-  GlobalPermissionMode,
-  PluginScenicThemesDestinationMeta,
-  ShortcutPlatform,
+import {
+  migrateKeybindingOverrides,
+  type AppSettings,
+  type GlobalPermissionMode,
+  type PluginScenicThemesDestinationMeta,
+  type ShortcutPlatform,
 } from "@pi-desktop/shared";
 import { useAppStore } from "../../stores/app-store";
 import { api } from "../../lib/api";
@@ -141,7 +142,9 @@ export function SettingsPage() {
     setSettingsRecoveryFailed(false);
     try {
       const recovered = await api.getSettings();
-      useAppStore.setState({ settings: recovered });
+      useAppStore.setState({
+        settings: { ...recovered, keybindings: migrateKeybindingOverrides(recovered.keybindings) },
+      });
     } catch {
       setSettingsRecoveryFailed(true);
     } finally {

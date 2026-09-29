@@ -790,7 +790,7 @@ sklm: {
       voiceToggle: "Toggle voice input",
       voiceCancel: "Cancel voice input",
       navToChat: "Go to Chat",
-      navToCode: "Go to Code editor",
+      navToFiles: "Open Files",
       navToBuild: "Go to Build",
       navToBench: "Go to Bench",
       toggleFollowLog: "Toggle log follow-tail",
@@ -1780,6 +1780,12 @@ sklm: {
     },
     pluginView: {
       failed: "This view could not be loaded. Reload the plugin and try again.",
+      viewReadOnly: "View read-only",
+    },
+    noSession: {
+      title: "No session active",
+      body: "Start a new task or select a session to open the file editor.",
+      action: "New task",
     },
     empty: {
     },

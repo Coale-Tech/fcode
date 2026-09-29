@@ -4,6 +4,7 @@
  * `list` delegates to `bench/discovery.ts` (owner: agent P, lane
  * feat/omp-bridge, DX10). All other channels drive `bench/supervisor.ts`.
  */
+import { resolve } from "node:path";
 import { ErrorCodes, IPC } from "@pi-desktop/shared";
 import { discoverBenches } from "../bench/discovery";
 import { benchSupervisor, shouldAutoApproveVerb } from "../bench/supervisor";
@@ -110,6 +111,19 @@ export function registerBenchIpc({ registrar, mainWindow }: BenchIpcDependencies
           new Error(`bench verb "${verb}" is not on the allow-list; use benchStart/benchStop for lifecycle`),
           { errorCode: ErrorCodes.FORBIDDEN },
         );
+      }
+
+      if (verb === "migrate") {
+        // `bench migrate` without a valid --site touches every site (or fails
+        // opaquely); demand one that this bench actually has.
+        const { benches } = await discoverBenches();
+        const bench = benches.find((b) => resolve(b.path) === resolve(benchPath));
+        if (!site || !bench?.sites.some((s) => s.name === site)) {
+          throw Object.assign(
+            new Error(`migrate requires a site that exists in bench "${benchPath}"${site ? ` (got "${site}")` : ""}`),
+            { errorCode: ErrorCodes.INVALID_ARGUMENT },
+          );
+        }
       }
 
       const result = await benchSupervisor.runOneShot({

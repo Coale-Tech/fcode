@@ -940,7 +940,7 @@ sklm: {
       voiceToggle: "Sesli girişi aç/kapat",
       voiceCancel: "Sesli girişi iptal et",
       navToChat: "Sohbete git",
-      navToCode: "Kod düzenleyiciye git",
+      navToFiles: "Dosyaları aç",
       navToBuild: "Build'e git",
       navToBench: "Bench'e git",
       toggleFollowLog: "Günlük takibini aç/kapat",
@@ -1767,6 +1767,12 @@ sklm: {
     },
     pluginView: {
       failed: "Bu görünüm yüklenemedi. Eklentiyi yeniden yükleyip deneyin.",
+      viewReadOnly: "Salt okunur görüntüle",
+    },
+    noSession: {
+      title: "Etkin oturum yok",
+      body: "Dosya düzenleyiciyi açmak için yeni bir görev başlatın veya bir oturum seçin.",
+      action: "Yeni görev",
     },
     empty: {
     },

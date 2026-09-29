@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../lib/api";
 import { pluginViewIcon } from "../../lib/plugin-view-icons";
+import { FILE_MANAGER_PLUGIN_TAB, fileWorkPanelTab } from "../../lib/work-panel-tabs";
+import { useAppStore } from "../../stores/app-store";
 import { IconPlug } from "../icons";
 import { WorkTabEmpty } from "./WorkTabEmpty";
 
@@ -106,7 +108,23 @@ export function PluginViewTab({
           icon={pluginViewIcon(icon) ?? IconPlug}
           title={title}
           body={t("panel.pluginView.failed")}
-        />
+        >
+          {(location ||
+            (pluginId === FILE_MANAGER_PLUGIN_TAB.pluginId &&
+              viewId === FILE_MANAGER_PLUGIN_TAB.viewId)) && (
+            <button
+              type="button"
+              className="work-tab-empty-action"
+              onClick={() =>
+                // No location: an empty-resource file tab is the host's
+                // read-only browser at the workspace root.
+                useAppStore.getState().openWorkPanelTab(fileWorkPanelTab(location ?? ""))
+              }
+            >
+              {t("panel.pluginView.viewReadOnly")}
+            </button>
+          )}
+        </WorkTabEmpty>
       </div>
     );
   }

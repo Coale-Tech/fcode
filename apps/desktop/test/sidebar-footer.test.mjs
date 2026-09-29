@@ -66,7 +66,7 @@ test("the nav rail exposes settings, plugins, scheduled tasks and notifications"
       railSource.indexOf("</", at),
     );
   };
-  for (const nav of ["chat", "code", "bench", "settings", "plugins", "scheduled"]) {
+  for (const nav of ["chat", "bench", "settings", "plugins", "scheduled"]) {
     assert.match(footerAttributes(`data-nav="${nav}"`), new RegExp(`aria-pressed=\\{page === "${nav}"\\}`));
   }
   assert.match(footerAttributes('data-nav="build-canvas"'), /aria-pressed=\{page === "build"\}/);
