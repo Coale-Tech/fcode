@@ -17,7 +17,7 @@
 
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { cpSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -32,7 +32,7 @@ const PINNED_OMP_COMMIT = "ba344f5e69f28535e7e9a2cf09e5af3643861b73";
 // rebuild of this same pinned commit is expected to need a fresh hash here,
 // not to reproduce this one — re-run this script and copy the printed
 // SHA256 whenever this constant needs updating.
-const OMP_BINARY_SHA256 = "24bc28b65cb897248738781aef207cbbbd2e18b57c94bc15b09b1d6da52705c7";
+const OMP_BINARY_SHA256 = "bef25fb7100093d25d680d3daf1499298d780a8526d6094496e474073603c3fc";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 // scripts/ lives at repo root; oh-my-pi is a sibling checkout
@@ -73,6 +73,41 @@ if (!existsSync(join(ompSource, "node_modules"))) {
       `  Run: (cd ${ompSource} && bun install)`,
   );
   process.exit(1);
+}
+
+// ── Apply local patches ───────────────────────────────────────────────────────
+// Patches in scripts/omp-patches/ are applied in filename order. Each patch is
+// checked with `git apply --reverse --check` first — if it's already applied
+// (idempotent re-run), it's skipped silently; if it fails both ways, the
+// build aborts loudly.
+const patchDir = resolve(scriptDir, "omp-patches");
+if (existsSync(patchDir)) {
+  const patches = readdirSync(patchDir)
+    .filter((f) => f.endsWith(".patch"))
+    .sort();
+  for (const patchFile of patches) {
+    const patchPath = join(patchDir, patchFile);
+    const alreadyApplied = spawnSync("git", ["apply", "--reverse", "--check", patchPath], {
+      cwd: ompSource,
+      stdio: "pipe",
+    });
+    if (alreadyApplied.status === 0) {
+      console.log(`build-omp: patch already applied, skipping: ${patchFile}`);
+      continue;
+    }
+    const result = spawnSync("git", ["apply", patchPath], {
+      cwd: ompSource,
+      stdio: "inherit",
+    });
+    if (result.status !== 0) {
+      console.error(
+        `build-omp: patch failed to apply: ${patchFile}\n` +
+          "  Resolve conflicts and re-run, or update the patch against the current pinned commit.",
+      );
+      process.exit(1);
+    }
+    console.log(`build-omp: applied patch: ${patchFile}`);
+  }
 }
 
 // ── Build + stage per target ─────────────────────────────────────────────────

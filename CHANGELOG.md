@@ -14,6 +14,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and per-file Keep/Revert; Frappe DocType browser (app→module→DocType grouping, migrate badge for
   git-dirty doctype JSONs, Run migrate button wired to bench run); nav rail adds text labels under Chat /
   Code / Build / Bench icons and removes the stuck tooltip on labelled items
+- Inject Fcode provider secrets into omp via `--models-config`: each enabled provider with a secret becomes a `fcode-<id>` provider in a generated `fcode-providers.yml`; secrets travel as `FCODE_PROVIDER_<ID>_KEY` env vars (never written to disk); sidecar restarts when providers are mutated
 - Subscribe to omp subagent progress on session open; map `subagent_lifecycle`/`subagent_progress` frames to `agent.event` rows with `parentToolCallId`+`agentName` for SubagentTopology UI
 - Public Frappe skill set: nine `fcode-*` skills under `apps/desktop/resources/fcode-skills/` covering routing, DocType development, API development, app hooks, bench operations, frappe-ui, Fcode host tools, Studio, and Builder
 - Pass `FCODE_DATA_DIR` and `FCODE_RESOURCES_PATH` to the omp bridge sidecar so the packaged app uses the bundled `Resources/bin/omp` binary and writes its overlay to the app data directory instead of the `~/.fcode-dev` default

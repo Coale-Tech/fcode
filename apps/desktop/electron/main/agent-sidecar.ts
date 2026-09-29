@@ -49,7 +49,7 @@ function fallbackStderrLogger(text: string): void {
  * the sidecar bundle this build ships.
  */
 export class AgentSidecar extends RuntimeAgentSidecar {
-  constructor(onStderr?: StderrHandler) {
+  constructor(onStderr?: StderrHandler, providerEnv?: Record<string, string>) {
     super({
       launch: {
         command: process.execPath,
@@ -61,6 +61,7 @@ export class AgentSidecar extends RuntimeAgentSidecar {
           ELECTRON_RUN_AS_NODE: "1",
           FCODE_DATA_DIR: desktopDataDir(),
           ...(process.resourcesPath ? { FCODE_RESOURCES_PATH: process.resourcesPath } : {}),
+          ...providerEnv,
         },
       },
       onStderr: onStderr ?? fallbackStderrLogger,

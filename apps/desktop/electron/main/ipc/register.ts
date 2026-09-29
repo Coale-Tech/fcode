@@ -288,6 +288,7 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     listRuntimeProviders,
     enrichProviderList,
     bindingForModel,
+    onProviderMutation: dependencies.onProviderMutation,
   });
   const loadComposerTemplatesCached = createComposerTemplateLoader(logger);
   const composerCommandService = registerComposerIpc({

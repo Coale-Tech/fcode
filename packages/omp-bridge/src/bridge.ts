@@ -1031,6 +1031,7 @@ export class OmpBridge {
     resourcesPath: string;
     ompBinary: string;
     overlayPath: string;
+    modelsConfigPath?: string;
     cwd: string;
     env: NodeJS.ProcessEnv;
   }): Promise<void> {
@@ -1038,9 +1039,12 @@ export class OmpBridge {
     this.state.cwd = opts.cwd;
     this.sessionStore = new SessionStore(opts.dataDir);
 
+    const ompArgs = ["--mode", "rpc", "--approval-mode", "always-ask", "--config", opts.overlayPath];
+    if (opts.modelsConfigPath) ompArgs.push("--models-config", opts.modelsConfigPath);
+
     const child = spawn(
       opts.ompBinary,
-      ["--mode", "rpc", "--approval-mode", "always-ask", "--config", opts.overlayPath],
+      ompArgs,
       {
         cwd: opts.cwd,
         env: opts.env,
@@ -1148,6 +1152,7 @@ async function main(): Promise<void> {
     resourcesPath,
     ompBinary,
     overlayPath,
+    modelsConfigPath: process.env.FCODE_MODELS_CONFIG,
     cwd,
     env: {
       ...process.env,
