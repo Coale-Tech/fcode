@@ -364,7 +364,7 @@ test("inventory counts the signing payload of a release directory", async (t) =>
   );
   assert.match(
     result.stdout,
-    /^resources: agent-runtime=<missing>, plugins=<missing>, skills=<missing>, models\.dev=<missing>, bin=2\/\d+$/m,
+    /^resources: plugins=<missing>, skills=<missing>, models\.dev=<missing>, bin=2\/\d+$/m,
   );
   assert.match(result.stdout, /^top-level-cost: Contents\/MacOS=\d+, Contents\/Resources=\d+$/m);
   assert.match(

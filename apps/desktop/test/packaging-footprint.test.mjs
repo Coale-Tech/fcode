@@ -191,18 +191,13 @@ test("packaging keeps only shipped locales and excludes non-runtime artifacts", 
     ),
     "third-party license and notice files must remain packageable",
   );
-  // The agent-runtime and omp-bridge dist-bundle mappings must remain
-  // directory copies: each bundle emits dist-bundle/package.json with
-  // "type":"module" so the ESM entry loads in packaged installs (issue
-  // #507). Contract tests live in agent-runtime-bundle-package.test.mjs.
+  // The omp-bridge dist-bundle mapping must remain a directory copy: the bundle
+  // emits dist-bundle/package.json with "type":"module" so the ESM entry loads
+  // in packaged installs (issue #507).
   assert.deepEqual(packageJson.build.extraResources, [
     {
       from: "build/icon.png",
       to: "tray-icon.png",
-    },
-    {
-      from: "../../packages/agent-runtime/dist-bundle",
-      to: "agent-runtime",
     },
     {
       from: "../../packages/omp-bridge/dist-bundle",
