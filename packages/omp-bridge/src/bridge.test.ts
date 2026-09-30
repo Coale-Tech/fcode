@@ -102,6 +102,26 @@ describe("makeOmpOverlay (DX3 / DX6 / DX7 / DX10)", () => {
   });
 });
 
+describe("makeOmpOverlay memory section", () => {
+  const base = { dataDir: "/d", resourcesPath: "/r", screenshotsDir: "/s" };
+  it("omits memory when unset", () => {
+    expect(makeOmpOverlay(base)).not.toContain("memory:");
+  });
+  it("emits session llmMode and hindsight target, never a token", () => {
+    const o = makeOmpOverlay({
+      ...base,
+      memory: { backend: "hindsight", hindsightUrl: "http://h:8888", hindsightBank: "fcode" },
+    });
+    expect(o).toContain("backend: hindsight");
+    expect(o).toContain("llmMode: session");
+    expect(o).toContain('apiUrl: "http://h:8888"');
+    expect(o.toLowerCase()).not.toContain("token");
+  });
+  it("mnemopi emits no hindsight block", () => {
+    expect(makeOmpOverlay({ ...base, memory: { backend: "mnemopi" } })).not.toContain("hindsight:");
+  });
+});
+
 describe("writeOmpOverlay (DX3 — overlay write failure is fatal)", () => {
   it("writes the overlay file and returns the path", () => {
     const overlayPath = writeOmpOverlay({

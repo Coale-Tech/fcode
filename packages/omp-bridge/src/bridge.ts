@@ -77,6 +77,8 @@ interface OverlayOptions {
   dataDir: string;
   resourcesPath: string;
   screenshotsDir: string;
+  /** Memory backend selection; the Hindsight token travels via HINDSIGHT_API_TOKEN env, never here. */
+  memory?: { backend: "mnemopi" | "hindsight" | "off"; hindsightUrl?: string; hindsightBank?: string };
 }
 
 /**
@@ -147,6 +149,22 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
     "  headless: true",
     `  screenshotDir: "${screenshotsDir}"`,
     "  relay: false",
+    ...(opts.memory
+      ? [
+          "",
+          "memory:",
+          `  backend: ${opts.memory.backend}`,
+          "mnemopi:",
+          "  llmMode: session",
+          ...(opts.memory.backend === "hindsight" && opts.memory.hindsightUrl
+            ? [
+                "hindsight:",
+                `  apiUrl: ${JSON.stringify(opts.memory.hindsightUrl)}`,
+                ...(opts.memory.hindsightBank ? [`  bankId: ${JSON.stringify(opts.memory.hindsightBank)}`] : []),
+              ]
+            : []),
+        ]
+      : []),
   ].join("\n");
 }
 
@@ -570,6 +588,9 @@ export class OmpBridge {
         break;
       case "omp.commands.list":
         this.ompCallAndForward(id, { type: "get_available_commands" });
+        break;
+      case "omp.memory.status":
+        this.ompCallAndForward(id, { type: "get_memory_status" });
         break;
       case "omp.state":
         this.ompCallAndForward(id, { type: "get_state", ...p });
@@ -1100,7 +1121,20 @@ async function main(): Promise<void> {
   try {
     const screenshotsDir = join(dataDir, "screenshots");
     mkdirSync(screenshotsDir, { recursive: true });
-    overlayPath = writeOmpOverlay({ dataDir, resourcesPath, screenshotsDir });
+    const backend = process.env.FCODE_MEMORY_BACKEND;
+    overlayPath = writeOmpOverlay({
+      dataDir,
+      resourcesPath,
+      screenshotsDir,
+      memory:
+        backend === "mnemopi" || backend === "hindsight" || backend === "off"
+          ? {
+              backend,
+              hindsightUrl: process.env.FCODE_HINDSIGHT_URL,
+              hindsightBank: process.env.FCODE_HINDSIGHT_BANK,
+            }
+          : undefined,
+    });
   } catch (e) {
     // DX3: overlay write failure is fatal — settle with a system message.
     process.stdout.write(
