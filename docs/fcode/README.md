@@ -238,6 +238,43 @@ Restart Fcode after changing the omp config. The model menu is populated from `o
 
 ---
 
+## Memory
+
+Fcode exposes omp's two memory backends through the **Settings → Memory** tab (Agent group).
+
+### Backends
+
+| Backend | Description | Default |
+| --- | --- | --- |
+| `mnemopi` | Local SQLite + vector store, runs inside the omp child process. No external service required. | ✓ |
+| `hindsight` | Remote HTTP service (connect-only; no managed local server in this phase). Requires a URL, optional bank name, and an auth token. | — |
+
+Changing the backend restarts the active omp session (same path as other overlay changes).
+
+### Config and token handling
+
+Backend selection and Hindsight connection details (`url`, `bank`) are stored in the host kv namespace `memory` and written into `omp-overlay.yml` by `packages/omp-bridge/src/bridge.ts` before omp starts. The Hindsight auth token is **never written to the overlay file** — it is passed to the omp child as the `HINDSIGHT_TOKEN` environment variable.
+
+`mnemopi.llmMode` is always set to `session` in the Fcode overlay so memory extraction uses the session's active model instead of a separate role-chain model.
+
+### Health card
+
+The Memory settings page shows a live status card polled every **15 s** (60 s while the page is not open). Possible states:
+
+| State | Meaning |
+| --- | --- |
+| `off` | Backend is `none` or not configured |
+| `starting` | First poll in progress |
+| `ok` | Active, writable, searchable, latency ≤ 2 s |
+| `degraded` | Active but not writable/searchable, or latency > 2 s |
+| `error` | Error returned, or 3 consecutive poll failures |
+
+A sidebar badge reflects the state colour outside Settings. The Hindsight probe uses `GET /v1/default/banks/{bank}/memories/list?limit=1` with a 2 s timeout; a 404 means reachable but bank missing (`degraded`).
+
+See [ADR 0308](docs/adr/0308-memory-backends.md) for the full design rationale.
+
+---
+
 ## Compatibility table
 
 | Fcode release | Pinned omp commit | Bridge protocol | Frappe v15 | Frappe v16 | Frappe v17 |
