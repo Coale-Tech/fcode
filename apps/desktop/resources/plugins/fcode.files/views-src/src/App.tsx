@@ -43,8 +43,11 @@ function ancestorPaths(relPath: string): string[] {
 const SEARCH_PAGE = 60;
 
 /** 静默丢弃磁盘上的脏草稿（保存成功 / 用户选择丢弃）。root = 缓冲读出时的 root。 */
-function discardDraft(rel: string, root?: string): void {
-  void invoke(channels.draftDiscard, { rel, root }).catch(() => {});
+function discardDraft(rel: string, root?: string): Promise<void> {
+  return invoke(channels.draftDiscard, { rel, root }).then(
+    () => {},
+    () => {},
+  );
 }
 
 export default function App() {
@@ -477,9 +480,9 @@ export default function App() {
   }, []);
 
   /** 丢草稿前先撤掉待落的那次，免得它把刚删的草稿又写回来。 */
-  const dropDraft = useCallback((file: OpenFile | null) => {
+  const dropDraft = useCallback((file: OpenFile | null): Promise<void> => {
     window.clearTimeout(draftTimerRef.current);
-    if (file) discardDraft(file.path, file.root);
+    return file ? discardDraft(file.path, file.root) : Promise.resolve();
   }, []);
 
   /** 重命名 / 移动之后，打开的文件（或其所在目录）的旧路径草稿作废。 */
@@ -1340,10 +1343,23 @@ export default function App() {
               label: t("discardAndSwitch"),
               variant: "danger",
               onPick: () => {
+                const file = openFile;
+                const deleted = conflict.deleted === true;
                 setConflict(null);
                 setDirty(false);
-                dropDraft(openFile);
-                if (openFile) void openEntry({ path: openFile.path } as FileEntry);
+                if (!file) return;
+                // 必须等丢弃落盘再重读：否则 openEntry 的草稿恢复会把刚丢的草稿又读回来。
+                void dropDraft(file).then(() => {
+                  if (!deleted) {
+                    void openEntry({ path: file.path } as FileEntry);
+                    return;
+                  }
+                  // 文件已不在磁盘上：没有可重读的版本，直接关掉缓冲。
+                  openTokenRef.current += 1;
+                  setOpenFile(null);
+                  setSelected(null);
+                  void loadDirectory(parentOf(file.path), true);
+                });
               },
             },
             {
