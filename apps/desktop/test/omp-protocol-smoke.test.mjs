@@ -7,9 +7,9 @@
  * in any CI workflow.
  *
  * What this test asserts:
- *   1. The bundled omp binary's SHA256 matches the value recorded in
- *      scripts/build-omp.mjs (OMP_BINARY_SHA256 constant) — skipped when the
- *      binary or the constant is absent.
+ *   1. The bundled omp binary was built from the current omp/ source
+ *      (omp.build.json sourceHash vs `git ls-files -s omp`) — skipped when
+ *      the binary or omp.build.json is absent.
  *   2. omp --mode rpc offers protocol version 2 in its `ready` frame, and
  *      replies with exactly `{protocolVersion:2}` to a `negotiate_protocol`
  *      request — skipped when the binary is absent.
@@ -19,12 +19,12 @@
  *      needing the real binary.
  *
  * When the omp binary is not present (development environment before building):
- * run `node scripts/build-omp.mjs` to build it from the pinned oh-my-pi commit.
+ * run `node scripts/build-omp.mjs` to build it from the in-repo omp/ source.
  */
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { dirname, join, resolve } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -32,16 +32,7 @@ import { fileURLToPath } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
 
-// ---------------------------------------------------------------------------
-// SHA pinning — read OMP_BINARY_SHA256 from scripts/build-omp.mjs
-// ---------------------------------------------------------------------------
-let OMP_BINARY_SHA256 = null;
-const buildOmpScript = join(repoRoot, "scripts", "build-omp.mjs");
-if (existsSync(buildOmpScript)) {
-  const src = readFileSync(buildOmpScript, "utf8");
-  const m = src.match(/OMP_BINARY_SHA256\s*=\s*["']([0-9a-f]{64})["']/);
-  if (m) OMP_BINARY_SHA256 = m[1];
-}
+
 
 // ---------------------------------------------------------------------------
 // Binary resolution — mirrors agent-sidecar.ts resolveSidecarEntry()
@@ -63,22 +54,20 @@ const binaryMissingMsg =
   "build it with: node scripts/build-omp.mjs";
 
 // ---------------------------------------------------------------------------
-// Test 1: SHA256 of bundled binary matches pinned SHA
+// Test 1: bundled binary was built from the current omp/ source
+// (hash of `git ls-files -s omp`; stage edits with `git add omp` to register)
 // ---------------------------------------------------------------------------
-test("omp binary SHA256 matches pinned SHA recorded in build-omp.mjs", {
-  skip:
-    !ompBinary
-      ? binaryMissingMsg
-      : !OMP_BINARY_SHA256
-        ? "OMP_BINARY_SHA256 not found in scripts/build-omp.mjs — run: node scripts/build-omp.mjs"
-        : false,
+const buildJson = ompBinary ? join(dirname(ompBinary), "omp.build.json") : null;
+test("omp binary is not stale vs omp/ source", {
+  skip: !buildJson || !existsSync(buildJson) ? "no omp.build.json next to binary" : false,
 }, () => {
-  const data = readFileSync(ompBinary);
-  const actual = createHash("sha256").update(data).digest("hex");
+  const want = createHash("sha256")
+    .update(execFileSync("git", ["ls-files", "-s", "omp"], { cwd: repoRoot }))
+    .digest("hex");
   assert.equal(
-    actual,
-    OMP_BINARY_SHA256,
-    `omp binary SHA256 mismatch — the binary does not match the commit pinned in scripts/build-omp.mjs. Rebuild with: node scripts/build-omp.mjs`,
+    JSON.parse(readFileSync(buildJson, "utf8")).sourceHash,
+    want,
+    "omp/ changed since the last build (git add omp if edited) — rebuild with: node scripts/build-omp.mjs",
   );
 });
 
@@ -91,7 +80,7 @@ test(
   "omp --mode rpc protocol smoke: handshake negotiates exactly version 2",
   {
     skip: ompBinary ? false : binaryMissingMsg,
-    timeout: 15_000,
+    timeout: 120_000, // omp loads user extensions before answering; 25-50s on a busy dev machine
   },
   () =>
     new Promise((done, fail) => {
@@ -320,7 +309,7 @@ test("E17: docs/fcode/README.md has no dead relative links", () => {
   const relLinks = [...withoutCode.matchAll(/\[.*?\]\(([^)#]+)/g)]
     .map((m) => m[1])
     .filter((l) => !l.startsWith("http") && !l.startsWith("mailto:"));
-  const dead = relLinks.filter((l) => !existsSync(join(repoRoot, l)));
+  const dead = relLinks.filter((l) => !existsSync(join(dirname(mdPath), l)));
   assert.deepEqual(
     dead,
     [],
