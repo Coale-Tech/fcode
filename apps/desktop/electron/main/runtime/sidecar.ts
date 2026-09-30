@@ -1,4 +1,5 @@
 import { writeFileSync } from "node:fs";
+import { MEMORY_TOKEN_SECRET_REF, memoryEnv, readMemoryConfig } from "../memory-config";
 import { join } from "node:path";
 import { IPC, type AgentEventEnvelope, type UiMessage } from "@pi-desktop/shared";
 import {
@@ -397,6 +398,20 @@ async function buildFcodeProvidersConfig(
     } catch {
       // Non-fatal — omp starts without Fcode provider injection.
     }
+  }
+  // Memory backend selection + Hindsight token (env only; never in the overlay file).
+  try {
+    const memory = readMemoryConfig(dataDir);
+    let token: string | null = null;
+    if (memory.backend === "hindsight" && runtimeState.host) {
+      const res = await runtimeState.host.call<{ value: string | null }>("secrets.getForRuntime", {
+        secretRef: MEMORY_TOKEN_SECRET_REF,
+      });
+      token = res?.value ?? null;
+    }
+    providerEnv = { ...providerEnv, ...memoryEnv(memory, token) };
+  } catch {
+    // Non-fatal — omp falls back to its own memory defaults.
   }
   const s = new AgentSidecar((text) => logger.child("agent", text), providerEnv);
   wireSidecar(s);
