@@ -21,6 +21,8 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 ### Fixes
 
 - `fcode_bench_execute` and `fcode_bench_execute_read` no longer fail with `NameError` when `kwargs` contain booleans or null: `bench execute --kwargs` eval()s its value, so kwargs are now sent as a Python literal instead of JSON.
+- `fcode_bench_execute`, `fcode_bench_execute_read` and `fcode_bench_run` returned only a keyword-guessed hint on failure (a `DoesNotExistError` traceback was reported as "Site does not exist") and dropped the real output. They now return the output; for `bench execute` that is the original error rather than the follow-up `NameError` frappe appends.
+- `fcode_bench_execute_read` now auto-approves `frappe.client.get_value` and `frappe.client.get_count`.
 
 ## [0.16.0] — 2026-09-29
 

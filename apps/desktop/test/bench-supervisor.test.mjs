@@ -17,6 +17,7 @@ const {
   BENCH_FAILURE_CODES,
   WATCHER_MAX_RESTARTS,
   shouldAutoApproveVerb,
+  benchFailureText,
 } = await import("../electron/main/bench/supervisor.ts");
 
 // ── DX4: Typed bench doctor with classified failures ──────────────────────────
@@ -300,4 +301,34 @@ test("BenchSupervisor.start: the same bench again while it is running is an idem
   const second = await sup.start("/tmp/bench-a");
   assert.equal(second.conflict, false, "restarting the same bench is not a conflict");
   assert.equal(children.length, 1, "must not spawn a duplicate process for the same bench");
+});
+
+// ── Failure text shown to the agent ───────────────────────────────────────────
+// Shape captured from a real `bench execute app.mod.fn` whose fn raised: frappe
+// re-evals the method name, so the original error is followed by a NameError.
+const executeFailure = [
+  "Traceback (most recent call last):",
+  '  File ".../frappe/commands/utils.py", line 297, in execute',
+  "    ret = frappe.get_attr(method)(*fn_args, **fn_kwargs)",
+  '  File ".../env/lib/python3.14/site-packages/x.py", line 1, in return_book',
+  "frappe.exceptions.DoesNotExistError: Library Loan LN-00001 not found",
+  "During handling of the above exception, another exception occurred:",
+  "Traceback (most recent call last):",
+  "NameError: name 'library_management' is not defined",
+].join("\n");
+
+test("benchFailureText keeps the original error, not the classifier's keyword guess", () => {
+  const output = executeFailure.replace("During handling", "\nDuring handling");
+  const failure = classifyBenchFailure(null, output, "execute");
+  assert.equal(failure.code, BENCH_FAILURE_CODES.MISSING_SITE, "the guess is wrong: 'site-packages' + 'not found'");
+  const text = benchFailureText({ output, failure });
+  assert.match(text, /DoesNotExistError: Library Loan LN-00001 not found/);
+  assert.match(text, /NameError: name 'library_management' is not defined$/);
+  assert.doesNotMatch(text, /Site does not exist/);
+});
+
+test("benchFailureText passes plain output through and falls back to the hint when silent", () => {
+  assert.equal(benchFailureText({ output: "boom\n" }), "boom");
+  const failure = classifyBenchFailure("ENOENT", "", "bench");
+  assert.match(benchFailureText({ output: "", failure }), /bench command not found[\s\S]*Fix:/);
 });

@@ -24,7 +24,7 @@ import type { PluginRuntime } from "../plugin-runtime";
 import type { UserMcpRuntime } from "../user-mcp";
 import type { RuntimeState } from "./context";
 import type { FinishTurn } from "./plans";
-import { benchSupervisor, ALLOWED_BENCH_VERBS } from "../bench/supervisor";
+import { benchSupervisor, ALLOWED_BENCH_VERBS, benchFailureText } from "../bench/supervisor";
 import { isReadOnlyBenchMethod } from "../bench/approval";
 import { pythonLiteral } from "../bench/python-literal";
 import { shell } from "electron";
@@ -730,9 +730,7 @@ async function buildFcodeProvidersConfig(
       return {
         ok: false,
         isError: true,
-        content: result.failure
-          ? `${result.failure.problem}\n\nFix: ${result.failure.fix}`
-          : result.output,
+        content: benchFailureText(result),
       };
     }
     return { ok: true, content: result.output };
@@ -770,9 +768,7 @@ async function buildFcodeProvidersConfig(
       return {
         ok: false,
         isError: true,
-        content: result.failure
-          ? `${result.failure.problem}\n\nFix: ${result.failure.fix}`
-          : result.output,
+        content: benchFailureText(result),
       };
     }
     return { ok: true, content: result.output };
@@ -810,9 +806,7 @@ async function buildFcodeProvidersConfig(
       return {
         ok: false,
         isError: true,
-        content: result.failure
-          ? `${result.failure.problem}\n\nFix: ${result.failure.fix}`
-          : result.output,
+        content: benchFailureText(result),
       };
     }
     return { ok: true, content: result.output };

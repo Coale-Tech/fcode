@@ -171,6 +171,25 @@ export function classifyBenchFailure(
   };
 }
 
+/**
+ * What an agent sees when a one-shot bench command fails: the real output.
+ * The classified hint is a keyword guess ("site" + "not found" matches any
+ * traceback through `site-packages`), so it is used only when nothing was printed.
+ *
+ * `bench execute` re-evals the method name when the call raises, which appends a
+ * second, misleading traceback (`NameError: name 'app' is not defined`). Keep the
+ * original error and only the last line of the rest.
+ */
+export function benchFailureText(result: { output: string; failure?: BenchFailure }): string {
+  const output = result.output.trim();
+  if (!output) {
+    return result.failure ? `${result.failure.problem}\n\nFix: ${result.failure.fix}` : "Bench command failed with no output";
+  }
+  const [original, ...rest] = output.split("\nDuring handling of the above exception, another exception occurred:");
+  const excerpt = original.split("\n").slice(-40).join("\n");
+  return rest.length ? `${excerpt}\n…\n${output.split("\n").slice(-1)[0]}` : excerpt;
+}
+
 // ── Log ring buffer ───────────────────────────────────────────────────────────
 
 export type LogLine = {
