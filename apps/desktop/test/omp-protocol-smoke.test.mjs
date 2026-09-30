@@ -309,7 +309,7 @@ test("E17: docs/fcode/README.md has no dead relative links", () => {
   const relLinks = [...withoutCode.matchAll(/\[.*?\]\(([^)#]+)/g)]
     .map((m) => m[1])
     .filter((l) => !l.startsWith("http") && !l.startsWith("mailto:"));
-  const dead = relLinks.filter((l) => !existsSync(join(repoRoot, l)));
+  const dead = relLinks.filter((l) => !existsSync(join(dirname(mdPath), l)));
   assert.deepEqual(
     dead,
     [],
