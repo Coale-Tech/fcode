@@ -8,6 +8,7 @@ import type {
   AskToolResolution,
   ContextCompactionMark,
   Mode,
+  OmpMemoryStatusResult,
   ModelInfo,
   OnboardingState,
   PermissionMode,
@@ -183,6 +184,8 @@ export type AppState = {
   settingsAnchor: string | null;
   /** Bumped by every setSettingsTab so a same-tab navigation is observable. */
   settingsTabNonce: number;
+  /** Latest polled omp memory status; null when agent is not running or not yet polled. */
+  memoryStatus: OmpMemoryStatusResult | null;
   navStack: Array<{ page: AppState["page"]; sessionId?: string }>;
   navIndex: number;
   error?: string | null;
@@ -195,6 +198,7 @@ export type AppState = {
    * Managed as local state in ChatSurface via IPC.event.sidecarFatal.
    */
   sidecarFatal?: { code: string; paths: string[]; detail: string } | null;
+  refreshMemoryStatus: () => Promise<void>;
   bootstrap: () => Promise<void>;
   refreshSessions: (options?: RefreshSessionsOptions) => Promise<void>;
   prefetchSession: (id: string) => Promise<void>;

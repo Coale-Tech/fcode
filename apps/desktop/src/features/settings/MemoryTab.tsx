@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { MemoryConfig, MemoryConfigView, OmpMemoryStatusResult } from "@pi-desktop/shared";
 import { api } from "../../lib/api";
+import { useAppStore } from "../../stores/app-store";
 import { Input } from "../../components/ui";
 import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect";
 import { SettingsCard, SettingsRow } from "./primitives";
@@ -16,27 +17,10 @@ export function memoryHealth(s: OmpMemoryStatusResult | null): MemoryHealth {
   return s.active ? "ok" : "degraded";
 }
 
-/** Poll omp for memory status; a rejected call means the agent is not running. */
-export function useMemoryStatus(intervalMs: number) {
-  const [status, setStatus] = useState<OmpMemoryStatusResult | null>(null);
-  const refresh = useCallback(async () => {
-    try {
-      setStatus(await api.ompMemoryStatus());
-    } catch {
-      setStatus(null);
-    }
-  }, []);
-  useEffect(() => {
-    void refresh();
-    const timer = setInterval(() => void refresh(), intervalMs);
-    return () => clearInterval(timer);
-  }, [refresh, intervalMs]);
-  return { status, refresh };
-}
-
 export function MemoryTab() {
   const { t } = useTranslation();
-  const { status, refresh } = useMemoryStatus(15_000);
+  const status = useAppStore((s) => s.memoryStatus);
+  const refresh = useAppStore((s) => s.refreshMemoryStatus);
   const [config, setConfig] = useState<MemoryConfigView | null>(null);
   const [draft, setDraft] = useState<MemoryConfig>({ backend: "mnemopi" });
   const [token, setToken] = useState("");

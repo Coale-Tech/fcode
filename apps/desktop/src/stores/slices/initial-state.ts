@@ -78,6 +78,7 @@ export function createInitialState(): AppStateData {
     settingsTab: "general",
     settingsAnchor: null,
     settingsTabNonce: 0,
+    memoryStatus: null,
     navStack: [{ page: "bench" }],
     navIndex: 0,
     toasts: [],
