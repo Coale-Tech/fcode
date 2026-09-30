@@ -7,7 +7,7 @@ export type Locale = "en" | "zh";
 
 const COPY = {
   en: {
-    title: "File Manager",
+    title: "Files",
     projectFiles: "Project files",
     noWorkspaceTitle: "No project open",
     noWorkspaceCopy: "Choose a project from the sidebar, then come back here to edit its files.",
@@ -150,7 +150,7 @@ const COPY = {
     errNotFound: "That path no longer exists.",
     errRootChanged: "The project folder changed; nothing was saved to the other project.",
     errUnsupported: "This host does not support that operation.",
-    errNoBridge: "This page must be opened inside PI-Desktop.",
+    errNoBridge: "This page must be opened inside Fcode.",
   },
   zh: {
     title: "文件管理器",
@@ -293,7 +293,7 @@ const COPY = {
     errNotFound: "该路径已不存在。",
     errRootChanged: "项目文件夹已切换，未保存到其他项目。",
     errUnsupported: "当前宿主不支持该操作。",
-    errNoBridge: "本页面需要在 PI-Desktop 中打开。",
+    errNoBridge: "本页面需要在 Fcode 中打开。",
   },
 } as const;
 
