@@ -5,10 +5,10 @@
  * Wired as apps/desktop/package.json "bundle:runtime" so it runs alongside the
  * agent-runtime bundle step before electron-builder packages the app.
  *
- * Pinned oh-my-pi commit: ba344f5e69f28535e7e9a2cf09e5af3643861b73
- * Update this SHA when bumping omp, then re-run the protocol smoke test
- * (apps/desktop/test/omp-protocol-smoke.test.mjs) to confirm protocol v2 is
- * still negotiated successfully.
+ * Source: vendored snapshot in omp/ (diverged from oh-my-pi ba344f5e69; no upstream sync).
+ * After changing omp/, re-run this script; the protocol smoke test
+ * (apps/desktop/test/omp-protocol-smoke.test.mjs) detects a stale binary and
+ * confirms protocol v2 is still negotiated.
  *
  * Platform support: macOS (arm64 + x64), Linux (arm64 + x64), and Windows (x64).
  * The omp runtime itself is cross-platform; Fcode's own bench supervisor still
@@ -17,97 +17,37 @@
 
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const PINNED_OMP_COMMIT = "ba344f5e69f28535e7e9a2cf09e5af3643861b73";
-// SHA256 of the darwin-x64 `bin/omp` built from the commit above, checked by
-// apps/desktop/test/omp-protocol-smoke.test.mjs as a drift guard.
-// NOTE: Bun's --compile output here is NOT byte-reproducible across rebuilds
-// of the identical commit — packages/coding-agent's generate-client-bundle.ts
-// regenerates the embedded web client fresh every build and does not embed it
-// deterministically (confirmed: two back-to-back builds of this exact commit
-// on the same machine differed in ~1.4MB of the ~364MB binary). A later
-// rebuild of this same pinned commit is expected to need a fresh hash here,
-// not to reproduce this one — re-run this script and copy the printed
-// SHA256 whenever this constant needs updating.
-const OMP_BINARY_SHA256 = "bef25fb7100093d25d680d3daf1499298d780a8526d6094496e474073603c3fc";
-
 const scriptDir = dirname(fileURLToPath(import.meta.url));
-// scripts/ lives at repo root; oh-my-pi is a sibling checkout
+// scripts/ lives at repo root; omp/ is the vendored source snapshot
 const repoRoot = resolve(scriptDir, "..");
-const ompSource = resolve(repoRoot, "..", "oh-my-pi");
+const ompSource = resolve(repoRoot, "omp");
 const destDir = resolve(repoRoot, "apps", "desktop", "resources", "bin");
 
-// ── Locate oh-my-pi ─────────────────────────────────────────────────────────
-if (!existsSync(ompSource)) {
-  console.error(
-    `build-omp: oh-my-pi checkout not found at ${ompSource}\n` +
-      "Clone it as a sibling of this repo:\n" +
-      "  git clone https://github.com/can1357/oh-my-pi ../oh-my-pi",
-  );
+
+// ── Verify source + dependencies ─────────────────────────────────────────────
+if (!existsSync(join(ompSource, "package.json"))) {
+  console.error(`build-omp: omp source not found at ${ompSource}`);
   process.exit(1);
 }
-
-// ── Verify pinned commit ─────────────────────────────────────────────────────
-const actualCommit = execFileSync("git", ["rev-parse", "HEAD"], {
-  cwd: ompSource,
-  encoding: "utf8",
-}).trim();
-
-if (!actualCommit.startsWith(PINNED_OMP_COMMIT)) {
-  console.error(
-    `build-omp: oh-my-pi HEAD is ${actualCommit}\n` +
-      `  Expected pinned commit: ${PINNED_OMP_COMMIT}\n` +
-      "  Run: git -C ../oh-my-pi checkout " +
-      PINNED_OMP_COMMIT,
-  );
-  process.exit(1);
-}
-
-// ── Verify dependencies installed ────────────────────────────────────────────
-if (!existsSync(join(ompSource, "node_modules"))) {
-  console.error(
-    `build-omp: oh-my-pi dependencies are not installed\n` +
-      `  Run: (cd ${ompSource} && bun install)`,
-  );
-  process.exit(1);
-}
-
-// ── Apply local patches ───────────────────────────────────────────────────────
-// Patches in scripts/omp-patches/ are applied in filename order. Each patch is
-// checked with `git apply --reverse --check` first — if it's already applied
-// (idempotent re-run), it's skipped silently; if it fails both ways, the
-// build aborts loudly.
-const patchDir = resolve(scriptDir, "omp-patches");
-if (existsSync(patchDir)) {
-  const patches = readdirSync(patchDir)
-    .filter((f) => f.endsWith(".patch"))
-    .sort();
-  for (const patchFile of patches) {
-    const patchPath = join(patchDir, patchFile);
-    const alreadyApplied = spawnSync("git", ["apply", "--reverse", "--check", patchPath], {
-      cwd: ompSource,
-      stdio: "pipe",
-    });
-    if (alreadyApplied.status === 0) {
-      console.log(`build-omp: patch already applied, skipping: ${patchFile}`);
-      continue;
-    }
-    const result = spawnSync("git", ["apply", patchPath], {
-      cwd: ompSource,
-      stdio: "inherit",
-    });
-    if (result.status !== 0) {
-      console.error(
-        `build-omp: patch failed to apply: ${patchFile}\n` +
-          "  Resolve conflicts and re-run, or update the patch against the current pinned commit.",
-      );
-      process.exit(1);
-    }
-    console.log(`build-omp: applied patch: ${patchFile}`);
+const run = (cmd, args, cwd) => {
+  const r = spawnSync(cmd, args, { cwd, stdio: "inherit" });
+  if (r.status !== 0) {
+    console.error(`build-omp: \`${cmd} ${args.join(" ")}\` failed in ${cwd}`);
+    process.exit(1);
   }
+};
+if (!existsSync(join(ompSource, "node_modules"))) {
+  run("bun", ["install", "--frozen-lockfile"], ompSource);
+}
+// Native addon: compiled once per machine (slow when cold); CI restores it from cache.
+const nativeDir = join(ompSource, "packages", "natives", "native");
+const hasAddon = existsSync(nativeDir) && readdirSync(nativeDir).some((f) => f.endsWith(".node"));
+if (!hasAddon) {
+  run("bun", ["--cwd=packages/natives", "run", "build"], ompSource);
 }
 
 // ── Build + stage per target ─────────────────────────────────────────────────
@@ -116,7 +56,7 @@ if (existsSync(patchDir)) {
 // platform's hardware (packages/coding-agent/scripts/build-binary.ts). Binaries
 // are staged immediately after each build so one target's failure never
 // discards another target's already-built, already-staged binary.
-console.log(`build-omp: building omp from ${ompSource} (${PINNED_OMP_COMMIT.slice(0, 12)})`);
+console.log(`build-omp: building omp from ${ompSource}`);
 
 const codingAgentDir = join(ompSource, "packages", "coding-agent");
 const distDir = join(codingAgentDir, "dist");
@@ -175,7 +115,15 @@ const hostBareDest = join(destDir, `omp${hostSuffix}`);
 cpSync(join(destDir, `omp-${hostTarget}${hostSuffix}`), hostBareDest);
 const sha256 = createHash("sha256").update(readFileSync(hostBareDest)).digest("hex");
 console.log(`build-omp: staged host binary → ${hostBareDest}`);
-console.log(`build-omp: ${hostTarget} SHA256 = ${sha256}`);
-console.log("build-omp: if bumping PINNED_OMP_COMMIT, update OMP_BINARY_SHA256 below to the value above");
+console.log(`build-omp: ${hostTarget} SHA256 = ${sha256} (informational; builds are not byte-reproducible)`);
+
+// Staleness guard: apps/desktop/test/omp-protocol-smoke.test.mjs recomputes this.
+const sourceHash = createHash("sha256")
+  .update(execFileSync("git", ["ls-files", "-s", "omp"], { cwd: repoRoot }))
+  .digest("hex");
+writeFileSync(
+  join(destDir, "omp.build.json"),
+  JSON.stringify({ sourceHash, builtAt: new Date().toISOString() }, null, 2),
+);
 
 console.log(`build-omp: done (${staged.length}/${crossTargets.length} targets staged: ${staged.join(", ")})`);
