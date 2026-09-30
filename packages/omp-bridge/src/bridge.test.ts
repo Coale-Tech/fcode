@@ -444,7 +444,7 @@ describe("OmpBridge.handleOmpFrame — host_tool_call dispatches to host and ret
 });
 
 describe("OmpBridge — registerHostTools sends set_host_tools after v2 negotiation (T7)", () => {
-  it("writes set_host_tools with 5 fcode_ tool names to omp stdin after protocol negotiation", async () => {
+  it("writes set_host_tools with the fcode_ tool names to omp stdin after protocol negotiation", async () => {
     const bridge = new OmpBridge();
     const b = bridge as unknown as Record<string, unknown>;
     // Clear any handshake timer that start() would set (not invoked here).
@@ -495,6 +495,7 @@ describe("OmpBridge — registerHostTools sends set_host_tools after v2 negotiat
     expect(names).toContain("fcode_bench_run");
     expect(names).toContain("fcode_canvas");
     expect(names).toContain("fcode_canvas_read");
+    expect(names).toContain("fcode_studio");
   });
 });
 

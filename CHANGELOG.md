@@ -17,6 +17,9 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - DocType browser moved to Bench; opening a DocType file opens it in Chat → Files. Migrate needs an explicit site when a bench has several.
 - Removed the whole-file `git restore` path; Review snapshot rollback is the only way to undo agent changes.
 - `navToCode` shortcut renamed `navToFiles`; custom bindings carry over. Saved `pi.file-manager` tabs move to `fcode.files`.
+- New `fcode_studio` host tool (always prompts): publish/unpublish an app or page, revert a page draft, enable/disable app export. The `fcode-studio` skill now documents driving Studio pages through their exported JSON (edit `draft_blocks` when present), which the open editor picks up live.
+- Fix: `fcode_bench_execute_read` auto-approved any method string that began with an approved prefix, and `bench execute` eval()s non-importable strings, so an expression could run without a prompt. Only plain dotted identifiers are matched now.
+- Fix: the `fcode-studio` and `fcode-bench` skills passed a Frappe app name to `build-studio-app`; it takes the Studio App name.
 
 ## [0.16.0] — 2026-09-29
 

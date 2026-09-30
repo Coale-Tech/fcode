@@ -35,6 +35,8 @@ const UNDERSCORE_PREFIXES: readonly string[] = [
   "builder.api.list",
 ];
 
+const DOTTED_IDENTIFIER = /^[A-Za-z_]\w*(\.[A-Za-z_]\w*)*$/;
+
 /**
  * Returns `true` when the method should suppress the approval prompt.
  *
@@ -51,7 +53,9 @@ const UNDERSCORE_PREFIXES: readonly string[] = [
  * the prefix list grows beyond ~20 entries.
  */
 export function isReadOnlyBenchMethod(method: string): boolean {
-  if (!method) return false;
+  // `bench execute` falls back to eval() when the method is not an importable
+  // dotted path, so anything but plain identifiers would run as Python code.
+  if (!DOTTED_IDENTIFIER.test(method)) return false;
 
   for (const prefix of DOT_PREFIXES) {
     if (method === prefix) return true;

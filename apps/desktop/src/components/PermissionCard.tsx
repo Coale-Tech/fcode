@@ -34,7 +34,8 @@ export function PermissionCard({
   // fcode_bench_execute_read is auto-approved and never reaches this card.
   const isBenchDestructive =
     permission.toolName === "fcode_bench_run" ||
-    permission.toolName === "fcode_bench_execute";
+    permission.toolName === "fcode_bench_execute" ||
+    permission.toolName === "fcode_studio";
 
   const restoreComposerFocus = () => {
     window.requestAnimationFrame(() => {
@@ -92,14 +93,20 @@ export function PermissionCard({
     const p = permission.argsPreview;
     const isObj = p != null && typeof p === "object";
     const site = isObj && "site" in p && p.site != null ? String(p.site) : "active site";
+    const fields = (isObj ? p : {}) as Record<string, unknown>;
+    const field = (key: string) => (fields[key] != null ? String(fields[key]) : "");
     const rawCommand =
       permission.toolName === "fcode_bench_run"
-        ? (isObj && "command" in p ? String(p.command) : permission.toolName)
-        : (isObj && "method" in p ? String(p.method) : permission.toolName);
+        ? (field("command") || permission.toolName)
+        : permission.toolName === "fcode_studio"
+          ? `${field("action")} ${field("app") || field("page")}`.trim()
+          : (field("method") || permission.toolName);
     const consequence =
       permission.toolName === "fcode_bench_run"
         ? (rawCommand === "migrate" ? "alters the database schema" : "alters bench state")
-        : "modifies the database";
+        : permission.toolName === "fcode_studio"
+          ? "changes Studio's published pages or where its source of truth lives"
+          : "modifies the database";
     return (
       <DestructiveActionDialog
         site={site}

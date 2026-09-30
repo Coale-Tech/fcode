@@ -26,6 +26,7 @@ import type { RuntimeState } from "./context";
 import type { FinishTurn } from "./plans";
 import { benchSupervisor, ALLOWED_BENCH_VERBS } from "../bench/supervisor";
 import { isReadOnlyBenchMethod } from "../bench/approval";
+import { studioExpression } from "../bench/studio-actions";
 import { shell } from "electron";
 import { parseAllowedExternalUrl } from "../safe-open-external";
 
@@ -815,6 +816,40 @@ async function buildFcodeProvidersConfig(
       };
     }
     return { ok: true, content: result.output };
+  });
+
+  s.setLocalTool("fcode_studio", async (ctx) => {
+    const args = ctx.args;
+    if (!args || typeof args !== "object") {
+      return { ok: false, isError: true, content: "fcode_studio: args must be an object" };
+    }
+    const fields = args as Record<string, unknown>;
+    const str = (key: string) => (fields[key] != null ? String(fields[key]) : undefined);
+    const built = studioExpression({
+      action: str("action") ?? "",
+      app: str("app"),
+      page: str("page"),
+      target_app: str("target_app"),
+    });
+    if (!built.ok) return { ok: false, isError: true, content: `fcode_studio: ${built.error}` };
+    const benchPath = benchSupervisor.activeBenchPath;
+    if (!benchPath) return { ok: false, isError: true, content: "fcode_studio: no active bench" };
+    const result = await benchSupervisor.runOneShot({
+      benchPath,
+      site: str("site") ?? benchSupervisor.activeSite,
+      verb: "execute",
+      args: [built.expression],
+    });
+    if (result.exitCode !== 0) {
+      return {
+        ok: false,
+        isError: true,
+        content: result.failure
+          ? `${result.failure.problem}\n\nFix: ${result.failure.fix}`
+          : result.output,
+      };
+    }
+    return { ok: true, content: result.output.trim() || "OK" };
   });
 
   s.setLocalTool("fcode_canvas", async (ctx) => {

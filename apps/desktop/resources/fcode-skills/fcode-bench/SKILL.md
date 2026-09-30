@@ -1,12 +1,13 @@
 ---
 name: fcode-bench
-description: "Fcode host tools: fcode_bench_execute, fcode_bench_execute_read, fcode_bench_run, fcode_canvas, fcode_canvas_read — when to use each and what is auto-approved."
+description: "Fcode host tools: fcode_bench_execute, fcode_bench_execute_read, fcode_bench_run, fcode_studio, fcode_canvas, fcode_canvas_read — when to use each and what is auto-approved."
 ---
 
 # Fcode host tools
 
-Fcode registers five host tools in omp. Use these to interact with the active
-bench and the embedded canvas instead of raw shell commands.
+Fcode registers six host tools in omp. Use these to interact with the active
+bench and the embedded canvas instead of raw shell commands. `fcode_studio`
+(Studio publish/export, always prompts) is documented in the `fcode-studio` skill.
 
 ## fcode_bench_execute_read
 
@@ -49,7 +50,7 @@ of verbs: `migrate`, `clear-cache`, `build`, `build-studio-app`, `list-apps`,
 
 ```json
 { "command": "migrate" }
-{ "command": "build-studio-app", "args": ["myapp"] }
+{ "command": "build-studio-app", "args": ["<studio_app_name>"] }
 { "command": "list-apps", "args": ["-f", "json"] }
 ```
 

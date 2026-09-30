@@ -82,6 +82,7 @@ const HOST_PROXY_ALLOWED = new Set([
   "fcode_bench_run",
   "fcode_canvas",
   "fcode_canvas_read",
+  "fcode_studio",
 ]);
 
 /** Host-side answers for the `extensions.*` proxy methods. */
