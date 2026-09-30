@@ -9928,6 +9928,20 @@ export class AgentSession implements SettingsScope {
 		if (!assistantMessage) {
 			throw new Error("Ephemeral turn ended without a final message");
 		}
+		// Broker deployments: report this side-channel request's burn so the broker can
+		// attribute token usage per install. Same contract as the main turn (L3618).
+		this.#modelRegistry.authStorage.usage.observe({
+			provider: assistantMessage.provider,
+			model: assistantMessage.model,
+			at: assistantMessage.timestamp,
+			usage: {
+				input: assistantMessage.usage.input,
+				output: assistantMessage.usage.output,
+				cacheRead: assistantMessage.usage.cacheRead,
+				cacheWrite: assistantMessage.usage.cacheWrite,
+			},
+			costUsd: assistantMessage.usage.cost.total,
+		});
 		const replyText = this.#deobfuscateFromProvider(providerReplyText);
 		if (args.onTextDelta && replyText.length > emittedReplyText.length) {
 			await args.onTextDelta(replyText.slice(emittedReplyText.length));
