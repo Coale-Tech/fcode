@@ -20,6 +20,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - New `fcode_studio` host tool (always prompts): publish/unpublish an app or page, revert a page draft, enable/disable app export. The `fcode-studio` skill now documents driving Studio pages through their exported JSON (edit `draft_blocks` when present), which the open editor picks up live.
 - Fix: `fcode_bench_execute_read` auto-approved any method string that began with an approved prefix, and `bench execute` eval()s non-importable strings, so an expression could run without a prompt. Only plain dotted identifiers are matched now.
 - Fix: the `fcode-studio` and `fcode-bench` skills passed a Frappe app name to `build-studio-app`; it takes the Studio App name.
+- Fix: the Build tab never saw `watch-studio` output because Python block-buffers `print()` on a pipe. The watcher now runs unbuffered, and the Build tab matches its real `watching …` / `synced …` lines.
 
 ## [0.16.0] — 2026-09-29
 

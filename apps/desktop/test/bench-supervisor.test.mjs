@@ -301,3 +301,22 @@ test("BenchSupervisor.start: the same bench again while it is running is an idem
   assert.equal(second.conflict, false, "restarting the same bench is not a conflict");
   assert.equal(children.length, 1, "must not spawn a duplicate process for the same bench");
 });
+
+test("BenchSupervisor: watch-studio is spawned unbuffered so its log lines reach the Build tab", async (t) => {
+  const { BenchSupervisor } = await import("../electron/main/bench/supervisor.ts");
+  const envs = [];
+  t.mock.method(childProcess, "spawn", (_cmd, _argv, opts) => {
+    envs.push(opts.env);
+    const child = new EventEmitter();
+    child.stdout = new EventEmitter();
+    child.stderr = new EventEmitter();
+    child.kill = () => {};
+    return child;
+  });
+  syncBuiltinESMExports();
+
+  const sup = new BenchSupervisor();
+  sup.startWatcher("/tmp/bench-a", "site-a");
+  sup.stopWatcher();
+  assert.equal(envs[0].PYTHONUNBUFFERED, "1");
+});
