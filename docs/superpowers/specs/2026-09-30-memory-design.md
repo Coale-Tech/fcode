@@ -44,5 +44,5 @@ Hindsight unreachable → `error` state with message; agent turns still run (mem
 - Smoke: run built omp with Mnemopi, call `get_memory_status`, expect `active:true`. Hindsight only against a real/mock HTTP server.
 
 ## Open questions
-1. Hindsight probe endpoint (see §1).
-2. Does session-model LLM use count against the user's turn budget? Assume separate ephemeral call (`runEphemeralTurn`); confirm.
+1. Resolved: Hindsight probe. `omp/packages/coding-agent/src/hindsight/client.ts` has no health call. Probe `GET /v1/default/banks/{bank}/memories/list?limit=1` (~L373) with a 2 s timeout; latency and HTTP error feed `latencyMs`/`error`. A 404 for the bank means reachable but bank missing (`degraded`; `createBank` PUT exists to fix it).
+2. Open: `session.runEphemeralTurn` exists (used by extensions and `omfg-controller`), but whether it counts against turn budget/usage totals is unread. Verify in `session/agent-session.ts` at plan step 2.4.
