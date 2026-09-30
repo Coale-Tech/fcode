@@ -271,7 +271,7 @@ The Memory settings page shows a live status card polled every **15 s** (60 s wh
 
 A sidebar badge reflects the state colour outside Settings. The Hindsight probe uses `GET /v1/default/banks/{bank}/memories/list?limit=1` with a 2 s timeout; a 404 means reachable but bank missing (`degraded`).
 
-See [ADR 0308](docs/adr/0308-memory-backends.md) for the full design rationale.
+See [ADR 0308](../adr/0308-memory-backends.md) for the full design rationale.
 
 ---
 
