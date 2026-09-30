@@ -80,7 +80,7 @@ test(
   "omp --mode rpc protocol smoke: handshake negotiates exactly version 2",
   {
     skip: ompBinary ? false : binaryMissingMsg,
-    timeout: 120_000,
+    timeout: 120_000, // omp loads user extensions before answering; 25-50s on a busy dev machine
   },
   () =>
     new Promise((done, fail) => {
@@ -309,7 +309,7 @@ test("E17: docs/fcode/README.md has no dead relative links", () => {
   const relLinks = [...withoutCode.matchAll(/\[.*?\]\(([^)#]+)/g)]
     .map((m) => m[1])
     .filter((l) => !l.startsWith("http") && !l.startsWith("mailto:"));
-  const dead = relLinks.filter((l) => !existsSync(join(repoRoot, l)));
+  const dead = relLinks.filter((l) => !existsSync(join(dirname(mdPath), l)));
   assert.deepEqual(
     dead,
     [],

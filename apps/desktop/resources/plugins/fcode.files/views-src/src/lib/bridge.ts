@@ -22,7 +22,7 @@ export const hasBridge = (): boolean => typeof window.pluginBridge?.invoke === "
 export async function invoke<T>(channel: string, payload?: unknown): Promise<T> {
   const bridge = window.pluginBridge;
   if (!bridge?.invoke) {
-    throw Object.assign(new Error("plugin bridge unavailable (open this view inside PI-Desktop)"), {
+    throw Object.assign(new Error("plugin bridge unavailable (open this view inside Fcode)"), {
       code: "NO_BRIDGE",
     });
   }
