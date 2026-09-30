@@ -9,66 +9,28 @@
  */
 
 /**
- * Two sets of rules, matched differently:
- *
- * DOT_PREFIXES — segment-aware, boundary is `.` only. Prevents
- * `frappe.client.get_list_evil` from matching `frappe.client.get_list`.
- *
- * UNDERSCORE_PREFIXES — function-name prefix, boundary is end-of-string or
- * end-of-identifier. Used for studio/builder getter namespaces where Frappe
- * function names use underscores (`get_app`, `list_pages`, …).
+ * `bench execute` falls back to `eval(method)` when `frappe.get_attr` fails
+ * (frappe/commands/utils.py), so the method string is code. Every rule below is
+ * therefore a whole-string match: exact names, or a single identifier under a
+ * fixed module. Prefix/suffix matching would admit
+ * `frappe.utils.now.__globals__[...]` and similar expressions.
  */
-const DOT_PREFIXES: readonly string[] = [
+const EXACT_METHODS: ReadonlySet<string> = new Set([
   "frappe.client.get",
   "frappe.client.get_list",
   "frappe.db.get_value",
   "frappe.db.count",
-  // Explicit safe introspection helpers only — no blanket frappe.utils allowance.
-  // frappe.utils.now  → pure, returns current datetime string (utils/data.py:416)
-  // frappe.utils.today → pure, returns current date string (utils/data.py:433)
-  // frappe.utils.get_url → pure read from site config (utils/data.py:1844)
+  // Pure helpers only — no blanket frappe.utils allowance.
   "frappe.utils.now",
   "frappe.utils.today",
   "frappe.utils.get_url",
-];
+]);
 
-// For studio.api and builder.api, allow any method whose local name starts
-// with `get` or `list` (they are all read-only introspection calls).
-const UNDERSCORE_PREFIXES: readonly string[] = [
-  "studio.api.get",
-  "studio.api.list",
-  "builder.api.get",
-  "builder.api.list",
-];
+// studio/builder getters: `<module>.api.get` / `list` or `get_*` / `list_*`,
+// one identifier, no dots, no operators.
+const GETTER_METHOD = /^(?:studio|builder)\.api\.(?:get|list)(?:_[A-Za-z0-9_]*)?$/;
 
-/**
- * Returns `true` when the method should suppress the approval prompt.
- *
- * DOT_PREFIXES match only at a dot boundary: `frappe.client.get_list_evil`
- * does NOT match `frappe.client.get_list` because the next character is `_`,
- * not `.` or end-of-string.
- *
- * UNDERSCORE_PREFIXES match at an underscore boundary: `studio.api.get_app`
- * matches `studio.api.get` because Frappe function names are underscore-joined
- * (`get_app`, `get_page`, …). A method must equal the prefix exactly or have
- * the prefix followed by `_` or `.`.
- *
- * ponytail: linear scan over a small static list; replace with a trie if
- * the prefix list grows beyond ~20 entries.
- */
+/** Returns `true` when the method should suppress the approval prompt. */
 export function isReadOnlyBenchMethod(method: string): boolean {
-  if (!method) return false;
-
-  for (const prefix of DOT_PREFIXES) {
-    if (method === prefix) return true;
-    if (method.startsWith(prefix) && method[prefix.length] === ".") return true;
-  }
-
-  for (const prefix of UNDERSCORE_PREFIXES) {
-    if (method === prefix) return true;
-    const next = method[prefix.length];
-    if (method.startsWith(prefix) && (next === "_" || next === ".")) return true;
-  }
-
-  return false;
+  return EXACT_METHODS.has(method) || GETTER_METHOD.test(method);
 }

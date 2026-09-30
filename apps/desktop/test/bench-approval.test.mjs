@@ -94,3 +94,28 @@ test("frappe.utils (bare namespace) is NOT read-only (B5)", () => {
 test("frappe.utils.unknown_method is NOT read-only (B5)", () => {
   assert.ok(!isReadOnlyBenchMethod("frappe.utils.unknown_method"));
 });
+
+// ── Expression / suffix bypass (bench execute eval()s the method string) ───────
+for (const m of [
+  "frappe.utils.now.__globals__['frappe'].db.set_value('User','Administrator','enabled',0)",
+  "frappe.utils.now.__globals__",
+  "frappe.utils.now.",
+  "frappe.client.get.__globals__",
+  "frappe.client.get_list.__globals__",
+  "frappe.db.count.__self__",
+  "frappe.utils.today ",
+  "frappe.utils.today;1",
+  "studio.api.get_app.__globals__",
+  "studio.api.get_x or __import__('os').system('id')",
+  "builder.api.list_pages()",
+  "studio.api.get.x",
+]) {
+  test(`expression/suffix is NOT read-only: ${m}`, () => {
+    assert.ok(!isReadOnlyBenchMethod(m));
+  });
+}
+
+test("studio.api.get / builder.api.list (bare) stay read-only", () => {
+  assert.ok(isReadOnlyBenchMethod("studio.api.get"));
+  assert.ok(isReadOnlyBenchMethod("builder.api.list"));
+});
