@@ -36,13 +36,17 @@ A full list of changed files is available via `git log` in this repository.
 
 ### omp (oh-my-pi)
 
-The `omp` binary bundled in the release artifacts is built from the
-[oh-my-pi](https://github.com/can1357/oh-my-pi) project, which is distributed under the
-MIT License.
+The `omp` binary bundled in the release artifacts is built from source vendored at `omp/`.
+It is a pruned snapshot of the [oh-my-pi](https://github.com/can1357/oh-my-pi) project at
+commit `ba344f5e69f28535e7e9a2cf09e5af3643861b73`, modified by Fcode and no longer synced
+with upstream. oh-my-pi is distributed under the MIT License (full text in `omp/LICENSE`).
 
 ```
 MIT License
 
+Copyright (c) 2025 Mario Zechner
+Copyright (c) 2025-2026 Can Bölük
+Copyright (c) 2026 Stencil Labs, Inc.
 Copyright (c) oh-my-pi contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

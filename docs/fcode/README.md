@@ -14,9 +14,8 @@ Fcode is a desktop AI coding agent for Frappe/ERPNext developers. It forks [PI-D
 | pnpm | `>= 10` | `npm i -g pnpm` |
 | Rust (stable) | latest stable | [rustup.rs](https://rustup.rs/) |
 | Bun | `>= 1.2` | [bun.sh](https://bun.sh/) |
-| oh-my-pi | sibling checkout | `git clone https://github.com/can1357/oh-my-pi ../oh-my-pi` |
 
-oh-my-pi must be cloned as a sibling of the Fcode checkout (`../oh-my-pi`) because `scripts/build-omp.mjs` references it at that relative path.
+omp is vendored at `omp/` (a diverged snapshot of oh-my-pi; see [ADR 0088](../adr/0088-vendor-omp-snapshot.md)). `scripts/build-omp.mjs` installs its dependencies and compiles its native addon on first run (slow when cold: ~40 min on x64).
 
 **Supported platforms:** macOS, Linux, and Windows are all packaged by the release pipeline. The Bench tab requires macOS, Linux, or WSL2 — Frappe bench is not supported natively on Windows. On Windows, PATH is inherited from the parent process rather than sourced from a login shell.
 
@@ -27,7 +26,7 @@ git clone https://github.com/Coale-Tech/fcode.git
 cd fcode
 pnpm install
 pnpm -C apps/desktop run build:host-release   # cargo build --release → pi-desktop-host-core
-node scripts/build-omp.mjs                    # builds omp binary from ../oh-my-pi
+node scripts/build-omp.mjs                    # builds omp binary from omp/
 pnpm -C apps/desktop run dist                 # electron-builder → apps/desktop/release/
 ```
 
@@ -49,7 +48,7 @@ node scripts/check-legal.mjs          # identity-keeplist assertion
 ### Contributor path (paved road)
 
 ```bash
-pnpm fcode:doctor   # checks Node, pnpm, Rust, Bun, sibling oh-my-pi checkout, platform
+pnpm fcode:doctor   # checks Node, pnpm, Rust, Bun, vendored omp/, platform
 pnpm fcode:dev      # runs the full dev setup in sequence
 ```
 
@@ -86,7 +85,7 @@ omp --mode rpc (child process)
 3. omp confirms `{protocolVersion:2}` — if it doesn't, the bridge emits a `system` warning and keeps the session read-only
 4. Large frames are chunked as `rpc_chunk {chunkId, index, count, byteLength, data}` (base64, 256 KB each); the bridge reassembles before mapping
 
-The smoke test in `apps/desktop/test/omp-protocol-smoke.test.mjs` asserts exactly protocol version 2 is negotiated and that the bundled binary matches the pinned SHA. This test is in `apps/desktop/test/` (not `scripts/e2e-*.mjs`) because only that location is executed by `release.yml` (`pnpm -r --if-present test`).
+The smoke test in `apps/desktop/test/omp-protocol-smoke.test.mjs` asserts exactly protocol version 2 is negotiated and that the bundled binary was built from the current `omp/` source (`omp.build.json` `sourceHash` vs `git ls-files -s omp`; `git add omp` after editing). This test is in `apps/desktop/test/` (not `scripts/e2e-*.mjs`) because only that location is executed by `release.yml` (`pnpm -r --if-present test`).
 
 ### omp overlay (`<dataDir>/omp-overlay.yml`)
 
@@ -124,7 +123,7 @@ All host tools default to `exec` tier in omp's approval model (`ExtensionToolWra
 ## Release build
 
 ```bash
-node scripts/build-omp.mjs            # build omp binary from pinned oh-my-pi commit
+node scripts/build-omp.mjs            # build omp binary from omp/
 pnpm -C apps/desktop run dist:mac     # electron-builder → DMG + blockmap
 ```
 

@@ -184,7 +184,7 @@ jobs:
         # runner class (macOS Intel, Linux, Windows alike — an x64 GH-hosted
         # CPU-class gap, not a platform bug), which otherwise leaves the
         # signed macOS path no headroom for notarization inside the job
-        # timeout. The addon only depends on the pinned commit, the OS, and
+        # timeout. The addon only depends on omp's Rust inputs, the OS, and
         # the arch, so it's identical across runs until the pin moves.
         id: omp-native-restore
         uses: actions/cache/restore@v4
