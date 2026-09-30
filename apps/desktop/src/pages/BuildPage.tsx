@@ -302,7 +302,9 @@ export function BuildPage() {
           typeof line.text === "string"
         ) {
           const text = line.text;
-          if (text.includes("Watching") || text.includes("Imported")) {
+          // Exact lines printed by studio/watch.py: "watching N studio folder(s) …", "synced <doctype> from <file>".
+          if (text.includes("] watching ")) setWatcherStatus("running");
+          if (text.includes("] synced ")) {
             setWatcherStatus("running");
             setWatcherLastImport(new Date().toLocaleTimeString());
           }

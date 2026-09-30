@@ -85,8 +85,10 @@ The page tree is a JSON array holding one root block.
 3. Read the page JSON file, edit it, save it. **Edit `draft_blocks` when the file
    has a non-empty one, otherwise `blocks`** — the editor shows `draft_blocks` first,
    so an edit to `blocks` under a live draft is invisible.
-4. `watch-studio` imports the file and Studio pushes a realtime event, so the open
-   editor rebuilds that page on its own. No reload, no migrate.
+4. `watch-studio` imports the file (`[watch-studio] synced Studio Page from <file>`)
+   and Studio pushes a realtime event, so an open editor rebuilds that page with no
+   reload and no migrate. This needs the realtime preconditions below; without them
+   the DB still updates and a reload shows the edit.
 5. Verify with `fcode_canvas_read { action: "screenshot" }`.
 
 A block is `{ componentId, componentName, originalElement?, blockName?,
@@ -126,3 +128,11 @@ fcode_canvas_read { action: "screenshot" }
 - `watchdog` Python package installed: `bench setup requirements --dev studio`.
 - The Fcode Build tab shows the exit output as a preconditions checklist if
   either is missing.
+- Dev editor: `yarn dev` in `apps/studio/frontend` serves Vite on
+  `8080 + (webserver_port - 8000)` (8114 for webserver_port 8034), not on the bench
+  port; `/studio` on the bench port 404s until `yarn build` has produced
+  `studio/www/studio.html`.
+- Live editor refresh: the socket.io service must run and the browser host must
+  equal the site name (the dev client joins namespace `/<hostname>`). A site named
+  `coale` browsed as `localhost` gets "Invalid namespace"; use a site named
+  `<x>.localhost` and browse `http://<x>.localhost:<vite port>`.
