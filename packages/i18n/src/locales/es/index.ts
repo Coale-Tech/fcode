@@ -1763,6 +1763,7 @@ sklm: {
       "failed": "Esta vista no se pudo cargar. Vuelva a cargar el complemento e inténtelo de nuevo.",
       "viewReadOnly": "Ver de solo lectura"
     },
+    "fileOutsideProject": "El archivo no está dentro de un proyecto abierto. Abre el directorio del bench como proyecto para explorar sus archivos.",
     "noSession": {
       "title": "Sin sesión activa",
       "body": "Inicia una nueva tarea o selecciona una sesión para abrir el editor de archivos.",

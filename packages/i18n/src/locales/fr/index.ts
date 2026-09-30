@@ -1763,6 +1763,7 @@ sklm: {
       "failed": "Cette vue n'a pas pu être chargée. Rechargez le plugin et réessayez.",
       "viewReadOnly": "Afficher en lecture seule"
     },
+    "fileOutsideProject": "Le fichier n'est dans aucun projet ouvert. Ouvrez le répertoire du bench comme projet pour parcourir ses fichiers.",
     "noSession": {
       "title": "Aucune session active",
       "body": "Démarrez une nouvelle tâche ou sélectionnez une session pour ouvrir l'éditeur de fichiers.",

@@ -1714,6 +1714,7 @@ export const ptBR = {
       failed: "Não foi possível carregar esta visualização. Recarregue o plugin e tente novamente.",
       viewReadOnly: "Ver somente leitura",
     },
+    fileOutsideProject: "O arquivo não está dentro de um projeto aberto. Abra o diretório do bench como projeto para navegar pelos arquivos.",
     noSession: {
       title: "Nenhuma sessão ativa",
       body: "Inicie uma nova tarefa ou selecione uma sessão para abrir o editor de arquivos.",

@@ -1034,6 +1034,7 @@ async function handleDraftLoad(payload) {
     expectedMtimeMs: draft.expectedMtimeMs ?? null,
     expectedSize: draft.expectedSize ?? null,
     expectedAbsent: draft.expectedAbsent === true,
+    root: typeof draft.root === "string" ? draft.root : undefined,
   };
 }
 

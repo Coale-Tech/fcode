@@ -1749,6 +1749,7 @@ sklm: {
       failed: "无法加载该视图。请重新加载插件后重试。",
       viewReadOnly: "只读查看",
     },
+    fileOutsideProject: "该文件不在任何已打开的项目中。请将 bench 目录作为项目打开后再浏览其文件。",
     noSession: {
       title: "无活动会话",
       body: "启动新任务或选择会话以打开文件编辑器。",

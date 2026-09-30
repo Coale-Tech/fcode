@@ -378,6 +378,34 @@ export default function App() {
         const response = await invoke<ReadResponse | Failure>(channels.read, request);
         if (token !== openTokenRef.current) return;
         if (!response.ok) {
+          // 草稿比文件活得久（Review 回滚删了它，或新文件从没存过）：报“路径不存在”
+          // 会每次启动都报一遍。改成把草稿还原成脏缓冲，交给保存流程（冲突 / 覆盖 /
+          // 丢弃）决定去留，改动不丢。
+          if (!external && response.code === "NOT_FOUND") {
+            try {
+              const draft = await invoke<DraftLoadResponse>(channels.draftLoad, { rel: entry.path });
+              if (token !== openTokenRef.current) return;
+              if (draft.ok && draft.found) {
+                loadTokenRef.current += 1;
+                setOpenFile({
+                  path: entry.path,
+                  kind: "text",
+                  text: draft.text,
+                  eol: "lf",
+                  bom: false,
+                  size: draft.expectedSize ?? 0,
+                  mtimeMs: draft.expectedMtimeMs ?? 0,
+                  root: draft.root,
+                  loadToken: loadTokenRef.current,
+                  ...(draft.expectedAbsent ? { expectedAbsent: true } : {}),
+                });
+                setDirty(true);
+                return;
+              }
+            } catch {
+              /* 草稿检查失败就按原来的错误处理 */
+            }
+          }
           setError(failureMessage(response, t));
           return;
         }

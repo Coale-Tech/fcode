@@ -1782,6 +1782,7 @@ sklm: {
       failed: "This view could not be loaded. Reload the plugin and try again.",
       viewReadOnly: "View read-only",
     },
+    fileOutsideProject: "File is not inside an open project. Open the bench directory as a project to browse its files.",
     noSession: {
       title: "No session active",
       body: "Start a new task or select a session to open the file editor.",

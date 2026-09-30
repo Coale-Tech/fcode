@@ -282,6 +282,8 @@ export type DraftLoadResponse =
       expectedMtimeMs: number | null;
       expectedSize: number | null;
       expectedAbsent: boolean;
+      /** 草稿保存时缓冲所属的 root；文件已不存在时视图靠它继续带 root 保存。 */
+      root?: string;
     }
   | Failure;
 

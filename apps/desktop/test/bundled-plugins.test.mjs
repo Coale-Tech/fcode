@@ -252,6 +252,23 @@ test("fcode.files draft: a save on the draft's stale disk baseline conflicts aft
   `);
 });
 
+test("fcode.files draft: a draft outlives its deleted file and its save conflicts as deleted", () => {
+  runFcode(`
+    const file = join(projectRoot, "gone.ts");
+    fs.writeFileSync(file, "v1");
+    const t1 = fs.statSync(file);
+    await invoke("fm.draft.save", { rel: "gone.ts", text: "edits", expectedMtimeMs: t1.mtimeMs, expectedSize: t1.size });
+    fs.rmSync(file); // Review rolled back an agent-created file
+    const gone = await invoke("fm.read", { path: "gone.ts" });
+    assertOk(!gone.ok && gone.code === "NOT_FOUND", "read must be NOT_FOUND: " + JSON.stringify(gone));
+    const d = await invoke("fm.draft.load", { rel: "gone.ts" });
+    assertOk(d.found && d.text === "edits" && d.root === projectRoot, "draft must still load with its root: " + JSON.stringify(d));
+    const r = await invoke("fm.write", { path: "gone.ts", root: d.root, text: d.text, expectedMtimeMs: d.expectedMtimeMs, expectedSize: d.expectedSize, eol: "lf", bom: false });
+    assertOk(!r.ok && r.code === "CONFLICT" && r.deleted === true, "expected deleted CONFLICT, got " + JSON.stringify(r));
+    assertOk(!fs.existsSync(file), "file must not be recreated without consent");
+  `);
+});
+
 test("fcode.files draft: expectedAbsent refuses to overwrite a file created meanwhile", () => {
   runFcode(`
     await invoke("fm.draft.save", { rel: "new.js", text: "mine", expectedMtimeMs: null, expectedSize: null, expectedAbsent: true });

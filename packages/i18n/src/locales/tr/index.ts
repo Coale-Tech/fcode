@@ -1769,6 +1769,7 @@ sklm: {
       failed: "Bu görünüm yüklenemedi. Eklentiyi yeniden yükleyip deneyin.",
       viewReadOnly: "Salt okunur görüntüle",
     },
+    fileOutsideProject: "Dosya açık bir projenin içinde değil. Dosyalarına göz atmak için bench dizinini proje olarak açın.",
     noSession: {
       title: "Etkin oturum yok",
       body: "Dosya düzenleyiciyi açmak için yeni bir görev başlatın veya bir oturum seçin.",

@@ -23,8 +23,10 @@ import { useAppStore } from "../stores/app-store";
 import { LogView } from "../components/bench/LogView";
 import { DestructiveActionDialog } from "../components/DestructiveActionDialog";
 import { IconPlay, IconSquare } from "../components/icons";
+import { api } from "../lib/api";
 import { DocTypeTree } from "../components/code/DocTypeTree";
 import { preferredFileWorkPanelTab } from "../lib/work-panel-tabs";
+import { useTranslation } from "react-i18next";
 
 // ── Types (mirrored from discovery.ts / supervisor.ts) ───────────────────────
 
@@ -459,27 +461,42 @@ export function BenchPage() {
   );
 
   const pluginViews = useAppStore((s) => s.pluginViews);
+  const { t } = useTranslation();
   const handleOpenDocTypeFile = useCallback(
-    (absolutePath: string) => {
+    async (absolutePath: string) => {
       const store = useAppStore.getState();
       // The bench is not necessarily an open project; opening a file outside
       // every open project would render an empty editor, so report instead.
       const norm = (p: string) => p.replace(/\\/g, "/").replace(/\/+$/, "");
       const file = norm(absolutePath);
-      const roots = [store.workspace?.path, ...store.openProjects.map((p) => p.path)]
+      const inside = (roots: string[]) =>
+        roots.some((root) => file === root || file.startsWith(`${root}/`));
+      const open = [store.workspace?.path, ...store.openProjects.map((p) => p.path)]
         .filter((p): p is string => Boolean(p))
         .map(norm);
-      if (!roots.some((root) => file === root || file.startsWith(`${root}/`))) {
-        store.showToast(
-          "File is not inside an open project. Open the bench directory as a project to browse its files.",
-          { variant: "error" },
-        );
+      let allowed = inside(open);
+      if (!allowed) {
+        // A multi-folder project registers extra roots the store does not
+        // carry; the file view accepts any of them, so accept them too.
+        try {
+          const { groups } = await api.listProjectGroups();
+          allowed = inside(
+            groups
+              .filter((g) => g.roots.some((r) => open.includes(norm(r.path))))
+              .flatMap((g) => g.roots.map((r) => norm(r.path))),
+          );
+        } catch {
+          /* fall through to the error toast */
+        }
+      }
+      if (!allowed) {
+        store.showToast(t("panel.fileOutsideProject"), { variant: "error" });
         return;
       }
       store.setPage("chat");
       store.requestFileInWorkPanel(preferredFileWorkPanelTab(absolutePath, pluginViews));
     },
-    [pluginViews],
+    [pluginViews, t],
   );
 
   // Delegate DocType migrate through handleRun so it uses DestructiveActionDialog,

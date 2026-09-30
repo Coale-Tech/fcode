@@ -1763,6 +1763,7 @@ sklm: {
       "failed": "Diese Ansicht konnte nicht geladen werden. Laden Sie das Plugin neu und versuchen Sie es erneut.",
       "viewReadOnly": "Schreibgeschützt anzeigen"
     },
+    "fileOutsideProject": "Die Datei liegt in keinem geöffneten Projekt. Öffne das Bench-Verzeichnis als Projekt, um seine Dateien zu durchsuchen.",
     "noSession": {
       "title": "Keine Sitzung aktiv",
       "body": "Starte eine neue Aufgabe oder wähle eine Sitzung, um den Datei-Editor zu öffnen.",
