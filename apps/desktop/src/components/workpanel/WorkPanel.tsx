@@ -16,7 +16,10 @@ import {
   workPanelTabReorderShouldArm,
 } from "../../lib/work-panel-tab-reorder";
 import {
+  FILE_MANAGER_PLUGIN_TAB,
+  hasPluginView,
   isKnownWorkPanelTab,
+  LEGACY_FILE_MANAGER_PLUGIN_TAB,
   parsePluginViewRef,
   pluginWorkPanelTab,
   subagentTabDisplayLabels,
@@ -43,6 +46,7 @@ import { ReviewTab } from "./ReviewTab";
 import { FilesTab } from "./FilesTab";
 import { PluginViewTab } from "./PluginViewTab";
 import { SubagentTranscriptTab } from "./SubagentTranscriptTab";
+import { WorkTabEmpty } from "./WorkTabEmpty";
 import {
   MAIN_PANE_MIN_WIDTH,
   WORK_PANEL_COMPACT_MIN_WIDTH,
@@ -119,10 +123,17 @@ function tabLabel(
 
 function workPanelTools(
   t: (key: string) => string,
-  pluginViews: PluginViewMeta[],
+  allViews: PluginViewMeta[],
 ): WorkPanelTool[] {
   // Review is the only host-owned launcher. Files, Browser, and every future
   // tool are plugin-contributed views, so their list stays data-driven.
+  // The source-built fcode.files view supersedes the marketplace file manager;
+  // both provide the same Files editor, so hide the old launcher row.
+  const pluginViews = hasPluginView(allViews, FILE_MANAGER_PLUGIN_TAB)
+    ? allViews.filter(
+        (v) => !hasPluginView([v], LEGACY_FILE_MANAGER_PLUGIN_TAB),
+      )
+    : allViews;
   return [
     {
       id: "review",
@@ -959,7 +970,24 @@ export function WorkPanel({
                 </div>
               );
             })()}
-          {(!activeTab || activeTab.kind === "new") && (
+          {!activeSessionId && (
+            <div className="work-panel-tabpane" data-testid="work-panel-empty">
+              <WorkTabEmpty
+                icon={IconFileText}
+                title={t("panel.noSession.title")}
+                body={t("panel.noSession.body")}
+              >
+                <button
+                  type="button"
+                  className="work-tab-empty-action"
+                  onClick={() => void useAppStore.getState().newSession()}
+                >
+                  {t("panel.noSession.action")}
+                </button>
+              </WorkTabEmpty>
+            </div>
+          )}
+          {activeSessionId && (!activeTab || activeTab.kind === "new") && (
             <div
               className="work-panel-tabpane"
               data-testid="work-panel-empty"

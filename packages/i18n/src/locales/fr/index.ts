@@ -942,7 +942,7 @@ sklm: {
       "voiceToggle": "Activer/désactiver la saisie vocale",
       "voiceCancel": "Annuler la saisie vocale",
       "navToChat": "Aller au Chat",
-      "navToCode": "Aller à l'éditeur de code",
+      "navToFiles": "Ouvrir les fichiers",
       "navToBuild": "Aller à Build",
       "navToBench": "Aller à Bench",
       "toggleFollowLog": "Basculer le suivi du journal",
@@ -1760,7 +1760,14 @@ sklm: {
       "subagent": "Sous-agent"
     },
     "pluginView": {
-      "failed": "Cette vue n'a pas pu être chargée. Rechargez le plugin et réessayez."
+      "failed": "Cette vue n'a pas pu être chargée. Rechargez le plugin et réessayez.",
+      "viewReadOnly": "Afficher en lecture seule"
+    },
+    "fileOutsideProject": "Le fichier n'est dans aucun projet ouvert. Ouvrez le répertoire du bench comme projet pour parcourir ses fichiers.",
+    "noSession": {
+      "title": "Aucune session active",
+      "body": "Démarrez une nouvelle tâche ou sélectionnez une session pour ouvrir l'éditeur de fichiers.",
+      "action": "Nouvelle tâche"
     },
     "empty": {
     },

@@ -174,7 +174,7 @@ export type AppState = {
   toasts: ToastItem[];
   notifications: AppNotification[];
   unreadNotificationCount: number;
-  page: "chat" | "pulls" | "scheduled" | "plugins" | "settings" | "code" | "build" | "bench";
+  page: "chat" | "pulls" | "scheduled" | "plugins" | "settings" | "build" | "bench";
   /** Bench log view follows new output while true; toggleFollowLog (Mod+Shift+B) flips it. */
   benchLogFollowTail: boolean;
   /** Tab ids come from the shared settings index. */
@@ -370,6 +370,8 @@ export type AppState = {
   workPanelWidth: number;
   /** Chat-initiated "preview this file" request consumed by the files viewer. */
   workPanelFileRequest: { path: string; seq: number; mimeType?: string } | null;
+  /** Tab queued for the next session activation (set when none is active). */
+  pendingWorkPanelTab: WorkPanelTab | null;
   /** Open (or activate) the transcript tab of one delegated subagent. */
   openSubagentTab: (delegationId: string, agentName?: string) => void;
   /** Abort one session's running turn, visible or not. */
@@ -394,6 +396,8 @@ export type AppState = {
   resetWorkPanelContext: () => void;
   setWorkPanelWidth: (width: number) => void;
   openFileInWorkPanel: (path: string, mimeType?: string) => void;
+  /** Open a file/plugin view now if a session is active, else queue it. */
+  requestFileInWorkPanel: (tab: WorkPanelTab) => void;
   openUrlInWorkPanel: (url: string) => void;
 };
 

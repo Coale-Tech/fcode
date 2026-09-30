@@ -18,7 +18,7 @@ export const KEYBOARD_SHORTCUT_IDS = [
   "voiceToggle",
   "voiceCancel",
   "navToChat",
-  "navToCode",
+  "navToFiles",
   "navToBuild",
   "navToBench",
   "toggleFollowLog",
@@ -81,7 +81,7 @@ export const KEYBOARD_SHORTCUTS: readonly KeyboardShortcutDefinition[] = [
     defaultBinding: "Escape",
   },
   { id: "navToChat", group: "navigation", defaultBinding: "Mod+1" },
-  { id: "navToCode", group: "navigation", defaultBinding: "Mod+2" },
+  { id: "navToFiles", group: "navigation", defaultBinding: "Mod+2" },
   { id: "navToBuild", group: "navigation", defaultBinding: "Mod+3" },
   { id: "navToBench", group: "navigation", defaultBinding: "Mod+4" },
   { id: "toggleFollowLog", group: "navigation", defaultBinding: "Mod+Shift+B" },
@@ -171,6 +171,14 @@ export function migrateKeybindingOverrides(
     else if (inherited !== undefined && carriesToggleIntent(inherited)) {
       migrated.toggleWindow = inherited;
     }
+  }
+  // `navToCode` (Mod+2) was renamed `navToFiles` in the single-editor cutover.
+  // Carry a custom binding forward unless the user already set `navToFiles`.
+  if (Object.prototype.hasOwnProperty.call(migrated, "navToCode")) {
+    if (!Object.prototype.hasOwnProperty.call(migrated, "navToFiles")) {
+      migrated.navToFiles = migrated.navToCode;
+    }
+    delete migrated.navToCode;
   }
   return Object.keys(migrated).length > 0
     ? (migrated as KeybindingOverrides)

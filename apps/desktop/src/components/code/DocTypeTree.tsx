@@ -20,7 +20,7 @@ import { cx } from "../ui";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-type BenchSummary = { id: string; path: string; sites: { name: string }[] };
+type BenchSummary = { id: string; path: string; sites: { name: string; isDefault?: boolean }[] };
 
 type DoctypeEntry = {
   path: string;  // relative to benchPath, e.g. apps/erpnext/erpnext/accounts/doctype/sales_invoice/sales_invoice.json
@@ -85,48 +85,27 @@ function groupDoctypes(entries: DoctypeEntry[]): DocGroup[] {
 
 function MigrateCard({
   dirtyCount,
-  benchPath,
-  site,
+  onMigrate,
 }: {
   dirtyCount: number;
-  benchPath: string;
-  site: string | undefined;
+  onMigrate?: ((el: HTMLButtonElement) => void) | undefined;
 }) {
-  const [running, setRunning] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
-
-  const runMigrate = useCallback(async () => {
-    setRunning(true);
-    setResult(null);
-    try {
-      const res = await ipc<{ exitCode: number; output: string }>(
-        IPC.invoke.benchRun,
-        { benchPath, site, verb: "migrate" },
-      );
-      setResult(res.exitCode === 0 ? "Migration complete." : `Failed (exit ${res.exitCode}).`);
-    } catch (err) {
-      setResult(err instanceof Error ? err.message : "Migration failed.");
-    } finally {
-      setRunning(false);
-    }
-  }, [benchPath, site]);
-
   if (dirtyCount === 0) return null;
-
   return (
     <div className="doctype-migrate-card">
       <span className="doctype-migrate-msg">
-        {dirtyCount} DocType{dirtyCount !== 1 ? "s" : ""} changed — migration may be needed.
+        {dirtyCount} DocType{dirtyCount !== 1 ? "s" : ""} modified in working tree —
+        heuristic only, may not require migration.
       </span>
       <button
         type="button"
         className="doctype-migrate-btn"
-        onClick={() => void runMigrate()}
-        disabled={running}
+        onClick={(e) => onMigrate?.(e.currentTarget)}
+        disabled={!onMigrate}
+        title={onMigrate ? "Run migrate via bench command panel" : "Select a site in the bench panel first"}
       >
-        {running ? "Running…" : "Run migrate"}
+        {onMigrate ? "Run migrate" : "Select a site to migrate"}
       </button>
-      {result && <span className="doctype-migrate-result">{result}</span>}
     </div>
   );
 }
@@ -149,7 +128,7 @@ function DoctypeRow({
       onClick={onSelect}
     >
       <span className="doctype-row-name">{entry.name.replaceAll("_", " ")}</span>
-      {entry.dirty && <span className="doctype-badge-migrate" title="Modified in git working tree — migrate may be needed">migrate</span>}
+      {entry.dirty && <span className="doctype-badge-migrate" title="Modified in git working tree — migration heuristic only, not guaranteed required">~migrate?</span>}
     </button>
   );
 }
@@ -187,8 +166,12 @@ function dtFilePath(
 
 export function DocTypeTree({
   onOpen,
+  bench,
+  onMigrate,
 }: {
   onOpen: (absolutePath: string) => void;
+  bench?: BenchSummary;
+  onMigrate?: (el: HTMLButtonElement) => void;
 }) {
   const [benches, setBenches] = useState<BenchSummary[]>([]);
   const [benchIdx, setBenchIdx] = useState(0);
@@ -199,27 +182,40 @@ export function DocTypeTree({
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<SelectedDoctype | null>(null);
 
-  // Load bench list once
+  // Load bench list once — only when the parent did not inject a bench.
   useEffect(() => {
+    if (bench) return;
     ipc<{ benches: BenchSummary[] }>(IPC.invoke.benchList)
       .then((r) => setBenches(r.benches ?? []))
       .catch(() => {});
-  }, []);
+  }, [bench]);
 
-  const selectedBench = benches[benchIdx] ?? null;
+  const selectedBench = bench ?? benches[benchIdx] ?? null;
+  const selectedBenchPath = selectedBench?.path;
 
   // Load doctypes when bench changes
   useEffect(() => {
-    if (!selectedBench) return;
+    if (!selectedBenchPath) return;
+    let cancelled = false;
     setLoading(true);
     setError(null);
     setEntries([]);
+    setSelected(null);
     api
-      .gitScanDoctypes(selectedBench.path)
-      .then(setEntries)
-      .catch((e) => setError(e instanceof Error ? e.message : String(e)))
-      .finally(() => setLoading(false));
-  }, [selectedBench]);
+      .gitScanDoctypes(selectedBenchPath)
+      .then((r) => {
+        if (!cancelled) setEntries(r);
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedBenchPath]);
 
   const groups = groupDoctypes(entries);
   const totalDirty = entries.filter((e) => e.dirty).length;
@@ -262,7 +258,7 @@ export function DocTypeTree({
 
   return (
     <div className="code-doctype-tree">
-      {benches.length > 1 && (
+      {!bench && benches.length > 1 && (
         <select
           className="doctype-bench-select"
           value={benchIdx}
@@ -278,11 +274,7 @@ export function DocTypeTree({
       )}
 
       {selectedBench && totalDirty > 0 && (
-        <MigrateCard
-          dirtyCount={totalDirty}
-          benchPath={selectedBench.path}
-          site={selectedBench.sites[0]?.name}
-        />
+        <MigrateCard key={selectedBench.path} dirtyCount={totalDirty} onMigrate={onMigrate} />
       )}
 
       <div className="code-tree-filter">

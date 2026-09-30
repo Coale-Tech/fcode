@@ -82,7 +82,7 @@ const flush = () => new Promise((resolve) => setImmediate(resolve));
 function reset({ pluginView = false } = {}) {
   Object.values(calls).forEach((list) => list.splice(0, list.length));
   state.pluginViews = pluginView
-    ? [{ pluginId: "pi.file-manager", viewId: "manager" }]
+    ? [{ pluginId: "fcode.files", viewId: "manager" }]
     : [];
   nextMatch = null;
   resolveFails = false;
@@ -125,9 +125,9 @@ test("a project file a tool surface names opens in the bundled file view", async
   assert.deepEqual(calls.resolved, ["src/dir/a.ts"]);
   assert.deepEqual(calls.tabs, [
     {
-      id: "plugin:pi.file-manager/manager",
+      id: "plugin:fcode.files/manager",
       kind: "plugin",
-      resource: "pi.file-manager/manager",
+      resource: "fcode.files/manager",
       location: "src/dir/a.ts",
     },
   ]);

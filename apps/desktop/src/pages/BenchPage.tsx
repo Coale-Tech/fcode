@@ -23,6 +23,10 @@ import { useAppStore } from "../stores/app-store";
 import { LogView } from "../components/bench/LogView";
 import { DestructiveActionDialog } from "../components/DestructiveActionDialog";
 import { IconPlay, IconSquare } from "../components/icons";
+import { api } from "../lib/api";
+import { DocTypeTree } from "../components/code/DocTypeTree";
+import { preferredFileWorkPanelTab } from "../lib/work-panel-tabs";
+import { useTranslation } from "react-i18next";
 
 // ── Types (mirrored from discovery.ts / supervisor.ts) ───────────────────────
 
@@ -119,6 +123,9 @@ export function BenchPage() {
   const [elapsedLabel, setElapsedLabel] = useState("");
   // Gap 2 / T6: per-verb one-shot state (Map — runtime insertion/deletion)
   const [oneshotState, setOneshotState] = useState<Map<string, OneshotEntry>>(new Map());
+  // Migrate site: null = no valid site (multi-site requires explicit choice; zero sites can't migrate).
+  // Single-site bench auto-selects; no preselection for multi-site.
+  const [migrateSite, setMigrateSite] = useState<string | null>(null);
   // T8 / T14: DestructiveActionDialog — pending confirmation + focus management
   const [pendingConfirm, setPendingConfirm] = useState<{
     verb: string;
@@ -261,6 +268,16 @@ export function BenchPage() {
   }, []);
 
   const selectedBench = benches.find((b) => b.id === selectedId) ?? null;
+
+  useEffect(() => {
+    if (!selectedBench) {
+      setMigrateSite(null);
+      return;
+    }
+    // Auto-select only when exactly one site exists; require explicit choice for >1
+    setMigrateSite(selectedBench.sites.length === 1 ? selectedBench.sites[0].name : null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBench?.id]);
 
   // A bench's process status only describes the bench the supervisor is
   // actually running; showing it for any other selected bench would let that
@@ -415,7 +432,12 @@ export function BenchPage() {
   const handleRun = useCallback(
     (verb: string, triggerEl?: HTMLButtonElement | null) => {
       if (!selectedBench) return;
-      const site = selectedBench.sites.find((s) => s.isDefault)?.name ?? "";
+      const site =
+        verb === "migrate"
+          ? (migrateSite ?? "")
+          : (selectedBench.sites.find((s) => s.isDefault)?.name ?? "");
+      // Belt-and-suspenders: migrate with no valid site is a no-op
+      if (verb === "migrate" && !migrateSite) return;
       const consequence = DESTRUCTIVE_CONSEQUENCES[verb];
       if (consequence) {
         // T8 / T14: gate destructive verbs through dialog; save trigger for focus restore
@@ -435,8 +457,57 @@ export function BenchPage() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selectedBench, runVerb],
+    [selectedBench, runVerb, migrateSite],
   );
+
+  const pluginViews = useAppStore((s) => s.pluginViews);
+  const { t } = useTranslation();
+  const handleOpenDocTypeFile = useCallback(
+    async (absolutePath: string) => {
+      const store = useAppStore.getState();
+      // The bench is not necessarily an open project; opening a file outside
+      // every open project would render an empty editor, so report instead.
+      const norm = (p: string) => p.replace(/\\/g, "/").replace(/\/+$/, "");
+      const file = norm(absolutePath);
+      const inside = (roots: string[]) =>
+        roots.some((root) => file === root || file.startsWith(`${root}/`));
+      const open = [store.workspace?.path, ...store.openProjects.map((p) => p.path)]
+        .filter((p): p is string => Boolean(p))
+        .map(norm);
+      let allowed = inside(open);
+      if (!allowed) {
+        // A multi-folder project registers extra roots the store does not
+        // carry; the file view accepts any of them, so accept them too.
+        try {
+          const { groups } = await api.listProjectGroups();
+          allowed = inside(
+            groups
+              .filter((g) => g.roots.some((r) => open.includes(norm(r.path))))
+              .flatMap((g) => g.roots.map((r) => norm(r.path))),
+          );
+        } catch {
+          /* fall through to the error toast */
+        }
+      }
+      if (!allowed) {
+        store.showToast(t("panel.fileOutsideProject"), { variant: "error" });
+        return;
+      }
+      store.setPage("chat");
+      store.requestFileInWorkPanel(preferredFileWorkPanelTab(absolutePath, pluginViews));
+    },
+    [pluginViews, t],
+  );
+
+  // Delegate DocType migrate through handleRun so it uses DestructiveActionDialog,
+  // oneshotState output, and the shared migrateSite.
+  const handleMigrateDocTypes = useCallback(
+    (el: HTMLButtonElement) => {
+      handleRun("migrate", el);
+    },
+    [handleRun],
+  );
+  const docTypeMigrateAction = migrateSite ? handleMigrateDocTypes : undefined;
 
   const handleDialogCancel = useCallback(() => {
     setPendingConfirm(null);
@@ -534,6 +605,7 @@ export function BenchPage() {
             onStart={handleStart}
             onStop={handleStop}
             onRun={handleRun}
+            onOpenDocTypeFile={handleOpenDocTypeFile}
             elapsedLabel={elapsedLabel}
             // Stale failures from a different bench must not follow the
             // selection here or into Retry's onStart (cross-bench Start-
@@ -541,6 +613,9 @@ export function BenchPage() {
             startFailure={selectVisibleStartFailure(startFailure, selectedBench)}
             warnings={warnings}
             oneshotState={oneshotState}
+            migrateSite={migrateSite}
+            onMigrateSiteChange={setMigrateSite}
+            onMigrateDocTypes={docTypeMigrateAction}
           />
         ) : loading ? null : benches.length === 0 && failedRoots.length === 0 ? (
           <ZeroBenchState />
@@ -581,10 +656,14 @@ function BenchDetail({
   onStart,
   onStop,
   onRun,
+  onOpenDocTypeFile,
   elapsedLabel,
   startFailure,
   warnings,
   oneshotState,
+  migrateSite,
+  onMigrateSiteChange,
+  onMigrateDocTypes,
 }: {
   bench: BenchSummary;
   status: BenchStatus;
@@ -595,10 +674,14 @@ function BenchDetail({
   onStart: () => void;
   onStop: () => void;
   onRun: (verb: string, triggerEl?: HTMLButtonElement | null) => void;
+  onOpenDocTypeFile: (absolutePath: string) => void;
   elapsedLabel: string;
   startFailure: StartFailureState | null;
   warnings: string[];
   oneshotState: Map<string, OneshotEntry>;
+  migrateSite: string | null;
+  onMigrateSiteChange: (site: string) => void;
+  onMigrateDocTypes: ((el: HTMLButtonElement) => void) | undefined;
 }) {
   return (
     <>
@@ -626,6 +709,27 @@ function BenchDetail({
 
         {/* One-shot commands — Gap 2 / T6 */}
         <div className="wb-sec-lbl">One-shot commands</div>
+        {bench.sites.length > 1 && (
+          <div className="wb-migrate-site">
+            <label className="wb-sec-lbl" htmlFor="migrate-site-select">
+              Migrate site
+            </label>
+            <select
+              id="migrate-site-select"
+              className="wb-select-sm"
+              value={migrateSite ?? ""}
+              onChange={(e) => onMigrateSiteChange(e.target.value)}
+              aria-label="Select site for migrate"
+            >
+              <option value="">— choose site —</option>
+              {bench.sites.map((s) => (
+                <option key={s.name} value={s.name}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div className="wb-cmds">
           {ONESHOT_VERBS.map((verb) => {
             const vs = oneshotState.get(verb);
@@ -635,7 +739,7 @@ function BenchDetail({
                   type="button"
                   className="wb-btn wb-btn-subtle"
                   onClick={(e) => onRun(verb, e.currentTarget)}
-                  disabled={status !== "running" || vs?.status === "running"}
+                  disabled={status !== "running" || vs?.status === "running" || (verb === "migrate" && !migrateSite)}
                   title={verb}
                 >
                   {vs?.status === "running" ? `${verb} …` : vs?.status === "ok" ? `✓ ${verb}` : vs?.status === "error" ? `✗ ${verb}` : verb}
@@ -685,6 +789,11 @@ function BenchDetail({
           onFollowTailChange={onFollowTailChange}
           className="bench-log-view"
         />
+      </div>
+      {/* DocTypes panel — browse-only; never mutates on browse */}
+      <div className="wb-doctypes">
+        <div className="wb-sec-lbl">DocTypes</div>
+        <DocTypeTree bench={bench} onOpen={onOpenDocTypeFile} onMigrate={onMigrateDocTypes} />
       </div>
     </>
   );

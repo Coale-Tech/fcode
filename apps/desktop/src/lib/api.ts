@@ -1305,17 +1305,11 @@ export const api = {
   toggleDevTools: (open?: boolean) =>
     invoke<{ open: boolean }>(IPC.invoke.devtoolsToggle, { open }),
   workspaceDiff: () => invoke<WorkspaceDiff>(IPC.invoke.workspaceDiff),
-  gitShow: (path: string, cwd?: string) =>
-    invoke<{ content: string | null }>(IPC.invoke.gitShow, { path, ...(cwd ? { cwd } : {}) }),
-  gitRestore: (path: string, untracked: boolean, cwd?: string) =>
-    invoke<{ ok: boolean }>(IPC.invoke.gitRestore, { path, untracked, ...(cwd ? { cwd } : {}) }),
   gitScanDoctypes: (benchPath: string) =>
     invoke<{ path: string; app: string; module: string; name: string; dirty: boolean }[]>(
       IPC.invoke.gitScanDoctypes,
       { benchPath },
     ),
-  gitBranch: (cwd?: string) =>
-    invoke<{ branch: string | null }>(IPC.invoke.gitBranch, cwd ? { cwd } : {}),
   workspaceReviewRollback: (input: {
     sessionId: string;
     snapshotId: string;

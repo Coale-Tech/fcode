@@ -54,18 +54,12 @@ const BuildPage = lazy(() =>
     default: module.BuildPage,
   })),
 );
-const CodePage = lazy(() =>
-  import("../../pages/CodePage").then((module) => ({
-    default: module.CodePage,
-  })),
-);
 
 export function AppShell() {
   const {
     t,
     ready,
     page,
-    activeSessionId,
     workPanelOpen,
     searchOpen,
     setSearchOpen,
@@ -287,10 +281,6 @@ export function AppShell() {
                     <div className="route-surface route-page">
                       <BuildPage />
                     </div>
-                  ) : page === "code" ? (
-                    <div className="route-surface route-page">
-                      <CodePage />
-                    </div>
                   ) : (
                     <ChatSurface visible={page === "chat"} />
                   )}
@@ -322,7 +312,11 @@ export function AppShell() {
               tooltip={workPanelToggleTooltip}
               ariaLabel={workPanelToggleTooltip}
               aria-pressed={workPanelOpen || presentedWorkPanelOpen}
-              disabled={!activeSessionId && !presentedWorkPanelOpen && !workPanelExiting}
+              disabled={
+                !presentedWorkPanelOpen &&
+                !workPanelExiting &&
+                (page === "settings" || page === "plugins" || page === "scheduled")
+              }
               onClick={togglePresentedWorkPanel}
             >
               <span className="app-work-panel-toggle-icon" aria-hidden>

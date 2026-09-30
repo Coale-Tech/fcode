@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "fcode.files",
+  "name": "Files",
+  "version": "0.5.2-fcode.1",
+  "description": "Fcode source-owned file editor. Fork of pi.file-manager v0.5.2 (MIT, Tioit-Wang) with distinct plugin identity, dirty-draft recovery, and source ownership.",
+  "i18n": {
+    "en": {
+      "name": "Files",
+      "description": "Browse, view and edit the open project in the right work panel: a full directory tree with per-file-type icons, syntax-highlighted editing, a Markdown preview, image and media viewing, CSV/JSON structured views, read-only SQLite browsing, a context menu for creating and renaming, filename search, multi-folder switching, host-driven open requests, and dirty-draft recovery after crash or plugin reload.",
+      "safetyNotes": "Databases opened strictly read-only. fs.read declared only for host-mediated open/reveal actions. Plugin reads and writes go through Node fs inside plugin process; host permission gateway does not mediate these. Root-relative paths confined to the selected registered folder root (symlink/junction escapes refused; credential paths denied). Atomic write (temp+rename) and mtime+size conflict check on save. Recovered dirty drafts also check disk version before saving; a draft for a file that did not exist (expectedAbsent) refuses if the file was subsequently created."
+    },
+    "zh-CN": {
+      "name": "文件",
+      "description": "在右侧工作面板中浏览、查看并编辑当前项目的文件。pi.file-manager v0.5.2 的 Fcode 源码分支，加入 Fcode 专属标识、脏草稿恢复与源码所有权。",
+      "safetyNotes": "数据库只读。路径包含限于当前选中的已注册 folder root。原子写并冲突检测。恢复脏草稿时同样做冲突检测；expectedAbsent 草稿在文件已被创建时拒绝覆盖。"
+    }
+  },
+  "author": "Tioit-Wang (upstream); Fcode fork",
+  "license": "MIT",
+  "categories": ["productivity"],
+  "main": "main.js",
+  "contributes": {
+    "views": [
+      {
+        "id": "manager",
+        "title": { "en": "Files", "zh-CN": "文件" },
+        "icon": "folder",
+        "entry": "views/index.html",
+        "order": 40
+      }
+    ]
+  },
+  "permissions": ["ui.view", "fs.read"],
+  "fs": {
+    "read": {
+      "root": "workspace",
+      "scope": ["**"]
+    }
+  },
+  "engines": { "piDesktop": ">=0.9.0" },
+  "activationEvents": ["onStartup"]
+}

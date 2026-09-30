@@ -942,7 +942,7 @@ sklm: {
       "voiceToggle": "Spracheingabe umschalten",
       "voiceCancel": "Spracheingabe abbrechen",
       "navToChat": "Zu Chat wechseln",
-      "navToCode": "Zum Code-Editor wechseln",
+      "navToFiles": "Dateien öffnen",
       "navToBuild": "Zu Build wechseln",
       "navToBench": "Zu Bench wechseln",
       "toggleFollowLog": "Protokoll-Mitlauf umschalten",
@@ -1760,7 +1760,14 @@ sklm: {
       "subagent": "Subagent"
     },
     "pluginView": {
-      "failed": "Diese Ansicht konnte nicht geladen werden. Laden Sie das Plugin neu und versuchen Sie es erneut."
+      "failed": "Diese Ansicht konnte nicht geladen werden. Laden Sie das Plugin neu und versuchen Sie es erneut.",
+      "viewReadOnly": "Schreibgeschützt anzeigen"
+    },
+    "fileOutsideProject": "Die Datei liegt in keinem geöffneten Projekt. Öffne das Bench-Verzeichnis als Projekt, um seine Dateien zu durchsuchen.",
+    "noSession": {
+      "title": "Keine Sitzung aktiv",
+      "body": "Starte eine neue Aufgabe oder wähle eine Sitzung, um den Datei-Editor zu öffnen.",
+      "action": "Neue Aufgabe"
     },
     "empty": {
     },

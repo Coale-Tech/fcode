@@ -1,8 +1,9 @@
-import type {
-  AppNotification,
-  ModelInfo,
-  ProviderPublic,
-  SessionSummary,
+import {
+  migrateKeybindingOverrides,
+  type AppNotification,
+  type ModelInfo,
+  type ProviderPublic,
+  type SessionSummary,
 } from "@pi-desktop/shared";
 import { api } from "../../lib/api";
 import { latestSessionOutcomes } from "../../lib/sidebar-session-status";
@@ -57,7 +58,7 @@ export function createCatalogSlice({
         providers: providers.providers,
         providerModels: {},
         sessions: decorateSessions(sessions.sessions, state.sessionMeta),
-        settings,
+        settings: { ...settings, keybindings: migrateKeybindingOverrides(settings.keybindings) },
         onboarding,
       }));
     },

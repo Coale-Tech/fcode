@@ -395,14 +395,8 @@ export const IPC = {
     buildCheckDeveloperMode: "pi-desktop/build/checkDeveloperMode",
     /** Build tab — check whether the watchdog Python package is installed. */
     buildCheckWatchdog: "pi-desktop/build/checkWatchdog",
-    /** Code tab — get file content at git HEAD (returns null for untracked). */
-    gitShow: "pi-desktop/git/show",
-    /** Code tab — restore a file from git HEAD (or delete if untracked-new). */
-    gitRestore: "pi-desktop/git/restore",
-    /** Code tab — scan bench apps directory for DocType JSON files + git status. */
+    /** Bench tab — scan bench apps for DocType JSON files + git status. */
     gitScanDoctypes: "pi-desktop/git/scanDoctypes",
-    /** Code tab — get current git branch name for the active workspace. */
-    gitBranch: "pi-desktop/git/branch",
   },
   event: {
     pluginChanged: "pi-desktop/event/pluginChanged",

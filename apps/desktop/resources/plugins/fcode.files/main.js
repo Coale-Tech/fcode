@@ -1,9 +1,9 @@
 "use strict";
 
 /**
- * 文件管理器 — PI-Desktop 插件主进程
+ * Files — Fcode 源码分支主进程
  *
- * 插件 id: pi.file-manager
+ * 插件 id: fcode.files  (Fcode 源码分支；上游 pi.file-manager v0.5.2, MIT, Tioit-Wang)
  * 视图:    contributes.views[0] → views/index.html（右侧工作面板）
  *
  * 为什么用原生 node:fs：
@@ -37,6 +37,7 @@
 
 const fs = require("node:fs/promises");
 const path = require("node:path");
+const { createHash } = require("node:crypto");
 
 // ── 上限 ────────────────────────────────────────────────────────────────────
 
@@ -766,13 +767,14 @@ function asDataUri(mime, buffer) {
 }
 
 async function handleRead(payload) {
-  const { abs, rel } = await resolveTarget(payload, "read");
+  const { abs, rel, rootPath } = await resolveTarget(payload, "read");
 
   const stat = await fs.stat(abs).catch(() => null);
   if (!stat) throw fail("NOT_FOUND", "file not found");
   if (stat.isDirectory()) throw fail("INVALID_PATH", "path is a directory");
 
-  const base = { path: rel, size: stat.size, mtimeMs: stat.mtimeMs };
+  // root：这份内容是从哪个 root 读出来的（项目外路径没有）；视图写 / 落草稿时带回。
+  const base = { path: rel, size: stat.size, mtimeMs: stat.mtimeMs, ...(rootPath ? { root: rootPath } : {}) };
   const extension = path.extname(rel).toLowerCase();
 
   // 数据库：只读 100 字节的头部就能认出它，所以这一支**不做体积限制**——
@@ -872,6 +874,17 @@ async function atomicWrite(abs, serialized, mode) {
 }
 
 async function handleWrite(payload) {
+  // 视图带来缓冲读出时的 root：项目在脏缓冲期间被切走了，这次写绝不能落到别的项目里。
+  if (typeof payload?.root === "string") {
+    const current = await currentRoot();
+    if (!current || !samePath(payload.root, current.path)) {
+      return {
+        ok: false,
+        code: "ROOT_CHANGED",
+        message: "the project folder changed since the file was opened",
+      };
+    }
+  }
   const { abs, rel } = await resolveTarget(payload, "write");
 
   const text = typeof payload?.text === "string" ? payload.text : "";
@@ -898,6 +911,30 @@ async function handleWrite(payload) {
     }
   }
 
+  // 打开时文件存在、现在没了（如 Review 回滚删掉了 agent 新建的文件）：陈旧缓冲
+  // 不能静默把它建回来。用户在冲突框选「覆盖」会以 expectedAbsent 重发。
+  if (!stat && typeof payload?.expectedMtimeMs === "number") {
+    return {
+      ok: false,
+      code: "CONFLICT",
+      message: "the file was deleted on disk since it was opened",
+      deleted: true,
+      mtimeMs: null,
+      size: null,
+    };
+  }
+
+  // 新文件守卫：草稿创建时文件不存在，但现在文件已存在——拒绝静默覆盖。
+  if (payload?.expectedAbsent === true && stat) {
+    return {
+      ok: false,
+      code: "CONFLICT",
+      message: "the file was created externally since the draft was saved",
+      mtimeMs: stat.mtimeMs,
+      size: stat.size,
+    };
+  }
+
   let serialized = text;
   if (payload?.eol === "crlf") serialized = serialized.split("\n").join("\r\n");
   if (payload?.bom) serialized = `\uFEFF${serialized}`;
@@ -913,6 +950,126 @@ async function handleWrite(payload) {
   });
 
   return { ok: true, mtimeMs: next.mtimeMs, size: next.size };
+}
+
+// ── 脏草稿持久化（崩溃 / 插件重载恢复） ──────────────────────────────────────
+
+/**
+ * 草稿文件：SHA-256(rootAbsPath + NUL + rel) 前 40 位十六进制作文件名——定长，
+ * 不同 root 下的同名相对路径互不碰撞，也不会撞 OS 255 字节文件名上限。
+ * root 取视图带来的「这个缓冲从哪个 root 读出来的」（payload.root）——草稿从不碰
+ * 目标路径，它只是哈希输入，所以项目切换后落草稿也不会串到别的项目；没带才退回
+ * 当前选中的 root（文件不存在的新建草稿也适用）。
+ */
+async function draftFile(payload) {
+  if (typeof payload?.rel !== "string" || !payload.rel) throw fail("INVALID_PATH", "rel is required");
+  const rel = normalizeRelative(payload.rel);
+  if (!rel || isDenied(rel, "write")) throw fail("DENIED_PATH", `refused path: ${rel}`);
+  if (!dataPath) throw fail("UNAVAILABLE", "plugin data path not available");
+  const rootPath =
+    typeof payload.root === "string" && payload.root ? payload.root : (await currentRoot())?.path;
+  if (!rootPath) throw fail("NO_WORKSPACE", "no project is open");
+  const key = createHash("sha256")
+    .update(`${canonicalPath(rootPath)}\x00${rel}`)
+    .digest("hex")
+    .slice(0, 40);
+  return { rel, rootPath, file: path.join(dataPath, `${key}.draft.json`) };
+}
+
+let draftTmpSeq = 0;
+
+async function atomicWriteDraft(file, content) {
+  const tmp = `${file}.${process.pid}.${Date.now()}.${(draftTmpSeq += 1)}.tmp`;
+  try {
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    await fs.writeFile(tmp, content, "utf8");
+    await fs.rename(tmp, file);
+  } catch (error) {
+    await fs.rm(tmp, { force: true }).catch(() => {});
+    throw error;
+  }
+}
+
+/**
+ * fm.draft.save — payload: { root, rel, text, expectedMtimeMs, expectedSize, expectedAbsent? }
+ * expectedMtimeMs / expectedSize 是草稿时刻的磁盘锁基准（文件不存在时为 null）；
+ * expectedAbsent: true 表示草稿创建时文件尚不存在，fm.write 发现文件已存在返回 CONFLICT。
+ * root + rel 一并写进 JSON，fm.draft.list 才能按当前 root 列出。
+ */
+async function handleDraftSave(payload) {
+  const { rel, rootPath, file } = await draftFile(payload);
+  const text = typeof payload.text === "string" ? payload.text : "";
+  if (Buffer.byteLength(text, "utf8") > MAX_WRITE_BYTES) {
+    throw fail("TOO_LARGE", "draft exceeds the 8 MiB limit");
+  }
+  const draft = {
+    root: rootPath,
+    rel,
+    text,
+    expectedMtimeMs: typeof payload.expectedMtimeMs === "number" ? payload.expectedMtimeMs : null,
+    expectedSize: typeof payload.expectedSize === "number" ? payload.expectedSize : null,
+    expectedAbsent: payload.expectedAbsent === true,
+    savedAt: Date.now(),
+  };
+  await atomicWriteDraft(file, JSON.stringify(draft));
+  return { ok: true };
+}
+
+/**
+ * fm.draft.load — 读取但不删除：崩溃或二次读取都能再次恢复，直到显式 discard 或覆写。
+ * 缺失 / 损坏的草稿都视为没有草稿。
+ */
+async function handleDraftLoad(payload) {
+  const { file } = await draftFile(payload);
+  let draft;
+  try {
+    draft = JSON.parse(await fs.readFile(file, "utf8"));
+  } catch {
+    return { ok: true, found: false };
+  }
+  return {
+    ok: true,
+    found: true,
+    text: typeof draft.text === "string" ? draft.text : "",
+    expectedMtimeMs: draft.expectedMtimeMs ?? null,
+    expectedSize: draft.expectedSize ?? null,
+    expectedAbsent: draft.expectedAbsent === true,
+    root: typeof draft.root === "string" ? draft.root : undefined,
+  };
+}
+
+const MAX_DRAFT_SCAN = 500;
+const MAX_DRAFT_LIST = 20;
+
+/**
+ * fm.draft.list — 当前 root 下的草稿，最新的在前，有上限。视图启动时据此恢复
+ * 崩溃 / 重载前没存的缓冲。没有 root 字段的旧草稿列不出来（仍可按路径打开时恢复）。
+ */
+async function handleDraftList() {
+  if (!dataPath) throw fail("UNAVAILABLE", "plugin data path not available");
+  const current = await currentRoot();
+  if (!current) throw fail("NO_WORKSPACE", "no project is open");
+  const names = await fs.readdir(dataPath).catch(() => []);
+  const drafts = [];
+  for (const name of names.filter((entry) => entry.endsWith(".draft.json")).slice(0, MAX_DRAFT_SCAN)) {
+    try {
+      const draft = JSON.parse(await fs.readFile(path.join(dataPath, name), "utf8"));
+      if (typeof draft.root === "string" && typeof draft.rel === "string" && samePath(draft.root, current.path)) {
+        drafts.push({ rel: draft.rel, savedAt: Number(draft.savedAt) || 0 });
+      }
+    } catch {
+      /* 损坏的草稿视为没有 */
+    }
+  }
+  drafts.sort((a, b) => b.savedAt - a.savedAt);
+  return { ok: true, drafts: drafts.slice(0, MAX_DRAFT_LIST) };
+}
+
+/** fm.draft.discard — 保存成功或用户选择丢弃时调用。 */
+async function handleDraftDiscard(payload) {
+  const { file } = await draftFile(payload);
+  await fs.rm(file, { force: true });
+  return { ok: true };
 }
 
 // ── 新建 / 重命名 / 移动 ────────────────────────────────────────────────────
@@ -1705,6 +1862,10 @@ const CHANNELS = {
   "fm.sqlite.open": handleSqliteOpen,
   "fm.sqlite.rows": handleSqliteRows,
   "fm.sqlite.query": handleSqliteQuery,
+  "fm.draft.save": handleDraftSave,
+  "fm.draft.load": handleDraftLoad,
+  "fm.draft.list": handleDraftList,
+  "fm.draft.discard": handleDraftDiscard,
 };
 
 async function onPanelInvoke(channel, payload) {

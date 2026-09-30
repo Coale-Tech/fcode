@@ -42,6 +42,7 @@ export function createInitialState(): AppStateData {
         .map(([path]) => [path, true]),
     ),
     workPanelOpen: false,
+    pendingWorkPanelTab: null,
     workPanelTabs: [],
     activeWorkPanelTabId: null,
     workPanelContexts: {},

@@ -927,7 +927,7 @@ sklm: {
       voiceToggle: "切换语音输入",
       voiceCancel: "取消语音输入",
       navToChat: "前往聊天",
-      navToCode: "前往代码编辑器",
+      navToFiles: "打开文件",
       navToBuild: "前往构建",
       navToBench: "前往 Bench",
       toggleFollowLog: "切换日志跟随",
@@ -1747,6 +1747,13 @@ sklm: {
     },
     pluginView: {
       failed: "无法加载该视图。请重新加载插件后重试。",
+      viewReadOnly: "只读查看",
+    },
+    fileOutsideProject: "该文件不在任何已打开的项目中。请将 bench 目录作为项目打开后再浏览其文件。",
+    noSession: {
+      title: "无活动会话",
+      body: "启动新任务或选择会话以打开文件编辑器。",
+      action: "新任务",
     },
     empty: {
     },

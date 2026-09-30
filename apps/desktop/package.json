@@ -36,7 +36,6 @@
   },
   "devDependencies": {
     "@earendil-works/pi-ai": "0.87.1",
-    "@monaco-editor/react": "^4.7.0",
     "@pi-desktop/agent-host": "workspace:*",
     "@pi-desktop/agent-runtime": "workspace:*",
     "@pi-desktop/host-runtime": "workspace:*",
@@ -61,7 +60,6 @@
     "katex": "^0.16.47",
     "lucide-react": "^1.31.0",
     "mermaid": "^11.16.1",
-    "monaco-editor": "^0.57.0",
     "pinyin-pro": "3.29.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",

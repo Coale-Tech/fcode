@@ -927,7 +927,7 @@ sklm: {
       voiceToggle: "切換語音輸入",
       voiceCancel: "取消語音輸入",
       navToChat: "前往聊天",
-      navToCode: "前往程式碼編輯器",
+      navToFiles: "開啟檔案",
       navToBuild: "前往建置",
       navToBench: "前往 Bench",
       toggleFollowLog: "切換記錄跟隨",
@@ -1747,6 +1747,13 @@ sklm: {
     },
     pluginView: {
       failed: "無法載入該檢視。請重新載入外掛後重試。",
+      viewReadOnly: "以唯讀模式檢視",
+    },
+    fileOutsideProject: "該檔案不在任何已開啟的專案中。請將 bench 目錄作為專案開啟後再瀏覽其檔案。",
+    noSession: {
+      title: "無活動工作階段",
+      body: "啟動新工作或選擇工作階段以開啟檔案編輯器。",
+      action: "新工作",
     },
     empty: {
     },

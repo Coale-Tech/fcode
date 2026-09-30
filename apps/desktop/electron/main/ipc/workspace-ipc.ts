@@ -2,9 +2,8 @@ import { BrowserWindow, dialog, shell, type OpenDialogOptions } from "electron";
 import { dirname } from "node:path";
 import { homedir } from "node:os";
 import { existsSync, statSync } from "node:fs";
-import { realpath, unlink } from "node:fs/promises";
+import { realpath } from "node:fs/promises";
 import { isAbsolute, join, resolve } from "node:path";
-import { execFile } from "node:child_process";
 import {
   ErrorCodes,
   IPC,
@@ -39,6 +38,7 @@ import {
   writeWorkspaceFile,
 } from "@pi-desktop/host-runtime";
 import { resolveChatFileRef } from "../chat-ref-resolve";
+import { scanDoctypes } from "../scan-doctypes";
 import { getWorkspaceFileIndex } from "../fs-index";
 import {
   projectFolderPaths,
@@ -949,98 +949,13 @@ export function registerWorkspaceIpc({
   );
 
 
-  // ── Git helpers (Code tab) ────────────────────────────────────────────────
-
-  function spawnGit(cwd: string, args: string[]): Promise<{ code: number; out: string }> {
-    const { promise, resolve: res } = Promise.withResolvers<{ code: number; out: string }>();
-    execFile("git", args, { cwd }, (err, stdout) => {
-      const code = !err ? 0 : typeof err.code === "number" ? err.code : 1;
-      res({ code, out: stdout });
-    });
-    return promise;
-  }
-
-  async function getWorkspaceCwd(): Promise<string | null> {
-    if (!host) return null;
-    const r = (await host.call("workspace.get")) as { workspace: { path: string } | null };
-    return r.workspace?.path ?? null;
-  }
-
-  handle(IPC.invoke.gitShow, async (input: { path?: string; cwd?: string } = {}) => {
-    const relPath = String(input.path ?? "").trim();
-    if (!relPath) throw new Error("path is required");
-    const cwd = String(input.cwd ?? "").trim() || (await getWorkspaceCwd()) || "";
-    if (!cwd) return { content: null };
-    const { code, out } = await spawnGit(cwd, ["show", `HEAD:${relPath}`]);
-    return { content: code === 0 ? out : null };
-  });
-
-  handle(
-    IPC.invoke.gitRestore,
-    async (input: { path?: string; untracked?: boolean; cwd?: string } = {}) => {
-      const relPath = String(input.path ?? "").trim();
-      if (!relPath) throw new Error("path is required");
-      const cwd = String(input.cwd ?? "").trim() || (await getWorkspaceCwd()) || "";
-      if (!cwd) throw new Error("workspace unavailable");
-      const abs = resolve(join(cwd, relPath));
-      if (!abs.startsWith(cwd + "/") && abs !== cwd) {
-        throw Object.assign(new Error("path escapes workspace"), {
-          errorCode: ErrorCodes.INVALID_ARGUMENT,
-        });
-      }
-      if (input.untracked) {
-        await unlink(abs);
-      } else {
-        const { code } = await spawnGit(cwd, ["restore", relPath]);
-        if (code !== 0) throw new Error(`git restore failed for ${relPath}`);
-      }
-      return { ok: true };
-    },
-  );
-
   handle(
     IPC.invoke.gitScanDoctypes,
     async (input: { benchPath?: string } = {}) => {
       const benchPath = String(input.benchPath ?? "").trim();
       if (!benchPath) throw new Error("benchPath is required");
-      const { out: lsOut } = await spawnGit(benchPath, [
-        "ls-files", "--cached", "--others", "--exclude-standard", "apps",
-      ]);
-      const { out: stOut } = await spawnGit(benchPath, [
-        "status", "--porcelain=v1", "--", "apps",
-      ]);
-      const dirtySet = new Set<string>();
-      for (const line of stOut.split("\n")) {
-        const trimmed = line.trim();
-        if (trimmed.length > 3) dirtySet.add(trimmed.slice(3).trim());
-      }
-      const entries: {
-        path: string; app: string; module: string; name: string; dirty: boolean;
-      }[] = [];
-      for (const p of lsOut.split("\n").map((l) => l.trim()).filter(Boolean)) {
-        const parts = p.split("/");
-        // apps/<app>/<app>/<module>/doctype/<name>/<name>.json
-        if (
-          parts.length === 7 &&
-          parts[0] === "apps" &&
-          parts[4] === "doctype" &&
-          parts[6] === `${parts[5]}.json`
-        ) {
-          entries.push({
-            path: p, app: parts[1], module: parts[3], name: parts[5],
-            dirty: dirtySet.has(p),
-          });
-        }
-      }
-      return entries;
+      return scanDoctypes(benchPath);
     },
   );
-
-  handle(IPC.invoke.gitBranch, async (input: { cwd?: string } = {}) => {
-    const cwd = String(input.cwd ?? "").trim() || (await getWorkspaceCwd()) || "";
-    if (!cwd) return { branch: null };
-    const { code, out } = await spawnGit(cwd, ["rev-parse", "--abbrev-ref", "HEAD"]);
-    return { branch: code === 0 ? out.trim() : null };
-  });
 
 }

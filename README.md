@@ -4,7 +4,7 @@
 
 ### AI coding agent for Frappe and ERPNext developers
 
-**Fcode is a desktop AI coding agent for Frappe/ERPNext developers — forked from [PI-Desktop](https://github.com/vastsa/PI-Desktop) and powered by omp, giving you a supervised local bench, a Monaco code editor, and Studio/Builder canvas integration alongside a persistent AI agent that understands Frappe's anatomy.**
+**Fcode is a desktop AI coding agent for Frappe/ERPNext developers — forked from [PI-Desktop](https://github.com/vastsa/PI-Desktop) and powered by omp, giving you a supervised local bench, an in-app file editor, and Studio/Builder canvas integration alongside a persistent AI agent that understands Frappe's anatomy.**
 
 [![Release](https://img.shields.io/github/v/release/Coale-Tech/fcode?include_prereleases&label=release)](https://github.com/Coale-Tech/fcode/releases)
 [![CI](https://github.com/Coale-Tech/fcode/actions/workflows/ci.yml/badge.svg)](https://github.com/Coale-Tech/fcode/actions/workflows/ci.yml)
@@ -21,7 +21,7 @@
 
 ## Current status
 
-Fcode has replaced the legacy Pi agent runtime with **omp** ([oh-my-pi](https://github.com/can1357/oh-my-pi)) and added the Code (Monaco editor), Build (Studio/Builder canvas), and Bench (Frappe bench cockpit) surfaces, Frappe bench discovery and supervision, and Frappe-specific skills and bench tools — on top of the inherited shell (isolated Fcode data directories, project opening, persistent sessions, model-provider configuration, permissions, plugins).
+Fcode has replaced the legacy Pi agent runtime with **omp** ([oh-my-pi](https://github.com/can1357/oh-my-pi)) and added the Build (Studio/Builder canvas) and Bench (Frappe bench cockpit) surfaces, an in-app Files editor in Chat's work panel, Frappe bench discovery and supervision, and Frappe-specific skills and bench tools — on top of the inherited shell (isolated Fcode data directories, project opening, persistent sessions, model-provider configuration, permissions, plugins).
 
 The release pipeline builds macOS (arm64 + x64), Linux (x64), and Windows (x64) artifacts. Two things remain incomplete:
 

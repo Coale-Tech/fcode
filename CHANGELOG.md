@@ -10,6 +10,14 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 
+### Changes
+
+- One in-app editor: files open in the Files view of Chat's work panel (`fcode.files`, a source-owned CodeMirror fork of the file-manager plugin, `Mod+2`). The separate Monaco Code page, its Changed panel, and the `monaco-editor` dependency are removed.
+- Unsaved edits in Files survive a crash or plugin reload as a draft; a recovered draft checks the file on disk before saving, so a Review rollback or agent write can no longer be silently overwritten.
+- DocType browser moved to Bench; opening a DocType file opens it in Chat → Files. Migrate needs an explicit site when a bench has several.
+- Removed the whole-file `git restore` path; Review snapshot rollback is the only way to undo agent changes.
+- `navToCode` shortcut renamed `navToFiles`; custom bindings carry over. Saved `pi.file-manager` tabs move to `fcode.files`.
+
 ## [0.16.0] — 2026-09-29
 
 ### Compatibility

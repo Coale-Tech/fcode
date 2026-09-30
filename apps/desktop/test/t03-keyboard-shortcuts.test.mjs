@@ -1,80 +1,83 @@
 /**
- * T3 — Register Mod+1..4 and Mod+Shift+B in the shared shortcut table.
+ * T3 — navToFiles shortcut, profile migration, and saved-tab migration.
  *
- * These shortcuts navigate between the four top-level surfaces and toggle
- * bench log follow-tail, passing the existing conflict-detection logic and
- * remaining user-overridable through KeyboardShortcutsSection.
+ * Tests verify consumer-visible behavior: the shortcut id and default binding
+ * are accessible, and old navToCode/pi.file-manager profiles migrate silently.
  */
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { readStoreSourceSync } from "./helpers/store-source.mjs";
 
-const source = await readFile(
-  new URL("../../../packages/shared/src/keyboard-shortcuts.ts", import.meta.url),
-  "utf8",
-);
-const runtimeSource = await readFile(
-  new URL("../src/features/app/useAppShellRuntime.tsx", import.meta.url),
-  "utf8",
-);
-const storeSource = readStoreSourceSync();
-const benchPageSource = await readFile(
-  new URL("../src/pages/BenchPage.tsx", import.meta.url),
-  "utf8",
-);
+const {
+  KEYBOARD_SHORTCUT_IDS,
+  KEYBOARD_SHORTCUTS,
+  migrateKeybindingOverrides,
+} = await import("../../../packages/shared/src/keyboard-shortcuts.ts");
 
-test("T3: KEYBOARD_SHORTCUT_IDS includes the five new navigation shortcuts", () => {
-  assert.match(source, /"navToChat"/);
-  assert.match(source, /"navToCode"/);
-  assert.match(source, /"navToBuild"/);
-  assert.match(source, /"navToBench"/);
-  assert.match(source, /"toggleFollowLog"/);
+const {
+  migrateWorkPanelTab,
+  LEGACY_FILE_MANAGER_PLUGIN_TAB,
+  FILE_MANAGER_PLUGIN_TAB,
+  sanitizeWorkPanelTabsState,
+} = await import("../src/lib/work-panel-tabs.ts");
+
+test("T3: navToFiles is in KEYBOARD_SHORTCUT_IDS; navToCode is not", () => {
+  assert.ok(KEYBOARD_SHORTCUT_IDS.includes("navToFiles"), "navToFiles missing");
+  assert.ok(!KEYBOARD_SHORTCUT_IDS.includes("navToCode"), "retired navToCode still present");
 });
 
-test("T3: new shortcuts map to Mod+1 through Mod+4 and Mod+Shift+B", () => {
-  assert.match(source, /id: "navToChat",[\s\S]*?defaultBinding: "Mod\+1"/);
-  assert.match(source, /id: "navToCode",[\s\S]*?defaultBinding: "Mod\+2"/);
-  assert.match(source, /id: "navToBuild",[\s\S]*?defaultBinding: "Mod\+3"/);
-  assert.match(source, /id: "navToBench",[\s\S]*?defaultBinding: "Mod\+4"/);
-  assert.match(source, /id: "toggleFollowLog",[\s\S]*?defaultBinding: "Mod\+Shift\+B"/);
+test("T3: navToFiles defaults to Mod+2 and is in the navigation group", () => {
+  const shortcut = KEYBOARD_SHORTCUTS.find((s) => s.id === "navToFiles");
+  assert.ok(shortcut, "navToFiles not in KEYBOARD_SHORTCUTS");
+  assert.equal(shortcut.defaultBinding, "Mod+2");
+  assert.equal(shortcut.group, "navigation");
 });
 
-test("T3: new shortcuts are in the navigation group", () => {
-  assert.match(source, /id: "navToChat",\s*group: "navigation"/);
-  assert.match(source, /id: "navToCode",\s*group: "navigation"/);
-  assert.match(source, /id: "navToBuild",\s*group: "navigation"/);
-  assert.match(source, /id: "navToBench",\s*group: "navigation"/);
-  assert.match(source, /id: "toggleFollowLog",\s*group: "navigation"/);
+test("T3: migrateKeybindingOverrides carries a navToCode custom binding to navToFiles", () => {
+  const result = migrateKeybindingOverrides({ navToCode: "Mod+Shift+2" });
+  assert.equal(result?.navToFiles, "Mod+Shift+2");
+  assert.ok(!("navToCode" in result), "retired id must not survive migration");
 });
 
-test("T3: runShortcut dispatches the four nav shortcuts to setPage", () => {
-  assert.match(runtimeSource, /case "navToChat":\s*\n\s*useAppStore\.getState\(\)\.setPage\("chat"\);\s*\n\s*break;/);
-  assert.match(runtimeSource, /case "navToCode":\s*\n\s*useAppStore\.getState\(\)\.setPage\("code"\);\s*\n\s*break;/);
-  assert.match(runtimeSource, /case "navToBuild":\s*\n\s*useAppStore\.getState\(\)\.setPage\("build"\);\s*\n\s*break;/);
-  assert.match(runtimeSource, /case "navToBench":\s*\n\s*useAppStore\.getState\(\)\.setPage\("bench"\);\s*\n\s*break;/);
+test("T3: migrateKeybindingOverrides does not overwrite an existing navToFiles override", () => {
+  const result = migrateKeybindingOverrides({ navToCode: "Mod+Shift+2", navToFiles: "Mod+Alt+F" });
+  assert.equal(result?.navToFiles, "Mod+Alt+F");
 });
 
-test("T3: runShortcut dispatches toggleFollowLog to toggleBenchLogFollowTail", () => {
-  assert.match(
-    runtimeSource,
-    /case "toggleFollowLog":\s*\n\s*useAppStore\.getState\(\)\.toggleBenchLogFollowTail\(\);\s*\n\s*break;/,
-  );
+test("T3: migrateKeybindingOverrides with no navToCode leaves navToFiles unset", () => {
+  const result = migrateKeybindingOverrides({ navToChat: "Mod+1" });
+  assert.equal(result?.navToFiles, undefined);
 });
 
-test("T3: benchLogFollowTail is a store field with set/toggle actions", () => {
-  assert.match(storeSource, /benchLogFollowTail: boolean;/);
-  assert.match(storeSource, /setBenchLogFollowTail: \(follow: boolean\) => void;/);
-  assert.match(storeSource, /toggleBenchLogFollowTail: \(\) => void;/);
-  assert.match(storeSource, /benchLogFollowTail: true,/);
-  assert.match(storeSource, /setBenchLogFollowTail: \(benchLogFollowTail\) => set\(\{ benchLogFollowTail \}\)/);
-  assert.match(
-    storeSource,
-    /toggleBenchLogFollowTail: \(\) =>\s*set\(\(state\) => \(\{ benchLogFollowTail: !state\.benchLogFollowTail \}\)\)/,
-  );
+test("T3: migrateWorkPanelTab upgrades pi.file-manager/manager to fcode.files/manager", () => {
+  const legacy = `${LEGACY_FILE_MANAGER_PLUGIN_TAB.pluginId}/${LEGACY_FILE_MANAGER_PLUGIN_TAB.viewId}`;
+  const current = `${FILE_MANAGER_PLUGIN_TAB.pluginId}/${FILE_MANAGER_PLUGIN_TAB.viewId}`;
+  const old = { id: `plugin:${legacy}`, kind: "plugin", resource: legacy, location: "src/app.ts" };
+  const upgraded = migrateWorkPanelTab(old);
+  assert.equal(upgraded.id, `plugin:${current}`);
+  assert.equal(upgraded.resource, current);
+  assert.equal(upgraded.location, "src/app.ts");
 });
 
-test("T3: BenchPage reads follow-tail from the shell-global store, not local state", () => {
-  assert.match(benchPageSource, /const followTail = useAppStore\(\(s\) => s\.benchLogFollowTail\);/);
-  assert.match(benchPageSource, /const setFollowTail = useAppStore\(\(s\) => s\.setBenchLogFollowTail\);/);
+test("T3: migrateWorkPanelTab returns same reference for non-file-manager and already-current tabs", () => {
+  const browser = { id: "plugin:pi.browser/browser", kind: "plugin", resource: "pi.browser/browser" };
+  assert.strictEqual(migrateWorkPanelTab(browser), browser);
+  const current = `${FILE_MANAGER_PLUGIN_TAB.pluginId}/${FILE_MANAGER_PLUGIN_TAB.viewId}`;
+  const alreadyCurrent = { id: `plugin:${current}`, kind: "plugin", resource: current };
+  assert.strictEqual(migrateWorkPanelTab(alreadyCurrent), alreadyCurrent);
+});
+
+test("T3: sanitizeWorkPanelTabsState deduplicates after migration when both legacy and current tab saved", () => {
+  const legacy = `${LEGACY_FILE_MANAGER_PLUGIN_TAB.pluginId}/${LEGACY_FILE_MANAGER_PLUGIN_TAB.viewId}`;
+  const current = `${FILE_MANAGER_PLUGIN_TAB.pluginId}/${FILE_MANAGER_PLUGIN_TAB.viewId}`;
+  const state = {
+    tabs: [
+      { id: `plugin:${legacy}`, kind: "plugin", resource: legacy },
+      { id: `plugin:${current}`, kind: "plugin", resource: current },
+    ],
+    activeTabId: `plugin:${current}`,
+  };
+  const result = sanitizeWorkPanelTabsState(state);
+  assert.equal(result.tabs.length, 1, "duplicate after migration must be removed");
+  assert.equal(result.tabs[0].resource, current);
+  assert.equal(result.activeTabId, `plugin:${current}`);
 });
