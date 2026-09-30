@@ -142,3 +142,12 @@ test("T14: focus is restored to trigger on dialog cancel (handleDialogCancel)", 
 test("B9: elapsed label is only rendered for an active (starting/running) bench", () => {
   assert.match(source, /elapsedLabel && \(status === "starting" \|\| status === "running"\)/);
 });
+
+test("log lines are shown only for the bench they belong to (no bleed into another selection)", () => {
+  assert.match(source, /logLines=\{selectedBench\.path === logPath \? logLines : NO_LOGS\}/);
+  // selecting a bench must not wipe the buffer (A's log returns when A is reselected)
+  assert.doesNotMatch(source, /const selectBench = useCallback\(\(id: string\) => \{[^}]*setLogLines/);
+  // a new start re-owns the buffer; a supervisor bench change re-seeds it
+  assert.match(source, /handleStart[\s\S]{0,400}setLogPath\(selectedBench\.path\)[\s\S]{0,80}setLogLines\(\[\]\)/);
+  assert.match(source, /s\.benchPath !== logPathRef\.current/);
+});

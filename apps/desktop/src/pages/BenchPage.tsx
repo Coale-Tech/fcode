@@ -97,6 +97,8 @@ async function invoke<T>(channel: string, args?: unknown): Promise<T> {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
+const NO_LOGS: LogLine[] = [];
+
 export function BenchPage() {
   // Discovery
   const [benches, setBenches] = useState<BenchSummary[]>([]);
@@ -109,6 +111,10 @@ export function BenchPage() {
   const [status, setStatus] = useState<BenchStatus>("stopped");
   const [activeBenchPath, setActiveBenchPath] = useState<string | null>(null);
   const [logLines, setLogLines] = useState<LogLine[]>([]);
+  // Bench the buffered logLines belong to; events carry no path, so scope by this.
+  const [logPath, setLogPath] = useState<string | null>(null);
+  const logPathRef = useRef<string | null>(null);
+  logPathRef.current = logPath;
   // Bench log follow-tail is shell-global state (toggleFollowLog / Mod+Shift+B
   // must reach it from useAppShellRuntime, outside this component).
   const followTail = useAppStore((s) => s.benchLogFollowTail);
@@ -191,9 +197,13 @@ export function BenchPage() {
           if (s.startedAt != null) {
             startMsRef.current = s.startedAt;
           }
-          if (s.logs && s.logs.length > 0) {
-            setLogLines(s.logs);
-          }
+        }
+        // The supervisor's bench owns the log buffer; re-seed when it changes
+        // (first poll, or a bench started outside this page).
+        if (s.benchPath && s.benchPath !== logPathRef.current) {
+          logPathRef.current = s.benchPath;
+          setLogPath(s.benchPath);
+          setLogLines(s.logs ?? []);
         }
       } catch { /* ignore */ }
     };
@@ -280,7 +290,6 @@ export function BenchPage() {
   const selectBench = useCallback((id: string) => {
     setSelectedId(id);
     setDetailKey((k) => k + 1); // triggers T16 cross-fade
-    setLogLines([]);
   }, []);
 
   // B9: on initial bench list load, prefer the bench the supervisor is running.
@@ -380,6 +389,9 @@ export function BenchPage() {
     setStartFailure(null);
     setWarnings([]);
     startMsRef.current = Date.now();
+    logPathRef.current = selectedBench.path;
+    setLogPath(selectedBench.path);
+    setLogLines([]);
     try {
       await invoke(IPC.invoke.benchStart, { benchPath: selectedBench.path });
       setStatus("starting");
@@ -649,7 +661,7 @@ export function BenchPage() {
             bench={selectedBench}
             status={displayStatus}
             anotherBenchRunning={anotherBenchRunning}
-            logLines={logLines}
+            logLines={selectedBench.path === logPath ? logLines : NO_LOGS}
             followTail={followTail}
             onFollowTailChange={setFollowTail}
             onStart={handleStart}
