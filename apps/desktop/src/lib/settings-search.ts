@@ -11,6 +11,7 @@ export type SettingsTabId =
   | "shortcuts"
   | "instructions"
   | "agent"
+  | "memory"
   | "import"
   | "projects"
   | "sync"
@@ -172,6 +173,18 @@ export const SETTINGS_NAV: SettingsNavEntry[] = [
       "settings.apiKey",
       "settings.baseUrl",
       "settings.apiStyle",
+    ],
+  },
+  {
+    id: "memory",
+    labelKey: "settings.nav.memory",
+    titleKey: "settings.memoryTitle",
+    group: "agent",
+    keywordKeys: [
+      "settings.memoryTitle",
+      "settings.memoryBackend",
+      "settings.memoryHindsightUrl",
+      "settings.memoryHindsightToken",
     ],
   },
   {

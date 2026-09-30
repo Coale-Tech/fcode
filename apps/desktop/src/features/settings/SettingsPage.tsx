@@ -19,6 +19,7 @@ import { pluginViewIcon } from "../../lib/plugin-view-icons";
 import {
   IconArchive,
   IconBot,
+  IconDatabase,
   IconChevronLeft,
   IconDownload,
   IconFileText,
@@ -39,6 +40,7 @@ import { FontFamilyRow } from "../../components/settings/FontFamilyRow";
 import { ThinkingDisplayModeRow } from "../../components/settings/ThinkingDisplayModeRow";
 import { FontSizeRow } from "../../components/settings/FontSizeRow";
 import { LanguageRow } from "../../components/settings/LanguageRow";
+import { MemoryTab, memoryHealth } from "./MemoryTab";
 import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect";
 import { ThemeRow } from "../../components/settings/ThemeRow";
 import { NetworkProxySection } from "../../components/settings/NetworkProxySection";
@@ -84,6 +86,8 @@ export function SettingsPage() {
   const settings = useAppStore((s) => s.settings);
   const version = useAppStore((s) => s.version);
   const refreshProviders = useAppStore((s) => s.refreshProviders);
+  const memStatus = useAppStore((s) => s.memoryStatus);
+  const mHealth = memoryHealth(memStatus);
   const platform = (window.piDesktop?.platform ?? "darwin") as ShortcutPlatform;
 
   // Developer-only destinations (Cloud sync and Remote Hosts) exist only
@@ -223,6 +227,7 @@ export function SettingsPage() {
       shortcuts: <IconKeyboard size={14} />,
       instructions: <IconFileText size={14} />,
       agent: <IconBot size={14} />,
+      memory: <IconDatabase size={14} />,
       import: <IconDownload size={14} />,
       projects: <IconArchive size={14} />,
       sync: <IconCloudDown size={14} />,
@@ -310,7 +315,13 @@ export function SettingsPage() {
                   >
                     <span className="settings-nav-icon">{item.icon}</span>
                     <span className="settings-nav-label">{t(item.labelKey)}</span>
-                    {item.experimentalBadgeKey ? (
+                    {item.id === "memory" ? (
+                      <span
+                        className="memory-status-dot"
+                        data-health={mHealth}
+                        aria-label={t(`settings.memoryStatus${mHealth[0].toUpperCase()}${mHealth.slice(1)}`)}
+                      />
+                    ) : item.experimentalBadgeKey ? (
                       <Badge tone="warning" className="settings-nav-experimental">
                         {t(item.experimentalBadgeKey)}
                       </Badge>
@@ -542,6 +553,8 @@ export function SettingsPage() {
           )}
 
           {tab === "agent" && <ModelConfigPage />}
+
+          {tab === "memory" && <MemoryTab />}
 
           {tab === "instructions" && <AgentInstructionsSection />}
 

@@ -1,3 +1,4 @@
+import type { MemoryBackendStatus } from "../../memory-backend/types";
 /**
  * RPC Client for programmatic access to the coding agent.
  *
@@ -687,6 +688,14 @@ export class RpcClient {
 	 */
 	async newSession(parentSession?: string): Promise<{ cancelled: boolean }> {
 		const response = await this.#send({ type: "new_session", parentSession });
+		return this.#getData(response);
+	}
+
+	/**
+	 * Memory backend health. Never rejects on backend failure; check `error`.
+	 */
+	async getMemoryStatus(): Promise<MemoryBackendStatus & { latencyMs: number }> {
+		const response = await this.#send({ type: "get_memory_status" });
 		return this.#getData(response);
 	}
 

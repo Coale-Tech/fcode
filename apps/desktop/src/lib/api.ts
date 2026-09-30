@@ -128,6 +128,9 @@ import type {
   OmpThinkingLevelsResult,
   OmpCommandsListResult,
   OmpStateResult,
+  OmpMemoryStatusResult,
+  MemoryConfig,
+  MemoryConfigView,
   OmpLoginProvidersResult,
   OmpLoginStartResult,
   OmpSessionBranchResult,
@@ -1634,6 +1637,13 @@ export const api = {
   /** Get the current omp session state snapshot. */
   ompState: () =>
     invoke<OmpStateResult>(IPC.invoke.ompState),
+  /** Memory backend health from the running omp session. */
+  ompMemoryStatus: () =>
+    invoke<OmpMemoryStatusResult>(IPC.invoke.ompMemoryStatus),
+  memoryGetConfig: () => invoke<MemoryConfigView>(IPC.invoke.memoryGetConfig),
+  /** Persist config; `token` is write-only. Restarts the agent sidecar. */
+  memorySetConfig: (input: MemoryConfig & { token?: string }) =>
+    invoke<MemoryConfigView>(IPC.invoke.memorySetConfig, input),
   /** List login providers known to omp. */
   ompLoginProviders: () =>
     invoke<OmpLoginProvidersResult>(IPC.invoke.ompLoginProviders),

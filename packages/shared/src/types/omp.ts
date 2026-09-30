@@ -84,3 +84,29 @@ export interface OmpSessionBranchResult {
   text: string;
   cancelled: boolean;
 }
+
+/** Result of `omp.memory.status` (omp `get_memory_status`). */
+export interface OmpMemoryStatusResult {
+  backend: "mnemopi" | "hindsight" | "local" | "off";
+  active: boolean;
+  writable: boolean;
+  searchable: boolean;
+  scope?: string;
+  retainBank?: string;
+  workingCount?: number;
+  episodicCount?: number;
+  tripleCount?: number;
+  message?: string;
+  error?: string;
+  latencyMs: number;
+}
+
+/** Fcode-owned memory backend selection. The Hindsight token is write-only. */
+export interface MemoryConfig {
+  backend: "mnemopi" | "hindsight" | "off";
+  hindsightUrl?: string;
+  hindsightBank?: string;
+}
+export interface MemoryConfigView extends MemoryConfig {
+  hasToken: boolean;
+}

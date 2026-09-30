@@ -31,7 +31,7 @@ import {
 	cfgMnemopiScoping,
 } from "./settings";
 
-export type MnemopiLlmMode = "none" | "smol" | "remote";
+export type MnemopiLlmMode = "none" | "smol" | "remote" | "session";
 
 export type MnemopiScoping = "global" | "per-project" | "per-project-tagged";
 

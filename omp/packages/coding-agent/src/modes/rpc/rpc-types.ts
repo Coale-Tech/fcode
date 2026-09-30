@@ -12,6 +12,7 @@ import type { ContextUsage } from "../../extensibility/extensions/types";
 import type { AgentSessionEvent, SessionStats } from "../../session/agent-session";
 import type { FileEntry, SessionEntry, SessionTreeNode } from "../../session/session-entries";
 import type { AvailableSlashCommandSource } from "../../slash-commands/available-commands";
+import type { MemoryBackendStatus } from "../../memory-backend/types";
 import type { AgentProgress } from "@oh-my-pi/pi-tui/tools/task";
 import type { SubagentEventPayload, SubagentLifecyclePayload, SubagentProgressPayload } from "../../task";
 import type { TodoPhase } from "@oh-my-pi/pi-tui/tools/todo";
@@ -36,6 +37,7 @@ export type RpcCommand =
 
 	// State
 	| { id?: string; type: "get_state" }
+	| { id?: string; type: "get_memory_status" }
 	| { id?: string; type: "set_fast_mode"; enabled: boolean }
 	| { id?: string; type: "get_available_commands" }
 	| { id?: string; type: "get_entries"; since?: string }
@@ -266,6 +268,13 @@ export type RpcResponse =
 
 	// State
 	| { id?: string; type: "response"; command: "get_state"; success: true; data: RpcSessionState }
+	| {
+			id?: string;
+			type: "response";
+			command: "get_memory_status";
+			success: true;
+			data: MemoryBackendStatus & { latencyMs: number };
+	  }
 	| {
 			id?: string;
 			type: "response";

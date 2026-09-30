@@ -215,7 +215,7 @@ export const cfgMnemopiEmbeddingApiKey = register({
 export const cfgMnemopiLlmMode = register({
 	id: "mnemopi.llmMode",
 	type: "enum",
-	values: ["none", "smol", "remote"] as const,
+	values: ["none", "smol", "remote", "session"] as const,
 	default: "smol",
 	ui: {
 		tab: "memory",
@@ -232,6 +232,7 @@ export const cfgMnemopiLlmMode = register({
 				description: "Use the online tiny model (the TINY role from /models, else @smol)",
 			},
 			{ value: "remote", label: "Remote", description: "Use the Mnemopi remote LLM settings below" },
+			{ value: "session", label: "Session model", description: "Use the model of the current chat session" },
 		],
 	},
 });

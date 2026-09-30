@@ -121,7 +121,7 @@ export const mnemopiBackend: MemoryBackend = {
 		}
 
 		try {
-			const config = await loadMnemopiConfigWithProviders(settings, agentDir, modelRegistry, sessionId);
+			const config = await loadMnemopiConfigWithProviders(settings, agentDir, modelRegistry, sessionId, session);
 			await Promise.all([loadMnemopi(), loadMnemopiCore()]);
 			await installMnemopiState(session, config);
 		} catch (error) {
@@ -194,6 +194,7 @@ export const mnemopiBackend: MemoryBackend = {
 					agentDir,
 					session.modelRegistry,
 					session.sessionId,
+					session,
 				);
 				await Promise.all([loadMnemopi(), loadMnemopiCore()]);
 				state = await installMnemopiState(session, config);
@@ -491,9 +492,10 @@ async function loadMnemopiConfigWithProviders(
 	agentDir: string,
 	modelRegistry: ModelRegistry,
 	sessionId: string,
+	session: AgentSession,
 ): Promise<MnemopiBackendConfig> {
 	const config = loadMnemopiConfig(settings, agentDir);
-	config.providerOptions = await resolveMnemopiProviderOptions(config, settings, modelRegistry, sessionId);
+	config.providerOptions = await resolveMnemopiProviderOptions(config, settings, modelRegistry, sessionId, session);
 	return config;
 }
 
@@ -516,11 +518,12 @@ async function openrouterKeyResolver(
 	return modelRegistry.resolver("openrouter", { sessionId });
 }
 
-async function resolveMnemopiProviderOptions(
+export async function resolveMnemopiProviderOptions(
 	config: MnemopiBackendConfig,
 	settings: MemoryBackendStartOptions["settings"],
 	modelRegistry: ModelRegistry,
 	sessionId: string,
+	session: Pick<AgentSession, "runEphemeralTurn">,
 ): Promise<MnemopiProviderOptions> {
 	const base: MnemopiProviderOptions = {
 		noEmbeddings: config.providerOptions.noEmbeddings,
@@ -533,6 +536,34 @@ async function resolveMnemopiProviderOptions(
 	};
 
 	if (config.llmMode === "none") return base;
+
+	// Use the chat session's own model via a side request that never touches
+	// session history. Bounded context: memory extraction needs no chat history.
+	if (config.llmMode === "session") {
+		const complete = async (prompt: string, opts?: MnemopiLlmCompleteOptions): Promise<string | null> => {
+			const request = resolveMemoryCompletionInput(prompt, opts);
+			try {
+				const result = await session.runEphemeralTurn({
+					promptText: request.systemPrompt ? `${request.systemPrompt}\n\n${request.prompt}` : request.prompt,
+					history: [],
+					tools: false,
+					maxTokens: opts?.maxTokens,
+					maxContextBytes: 256 * 1024,
+					signal:
+						typeof opts?.timeout === "number" && Number.isFinite(opts.timeout) && opts.timeout > 0
+							? AbortSignal.timeout(opts.timeout)
+							: undefined,
+				});
+				return result.replyText.trim();
+			} catch (error) {
+				logger.warn("Mnemopi: session-model completion failed; continuing without LLM.", {
+					error: error instanceof Error ? error.message : String(error),
+				});
+				return null;
+			}
+		};
+		return { ...base, llm: { complete, consolidationPrompt: memoryConsolidationPrompt } };
+	}
 
 	// An explicitly configured external Mnemopi endpoint remains authoritative;
 	// role selection only supplies the normal managed-model path.

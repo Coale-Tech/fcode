@@ -15,7 +15,8 @@ import * as path from "node:path";
 import { ThinkingLevel } from "@oh-my-pi/pi-agent-core";
 import { getOAuthProviders } from "@oh-my-pi/pi-ai/oauth";
 import { toolWireSchema } from "@oh-my-pi/pi-ai/utils/schema";
-import { $env, isRecord, logger, Snowflake } from "@oh-my-pi/pi-utils";
+import { $env, getAgentDir, isRecord, logger, Snowflake } from "@oh-my-pi/pi-utils";
+import { createSessionMemoryRuntimeContext } from "../../memory-backend/runtime";
 import { clearPluginRootsAndCaches, resolveActiveProjectRegistryPath } from "../../discovery/helpers";
 import {
 	type ExtensionUIContext,
@@ -1301,6 +1302,29 @@ export async function runRpcMode(session: AgentSession, options: RpcModeOptions 
 					contextUsage: session.getContextUsage(),
 				};
 				return success(id, "get_state", state);
+			}
+
+			case "get_memory_status": {
+				// Never throws: a failing backend is reported as data so the host can show it.
+				const startedAt = performance.now();
+				const latency = () => Math.round(performance.now() - startedAt);
+				try {
+					const status = await createSessionMemoryRuntimeContext(
+						session,
+						getAgentDir(),
+						session.sessionManager.getCwd(),
+					).status();
+					return success(id, "get_memory_status", { ...status, latencyMs: latency() });
+				} catch (err) {
+					return success(id, "get_memory_status", {
+						backend: "off",
+						active: false,
+						writable: false,
+						searchable: false,
+						error: err instanceof Error ? err.message : String(err),
+						latencyMs: latency(),
+					});
+				}
 			}
 
 			case "set_fast_mode": {
