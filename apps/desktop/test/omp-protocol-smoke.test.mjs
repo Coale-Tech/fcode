@@ -80,7 +80,7 @@ test(
   "omp --mode rpc protocol smoke: handshake negotiates exactly version 2",
   {
     skip: ompBinary ? false : binaryMissingMsg,
-    timeout: 15_000,
+    timeout: 120_000, // omp loads user extensions before answering; 25-50s on a busy dev machine
   },
   () =>
     new Promise((done, fail) => {
