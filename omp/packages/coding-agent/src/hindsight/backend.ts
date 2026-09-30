@@ -11,11 +11,16 @@ import type { AgentMessage } from "@oh-my-pi/pi-agent-core";
 import { logger, prompt } from "@oh-my-pi/pi-utils";
 import type { Settings } from "../config/settings";
 import { memoryToolRefs } from "../memory-backend/tool-names";
-import type { MemoryBackend, MemoryBackendStartOptions, MemoryPromptPreparation } from "../memory-backend/types";
+import type {
+	MemoryBackend,
+	MemoryBackendStartOptions,
+	MemoryBackendStatus,
+	MemoryPromptPreparation,
+} from "../memory-backend/types";
 import hindsightInstructions from "../prompts/system/hindsight-instructions.md" with { type: "text" };
 import type { AgentSession } from "../session/agent-session";
 import { type BankScope, computeBankScope } from "./bank";
-import { createHindsightClient } from "./client";
+import { createHindsightClient, HindsightError } from "./client";
 import { type HindsightConfig, isHindsightConfigured, loadHindsightConfig } from "./config";
 import { type HindsightMessage, hasSubstantiveContent } from "./content";
 import { HindsightSessionState } from "./state";
@@ -74,6 +79,26 @@ export const hindsightBackend: MemoryBackend = {
 		}
 
 		await installPrimaryState(session, settings, new Set());
+	},
+
+	async status({ session }): Promise<MemoryBackendStatus> {
+		const state = session?.getHindsightSessionState();
+		const primary = state?.aliasOf ?? state;
+		const base = { backend: "hindsight", writable: false, searchable: false } as const;
+		if (!primary) {
+			return { ...base, active: false, message: "Hindsight backend is not initialised for this session." };
+		}
+		const info = { scope: primary.config.scoping, retainBank: primary.bankId };
+		try {
+			// Cheap reachability + auth + bank probe; 2s cap keeps the health poller responsive.
+			await primary.client.listMemories(primary.bankId, { limit: 1, signal: AbortSignal.timeout(2000) });
+			return { ...base, ...info, active: true, writable: true, searchable: true };
+		} catch (err) {
+			if (err instanceof HindsightError && err.statusCode === 404) {
+				return { ...base, ...info, active: false, message: `Hindsight bank "${primary.bankId}" does not exist yet.` };
+			}
+			return { ...base, ...info, active: false, error: err instanceof Error ? err.message : String(err) };
+		}
 	},
 
 	async buildDeveloperInstructions(_agentDir, settings, session): Promise<string | undefined> {
