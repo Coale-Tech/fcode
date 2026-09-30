@@ -107,7 +107,7 @@ Other coupling points to update: `scripts/fcode-doctor.mjs`,
 `scripts/check-legal.mjs` (must exclude `omp/` from the upstream-identity
 scan; scan scope not yet read), `NOTICE.md`, `README.md`,
 `docs/fcode/README.md`, `CHANGELOG.md`, `apps/desktop/package.json`
-`bundle:runtime` (unchanged command, new behavior), new ADR 0088.
+`bundle:runtime` (unchanged command, new behavior), new ADR 0307.
 
 omp's own tests: keep `test/` dirs in kept packages; CI runs a curated
 subset (`mnemopi` and the RPC/memory tests touched later), not omp's
@@ -132,7 +132,7 @@ Nothing is committed to Fcode until step 1 passes.
 4. Wiring commit: `build-omp.mjs`, excludes, `check-legal`, `fcode-doctor`.
 5. CI commit: `release.yml`.
 6. Docs commit: `NOTICE.md`, READMEs, CHANGELOG, `docs/fcode/README.md`,
-   ADR 0088.
+   ADR 0307.
 
 ## 7. Acceptance
 
@@ -157,4 +157,4 @@ Nothing is committed to Fcode until step 1 passes.
   never re-import.
 - Linux/Windows builds unverified until CI runs.
 - No upstream sync: security and bug fixes upstream must be ported
-  manually; ADR 0088 records this as accepted.
+  manually; ADR 0307 records this as accepted.

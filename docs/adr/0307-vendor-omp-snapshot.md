@@ -1,4 +1,4 @@
-# ADR 0088: Vendor omp as a pruned snapshot
+# ADR 0307: Vendor omp as a pruned snapshot
 
 - Status: Implemented
 - Date: 2026-09-30
