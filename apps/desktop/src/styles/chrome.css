@@ -1318,8 +1318,8 @@
 }
 
 .nav-rail-label {
-  font-size: 10px;
-  line-height: 12px;
+  font-size: var(--text-tiny);
+  line-height: var(--leading-tighter);
   font-weight: var(--font-weight-medium);
 }
 
