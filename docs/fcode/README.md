@@ -15,7 +15,7 @@ Fcode is a desktop AI coding agent for Frappe/ERPNext developers. It forks [PI-D
 | Rust (stable) | latest stable | [rustup.rs](https://rustup.rs/) |
 | Bun | `>= 1.2` | [bun.sh](https://bun.sh/) |
 
-omp is vendored at `omp/` (a diverged snapshot of oh-my-pi; see [ADR 0307](docs/adr/0307-vendor-omp-snapshot.md)). `scripts/build-omp.mjs` installs its dependencies and compiles its native addon on first run (slow when cold: ~40 min on x64).
+omp is vendored at `omp/` (a diverged snapshot of oh-my-pi; see [ADR 0307](../adr/0307-vendor-omp-snapshot.md)). `scripts/build-omp.mjs` installs its dependencies and compiles its native addon on first run (slow when cold: ~40 min on x64).
 
 **Supported platforms:** macOS, Linux, and Windows are all packaged by the release pipeline. The Bench tab requires macOS, Linux, or WSL2 — Frappe bench is not supported natively on Windows. On Windows, PATH is inherited from the parent process rather than sourced from a login shell.
 
