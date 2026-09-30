@@ -55,3 +55,5 @@ coverage/
 .claude/
 .workbuddy
 electron.vite.config.*.mjs
+
+omp/packages/natives/native/*.node
