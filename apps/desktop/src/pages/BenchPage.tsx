@@ -154,15 +154,14 @@ export function BenchPage() {
       }>(IPC.invoke.benchList);
       setBenches(discovered);
       setFailedRoots(failed ?? []);
-      if (discovered.length > 0 && !selectedId) {
-        setSelectedId(discovered[0].id);
-      }
+      // B9: initial bench selection is deferred to the useEffect below so the
+      // active bench (from the first benchStatus poll) takes priority over [0].
     } catch {
       // discovery error: show empty state
     } finally {
       setLoading(false);
     }
-  }, [selectedId]);
+  }, []);
 
   useEffect(() => {
     loadBenches();
@@ -173,12 +172,29 @@ export function BenchPage() {
 
   useEffect(() => {
     let cancelled = false;
+    let seeded = false;
     const poll = async () => {
       if (cancelled) return;
       try {
-        const s = await invoke<{ status: BenchStatus; benchPath: string | null }>(IPC.invoke.benchStatus);
+        // B9: extended type — older main may omit startedAt/logs; treat defensively.
+        const s = await invoke<{
+          status: BenchStatus;
+          benchPath: string | null;
+          startedAt?: number | null;
+          logs?: LogLine[];
+        }>(IPC.invoke.benchStatus);
         setStatus(s.status);
         setActiveBenchPath(s.benchPath);
+        // B9: seed elapsed timer and log buffer from supervisor state on first poll.
+        if (!seeded) {
+          seeded = true;
+          if (s.startedAt != null) {
+            startMsRef.current = s.startedAt;
+          }
+          if (s.logs && s.logs.length > 0) {
+            setLogLines(s.logs);
+          }
+        }
       } catch { /* ignore */ }
     };
     poll();
@@ -267,6 +283,18 @@ export function BenchPage() {
     setLogLines([]);
   }, []);
 
+  // B9: on initial bench list load, prefer the bench the supervisor is running.
+  // Uses a ref so repeated polls don't override a user's explicit selection.
+  const initSelectedRef = useRef(false);
+  useEffect(() => {
+    if (initSelectedRef.current || benches.length === 0) return;
+    initSelectedRef.current = true;
+    const active = activeBenchPath ? benches.find((b) => b.path === activeBenchPath) : null;
+    // Don't use selectBench — that clears logLines, which were seeded from benchStatus.
+    setSelectedId((active ?? benches[0]).id);
+  }, [benches, activeBenchPath]);
+
+
   const selectedBench = benches.find((b) => b.id === selectedId) ?? null;
 
   useEffect(() => {
@@ -315,18 +343,30 @@ export function BenchPage() {
     (e: React.KeyboardEvent<HTMLUListElement>) => {
       if (!benches.length) return;
       const idx = benches.findIndex((b) => b.id === selectedId);
+      let nextId: string | null = null;
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        selectBench(benches[Math.min(idx + 1, benches.length - 1)].id);
+        nextId = benches[Math.min(idx + 1, benches.length - 1)].id;
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        selectBench(benches[Math.max(idx - 1, 0)].id);
+        nextId = benches[Math.max(idx - 1, 0)].id;
       } else if (e.key === "Home") {
         e.preventDefault();
-        selectBench(benches[0].id);
+        nextId = benches[0].id;
       } else if (e.key === "End") {
         e.preventDefault();
-        selectBench(benches[benches.length - 1].id);
+        nextId = benches[benches.length - 1].id;
+      }
+      if (nextId !== null) {
+        selectBench(nextId);
+        // B7: move real DOM focus to the new option and scroll it into view.
+        // requestAnimationFrame lets React flush the tabIndex update first.
+        const id = nextId;
+        requestAnimationFrame(() => {
+          const el = listRef.current?.querySelector<HTMLElement>(`[id="bench-item-${id}"]`);
+          el?.focus();
+          el?.scrollIntoView({ block: "nearest" });
+        });
       }
     },
     [benches, selectedId, selectBench],
@@ -522,7 +562,18 @@ export function BenchPage() {
         <nav aria-label="Discovered benches" className="wb-sidebar-nav">
           <div className="wb-sidebar-hd">
             <span>Benches</span>
+            <span className="wb-spacer" />
             {!loading && <span className="wb-count">{benches.length}</span>}
+            {/* B10(b): Refresh control so the user can re-scan without remounting */}
+            <button
+              type="button"
+              className="wb-btn wb-btn-ghost wb-btn-sm"
+              onClick={loadBenches}
+              aria-label="Refresh bench list"
+              title="Refresh bench list"
+            >
+              ↺
+            </button>
           </div>
 
           {loading ? (
@@ -533,7 +584,6 @@ export function BenchPage() {
                 ref={listRef}
                 role="listbox"
                 aria-label="Select a bench"
-                aria-activedescendant={selectedId ? `bench-item-${selectedId}` : undefined}
                 onKeyDown={handleListKeyDown}
                 className="wb-list"
               >
@@ -570,8 +620,8 @@ export function BenchPage() {
             <div className="wb-failed-roots" role="alert">
               <p className="wb-sidebar-note">
                 {benches.length > 0
-                  ? `${failedRoots.length} root${failedRoots.length > 1 ? "s" : ""} unreadable — fix permissions and refresh.`
-                  : "All discovery roots unreadable — fix permissions and refresh."}
+                  ? `${failedRoots.length} root${failedRoots.length > 1 ? "s" : ""} could not be read — check the path exists and is readable.`
+                  : "Could not read any bench roots — check paths exist and are readable, then refresh."}
               </p>
               {failedRoots.map((fr) => (
                 <div key={fr.root} className="wb-row is-static" title={fr.root}>
@@ -846,7 +896,7 @@ export function ProcessPanel({
       {/* Gap 3 / T6: status + elapsed */}
       <div className="wb-status-line">
         <StatusBadge status={status} />
-        {elapsedLabel && <span className="wb-muted">{elapsedLabel}</span>}
+        {elapsedLabel && (status === "starting" || status === "running") && <span className="wb-muted">{elapsedLabel}</span>}
         <span className="wb-spacer" />
         {status === "stopped" || status === "failed" ? (
           <button type="button" className="wb-btn wb-btn-solid" onClick={onStart} disabled={anotherBenchRunning}>
@@ -858,7 +908,6 @@ export function ProcessPanel({
             type="button"
             className="wb-btn wb-btn-subtle"
             onClick={onStop}
-            disabled={status === "starting"}
           >
             <IconSquare size={14} aria-hidden="true" />
             Stop
@@ -975,7 +1024,9 @@ function ZeroBenchState() {
       <div className="wb-empty-inner">
         <p className="wb-empty-title">No Frappe benches found</p>
         <p className="wb-muted">
-          Fcode scans <code className="wb-code">~/ERPNext</code> on startup.
+          Fcode searches bench roots to find Frappe benches
+          (default <code className="wb-code">~/ERPNext</code>, override with{" "}
+          <code className="wb-code">FCODE_BENCH_ROOTS</code>).
           Frappe installation is outside this app's control.
         </p>
 

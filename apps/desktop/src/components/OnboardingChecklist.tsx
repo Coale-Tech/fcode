@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../lib/api";
 import { useAppStore } from "../stores/app-store";
 import { IconCheck } from "./icons";
+import { deriveBenchOnboarding, useBenchStatus } from "../lib/use-bench-status";
 
 /** Host step ids (app.getOnboarding) mapped to locale keys under `onboarding.`. */
 const STEP_LOCALE_KEY: Record<string, string> = {
@@ -26,9 +27,14 @@ export function OnboardingChecklist() {
   const setSettingsTab = useAppStore((s) => s.setSettingsTab);
   const openProject = useAppStore((s) => s.openProject);
 
-  // Bench steps sourced from renderer store (not host-core).
+  // Bench steps: live bench state from IPC poll (B8 fix).
   // Discovery runs automatically at launch so bench.discover is always done.
-  const benchSelected = workspace != null;
+  const { status, benchPath } = useBenchStatus();
+  const { select: benchSelected, start: benchStarted } = deriveBenchOnboarding(
+    status,
+    benchPath,
+    workspace,
+  );
   const benchDiscoverTitle =
     discoveredBenchCount != null && discoveredBenchCount > 0
       ? t("onboarding.benchDiscoverCount", "{{count}} benches found", {
@@ -45,10 +51,10 @@ export function OnboardingChecklist() {
     {
       id: "bench.start",
       title: t("onboarding.benchStart", "Start your bench"),
-      done: false,
+      done: benchStarted,
     },
   ];
-  const allBenchDone = benchSelected; // select implies start will happen from Bench tab
+  const allBenchDone = benchSelected && benchStarted;
 
   const hostSteps = onboarding?.showChecklist ? (onboarding.steps ?? []) : [];
   const allHostDone = hostSteps.length === 0 || hostSteps.every((s) => s.done);

@@ -37,4 +37,5 @@
 @import "./extensions.css";
 @import "./plugin-launcher.css";
 @import "./workbench.css";
+@import "./destructive-dialog.css";
 @import "./responsive.css";

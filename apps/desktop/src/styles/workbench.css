@@ -112,7 +112,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 8px 4px;
-  color: var(--ink-gray-4);
+  /* B10(e): --ink-gray-4 gives 2.68:1 in light (#999999 on #f8f8f8); need >=4.5:1.
+     --ink-gray-6 gives 7.35:1 light (#525252 on #f8f8f8) / 7.37:1 dark (#999999 on #000). */
+  color: var(--ink-gray-6);
   font-size: var(--text-xs);
   font-weight: var(--font-weight-medium);
   letter-spacing: var(--tracking-wide);

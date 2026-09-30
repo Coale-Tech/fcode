@@ -23,7 +23,13 @@ const DOT_PREFIXES: readonly string[] = [
   "frappe.client.get_list",
   "frappe.db.get_value",
   "frappe.db.count",
-  "frappe.utils",
+  // Explicit safe introspection helpers only — no blanket frappe.utils allowance.
+  // frappe.utils.now  → pure, returns current datetime string (utils/data.py:416)
+  // frappe.utils.today → pure, returns current date string (utils/data.py:433)
+  // frappe.utils.get_url → pure read from site config (utils/data.py:1844)
+  "frappe.utils.now",
+  "frappe.utils.today",
+  "frappe.utils.get_url",
 ];
 
 // For studio.api and builder.api, allow any method whose local name starts

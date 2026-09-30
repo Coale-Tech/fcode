@@ -37,6 +37,14 @@ test("frappe.utils.now is read-only", () => {
   assert.ok(isReadOnlyBenchMethod("frappe.utils.now"));
 });
 
+test("frappe.utils.today is read-only", () => {
+  assert.ok(isReadOnlyBenchMethod("frappe.utils.today"));
+});
+
+test("frappe.utils.get_url is read-only", () => {
+  assert.ok(isReadOnlyBenchMethod("frappe.utils.get_url"));
+});
+
 test("studio.api.get_app is read-only", () => {
   assert.ok(isReadOnlyBenchMethod("studio.api.get_app"));
 });
@@ -64,4 +72,25 @@ test("studio.api.save_page is NOT read-only", () => {
 
 test("empty string is NOT read-only", () => {
   assert.ok(!isReadOnlyBenchMethod(""));
+});
+
+// B5: blanket frappe.utils prefix was removed; dangerous sub-modules must be denied.
+test("frappe.utils.safe_exec.safe_exec is NOT read-only (B5)", () => {
+  assert.ok(!isReadOnlyBenchMethod("frappe.utils.safe_exec.safe_exec"));
+});
+
+test("frappe.utils.background_jobs.enqueue is NOT read-only (B5)", () => {
+  assert.ok(!isReadOnlyBenchMethod("frappe.utils.background_jobs.enqueue"));
+});
+
+test("frappe.utils.install.before_install is NOT read-only (B5)", () => {
+  assert.ok(!isReadOnlyBenchMethod("frappe.utils.install.before_install"));
+});
+
+test("frappe.utils (bare namespace) is NOT read-only (B5)", () => {
+  assert.ok(!isReadOnlyBenchMethod("frappe.utils"));
+});
+
+test("frappe.utils.unknown_method is NOT read-only (B5)", () => {
+  assert.ok(!isReadOnlyBenchMethod("frappe.utils.unknown_method"));
 });

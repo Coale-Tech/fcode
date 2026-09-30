@@ -16,6 +16,9 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Unsaved edits in Files survive a crash or plugin reload as a draft; a recovered draft checks the file on disk before saving, so a Review rollback or agent write can no longer be silently overwritten.
 - DocType browser moved to Bench; opening a DocType file opens it in Chat → Files. Migrate needs an explicit site when a bench has several.
 - Removed the whole-file `git restore` path; Review snapshot rollback is the only way to undo agent changes.
+- Bench fixes: Frappe v16 benches now reach "Running" (the supervisor recognises `Running on http://…`) and Stop works while starting. The chosen site is passed to Build and the `fcode_bench_*` tools. Quitting the app stops the bench tree instead of orphaning it. Redis port conflicts are no longer reported as the web port.
+- Bench safety: `frappe.utils.*` is no longer auto-approved as read-only (only `now`, `today`, `get_url`); start/run reject paths that are not discovered benches; site folders without `site_config.json` are not listed. Discovery roots can be set with `FCODE_BENCH_ROOTS`.
+- Bench UI: the migrate confirmation is a styled modal (focus trap, Escape, backdrop); the workspace bar and onboarding show the live bench and site; list keyboard navigation moves focus and scrolls; selection, log and timer survive leaving the page; ANSI codes are stripped from the log; low-contrast labels fixed.
 - `navToCode` shortcut renamed `navToFiles`; custom bindings carry over. Saved `pi.file-manager` tabs move to `fcode.files`.
 
 ## [0.16.0] — 2026-09-29

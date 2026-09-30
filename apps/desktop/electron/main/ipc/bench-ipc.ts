@@ -14,9 +14,11 @@ import type { BrowserWindow } from "electron";
 export type BenchIpcDependencies = {
   registrar: IpcRegistrar;
   mainWindow: () => BrowserWindow | null;
+  /** Override bench discovery; defaults to discoverBenches (injectable for tests). */
+  discover?: typeof discoverBenches;
 };
 
-export function registerBenchIpc({ registrar, mainWindow }: BenchIpcDependencies): void {
+export function registerBenchIpc({ registrar, mainWindow, discover = discoverBenches }: BenchIpcDependencies): void {
   const { handle } = registrar;
 
   // Forward supervisor events to the renderer
@@ -47,25 +49,50 @@ export function registerBenchIpc({ registrar, mainWindow }: BenchIpcDependencies
   });
 
   handle(IPC.invoke.benchStatus, async () => {
+    const status = benchSupervisor.getStatus();
     return {
-      running: benchSupervisor.getStatus() === "running",
-      status: benchSupervisor.getStatus(),
+      running: status === "running",
+      status,
       benchPath: benchSupervisor.activeBenchPath,
       site: benchSupervisor.activeSite,
+      startedAt: benchSupervisor.startedAt,
+      logs: benchSupervisor.startedAt !== null ? benchSupervisor.getLog("start") : [],
     };
   });
 
-  handle(IPC.invoke.benchStart, async (input: { benchPath?: string } = {}) => {
+  handle(IPC.invoke.benchStart, async (input: { benchPath?: string; site?: string } = {}) => {
     const benchPath = String(input.benchPath ?? "").trim();
     if (!benchPath) {
       throw Object.assign(new Error("benchPath is required"), {
         errorCode: ErrorCodes.INVALID_ARGUMENT,
       });
     }
-    const result = await benchSupervisor.start(benchPath);
+
+    // B10(d): validate path against discovery and resolve site (B2/contract)
+    const { benches } = await discover();
+    const resolvedPath = resolve(benchPath);
+    const bench = benches.find((b) => resolve(b.path) === resolvedPath);
+    if (!bench) {
+      throw Object.assign(
+        new Error(`bench "${benchPath}" was not found in discovered benches`),
+        { errorCode: ErrorCodes.NOT_FOUND },
+      );
+    }
+
+    // B2/contract: explicit site > only site > isDefault site > null
+    const inputSite = input.site ? String(input.site).trim() : null;
+    let resolvedSite: string | null = null;
+    if (inputSite) {
+      resolvedSite = inputSite;
+    } else if (bench.sites.length === 1) {
+      resolvedSite = bench.sites[0].name;
+    } else {
+      resolvedSite = bench.sites.find((s) => s.isDefault)?.name ?? null;
+    }
+
+    const result = await benchSupervisor.start(benchPath, resolvedSite ?? undefined);
     if (result.conflict) {
-      // A different bench is already running/starting — refuse instead of
-      // silently no-op'ing while claiming success (cross-bench Start bug).
+      // Race between our validation and start() — another bench started concurrently.
       throw Object.assign(
         new Error(`bench "${benchSupervisor.activeBenchPath}" is already running; stop it before starting "${benchPath}"`),
         { errorCode: ErrorCodes.CONFLICT },
@@ -96,7 +123,8 @@ export function registerBenchIpc({ registrar, mainWindow }: BenchIpcDependencies
   handle(
     IPC.invoke.benchRun,
     async (input: { benchPath?: string; site?: string; verb?: string; args?: string[] } = {}) => {
-      const benchPath = String(input.benchPath ?? benchSupervisor.activeBenchPath ?? "").trim();
+      const explicitPath = input.benchPath != null ? String(input.benchPath).trim() : null;
+      const benchPath = (explicitPath ?? benchSupervisor.activeBenchPath ?? "").trim();
       const site = input.site != null ? String(input.site).trim() : benchSupervisor.activeSite;
       const verb = String(input.verb ?? "").trim();
 
@@ -113,16 +141,33 @@ export function registerBenchIpc({ registrar, mainWindow }: BenchIpcDependencies
         );
       }
 
-      if (verb === "migrate") {
-        // `bench migrate` without a valid --site touches every site (or fails
-        // opaquely); demand one that this bench actually has.
-        const { benches } = await discoverBenches();
-        const bench = benches.find((b) => resolve(b.path) === resolve(benchPath));
-        if (!site || !bench?.sites.some((s) => s.name === site)) {
+      // B10(d): validate an explicitly-provided path that differs from the active bench.
+      // Paths that default to activeBenchPath were already validated through benchStart.
+      const needsDiscovery =
+        (explicitPath !== null && resolve(explicitPath) !== resolve(benchSupervisor.activeBenchPath ?? "")) ||
+        verb === "migrate";
+
+      if (needsDiscovery) {
+        const { benches } = await discover();
+        const resolvedPath = resolve(benchPath);
+        const bench = benches.find((b) => resolve(b.path) === resolvedPath);
+
+        if (explicitPath !== null && resolve(explicitPath) !== resolve(benchSupervisor.activeBenchPath ?? "") && !bench) {
           throw Object.assign(
-            new Error(`migrate requires a site that exists in bench "${benchPath}"${site ? ` (got "${site}")` : ""}`),
-            { errorCode: ErrorCodes.INVALID_ARGUMENT },
+            new Error(`bench "${benchPath}" was not found in discovered benches`),
+            { errorCode: ErrorCodes.NOT_FOUND },
           );
+        }
+
+        if (verb === "migrate") {
+          // `bench migrate` without a valid --site touches every site (or fails
+          // opaquely); demand one that this bench actually has.
+          if (!site || !bench?.sites.some((s) => s.name === site)) {
+            throw Object.assign(
+              new Error(`migrate requires a site that exists in bench "${benchPath}"${site ? ` (got "${site}")` : ""}`),
+              { errorCode: ErrorCodes.INVALID_ARGUMENT },
+            );
+          }
         }
       }
 

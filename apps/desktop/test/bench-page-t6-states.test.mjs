@@ -87,8 +87,11 @@ test("T6 Gap4: failedRoots banner has role=alert", () => {
 });
 
 test("T6 Gap4: partial-discovery case shown (some roots ok, some failed)", () => {
-  // The banner text explains partial failure
-  assert.match(source, /unreadable.*fix permissions|fix permissions.*unreadable/si);
+  // B10(b): copy updated — must describe the failure without prescribing "fix permissions"
+  // (a missing directory doesn't need permission fixes). Check that there is
+  // a banner message distinguishing partial vs all-failed.
+  assert.match(source, /could not be read|unreadable/si);
+  assert.match(source, /failedRoots\.length > 0/);
 });
 
 // ── Gap 5: port-conflict warnings ─────────────────────────────────────────────
@@ -134,4 +137,8 @@ test("T14: focus is restored to trigger on dialog cancel (handleDialogCancel)", 
   assert.match(source, /handleDialogCancel/);
   // handleDialogCancel must call .focus() on the trigger ref
   assert.match(source, /handleDialogCancel[\s\S]{0,200}\.focus\(\)/);
+});
+
+test("B9: elapsed label is only rendered for an active (starting/running) bench", () => {
+  assert.match(source, /elapsedLabel && \(status === "starting" \|\| status === "running"\)/);
 });

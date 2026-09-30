@@ -17,7 +17,7 @@
  */
 
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join, resolve, delimiter } from "node:path";
 import { homedir } from "node:os";
 
 export type BenchVersion = 15 | 16 | 17 | "unknown";
@@ -47,8 +47,19 @@ export interface SiteConfigAllowed {
   developerMode?: boolean;
 }
 
-/** Default discovery roots when none are configured. */
+/** Static fallback when FCODE_BENCH_ROOTS env is absent. */
 export const DEFAULT_ROOTS = [join(homedir(), "ERPNext")];
+
+/**
+ * Returns the effective discovery roots, evaluated at call time.
+ * When FCODE_BENCH_ROOTS is set and non-empty, it is split on the OS path
+ * delimiter (`:` on POSIX, `;` on Windows); otherwise falls back to DEFAULT_ROOTS.
+ */
+export function defaultRoots(): string[] {
+  const env = process.env.FCODE_BENCH_ROOTS;
+  if (env && env.trim()) return env.split(delimiter).filter(Boolean);
+  return DEFAULT_ROOTS;
+}
 
 /** Maximum number of sub-roots to scan in parallel (E11). */
 const CONCURRENCY = 4;
@@ -110,7 +121,13 @@ function readSites(benchPath: string): BenchSite[] {
 
   try {
     return readdirSync(sitesDir, { withFileTypes: true })
-      .filter((d) => d.isDirectory() && !d.name.startsWith(".") && d.name !== "assets")
+      .filter(
+        (d) =>
+          d.isDirectory() &&
+          !d.name.startsWith(".") &&
+          d.name !== "assets" &&
+          existsSync(join(sitesDir, d.name, "site_config.json")),
+      )
       .map((d) => {
         let webserverPort = sharedWebserverPort ?? 8000;
         try {
@@ -155,7 +172,7 @@ export async function discoverBenches(options: {
   roots?: string[];
   signal?: AbortSignal;
 } = {}): Promise<{ benches: BenchSummary[]; failedRoots: Array<{ root: string; reason: string }> }> {
-  const { roots = DEFAULT_ROOTS, signal } = options;
+  const { roots = defaultRoots(), signal } = options;
   if (signal?.aborted) return { benches: [], failedRoots: [] };
 
   const results: BenchSummary[] = [];
