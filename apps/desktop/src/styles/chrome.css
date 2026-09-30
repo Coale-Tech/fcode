@@ -1307,6 +1307,22 @@
     color var(--motion-duration-fast) var(--motion-ease-out);
 }
 
+/* Primary destinations: icon above a 10px label, filling the 60px rail. */
+.nav-rail-btn.nav-rail-labeled {
+  width: 52px;
+  height: auto;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 0 4px;
+}
+
+.nav-rail-label {
+  font-size: 10px;
+  line-height: 12px;
+  font-weight: var(--font-weight-medium);
+}
+
 .nav-rail-btn:hover,
 .nav-rail .notification-trigger:hover {
   background: var(--surface-gray-3);
