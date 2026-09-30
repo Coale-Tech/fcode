@@ -359,6 +359,8 @@ export const ptBR = {
     compactionRowSummary: "resumo ≈{{tokens}} tokens",
     compactionRowNoSummary: "Nenhum resumo gerado",
     compactionRowSummaryFailed: "Falha ao gerar o resumo · contexto recente mantido",
+    usageSessionLabel: "Sessão",
+    usageSessionCost: "Custo {{amount}}",
     scrollToBottom: "Ir para a mensagem mais recente",
     minimap: "Visão geral da conversa",
     resultNeedsAttention: "Esta tarefa requer atenção",
