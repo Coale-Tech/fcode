@@ -2,8 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Espresso (Raven espresso-*.css) 语义令牌的解析值镜像：视图页面拿不到宿主的 renderer CSS，
-   只能复刻；值取自 apps/desktop/src/styles/espresso.css 的 --surface-*/--ink-*/--outline-*。 */
+/* Espresso (Raven espresso CSS) 语义令牌的解析值镜像：视图页面拿不到宿主的 renderer CSS，
+   只能复刻；值取自 apps/desktop/src/styles/espresso.css 的 surface、ink、outline 三组令牌。 */
 :root {
   color-scheme: dark;
   --bg: #171717; /* surface-base (gray-950) */
