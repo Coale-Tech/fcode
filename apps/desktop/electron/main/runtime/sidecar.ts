@@ -26,6 +26,7 @@ import type { RuntimeState } from "./context";
 import type { FinishTurn } from "./plans";
 import { benchSupervisor, ALLOWED_BENCH_VERBS } from "../bench/supervisor";
 import { isReadOnlyBenchMethod } from "../bench/approval";
+import { pythonLiteral } from "../bench/python-literal";
 import { shell } from "electron";
 import { parseAllowedExternalUrl } from "../safe-open-external";
 
@@ -723,7 +724,7 @@ async function buildFcodeProvidersConfig(
       benchPath,
       site,
       verb: "execute",
-      args: [method, "--kwargs", JSON.stringify(kwargs)],
+      args: [method, "--kwargs", pythonLiteral(kwargs)],
     });
     if (result.exitCode !== 0) {
       return {
@@ -763,7 +764,7 @@ async function buildFcodeProvidersConfig(
       benchPath,
       site,
       verb: "execute",
-      args: [method, "--kwargs", JSON.stringify(kwargs)],
+      args: [method, "--kwargs", pythonLiteral(kwargs)],
     });
     if (result.exitCode !== 0) {
       return {

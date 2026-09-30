@@ -18,6 +18,10 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Removed the whole-file `git restore` path; Review snapshot rollback is the only way to undo agent changes.
 - `navToCode` shortcut renamed `navToFiles`; custom bindings carry over. Saved `pi.file-manager` tabs move to `fcode.files`.
 
+### Fixes
+
+- `fcode_bench_execute` and `fcode_bench_execute_read` no longer fail with `NameError` when `kwargs` contain booleans or null: `bench execute --kwargs` eval()s its value, so kwargs are now sent as a Python literal instead of JSON.
+
 ## [0.16.0] — 2026-09-29
 
 ### Compatibility
