@@ -1744,6 +1744,10 @@ export const ptBR = {
       skipped: "Pergunta {{number}} ignorada"
     }
   },
+  editor: {
+    title: "Editar texto",
+    placeholder: "Digite o texto…",
+  },
   pluginPanelWidget: {
     alwaysOnTop: "Sempre no topo",
     minimize: "Minimizar",

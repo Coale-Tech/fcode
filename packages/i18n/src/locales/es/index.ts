@@ -1789,6 +1789,10 @@ sklm: {
       "skipped": "Pregunta {{number}} omitida"
     }
   },
+  "editor": {
+    "title": "Editar texto",
+    "placeholder": "Ingresar texto…"
+  },
   /**
    * Host-owned window menu of a floating plugin widget (`ui.shape: "widget"`).
    * A widget has no control capsule, so its context menu carries these.

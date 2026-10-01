@@ -181,12 +181,13 @@ export interface BenchBootstrapResult {
   message?: string;
 }
 /**
- * Payload emitted by the omp bridge for setStatus / setWidget / setTitle
- * extension_ui_request methods (sidecar.ext_ui notification).
+ * Payload emitted by the omp bridge for setStatus / setWidget / setTitle /
+ * set_editor_text extension_ui_request methods (sidecar.ext_ui notification).
  */
 export type SidecarExtUiEvent =
   | { kind: "status"; sessionId: string; key: string; text: string | undefined }
   | { kind: "widget"; sessionId: string; key: string; lines: string[] | undefined }
-  | { kind: "title"; sessionId: string; title: string };
+  | { kind: "title"; sessionId: string; title: string }
+  | { kind: "editor_text"; sessionId: string; text: string };
 /** omp tool approval mode. Controls which tool tiers are auto-approved. */
 export type ToolApprovalMode = "always-ask" | "write" | "yolo";

@@ -940,12 +940,6 @@ export class OmpBridge {
       return;
     }
 
-    if (mapped.type === "editor_refusal") {
-      // Immediately respond with a refusal so the tool turn doesn't hang (E9).
-      this.sendToOmp({ type: "extension_ui_response", id: req.id, cancelled: true });
-      return;
-    }
-
     if (mapped.type === "system_message") {
       this.emitSystemMessage(sessionId, mapped.text);
       return;
@@ -957,8 +951,13 @@ export class OmpBridge {
       return;
     }
 
-    // setStatus / setWidget / setTitle — fire-and-forget UI state updates (E9).
-    if (mapped.type === "ext_status" || mapped.type === "ext_widget" || mapped.type === "ext_title") {
+    // setStatus / setWidget / setTitle / set_editor_text — fire-and-forget UI state updates.
+    if (
+      mapped.type === "ext_status" ||
+      mapped.type === "ext_widget" ||
+      mapped.type === "ext_title" ||
+      mapped.type === "set_editor_text"
+    ) {
       this.notify("sidecar.ext_ui", mapped);
       return;
     }

@@ -70,7 +70,7 @@ Fcode (Electron)
         bridge.ts         ← spawns omp, negotiates protocol v2, maps methods + events
         sessions.ts       ← persists sessionId → omp session dir mapping
         state.ts          ← holds per-session pending request map
-        ui-requests.ts    ← maps extension_ui_request frames to ToolPermissionRequest/AskToolRequest
+        ui-requests.ts    ← maps extension_ui_request frames to ToolPermissionRequest/AskToolRequest/editor textarea/set_editor_text
 
 omp --mode rpc (child process)
   ↑ spawned with --approval-mode always-ask --config <dataDir>/omp-overlay.yml

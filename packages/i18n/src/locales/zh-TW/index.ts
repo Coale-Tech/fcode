@@ -1775,6 +1775,10 @@ sklm: {
       skipped: "第 {{number}} 題已跳過",
     },
   },
+  editor: {
+    title: "編輯文字",
+    placeholder: "輸入文字…",
+  },
   /**
    * Host-owned window menu of a floating plugin widget (`ui.shape: "widget"`).
    * A widget has no control capsule, so its context menu carries these.
