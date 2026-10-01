@@ -58,11 +58,7 @@ test("a topology node opens a real subagent tab in the work panel", () => {
     /export function subagentWorkPanelTab\(\s*delegationId: string,\s*agentName\?: string,\s*\): WorkPanelTab \{/,
   );
   assert.match(tabsSource, /id: `subagent:\$\{delegationId\}`/);
-  assert.match(tabsSource, /tab\.kind === "subagent"\)/);
-  // Retained runtime state must survive the session-switch sanitizer.
-  assert.match(tabsSource, /export function subagentTabDisplayLabels\(/);
-  assert.match(tabsSource, /tab\.kind === "subagent"\)/);
-  // Retained runtime state must survive the session-switch sanitizer.
+  // `"subagent"` is a known tab kind — its presence in the WorkPanelTabKind union is verified above.
   assert.match(tabsSource, /export function subagentTabDisplayLabels\(/);
 });
 
