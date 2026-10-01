@@ -135,6 +135,10 @@ export interface MemoryConfig {
   backend: "mnemopi" | "hindsight" | "off";
   hindsightUrl?: string;
   hindsightBank?: string;
+  /** Reflect/recall mission text written to the bank via PUT on save. */
+  hindsightBankMission?: string;
+  /** Retain mission text written to the bank via PUT on save. */
+  hindsightRetainMission?: string;
   /** When true, the local Hindsight supervisor starts automatically with the agent. */
   hindsightLocal?: boolean;
 }
@@ -142,6 +146,40 @@ export interface MemoryConfigView extends MemoryConfig {
   hasToken: boolean;
 }
 
+/** Result of `hindsightSetBankMission`. */
+export interface HindsightSetBankMissionResult {
+  ok: boolean;
+}
+
+/** A mental-model page returned by the Hindsight API. */
+export interface HindsightMentalModelSummary {
+  id: string;
+  name: string;
+  content?: string;
+  tags?: string[];
+  updatedAt?: string;
+}
+
+/** Result of `hindsightListMentalModels`. */
+export interface HindsightListMentalModelsResult {
+  models: HindsightMentalModelSummary[];
+}
+
+/** Result of `hindsightRefreshMentalModel`. */
+export interface HindsightRefreshMentalModelResult {
+  operationId?: string;
+}
+
+/** Result of `benchBootstrapMemory`. */
+export interface BenchBootstrapResult {
+  ok: boolean;
+  benchPath: string;
+  sites: string[];
+  apps: string[];
+  /** Set for the hindsight backend; absent for mnemopi/off. */
+  retained?: boolean;
+  message?: string;
+}
 /**
  * Payload emitted by the omp bridge for setStatus / setWidget / setTitle
  * extension_ui_request methods (sidecar.ext_ui notification).

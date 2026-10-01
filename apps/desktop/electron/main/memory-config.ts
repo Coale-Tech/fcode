@@ -48,6 +48,10 @@ export function validateMemoryConfig(input: Partial<MemoryConfig>): MemoryConfig
     }
     const bank = String(input.hindsightBank ?? "").trim();
     if (bank) out.hindsightBank = bank;
+    const mission = String(input.hindsightBankMission ?? "").trim();
+    if (mission) out.hindsightBankMission = mission;
+    const retainMission = String(input.hindsightRetainMission ?? "").trim();
+    if (retainMission) out.hindsightRetainMission = retainMission;
   }
   return out;
 }
