@@ -77,27 +77,35 @@ export const OmpCollabPanel = memo(function OmpCollabPanel({
           </button>
         </div>
 
-        {state.phase === "url" && state.url && (
-          <div className="omp-collab-url-row">
-            <a
-              href={state.url}
-              target="_blank"
-              rel="noreferrer"
-              className="omp-collab-url"
-              title={state.url}
-            >
-              {state.url}
-            </a>
-            <button
-              type="button"
-              className="omp-collab-btn omp-collab-btn--copy"
-              onClick={handleCopy}
-              aria-label={t("settings.ompCollabPanelShareCopy")}
-            >
-              {copied ? "✓" : t("settings.ompCollabPanelShareCopy")}
-            </button>
-          </div>
-        )}
+        {state.phase === "url" && state.url && (() => {
+          // Defense-in-depth: only render an anchor for http(s) URLs.
+          const safeUrl = /^https?:\/\//i.test(state.url) ? state.url : null;
+          return (
+            <div className="omp-collab-url-row">
+              {safeUrl ? (
+                <a
+                  href={safeUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="omp-collab-url"
+                  title={safeUrl}
+                >
+                  {safeUrl}
+                </a>
+              ) : (
+                <span className="omp-collab-url" title={state.url}>{state.url}</span>
+              )}
+              <button
+                type="button"
+                className="omp-collab-btn omp-collab-btn--copy"
+                onClick={handleCopy}
+                aria-label={t("settings.ompCollabPanelShareCopy")}
+              >
+                {copied ? "✓" : t("settings.ompCollabPanelShareCopy")}
+              </button>
+            </div>
+          );
+        })()}
 
         {state.phase === "error" && state.error && (
           <div className="omp-collab-error">

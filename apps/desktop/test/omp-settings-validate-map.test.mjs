@@ -358,3 +358,106 @@ test("display.* settings are not in OmpSettingsValues schema (no RPC effect)", (
     assert.throws(() => validateOmpSettings({ [key]: true }), /unknown omp setting key/, `${key} must be rejected`);
   }
 });
+
+// ─── Security: agentModelOverrides YAML injection / key charset ──────────────
+
+import { parse as parseYaml } from "yaml";
+
+test("validateOmpSettings rejects agent name with newline (YAML injection)", () => {
+  assert.throws(
+    () => validateOmpSettings({ "task.agentModelOverrides": { "x:\n  bad": "model" } }),
+    /invalid agent id/,
+  );
+});
+
+test("validateOmpSettings rejects agent name with colon (YAML injection)", () => {
+  assert.throws(
+    () => validateOmpSettings({ "task.agentModelOverrides": { "x:y": "model" } }),
+    /invalid agent id/,
+  );
+});
+
+test("validateOmpSettings rejects agent name with space", () => {
+  assert.throws(
+    () => validateOmpSettings({ "task.agentModelOverrides": { "my agent": "model" } }),
+    /invalid agent id/,
+  );
+});
+
+test("makeOmpOverlay: newline in agent key is quoted and cannot inject extra YAML keys", () => {
+  // Bypass validateOmpSettings (validator now rejects this, but test the bridge independently)
+  const yaml = makeOmpOverlay({
+    ...BASE_OPTS,
+    ompSettings: {
+      "task.agentModelOverrides": { "x:\n  approval_mode: allow-all-without-asking\n  y": "bad" },
+    },
+  });
+  const parsed = parseYaml(yaml);
+  assert.ok(!Object.prototype.hasOwnProperty.call(parsed, "approval_mode"),
+    "injection must not produce a top-level approval_mode key");
+  const overrides = parsed?.task?.agentModelOverrides;
+  assert.ok(overrides !== undefined, "agentModelOverrides must be present");
+  assert.equal(Object.keys(overrides).length, 1, "must have exactly one entry");
+});
+
+test("makeOmpOverlay: model id with special chars is quoted and round-trips", () => {
+  const yaml = makeOmpOverlay({
+    ...BASE_OPTS,
+    ompSettings: {
+      "task.agentModelOverrides": { "agent": "model: with: colons\nnewline" },
+    },
+  });
+  const parsed = parseYaml(yaml);
+  assert.equal(parsed?.task?.agentModelOverrides?.["agent"], "model: with: colons\nnewline");
+});
+
+// ─── Port-range validation (hindsight-local-ipc guard) ───────────────────────
+// Pure logic test: mirrors the clamp guard in hindsight-local-ipc.ts.
+
+const DEFAULT_PORT = 8888;
+function clampPort(raw) {
+  return Number.isInteger(raw) && raw >= 1024 && raw <= 65535 ? raw : DEFAULT_PORT;
+}
+
+test("hindsight port clamp: valid port passes through", () => {
+  assert.equal(clampPort(9000), 9000);
+  assert.equal(clampPort(1024), 1024);
+  assert.equal(clampPort(65535), 65535);
+});
+
+test("hindsight port clamp: port 0 falls back to default", () => {
+  assert.equal(clampPort(0), DEFAULT_PORT);
+});
+
+test("hindsight port clamp: port 99999 falls back to default", () => {
+  assert.equal(clampPort(99999), DEFAULT_PORT);
+});
+
+test("hindsight port clamp: port 1023 (privileged) falls back to default", () => {
+  assert.equal(clampPort(1023), DEFAULT_PORT);
+});
+
+test("hindsight port clamp: non-integer falls back to default", () => {
+  assert.equal(clampPort(8080.5), DEFAULT_PORT);
+  assert.equal(clampPort(NaN), DEFAULT_PORT);
+});
+
+// ─── bench args element regex (bench-ipc guard) ──────────────────────────────
+// Pure logic test: mirrors the SAFE_ARG_RE guard in bench-ipc.ts.
+
+const SAFE_ARG_RE = /^[a-zA-Z0-9@_\-.\/]+$/;
+
+test("bench arg regex: accepts safe identifiers", () => {
+  assert.ok(SAFE_ARG_RE.test("migrate"));
+  assert.ok(SAFE_ARG_RE.test("my-site.localhost"));
+  assert.ok(SAFE_ARG_RE.test("@scope/pkg"));
+  assert.ok(SAFE_ARG_RE.test("v1.2.3"));
+});
+
+test("bench arg regex: rejects shell metacharacters", () => {
+  assert.ok(!SAFE_ARG_RE.test("rm -rf /"));
+  assert.ok(!SAFE_ARG_RE.test("arg;bad"));
+  assert.ok(!SAFE_ARG_RE.test("$(id)"));
+  assert.ok(!SAFE_ARG_RE.test("arg\nnewline"));
+  assert.ok(!SAFE_ARG_RE.test(""));
+});
