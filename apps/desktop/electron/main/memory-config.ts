@@ -8,7 +8,7 @@ import { join } from "node:path";
 import type { MemoryConfig } from "@pi-desktop/shared";
 
 export const MEMORY_TOKEN_SECRET_REF = "secret:memory:hindsight-token";
-const BACKENDS = ["mnemopi", "hindsight", "off"] as const;
+const BACKENDS = ["mnemopi", "hindsight", "sharpshooter", "local", "off"] as const;
 
 export function readMemoryConfig(dataDir: string): MemoryConfig {
   try {

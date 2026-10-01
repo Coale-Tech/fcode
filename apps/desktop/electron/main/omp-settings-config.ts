@@ -26,6 +26,10 @@ const QUEUE_FLOW_MODES = ["all", "one-at-a-time"] as const;
 const INTERRUPT_MODES = ["immediate", "wait"] as const;
 const LOOP_MODES = ["prompt", "compact", "reset"] as const;
 const HINDSIGHT_RETAIN_MODES = ["full-session", "last-turn"] as const;
+const MNEMOPI_SCOPING_MODES = ["global", "per-project", "per-project-tagged"] as const;
+const HINDSIGHT_SCOPING_MODES = ["global", "per-project", "per-project-tagged"] as const;
+const MNEMOPI_EMBEDDING_VARIANTS = ["en", "multilingual"] as const;
+const HINDSIGHT_RECALL_BUDGETS = ["low", "mid", "high"] as const;
 
 const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   // Task / isolation (omp/packages/coding-agent/src/task/settings.ts)
@@ -85,6 +89,54 @@ const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   "hindsight.retainMode":          { type: "enum", values: HINDSIGHT_RETAIN_MODES },
   "hindsight.mentalModelsEnabled": { type: "boolean" },
   "hindsight.mentalModelAutoSeed": { type: "boolean" },
+  // Mnemopi advanced (omp/packages/coding-agent/src/mnemopi/settings.ts)
+  // mnemopi.llmMode forced to "session" by overlay; mnemopi.embeddingApiKey/llmApiKey are secrets.
+  "mnemopi.scoping":               { type: "enum", values: MNEMOPI_SCOPING_MODES },
+  "mnemopi.dbPath":                { type: "string" },
+  "mnemopi.bank":                  { type: "string" },
+  "mnemopi.embeddingVariant":      { type: "enum", values: MNEMOPI_EMBEDDING_VARIANTS },
+  "mnemopi.autoRecall":            { type: "boolean" },
+  "mnemopi.autoRetain":            { type: "boolean" },
+  "mnemopi.polyphonicRecall":      { type: "boolean" },
+  "mnemopi.enhancedRecall":        { type: "boolean" },
+  "mnemopi.proactiveLinking":      { type: "boolean" },
+  "mnemopi.noEmbeddings":          { type: "boolean" },
+  "mnemopi.embeddingModel":        { type: "string" },
+  "mnemopi.embeddingApiUrl":       { type: "string" },
+  "mnemopi.llmBaseUrl":            { type: "string" },
+  "mnemopi.llmModel":              { type: "string" },
+  "mnemopi.retainEveryNTurns":     { type: "number", min: 1, max: 100 },
+  "mnemopi.recallLimit":           { type: "number", min: 1, max: 200 },
+  "mnemopi.recallContextTurns":    { type: "number", min: 0, max: 20 },
+  "mnemopi.recallMaxQueryChars":   { type: "number", min: 100, max: 50000 },
+  "mnemopi.injectionTokenLimit":   { type: "number", min: 0, max: 200000 },
+  "mnemopi.debug":                 { type: "boolean" },
+  // Hindsight advanced remaining (omp/packages/coding-agent/src/hindsight/settings.ts)
+  // hindsight.retainContext is purely internal; hindsight.recallTypes is array-of-string (complex, skip).
+  "hindsight.scoping":                    { type: "enum", values: HINDSIGHT_SCOPING_MODES },
+  "hindsight.bankIdPrefix":               { type: "string" },
+  "hindsight.retainEveryNTurns":          { type: "number", min: 1, max: 100 },
+  "hindsight.retainOverlapTurns":         { type: "number", min: 0, max: 20 },
+  "hindsight.recallBudget":               { type: "enum", values: HINDSIGHT_RECALL_BUDGETS },
+  "hindsight.recallMaxTokens":            { type: "number", min: 0, max: 100000 },
+  "hindsight.recallContextTurns":         { type: "number", min: 0, max: 20 },
+  "hindsight.recallMaxQueryChars":        { type: "number", min: 0, max: 50000 },
+  "hindsight.debug":                      { type: "boolean" },
+  "hindsight.requestTimeoutMs":           { type: "number", min: 1000, max: 600000 },
+  "hindsight.reflectTimeoutMs":           { type: "number", min: 1000, max: 600000 },
+  "hindsight.recallTimeoutMs":            { type: "number", min: 1000, max: 600000 },
+  "hindsight.retainTimeoutMs":            { type: "number", min: 1000, max: 600000 },
+  "hindsight.mentalModelMaxRenderChars":  { type: "number", min: 0, max: 200000 },
+  // Sharpshooter (omp/packages/coding-agent/src/sharpshooter/settings.ts)
+  "sharpshooter.model":               { type: "string" },
+  "sharpshooter.intervalMinutes":     { type: "number", min: 1, max: 1440 },
+  "sharpshooter.injectionTokenLimit": { type: "number", min: 0, max: 200000 },
+  // Local memory pipeline (omp/packages/coding-agent/src/memories/settings.ts)
+  // memories.enabled is legacy/hidden; stage1/phase2 lease/retry/heartbeat are pipeline internals.
+  "memories.maxRolloutsPerStartup":        { type: "number", min: 1, max: 10000 },
+  "memories.maxRolloutAgeDays":            { type: "number", min: 1, max: 365 },
+  "memories.minRolloutIdleHours":          { type: "number", min: 0, max: 168 },
+  "memories.summaryInjectionTokenLimit":   { type: "number", min: 0, max: 200000 },
   // Appearance — HTML export themes (omp/packages/coding-agent/src/modes/settings.ts)
   "theme.dark":                    { type: "string" },
   "theme.light":                   { type: "string" },
