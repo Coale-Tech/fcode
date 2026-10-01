@@ -22,6 +22,8 @@ export const KEYBOARD_SHORTCUT_IDS = [
   "navToBuild",
   "navToBench",
   "toggleFollowLog",
+  "cycleOmpModel",
+  "cycleOmpThinking",
 ] as const;
 
 export type KeyboardShortcutId = (typeof KEYBOARD_SHORTCUT_IDS)[number];
@@ -85,6 +87,8 @@ export const KEYBOARD_SHORTCUTS: readonly KeyboardShortcutDefinition[] = [
   { id: "navToBuild", group: "navigation", defaultBinding: "Mod+3" },
   { id: "navToBench", group: "navigation", defaultBinding: "Mod+4" },
   { id: "toggleFollowLog", group: "navigation", defaultBinding: "Mod+Shift+B" },
+  { id: "cycleOmpModel", group: "agent", defaultBinding: "Alt+BracketRight" },
+  { id: "cycleOmpThinking", group: "agent", defaultBinding: "Alt+BracketLeft" },
 ] as const;
 
 /**

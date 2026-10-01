@@ -264,6 +264,15 @@ function ompSettingsYaml(s: OmpSettingsValues): string[] {
     if (collabAuto  !== undefined) lines.push(`  autoStart: ${collabAuto}`);
   }
 
+  // queue modes / interaction section (steeringMode, followUpMode, interruptMode, loop.mode)
+  const steeringMode  = s["steeringMode"];
+  const followUpMode  = s["followUpMode"];
+  const interruptMode = s["interruptMode"];
+  const loopMode      = s["loop.mode"];
+  if (steeringMode  !== undefined) lines.push("", `steeringMode: ${steeringMode}`);
+  if (followUpMode  !== undefined) lines.push("", `followUpMode: ${followUpMode}`);
+  if (interruptMode !== undefined) lines.push("", `interruptMode: ${interruptMode}`);
+  if (loopMode      !== undefined) lines.push("", "loop:", `  mode: ${loopMode}`);
   // lsp section
   const lspEnabled = s["lsp.enabled"];
   const lspFmt = s["lsp.formatOnWrite"];
@@ -345,12 +354,36 @@ const TOOL_EVENT_RENAME: Record<string, string> = {
 
 /** omp event types to drop silently (no PI counterpart). */
 const DROP_EVENTS = new Set([
-  "notice",
-  "ttsr_triggered", "auto_retry_start", "auto_retry_end",
-  "retry_fallback_start", "retry_fallback_end",
-  "goal_updated", "model_changed", "thinking_level_changed",
+  "ttsr_triggered",
   "ready", "negotiate_protocol",
 ]);
+
+/** omp event types that surface as quiet system transcript lines. Key presence = handled. */
+const SYSTEM_LINE_EVENTS: Record<string, true> = {
+  notice: true,
+  auto_retry_start: true, auto_retry_end: true,
+  retry_fallback_start: true, retry_fallback_end: true,
+  goal_updated: true,
+  model_changed: true, thinking_level_changed: true,
+  session_settled: true,
+};
+
+/** Map a system-line event to a human-readable text label. */
+function systemLineText(frame: Record<string, unknown>): string {
+  const t = String(frame.type ?? "");
+  switch (t) {
+    case "notice":               return `[omp] ${String(frame.message ?? frame.text ?? t)}`;
+    case "auto_retry_start":     return `[omp] Retrying…`;
+    case "auto_retry_end":       return `[omp] Retry complete`;
+    case "retry_fallback_start": return `[omp] Fallback model: ${String(frame.model ?? "")}`;
+    case "retry_fallback_end":   return `[omp] Fallback complete`;
+    case "goal_updated":         return `[omp] Goal: ${String(frame.goal ?? frame.text ?? "")}`;
+    case "model_changed":        return `[omp] Model → ${String(frame.model ?? frame.modelId ?? "")}`;
+    case "thinking_level_changed": return `[omp] Thinking → ${String(frame.level ?? "")}`;
+    case "session_settled":      return `[omp] Session settled`;
+    default:                     return `[omp] ${t}`;
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Main bridge class
@@ -811,6 +844,56 @@ export class OmpBridge {
         break;
 
 
+      // Session-scoped mode controls (queue modes, fast mode, retry)
+      case "omp.modes.setSteeringMode":
+        this.ompCallAndForward(id, { type: "set_steering_mode", mode: p.mode });
+        break;
+      case "omp.modes.setFollowUpMode":
+        this.ompCallAndForward(id, { type: "set_follow_up_mode", mode: p.mode });
+        break;
+      case "omp.modes.setInterruptMode":
+        this.ompCallAndForward(id, { type: "set_interrupt_mode", mode: p.mode });
+        break;
+      case "omp.fast.set":
+        this.ompCallAndForward(id, { type: "set_fast_mode", enabled: p.enabled });
+        break;
+      case "omp.retry.setAutoRetry":
+        this.ompCallAndForward(id, { type: "set_auto_retry", enabled: p.enabled });
+        break;
+      case "omp.retry.abort":
+        this.ompCallAndForward(id, { type: "abort_retry" });
+        break;
+      case "omp.models.cycle":
+        this.ompCallAndForward(id, { type: "cycle_model" });
+        break;
+      case "omp.thinking.cycle":
+        this.ompCallAndForward(id, { type: "cycle_thinking_level" });
+        break;
+
+      // Queue-while-streaming: follow_up / abort_and_prompt
+      case "agent.followUp": {
+        const sessionId = String(p.sessionId ?? "");
+        const content = String(p.content ?? "");
+        try {
+          await this.ompCall({ type: "follow_up", message: content, sessionId });
+          this.respond(id, { accepted: true });
+        } catch {
+          this.respond(id, { accepted: false });
+        }
+        break;
+      }
+      case "agent.abortAndPrompt": {
+        const sessionId = String(p.sessionId ?? "");
+        const content = String(p.content ?? "");
+        try {
+          await this.ompCall({ type: "abort_and_prompt", message: content, sessionId });
+          this.respond(id, { accepted: true });
+        } catch {
+          this.respond(id, { accepted: false });
+        }
+        break;
+      }
+
       case "omp.share":
         this.ompShareAndForward(id);
         break;
@@ -1163,6 +1246,11 @@ export class OmpBridge {
     // Agent events: map omp events to Fcode agent.event notifications.
     const rawType = String(frame.type ?? "");
     if (DROP_EVENTS.has(rawType)) return;
+    if (rawType in SYSTEM_LINE_EVENTS) {
+      const sessionId = this.sessions.keys().next().value ?? "";
+      this.emitSystemMessage(sessionId, systemLineText(frame));
+      return;
+    }
     const eventType = TOOL_EVENT_RENAME[rawType] ?? rawType;
     if (eventType !== rawType) frame.type = eventType;
 

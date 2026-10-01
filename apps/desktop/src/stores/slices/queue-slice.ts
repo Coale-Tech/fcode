@@ -405,8 +405,10 @@ export function createQueueSlice({
             get().showToast(i18n.t("chat.nativeSessionBusy"), { variant: "info" });
             return false;
           }
-          const accepted = await get().enqueuePrompt(content, draft, sessionId);
-          return accepted;
+          // Desktop sessions use the omp sidecar: send follow_up so omp
+          // queues the message natively (runs after the current turn).
+          const result = await api.agentFollowUp(sessionId, content).catch(() => null);
+          return result?.accepted ?? false;
         }
         const startedIn = sessionId;
         const messageCountBeforeSend =

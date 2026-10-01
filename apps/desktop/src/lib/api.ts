@@ -1762,6 +1762,36 @@ export const api = {
   /** Get preview messages for the current branch. */
   ompSessionBranchMessages: () =>
     invoke<OmpSessionBranchMessagesResult>(IPC.invoke.ompSessionBranchMessages),
+  /** Set steering mode for the active omp session. */
+  ompModesSetSteeringMode: (mode: "all" | "one-at-a-time") =>
+    invoke<void>(IPC.invoke.ompModesSetSteeringMode, { mode }),
+  /** Set follow-up mode for the active omp session. */
+  ompModesSetFollowUpMode: (mode: "all" | "one-at-a-time") =>
+    invoke<void>(IPC.invoke.ompModesSetFollowUpMode, { mode }),
+  /** Set interrupt mode for the active omp session. */
+  ompModesSetInterruptMode: (mode: "immediate" | "wait") =>
+    invoke<void>(IPC.invoke.ompModesSetInterruptMode, { mode }),
+  /** Toggle fast mode for the active omp session. */
+  ompFastSet: (enabled: boolean) =>
+    invoke<void>(IPC.invoke.ompFastSet, { enabled }),
+  /** Set auto-retry for the active omp session. */
+  ompRetrySetAutoRetry: (enabled: boolean) =>
+    invoke<void>(IPC.invoke.ompRetrySetAutoRetry, { enabled }),
+  /** Abort any pending retry in the active omp session. */
+  ompRetryAbort: () =>
+    invoke<void>(IPC.invoke.ompRetryAbort),
+  /** Queue a follow-up message after the current omp turn. */
+  agentFollowUp: (sessionId: string, content: string) =>
+    invoke<{ accepted: boolean }>(IPC.invoke.agentFollowUp, { sessionId, content }),
+  /** Abort the current omp turn and immediately start a new prompt. */
+  agentAbortAndPrompt: (sessionId: string, content: string) =>
+    invoke<{ accepted: boolean }>(IPC.invoke.agentAbortAndPrompt, { sessionId, content }),
+  /** Cycle to the next available omp model. */
+  ompCycleModel: () =>
+    invoke<void>(IPC.invoke.ompCycleModel),
+  /** Cycle to the next omp thinking level. */
+  ompCycleThinkingLevel: () =>
+    invoke<void>(IPC.invoke.ompCycleThinkingLevel),
   /** Trigger the /share slash command and return the snapshot URL. */
   ompShare: () =>
     invoke<OmpShareResult>(IPC.invoke.ompShare),
