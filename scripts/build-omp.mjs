@@ -66,7 +66,12 @@ const hostTarget = `${process.platform}-${process.arch}`;
 // release.yml matrix job packages only its own platform, so the other 4
 // targets would just be discarded, guaranteed-to-fail noise in the log —
 // skip them there and only build the one target that job actually ships.
-const ALL_TARGETS = ["darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64", "win32-x64"];
+//
+// linux-arm64 is excluded: electron-builder's Linux targets (AppImage/deb/rpm)
+// only declare x64 arch, the host-core Rust sidecar has no cross-compile step
+// in release.yml, and no ubuntu-22.04-arm runner is available on GitHub-hosted
+// runners. Add back when all three are addressed.
+const ALL_TARGETS = ["darwin-arm64", "darwin-x64", "linux-x64", "win32-x64"];
 const crossTargets = process.env.CI
   ? [hostTarget]
   : [hostTarget, ...ALL_TARGETS.filter((t) => t !== hostTarget)];
