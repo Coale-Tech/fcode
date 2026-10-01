@@ -394,6 +394,7 @@ export const es = {
     "toolBlockNotice": "Nota",
     "toolBlockError": "Error",
     "toolBlockMore": "{{count}} más oculto",
+    "toolScreenshot": "Captura de pantalla",
     "toolChipExit": "salir {{count}}",
     "toolChipMatches_one": "1 coincidencia",
     "toolChipMatches_other": "{{count}} coincidencias",
