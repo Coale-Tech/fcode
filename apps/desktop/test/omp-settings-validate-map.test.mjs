@@ -319,3 +319,42 @@ test("makeOmpOverlay emits hindsight behavioral settings even without memory con
   assert.ok(yaml.includes("\nhindsight:"), "hindsight block present even without memory config");
   assert.ok(yaml.includes("mentalModelsEnabled: false"), "mentalModelsEnabled set");
 });
+// ─── theme.dark / theme.light ─────────────────────────────────────────────────
+
+test("validateOmpSettings accepts theme.dark string", () => {
+  assert.equal(validateOmpSettings({ "theme.dark": "titanium" })["theme.dark"], "titanium");
+});
+
+test("validateOmpSettings accepts theme.light string", () => {
+  assert.equal(validateOmpSettings({ "theme.light": "light" })["theme.light"], "light");
+});
+
+test("validateOmpSettings rejects theme.dark non-string", () => {
+  assert.throws(() => validateOmpSettings({ "theme.dark": true }), /expected string/);
+});
+
+test("makeOmpOverlay emits theme section when theme.dark is set", () => {
+  const yaml = makeOmpOverlay({ ...BASE_OPTS, ompSettings: { "theme.dark": "midnight" } });
+  assert.ok(yaml.includes("\ntheme:"), "theme block present");
+  assert.ok(yaml.includes('  dark: "midnight"'), "dark theme name emitted");
+});
+
+test("makeOmpOverlay emits theme section with both dark and light", () => {
+  const yaml = makeOmpOverlay({ ...BASE_OPTS, ompSettings: { "theme.dark": "titanium", "theme.light": "snow" } });
+  assert.ok(yaml.includes('  dark: "titanium"'), "dark emitted");
+  assert.ok(yaml.includes('  light: "snow"'), "light emitted");
+});
+
+test("makeOmpOverlay does not emit theme section when ompSettings is empty", () => {
+  const yaml = makeOmpOverlay({ ...BASE_OPTS });
+  assert.ok(!yaml.includes("\ntheme:"), "no theme block when nothing set");
+});
+
+test("display.* settings are not in OmpSettingsValues schema (no RPC effect)", () => {
+  // All display.* keys must be rejected by validateOmpSettings — they are TUI-only.
+  for (const key of ["display.smoothStreaming", "display.showTokenUsage", "display.showTurnTime",
+                     "display.hideToolActivity", "display.cacheMissMarker", "display.collapseCompacted",
+                     "display.shimmer", "display.pinnedAgents"]) {
+    assert.throws(() => validateOmpSettings({ [key]: true }), /unknown omp setting key/, `${key} must be rejected`);
+  }
+});

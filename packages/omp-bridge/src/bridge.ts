@@ -317,6 +317,15 @@ function ompSettingsYaml(s: OmpSettingsValues): string[] {
     if (cmdClaudeProj !== undefined) lines.push(`  enableClaudeProject: ${cmdClaudeProj}`);
   }
 
+  // theme section (HTML export palette)
+  const themeDark  = s["theme.dark"];
+  const themeLight = s["theme.light"];
+  if (themeDark !== undefined || themeLight !== undefined) {
+    lines.push("", "theme:");
+    if (themeDark  !== undefined && themeDark  !== "") lines.push(`  dark: ${JSON.stringify(themeDark)}`);
+    if (themeLight !== undefined && themeLight !== "") lines.push(`  light: ${JSON.stringify(themeLight)}`);
+  }
+
   return lines;
 }
 

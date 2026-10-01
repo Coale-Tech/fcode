@@ -274,6 +274,9 @@ export interface OmpSettingsValues {
   "hindsight.retainMode"?: "full-session" | "last-turn";
   "hindsight.mentalModelsEnabled"?: boolean;
   "hindsight.mentalModelAutoSeed"?: boolean;
+  // Appearance — HTML export themes (omp/packages/coding-agent/src/modes/settings.ts)
+  "theme.dark"?: string;
+  "theme.light"?: string;
 }
 
 // ─── Session-data additions (feat/session-data) ──────────────────────────────

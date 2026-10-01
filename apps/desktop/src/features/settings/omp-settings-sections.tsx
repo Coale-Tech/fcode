@@ -551,6 +551,24 @@ export function OmpSettingsSections() {
           />
         </SettingsRow>
       </SettingsCard>
+
+      {/* ── HTML Export Theme ────────────────────────────────────── */}
+      <SettingsCard title={t("settings.ompThemeGroup")}>
+        <SettingsRow title={t("settings.ompThemeDark")} description={t("settings.ompThemeDarkDesc")}>
+          <Input
+            value={omp["theme.dark"] ?? ""}
+            placeholder="titanium"
+            onChange={(e) => void save({ "theme.dark": e.target.value || undefined })}
+          />
+        </SettingsRow>
+        <SettingsRow title={t("settings.ompThemeLight")} description={t("settings.ompThemeLightDesc")}>
+          <Input
+            value={omp["theme.light"] ?? ""}
+            placeholder="light"
+            onChange={(e) => void save({ "theme.light": e.target.value || undefined })}
+          />
+        </SettingsRow>
+      </SettingsCard>
       {/* ── Installed omp Skills ─────────────────────────────────── */}
       <OmpSkillsSection />
 

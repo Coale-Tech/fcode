@@ -1572,7 +1572,7 @@ export async function runRpcMode(session: AgentSession, options: RpcModeOptions 
 			}
 
 			case "export_html": {
-				const path = await session.exportToHtml(command.outputPath);
+				const path = await session.exportToHtml(command.outputPath, true);
 				return success(id, "export_html", { path });
 			}
 
