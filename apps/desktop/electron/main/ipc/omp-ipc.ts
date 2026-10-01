@@ -19,6 +19,8 @@ import type {
   OmpSessionBranchResult,
   OmpSessionStatsResult,
   OmpStateResult,
+  OmpSubagentListResult,
+  OmpSubagentMessagesResult,
   OmpThinkingLevelsResult,
 } from "@pi-desktop/shared";
 import type { AgentSidecar } from "../agent-sidecar";
@@ -131,4 +133,25 @@ export function registerOmpIpc({ registrar, getSidecar }: OmpIpcDependencies): v
     const sidecar = getSidecar() ?? unavailable();
     return sidecar.call<void>("omp.auto-compaction.set", { enabled: input.enabled });
   });
+
+  // ── omp.subagents.list ─────────────────────────────────────────────────────
+  handle(IPC.invoke.ompSubagentList, async () => {
+    const sidecar = getSidecar();
+    if (!sidecar) unavailable();
+    return sidecar.call<OmpSubagentListResult>("omp.subagents.list", {});
+  });
+
+  // ── omp.subagents.messages ─────────────────────────────────────────────────
+  handle(
+    IPC.invoke.ompSubagentMessages,
+    async (input: { subagentId?: unknown; sessionFile?: unknown; fromByte?: unknown } = {}) => {
+      const sidecar = getSidecar();
+      if (!sidecar) unavailable();
+      const params: Record<string, unknown> = {};
+      if (typeof input.subagentId === "string" && input.subagentId) params.subagentId = input.subagentId;
+      if (typeof input.sessionFile === "string" && input.sessionFile) params.sessionFile = input.sessionFile;
+      if (typeof input.fromByte === "number") params.fromByte = input.fromByte;
+      return sidecar.call<OmpSubagentMessagesResult>("omp.subagents.messages", params);
+    },
+  );
 }

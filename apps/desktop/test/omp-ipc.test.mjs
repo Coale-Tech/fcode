@@ -47,6 +47,7 @@ test("no-input handlers throw AGENT_UNAVAILABLE when sidecar is null", async () 
     IPC.invoke.ompState,
     IPC.invoke.ompLoginProviders,
     IPC.invoke.ompSessionStats,
+    IPC.invoke.ompSubagentList,
   ];
   for (const ch of nullInputChannels) {
     await assert.rejects(handlers.get(ch)(), (err) => {

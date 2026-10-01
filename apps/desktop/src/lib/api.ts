@@ -143,6 +143,8 @@ import type {
   ToolApprovalMode,
   OmpSettingsValues,
   OmpSessionStatsResult,
+  OmpSubagentListResult,
+  OmpSubagentMessagesResult,
 } from "@pi-desktop/shared";
 import {
   defaultCommandShellForPlatform,
@@ -1720,4 +1722,10 @@ export const api = {
   /** Fetch session-wide token and cost totals from the running omp session. */
   ompSessionStats: () =>
     invoke<OmpSessionStatsResult>(IPC.invoke.ompSessionStats),
+  /** List all live subagents in the active omp session. */
+  ompSubagentList: () =>
+    invoke<OmpSubagentListResult>(IPC.invoke.ompSubagentList),
+  /** Fetch the message history for one subagent by id. */
+  ompSubagentMessages: (params?: { subagentId?: string; sessionFile?: string; fromByte?: number }) =>
+    invoke<OmpSubagentMessagesResult>(IPC.invoke.ompSubagentMessages, params ?? {}),
 };

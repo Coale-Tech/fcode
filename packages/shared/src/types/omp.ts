@@ -192,6 +192,28 @@ export type SidecarExtUiEvent =
 /** omp tool approval mode. Controls which tool tiers are auto-approved. */
 export type ToolApprovalMode = "always-ask" | "write" | "yolo";
 
+/** A live subagent known to the omp session (mirrors RpcSubagentSnapshot). */
+export interface OmpSubagentSnapshot {
+  id: string;
+  index: number;
+  agent: string;
+  status: "running" | "completed" | "failed" | "aborted" | "timed_out" | "stopped" | "denied";
+  task?: string;
+  description?: string;
+  lastUpdate: number;
+}
+
+/** Result of `omp.subagents.list`. */
+export interface OmpSubagentListResult {
+  subagents: OmpSubagentSnapshot[];
+}
+
+/** Result of `omp.subagents.messages`. */
+export interface OmpSubagentMessagesResult {
+  /** Raw AgentMessage array from omp. */
+  messages: unknown[];
+}
+
 /**
  * User-controlled omp settings persisted in `omp-settings.json` and injected
  * into the overlay on sidecar restart. Only the configured subset is written;

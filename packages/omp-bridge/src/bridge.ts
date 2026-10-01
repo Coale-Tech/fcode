@@ -282,7 +282,7 @@ const TOOL_EVENT_RENAME: Record<string, string> = {
 
 /** omp event types to drop silently (no PI counterpart). */
 const DROP_EVENTS = new Set([
-  "notice", "irc_message", "todo_reminder", "todo_auto_clear",
+  "notice", "todo_reminder", "todo_auto_clear",
   "ttsr_triggered", "auto_retry_start", "auto_retry_end",
   "retry_fallback_start", "retry_fallback_end",
   "goal_updated", "model_changed", "thinking_level_changed",
@@ -695,6 +695,14 @@ export class OmpBridge {
         this.ompCallAndForward(id, { type: "get_session_stats" });
         break;
 
+      case "omp.subagents.list":
+        this.ompCallAndForward(id, { type: "get_subagents" });
+        break;
+
+      case "omp.subagents.messages":
+        this.ompCallAndForward(id, { type: "get_subagent_messages", ...p });
+        break;
+
       default:
         this.respondError(id, `Unknown method: ${method}`, -32601);
     }
@@ -951,6 +959,31 @@ export class OmpBridge {
     // extension_ui_request (E9).
     if (frame.type === "extension_ui_request") {
       this.handleUiRequest(frame as unknown as OmpExtensionUiRequest);
+      return;
+    }
+
+    // irc_message: forward as a quiet system transcript line if content is plain text.
+    if (frame.type === "irc_message") {
+      const sessionId = this.sessions.keys().next().value ?? "";
+      const msg = frame.message as Record<string, unknown> | undefined;
+      const content = msg?.content;
+      if (typeof content === "string" && content.trim()) {
+        this.emitSystemMessage(sessionId, content.trim());
+      }
+      return;
+    }
+
+    // Subagent full-event stream (subagent_event): relay inner event tagged with subagentId.
+    if (frame.type === "subagent_event") {
+      const payload = (frame.payload ?? {}) as Record<string, unknown>;
+      const subagentId = String(payload.id ?? "");
+      const sessionId = this.sessions.keys().next().value ?? "";
+      this.notify("agent.event", {
+        sessionId,
+        ts: Date.now(),
+        subagentId,
+        event: payload.event,
+      });
       return;
     }
 
