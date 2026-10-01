@@ -1269,6 +1269,11 @@ sklm: {
     permissionModeAsk: "Her seferinde sor",
     permissionModeAcceptEdits: "Düzenlemeleri otomatik kabul et",
     permissionModeAuto: "Tam otomatik",
+    toolApprovalMode: "Araç onay kipi",
+    toolApprovalModeDesc: "Hangi omp araç katmanlarının onay gerektirdiği. Aracı yeniden başlattıktan sonra geçerli olur.",
+    toolApprovalModeAlwaysAsk: "Her seferinde sor",
+    toolApprovalModeWrite: "Okumaları otomatik onayla",
+    toolApprovalModeYolo: "Tümünü otomatik onayla",
     closeBehaviorTitle: "Kapatma davranışı",
     closeBehaviorDesc:
       "Ana pencereyi kapattığınızda ne olur. macOS uygulamayı her zaman Dock’ta tutar.",

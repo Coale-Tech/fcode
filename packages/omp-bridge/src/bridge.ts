@@ -79,6 +79,8 @@ interface OverlayOptions {
   screenshotsDir: string;
   /** Memory backend selection; the Hindsight token travels via HINDSIGHT_API_TOKEN env, never here. */
   memory?: { backend: "mnemopi" | "hindsight" | "off"; hindsightUrl?: string; hindsightBank?: string };
+  /** Tool approval mode; defaults to "always-ask" (never yolo). */
+  approvalMode?: "always-ask" | "write" | "yolo";
 }
 
 /**
@@ -126,13 +128,14 @@ export function isReadOnlyExecuteMethod(method: string): boolean {
 export function makeOmpOverlay(opts: OverlayOptions): string {
   const skillsDir = resolve(join(opts.resourcesPath, "fcode-skills"));
   const screenshotsDir = resolve(opts.screenshotsDir);
+  const mode = opts.approvalMode ?? "always-ask";
 
   // ponytail: YAML by hand — avoids a yaml dep for a ~20-line config file.
   return [
     "# omp overlay for Fcode — generated on each launch, do not edit.",
-    "# DX3: approval_mode always-ask so no writes are auto-approved.",
+    `# DX3: approval_mode ${mode} — controlled by Fcode Settings > AI > Tool approval mode.`,
     "tools:",
-    "  approval_mode: always-ask",
+    `  approval_mode: ${mode}`,
     "  approval:",
     "    # DX7: auto-approve read-only fcode_bench_execute calls.",
     "    fcode_bench_execute_read: allow",
@@ -1066,6 +1069,7 @@ export class OmpBridge {
     ompBinary: string;
     overlayPath: string;
     modelsConfigPath?: string;
+    approvalMode?: "always-ask" | "write" | "yolo";
     cwd: string;
     env: NodeJS.ProcessEnv;
   }): Promise<void> {
@@ -1073,7 +1077,7 @@ export class OmpBridge {
     this.state.cwd = opts.cwd;
     this.sessionStore = new SessionStore(opts.dataDir);
 
-    const ompArgs = ["--mode", "rpc", "--approval-mode", "always-ask", "--config", opts.overlayPath];
+    const ompArgs = ["--mode", "rpc", "--approval-mode", opts.approvalMode ?? "always-ask", "--config", opts.overlayPath];
     if (opts.modelsConfigPath) ompArgs.push("--models-config", opts.modelsConfigPath);
 
     const child = spawn(
@@ -1135,10 +1139,14 @@ async function main(): Promise<void> {
     const screenshotsDir = join(dataDir, "screenshots");
     mkdirSync(screenshotsDir, { recursive: true });
     const backend = process.env.FCODE_MEMORY_BACKEND;
+    const rawMode = process.env.FCODE_TOOL_APPROVAL_MODE;
+    const approvalMode: "always-ask" | "write" | "yolo" =
+      rawMode === "write" || rawMode === "yolo" ? rawMode : "always-ask";
     overlayPath = writeOmpOverlay({
       dataDir,
       resourcesPath,
       screenshotsDir,
+      approvalMode,
       memory:
         backend === "mnemopi" || backend === "hindsight" || backend === "off"
           ? {
@@ -1200,6 +1208,7 @@ async function main(): Promise<void> {
     ompBinary,
     overlayPath,
     modelsConfigPath: process.env.FCODE_MODELS_CONFIG,
+    approvalMode,
     cwd,
     env: {
       ...process.env,
