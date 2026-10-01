@@ -62,6 +62,7 @@ import { PromptEnhancementCard } from "./prompt-enhancement-card";
 import { CloseBehaviorSection, DeveloperSection } from "./developer-sections";
 import { PluginScenicThemesDestination } from "../../components/settings/PluginScenicThemesDestination";
 import { ConfigSyncPage } from "../../components/settings/ConfigSyncPage";
+import { OmpSettingsSections } from "./omp-settings-sections";
 
 type SettingsTab = ReturnType<typeof useAppStore.getState>["settingsTab"];
 
@@ -557,6 +558,7 @@ export function SettingsPage() {
                 settings={settings}
                 saveSettings={saveSettings}
               />
+              <OmpSettingsSections />
             </div>
           )}
 

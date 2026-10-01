@@ -141,6 +141,7 @@ import type {
   SidecarExtUiEvent,
   HindsightLocalState,
   ToolApprovalMode,
+  OmpSettingsValues,
   OmpSessionStatsResult,
   OmpSubagentListResult,
   OmpSubagentMessagesResult,
@@ -1676,6 +1677,10 @@ export const api = {
   /** Persist approval mode; restarts the agent sidecar. */
   toolApprovalModeSet: (mode: ToolApprovalMode) =>
     invoke<ToolApprovalMode>(IPC.invoke.toolApprovalModeSet, { mode }),
+  ompSettingsGet: () => invoke<OmpSettingsValues>(IPC.invoke.ompSettingsGet),
+  /** Persist omp settings groups (task/eval/browser/collab); restarts the agent sidecar. */
+  ompSettingsSet: (patch: OmpSettingsValues) =>
+    invoke<OmpSettingsValues>(IPC.invoke.ompSettingsSet, patch as Record<string, unknown>),
   /** List login providers known to omp. */
   ompLoginProviders: () =>
     invoke<OmpLoginProvidersResult>(IPC.invoke.ompLoginProviders),

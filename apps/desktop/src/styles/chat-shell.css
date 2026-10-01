@@ -1063,10 +1063,10 @@
 
 .omp-subagents-title {
   font-size: var(--text-xs, 11px);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--ds-text-secondary, #666);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--tracking-wide);
 }
 
 .omp-subagents-counts {
@@ -1077,7 +1077,7 @@
 .omp-subagents-count {
   font-size: var(--text-xs, 11px);
   padding: 1px 6px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
 }
 
 .omp-subagents-count--running {
@@ -1124,7 +1124,7 @@
   flex-shrink: 0;
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: var(--radius-round);
   background: var(--ds-text-tertiary, #999);
 }
 
@@ -1139,7 +1139,7 @@
 }
 
 .omp-subagent-name {
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   flex-shrink: 0;
 }
 
@@ -1196,7 +1196,7 @@
 
 .omp-subagents-popover-title {
   font-size: var(--text-sm, 13px);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--ds-text-primary, #111);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1208,8 +1208,7 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  font-size: 18px;
-  line-height: 1;
+  line-height: var(--leading-none);
   color: var(--ds-text-secondary, #666);
   padding: 0 4px;
 }
@@ -1247,7 +1246,7 @@
 }
 
 .omp-subagents-message-role {
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--ds-text-secondary, #666);
   text-align: right;
   padding-top: 2px;
@@ -1265,5 +1264,5 @@
   color: var(--ds-text-primary, #111);
   white-space: pre-wrap;
   word-break: break-word;
-  line-height: 1.5;
+  line-height: var(--leading-relaxed);
 }

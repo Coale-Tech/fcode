@@ -27,7 +27,7 @@ import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import { ErrorCodes, readNdjsonLines } from "@pi-desktop/shared";
+import { ErrorCodes, readNdjsonLines, type OmpSettingsValues } from "@pi-desktop/shared";
 import { capNdjsonLine, reassembleChunk } from "./chunks.js";
 import { SessionStore } from "./sessions.js";
 import { createBridgeState } from "./state.js";
@@ -81,6 +81,8 @@ interface OverlayOptions {
   memory?: { backend: "mnemopi" | "hindsight" | "off"; hindsightUrl?: string; hindsightBank?: string };
   /** Tool approval mode; defaults to "always-ask" (never yolo). */
   approvalMode?: "always-ask" | "write" | "yolo";
+  /** User-configured omp settings groups; absent keys use omp's own defaults. */
+  ompSettings?: OmpSettingsValues;
 }
 
 /**
@@ -129,6 +131,12 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
   const skillsDir = resolve(join(opts.resourcesPath, "fcode-skills"));
   const screenshotsDir = resolve(opts.screenshotsDir);
   const mode = opts.approvalMode ?? "always-ask";
+  const s = opts.ompSettings ?? {};
+
+  // Merge user browser settings onto Fcode's required defaults.
+  const browserEnabled  = s["browser.enabled"]  ?? true;
+  const browserHeadless = s["browser.headless"] ?? true;
+  const browserRelay    = s["browser.relay"]    ?? false;
 
   // ponytail: YAML by hand — avoids a yaml dep for a ~20-line config file.
   return [
@@ -148,10 +156,12 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
     "  enableClaudeUser: true",
     "",
     "browser:",
-    "  enabled: true",
-    "  headless: true",
+    `  enabled: ${browserEnabled}`,
+    `  headless: ${browserHeadless}`,
     `  screenshotDir: "${screenshotsDir}"`,
-    "  relay: false",
+    `  relay: ${browserRelay}`,
+    ...(s["browser.cdpUrl"]   ? [`  cdpUrl: ${JSON.stringify(s["browser.cdpUrl"])}`]   : []),
+    ...(s["browser.relayUrl"] ? [`  relayUrl: ${JSON.stringify(s["browser.relayUrl"])}`] : []),
     ...(opts.memory
       ? [
           "",
@@ -168,7 +178,74 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
             : []),
         ]
       : []),
+    // Task / isolation settings
+    ...ompSettingsYaml(s),
   ].join("\n");
+}
+
+/**
+ * Generate YAML lines for the user-configured omp settings groups
+ * (task, isolation, worktree, eval, python, collab).
+ * Only emits sections where the user has set at least one key.
+ */
+function ompSettingsYaml(s: OmpSettingsValues): string[] {
+  const lines: string[] = [];
+
+  // task section
+  const taskIso = s["task.isolation.enabled"];
+  const taskConc = s["task.maxConcurrency"];
+  const taskDepth = s["task.maxRecursionDepth"];
+  if (taskIso !== undefined || taskConc !== undefined || taskDepth !== undefined) {
+    lines.push("", "task:");
+    if (taskIso !== undefined) { lines.push("  isolation:"); lines.push(`    enabled: ${taskIso}`); }
+    if (taskConc !== undefined) lines.push(`  maxConcurrency: ${taskConc}`);
+    if (taskDepth !== undefined) lines.push(`  maxRecursionDepth: ${taskDepth}`);
+  }
+
+  // isolation section
+  if (s["isolation.backend"] !== undefined) {
+    lines.push("", "isolation:", `  backend: ${s["isolation.backend"]}`);
+  }
+
+  // worktree section
+  if (s["worktree.clone"] !== undefined) {
+    lines.push("", "worktree:", `  clone: ${s["worktree.clone"]}`);
+  }
+
+  // eval section
+  const evalPy = s["eval.py"];
+  const evalJs = s["eval.js"];
+  const evalTools = s["eval.tools.enabled"];
+  if (evalPy !== undefined || evalJs !== undefined || evalTools !== undefined) {
+    lines.push("", "eval:");
+    if (evalPy !== undefined) lines.push(`  py: ${evalPy}`);
+    if (evalJs !== undefined) lines.push(`  js: ${evalJs}`);
+    if (evalTools !== undefined) { lines.push("  tools:"); lines.push(`    enabled: ${evalTools}`); }
+  }
+
+  // python section
+  const pyMode = s["python.kernelMode"];
+  const pyInterp = s["python.interpreter"];
+  if (pyMode !== undefined || pyInterp !== undefined) {
+    lines.push("", "python:");
+    if (pyMode !== undefined) lines.push(`  kernelMode: ${pyMode}`);
+    if (pyInterp !== undefined && pyInterp !== "") lines.push(`  interpreter: ${JSON.stringify(pyInterp)}`);
+  }
+
+  // collab section
+  const collabRelay = s["collab.relayUrl"];
+  const collabWeb   = s["collab.webUrl"];
+  const collabName  = s["collab.displayName"];
+  const collabAuto  = s["collab.autoStart"];
+  if (collabRelay !== undefined || collabWeb !== undefined || collabName !== undefined || collabAuto !== undefined) {
+    lines.push("", "collab:");
+    if (collabRelay !== undefined && collabRelay !== "") lines.push(`  relayUrl: ${JSON.stringify(collabRelay)}`);
+    if (collabWeb   !== undefined && collabWeb   !== "") lines.push(`  webUrl: ${JSON.stringify(collabWeb)}`);
+    if (collabName  !== undefined && collabName  !== "") lines.push(`  displayName: ${JSON.stringify(collabName)}`);
+    if (collabAuto  !== undefined) lines.push(`  autoStart: ${collabAuto}`);
+  }
+
+  return lines;
 }
 
 /**
@@ -1160,6 +1237,20 @@ export class OmpBridge {
 // Entry point (when run as a standalone process)
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Safe parse of `FCODE_OMP_SETTINGS` JSON; returns empty on any failure. */
+function parseOmpSettings(raw: string | undefined): OmpSettingsValues {
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as OmpSettingsValues;
+    }
+  } catch {
+    // non-fatal
+  }
+  return {};
+}
+
 /** Main entry point for the sidecar process. */
 async function main(): Promise<void> {
   const bridge = new OmpBridge();
@@ -1180,6 +1271,7 @@ async function main(): Promise<void> {
       resourcesPath,
       screenshotsDir,
       approvalMode,
+      ompSettings: parseOmpSettings(process.env.FCODE_OMP_SETTINGS),
       memory:
         backend === "mnemopi" || backend === "hindsight" || backend === "off"
           ? {

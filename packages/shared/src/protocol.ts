@@ -378,6 +378,9 @@ export const IPC = {
     /** Tool approval mode (always-ask / write / yolo) persisted host-side. */
     toolApprovalModeGet: "pi-desktop/tool-approval-mode/get",
     toolApprovalModeSet: "pi-desktop/tool-approval-mode/set",
+    /** omp settings groups (task/eval/browser/collab) persisted host-side. */
+    ompSettingsGet: "pi-desktop/omp-settings/get",
+    ompSettingsSet: "pi-desktop/omp-settings/set",
     ompSessionStats: "pi-desktop/omp/session/stats",
     /** List all live subagents in the active omp session. */
     ompSubagentList: "pi-desktop/omp/subagent/list",
