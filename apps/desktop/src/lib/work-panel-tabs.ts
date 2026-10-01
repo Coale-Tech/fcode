@@ -4,7 +4,8 @@ export type WorkPanelTabKind =
   | "file"
   | "plugin"
   | "subagent"
-  | "session-tree";
+  | "session-tree"
+  | "tools";
 
 export type WorkPanelTab = {
   id: string;
@@ -225,12 +226,16 @@ export function isKnownWorkPanelTab(tab: WorkPanelTab): boolean {
     Boolean(tab) &&
     (tab.kind === "new" || tab.kind === "review" ||
       tab.kind === "file" || tab.kind === "plugin" ||
-      tab.kind === "session-tree" || tab.kind === "subagent")
+      tab.kind === "session-tree" || tab.kind === "subagent" ||
+      tab.kind === "tools")
   );
 }
 
 /** The session history / branch-navigation tab. Singleton id. */
 export const SESSION_TREE_TAB: WorkPanelTab = { id: "session-tree", kind: "session-tree" };
+
+/** The tool inspector tab (browser/eval/computer/IDA). Singleton id. */
+export const TOOLS_TAB: WorkPanelTab = { id: "tools", kind: "tools" };
 
 export function sanitizeWorkPanelTabsState(
   state: WorkPanelTabsState,

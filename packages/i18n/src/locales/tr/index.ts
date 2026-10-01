@@ -2168,7 +2168,8 @@ sklm: {
       file: "Dosyalar",
       plugin: "Eklenti görünümü",
       subagent: "Alt ajan",
-    "session-tree": "Oturum geçmişi"
+    "session-tree": "Oturum geçmişi",
+      tools: "Araçlar",
     },
     pluginView: {
       failed: "Bu görünüm yüklenemedi. Eklentiyi yeniden yükleyip deneyin.",
@@ -2874,6 +2875,19 @@ importConfirm: "İçe aktarılan uzantılar ajan sürecinde, ajanın kendi araç
       dismiss: "Kapat",
     },
   },
+  tools: {
+    title: "Araç Denetçileri",
+    noData: "Henüz veri yok — ajan çalışırken araç çağrıları burada görünür.",
+    browserSteps: "Adımlar",
+    computerActions: "Eylemler",
+    evalCell: "Hücre {{index}}",
+    tabs: {
+      browser: "Tarayıcı",
+      eval: "Değerlendir",
+      computer: "Bilgisayar",
+      ida: "IDA",
+    },
+  }
 } satisfies EnglishCatalog;
 
 export default tr;

@@ -2113,7 +2113,8 @@ export const ptBR = {
       file: "Arquivos",
       plugin: "Visualização de plugin",
       subagent: "Subagente",
-    "session-tree": "Histórico de sessão"
+    "session-tree": "Histórico de sessão",
+      tools: "Ferramentas",
     },
     pluginView: {
       failed: "Não foi possível carregar esta visualização. Recarregue o plugin e tente novamente.",
@@ -2798,6 +2799,19 @@ export const ptBR = {
       continue: "Continuar",
       dismiss: "Dispensar"
     }
+  },
+  tools: {
+    title: "Inspetores de ferramentas",
+    noData: "Sem dados ainda — as chamadas de ferramentas aparecem aqui enquanto o agente executa.",
+    browserSteps: "Passos",
+    computerActions: "Ações",
+    evalCell: "Célula {{index}}",
+    tabs: {
+      browser: "Navegador",
+      eval: "Eval",
+      computer: "Computador",
+      ida: "IDA",
+    },
   }
 } satisfies EnglishCatalog;
 

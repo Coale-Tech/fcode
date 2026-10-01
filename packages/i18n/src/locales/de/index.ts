@@ -2162,7 +2162,8 @@ sklm: {
       "file": "Dateien",
       "plugin": "Plugin-Ansicht",
       "subagent": "Subagent",
-    "session-tree": "Sitzungsverlauf"
+    "session-tree": "Sitzungsverlauf",
+      "tools": "Werkzeuge"
     },
     "pluginView": {
       "failed": "Diese Ansicht konnte nicht geladen werden. Laden Sie das Plugin neu und versuchen Sie es erneut.",
@@ -2842,6 +2843,20 @@ sklm: {
       "retry": "Noch einmal versuchen",
       "continue": "Weiter",
       "dismiss": "Verwerfen"
+    }
+  }
+,
+  "tools": {
+    "title": "Werkzeug-Inspektoren",
+    "noData": "Noch keine Daten — Tool-Aufrufe erscheinen hier während der Agent läuft.",
+    "browserSteps": "Schritte",
+    "computerActions": "Aktionen",
+    "evalCell": "Zelle {{index}}",
+    "tabs": {
+      "browser": "Browser",
+      "eval": "Auswertung",
+      "computer": "Computer",
+      "ida": "IDA"
     }
   }
 } satisfies EnglishCatalog;
