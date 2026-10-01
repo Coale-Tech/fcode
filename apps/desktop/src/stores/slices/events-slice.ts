@@ -380,33 +380,41 @@ export function createEventsSlice({
       }
 
       // Extract todo phases from successful todo tool results.
-      if (event.type === "tool_end" && event.toolName === "todo" && !event.isError) {
-        const result = event.result;
-        const details = result && typeof result === "object" && "details" in result ? result.details : undefined;
-        const phases = details && typeof details === "object" && "phases" in details ? details.phases : undefined;
-        if (Array.isArray(phases)) {
-          set((state) => ({
-            sessionTodoPhases: {
-              ...state.sessionTodoPhases,
-              [envelope.sessionId]: phases as OmpTodoPhase[],
-            },
-          }));
+      // tool_end has no toolName; look it up from the paired tool_start record.
+      if (event.type === "tool_end" && !event.isError) {
+        const toolStart = runtime.getToolStart(event.toolCallId);
+        if (toolStart?.toolName === "todo") {
+          const result = event.result;
+          const details = result && typeof result === "object" && "details" in result ? result.details : undefined;
+          const phases = details && typeof details === "object" && "phases" in details ? details.phases : undefined;
+          if (Array.isArray(phases)) {
+            set((state) => ({
+              sessionTodoPhases: {
+                ...state.sessionTodoPhases,
+                [envelope.sessionId]: phases as OmpTodoPhase[],
+              },
+            }));
+          }
         }
       }
 
-      // todo_reminder: forwarded from omp as agent.event; update phases from flat todo list.
-      if (event.type === "todo_reminder") {
-        const ev = event as unknown as { todos?: unknown };
-        if (Array.isArray(ev.todos) && ev.todos.length > 0) {
-          const phases: OmpTodoPhase[] = [{ name: "Todos", tasks: ev.todos as OmpTodoPhase["tasks"] }];
-          set((state) => ({
-            sessionTodoPhases: { ...state.sessionTodoPhases, [envelope.sessionId]: phases },
-          }));
-        }
+      // todo_reminder / todo_auto_clear: forwarded from omp as agent.event; not in the
+      // typed union. Cast to unknown once then use `in` guards — no inline-cast member access.
+      const rawEvent: unknown = event;
+      if (
+        rawEvent && typeof rawEvent === "object" && "type" in rawEvent &&
+        rawEvent.type === "todo_reminder" &&
+        "todos" in rawEvent && Array.isArray(rawEvent.todos) && rawEvent.todos.length > 0
+      ) {
+        const phases: OmpTodoPhase[] = [{ name: "Todos", tasks: rawEvent.todos as OmpTodoPhase["tasks"] }];
+        set((state) => ({
+          sessionTodoPhases: { ...state.sessionTodoPhases, [envelope.sessionId]: phases },
+        }));
       }
-
-      // todo_auto_clear: omp cleared all todos; clear the panel.
-      if (event.type === "todo_auto_clear") {
+      if (
+        rawEvent && typeof rawEvent === "object" && "type" in rawEvent &&
+        rawEvent.type === "todo_auto_clear"
+      ) {
         set((state) => ({
           sessionTodoPhases: { ...state.sessionTodoPhases, [envelope.sessionId]: [] },
         }));
