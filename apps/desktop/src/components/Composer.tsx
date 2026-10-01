@@ -8,6 +8,7 @@ import {
 import { useTranslation } from "react-i18next";
 import type {
   Mode,
+  OmpSessionStatsResult,
   OmpStateResult,
   PermissionMode,
 } from "@pi-desktop/shared";
@@ -116,6 +117,11 @@ export function Composer({
   useEffect(() => {
     if (isRunning) return;
     void api.ompState().then((s) => setOmpContextUsage(s.contextUsage ?? null)).catch(() => {});
+  }, [isRunning]);
+  const [ompSessionStats, setOmpSessionStats] = useState<OmpSessionStatsResult | null>(null);
+  useEffect(() => {
+    if (isRunning) return;
+    void api.ompSessionStats().then(setOmpSessionStats).catch(() => {});
   }, [isRunning]);
   const composerContextUsage = useMemo(
     () =>
@@ -612,6 +618,7 @@ export function Composer({
             modelLabel={modelLabel}
             thinkingLabel={thinkingLabel}
             contextUsage={composerContextUsage ?? null}
+            sessionStats={ompSessionStats}
             enhancementDraft={enhancementDraft}
             value={value}
             modelReady={modelReady}

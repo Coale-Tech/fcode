@@ -607,6 +607,9 @@ export class OmpBridge {
       case "omp.session.rename":
         this.ompCallAndForward(id, { type: "set_session_name", ...p });
         break;
+      case "omp.session.stats":
+        this.ompCallAndForward(id, { type: "get_session_stats" });
+        break;
 
       default:
         this.respondError(id, `Unknown method: ${method}`, -32601);

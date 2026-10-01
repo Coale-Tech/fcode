@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import {
   formatCompactTokenCount,
   type MessageUsage,
+  type OmpSessionStatsResult,
   type UiMessage,
 } from "@pi-desktop/shared";
 import { useAppStore } from "../stores/app-store";
@@ -22,6 +23,7 @@ import {
   calculateTokenRate,
   contextOccupancyTokens,
   contextUsageView,
+  formatSessionCost,
   resolveContextUsageDisplay,
 } from "../lib/context-usage";
 import {
@@ -40,6 +42,7 @@ export function ContextUsageInspector({
   responseDurationMs,
   responseOutputTokens,
   responseOutputEstimated = false,
+  sessionStats = null,
 }: {
   usage: MessageUsage;
   turnUsage: MessageUsage;
@@ -48,6 +51,7 @@ export function ContextUsageInspector({
   responseDurationMs?: number;
   responseOutputTokens?: number;
   responseOutputEstimated?: boolean;
+  sessionStats?: OmpSessionStatsResult | null;
 }) {
   const { t } = useTranslation();
   const panelId = useId();
@@ -87,6 +91,7 @@ export function ContextUsageInspector({
     (total, row) => total + row.totalTokens,
     0,
   );
+  const sessionCost = sessionStats ? formatSessionCost(sessionStats.cost) : null;
   const level =
     context.remainingPercent <= 10
       ? "critical"
@@ -355,6 +360,23 @@ export function ContextUsageInspector({
             {t("chat.usageCompaction", { times: compaction.generation })}
           </span>
           <strong title={compaction.summarized && !compaction.fallback && compaction.summary?.trim() ? compaction.summary : undefined}>~{formatCompactTokenCount(compaction.summaryTokens)}</strong>
+        </div>
+      ) : null}
+      {sessionStats ? (
+        <div className="context-inspector-summary">
+          <div className="context-inspector-summary-row">
+            <strong>{t("chat.usageSessionLabel")}</strong>
+            <span className="context-inspector-summary-values">
+              <span>{t("chat.usageInput")} {formatCompactTokenCount(sessionStats.tokens.input)}</span>
+              <span>{t("chat.usageOutput")} {formatCompactTokenCount(sessionStats.tokens.output)}</span>
+              {sessionStats.tokens.cacheRead > 0 ? (
+                <span>{t("chat.usageCacheRead")} {formatCompactTokenCount(sessionStats.tokens.cacheRead)}</span>
+              ) : null}
+              {sessionCost !== null ? (
+                <span>{t("chat.usageSessionCost", { amount: sessionCost })}</span>
+              ) : null}
+            </span>
+          </div>
         </div>
       ) : null}
     </div>
