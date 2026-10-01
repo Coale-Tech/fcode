@@ -292,6 +292,10 @@ export function OmpSettingsSections() {
               { id: "compact", label: t("settings.ompLoopModeCompact") },
               { id: "reset", label: t("settings.ompLoopModeReset") },
             ]}
+          />
+        </SettingsRow>
+      </SettingsCard>
+
       {/* ── LSP ──────────────────────────────────────────────────── */}
       <SettingsCard title={t("settings.ompLspGroup")}>
         <SettingsRow title={t("settings.ompLspEnabled")} description={t("settings.ompLspEnabledDesc")}>
