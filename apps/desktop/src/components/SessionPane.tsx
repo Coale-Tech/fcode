@@ -6,6 +6,7 @@ import { headAsk } from "../lib/pending-asks";
 import { useTranscriptView } from "../hooks/use-transcript-view";
 import { TranscriptDisclosureProvider } from "../features/chat/transcript/disclosure";
 import { OmpSubagentsList } from "../features/chat/transcript/OmpSubagentsList";
+import { OmpCollabPanel } from "../features/chat/transcript/OmpCollabPanel";
 
 /**
  * One retained conversation pane (ADR 0137).
@@ -43,6 +44,9 @@ export const SessionPane = memo(function SessionPane({
     Boolean(headAsk(state.pendingAsks, sessionId)),
   );
   const planningState = useAppStore((state) => state.planningStates[sessionId]);
+  const isOmpSession = useAppStore((state) =>
+    state.sessions.find((s) => s.id === sessionId)?.source !== "pi-native",
+  );
   const searchTarget = useMemo(
     () =>
       transcript.focus && transcript.parentMessage
@@ -87,6 +91,7 @@ export const SessionPane = memo(function SessionPane({
         />
       </TranscriptDisclosureProvider>
       {visible ? <OmpSubagentsList sessionId={sessionId} /> : null}
+      {visible && isOmpSession ? <OmpCollabPanel sessionId={sessionId} /> : null}
     </div>
   );
 });

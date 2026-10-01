@@ -18,6 +18,7 @@ import type {
   OmpModelsSetResult,
   OmpSessionBranchResult,
   OmpSessionStatsResult,
+  OmpShareResult,
   OmpStateResult,
   OmpSubagentListResult,
   OmpSubagentMessagesResult,
@@ -154,4 +155,11 @@ export function registerOmpIpc({ registrar, getSidecar }: OmpIpcDependencies): v
       return sidecar.call<OmpSubagentMessagesResult>("omp.subagents.messages", params);
     },
   );
+
+  // ── omp.share ──────────────────────────────────────────────────────────────
+  handle(IPC.invoke.ompShare, async () => {
+    const sidecar = getSidecar();
+    if (!sidecar) unavailable();
+    return sidecar.call<OmpShareResult>("omp.share");
+  });
 }
