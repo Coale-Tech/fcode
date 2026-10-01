@@ -15,6 +15,7 @@ import { SettingsCard, SettingsRow } from "./primitives";
 import { OmpSkillsSection } from "../../components/settings/OmpSkillsSection";
 import { OmpUsageSection } from "../../components/settings/OmpUsageSection";
 import { OmpWorktreeSection } from "../../components/settings/OmpWorktreeSection";
+import { OmpExtensionsSection } from "../../components/settings/OmpExtensionsSection";
 
 /** Bundled omp agent names (from omp/packages/coding-agent/src/task/agents.ts). */
 const BUNDLED_AGENTS = ["task", "sonic", "scout", "reviewer", "security-reviewer"] as const;
@@ -559,6 +560,9 @@ export function OmpSettingsSections() {
 
       {/* ── Agent Worktrees ──────────────────────────────────────── */}
       <OmpWorktreeSection />
+
+      {/* ── Extensions ───────────────────────────────────────────── */}
+      <OmpExtensionsSection />
     </>
   );
 }
