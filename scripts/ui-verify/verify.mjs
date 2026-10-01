@@ -2,7 +2,7 @@
 /**
  * scripts/ui-verify/verify.mjs
  *
- * Headless visual verification of the PI-Desktop renderer.
+ * Headless visual verification of the Fcode renderer.
  * Serves the pre-built renderer (apps/desktop/out/renderer/),
  * injects a mock window.piDesktop, then screenshots every target screen
  * in light+dark at 1280x800 and 900x600.

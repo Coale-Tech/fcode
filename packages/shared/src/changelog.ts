@@ -30,6 +30,16 @@ export type ChangelogEntry = {
 
 const enEntries: ChangelogEntry[] = [
   {
+    version: "0.17.0",
+    date: "2026-10-01",
+    highlights: [
+      "The Work Panel gains a Tools tab (browser/eval/computer/IDA sub-panels), a Session History tab to browse and fork past messages, and a live Todo list — all driven by existing agent events.",
+      "omp is now vendored in-repo; Settings → AI adds eleven new sections (Queue Modes, Task Subagents, Eval & Python, Browser, Collab, LSP, IDA Pro, MCP, Skills & Commands, Hindsight Behavior, HTML Export Theme) and Settings → Extensions manages installed omp plugins.",
+      "The in-app file editor (Files, Mod+2) replaces the separate Code page; the DAP panel gains breakpoints and run controls; the context-usage popover shows session token and cost stats.",
+    ],
+  },
+
+  {
     version: "0.16.0",
     date: "2026-09-29",
     highlights: [
@@ -853,6 +863,16 @@ const enEntries: ChangelogEntry[] = [
 
 const zhCNEntries: ChangelogEntry[] = [
   {
+    version: "0.17.0",
+    date: "2026-10-01",
+    highlights: [
+      "工作面板新增 Tools 标签页（浏览器/eval/computer/IDA 子面板）、Session History 标签页（可浏览历史消息并从任意消息分支），以及实时 Todo 列表，均由现有代理事件驱动。",
+      "omp 现已内置于仓库；设置 → AI 新增 11 个配置分组（Queue Modes、Task Subagents、Eval & Python、Browser、Collab、LSP、IDA Pro、MCP、Skills & Commands、Hindsight Behavior、HTML Export Theme），设置 → Extensions 可管理已安装的 omp 插件。",
+      "内置文件编辑器（Files，Mod+2）取代独立的 Code 页面；DAP 面板新增断点管理与运行控制；上下文用量弹窗显示会话 Token 用量和费用统计。",
+    ],
+  },
+
+  {
     version: "0.16.0",
     date: "2026-09-29",
     highlights: [
@@ -1674,6 +1694,16 @@ const zhCNEntries: ChangelogEntry[] = [
 ];
 
 const zhTWEntries: ChangelogEntry[] = [
+  {
+    version: "0.17.0",
+    date: "2026-10-01",
+    highlights: [
+      "工作面板新增 Tools 分頁（瀏覽器/eval/computer/IDA 子面板）、Session History 分頁（可瀏覽歷史訊息並從任意訊息分支），以及即時 Todo 清單，均由現有代理事件驅動。",
+      "omp 現已內建於倉庫；設定 → AI 新增 11 個設定群組（Queue Modes、Task Subagents、Eval & Python、Browser、Collab、LSP、IDA Pro、MCP、Skills & Commands、Hindsight Behavior、HTML Export Theme），設定 → Extensions 可管理已安裝的 omp 外掛。",
+      "內建檔案編輯器（Files，Mod+2）取代獨立的 Code 頁面；DAP 面板新增中斷點管理與執行控制；上下文用量彈窗顯示會話 Token 用量與費用統計。",
+    ],
+  },
+
   {
     version: "0.16.0",
     date: "2026-09-29",

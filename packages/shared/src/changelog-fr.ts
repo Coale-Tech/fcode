@@ -2,6 +2,16 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const frEntries: ChangelogEntry[] = [
   {
+    "version": "0.17.0",
+    "date": "2026-10-01",
+    "highlights": [
+      "Le Work Panel gagne un onglet Tools (sous-panneaux navigateur/eval/computer/IDA), un onglet Session History pour parcourir et bifurquer les messages passés, et une liste Todo en direct — le tout piloté par les événements d'agent existants.",
+      "omp est désormais intégré dans le dépôt ; Paramètres → AI ajoute onze nouvelles sections (Queue Modes, Task Subagents, Eval & Python, Browser, Collab, LSP, IDA Pro, MCP, Skills & Commands, Hindsight Behavior, HTML Export Theme) et Paramètres → Extensions gère les plugins omp installés.",
+      "L'éditeur de fichiers intégré (Files, Mod+2) remplace la page Code séparée ; le panneau DAP prend en charge les points d'arrêt et les contrôles d'exécution ; le popover d'usage du contexte affiche les statistiques de tokens et le coût par session.",
+    ],
+  },
+
+  {
     "version": "0.16.0",
     "date": "2026-09-29",
     "highlights": [

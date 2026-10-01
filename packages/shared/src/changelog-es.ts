@@ -2,6 +2,16 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const esEntries: ChangelogEntry[] = [
   {
+    "version": "0.17.0",
+    "date": "2026-10-01",
+    "highlights": [
+      "El Work Panel incorpora una pestaña Tools (subpaneles de navegador/eval/computer/IDA), una pestaña Session History para explorar y bifurcar mensajes pasados, y una lista Todo en vivo — todo impulsado por eventos de agente existentes.",
+      "omp ahora está integrado en el repositorio; Ajustes → AI añade once nuevas secciones (Queue Modes, Task Subagents, Eval & Python, Browser, Collab, LSP, IDA Pro, MCP, Skills & Commands, Hindsight Behavior, HTML Export Theme) y Ajustes → Extensions gestiona los plugins de omp instalados.",
+      "El editor de archivos integrado (Files, Mod+2) reemplaza la página Code separada; el panel DAP añade puntos de interrupción y controles de ejecución; el popover de uso de contexto muestra estadísticas de tokens y costo por sesión.",
+    ],
+  },
+
+  {
     "version": "0.16.0",
     "date": "2026-09-29",
     "highlights": [

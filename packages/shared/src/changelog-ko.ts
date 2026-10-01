@@ -2,6 +2,16 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const koEntries: ChangelogEntry[] = [
   {
+    version: "0.17.0",
+    date: "2026-10-01",
+    highlights: [
+      "작업 패널에 Tools 탭(브라우저/eval/computer/IDA 서브패널), 과거 메시지를 탐색하고 분기할 수 있는 Session History 탭, 실시간 Todo 목록이 추가되었습니다. 모두 기존 에이전트 이벤트를 활용합니다.",
+      "omp가 레포지토리에 직접 내장되었습니다. 설정 → AI에 11개의 새 섹션(Queue Modes, Task Subagents, Eval & Python, Browser, Collab, LSP, IDA Pro, MCP, Skills & Commands, Hindsight Behavior, HTML Export Theme)이 추가되었고, 설정 → Extensions에서 omp 플러그인을 관리할 수 있습니다.",
+      "내장 파일 편집기(Files, Mod+2)가 별도 Code 페이지를 대체합니다. DAP 패널에 중단점 관리와 실행 제어가 추가되었고, 컨텍스트 사용량 팝오버에 세션 토큰 통계와 비용이 표시됩니다.",
+    ],
+  },
+
+  {
     version: "0.16.0",
     date: "2026-09-29",
     highlights: [
