@@ -366,6 +366,7 @@ export const IPC = {
     ompLoginStart: "pi-desktop/omp/login/start",
     ompSessionBranch: "pi-desktop/omp/session/branch",
     ompSessionRename: "pi-desktop/omp/session/rename",
+    ompSessionStats: "pi-desktop/omp/session/stats",
     /** Bench subsystem (Approach step 6): discovery, supervision, agent access. */
     benchList: "pi-desktop/bench/list",
     benchStart: "pi-desktop/bench/start",

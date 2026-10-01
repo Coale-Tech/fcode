@@ -368,6 +368,8 @@ export const en = {
     compactionRowSummary: "summary ≈{{tokens}} tokens",
     compactionRowNoSummary: "no summary generated",
     compactionRowSummaryFailed: "summary generation failed · recent context retained",
+    usageSessionLabel: "Session",
+    usageSessionCost: "Cost {{amount}}",
     scrollToBottom: "Jump to latest",
     minimap: "Conversation outline",
     resultNeedsAttention: "This task needs attention",

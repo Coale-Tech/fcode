@@ -135,6 +135,7 @@ import type {
   OmpLoginStartResult,
   OmpSessionBranchResult,
   HindsightLocalState,
+  OmpSessionStatsResult,
 } from "@pi-desktop/shared";
 import {
   defaultCommandShellForPlatform,
@@ -1680,4 +1681,7 @@ export const api = {
       listener(payload as HindsightLocalState),
     );
   },
+  /** Fetch session-wide token and cost totals from the running omp session. */
+  ompSessionStats: () =>
+    invoke<OmpSessionStatsResult>(IPC.invoke.ompSessionStats),
 };
