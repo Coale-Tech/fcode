@@ -209,7 +209,7 @@
 | `grep` / `glob` | `tools/grep.ts`, `glob.ts` | `bridge.ts:169` tool events | surfaced | |
 | `browser` (Playwright) | `tools/browser.ts`, `tools/browser/` | `bridge.ts:169` tool events | partial | Events shown; no browser viewport in Fcode UI |
 | `eval` (Python/JS) | `tools/eval.ts` | `bridge.ts:169` tool events | partial | Events shown; no REPL output panel |
-| `debug` (DAP) | `tools/debug.ts` | `bridge.ts:169` tool events | partial | Events shown; no DAP session panel |
+| `debug` (DAP) | `tools/debug.ts` | `DapPanel.tsx` (from `tool_end` details) | surfaced | Read-only session panel: status, frames, variables, breakpoint count |
 | `ida` (IDA Pro) | `tools/ida.ts` | `bridge.ts:169` tool events | partial | Events shown; no IDA UI |
 | `computer` (computer use) | `tools/computer/` | `bridge.ts:169` tool events | partial | Events shown; no screen capture panel |
 | `memory_recall` / `memory_retain` | `tools/memory-recall.ts`, `memory-retain.ts` | `bridge.ts:169` tool events | partial | Events shown; no memory management UI |
@@ -403,7 +403,7 @@
 |---|---|---|---|---|
 | LSP diagnostics on write | `lsp/settings.ts:58` | none | missing | omp runs LSP inside its process; diagnostics not surfaced in Fcode |
 | LSP format on write | `lsp/settings.ts:46` | none | missing | |
-| DAP debugger attach | `tools/debug.ts` | `bridge.ts:169` tool events only | partial | Tool events visible; no DAP session panel or variable inspector |
+| DAP debugger attach | `tools/debug.ts` | `DapPanel.tsx` (from `tool_end` details) | surfaced | Read-only sessions/frames/variables; no breakpoint editing |
 | Browser (Playwright) | `tools/browser/` | `bridge.ts:169` tool events only | partial | Events shown; no live browser viewport in Fcode window |
 | Python eval (`eval.py`) | `tools/eval.ts` | `bridge.ts:169` tool events only | partial | REPL output in tool rows; no notebook/REPL panel |
 | JS eval (`eval.js`) | `tools/eval.ts` | `bridge.ts:169` tool events only | partial | Same as Python |

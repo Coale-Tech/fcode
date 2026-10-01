@@ -13,6 +13,8 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 ### Changes
 
 - Settings → Memory: pick Mnemopi (local), Hindsight (URL, bank, write-only token) or Off, with a live health card (polled every 15 s while open). Memory LLM work (`mnemopi.llmMode=session`) uses the active session model. New omp RPC `get_memory_status`. Saving restarts the agent.
+- DAP session panel: a read-only debugger inspector appears below the transcript while omp's `debug` tool has active sessions. Shows session rows (adapter, program, status badge), stack frames when stopped, and variables from the last query. Driven purely by `tool_end` events — no new IPC. Parity matrix §4.3 `debug` row advances from partial to surfaced.
+
 - omp `extension_ui_request editor`: multi-line textarea dialog in the Composer (instead of immediate refusal); submit returns the edited text, Decline / timeout → cancelled. `set_editor_text` injects text into the active Composer draft.
 - Settings → Memory → Hindsight: "Local Hindsight server" section detects `hindsight-api`, `uvx`, and `docker` on PATH; Start/Stop buttons manage a supervised local server process; when running, the URL field auto-fills to `http://localhost:<port>`. If the server exits immediately due to a missing LLM API key, state shows "unavailable" with a note to configure `~/.hindsight/config.toml`. No auto-install; the user must install the server separately.
 - Context-usage popover: auto-compact toggle reads initial state from `omp.state` and writes via new `omp.auto-compaction.set` RPC. Persisted per omp's session-scoped mechanism; reflected immediately on load.
