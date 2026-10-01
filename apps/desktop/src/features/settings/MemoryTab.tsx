@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type {
   BenchBootstrapResult,
@@ -7,10 +7,11 @@ import type {
   MemoryConfig,
   MemoryConfigView,
   OmpMemoryStatusResult,
+  OmpSettingsValues,
 } from "@pi-desktop/shared";
 import { api } from "../../lib/api";
 import { useAppStore } from "../../stores/app-store";
-import { Input } from "../../components/ui";
+import { Input, SettingsToggle } from "../../components/ui";
 import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect";
 import { SettingsCard, SettingsRow } from "./primitives";
 
@@ -50,6 +51,9 @@ export function MemoryTab() {
   // ── Bank mission state (Hindsight only) ───────────────────────────────────
   const [missionSaving, setMissionSaving] = useState(false);
   const [missionResult, setMissionResult] = useState<string | null>(null);
+  // ── omp settings state (Advanced sections) ────────────────────────────────
+  const [omp, setOmp] = useState<OmpSettingsValues>({});
+
 
   useEffect(() => {
     void api.memoryGetConfig().then((c) => {
@@ -63,6 +67,7 @@ export function MemoryTab() {
         hindsightLocal: c.hindsightLocal,
       });
     }).finally(() => setConfigLoading(false));
+    void api.ompSettingsGet().then(setOmp).catch(() => undefined);
     // Detect launchers so the section renders even before any start/stop
     void api.hindsightLocalDetect().then((r) => setLocalState(r.state));
     // Subscribe to supervisor push events from main process
@@ -105,6 +110,18 @@ export function MemoryTab() {
       setSaving(false);
     }
   };
+
+  const saveOmp = useCallback(
+    async (patch: OmpSettingsValues) => {
+      const merged = { ...omp, ...patch };
+      setOmp(merged);
+      try {
+        const saved = await api.ompSettingsSet(patch);
+        setOmp(saved);
+      } catch { /* keep optimistic update */ }
+    },
+    [omp],
+  );
 
   const applyMission = async () => {
     setMissionSaving(true);
@@ -221,6 +238,8 @@ export function MemoryTab() {
             options={[
               { id: "mnemopi", label: t("settings.memoryBackendMnemopi") },
               { id: "hindsight", label: t("settings.memoryBackendHindsight") },
+              { id: "sharpshooter", label: t("settings.memoryBackendSharpshooter") },
+              { id: "local", label: t("settings.memoryBackendLocal") },
               { id: "off", label: t("settings.memoryBackendOff") },
             ]}
             onChange={(id) => setDraft({ ...draft, backend: id as MemoryConfig["backend"] })}
@@ -399,6 +418,295 @@ export function MemoryTab() {
         )}
         {bootstrapError && <div role="alert">{bootstrapError}</div>}
       </SettingsCard>
+
+      {/* ── Mnemopi Advanced ─────────────────────────────────────────────── */}
+      {config?.backend === "mnemopi" && (
+        <section className="settings-card-block">
+          <details>
+            <summary className="settings-card-heading" style={{ cursor: "pointer", userSelect: "none" }}>
+              {t("settings.memoryAdvancedSection")}
+            </summary>
+            <div className="settings-panel">
+              <SettingsRow title={t("settings.memoryMnemopiScoping")} description={t("settings.memoryMnemopiScopingDesc")}>
+                <SettingsMenuSelect
+                  label={t("settings.memoryMnemopiScoping")}
+                  value={omp["mnemopi.scoping"] ?? "per-project"}
+                  onChange={(v) => void saveOmp({ "mnemopi.scoping": v as OmpSettingsValues["mnemopi.scoping"] })}
+                  options={[
+                    { id: "global", label: t("settings.memoryMnemopiScopingGlobal") },
+                    { id: "per-project", label: t("settings.memoryMnemopiScopingPerProject") },
+                    { id: "per-project-tagged", label: t("settings.memoryMnemopiScopingPerProjectTagged") },
+                  ]}
+                />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryMnemopiAutoRecall")} description={t("settings.memoryMnemopiAutoRecallDesc")}>
+                <SettingsToggle checked={omp["mnemopi.autoRecall"] !== false} label={t("settings.memoryMnemopiAutoRecall")} onChange={() => void saveOmp({ "mnemopi.autoRecall": !(omp["mnemopi.autoRecall"] !== false) })} />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryMnemopiAutoRetain")} description={t("settings.memoryMnemopiAutoRetainDesc")}>
+                <SettingsToggle checked={omp["mnemopi.autoRetain"] !== false} label={t("settings.memoryMnemopiAutoRetain")} onChange={() => void saveOmp({ "mnemopi.autoRetain": !(omp["mnemopi.autoRetain"] !== false) })} />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryMnemopiPolyphonicRecall")} description={t("settings.memoryMnemopiPolyphonicRecallDesc")}>
+                <SettingsToggle checked={omp["mnemopi.polyphonicRecall"] === true} label={t("settings.memoryMnemopiPolyphonicRecall")} onChange={() => void saveOmp({ "mnemopi.polyphonicRecall": !(omp["mnemopi.polyphonicRecall"] === true) })} />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryMnemopiEnhancedRecall")} description={t("settings.memoryMnemopiEnhancedRecallDesc")}>
+                <SettingsToggle checked={omp["mnemopi.enhancedRecall"] === true} label={t("settings.memoryMnemopiEnhancedRecall")} onChange={() => void saveOmp({ "mnemopi.enhancedRecall": !(omp["mnemopi.enhancedRecall"] === true) })} />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryMnemopiProactiveLinking")} description={t("settings.memoryMnemopiProactiveLinkingDesc")}>
+                <SettingsToggle checked={omp["mnemopi.proactiveLinking"] === true} label={t("settings.memoryMnemopiProactiveLinking")} onChange={() => void saveOmp({ "mnemopi.proactiveLinking": !(omp["mnemopi.proactiveLinking"] === true) })} />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryMnemopiNoEmbeddings")} description={t("settings.memoryMnemopiNoEmbeddingsDesc")}>
+                <SettingsToggle checked={omp["mnemopi.noEmbeddings"] === true} label={t("settings.memoryMnemopiNoEmbeddings")} onChange={() => void saveOmp({ "mnemopi.noEmbeddings": !(omp["mnemopi.noEmbeddings"] === true) })} />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryMnemopiEmbeddingVariant")} description={t("settings.memoryMnemopiEmbeddingVariantDesc")}>
+                <SettingsMenuSelect
+                  label={t("settings.memoryMnemopiEmbeddingVariant")}
+                  value={omp["mnemopi.embeddingVariant"] ?? "en"}
+                  onChange={(v) => void saveOmp({ "mnemopi.embeddingVariant": v as "en" | "multilingual" })}
+                  options={[
+                    { id: "en", label: t("settings.memoryMnemopiEmbeddingVariantEn") },
+                    { id: "multilingual", label: t("settings.memoryMnemopiEmbeddingVariantMultilingual") },
+                  ]}
+                />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryMnemopiEmbeddingModel")} description={t("settings.memoryMnemopiEmbeddingModelDesc")}>
+                <Input
+                  value={omp["mnemopi.embeddingModel"] ?? ""}
+                  placeholder=""
+                  onChange={(e) => setOmp((prev) => ({ ...prev, "mnemopi.embeddingModel": e.target.value }))}
+                  onBlur={(e) => void saveOmp({ "mnemopi.embeddingModel": e.target.value || undefined })}
+                  onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryMnemopiEmbeddingApiUrl")} description={t("settings.memoryMnemopiEmbeddingApiUrlDesc")}>
+                <Input
+                  value={omp["mnemopi.embeddingApiUrl"] ?? ""}
+                  placeholder=""
+                  onChange={(e) => setOmp((prev) => ({ ...prev, "mnemopi.embeddingApiUrl": e.target.value }))}
+                  onBlur={(e) => void saveOmp({ "mnemopi.embeddingApiUrl": e.target.value || undefined })}
+                  onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryMnemopiLlmBaseUrl")} description={t("settings.memoryMnemopiLlmBaseUrlDesc")}>
+                <Input
+                  value={omp["mnemopi.llmBaseUrl"] ?? ""}
+                  placeholder=""
+                  onChange={(e) => setOmp((prev) => ({ ...prev, "mnemopi.llmBaseUrl": e.target.value }))}
+                  onBlur={(e) => void saveOmp({ "mnemopi.llmBaseUrl": e.target.value || undefined })}
+                  onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryMnemopiLlmModel")} description={t("settings.memoryMnemopiLlmModelDesc")}>
+                <Input
+                  value={omp["mnemopi.llmModel"] ?? ""}
+                  placeholder=""
+                  onChange={(e) => setOmp((prev) => ({ ...prev, "mnemopi.llmModel": e.target.value }))}
+                  onBlur={(e) => void saveOmp({ "mnemopi.llmModel": e.target.value || undefined })}
+                  onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryMnemopiDbPath")} description={t("settings.memoryMnemopiDbPathDesc")}>
+                <Input
+                  value={omp["mnemopi.dbPath"] ?? ""}
+                  placeholder=""
+                  onChange={(e) => setOmp((prev) => ({ ...prev, "mnemopi.dbPath": e.target.value }))}
+                  onBlur={(e) => void saveOmp({ "mnemopi.dbPath": e.target.value || undefined })}
+                  onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryMnemopiBank")} description={t("settings.memoryMnemopiBankDesc")}>
+                <Input
+                  value={omp["mnemopi.bank"] ?? ""}
+                  placeholder=""
+                  onChange={(e) => setOmp((prev) => ({ ...prev, "mnemopi.bank": e.target.value }))}
+                  onBlur={(e) => void saveOmp({ "mnemopi.bank": e.target.value || undefined })}
+                  onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryMnemopiRetainEveryNTurns")} description={t("settings.memoryMnemopiRetainEveryNTurnsDesc")}>
+                <Input
+                  type="number"
+                  value={String(omp["mnemopi.retainEveryNTurns"] ?? 4)}
+                  onChange={(e) => setOmp((prev) => ({ ...prev, "mnemopi.retainEveryNTurns": Number(e.target.value) }))}
+                  onBlur={(e) => void saveOmp({ "mnemopi.retainEveryNTurns": Number(e.target.value) })}
+                  onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryMnemopiRecallLimit")} description={t("settings.memoryMnemopiRecallLimitDesc")}>
+                <Input
+                  type="number"
+                  value={String(omp["mnemopi.recallLimit"] ?? 8)}
+                  onChange={(e) => setOmp((prev) => ({ ...prev, "mnemopi.recallLimit": Number(e.target.value) }))}
+                  onBlur={(e) => void saveOmp({ "mnemopi.recallLimit": Number(e.target.value) })}
+                  onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryMnemopiRecallContextTurns")} description={t("settings.memoryMnemopiRecallContextTurnsDesc")}>
+                <Input
+                  type="number"
+                  value={String(omp["mnemopi.recallContextTurns"] ?? 3)}
+                  onChange={(e) => setOmp((prev) => ({ ...prev, "mnemopi.recallContextTurns": Number(e.target.value) }))}
+                  onBlur={(e) => void saveOmp({ "mnemopi.recallContextTurns": Number(e.target.value) })}
+                  onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryMnemopiRecallMaxQueryChars")} description={t("settings.memoryMnemopiRecallMaxQueryCharsDesc")}>
+                <Input
+                  type="number"
+                  value={String(omp["mnemopi.recallMaxQueryChars"] ?? 4000)}
+                  onChange={(e) => setOmp((prev) => ({ ...prev, "mnemopi.recallMaxQueryChars": Number(e.target.value) }))}
+                  onBlur={(e) => void saveOmp({ "mnemopi.recallMaxQueryChars": Number(e.target.value) })}
+                  onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryMnemopiInjectionTokenLimit")} description={t("settings.memoryMnemopiInjectionTokenLimitDesc")}>
+                <Input
+                  type="number"
+                  value={String(omp["mnemopi.injectionTokenLimit"] ?? 5000)}
+                  onChange={(e) => setOmp((prev) => ({ ...prev, "mnemopi.injectionTokenLimit": Number(e.target.value) }))}
+                  onBlur={(e) => void saveOmp({ "mnemopi.injectionTokenLimit": Number(e.target.value) })}
+                  onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryMnemopiDebug")} description={t("settings.memoryMnemopiDebugDesc")}>
+                <SettingsToggle checked={omp["mnemopi.debug"] === true} label={t("settings.memoryMnemopiDebug")} onChange={() => void saveOmp({ "mnemopi.debug": !(omp["mnemopi.debug"] === true) })} />
+              </SettingsRow>
+            </div>
+          </details>
+        </section>
+      )}
+
+      {/* ── Hindsight Advanced ───────────────────────────────────────────── */}
+      {config?.backend === "hindsight" && (
+        <section className="settings-card-block">
+          <details>
+            <summary className="settings-card-heading" style={{ cursor: "pointer", userSelect: "none" }}>
+              {t("settings.memoryAdvancedSection")}
+            </summary>
+            <div className="settings-panel">
+              <SettingsRow title={t("settings.memoryHindsightScoping")} description={t("settings.memoryHindsightScopingDesc")}>
+                <SettingsMenuSelect
+                  label={t("settings.memoryHindsightScoping")}
+                  value={omp["hindsight.scoping"] ?? "per-project-tagged"}
+                  onChange={(v) => void saveOmp({ "hindsight.scoping": v as OmpSettingsValues["hindsight.scoping"] })}
+                  options={[
+                    { id: "global", label: t("settings.memoryHindsightScopingGlobal") },
+                    { id: "per-project", label: t("settings.memoryHindsightScopingPerProject") },
+                    { id: "per-project-tagged", label: t("settings.memoryHindsightScopingPerProjectTagged") },
+                  ]}
+                />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryHindsightBankIdPrefix")} description={t("settings.memoryHindsightBankIdPrefixDesc")}>
+                <Input
+                  value={omp["hindsight.bankIdPrefix"] ?? ""}
+                  placeholder=""
+                  onChange={(e) => setOmp((prev) => ({ ...prev, "hindsight.bankIdPrefix": e.target.value }))}
+                  onBlur={(e) => void saveOmp({ "hindsight.bankIdPrefix": e.target.value || undefined })}
+                  onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryHindsightRetainEveryNTurns")} description={t("settings.memoryHindsightRetainEveryNTurnsDesc")}>
+                <Input type="number" value={String(omp["hindsight.retainEveryNTurns"] ?? 3)} onChange={(e) => setOmp((prev) => ({ ...prev, "hindsight.retainEveryNTurns": Number(e.target.value) }))} onBlur={(e) => void saveOmp({ "hindsight.retainEveryNTurns": Number(e.target.value) })} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryHindsightRetainOverlapTurns")} description={t("settings.memoryHindsightRetainOverlapTurnsDesc")}>
+                <Input type="number" value={String(omp["hindsight.retainOverlapTurns"] ?? 2)} onChange={(e) => setOmp((prev) => ({ ...prev, "hindsight.retainOverlapTurns": Number(e.target.value) }))} onBlur={(e) => void saveOmp({ "hindsight.retainOverlapTurns": Number(e.target.value) })} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryHindsightRecallBudget")} description={t("settings.memoryHindsightRecallBudgetDesc")}>
+                <SettingsMenuSelect
+                  label={t("settings.memoryHindsightRecallBudget")}
+                  value={omp["hindsight.recallBudget"] ?? "mid"}
+                  onChange={(v) => void saveOmp({ "hindsight.recallBudget": v as "low" | "mid" | "high" })}
+                  options={[
+                    { id: "low", label: t("settings.memoryHindsightRecallBudgetLow") },
+                    { id: "mid", label: t("settings.memoryHindsightRecallBudgetMid") },
+                    { id: "high", label: t("settings.memoryHindsightRecallBudgetHigh") },
+                  ]}
+                />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryHindsightRecallMaxTokens")} description={t("settings.memoryHindsightRecallMaxTokensDesc")}>
+                <Input type="number" value={String(omp["hindsight.recallMaxTokens"] ?? 1024)} onChange={(e) => setOmp((prev) => ({ ...prev, "hindsight.recallMaxTokens": Number(e.target.value) }))} onBlur={(e) => void saveOmp({ "hindsight.recallMaxTokens": Number(e.target.value) })} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryHindsightRecallContextTurns")} description={t("settings.memoryHindsightRecallContextTurnsDesc")}>
+                <Input type="number" value={String(omp["hindsight.recallContextTurns"] ?? 1)} onChange={(e) => setOmp((prev) => ({ ...prev, "hindsight.recallContextTurns": Number(e.target.value) }))} onBlur={(e) => void saveOmp({ "hindsight.recallContextTurns": Number(e.target.value) })} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryHindsightRecallMaxQueryChars")} description={t("settings.memoryHindsightRecallMaxQueryCharsDesc")}>
+                <Input type="number" value={String(omp["hindsight.recallMaxQueryChars"] ?? 800)} onChange={(e) => setOmp((prev) => ({ ...prev, "hindsight.recallMaxQueryChars": Number(e.target.value) }))} onBlur={(e) => void saveOmp({ "hindsight.recallMaxQueryChars": Number(e.target.value) })} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryHindsightMentalModelMaxRenderChars")} description={t("settings.memoryHindsightMentalModelMaxRenderCharsDesc")}>
+                <Input type="number" value={String(omp["hindsight.mentalModelMaxRenderChars"] ?? 16000)} onChange={(e) => setOmp((prev) => ({ ...prev, "hindsight.mentalModelMaxRenderChars": Number(e.target.value) }))} onBlur={(e) => void saveOmp({ "hindsight.mentalModelMaxRenderChars": Number(e.target.value) })} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryHindsightDebug")} description={t("settings.memoryHindsightDebugDesc")}>
+                <SettingsToggle checked={omp["hindsight.debug"] === true} label={t("settings.memoryHindsightDebug")} onChange={() => void saveOmp({ "hindsight.debug": !(omp["hindsight.debug"] === true) })} />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryHindsightRequestTimeoutMs")} description={t("settings.memoryHindsightRequestTimeoutMsDesc")}>
+                <Input type="number" value={String(omp["hindsight.requestTimeoutMs"] ?? 30000)} onChange={(e) => setOmp((prev) => ({ ...prev, "hindsight.requestTimeoutMs": Number(e.target.value) }))} onBlur={(e) => void saveOmp({ "hindsight.requestTimeoutMs": Number(e.target.value) })} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryHindsightReflectTimeoutMs")} description={t("settings.memoryHindsightReflectTimeoutMsDesc")}>
+                <Input type="number" value={String(omp["hindsight.reflectTimeoutMs"] ?? 120000)} onChange={(e) => setOmp((prev) => ({ ...prev, "hindsight.reflectTimeoutMs": Number(e.target.value) }))} onBlur={(e) => void saveOmp({ "hindsight.reflectTimeoutMs": Number(e.target.value) })} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryHindsightRecallTimeoutMs")} description={t("settings.memoryHindsightRecallTimeoutMsDesc")}>
+                <Input type="number" value={String(omp["hindsight.recallTimeoutMs"] ?? 30000)} onChange={(e) => setOmp((prev) => ({ ...prev, "hindsight.recallTimeoutMs": Number(e.target.value) }))} onBlur={(e) => void saveOmp({ "hindsight.recallTimeoutMs": Number(e.target.value) })} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryHindsightRetainTimeoutMs")} description={t("settings.memoryHindsightRetainTimeoutMsDesc")}>
+                <Input type="number" value={String(omp["hindsight.retainTimeoutMs"] ?? 60000)} onChange={(e) => setOmp((prev) => ({ ...prev, "hindsight.retainTimeoutMs": Number(e.target.value) }))} onBlur={(e) => void saveOmp({ "hindsight.retainTimeoutMs": Number(e.target.value) })} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} />
+              </SettingsRow>
+            </div>
+          </details>
+        </section>
+      )}
+
+      {/* ── Sharpshooter Advanced ────────────────────────────────────────── */}
+      {config?.backend === "sharpshooter" && (
+        <section className="settings-card-block">
+          <details>
+            <summary className="settings-card-heading" style={{ cursor: "pointer", userSelect: "none" }}>
+              {t("settings.memoryAdvancedSection")}
+            </summary>
+            <div className="settings-panel">
+              <SettingsRow title={t("settings.memorySharpshooterModel")} description={t("settings.memorySharpshooterModelDesc")}>
+                <Input
+                  value={omp["sharpshooter.model"] ?? ""}
+                  placeholder=""
+                  onChange={(e) => setOmp((prev) => ({ ...prev, "sharpshooter.model": e.target.value }))}
+                  onBlur={(e) => void saveOmp({ "sharpshooter.model": e.target.value || undefined })}
+                  onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memorySharpshooterIntervalMinutes")} description={t("settings.memorySharpshooterIntervalMinutesDesc")}>
+                <Input type="number" value={String(omp["sharpshooter.intervalMinutes"] ?? 5)} onChange={(e) => setOmp((prev) => ({ ...prev, "sharpshooter.intervalMinutes": Number(e.target.value) }))} onBlur={(e) => void saveOmp({ "sharpshooter.intervalMinutes": Number(e.target.value) })} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memorySharpshooterInjectionTokenLimit")} description={t("settings.memorySharpshooterInjectionTokenLimitDesc")}>
+                <Input type="number" value={String(omp["sharpshooter.injectionTokenLimit"] ?? 15000)} onChange={(e) => setOmp((prev) => ({ ...prev, "sharpshooter.injectionTokenLimit": Number(e.target.value) }))} onBlur={(e) => void saveOmp({ "sharpshooter.injectionTokenLimit": Number(e.target.value) })} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} />
+              </SettingsRow>
+            </div>
+          </details>
+        </section>
+      )}
+
+      {/* ── Local pipeline Advanced ──────────────────────────────────────── */}
+      {config?.backend === "local" && (
+        <section className="settings-card-block">
+          <details>
+            <summary className="settings-card-heading" style={{ cursor: "pointer", userSelect: "none" }}>
+              {t("settings.memoryAdvancedSection")}
+            </summary>
+            <div className="settings-panel">
+              <SettingsRow title={t("settings.memoryLocalPipelineMaxRolloutsPerStartup")} description={t("settings.memoryLocalPipelineMaxRolloutsPerStartupDesc")}>
+                <Input type="number" value={String(omp["memories.maxRolloutsPerStartup"] ?? 64)} onChange={(e) => setOmp((prev) => ({ ...prev, "memories.maxRolloutsPerStartup": Number(e.target.value) }))} onBlur={(e) => void saveOmp({ "memories.maxRolloutsPerStartup": Number(e.target.value) })} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryLocalPipelineMaxRolloutAgeDays")} description={t("settings.memoryLocalPipelineMaxRolloutAgeDaysDesc")}>
+                <Input type="number" value={String(omp["memories.maxRolloutAgeDays"] ?? 30)} onChange={(e) => setOmp((prev) => ({ ...prev, "memories.maxRolloutAgeDays": Number(e.target.value) }))} onBlur={(e) => void saveOmp({ "memories.maxRolloutAgeDays": Number(e.target.value) })} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryLocalPipelineMinRolloutIdleHours")} description={t("settings.memoryLocalPipelineMinRolloutIdleHoursDesc")}>
+                <Input type="number" value={String(omp["memories.minRolloutIdleHours"] ?? 12)} onChange={(e) => setOmp((prev) => ({ ...prev, "memories.minRolloutIdleHours": Number(e.target.value) }))} onBlur={(e) => void saveOmp({ "memories.minRolloutIdleHours": Number(e.target.value) })} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} />
+              </SettingsRow>
+              <SettingsRow title={t("settings.memoryLocalPipelineSummaryInjectionTokenLimit")} description={t("settings.memoryLocalPipelineSummaryInjectionTokenLimitDesc")}>
+                <Input type="number" value={String(omp["memories.summaryInjectionTokenLimit"] ?? 5000)} onChange={(e) => setOmp((prev) => ({ ...prev, "memories.summaryInjectionTokenLimit": Number(e.target.value) }))} onBlur={(e) => void saveOmp({ "memories.summaryInjectionTokenLimit": Number(e.target.value) })} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} />
+              </SettingsRow>
+            </div>
+          </details>
+        </section>
+      )}
+
     </div>
   );
 }
