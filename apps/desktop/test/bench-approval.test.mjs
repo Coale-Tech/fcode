@@ -33,6 +33,11 @@ test("frappe.db.count is read-only", () => {
   assert.ok(isReadOnlyBenchMethod("frappe.db.count"));
 });
 
+test("frappe.client.get_value and get_count are read-only", () => {
+  assert.ok(isReadOnlyBenchMethod("frappe.client.get_value"));
+  assert.ok(isReadOnlyBenchMethod("frappe.client.get_count"));
+});
+
 test("frappe.utils.now is read-only", () => {
   assert.ok(isReadOnlyBenchMethod("frappe.utils.now"));
 });
