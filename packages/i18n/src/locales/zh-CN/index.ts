@@ -358,6 +358,7 @@ export const zhCN = {
     usageToolsSummary: "{{count}} 种工具 · {{calls}} 次调用 · 约 {{tokens}} tokens",
     usageNoTools: "本轮没有调用工具",
     usageCompaction: "已压缩 {{times}} 次 · 摘要",
+    usageAutoCompact: "自动压缩",
     compactionRow: "上下文已压缩 · 第 {{times}} 次",
     compactionRowSummary: "摘要 ≈{{tokens}} tokens",
     compactionRowNoSummary: "未生成摘要",
