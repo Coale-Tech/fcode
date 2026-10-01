@@ -397,6 +397,11 @@ export class OmpBridge {
   private tracer: ((dir: string, line: string) => void) | null = null;
   /** Whether set_subagent_subscription{progress} has been sent for this omp process (§9). */
   private subagentSubscribed = false;
+  /**
+   * One-shot resolvers for `command_output` frames — consumed in FIFO order.
+   * Used by `omp.share` to capture the text that `/share` emits before its ack.
+   */
+  private pendingCommandOutput: Array<(text: string) => void> = [];
 
   /** Enable raw-frame tracing to a file (FCODE_BRIDGE_TRACE=1). */
   setTracer(fn: (dir: string, line: string) => void): void {
@@ -703,6 +708,10 @@ export class OmpBridge {
         this.ompCallAndForward(id, { type: "get_subagent_messages", ...p });
         break;
 
+      case "omp.share":
+        this.ompShareAndForward(id);
+        break;
+
       default:
         this.respondError(id, `Unknown method: ${method}`, -32601);
     }
@@ -713,6 +722,46 @@ export class OmpBridge {
       .then((result) => this.respond(hostId, result))
       .catch((e) => this.respondError(hostId, String(e)));
   }
+
+  /**
+   * Drive the `/share` slash command and capture its `command_output` text.
+   * The `command_output` frame arrives on omp stdout BEFORE the response ack
+   * for local slash commands (agentInvoked:false), so the one-shot resolver
+   * is registered before the ompCall and is already settled when the ack comes.
+   */
+  private ompShareAndForward(hostId: string): void {
+    let resolveOutput!: (text: string) => void;
+    const textPromise = new Promise<string>((resolve) => {
+      resolveOutput = resolve;
+      this.pendingCommandOutput.push(resolve);
+    });
+    this.ompCall({ type: "prompt", message: "/share" })
+      .then(async (ack) => {
+        const invoked = (ack as Record<string, unknown>)?.agentInvoked;
+        if (invoked !== false) {
+          // Fell through to the LLM — no command_output coming; clean up.
+          const idx = this.pendingCommandOutput.indexOf(resolveOutput);
+          if (idx !== -1) this.pendingCommandOutput.splice(idx, 1);
+          this.respond(hostId, { url: null, text: null });
+          return;
+        }
+        // Slash command ran; command_output was (or will be) emitted before this ack.
+        const text = await Promise.race([
+          textPromise,
+          new Promise<string>((_, reject) =>
+            setTimeout(() => reject(new Error("command_output timeout")), 10_000),
+          ),
+        ]);
+        const match = text.match(/Share URL:\s*(\S+)/);
+        this.respond(hostId, { url: match?.[1] ?? null, text });
+      })
+      .catch((e: unknown) => {
+        const idx = this.pendingCommandOutput.indexOf(resolveOutput);
+        if (idx !== -1) this.pendingCommandOutput.splice(idx, 1);
+        this.respondError(hostId, String((e as Error)?.message ?? e));
+      });
+  }
+
 
   private async ompPrompt(opts: {
     sessionId: string;
@@ -959,6 +1008,13 @@ export class OmpBridge {
     // extension_ui_request (E9).
     if (frame.type === "extension_ui_request") {
       this.handleUiRequest(frame as unknown as OmpExtensionUiRequest);
+      return;
+    }
+
+    // command_output: one-shot capture for slash commands like /share that emit text.
+    if (frame.type === "command_output") {
+      const callback = this.pendingCommandOutput.shift();
+      if (callback) callback(String(frame.text ?? ""));
       return;
     }
 

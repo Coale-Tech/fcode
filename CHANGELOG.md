@@ -30,6 +30,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - omp extension `setStatus` / `setWidget` / `setTitle` UI requests are now rendered: status entries appear in the existing extension status line, widget lines as a collapsible block above the composer, and `setTitle` overrides the session title in the topbar.
 
 - Settings → AI: four new omp settings groups — **Task Subagents** (isolation enabled/backend, worktree clone, max concurrency/recursion), **Eval & Python** (py/js/tools toggles, kernel mode, interpreter path), **Browser** (enabled, headless, CDP URL, relay), **Collab** (relay URL, web URL, display name, auto-start). Settings persist in `omp-settings.json`; injected into the omp overlay at sidecar restart via `FCODE_OMP_SETTINGS`. Validated against the omp schema on write (unknown key, wrong type, out-of-range rejected). `task.agentModelOverrides` deferred: it is a free-form agent→model map with no clean fixed-field UI.
+- Collab / Share panel: a sticky panel below the transcript surfaces the `/share` snapshot command for omp sessions. Clicking **Share** invokes `/share` via the omp prompt path, captures the resulting URL, and shows it with a one-click Copy button. A **Collab settings** link jumps to Settings → AI → Collab. Live collab (`/collab start`, guest join) remains TUI-only; the panel notes this explicitly. New IPC channel `pi-desktop/omp/share`; new omp bridge route `omp.share`; new pure reducer `omp-collab.ts`.
 
 ## [0.16.0] — 2026-09-29
 
