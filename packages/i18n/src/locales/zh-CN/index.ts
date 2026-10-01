@@ -395,6 +395,7 @@ export const zhCN = {
     toolBlockNotice: "说明",
     toolBlockError: "错误",
     toolBlockMore: "还有 {{count}} 项未显示",
+    toolScreenshot: "截图",
     toolChipExit: "退出码 {{count}}",
     toolChipMatches_one: "1 处匹配",
     toolChipMatches_other: "{{count}} 处匹配",
