@@ -1317,7 +1317,10 @@ export class OmpBridge {
       mapped.type === "ext_title" ||
       mapped.type === "set_editor_text"
     ) {
-      this.notify("sidecar.ext_ui", mapped);
+      // Renderer's SidecarExtUiEvent discriminates on `kind`, not the mapper's `type`.
+      const { type, ...rest } = mapped;
+      const kind = type === "set_editor_text" ? "editor_text" : type.slice("ext_".length);
+      this.notify("sidecar.ext_ui", { kind, ...rest });
       return;
     }
 
@@ -1506,14 +1509,14 @@ async function main(): Promise<void> {
   const dataDir = process.env.FCODE_DATA_DIR ?? join(homedir(), ".fcode-dev");
   const ompBinary = resolveOmpBinary({ resourcesPath, env: process.env as Record<string, string | undefined> });
 
+  const rawMode = process.env.FCODE_TOOL_APPROVAL_MODE;
+  const approvalMode: "always-ask" | "write" | "yolo" =
+    rawMode === "write" || rawMode === "yolo" ? rawMode : "always-ask";
   let overlayPath: string;
   try {
     const screenshotsDir = join(dataDir, "screenshots");
     mkdirSync(screenshotsDir, { recursive: true });
     const backend = process.env.FCODE_MEMORY_BACKEND;
-    const rawMode = process.env.FCODE_TOOL_APPROVAL_MODE;
-    const approvalMode: "always-ask" | "write" | "yolo" =
-      rawMode === "write" || rawMode === "yolo" ? rawMode : "always-ask";
     overlayPath = writeOmpOverlay({
       dataDir,
       resourcesPath,
