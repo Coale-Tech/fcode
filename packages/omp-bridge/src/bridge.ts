@@ -78,7 +78,7 @@ interface OverlayOptions {
   resourcesPath: string;
   screenshotsDir: string;
   /** Memory backend selection; the Hindsight token travels via HINDSIGHT_API_TOKEN env, never here. */
-  memory?: { backend: "mnemopi" | "hindsight" | "off"; hindsightUrl?: string; hindsightBank?: string };
+  memory?: { backend: "mnemopi" | "hindsight" | "sharpshooter" | "local" | "off"; hindsightUrl?: string; hindsightBank?: string };
   /** Tool approval mode; defaults to "always-ask" (never yolo). */
   approvalMode?: "always-ask" | "write" | "yolo";
   /** User-configured omp settings groups; absent keys use omp's own defaults. */
@@ -147,11 +147,25 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
     if (opts.memory.hindsightUrl) hindsightLines.push(`  apiUrl: ${JSON.stringify(opts.memory.hindsightUrl)}`);
     if (opts.memory.hindsightBank) hindsightLines.push(`  bankId: ${JSON.stringify(opts.memory.hindsightBank)}`);
   }
-  if (s["hindsight.autoRecall"]          !== undefined) hindsightLines.push(`  autoRecall: ${s["hindsight.autoRecall"]}`);
-  if (s["hindsight.autoRetain"]          !== undefined) hindsightLines.push(`  autoRetain: ${s["hindsight.autoRetain"]}`);
-  if (s["hindsight.retainMode"]          !== undefined) hindsightLines.push(`  retainMode: ${s["hindsight.retainMode"]}`);
-  if (s["hindsight.mentalModelsEnabled"] !== undefined) hindsightLines.push(`  mentalModelsEnabled: ${s["hindsight.mentalModelsEnabled"]}`);
-  if (s["hindsight.mentalModelAutoSeed"] !== undefined) hindsightLines.push(`  mentalModelAutoSeed: ${s["hindsight.mentalModelAutoSeed"]}`);
+  if (s["hindsight.autoRecall"]                  !== undefined) hindsightLines.push(`  autoRecall: ${s["hindsight.autoRecall"]}`);
+  if (s["hindsight.autoRetain"]                  !== undefined) hindsightLines.push(`  autoRetain: ${s["hindsight.autoRetain"]}`);
+  if (s["hindsight.retainMode"]                  !== undefined) hindsightLines.push(`  retainMode: ${s["hindsight.retainMode"]}`);
+  if (s["hindsight.mentalModelsEnabled"]          !== undefined) hindsightLines.push(`  mentalModelsEnabled: ${s["hindsight.mentalModelsEnabled"]}`);
+  if (s["hindsight.mentalModelAutoSeed"]          !== undefined) hindsightLines.push(`  mentalModelAutoSeed: ${s["hindsight.mentalModelAutoSeed"]}`);
+  if (s["hindsight.scoping"]                      !== undefined) hindsightLines.push(`  scoping: ${s["hindsight.scoping"]}`);
+  if (s["hindsight.bankIdPrefix"]                 !== undefined && s["hindsight.bankIdPrefix"] !== "") hindsightLines.push(`  bankIdPrefix: ${JSON.stringify(s["hindsight.bankIdPrefix"])}`);
+  if (s["hindsight.retainEveryNTurns"]            !== undefined) hindsightLines.push(`  retainEveryNTurns: ${s["hindsight.retainEveryNTurns"]}`);
+  if (s["hindsight.retainOverlapTurns"]           !== undefined) hindsightLines.push(`  retainOverlapTurns: ${s["hindsight.retainOverlapTurns"]}`);
+  if (s["hindsight.recallBudget"]                 !== undefined) hindsightLines.push(`  recallBudget: ${s["hindsight.recallBudget"]}`);
+  if (s["hindsight.recallMaxTokens"]              !== undefined) hindsightLines.push(`  recallMaxTokens: ${s["hindsight.recallMaxTokens"]}`);
+  if (s["hindsight.recallContextTurns"]           !== undefined) hindsightLines.push(`  recallContextTurns: ${s["hindsight.recallContextTurns"]}`);
+  if (s["hindsight.recallMaxQueryChars"]          !== undefined) hindsightLines.push(`  recallMaxQueryChars: ${s["hindsight.recallMaxQueryChars"]}`);
+  if (s["hindsight.debug"]                        !== undefined) hindsightLines.push(`  debug: ${s["hindsight.debug"]}`);
+  if (s["hindsight.requestTimeoutMs"]             !== undefined) hindsightLines.push(`  requestTimeoutMs: ${s["hindsight.requestTimeoutMs"]}`);
+  if (s["hindsight.reflectTimeoutMs"]             !== undefined) hindsightLines.push(`  reflectTimeoutMs: ${s["hindsight.reflectTimeoutMs"]}`);
+  if (s["hindsight.recallTimeoutMs"]              !== undefined) hindsightLines.push(`  recallTimeoutMs: ${s["hindsight.recallTimeoutMs"]}`);
+  if (s["hindsight.retainTimeoutMs"]              !== undefined) hindsightLines.push(`  retainTimeoutMs: ${s["hindsight.retainTimeoutMs"]}`);
+  if (s["hindsight.mentalModelMaxRenderChars"]    !== undefined) hindsightLines.push(`  mentalModelMaxRenderChars: ${s["hindsight.mentalModelMaxRenderChars"]}`);
 
   // ponytail: YAML by hand — avoids a yaml dep for a ~20-line config file.
   return [
@@ -187,6 +201,26 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
           `  backend: ${opts.memory.backend}`,
           "mnemopi:",
           "  llmMode: session",
+          ...(s["mnemopi.scoping"]           !== undefined ? [`  scoping: ${s["mnemopi.scoping"]}`]                                 : []),
+          ...(s["mnemopi.dbPath"]            ? [`  dbPath: ${JSON.stringify(s["mnemopi.dbPath"])}`]                                 : []),
+          ...(s["mnemopi.bank"]              ? [`  bank: ${JSON.stringify(s["mnemopi.bank"])}`]                                     : []),
+          ...(s["mnemopi.embeddingVariant"]  !== undefined ? [`  embeddingVariant: ${s["mnemopi.embeddingVariant"]}`]               : []),
+          ...(s["mnemopi.autoRecall"]        !== undefined ? [`  autoRecall: ${s["mnemopi.autoRecall"]}`]                           : []),
+          ...(s["mnemopi.autoRetain"]        !== undefined ? [`  autoRetain: ${s["mnemopi.autoRetain"]}`]                           : []),
+          ...(s["mnemopi.polyphonicRecall"]  !== undefined ? [`  polyphonicRecall: ${s["mnemopi.polyphonicRecall"]}`]               : []),
+          ...(s["mnemopi.enhancedRecall"]    !== undefined ? [`  enhancedRecall: ${s["mnemopi.enhancedRecall"]}`]                   : []),
+          ...(s["mnemopi.proactiveLinking"]  !== undefined ? [`  proactiveLinking: ${s["mnemopi.proactiveLinking"]}`]               : []),
+          ...(s["mnemopi.noEmbeddings"]      !== undefined ? [`  noEmbeddings: ${s["mnemopi.noEmbeddings"]}`]                       : []),
+          ...(s["mnemopi.embeddingModel"]    ? [`  embeddingModel: ${JSON.stringify(s["mnemopi.embeddingModel"])}`]                 : []),
+          ...(s["mnemopi.embeddingApiUrl"]   ? [`  embeddingApiUrl: ${JSON.stringify(s["mnemopi.embeddingApiUrl"])}`]               : []),
+          ...(s["mnemopi.llmBaseUrl"]        ? [`  llmBaseUrl: ${JSON.stringify(s["mnemopi.llmBaseUrl"])}`]                         : []),
+          ...(s["mnemopi.llmModel"]          ? [`  llmModel: ${JSON.stringify(s["mnemopi.llmModel"])}`]                             : []),
+          ...(s["mnemopi.retainEveryNTurns"] !== undefined ? [`  retainEveryNTurns: ${s["mnemopi.retainEveryNTurns"]}`]             : []),
+          ...(s["mnemopi.recallLimit"]       !== undefined ? [`  recallLimit: ${s["mnemopi.recallLimit"]}`]                         : []),
+          ...(s["mnemopi.recallContextTurns"]    !== undefined ? [`  recallContextTurns: ${s["mnemopi.recallContextTurns"]}`]       : []),
+          ...(s["mnemopi.recallMaxQueryChars"]   !== undefined ? [`  recallMaxQueryChars: ${s["mnemopi.recallMaxQueryChars"]}`]     : []),
+          ...(s["mnemopi.injectionTokenLimit"]   !== undefined ? [`  injectionTokenLimit: ${s["mnemopi.injectionTokenLimit"]}`]     : []),
+          ...(s["mnemopi.debug"]             !== undefined ? [`  debug: ${s["mnemopi.debug"]}`]                                     : []),
         ]
       : []),
     ...(hindsightLines.length > 0 ? ["", "hindsight:", ...hindsightLines] : []),
@@ -317,6 +351,30 @@ function ompSettingsYaml(s: OmpSettingsValues): string[] {
     if (cmdClaudeProj !== undefined) lines.push(`  enableClaudeProject: ${cmdClaudeProj}`);
   }
 
+  // sharpshooter section (backend=sharpshooter; also configures extraction when using other backends)
+  const ssModel    = s["sharpshooter.model"];
+  const ssInterval = s["sharpshooter.intervalMinutes"];
+  const ssLimit    = s["sharpshooter.injectionTokenLimit"];
+  if (ssModel !== undefined || ssInterval !== undefined || ssLimit !== undefined) {
+    lines.push("", "sharpshooter:");
+    if (ssModel    !== undefined && ssModel !== "") lines.push(`  model: ${JSON.stringify(ssModel)}`);
+    if (ssInterval !== undefined) lines.push(`  intervalMinutes: ${ssInterval}`);
+    if (ssLimit    !== undefined) lines.push(`  injectionTokenLimit: ${ssLimit}`);
+  }
+
+  // memories section (local memory pipeline; backend=local)
+  const memMaxRollouts     = s["memories.maxRolloutsPerStartup"];
+  const memMaxAgeDays      = s["memories.maxRolloutAgeDays"];
+  const memMinIdleHours    = s["memories.minRolloutIdleHours"];
+  const memSummaryLimit    = s["memories.summaryInjectionTokenLimit"];
+  if (memMaxRollouts !== undefined || memMaxAgeDays !== undefined || memMinIdleHours !== undefined || memSummaryLimit !== undefined) {
+    lines.push("", "memories:");
+    if (memMaxRollouts  !== undefined) lines.push(`  maxRolloutsPerStartup: ${memMaxRollouts}`);
+    if (memMaxAgeDays   !== undefined) lines.push(`  maxRolloutAgeDays: ${memMaxAgeDays}`);
+    if (memMinIdleHours !== undefined) lines.push(`  minRolloutIdleHours: ${memMinIdleHours}`);
+    if (memSummaryLimit !== undefined) lines.push(`  summaryInjectionTokenLimit: ${memSummaryLimit}`);
+  }
+
   // theme section (HTML export palette)
   const themeDark  = s["theme.dark"];
   const themeLight = s["theme.light"];
@@ -326,6 +384,12 @@ function ompSettingsYaml(s: OmpSettingsValues): string[] {
     if (themeLight !== undefined && themeLight !== "") lines.push(`  light: ${JSON.stringify(themeLight)}`);
   }
 
+  // NOTE: `extensions` and `disabledExtensions` (OmpSettingsValues keys from
+  // omp/packages/coding-agent/src/extensibility/settings.ts) are NOT written to
+  // the overlay here. omp reads them directly from omp-settings.json (injected
+  // via FCODE_OMP_SETTINGS env var) when it resolves extensibility settings.
+  // The disable toggle in extensions-mgmt-ipc.ts writes to omp-settings.json
+  // and the env var refreshes on sidecar restart — no overlay entry needed.
   return lines;
 }
 
@@ -363,7 +427,6 @@ const TOOL_EVENT_RENAME: Record<string, string> = {
 
 /** omp event types to drop silently (no PI counterpart). */
 const DROP_EVENTS = new Set([
-  "ttsr_triggered",
   "ready", "negotiate_protocol",
 ]);
 
@@ -375,6 +438,8 @@ const SYSTEM_LINE_EVENTS: Record<string, true> = {
   goal_updated: true,
   model_changed: true, thinking_level_changed: true,
   session_settled: true,
+  /** Token-to-sample ratio limit reached; omp paused and resumed the session. */
+  ttsr_triggered: true,
 };
 
 /** Map a system-line event to a human-readable text label. */
@@ -390,6 +455,7 @@ function systemLineText(frame: Record<string, unknown>): string {
     case "model_changed":        return `[omp] Model → ${String(frame.model ?? frame.modelId ?? "")}`;
     case "thinking_level_changed": return `[omp] Thinking → ${String(frame.level ?? "")}`;
     case "session_settled":      return `[omp] Session settled`;
+    case "ttsr_triggered":       return `[omp] Token-to-sample ratio limit; session paused and resumed`;
     default:                     return `[omp] ${t}`;
   }
 }
@@ -901,6 +967,38 @@ export class OmpBridge {
         this.ompShareAndForward(id);
         break;
 
+      case "omp.bash": {
+        // Run a shell command in omp's session cwd and emit output as a system
+        // transcript block so the user sees it without an extra round-trip.
+        const command = typeof p.command === "string" ? p.command : "";
+        if (!command) { this.respondError(id, "command required"); break; }
+        try {
+          const result = await this.ompCall({ type: "bash", command }) as Record<string, unknown>;
+          const output = String(result?.output ?? "").trim();
+          const exitCode = result?.exitCode ?? 0;
+          const sessionId = this.sessions.keys().next().value ?? "";
+          this.emitSystemMessage(
+            sessionId,
+            `$ ${command}\n${output}${output ? "\n" : ""}[exit ${String(exitCode)}]`,
+          );
+          this.respond(id, { ok: true });
+        } catch (e) {
+          this.respondError(id, String(e));
+        }
+        break;
+      }
+
+      case "omp.abort_bash":
+        this.ompCallAndForward(id, { type: "abort_bash" });
+        break;
+
+      case "omp.set_event_filter": {
+        // null = receive all events; string[] = allowlist of event type names.
+        const events = Array.isArray(p.events) ? (p.events as string[]) : null;
+        this.ompCallAndForward(id, { type: "set_event_filter", events });
+        break;
+      }
+
       default:
         this.respondError(id, `Unknown method: ${method}`, -32601);
     }
@@ -979,12 +1077,11 @@ export class OmpBridge {
     }
 
     // omp has no per-session cwd/project field on new_session or open_session:
-    // cwd is fixed once at process spawn for the bridge's whole lifetime
-    // (start(), below). A single shared ompProcess also means open_session's
+    // cwd is fixed once at process spawn (start(), below) from FCODE_BENCH_PATH,
+    // which sidecar.ts sets to benchSupervisor.activeBenchPath on each launch.
+    // A single shared ompProcess also means open_session's
     // "most recent session in this directory" resume can race if two
     // Fcode sessions ever share a project.
-    // ponytail: single-cwd-per-process ceiling; upgrade path is one omp child
-    // per session (tracked as a follow-up to this fix).
     const sessionCmd: Record<string, unknown> = sessionType === "open_session" && sessionDir
       ? { type: "open_session", sessionDir }
       : { type: "new_session" };
@@ -1140,6 +1237,13 @@ export class OmpBridge {
               this.registerHostTools()
                 .then((names) => {
                   process.stderr.write(`[omp-bridge] handshake: registered host tools: ${names.join(", ")}\n`);
+                  // Wire the event filter: null = receive all session events.
+                  // Called explicitly so the filter mechanism is exercised; upgrade
+                  // to an allowlist when event volume becomes a measurable concern.
+                  return this.ompCall({ type: "set_event_filter", events: null });
+                })
+                .then(() => {
+                  process.stderr.write("[omp-bridge] handshake: event filter cleared (all events)\n");
                 })
                 .catch((e: unknown) => {
                   const msg = String((e as Error)?.message ?? e);
@@ -1533,7 +1637,7 @@ async function main(): Promise<void> {
       approvalMode,
       ompSettings: parseOmpSettings(process.env.FCODE_OMP_SETTINGS),
       memory:
-        backend === "mnemopi" || backend === "hindsight" || backend === "off"
+        backend === "mnemopi" || backend === "hindsight" || backend === "sharpshooter" || backend === "local" || backend === "off"
           ? {
               backend,
               hindsightUrl: process.env.FCODE_HINDSIGHT_URL,

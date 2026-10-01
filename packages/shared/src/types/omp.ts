@@ -58,6 +58,8 @@ export interface OmpStateResult {
   sessionName?: string;
   messageCount: number;
   autoCompactionEnabled?: boolean;
+  /** When present: whether fast-mode is currently active for this session. */
+  fastModeEnabled?: boolean;
   contextUsage?: { tokensUsed?: number; tokensAvailable?: number; tokensTotal?: number; [key: string]: unknown };
   [key: string]: unknown;
 }
@@ -88,7 +90,7 @@ export interface OmpSessionBranchResult {
 
 /** Result of `omp.memory.status` (omp `get_memory_status`). */
 export interface OmpMemoryStatusResult {
-  backend: "mnemopi" | "hindsight" | "local" | "off";
+  backend: "mnemopi" | "hindsight" | "local" | "sharpshooter" | "off";
   active: boolean;
   writable: boolean;
   searchable: boolean;
@@ -132,7 +134,7 @@ export interface OmpSessionStatsResult {
 
 /** Fcode-owned memory backend selection. The Hindsight token is write-only. */
 export interface MemoryConfig {
-  backend: "mnemopi" | "hindsight" | "off";
+  backend: "mnemopi" | "hindsight" | "sharpshooter" | "local" | "off";
   hindsightUrl?: string;
   hindsightBank?: string;
   /** Reflect/recall mission text written to the bank via PUT on save. */
@@ -277,6 +279,57 @@ export interface OmpSettingsValues {
   "hindsight.retainMode"?: "full-session" | "last-turn";
   "hindsight.mentalModelsEnabled"?: boolean;
   "hindsight.mentalModelAutoSeed"?: boolean;
+  // Mnemopi advanced (omp/packages/coding-agent/src/mnemopi/settings.ts)
+  // mnemopi.llmMode is forced to "session" by the bridge overlay; excluded.
+  // mnemopi.embeddingApiKey and mnemopi.llmApiKey are credentials; use secret store; excluded.
+  "mnemopi.scoping"?: "global" | "per-project" | "per-project-tagged";
+  "mnemopi.dbPath"?: string;
+  "mnemopi.bank"?: string;
+  "mnemopi.embeddingVariant"?: "en" | "multilingual";
+  "mnemopi.autoRecall"?: boolean;
+  "mnemopi.autoRetain"?: boolean;
+  "mnemopi.polyphonicRecall"?: boolean;
+  "mnemopi.enhancedRecall"?: boolean;
+  "mnemopi.proactiveLinking"?: boolean;
+  "mnemopi.noEmbeddings"?: boolean;
+  "mnemopi.embeddingModel"?: string;
+  "mnemopi.embeddingApiUrl"?: string;
+  "mnemopi.llmBaseUrl"?: string;
+  "mnemopi.llmModel"?: string;
+  "mnemopi.retainEveryNTurns"?: number;
+  "mnemopi.recallLimit"?: number;
+  "mnemopi.recallContextTurns"?: number;
+  "mnemopi.recallMaxQueryChars"?: number;
+  "mnemopi.injectionTokenLimit"?: number;
+  "mnemopi.debug"?: boolean;
+  // Hindsight advanced — remaining keys not in MemoryTab or omp-settings-sections
+  // hindsight.apiUrl/bankId/apiToken managed by MemoryTab; hindsight.bankMission/retainMission also MemoryTab.
+  // hindsight.retainContext is purely internal ("omp" constant); excluded.
+  // hindsight.recallTypes (array of strings) is complex; excluded for now.
+  "hindsight.scoping"?: "global" | "per-project" | "per-project-tagged";
+  "hindsight.bankIdPrefix"?: string;
+  "hindsight.retainEveryNTurns"?: number;
+  "hindsight.retainOverlapTurns"?: number;
+  "hindsight.recallBudget"?: "low" | "mid" | "high";
+  "hindsight.recallMaxTokens"?: number;
+  "hindsight.recallContextTurns"?: number;
+  "hindsight.recallMaxQueryChars"?: number;
+  "hindsight.debug"?: boolean;
+  "hindsight.requestTimeoutMs"?: number;
+  "hindsight.reflectTimeoutMs"?: number;
+  "hindsight.recallTimeoutMs"?: number;
+  "hindsight.retainTimeoutMs"?: number;
+  "hindsight.mentalModelMaxRenderChars"?: number;
+  // Sharpshooter (omp/packages/coding-agent/src/sharpshooter/settings.ts)
+  "sharpshooter.model"?: string;
+  "sharpshooter.intervalMinutes"?: number;
+  "sharpshooter.injectionTokenLimit"?: number;
+  // Local memory pipeline (omp/packages/coding-agent/src/memories/settings.ts)
+  // memories.enabled is legacy/hidden; excluded. Stage1/phase2 lease/retry/heartbeat are pipeline internals; excluded.
+  "memories.maxRolloutsPerStartup"?: number;
+  "memories.maxRolloutAgeDays"?: number;
+  "memories.minRolloutIdleHours"?: number;
+  "memories.summaryInjectionTokenLimit"?: number;
   // Appearance — HTML export themes (omp/packages/coding-agent/src/modes/settings.ts)
   "theme.dark"?: string;
   "theme.light"?: string;
@@ -444,4 +497,12 @@ export interface OmpExtensionListResult {
 export interface OmpExtensionMutateResult {
   ok: boolean;
   output: string;
+}
+
+/** Result of the omp `bash` RPC command. */
+export interface OmpBashResult {
+  /** Combined stdout+stderr from the command. */
+  output: string;
+  exitCode: number | undefined;
+  cancelled: boolean;
 }

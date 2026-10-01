@@ -11,6 +11,7 @@
  */
 import { ErrorCodes, IPC } from "@pi-desktop/shared";
 import type {
+  OmpBashResult,
   OmpCommandsListResult,
   OmpHistoricalStatsResult,
   OmpInstalledSkillsListResult,
@@ -487,5 +488,29 @@ export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpc
     const sidecar = getSidecar();
     if (!sidecar) unavailable();
     return sidecar.call<OmpShareResult>("omp.share");
+  });
+
+  // ── omp.bash ───────────────────────────────────────────────────────────────
+  // Runs a shell command in omp's session cwd. The bridge emits the output as
+  // a system transcript block and returns { ok: true } on success.
+  handle(IPC.invoke.ompBash, async (input: { command?: unknown } = {}) => {
+    const command = typeof input?.command === "string" ? input.command.trim() : "";
+    if (!command) invalid("command required");
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<OmpBashResult>("omp.bash", { command });
+  });
+
+  // ── omp.abort_bash ─────────────────────────────────────────────────────────
+  handle(IPC.invoke.ompAbortBash, async () => {
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<void>("omp.abort_bash");
+  });
+
+  // ── omp.set_event_filter ───────────────────────────────────────────────────
+  // null = all events; string[] = allowlist of event type names.
+  handle(IPC.invoke.ompSetEventFilter, async (input: { events?: unknown } = {}) => {
+    const events = Array.isArray(input?.events) ? (input.events as string[]) : null;
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<void>("omp.set_event_filter", { events });
   });
 }

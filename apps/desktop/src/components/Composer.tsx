@@ -116,16 +116,29 @@ export function Composer({
   // After each turn ends, refresh context window from omp state for accurate occupancy.
   const [ompContextUsage, setOmpContextUsage] = useState<OmpStateResult["contextUsage"] | null>(null);
   const [ompAutoCompactionEnabled, setOmpAutoCompactionEnabled] = useState<boolean | undefined>(undefined);
+  const [ompFastModeEnabled, setOmpFastModeEnabled] = useState<boolean | undefined>(undefined);
+  const [ompAutoRetryEnabled, setOmpAutoRetryEnabled] = useState<boolean | undefined>(undefined);
   useEffect(() => {
     if (isRunning) return;
     void api.ompState().then((s) => {
       setOmpContextUsage(s.contextUsage ?? null);
       if (typeof s.autoCompactionEnabled === "boolean") setOmpAutoCompactionEnabled(s.autoCompactionEnabled);
+      if (typeof s.fastModeEnabled === "boolean") setOmpFastModeEnabled(s.fastModeEnabled);
+      if (typeof (s as Record<string, unknown>).autoRetryEnabled === "boolean")
+        setOmpAutoRetryEnabled((s as Record<string, unknown>).autoRetryEnabled as boolean);
     }).catch(() => {});
   }, [isRunning]);
   const handleToggleAutoCompaction = useCallback((enabled: boolean) => {
     setOmpAutoCompactionEnabled(enabled);
     void api.ompAutoCompactionSet(enabled).catch(() => {});
+  }, []);
+  const handleToggleFastMode = useCallback((enabled: boolean) => {
+    setOmpFastModeEnabled(enabled);
+    void api.ompFastSet(enabled).catch(() => {});
+  }, []);
+  const handleToggleAutoRetry = useCallback((enabled: boolean) => {
+    setOmpAutoRetryEnabled(enabled);
+    void api.ompRetrySetAutoRetry(enabled).catch(() => {});
   }, []);
 
   const [ompSessionStats, setOmpSessionStats] = useState<OmpSessionStatsResult | null>(null);
@@ -638,7 +651,10 @@ export function Composer({
             contextUsage={composerContextUsage ?? null}
             autoCompactionEnabled={ompAutoCompactionEnabled}
             onToggleAutoCompaction={handleToggleAutoCompaction}
-            sessionStats={ompSessionStats}
+            fastModeEnabled={ompFastModeEnabled}
+            onToggleFastMode={handleToggleFastMode}
+            autoRetryEnabled={ompAutoRetryEnabled}
+            onToggleAutoRetry={handleToggleAutoRetry}
             enhancementDraft={enhancementDraft}
             value={value}
             modelReady={modelReady}

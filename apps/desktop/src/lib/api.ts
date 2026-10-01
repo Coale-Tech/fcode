@@ -159,6 +159,7 @@ import type {
   OmpWorktreeListResult,
   OmpExtensionListResult,
   OmpExtensionMutateResult,
+  OmpBashResult,
 } from "@pi-desktop/shared";
 import {
   defaultCommandShellForPlatform,
@@ -1820,4 +1821,13 @@ export const api = {
   /** Enable or disable an extension. Updates disabledExtensions and restarts sidecar. */
   ompExtensionSetEnabled: (id: string, enabled: boolean) =>
     invoke<OmpSettingsValues>(IPC.invoke.ompExtensionSetEnabled, { id, enabled }),
+  /** Run a shell command in omp's session cwd; bridge emits output as a transcript system block. */
+  ompBash: (command: string) =>
+    invoke<OmpBashResult>(IPC.invoke.ompBash, { command }),
+  /** Abort a running bash command. */
+  ompAbortBash: () =>
+    invoke<void>(IPC.invoke.ompAbortBash),
+  /** Set the omp event filter; null = all events, string[] = allowlist. */
+  ompSetEventFilter: (events: string[] | null) =>
+    invoke<void>(IPC.invoke.ompSetEventFilter, { events }),
 };

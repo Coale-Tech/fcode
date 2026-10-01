@@ -398,23 +398,13 @@ export function createEventsSlice({
         }
       }
 
-      // todo_reminder / todo_auto_clear: forwarded from omp as agent.event; not in the
-      // typed union. Cast to unknown once then use `in` guards — no inline-cast member access.
-      const rawEvent: unknown = event;
-      if (
-        rawEvent && typeof rawEvent === "object" && "type" in rawEvent &&
-        rawEvent.type === "todo_reminder" &&
-        "todos" in rawEvent && Array.isArray(rawEvent.todos) && rawEvent.todos.length > 0
-      ) {
-        const phases: OmpTodoPhase[] = [{ name: "Todos", tasks: rawEvent.todos as OmpTodoPhase["tasks"] }];
+      if (event.type === "todo_reminder" && Array.isArray(event.todos) && event.todos.length > 0) {
+        const phases: OmpTodoPhase[] = [{ name: "Todos", tasks: event.todos as OmpTodoPhase["tasks"] }];
         set((state) => ({
           sessionTodoPhases: { ...state.sessionTodoPhases, [envelope.sessionId]: phases },
         }));
       }
-      if (
-        rawEvent && typeof rawEvent === "object" && "type" in rawEvent &&
-        rawEvent.type === "todo_auto_clear"
-      ) {
+      if (event.type === "todo_auto_clear") {
         set((state) => ({
           sessionTodoPhases: { ...state.sessionTodoPhases, [envelope.sessionId]: [] },
         }));
