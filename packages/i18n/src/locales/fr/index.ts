@@ -1375,6 +1375,8 @@ sklm: {
     "ompCollabAutoStartOff": "Off",
     "ompCollabAutoStartView": "View",
     "ompCollabAutoStartControl": "Control",
+    "ompAgentModelOverridesDesc": "Remplace le modèle utilisé par cet agent intégré. Laissez sur Défaut pour utiliser le modèle de la session.",
+    "ompAgentModelOverridesDefault": "Défaut",
     "closeBehaviorTitle": "Comportement de fermeture",
     "closeBehaviorDesc": "Que se passe-t-il lorsque vous fermez la fenêtre principale. macOS conserve toujours l'application dans le Dock.",
     "closeBehaviorTray": "Près de la barre d'état système",

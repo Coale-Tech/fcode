@@ -1362,6 +1362,8 @@ sklm: {
     ompCollabAutoStartOff: "Off",
     ompCollabAutoStartView: "View",
     ompCollabAutoStartControl: "Control",
+    ompAgentModelOverridesDesc: "覆寫此內建 Agent 使用的模型。選擇預設則沿用會話模型。",
+    ompAgentModelOverridesDefault: "預設",
     closeBehaviorTitle: "關閉行為",
     closeBehaviorDesc: "關閉主視窗時發生什麼。macOS 始終會將應用保留在 Dock 中。",
     closeBehaviorTray: "關閉到托盤",

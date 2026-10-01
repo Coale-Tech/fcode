@@ -1375,6 +1375,8 @@ sklm: {
     "ompCollabAutoStartOff": "Off",
     "ompCollabAutoStartView": "View",
     "ompCollabAutoStartControl": "Control",
+    "ompAgentModelOverridesDesc": "Überschreibt das von diesem integrierten Agenten verwendete Modell. Auf Standard lassen, um das Sitzungsmodell zu verwenden.",
+    "ompAgentModelOverridesDefault": "Standard",
     "closeBehaviorTitle": "Schließverhalten",
     "closeBehaviorDesc": "Was passiert, wenn Sie das Hauptfenster schließen? macOS behält die App immer im Dock.",
     "closeBehaviorTray": "In der Taskleiste schließen",

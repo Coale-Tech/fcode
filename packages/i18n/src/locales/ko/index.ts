@@ -1386,6 +1386,8 @@ sklm: {
     ompCollabAutoStartOff: "Off",
     ompCollabAutoStartView: "View",
     ompCollabAutoStartControl: "Control",
+    ompAgentModelOverridesDesc: "이 내장 에이전트가 사용할 모델을 재정의합니다. 세션 모델을 사용하려면 기본값으로 두세요.",
+    ompAgentModelOverridesDefault: "기본값",
     closeBehaviorTitle: "닫기 동작",
     closeBehaviorDesc:
       "주 창을 닫을 때의 동작입니다. macOS에서는 앱이 항상 Dock에 유지됩니다.",

@@ -5,18 +5,23 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { OmpSettingsValues } from "@pi-desktop/shared";
+import type { OmpModel, OmpSettingsValues } from "@pi-desktop/shared";
 import { api } from "../../lib/api";
 import { Input, SettingsToggle } from "../../components/ui";
 import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect";
 import { SettingsCard, SettingsRow } from "./primitives";
 
+/** Bundled omp agent names (from omp/packages/coding-agent/src/task/agents.ts). */
+const BUNDLED_AGENTS = ["task", "sonic", "scout", "reviewer", "security-reviewer"] as const;
+
 export function OmpSettingsSections() {
   const { t } = useTranslation();
   const [omp, setOmp] = useState<OmpSettingsValues>({});
+  const [ompModels, setOmpModels] = useState<OmpModel[]>([]);
 
   useEffect(() => {
     void api.ompSettingsGet().then(setOmp).catch(() => undefined);
+    void api.ompModelsList().then((r) => setOmpModels(r.models)).catch(() => undefined);
   }, []);
 
   const save = useCallback(
@@ -101,6 +106,39 @@ export function OmpSettingsSections() {
             ]}
           />
         </SettingsRow>
+        {/* ── Agent model overrides ─────────────────────────────── */}
+        {BUNDLED_AGENTS.map((agent) => {
+          const current = omp["task.agentModelOverrides"]?.[agent] ?? "";
+          const modelOptions = [
+            { id: "", label: t("settings.ompAgentModelOverridesDefault") },
+            ...ompModels.map((m) => {
+              const fullId = `${m.provider.id}/${m.id}`;
+              return { id: fullId, label: fullId };
+            }),
+          ];
+          return (
+            <SettingsRow
+              key={agent}
+              title={agent}
+              description={t("settings.ompAgentModelOverridesDesc")}
+            >
+              <SettingsMenuSelect
+                label={agent}
+                value={current}
+                onChange={(v) => {
+                  const overrides = { ...(omp["task.agentModelOverrides"] ?? {}) };
+                  if (v === "") {
+                    delete overrides[agent];
+                  } else {
+                    overrides[agent] = v;
+                  }
+                  void save({ "task.agentModelOverrides": overrides });
+                }}
+                options={modelOptions}
+              />
+            </SettingsRow>
+          );
+        })}
       </SettingsCard>
 
       {/* ── Eval & Python ────────────────────────────────────────── */}

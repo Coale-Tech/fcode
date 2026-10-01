@@ -1376,6 +1376,8 @@ sklm: {
     ompCollabAutoStartOff: "Off",
     ompCollabAutoStartView: "View",
     ompCollabAutoStartControl: "Control",
+    ompAgentModelOverridesDesc: "Bu yerleşik ajanın kullandığı modeli değiştirin. Oturum modelini kullanmak için Varsayılan olarak bırakın.",
+    ompAgentModelOverridesDefault: "Varsayılan",
     closeBehaviorTitle: "Kapatma davranışı",
     closeBehaviorDesc:
       "Ana pencereyi kapattığınızda ne olur. macOS uygulamayı her zaman Dock’ta tutar.",

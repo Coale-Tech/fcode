@@ -1340,6 +1340,8 @@ export const ptBR = {
     ompCollabAutoStartOff: "Off",
     ompCollabAutoStartView: "View",
     ompCollabAutoStartControl: "Control",
+    ompAgentModelOverridesDesc: "Substituir o modelo usado por este agente. Deixe em Padrão para usar o modelo da sessão.",
+    ompAgentModelOverridesDefault: "Padrão",
     closeBehaviorTitle: "Comportamento ao fechar",
     closeBehaviorDesc: "O que acontece ao fechar a janela principal. O macOS sempre mantém o app no Dock.",
     closeBehaviorTray: "Fechar para a bandeja",
