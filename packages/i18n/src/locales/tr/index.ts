@@ -1858,6 +1858,10 @@ sklm: {
       skipped: "Soru {{number}} atlandı",
     },
   },
+  editor: {
+    title: "Metin düzenle",
+    placeholder: "Metin girin…",
+  },
   /**
    * Host-owned window menu of a floating plugin widget (`ui.shape: "widget"`).
    * A widget has no control capsule, so its context menu carries these.

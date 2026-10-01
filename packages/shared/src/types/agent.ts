@@ -189,6 +189,10 @@ export type AskToolQuestion = {
   question: string;
   options: string[];
   multiSelect?: boolean;
+  /** When true, render a multi-line textarea instead of option buttons. */
+  multiline?: boolean;
+  /** Initial text for a multiline textarea (from omp editor request prefill). */
+  defaultText?: string;
 };
 
 export type AskToolRequest = {

@@ -417,6 +417,14 @@ export function Composer({
     setPermissionOpen(false);
   }, [controlsBlocked]);
 
+  // set_editor_text: omp injects text into the Composer draft (fire-and-forget).
+  useEffect(() => {
+    return api.onSidecarExtUi((event) => {
+      if (event.kind !== "editor_text" || event.sessionId !== activeSessionId) return;
+      setValue(event.text);
+    });
+  }, [activeSessionId, setValue]);
+
   const submitController = useComposerSubmit({
     value,
     draftKey,

@@ -15,10 +15,11 @@ type DraftAnswer = {
 const CUSTOM_OPTION = "__asktool_custom__";
 
 function emptyDrafts(questions: AskToolQuestion[]): DraftAnswer[] {
-  return questions.map(() => ({
+  return questions.map((q) => ({
     values: [],
-    customSelected: false,
-    customText: "",
+    // multiline questions use the custom-text slot pre-filled with defaultText.
+    customSelected: q.multiline === true,
+    customText: q.defaultText ?? "",
     skipped: false,
   }));
 }
@@ -123,11 +124,11 @@ export function AskToolCard({ request, queued = 0 }: { request: PendingAsk; queu
   };
 
   return (
-    <section className="asktool-card" role="region" aria-label={t("askTool.title")}>
+    <section className="asktool-card" role="region" aria-label={current.multiline ? t("editor.title") : t("askTool.title")}>
       <div className="asktool-card-header">
         <div>
           <div className="asktool-card-title" role="status" aria-live="polite">
-            {t("askTool.title")}
+            {current.multiline ? t("editor.title") : t("askTool.title")}
           </div>
           <div className="asktool-card-progress">
             {t("askTool.progress", { current: index + 1, total: request.questions.length })}
@@ -161,48 +162,64 @@ export function AskToolCard({ request, queued = 0 }: { request: PendingAsk; queu
         {t("askTool.questionNumber", { number: index + 1 })}
       </div>
       <h3 className="asktool-question">{current.question}</h3>
-      <div className="asktool-options" role={current.multiSelect ? "group" : "radiogroup"}>
-        {current.options.map((option) => {
-          const selected = currentDraft.values.includes(option);
-          return (
-            <button
-              key={option}
-              type="button"
-              className={`asktool-option ${selected ? "selected" : ""}`}
-              aria-pressed={current.multiSelect ? selected : undefined}
-              aria-checked={!current.multiSelect ? selected : undefined}
-              role={current.multiSelect ? "checkbox" : "radio"}
-              onClick={() => selectOption(option)}
-            >
-              <span className="asktool-option-mark" aria-hidden>{selected ? "✓" : ""}</span>
-              <span>{option}</span>
-            </button>
-          );
-        })}
-        <button
-          type="button"
-          className={`asktool-option asktool-custom-option ${currentDraft.customSelected ? "selected" : ""}`}
-          aria-pressed={current.multiSelect ? currentDraft.customSelected : undefined}
-          aria-checked={!current.multiSelect ? currentDraft.customSelected : undefined}
-          role={current.multiSelect ? "checkbox" : "radio"}
-          onClick={() => selectOption(CUSTOM_OPTION)}
-        >
-          <span className="asktool-option-mark" aria-hidden>{currentDraft.customSelected ? "✓" : ""}</span>
-          <span>{t("askTool.customOption")}</span>
-        </button>
-      </div>
-      {currentDraft.customSelected ? (
-        <input
-          className="asktool-custom-input"
+      {current.multiline ? (
+        <textarea
+          className="asktool-editor-textarea"
           value={currentDraft.customText}
-          placeholder={t("askTool.customPlaceholder")}
-          aria-label={t("askTool.customOption")}
+          placeholder={t("editor.placeholder")}
+          aria-label={current.question}
           onChange={(event) =>
             updateDraft((draft) => ({ ...draft, customText: event.target.value, skipped: false }))
           }
           autoFocus
+          rows={6}
         />
-      ) : null}
+      ) : (
+        <>
+          <div className="asktool-options" role={current.multiSelect ? "group" : "radiogroup"}>
+            {current.options.map((option) => {
+              const selected = currentDraft.values.includes(option);
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  className={`asktool-option ${selected ? "selected" : ""}`}
+                  aria-pressed={current.multiSelect ? selected : undefined}
+                  aria-checked={!current.multiSelect ? selected : undefined}
+                  role={current.multiSelect ? "checkbox" : "radio"}
+                  onClick={() => selectOption(option)}
+                >
+                  <span className="asktool-option-mark" aria-hidden>{selected ? "✓" : ""}</span>
+                  <span>{option}</span>
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              className={`asktool-option asktool-custom-option ${currentDraft.customSelected ? "selected" : ""}`}
+              aria-pressed={current.multiSelect ? currentDraft.customSelected : undefined}
+              aria-checked={!current.multiSelect ? currentDraft.customSelected : undefined}
+              role={current.multiSelect ? "checkbox" : "radio"}
+              onClick={() => selectOption(CUSTOM_OPTION)}
+            >
+              <span className="asktool-option-mark" aria-hidden>{currentDraft.customSelected ? "✓" : ""}</span>
+              <span>{t("askTool.customOption")}</span>
+            </button>
+          </div>
+          {currentDraft.customSelected ? (
+            <input
+              className="asktool-custom-input"
+              value={currentDraft.customText}
+              placeholder={t("askTool.customPlaceholder")}
+              aria-label={t("askTool.customOption")}
+              onChange={(event) =>
+                updateDraft((draft) => ({ ...draft, customText: event.target.value, skipped: false }))
+              }
+              autoFocus
+            />
+          ) : null}
+        </>
+      )}
 
       <div className="asktool-card-actions">
         <Button variant="ghost" disabled={resolving} onClick={skip}>
