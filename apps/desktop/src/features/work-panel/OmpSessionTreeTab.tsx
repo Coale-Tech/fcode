@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../lib/api";
 import { useAppStore } from "../../stores/app-store";
 import { branchPointPreview, buildFlatTree, type SessionTreeNode } from "./session-tree";
+import { DestructiveActionDialog } from "../../components/DestructiveActionDialog";
 
 type State =
   | { status: "idle" }
@@ -35,6 +36,7 @@ export const OmpSessionTreeTab = memo(function OmpSessionTreeTab() {
   const { t } = useTranslation();
   const [state, dispatch] = useReducer(reducer, { status: "idle" });
   const [branching, setBranching] = useState<string | null>(null);
+  const [pendingBranch, setPendingBranch] = useState<SessionTreeNode | null>(null);
   const showToast = useAppStore((s) => s.showToast);
   const activeSessionId = useAppStore((s) => s.activeSessionId);
   const abortRef = useRef<AbortController | null>(null);
@@ -59,8 +61,8 @@ export const OmpSessionTreeTab = memo(function OmpSessionTreeTab() {
     return () => { abortRef.current?.abort(); };
   }, [load]);
 
-  const branchFrom = useCallback(async (node: SessionTreeNode) => {
-    if (branching || !window.confirm(t("chat.ompSessionTreeBranchConfirm"))) return;
+  const doBranch = useCallback(async (node: SessionTreeNode) => {
+    setPendingBranch(null);
     setBranching(node.entry.id);
     try {
       const result = await api.ompSessionBranch(node.entry.id);
@@ -80,7 +82,7 @@ export const OmpSessionTreeTab = memo(function OmpSessionTreeTab() {
     } finally {
       setBranching(null);
     }
-  }, [activeSessionId, branching, load, showToast, t]);
+  }, [activeSessionId, load, showToast, t]);
 
   const branchMessages = useCallback(async () => {
     try {
@@ -89,7 +91,7 @@ export const OmpSessionTreeTab = memo(function OmpSessionTreeTab() {
         showToast(t("chat.ompSessionBranchMessagesEmpty"), { variant: "info" });
         return;
       }
-      const text = result.messages.map((m) => m.text).join("\n---\n");
+      const text = result.messages.map((m: { text: string }) => m.text).join("\n---\n");
       await navigator.clipboard.writeText(text);
       showToast(t("chat.ompSessionBranchMessagesCopied", { count: result.messages.length }), {
         variant: "success",
@@ -101,6 +103,15 @@ export const OmpSessionTreeTab = memo(function OmpSessionTreeTab() {
 
   return (
     <div className="omp-session-tree-tab">
+      {pendingBranch && (
+        <DestructiveActionDialog
+          site={branchPointPreview(pendingBranch.entry)}
+          command={t("chat.ompSessionTreeBranch")}
+          consequence={t("chat.ompSessionBranchConsequence")}
+          onConfirm={() => void doBranch(pendingBranch)}
+          onCancel={() => setPendingBranch(null)}
+        />
+      )}
       <div className="omp-session-tree-header">
         <button
           type="button"
@@ -142,7 +153,7 @@ export const OmpSessionTreeTab = memo(function OmpSessionTreeTab() {
               <button
                 type="button"
                 className="omp-session-tree-node-btn"
-                onClick={() => void branchFrom(node)}
+                onClick={() => { if (!branching) setPendingBranch(node); }}
                 disabled={branching !== null}
                 title={t("chat.ompSessionTreeBranch")}
               >

@@ -50,6 +50,10 @@ const SAFE_SPEC_RE = /^[a-zA-Z0-9@/.:\-_+#~=^]+$/;
 
 /** Local-path prefixes that classify a spec as a filesystem path, not a package. */
 function isLocalPath(spec: string): boolean {
+  // Block dangerous URI schemes even though their chars pass SAFE_SPEC_RE.
+  if (/^file:/i.test(spec)) return true;
+  if (/^git\+file:/i.test(spec)) return true;
+  if (/^(?:svn|hg)\+/i.test(spec)) return true;
   if (spec === "." || spec === ".." || spec === "~") return true;
   if (spec.startsWith("./") || spec.startsWith("../")) return true;
   if (spec.startsWith(".\\") || spec.startsWith("..\\")) return true;

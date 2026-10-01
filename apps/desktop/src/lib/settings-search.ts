@@ -147,6 +147,57 @@ export const SETTINGS_NAV: SettingsNavEntry[] = [
       "settings.ompCollabWebUrl",
       "settings.ompCollabDisplayName",
       "settings.ompCollabAutoStart",
+      // Queue Modes
+      "settings.ompQueueModesGroup",
+      "settings.ompSteeringMode",
+      "settings.ompFollowUpMode",
+      "settings.ompInterruptMode",
+      "settings.ompLoopMode",
+      "settings.ompQueueModeAll",
+      "settings.ompQueueModeOneAtATime",
+      // LSP
+      "settings.ompLspGroup",
+      "settings.ompLspEnabled",
+      "settings.ompLspFormatOnWrite",
+      "settings.ompLspDiagnosticsOnWrite",
+      "settings.ompLspDiagnosticsOnEdit",
+      // IDA Pro
+      "settings.ompIdaGroup",
+      "settings.ompIdaEnabled",
+      "settings.ompIdaPython",
+      "settings.ompIdaInstallDir",
+      // MCP
+      "settings.ompMcpGroup",
+      "settings.ompMcpEnableProjectConfig",
+      "settings.ompMcpRenderMarkdownResults",
+      "settings.ompMcpNotifications",
+      // Skills & Commands
+      "settings.ompExtensibilityGroup",
+      "settings.ompSkillsEnabled",
+      "settings.ompSkillsRegistryUrl",
+      "settings.ompSkillsCustomDirectories",
+      "settings.ompCommandsEnableClaudeUser",
+      "settings.ompCommandsEnableClaudeProject",
+      // Hindsight Behavior
+      "settings.ompHindsightGroup",
+      "settings.ompHindsightAutoRecall",
+      "settings.ompHindsightAutoRetain",
+      "settings.ompHindsightRetainMode",
+      "settings.ompHindsightMentalModelsEnabled",
+      "settings.ompHindsightMentalModelAutoSeed",
+      // HTML Export Theme
+      "settings.ompThemeGroup",
+      "settings.ompThemeDark",
+      "settings.ompThemeLight",
+      // Agent Model Overrides
+      "settings.ompAgentModelOverridesDesc",
+      "settings.ompAgentModelOverridesDefault",
+      // Extensions / Skills / Worktrees (installed)
+      "settings.ompExtGroup",
+      "settings.ompExtInstall",
+      "settings.ompExtUninstall",
+      "settings.ompSkillsGroup",
+      "settings.ompWorktreesGroup",
     ],
   },
   {

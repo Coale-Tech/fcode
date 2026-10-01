@@ -158,6 +158,11 @@ export function validateOmpSettings(patch: Record<string, unknown>): OmpSettings
         const rec: Record<string, string> = {};
         for (const [agentName, modelId] of Object.entries(value as Record<string, unknown>)) {
           if (!agentName) continue; // skip empty keys silently
+          // Reject keys with YAML metacharacters (newline, colon, control chars).
+          // Agent ids are identifiers: allow letters, digits, hyphen, underscore, dot.
+          if (!/^[a-zA-Z0-9_.\-]+$/.test(agentName)) {
+            throw new Error(`omp setting ${JSON.stringify(key)}: invalid agent id ${JSON.stringify(agentName)}`);
+          }
           if (typeof modelId !== "string") {
             throw new Error(`omp setting ${JSON.stringify(key)}[${JSON.stringify(agentName)}]: expected string model id, got ${typeof modelId}`);
           }
