@@ -401,6 +401,7 @@ export const en = {
     toolBlockNotice: "Note",
     toolBlockError: "Error",
     toolBlockMore: "{{count}} more hidden",
+    toolScreenshot: "Screenshot",
     toolChipExit: "exit {{count}}",
     toolChipMatches_one: "1 match",
     toolChipMatches_other: "{{count}} matches",
