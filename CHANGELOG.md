@@ -19,6 +19,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - DocType browser moved to Bench; opening a DocType file opens it in Chat → Files. Migrate needs an explicit site when a bench has several.
 - Removed the whole-file `git restore` path; Review snapshot rollback is the only way to undo agent changes.
 - `navToCode` shortcut renamed `navToFiles`; custom bindings carry over. Saved `pi.file-manager` tabs move to `fcode.files`.
+- Session stats (tokens in/out/cache, cost) surface in the context-usage popover after each turn. Cost is hidden for local/uncounted models. New omp bridge route `omp.session.stats`, IPC `ompSessionStats`, and `api.ompSessionStats()`.
 
 - Settings → Memory: Hindsight mental-model pages list with per-page refresh button; Frappe bench bootstrap action that seeds bench path, sites, and installed apps into the active memory backend (Hindsight HTTP API; Mnemopi explains it manages context automatically).
 

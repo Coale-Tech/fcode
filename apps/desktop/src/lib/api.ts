@@ -137,6 +137,7 @@ import type {
   HindsightListMentalModelsResult,
   HindsightRefreshMentalModelResult,
   BenchBootstrapResult,
+  OmpSessionStatsResult,
 } from "@pi-desktop/shared";
 import {
   defaultCommandShellForPlatform,
@@ -1672,4 +1673,7 @@ export const api = {
   /** Rename the current omp session. */
   ompSessionRename: (name: string) =>
     invoke<void>(IPC.invoke.ompSessionRename, { name }),
+  /** Fetch session-wide token and cost totals from the running omp session. */
+  ompSessionStats: () =>
+    invoke<OmpSessionStatsResult>(IPC.invoke.ompSessionStats),
 };

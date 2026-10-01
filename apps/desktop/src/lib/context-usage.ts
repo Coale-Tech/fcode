@@ -345,3 +345,14 @@ export function calculateCacheRate(
   if (promptTokens <= 0) return undefined;
   return Math.round((cacheReadTokens / promptTokens) * 100);
 }
+
+/**
+ * Format an omp session cost (USD) for display. Returns `null` when cost is
+ * zero — local/uncounted models do not incur a charge and should show nothing
+ * rather than "$0.00".
+ */
+export function formatSessionCost(cost: number): string | null {
+  if (cost <= 0) return null;
+  // Four decimal places for sub-cent amounts; two otherwise.
+  return cost < 0.01 ? `$${cost.toFixed(4)}` : `$${cost.toFixed(2)}`;
+}

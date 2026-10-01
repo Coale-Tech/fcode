@@ -101,6 +101,20 @@ export interface OmpMemoryStatusResult {
   latencyMs: number;
 }
 
+/** Result of `omp.session.stats` (omp `get_session_stats`). */
+export interface OmpSessionStatsResult {
+  userMessages: number;
+  tokens: {
+    input: number;
+    output: number;
+    cacheRead: number;
+    cacheWrite: number;
+    total: number;
+  };
+  /** Session cost in USD. Zero for local/uncounted models. */
+  cost: number;
+}
+
 /** Fcode-owned memory backend selection. The Hindsight token is write-only. */
 export interface MemoryConfig {
   backend: "mnemopi" | "hindsight" | "off";

@@ -361,6 +361,8 @@ export const de = {
     "compactionRowSummary": "Zusammenfassung ≈{{tokens}} Token",
     "compactionRowNoSummary": "keine Zusammenfassung generiert",
     "compactionRowSummaryFailed": "Zusammenfassung fehlgeschlagen · aktueller Kontext beibehalten",
+    "usageSessionLabel": "Sitzung",
+    "usageSessionCost": "Kosten {{amount}}",
     "scrollToBottom": "Zum Neuesten springen",
     "minimap": "Gesprächsübersicht",
     "resultNeedsAttention": "Diese Aufgabe erfordert Aufmerksamkeit",
