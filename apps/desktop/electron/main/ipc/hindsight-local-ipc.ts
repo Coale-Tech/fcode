@@ -27,7 +27,11 @@ export function registerHindsightLocalIpc({ registrar, mainWindow }: HindsightLo
   });
 
   handle(IPC.invoke.hindsightLocalStart, async (input: { port?: number } = {}) => {
-    await hindsightSupervisor.start(input.port ?? HINDSIGHT_DEFAULT_PORT);
+    const rawPort = input.port ?? HINDSIGHT_DEFAULT_PORT;
+    const port = Number.isInteger(rawPort) && rawPort >= 1024 && rawPort <= 65535
+      ? rawPort
+      : HINDSIGHT_DEFAULT_PORT;
+    await hindsightSupervisor.start(port);
     return hindsightSupervisor.getState();
   });
 

@@ -174,7 +174,9 @@ test("fast exit with LLM key error → unavailable state with message", async (t
 
     const final = sup.getState();
     assert.equal(final.state, "unavailable", `states: ${JSON.stringify(states)}`);
-    assert.ok(final.message?.includes("LLM") || final.message?.includes("api_key"), `message: ${final.message}`);
+    assert.ok(final.message?.includes("LLM API key") || final.message?.includes("api_key") || final.message?.includes("LLM"), `message: ${final.message}`);
+    // Security: raw subprocess output must NOT be embedded in the IPC state message.
+    assert.ok(!final.message?.includes("api_key configuration"), `message must not include raw output: ${final.message}`);
   } finally {
     sup.stop();
     process.env.PATH = orig;
