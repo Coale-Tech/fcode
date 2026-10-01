@@ -1661,6 +1661,9 @@ export const api = {
   /** Rename the current omp session. */
   ompSessionRename: (name: string) =>
     invoke<void>(IPC.invoke.ompSessionRename, { name }),
+  /** Enable or disable auto-compaction for the current omp session. */
+  ompAutoCompactionSet: (enabled: boolean) =>
+    invoke<void>(IPC.invoke.ompAutoCompactionSet, { enabled }),
   /** Fetch session-wide token and cost totals from the running omp session. */
   ompSessionStats: () =>
     invoke<OmpSessionStatsResult>(IPC.invoke.ompSessionStats),

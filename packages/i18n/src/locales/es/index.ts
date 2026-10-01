@@ -357,6 +357,7 @@ export const es = {
     "usageToolsSummary": "{{count}} tipos de herramientas · {{calls}} llamadas · ~{{tokens}} tokens",
     "usageNoTools": "Ninguna herramienta llama en este turno",
     "usageCompaction": "Compactado {{times}}× · resumen",
+    "usageAutoCompact": "Compactación automática",
     "compactionRow": "Contexto compactado · #{{times}}",
     "compactionRowSummary": "resumen ≈{{tokens}} tokens",
     "compactionRowNoSummary": "no se generó ningún resumen",

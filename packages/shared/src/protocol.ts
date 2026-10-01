@@ -360,6 +360,7 @@ export const IPC = {
     ompCommandsList: "pi-desktop/omp/commands/list",
     ompState: "pi-desktop/omp/state",
     ompMemoryStatus: "pi-desktop/omp/memory/status",
+    ompAutoCompactionSet: "pi-desktop/omp/auto-compaction/set",
     memoryGetConfig: "pi-desktop/memory/getConfig",
     memorySetConfig: "pi-desktop/memory/setConfig",
     ompLoginProviders: "pi-desktop/omp/login/providers",

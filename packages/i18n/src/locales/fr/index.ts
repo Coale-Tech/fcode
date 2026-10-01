@@ -357,6 +357,7 @@ export const fr = {
     "usageToolsSummary": "{{count}} types d'outils · {{calls}} appels · ~{{tokens}} jetons",
     "usageNoTools": "Aucun appel d'outil dans ce tour",
     "usageCompaction": "Compacté {{times}}× · résumé",
+    "usageAutoCompact": "Compaction automatique",
     "compactionRow": "Contexte compacté · #{{times}}",
     "compactionRowSummary": "résumé ≈{{tokens}} jetons",
     "compactionRowNoSummary": "aucun résumé généré",
