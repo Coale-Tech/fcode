@@ -65,7 +65,7 @@ The installed application uses:
 - Node.js `>=22.19`
 - pnpm `>=10`
 - a stable Rust toolchain
-- Bun `>=1.2` and a sibling [oh-my-pi](https://github.com/can1357/oh-my-pi) checkout (`../oh-my-pi`) — see [Developer docs](docs/fcode/README.md) for setup
+- Bun `>=1.2` (omp is vendored in `omp/`; its first native build also needs Rust nightly, installed by rustup on demand) — see [Developer docs](docs/fcode/README.md) for setup
 
 ```bash
 git clone https://github.com/Coale-Tech/fcode.git

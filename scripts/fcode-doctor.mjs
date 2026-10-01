@@ -9,7 +9,7 @@
  *   • pnpm >= 10
  *   • Rust stable toolchain (cargo)
  *   • Bun >= 1.2
- *   • oh-my-pi sibling checkout present
+ *   • Vendored omp source present (omp/)
  *   • Platform (macOS, Linux, or Windows; Bench tab needs macOS/Linux/WSL2)
  *
  * Exits 0 if all checks pass, 1 if any check fails.
@@ -129,18 +129,14 @@ if (process.platform === "win32") {
   }
 }
 
-// ── oh-my-pi sibling checkout ────────────────────────────────────────────────
+// ── vendored omp source ──────────────────────────────────────────────────────
 {
-  const ompPath = resolve(repoRoot, "..", "oh-my-pi");
-  if (!existsSync(ompPath)) {
-    fail(
-      "oh-my-pi: sibling checkout not found",
-      `Clone it alongside this repo:\n` +
-        `       git clone https://github.com/can1357/oh-my-pi ${resolve(repoRoot, "..", "oh-my-pi")}`,
-    );
+  if (!existsSync(resolve(repoRoot, "omp", "package.json"))) {
+    fail("omp: vendored source missing at omp/", "Restore it: git checkout -- omp");
+  } else if (!existsSync(resolve(repoRoot, "omp", "node_modules"))) {
+    pass("omp: source present (dependencies install on first `pnpm -C apps/desktop bundle:runtime`)");
   } else {
-    const sha = tryExec("git", ["rev-parse", "--short", "HEAD"], ompPath) ?? "unknown";
-    pass(`oh-my-pi: found at ${ompPath} (${sha})`);
+    pass("omp: source present, dependencies installed");
   }
 }
 

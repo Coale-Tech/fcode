@@ -22,6 +22,8 @@ import {
   LEGACY_FILE_MANAGER_PLUGIN_TAB,
   parsePluginViewRef,
   pluginWorkPanelTab,
+  SESSION_TREE_TAB,
+  TOOLS_TAB,
   subagentTabDisplayLabels,
   toolWorkPanelTab,
 } from "../../lib/work-panel-tabs";
@@ -34,6 +36,7 @@ import { TooltipButton } from "../ui";
 import type { IconProps } from "../icons";
 import {
   IconBot,
+  IconBranch,
   IconClose,
   IconDiff,
   IconFileText,
@@ -41,11 +44,14 @@ import {
   IconPanelRestore,
   IconPlug,
   IconPlus,
+  IconWrench,
 } from "../icons";
 import { ReviewTab } from "./ReviewTab";
 import { FilesTab } from "./FilesTab";
 import { PluginViewTab } from "./PluginViewTab";
 import { SubagentTranscriptTab } from "./SubagentTranscriptTab";
+import { OmpSessionTreeTab } from "../../features/work-panel/OmpSessionTreeTab";
+import { ToolsPanelTab } from "../../features/work-panel/ToolsPanelTab";
 import { WorkTabEmpty } from "./WorkTabEmpty";
 import {
   MAIN_PANE_MIN_WIDTH,
@@ -63,6 +69,8 @@ const TAB_ICONS = {
   file: IconFileText,
   plugin: IconPlug,
   subagent: IconBot,
+  "session-tree": IconBranch,
+  tools: IconWrench,
 } as const;
 
 type WorkPanelResizeState = {
@@ -140,6 +148,18 @@ function workPanelTools(
       tab: toolWorkPanelTab("review"),
       label: t("panel.tabs.review"),
       icon: IconDiff,
+    },
+    {
+      id: "session-tree",
+      tab: SESSION_TREE_TAB,
+      label: t("panel.tabs.session-tree"),
+      icon: IconBranch,
+    },
+    {
+      id: "tools",
+      tab: TOOLS_TAB,
+      label: t("panel.tabs.tools"),
+      icon: IconWrench,
     },
     ...pluginViews.map((view) => {
       const Icon = pluginViewIcon(view.icon);
@@ -932,6 +952,26 @@ export function WorkPanel({
               aria-labelledby={`work-panel-tab-${activeTab.id}`}
             >
               <ReviewTab />
+            </div>
+          )}
+          {activeTab?.kind === "session-tree" && (
+            <div
+              id={`work-panel-surface-${activeTab.id}`}
+              className="work-panel-tabpane"
+              role="tabpanel"
+              aria-labelledby={`work-panel-tab-${activeTab.id}`}
+            >
+              <OmpSessionTreeTab />
+            </div>
+          )}
+          {activeTab?.kind === "tools" && (
+            <div
+              id={`work-panel-surface-${activeTab.id}`}
+              className="work-panel-tabpane"
+              role="tabpanel"
+              aria-labelledby={`work-panel-tab-${activeTab.id}`}
+            >
+              <ToolsPanelTab sessionId={activeSessionId} />
             </div>
           )}
           {activeTab?.kind === "file" && (

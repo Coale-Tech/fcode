@@ -36,6 +36,11 @@ import { registerSpeechIpc } from "./speech-ipc";
 import { registerVoiceIpc } from "./voice-ipc";
 import type { IpcRegistrar } from "./types";
 import { registerOmpIpc } from "./omp-ipc";
+import { registerMemoryIpc } from "./memory-ipc";
+import { registerHindsightLocalIpc } from "./hindsight-local-ipc";
+import { registerApprovalModeIpc } from "./approval-mode-ipc";
+import { registerOmpSettingsIpc } from "./omp-settings-ipc";
+import { registerExtensionsMgmtIpc } from "./extensions-mgmt-ipc";
 import type { createTraySessions } from "../tray-sessions";
 import type { createTaskbarUnreadBadge } from "../taskbar-unread-badge";
 
@@ -344,7 +349,44 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
   });
   registerBenchIpc({ registrar, mainWindow: getMainWindow });
   registerBuildIpc({ registrar, mainWindow: getMainWindow, browserPane: dependencies.browserPane });
-  registerOmpIpc({ registrar, getSidecar });
+  registerOmpIpc({
+    registrar,
+    getSidecar,
+    pickExportPath: async () => {
+      const options = {
+        title: "Export transcript",
+        defaultPath: `transcript-${Date.now()}.html`,
+        filters: [{ name: "HTML", extensions: ["html"] }],
+      };
+      const owner = getMainWindow();
+      const save = owner ? await dialog.showSaveDialog(owner, options) : await dialog.showSaveDialog(options);
+      return save.canceled || !save.filePath ? null : save.filePath;
+    },
+  });
+  registerMemoryIpc({
+    registrar,
+    dataDir,
+    getHost,
+    getSidecar,
+    restartSidecar: async () => dependencies.onProviderMutation?.(),
+  });
+  registerHindsightLocalIpc({ registrar, mainWindow: getMainWindow });
+  registerApprovalModeIpc({
+    registrar,
+    dataDir,
+    restartSidecar: async () => dependencies.onProviderMutation?.(),
+  });
+  registerOmpSettingsIpc({
+    registrar,
+    dataDir,
+    restartSidecar: async () => dependencies.onProviderMutation?.(),
+  });
+  registerExtensionsMgmtIpc({
+    registrar,
+    dataDir,
+    restartSidecar: async () => dependencies.onProviderMutation?.(),
+  });
+
 
   registerAgentExtensionIpc({
     handle,

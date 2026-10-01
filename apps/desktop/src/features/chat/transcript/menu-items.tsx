@@ -20,8 +20,12 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconCopy,
+  IconDownload,
+  IconLogOut,
   IconPencil,
+  IconRefresh,
   IconReview,
+  IconTerminal,
   IconTextSelect,
   IconTrash,
 } from "../../../components/icons";
@@ -192,6 +196,11 @@ export function conversationMenuItems({
   contentRef,
   actions,
   onReturnToLatest,
+  onExportHtml,
+  onCopyLastReply,
+  onHandoff,
+  onRunCommand,
+  onAbortRetry,
 }: {
   t: TFunction;
   /** The loaded window or older/newer history contains dialogue to copy. */
@@ -201,6 +210,13 @@ export function conversationMenuItems({
   contentRef: { current: HTMLElement | null };
   actions: MenuItemActions;
   onReturnToLatest: () => void;
+  onExportHtml: () => void;
+  onCopyLastReply: () => void;
+  onHandoff: () => void;
+  /** Run a shell command via omp bash RPC; output appears in transcript. */
+  onRunCommand?: () => void;
+  /** Abort a pending auto-retry. */
+  onAbortRetry?: () => void;
 }): ContextMenuItem[] {
   const scrollTo = (top: number) => () => scrollRef.current?.scrollTo({ top });
   return [
@@ -234,6 +250,38 @@ export function conversationMenuItems({
       // scroller would scroll once and then stay pinned where it landed.
       onSelect: onReturnToLatest,
     },
+    {
+      id: "export-html",
+      label: t("chat.exportTranscript"),
+      icon: <IconDownload size={14} />,
+      separatorBefore: true,
+      onSelect: onExportHtml,
+    },
+    {
+      id: "copy-last-reply",
+      label: t("chat.copyLastReply"),
+      icon: copyIcon(),
+      onSelect: onCopyLastReply,
+    },
+    {
+      id: "handoff",
+      label: t("chat.handoff"),
+      icon: <IconLogOut size={14} />,
+      onSelect: onHandoff,
+    },
+    ...(onRunCommand ? [{
+      id: "run-command",
+      label: t("chat.runCommand"),
+      icon: <IconTerminal size={14} />,
+      separatorBefore: true,
+      onSelect: onRunCommand,
+    }] : []),
+    ...(onAbortRetry ? [{
+      id: "abort-retry",
+      label: t("chat.abortRetry"),
+      icon: <IconRefresh size={14} />,
+      onSelect: onAbortRetry,
+    }] : []),
   ];
 }
 

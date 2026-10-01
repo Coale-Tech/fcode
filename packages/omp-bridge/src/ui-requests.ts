@@ -2,14 +2,17 @@
  * omp extension_ui_request → Fcode event mapper (E9, E20).
  *
  * omp's extension_ui_request.method values and their PI equivalents:
- * - "confirm"  → tool_permission_request (PermissionCard)
- * - "select"   → asktool_request (AskToolCard)
- * - "input"    → asktool_request (AskToolCard)
- * - "editor"   → explicit refusal response (no PI counterpart)
- * - "cancel"   → clear the pending-request map entry (E9)
- * - "notify"   → system UiMessage
- * - "open_url" → shell.openExternal + system UiMessage
- * - "setStatus"/"setWidget"/"setTitle" → explicitly ignored
+ * - "confirm"         → tool_permission_request (PermissionCard)
+ * - "select"          → asktool_request (AskToolCard)
+ * - "input"           → asktool_request (AskToolCard, single-line)
+ * - "editor"          → asktool_request (AskToolCard, multiline textarea)
+ * - "cancel"          → clear the pending-request map entry (E9)
+ * - "notify"          → system UiMessage
+ * - "open_url"        → shell.openExternal + system UiMessage
+ * - "setStatus"       → ext_status (status bar / footer line, keyed by statusKey)
+ * - "setWidget"       → ext_widget (collapsible block above composer, keyed by widgetKey)
+ * - "setTitle"        → ext_title (overrides session title display)
+ * - "set_editor_text" → sidecar.ext_ui editor_text (prefill Composer draft)
  */
 
 export interface OmpExtensionUiRequest {
@@ -21,7 +24,18 @@ export interface OmpExtensionUiRequest {
   url?: string;
   launchUrl?: string;
   options?: Array<{ value: string; label?: string }>;
+  /** editor request: initial text for the multiline textarea */
+  prefill?: string;
   defaultValue?: string;
+  /** set_editor_text wire field */
+  text?: string;
+  /** setStatus wire fields */
+  statusKey?: string;
+  statusText?: string;
+  /** setWidget wire fields */
+  widgetKey?: string;
+  widgetLines?: string[];
+  widgetPlacement?: "aboveEditor" | "belowEditor";
 }
 
 export interface MappedToolPermissionRequest {
@@ -44,6 +58,8 @@ export interface MappedAskToolRequest {
     question: string;
     options: string[];
     multiSelect: boolean;
+    multiline?: boolean;
+    defaultText?: string;
   }>;
 }
 
@@ -60,9 +76,30 @@ export interface MappedOpenUrl {
   text: string;
 }
 
-export interface MappedEditorRefusal {
-  type: "editor_refusal";
-  requestId: string;
+export interface MappedSetEditorText {
+  type: "set_editor_text";
+  sessionId: string;
+  text: string;
+}
+
+export interface MappedExtStatus {
+  type: "ext_status";
+  sessionId: string;
+  key: string;
+  text: string | undefined;
+}
+
+export interface MappedExtWidget {
+  type: "ext_widget";
+  sessionId: string;
+  key: string;
+  lines: string[] | undefined;
+}
+
+export interface MappedExtTitle {
+  type: "ext_title";
+  sessionId: string;
+  title: string;
 }
 
 export type MappedUiRequest =
@@ -70,8 +107,11 @@ export type MappedUiRequest =
   | MappedAskToolRequest
   | MappedSystemMessage
   | MappedOpenUrl
-  | MappedEditorRefusal
-  | null; // null = cancel or ignored method
+  | MappedSetEditorText
+  | MappedExtStatus
+  | MappedExtWidget
+  | MappedExtTitle
+  | null; // null = cancel
 
 /**
  * Map one omp extension_ui_request frame to its Fcode equivalent.
@@ -122,9 +162,21 @@ export function mapExtensionUiRequest(
     }
 
     case "editor":
-      // No PI counterpart; respond immediately with a refusal so the tool turn
-      // does not hang (E9).
-      return { type: "editor_refusal", requestId: req.id };
+      return {
+        type: "asktool_request",
+        requestId: req.id,
+        sessionId,
+        toolCallId,
+        questions: [
+          {
+            question: req.title ?? req.message ?? "",
+            options: [],
+            multiSelect: false,
+            multiline: true,
+            defaultText: req.prefill,
+          },
+        ],
+      };
 
     case "notify":
       return {
@@ -147,7 +199,36 @@ export function mapExtensionUiRequest(
       // Cleared by the caller; signal the pending-request map to drop the entry.
       return null;
 
-    // setStatus / setWidget / setTitle — no PI surface; ignore.
+    case "setStatus":
+      return {
+        type: "ext_status",
+        sessionId,
+        key: req.statusKey ?? "",
+        text: req.statusText,
+      };
+
+    case "setWidget":
+      return {
+        type: "ext_widget",
+        sessionId,
+        key: req.widgetKey ?? "",
+        lines: req.widgetLines,
+      };
+
+    case "setTitle":
+      return {
+        type: "ext_title",
+        sessionId,
+        title: req.title ?? "",
+      };
+
+    case "set_editor_text":
+      return {
+        type: "set_editor_text",
+        sessionId,
+        text: req.text ?? "",
+      };
+
     default:
       return null;
   }

@@ -14,9 +14,8 @@ Fcode is a desktop AI coding agent for Frappe/ERPNext developers. It forks [PI-D
 | pnpm | `>= 10` | `npm i -g pnpm` |
 | Rust (stable) | latest stable | [rustup.rs](https://rustup.rs/) |
 | Bun | `>= 1.2` | [bun.sh](https://bun.sh/) |
-| oh-my-pi | sibling checkout | `git clone https://github.com/can1357/oh-my-pi ../oh-my-pi` |
 
-oh-my-pi must be cloned as a sibling of the Fcode checkout (`../oh-my-pi`) because `scripts/build-omp.mjs` references it at that relative path.
+omp is vendored at `omp/` (a diverged snapshot of oh-my-pi; see [ADR 0307](../adr/0307-vendor-omp-snapshot.md)). `scripts/build-omp.mjs` installs its dependencies and compiles its native addon on first run (slow when cold: ~40 min on x64).
 
 **Supported platforms:** macOS, Linux, and Windows are all packaged by the release pipeline. The Bench tab requires macOS, Linux, or WSL2 — Frappe bench is not supported natively on Windows. On Windows, PATH is inherited from the parent process rather than sourced from a login shell.
 
@@ -27,7 +26,7 @@ git clone https://github.com/Coale-Tech/fcode.git
 cd fcode
 pnpm install
 pnpm -C apps/desktop run build:host-release   # cargo build --release → pi-desktop-host-core
-node scripts/build-omp.mjs                    # builds omp binary from ../oh-my-pi
+node scripts/build-omp.mjs                    # builds omp binary from omp/
 pnpm -C apps/desktop run dist                 # electron-builder → apps/desktop/release/
 ```
 
@@ -49,7 +48,7 @@ node scripts/check-legal.mjs          # identity-keeplist assertion
 ### Contributor path (paved road)
 
 ```bash
-pnpm fcode:doctor   # checks Node, pnpm, Rust, Bun, sibling oh-my-pi checkout, platform
+pnpm fcode:doctor   # checks Node, pnpm, Rust, Bun, vendored omp/, platform
 pnpm fcode:dev      # runs the full dev setup in sequence
 ```
 
@@ -71,7 +70,7 @@ Fcode (Electron)
         bridge.ts         ← spawns omp, negotiates protocol v2, maps methods + events
         sessions.ts       ← persists sessionId → omp session dir mapping
         state.ts          ← holds per-session pending request map
-        ui-requests.ts    ← maps extension_ui_request frames to ToolPermissionRequest/AskToolRequest
+        ui-requests.ts    ← maps extension_ui_request frames to ToolPermissionRequest/AskToolRequest/editor textarea/set_editor_text
 
 omp --mode rpc (child process)
   ↑ spawned with --approval-mode always-ask --config <dataDir>/omp-overlay.yml
@@ -86,7 +85,7 @@ omp --mode rpc (child process)
 3. omp confirms `{protocolVersion:2}` — if it doesn't, the bridge emits a `system` warning and keeps the session read-only
 4. Large frames are chunked as `rpc_chunk {chunkId, index, count, byteLength, data}` (base64, 256 KB each); the bridge reassembles before mapping
 
-The smoke test in `apps/desktop/test/omp-protocol-smoke.test.mjs` asserts exactly protocol version 2 is negotiated and that the bundled binary matches the pinned SHA. This test is in `apps/desktop/test/` (not `scripts/e2e-*.mjs`) because only that location is executed by `release.yml` (`pnpm -r --if-present test`).
+The smoke test in `apps/desktop/test/omp-protocol-smoke.test.mjs` asserts exactly protocol version 2 is negotiated and that the bundled binary was built from the current `omp/` source (`omp.build.json` `sourceHash` vs `git ls-files -s omp`; `git add omp` after editing). This test is in `apps/desktop/test/` (not `scripts/e2e-*.mjs`) because only that location is executed by `release.yml` (`pnpm -r --if-present test`).
 
 ### omp overlay (`<dataDir>/omp-overlay.yml`)
 
@@ -124,7 +123,7 @@ All host tools default to `exec` tier in omp's approval model (`ExtensionToolWra
 ## Release build
 
 ```bash
-node scripts/build-omp.mjs            # build omp binary from pinned oh-my-pi commit
+node scripts/build-omp.mjs            # build omp binary from omp/
 pnpm -C apps/desktop run dist:mac     # electron-builder → DMG + blockmap
 ```
 
@@ -238,6 +237,61 @@ providers:
 Restart Fcode after changing the omp config. The model menu is populated from `omp.models.list` at session open; it is not PI-Desktop's provider catalog.
 
 ---
+
+## Memory
+
+Fcode exposes omp's two memory backends through the **Settings → Memory** tab (Agent group).
+
+### Backends
+
+| Backend | Description | Default |
+| --- | --- | --- |
+| `mnemopi` | Local SQLite + vector store, runs inside the omp child process. No external service required. | ✓ |
+| `hindsight` | Remote HTTP service (connect-only; no managed local server in this phase). Requires a URL, optional bank name, and an auth token. | — |
+
+Changing the backend restarts the active omp session (same path as other overlay changes).
+
+### Config and token handling
+
+Backend selection and Hindsight connection details (`url`, `bank`) are stored in the host kv namespace `memory` and written into `omp-overlay.yml` by `packages/omp-bridge/src/bridge.ts` before omp starts. The Hindsight auth token is **never written to the overlay file** — it is passed to the omp child as the `HINDSIGHT_TOKEN` environment variable.
+
+`mnemopi.llmMode` is always set to `session` in the Fcode overlay so memory extraction uses the session's active model instead of a separate role-chain model.
+
+### Health card
+
+The Memory settings page shows a live status card polled every **15 s** (60 s while the page is not open). Possible states:
+
+| State | Meaning |
+| --- | --- |
+| `off` | Backend is `none` or not configured |
+| `starting` | First poll in progress |
+| `ok` | Active, writable, searchable, latency ≤ 2 s |
+| `degraded` | Active but not writable/searchable, or latency > 2 s |
+| `error` | Error returned, or 3 consecutive poll failures |
+
+A sidebar badge reflects the state colour outside Settings. The Hindsight probe uses `GET /v1/default/banks/{bank}/memories/list?limit=1` with a 2 s timeout; a 404 means reachable but bank missing (`degraded`).
+
+See [ADR 0308](../adr/0308-memory-backends.md) for the full design rationale.
+
+---
+
+## omp Settings Groups
+
+Fcode exposes four groups of omp runtime settings in **Settings → AI** (below the prompt enhancement card). Settings persist in `<dataDir>/omp-settings.json`; changes take effect after the sidecar restarts (same path as approval mode and memory).
+
+| Group | Key prefix | Controls |
+| --- | --- | --- |
+| Task Subagents | `task.*`, `isolation.*`, `worktree.*` | git-worktree isolation, backend, concurrency, recursion depth |
+| Eval & Python | `eval.*`, `python.*` | Python/JS eval backends, kernel mode, interpreter path |
+| Browser | `browser.*` | Playwright headless toggle, CDP URL, relay |
+| Collab | `collab.*` | Relay URL, web URL, display name, auto-start mode |
+
+The host validates every key against the omp schema (type, enum values, numeric range) before writing. Unknown keys and out-of-range values are rejected. `task.agentModelOverrides` is intentionally excluded — it is a free-form agent→model map best managed via the omp `/agents` hub.
+
+Validated settings are serialised as JSON and passed to the bridge process as `FCODE_OMP_SETTINGS`, where `makeOmpOverlay` merges them into the appropriate YAML sections.
+
+---
+
 
 ## Compatibility table
 

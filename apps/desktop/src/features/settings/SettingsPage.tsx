@@ -6,6 +6,7 @@ import {
   type GlobalPermissionMode,
   type PluginScenicThemesDestinationMeta,
   type ShortcutPlatform,
+  type ToolApprovalMode,
 } from "@pi-desktop/shared";
 import { useAppStore } from "../../stores/app-store";
 import { api } from "../../lib/api";
@@ -19,6 +20,7 @@ import { pluginViewIcon } from "../../lib/plugin-view-icons";
 import {
   IconArchive,
   IconBot,
+  IconDatabase,
   IconChevronLeft,
   IconDownload,
   IconFileText,
@@ -39,6 +41,7 @@ import { FontFamilyRow } from "../../components/settings/FontFamilyRow";
 import { ThinkingDisplayModeRow } from "../../components/settings/ThinkingDisplayModeRow";
 import { FontSizeRow } from "../../components/settings/FontSizeRow";
 import { LanguageRow } from "../../components/settings/LanguageRow";
+import { MemoryTab, memoryHealth } from "./MemoryTab";
 import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect";
 import { ThemeRow } from "../../components/settings/ThemeRow";
 import { NetworkProxySection } from "../../components/settings/NetworkProxySection";
@@ -59,6 +62,7 @@ import { PromptEnhancementCard } from "./prompt-enhancement-card";
 import { CloseBehaviorSection, DeveloperSection } from "./developer-sections";
 import { PluginScenicThemesDestination } from "../../components/settings/PluginScenicThemesDestination";
 import { ConfigSyncPage } from "../../components/settings/ConfigSyncPage";
+import { OmpSettingsSections } from "./omp-settings-sections";
 
 type SettingsTab = ReturnType<typeof useAppStore.getState>["settingsTab"];
 
@@ -84,6 +88,8 @@ export function SettingsPage() {
   const settings = useAppStore((s) => s.settings);
   const version = useAppStore((s) => s.version);
   const refreshProviders = useAppStore((s) => s.refreshProviders);
+  const memStatus = useAppStore((s) => s.memoryStatus);
+  const mHealth = memoryHealth(memStatus);
   const platform = (window.piDesktop?.platform ?? "darwin") as ShortcutPlatform;
 
   // Developer-only destinations (Cloud sync and Remote Hosts) exist only
@@ -97,6 +103,7 @@ export function SettingsPage() {
   const [settingsRecoveryFailed, setSettingsRecoveryFailed] = useState(false);
   const [extensions, setExtensions] = useState<PluginScenicThemesDestinationMeta[]>([]);
   const [activeExtension, setActiveExtension] = useState<PluginScenicThemesDestinationMeta | null>(null);
+  const [toolApprovalMode, setToolApprovalMode] = useState<ToolApprovalMode>("always-ask");
   const seenSettingsTabNonce = useRef(settingsTabNonce);
   // setSettingsTab means "show this built-in category", even when the tab id
   // does not change. Dismiss a plugin page before paint; an anchor-only deep
@@ -121,6 +128,10 @@ export function SettingsPage() {
     refresh();
     return api.onPluginChanged(refresh);
   }, []);
+  useEffect(() => {
+    void api.toolApprovalModeGet().then(setToolApprovalMode).catch(() => undefined);
+  }, []);
+
 
   useEffect(() => {
     if (activeExtension && !extensions.some((entry) => entry.ref === activeExtension.ref)) {
@@ -223,6 +234,7 @@ export function SettingsPage() {
       shortcuts: <IconKeyboard size={14} />,
       instructions: <IconFileText size={14} />,
       agent: <IconBot size={14} />,
+      memory: <IconDatabase size={14} />,
       import: <IconDownload size={14} />,
       projects: <IconArchive size={14} />,
       sync: <IconCloudDown size={14} />,
@@ -310,7 +322,13 @@ export function SettingsPage() {
                   >
                     <span className="settings-nav-icon">{item.icon}</span>
                     <span className="settings-nav-label">{t(item.labelKey)}</span>
-                    {item.experimentalBadgeKey ? (
+                    {item.id === "memory" ? (
+                      <span
+                        className="memory-status-dot"
+                        data-health={mHealth}
+                        aria-label={t(`settings.memoryStatus${mHealth[0].toUpperCase()}${mHealth.slice(1)}`)}
+                      />
+                    ) : item.experimentalBadgeKey ? (
                       <Badge tone="warning" className="settings-nav-experimental">
                         {t(item.experimentalBadgeKey)}
                       </Badge>
@@ -457,6 +475,26 @@ export function SettingsPage() {
                     ]}
                   />
                 </SettingsRow>
+                <SettingsRow
+                  title={t("settings.toolApprovalMode")}
+                  description={t("settings.toolApprovalModeDesc")}
+                >
+                  <SettingsMenuSelect
+                    className="settings-permission-select"
+                    label={t("settings.toolApprovalMode")}
+                    value={toolApprovalMode}
+                    onChange={(mode) => {
+                      const m = mode as ToolApprovalMode;
+                      setToolApprovalMode(m);
+                      void api.toolApprovalModeSet(m).catch(() => undefined);
+                    }}
+                    options={[
+                      { id: "always-ask", label: t("settings.toolApprovalModeAlwaysAsk") },
+                      { id: "write", label: t("settings.toolApprovalModeWrite") },
+                      { id: "yolo", label: t("settings.toolApprovalModeYolo") },
+                    ]}
+                  />
+                </SettingsRow>
               </SettingsCard>
 
               <SettingsCard title={t("settings.defaultsTitle")}>
@@ -520,6 +558,7 @@ export function SettingsPage() {
                 settings={settings}
                 saveSettings={saveSettings}
               />
+              <OmpSettingsSections />
             </div>
           )}
 
@@ -542,6 +581,8 @@ export function SettingsPage() {
           )}
 
           {tab === "agent" && <ModelConfigPage />}
+
+          {tab === "memory" && <MemoryTab />}
 
           {tab === "instructions" && <AgentInstructionsSection />}
 

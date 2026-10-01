@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "../stores/app-store";
+import { memoryHealth } from "../features/settings/MemoryTab";
 import {
   IconChat,
   IconClock,
@@ -27,6 +28,8 @@ export function NavRail() {
   const setPage = useAppStore((s) => s.setPage);
   const navBack = useAppStore((s) => s.navBack);
   const canNavBack = useAppStore((s) => s.canNavBack);
+  const memStatus = useAppStore((s) => s.memoryStatus);
+  const mHealth = memoryHealth(memStatus);
 
   return (
     <nav className="nav-rail sidebar-surface" aria-label="Primary">
@@ -106,6 +109,11 @@ export function NavRail() {
           aria-pressed={page === "settings"}
         >
           <IconSettings size={16} aria-hidden />
+          <span
+            className="memory-status-dot memory-status-dot-rail"
+            data-health={mHealth}
+            aria-label={t(`settings.memoryStatus${mHealth[0].toUpperCase()}${mHealth.slice(1)}`)}
+          />
         </TooltipButton>
       </div>
     </nav>

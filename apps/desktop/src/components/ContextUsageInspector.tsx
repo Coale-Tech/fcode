@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import {
   formatCompactTokenCount,
   type MessageUsage,
+  type OmpSessionStatsResult,
   type UiMessage,
 } from "@pi-desktop/shared";
 import { useAppStore } from "../stores/app-store";
@@ -22,6 +23,7 @@ import {
   calculateTokenRate,
   contextOccupancyTokens,
   contextUsageView,
+  formatSessionCost,
   resolveContextUsageDisplay,
 } from "../lib/context-usage";
 import {
@@ -40,6 +42,13 @@ export function ContextUsageInspector({
   responseDurationMs,
   responseOutputTokens,
   responseOutputEstimated = false,
+  autoCompactionEnabled,
+  onToggleAutoCompaction,
+  fastModeEnabled,
+  onToggleFastMode,
+  autoRetryEnabled,
+  onToggleAutoRetry,
+  sessionStats = null,
 }: {
   usage: MessageUsage;
   turnUsage: MessageUsage;
@@ -48,6 +57,15 @@ export function ContextUsageInspector({
   responseDurationMs?: number;
   responseOutputTokens?: number;
   responseOutputEstimated?: boolean;
+  autoCompactionEnabled?: boolean;
+  onToggleAutoCompaction?: (enabled: boolean) => void;
+  /** When present, shows a fast-mode toggle in the context inspector popover. */
+  fastModeEnabled?: boolean;
+  onToggleFastMode?: (enabled: boolean) => void;
+  /** When present, shows an auto-retry toggle in the context inspector popover. */
+  autoRetryEnabled?: boolean;
+  onToggleAutoRetry?: (enabled: boolean) => void;
+  sessionStats?: OmpSessionStatsResult | null;
 }) {
   const { t } = useTranslation();
   const panelId = useId();
@@ -87,6 +105,7 @@ export function ContextUsageInspector({
     (total, row) => total + row.totalTokens,
     0,
   );
+  const sessionCost = sessionStats ? formatSessionCost(sessionStats.cost) : null;
   const level =
     context.remainingPercent <= 10
       ? "critical"
@@ -355,6 +374,59 @@ export function ContextUsageInspector({
             {t("chat.usageCompaction", { times: compaction.generation })}
           </span>
           <strong title={compaction.summarized && !compaction.fallback && compaction.summary?.trim() ? compaction.summary : undefined}>~{formatCompactTokenCount(compaction.summaryTokens)}</strong>
+        </div>
+      ) : null}
+      {onToggleAutoCompaction !== undefined && autoCompactionEnabled !== undefined ? (
+        <div className="context-inspector-auto-compact">
+          <label className="context-inspector-auto-compact-label">
+            <span>{t("chat.usageAutoCompact")}</span>
+            <input
+              type="checkbox"
+              checked={autoCompactionEnabled}
+              onChange={(e) => onToggleAutoCompaction(e.target.checked)}
+            />
+          </label>
+        </div>
+      ) : null}
+      {onToggleFastMode !== undefined && fastModeEnabled !== undefined ? (
+        <div className="context-inspector-auto-compact">
+          <label className="context-inspector-auto-compact-label">
+            <span>{t("chat.usageFastMode")}</span>
+            <input
+              type="checkbox"
+              checked={fastModeEnabled}
+              onChange={(e) => onToggleFastMode(e.target.checked)}
+            />
+          </label>
+        </div>
+      ) : null}
+      {onToggleAutoRetry !== undefined && autoRetryEnabled !== undefined ? (
+        <div className="context-inspector-auto-compact">
+          <label className="context-inspector-auto-compact-label">
+            <span>{t("chat.usageAutoRetry")}</span>
+            <input
+              type="checkbox"
+              checked={autoRetryEnabled}
+              onChange={(e) => onToggleAutoRetry(e.target.checked)}
+            />
+          </label>
+        </div>
+      ) : null}
+      {sessionStats ? (
+        <div className="context-inspector-summary">
+          <div className="context-inspector-summary-row">
+            <strong>{t("chat.usageSessionLabel")}</strong>
+            <span className="context-inspector-summary-values">
+              <span>{t("chat.usageInput")} {formatCompactTokenCount(sessionStats.tokens.input)}</span>
+              <span>{t("chat.usageOutput")} {formatCompactTokenCount(sessionStats.tokens.output)}</span>
+              {sessionStats.tokens.cacheRead > 0 ? (
+                <span>{t("chat.usageCacheRead")} {formatCompactTokenCount(sessionStats.tokens.cacheRead)}</span>
+              ) : null}
+              {sessionCost !== null ? (
+                <span>{t("chat.usageSessionCost", { amount: sessionCost })}</span>
+              ) : null}
+            </span>
+          </div>
         </div>
       ) : null}
     </div>

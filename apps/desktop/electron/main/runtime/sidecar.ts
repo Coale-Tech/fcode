@@ -1,4 +1,7 @@
 import { writeFileSync } from "node:fs";
+import { MEMORY_TOKEN_SECRET_REF, memoryEnv, readMemoryConfig } from "../memory-config";
+import { approvalModeEnv, readApprovalMode } from "../approval-mode-config";
+import { ompSettingsEnv, readOmpSettings } from "../omp-settings-config";
 import { join } from "node:path";
 import { IPC, type AgentEventEnvelope, type UiMessage } from "@pi-desktop/shared";
 import {
@@ -317,6 +320,11 @@ async function buildFcodeProvidersConfig(
       }
       return;
     }
+    // omp-bridge setStatus/setWidget/setTitle: forward as-is to renderer.
+    if (method === "sidecar.ext_ui") {
+      sendToRenderer(IPC.event.sidecarExtUi, params);
+      return;
+    }
     // permissions.request reaches the renderer once, via wireHost; the
     // sidecar no longer relays it (agent-sidecar.setHost filters it out).
   });
@@ -399,6 +407,29 @@ async function buildFcodeProvidersConfig(
       // Non-fatal — omp starts without Fcode provider injection.
     }
   }
+  // Memory backend selection + Hindsight token (env only; never in the overlay file).
+  try {
+    const memory = readMemoryConfig(dataDir);
+    let token: string | null = null;
+    if (memory.backend === "hindsight" && runtimeState.host) {
+      const res = await runtimeState.host.call<{ value: string | null }>("secrets.getForRuntime", {
+        secretRef: MEMORY_TOKEN_SECRET_REF,
+      });
+      token = res?.value ?? null;
+    }
+    providerEnv = { ...providerEnv, ...memoryEnv(memory, token) };
+  } catch {
+    // Non-fatal — omp falls back to its own memory defaults.
+  }
+  // Tool approval mode — controls omp's --approval-mode on spawn.
+  providerEnv = { ...providerEnv, ...approvalModeEnv(readApprovalMode(dataDir)) };
+  // omp settings groups (task / eval / browser / collab).
+  providerEnv = { ...providerEnv, ...ompSettingsEnv(readOmpSettings(dataDir)) };
+  // Set omp's working directory to the active bench so the bash RPC and session
+  // path context use the correct project root instead of the user home directory.
+  const benchPath = benchSupervisor.activeBenchPath;
+  if (benchPath) providerEnv = { ...providerEnv, FCODE_BENCH_PATH: benchPath };
+
   const s = new AgentSidecar((text) => logger.child("agent", text), providerEnv);
   wireSidecar(s);
   s.setProjectInstructionResolver(async ({ projectPath, path }) => {

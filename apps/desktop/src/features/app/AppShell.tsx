@@ -23,6 +23,7 @@ import { api } from "../../lib/api";
 import { PortalVisibilityProvider } from "../../lib/portal-visibility";
 import { CollapsedTitlebarActions, RoutePending } from "./chrome";
 import { useAppShellRuntime } from "./useAppShellRuntime";
+import { useMemoryHealthPoller } from "../../hooks/use-memory-health-poller";
 
 const SettingsPage = lazy(() =>
   import("../../pages/SettingsPage").then((module) => ({
@@ -98,6 +99,7 @@ export function AppShell() {
     workPanelToggleTooltip,
   } = useAppShellRuntime();
   useCopyTex();
+  useMemoryHealthPoller();
 
   // A boot that never reaches the shell gets a surface it can act on instead of
   // a window that only knows how to wait (issue #831). Rendered as a direct child
