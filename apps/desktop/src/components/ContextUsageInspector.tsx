@@ -44,6 +44,10 @@ export function ContextUsageInspector({
   responseOutputEstimated = false,
   autoCompactionEnabled,
   onToggleAutoCompaction,
+  fastModeEnabled,
+  onToggleFastMode,
+  autoRetryEnabled,
+  onToggleAutoRetry,
   sessionStats = null,
 }: {
   usage: MessageUsage;
@@ -55,6 +59,12 @@ export function ContextUsageInspector({
   responseOutputEstimated?: boolean;
   autoCompactionEnabled?: boolean;
   onToggleAutoCompaction?: (enabled: boolean) => void;
+  /** When present, shows a fast-mode toggle in the context inspector popover. */
+  fastModeEnabled?: boolean;
+  onToggleFastMode?: (enabled: boolean) => void;
+  /** When present, shows an auto-retry toggle in the context inspector popover. */
+  autoRetryEnabled?: boolean;
+  onToggleAutoRetry?: (enabled: boolean) => void;
   sessionStats?: OmpSessionStatsResult | null;
 }) {
   const { t } = useTranslation();
@@ -374,6 +384,30 @@ export function ContextUsageInspector({
               type="checkbox"
               checked={autoCompactionEnabled}
               onChange={(e) => onToggleAutoCompaction(e.target.checked)}
+            />
+          </label>
+        </div>
+      ) : null}
+      {onToggleFastMode !== undefined && fastModeEnabled !== undefined ? (
+        <div className="context-inspector-auto-compact">
+          <label className="context-inspector-auto-compact-label">
+            <span>{t("chat.usageFastMode")}</span>
+            <input
+              type="checkbox"
+              checked={fastModeEnabled}
+              onChange={(e) => onToggleFastMode(e.target.checked)}
+            />
+          </label>
+        </div>
+      ) : null}
+      {onToggleAutoRetry !== undefined && autoRetryEnabled !== undefined ? (
+        <div className="context-inspector-auto-compact">
+          <label className="context-inspector-auto-compact-label">
+            <span>{t("chat.usageAutoRetry")}</span>
+            <input
+              type="checkbox"
+              checked={autoRetryEnabled}
+              onChange={(e) => onToggleAutoRetry(e.target.checked)}
             />
           </label>
         </div>

@@ -230,6 +230,26 @@ function TranscriptBody({
     }
   };
 
+  const runCommand = async () => {
+    if (!sessionId) return;
+    // prompt() is available in Electron's renderer; minimal "Run command" dialog.
+    const command = window.prompt(t("chat.runCommandPrompt"));
+    if (!command?.trim()) return;
+    try {
+      await api.ompBash(command.trim());
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : t("chat.runCommandFailed"), { variant: "error" });
+    }
+  };
+
+  const abortRetry = async () => {
+    try {
+      await api.ompRetryAbort();
+    } catch {
+      // Ignore — no retry was pending or sidecar unavailable.
+    }
+  };
+
   const onContextMenu = (event: ReactMouseEvent<HTMLDivElement>) => {
     openTranscriptMenu(event, {
       label: t("chat.conversationMenu"),
@@ -249,6 +269,8 @@ function TranscriptBody({
         onExportHtml: () => void exportHtml(),
         onCopyLastReply: () => void copyLastReply(),
         onHandoff: () => void handoff(),
+        onRunCommand: sessionId ? () => void runCommand() : undefined,
+        onAbortRetry: sessionId ? () => void abortRetry() : undefined,
       }),
     });
   };

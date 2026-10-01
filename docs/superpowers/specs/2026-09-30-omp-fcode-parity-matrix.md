@@ -35,7 +35,7 @@ Row counts: **surfaced 107** · **partial 31** · **missing 86** · **total 224*
 | Capability | omp source | Fcode surface | Status | Note |
 |---|---|---|---|---|
 | `get_state` | `rpc-types.ts:38` | `bridge.ts:489` via `agent.getStatus`; `bridge.ts:575` via `omp.state` | surfaced | Used for isRunning check and context usage display |
-| `set_fast_mode` | `rpc-types.ts:39` | `bridge.ts:860` `omp.fast.set`; `omp-ipc.ts:433–438`; `api.ts:1788` `ompFastSet` | partial | IPC+bridge+API wired; no renderer UI toggle |
+| `set_fast_mode` | `rpc-types.ts:39` | `bridge.ts:860` `omp.fast.set`; `omp-ipc.ts:433–438`; `api.ts:1788` `ompFastSet`; `ContextUsageInspector.tsx` toggle | surfaced | Toggled in context inspector popover alongside auto-compact |
 | `get_available_commands` | `rpc-types.ts:40` | `bridge.ts:571` via `omp.commands.list` | surfaced | Merged into composer autocomplete (`use-composer-autocomplete.ts:136`) |
 | `get_entries` | `rpc-types.ts:41` | `bridge.ts:836` `omp.session.entries`; `omp-ipc.ts:285–291`; `api.ts:1758` `ompSessionEntries`; `OmpSessionTreeTab.tsx:48` | surfaced | Session history tab in Work Panel; renders entry list; click to fork |
 | `get_tree` | `rpc-types.ts:42` | `bridge.ts:840` `omp.session.tree`; `omp-ipc.ts:293–297`; `api.ts:1761` `ompSessionTree` | partial | Bridge+IPC+API wired; `OmpSessionTreeTab` uses `get_entries` not `get_tree`; no confirmed renderer consumer |
@@ -43,7 +43,7 @@ Row counts: **surfaced 107** · **partial 31** · **missing 86** · **total 224*
 | `set_host_tools` | `rpc-types.ts:44` | `bridge.ts:947` auto on handshake | surfaced | Registers `fcode_bench_execute`, `fcode_bench_run`, `fcode_canvas` tools |
 | `set_host_uri_schemes` | `rpc-types.ts:45` | none | missing | Not bridged; no custom URI scheme host |
 | `set_subagent_subscription` | `rpc-types.ts:46` | `bridge.ts:677` auto on first prompt | surfaced | Level `progress` subscribed once per omp process |
-| `set_event_filter` | `rpc-types.ts:47` | none | missing | Not bridged |
+| `set_event_filter` | `rpc-types.ts:47` | `bridge.ts` called with `null` after `registerHostTools()` | surfaced | Called once at handshake with `null` (all events); IPC handler added for renderer override |
 | `get_subagents` | `rpc-types.ts:48` | `omp-ipc.ts` via `omp.subagents.list` → `api.ompSubagentList` → `OmpSubagentsList.tsx` | surfaced | Initial snapshot for the compact subagents list |
 | `get_subagent_messages` | `rpc-types.ts:49` | `omp-ipc.ts` via `omp.subagents.messages` → `api.ompSubagentMessages` → popover in `OmpSubagentsList.tsx` | surfaced | Read-only message view on row click |
 | `get_memory_status` | `rpc-types.ts:40` | `bridge.ts:782` `omp.memory.status`; `omp-ipc.ts` confirmed; `api.ts:1672` `ompMemoryStatus`; `MemoryTab.tsx:29–30` | surfaced | Memory health polling for MemoryTab; refreshed every 15 s while tab is open |
@@ -83,15 +83,15 @@ Row counts: **surfaced 107** · **partial 31** · **missing 86** · **total 224*
 
 | Capability | omp source | Fcode surface | Status | Note |
 |---|---|---|---|---|
-| `set_auto_retry` | `rpc-types.ts:71` | `bridge.ts:863` `omp.retry.setAutoRetry`; `omp-ipc.ts:440–445`; `api.ts:1791` `ompRetrySetAutoRetry` | partial | Bridge+IPC+API wired; no UI toggle in Settings |
-| `abort_retry` | `rpc-types.ts:72` | `bridge.ts:866` `omp.retry.abort`; `omp-ipc.ts:447–451`; `api.ts:1794` `ompRetryAbort` | partial | Bridge+IPC+API wired; no UI button in transcript |
+| `set_auto_retry` | `rpc-types.ts:71` | `bridge.ts:863` `omp.retry.setAutoRetry`; `omp-ipc.ts:440–445`; `api.ts:1791` `ompRetrySetAutoRetry`; `ContextUsageInspector.tsx` toggle | surfaced | Toggled in context inspector popover alongside fast-mode |
+| `abort_retry` | `rpc-types.ts:72` | `bridge.ts:866` `omp.retry.abort`; `omp-ipc.ts:447–451`; `api.ts:1794` `ompRetryAbort`; transcript context menu | surfaced | "Abort retry" item in transcript right-click menu |
 
 ### 1.9 Bash (direct shell exec)
 
 | Capability | omp source | Fcode surface | Status | Note |
 |---|---|---|---|---|
-| `bash` | `rpc-types.ts:75` | none | missing | Direct RPC bash call not used; bash runs via agent tool |
-| `abort_bash` | `rpc-types.ts:76` | none | missing | Not bridged |
+| `bash` | `rpc-types.ts:75` | `bridge.ts` `omp.bash`; `omp-ipc.ts` `ompBash`; `api.ts` `ompBash`; transcript "Run shell command…" menu | surfaced | Output emitted as system transcript line |
+| `abort_bash` | `rpc-types.ts:76` | `bridge.ts` `omp.abort_bash`; `omp-ipc.ts` `ompAbortBash`; `api.ts` `ompAbortBash` | surfaced | Bridge handler added; no renderer UI (low value) |
 
 ### 1.10 Session
 
@@ -149,7 +149,7 @@ Row counts: **surfaced 107** · **partial 31** · **missing 86** · **total 224*
 | `retry_fallback_start` / `retry_fallback_end` | omp internal | `bridge.ts:375–376` in `SYSTEM_LINE_EVENTS` | surfaced | "[omp] Fallback model: …" / "[omp] Fallback complete" |
 | `goal_updated` | omp internal | `bridge.ts:377` in `SYSTEM_LINE_EVENTS` | surfaced | "[omp] Goal: …" system line |
 | `model_changed` / `thinking_level_changed` | omp internal | `bridge.ts:378` in `SYSTEM_LINE_EVENTS` | surfaced | "[omp] Model → …" / "[omp] Thinking → …" system lines |
-| `ttsr_triggered` | omp internal | `bridge.ts:366` in `DROP_EVENTS` | missing | Silently discarded; no surface |
+| `ttsr_triggered` | omp internal | `bridge.ts` in `SYSTEM_LINE_EVENTS` | surfaced | Moved from DROP_EVENTS; surfaces as "[omp] Token-to-sample ratio limit; session paused and resumed" |
 
 ### 2.3 Subagent Frames
 
@@ -356,7 +356,7 @@ Row counts: **surfaced 107** · **partial 31** · **missing 86** · **total 224*
 | `interruptMode` | `modes/settings.ts:702` | `omp-settings-sections.tsx:320`; `bridge.ts:274` | surfaced | |
 | `loop.mode` | `modes/settings.ts:747` | `omp-settings-sections.tsx:331`; `bridge.ts:275` | surfaced | Auto-loop on completion |
 | `auto_compaction` toggle | `rpc-types.ts:68` | `ContextUsageInspector.tsx` toggle → `omp.auto-compaction.set` | surfaced | See §1.7 |
-| `auto_retry` toggle (Settings) | `rpc-types.ts:71` | API wired (`ompRetrySetAutoRetry`) | partial | API wired; no Settings UI toggle (see §1.8) |
+| `auto_retry` toggle (Settings) | `rpc-types.ts:71` | `ContextUsageInspector.tsx` toggle → `ompRetrySetAutoRetry` | surfaced | Toggle in context inspector alongside fast-mode; see §1.8 |
 
 ---
 
@@ -466,7 +466,7 @@ Row counts: **surfaced 107** · **partial 31** · **missing 86** · **total 224*
 
 2. **`hindsight.autoRecall/autoRetain/retainMode/mentalModelsEnabled/mentalModelAutoSeed`** — `bridge.ts:150–154` reads these from `OmpSettingsValues` but they are absent from the type (`shared/src/types/omp.ts`). Type gap = dead config paths. Add the 5 keys to `OmpSettingsValues`.
 
-3. **`set_fast_mode` / `set_auto_retry` / `abort_retry`** — fully wired IPC/bridge/API but no renderer UI entry points. Small additions to Session Modes settings or composer toolbar.
+3. **`set_fast_mode` / `set_auto_retry` / `abort_retry`** — ✅ surfaced (PR fix/audit-bridge-rpc): toggles added to `ContextUsageInspector`; abort-retry in transcript menu.
 
 4. **`get_tree` / `get_branch_messages` / `set_todos`** — bridge+IPC+API wired; no confirmed renderer consumer. `OmpSessionTreeTab` already uses `get_entries`; tree/branch-messages could add depth.
 
@@ -474,6 +474,6 @@ Row counts: **surfaced 107** · **partial 31** · **missing 86** · **total 224*
 
 6. **Collab live session** — relay settings configurable; no live peer-view or guest-join panel.
 
-7. **`ttsr_triggered`** — still in `DROP_EVENTS` at `bridge.ts:366`; silently discarded.
+7. **`ttsr_triggered`** — ✅ surfaced (PR fix/audit-bridge-rpc): moved to `SYSTEM_LINE_EVENTS`.
 
-8. **`bash`/`abort_bash`, `set_host_uri_schemes`, `set_event_filter`, `switch_session`, `get_messages`/`get_messages_page`** — still missing, no bridge handler.
+8. **`bash`/`abort_bash`, `set_event_filter`** — ✅ surfaced (PR fix/audit-bridge-rpc): bridge+IPC+API+UI wired. `set_host_uri_schemes`, `switch_session`, `get_messages`/`get_messages_page` — still missing.

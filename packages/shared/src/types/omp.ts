@@ -58,6 +58,8 @@ export interface OmpStateResult {
   sessionName?: string;
   messageCount: number;
   autoCompactionEnabled?: boolean;
+  /** When present: whether fast-mode is currently active for this session. */
+  fastModeEnabled?: boolean;
   contextUsage?: { tokensUsed?: number; tokensAvailable?: number; tokensTotal?: number; [key: string]: unknown };
   [key: string]: unknown;
 }
@@ -495,4 +497,12 @@ export interface OmpExtensionListResult {
 export interface OmpExtensionMutateResult {
   ok: boolean;
   output: string;
+}
+
+/** Result of the omp `bash` RPC command. */
+export interface OmpBashResult {
+  /** Combined stdout+stderr from the command. */
+  output: string;
+  exitCode: number | undefined;
+  cancelled: boolean;
 }

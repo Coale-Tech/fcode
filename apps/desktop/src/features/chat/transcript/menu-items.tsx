@@ -23,7 +23,9 @@ import {
   IconDownload,
   IconLogOut,
   IconPencil,
+  IconRefresh,
   IconReview,
+  IconTerminal,
   IconTextSelect,
   IconTrash,
 } from "../../../components/icons";
@@ -197,6 +199,8 @@ export function conversationMenuItems({
   onExportHtml,
   onCopyLastReply,
   onHandoff,
+  onRunCommand,
+  onAbortRetry,
 }: {
   t: TFunction;
   /** The loaded window or older/newer history contains dialogue to copy. */
@@ -209,6 +213,10 @@ export function conversationMenuItems({
   onExportHtml: () => void;
   onCopyLastReply: () => void;
   onHandoff: () => void;
+  /** Run a shell command via omp bash RPC; output appears in transcript. */
+  onRunCommand?: () => void;
+  /** Abort a pending auto-retry. */
+  onAbortRetry?: () => void;
 }): ContextMenuItem[] {
   const scrollTo = (top: number) => () => scrollRef.current?.scrollTo({ top });
   return [
@@ -261,6 +269,19 @@ export function conversationMenuItems({
       icon: <IconLogOut size={14} />,
       onSelect: onHandoff,
     },
+    ...(onRunCommand ? [{
+      id: "run-command",
+      label: t("chat.runCommand"),
+      icon: <IconTerminal size={14} />,
+      separatorBefore: true,
+      onSelect: onRunCommand,
+    }] : []),
+    ...(onAbortRetry ? [{
+      id: "abort-retry",
+      label: t("chat.abortRetry"),
+      icon: <IconRefresh size={14} />,
+      onSelect: onAbortRetry,
+    }] : []),
   ];
 }
 

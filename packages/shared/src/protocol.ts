@@ -475,6 +475,12 @@ export const IPC = {
     ompExtensionUninstall: "pi-desktop/omp/extensions/uninstall",
     /** Enable or disable an extension by toggling disabledExtensions in omp-settings. Restarts sidecar. */
     ompExtensionSetEnabled: "pi-desktop/omp/extensions/setEnabled",
+    /** Run a shell command in omp's session cwd; output emitted as a system transcript block. */
+    ompBash: "pi-desktop/omp/bash",
+    /** Abort a running bash command started via ompBash. */
+    ompAbortBash: "pi-desktop/omp/abort-bash",
+    /** Set the omp event filter (null = all events; string[] = allowlist). */
+    ompSetEventFilter: "pi-desktop/omp/set-event-filter",
   },
   event: {
     pluginChanged: "pi-desktop/event/pluginChanged",
