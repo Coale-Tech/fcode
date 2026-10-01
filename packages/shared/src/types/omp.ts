@@ -102,6 +102,20 @@ export interface OmpMemoryStatusResult {
   latencyMs: number;
 }
 
+/** Launcher available for a managed local Hindsight server. */
+export type HindsightLocalLauncher = "binary" | "uvx" | "docker";
+
+/** Live state of the managed local Hindsight server supervisor. */
+export interface HindsightLocalState {
+  /** Launchers found on PATH; empty when nothing is installed. */
+  launchers: HindsightLocalLauncher[];
+  state: "stopped" | "starting" | "running" | "failed" | "unavailable";
+  /** Port the server is (or will be) listening on. */
+  port?: number;
+  /** Human-readable reason for `failed` or `unavailable`. */
+  message?: string;
+}
+
 /** Result of `omp.session.stats` (omp `get_session_stats`). */
 export interface OmpSessionStatsResult {
   userMessages: number;
@@ -121,6 +135,8 @@ export interface MemoryConfig {
   backend: "mnemopi" | "hindsight" | "off";
   hindsightUrl?: string;
   hindsightBank?: string;
+  /** When true, the local Hindsight supervisor starts automatically with the agent. */
+  hindsightLocal?: boolean;
 }
 export interface MemoryConfigView extends MemoryConfig {
   hasToken: boolean;

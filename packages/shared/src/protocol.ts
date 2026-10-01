@@ -405,6 +405,14 @@ export const IPC = {
     buildCheckWatchdog: "pi-desktop/build/checkWatchdog",
     /** Bench tab — scan bench apps for DocType JSON files + git status. */
     gitScanDoctypes: "pi-desktop/git/scanDoctypes",
+    /** Managed local Hindsight server: detect available launchers. */
+    hindsightLocalDetect: "pi-desktop/hindsight-local/detect",
+    /** Managed local Hindsight server: start the supervisor. */
+    hindsightLocalStart: "pi-desktop/hindsight-local/start",
+    /** Managed local Hindsight server: stop the supervisor. */
+    hindsightLocalStop: "pi-desktop/hindsight-local/stop",
+    /** Managed local Hindsight server: get current supervisor state. */
+    hindsightLocalStatus: "pi-desktop/hindsight-local/status",
   },
   event: {
     pluginChanged: "pi-desktop/event/pluginChanged",
@@ -457,6 +465,8 @@ export const IPC = {
     sidecarFatal: "pi-desktop/sidecar/event/fatal",
     /** omp setStatus / setWidget / setTitle forwarded from the omp bridge. */
     sidecarExtUi: "pi-desktop/sidecar/event/extUi",
+    /** Managed local Hindsight server state changed. */
+    hindsightLocalStatus: "pi-desktop/hindsight-local/event/status",
   },
 } as const;
 

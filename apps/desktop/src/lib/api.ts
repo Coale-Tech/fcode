@@ -135,6 +135,7 @@ import type {
   OmpLoginStartResult,
   OmpSessionBranchResult,
   SidecarExtUiEvent,
+  HindsightLocalState,
   ToolApprovalMode,
   OmpSessionStatsResult,
 } from "@pi-desktop/shared";
@@ -1673,6 +1674,25 @@ export const api = {
   /** Rename the current omp session. */
   ompSessionRename: (name: string) =>
     invoke<void>(IPC.invoke.ompSessionRename, { name }),
+  /** Detect available launchers for the local Hindsight server. */
+  hindsightLocalDetect: () =>
+    invoke<{ launchers: HindsightLocalState["launchers"]; state: HindsightLocalState }>(IPC.invoke.hindsightLocalDetect),
+  /** Start the managed local Hindsight server on the given port (default 8888). */
+  hindsightLocalStart: (port?: number) =>
+    invoke<HindsightLocalState>(IPC.invoke.hindsightLocalStart, { port }),
+  /** Stop the managed local Hindsight server. */
+  hindsightLocalStop: () =>
+    invoke<HindsightLocalState>(IPC.invoke.hindsightLocalStop),
+  /** Get current local Hindsight supervisor state. */
+  hindsightLocalStatus: () =>
+    invoke<HindsightLocalState>(IPC.invoke.hindsightLocalStatus),
+  /** Subscribe to local Hindsight server state changes from main process. */
+  onHindsightLocalStatus: (listener: (state: HindsightLocalState) => void) => {
+    if (!window.piDesktop?.on) return () => undefined;
+    return window.piDesktop.on(IPC.event.hindsightLocalStatus, (payload) =>
+      listener(payload as HindsightLocalState),
+    );
+  },
   /** Enable or disable auto-compaction for the current omp session. */
   ompAutoCompactionSet: (enabled: boolean) =>
     invoke<void>(IPC.invoke.ompAutoCompactionSet, { enabled }),
