@@ -467,6 +467,14 @@ export const IPC = {
     ompSessionBranchMessages: "pi-desktop/omp/session/branchMessages",
     /** Trigger /share slash command and return the snapshot URL. */
     ompShare: "pi-desktop/omp/share",
+    /** List installed omp extensions (npm + marketplace plugins) via omp plugin list --json. */
+    ompExtensionsList: "pi-desktop/omp/extensions/list",
+    /** Install an omp extension by npm/git spec via omp plugin install. Validates spec; restarts sidecar. */
+    ompExtensionInstall: "pi-desktop/omp/extensions/install",
+    /** Uninstall an omp extension by name via omp plugin uninstall. Restarts sidecar. */
+    ompExtensionUninstall: "pi-desktop/omp/extensions/uninstall",
+    /** Enable or disable an extension by toggling disabledExtensions in omp-settings. Restarts sidecar. */
+    ompExtensionSetEnabled: "pi-desktop/omp/extensions/setEnabled",
   },
   event: {
     pluginChanged: "pi-desktop/event/pluginChanged",
