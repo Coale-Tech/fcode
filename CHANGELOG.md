@@ -21,6 +21,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - DocType browser moved to Bench; opening a DocType file opens it in Chat → Files. Migrate needs an explicit site when a bench has several.
 - Removed the whole-file `git restore` path; Review snapshot rollback is the only way to undo agent changes.
 - `navToCode` shortcut renamed `navToFiles`; custom bindings carry over. Saved `pi.file-manager` tabs move to `fcode.files`.
+- omp subagents panel: a compact live list appears below the transcript when omp spawns subagents (status badge, agent name, task). Clicking a row opens a read-only popover with the subagent's message history via `get_subagent_messages`. `irc_message` events forwarded as quiet system lines. New IPC: `omp.subagents.list`, `omp.subagents.messages`.
 - Settings → AI → Permissions: tool approval mode selector (Ask every time / Auto-approve reads / Auto-approve all) persisted host-side as `approval-mode.json`; passed to omp via `FCODE_TOOL_APPROVAL_MODE` env var and `--approval-mode` CLI flag; default stays `always-ask`. Changes take effect after the agent restarts.
 - Session stats (tokens in/out/cache, cost) surface in the context-usage popover after each turn. Cost is hidden for local/uncounted models. New omp bridge route `omp.session.stats`, IPC `ompSessionStats`, and `api.ompSessionStats()`.
 

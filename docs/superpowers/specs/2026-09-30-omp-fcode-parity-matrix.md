@@ -41,8 +41,8 @@
 | `set_host_uri_schemes` | `rpc-types.ts:45` | none | missing | Not bridged; no custom URI scheme host |
 | `set_subagent_subscription` | `rpc-types.ts:46` | `bridge.ts:677` auto on first prompt | surfaced | Level `progress` subscribed once per omp process |
 | `set_event_filter` | `rpc-types.ts:47` | none | missing | Not bridged |
-| `get_subagents` | `rpc-types.ts:48` | none | missing | Subagent list not polled; events used instead |
-| `get_subagent_messages` | `rpc-types.ts:49` | none | missing | Not bridged |
+| `get_subagents` | `rpc-types.ts:48` | `omp-ipc.ts` via `omp.subagents.list` → `api.ompSubagentList` → `OmpSubagentsList.tsx` | surfaced | Initial snapshot for the compact subagents list |
+| `get_subagent_messages` | `rpc-types.ts:49` | `omp-ipc.ts` via `omp.subagents.messages` → `api.ompSubagentMessages` → popover in `OmpSubagentsList.tsx` | surfaced | Read-only message view on row click |
 
 ### 1.4 Model
 
@@ -139,7 +139,7 @@
 | Capability | omp source | Fcode surface | Status | Note |
 |---|---|---|---|---|
 | `notice` | omp internal | `bridge.ts:186` | missing | System notices dropped |
-| `irc_message` | omp internal | `bridge.ts:186` | missing | Collab IRC dropped |
+| `irc_message` | omp internal | `bridge.ts:888` → `emitSystemMessage` as quiet transcript line | surfaced | Plain-text content forwarded; non-string content silently dropped |
 | `todo_reminder` / `todo_auto_clear` | omp internal | `bridge.ts:186` | missing | Todo events dropped |
 | `ttsr_triggered` | omp internal | `bridge.ts:186` | missing | TTSR (time-to-summarize) dropped |
 | `auto_retry_start` / `auto_retry_end` | omp internal | `bridge.ts:186` | missing | Auto-retry notifications dropped |
@@ -153,7 +153,7 @@
 |---|---|---|---|---|
 | `subagent_lifecycle` | `rpc-types.ts:423` | `bridge.ts:962` → `agent.event { type: "tool_start"/"tool_end" }` | surfaced | Subagents surface as nested tool rows in transcript |
 | `subagent_progress` | `rpc-types.ts:428` | `bridge.ts:1002` → `agent.event { type: "tool_update" }` | surfaced | Progress text shown in tool row |
-| `subagent_events` subscription level | `rpc-types.ts:217` | none | partial | Only `progress` level subscribed; full event stream not forwarded |
+| `subagent_events` subscription level | `rpc-types.ts:217` | `bridge.ts:899` → `agent.event { subagentId }` | surfaced | `subagent_event` frames relayed with inner event + subagentId; subscription stays at `progress` |
 
 ---
 

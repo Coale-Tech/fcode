@@ -379,6 +379,10 @@ export const IPC = {
     toolApprovalModeGet: "pi-desktop/tool-approval-mode/get",
     toolApprovalModeSet: "pi-desktop/tool-approval-mode/set",
     ompSessionStats: "pi-desktop/omp/session/stats",
+    /** List all live subagents in the active omp session. */
+    ompSubagentList: "pi-desktop/omp/subagent/list",
+    /** Fetch the message history for one subagent by id. */
+    ompSubagentMessages: "pi-desktop/omp/subagent/messages",
     /** Bench subsystem (Approach step 6): discovery, supervision, agent access. */
     benchList: "pi-desktop/bench/list",
     benchStart: "pi-desktop/bench/start",
