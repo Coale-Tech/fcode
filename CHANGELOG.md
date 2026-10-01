@@ -10,6 +10,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 - i18n: translate `cycleOmpModel`/`cycleOmpThinking` shortcut labels in all 8 non-English locales (pt-BR, zh-CN, zh-TW, de, es, fr, ko, tr); key parity test already enforces full coverage.
+- Fix: settings search now indexes all omp sections (Queue Modes, LSP, IDA, MCP, Skills/Commands, Hindsight, Theme, Agent Model Overrides, Extensions, Worktrees); OmpSubagentsList messages popover has a proper focus trap + Esc + return-focus; OmpSettingsSections shows loading/error/sidecar-not-running states instead of silently blank; OmpSkillsSection and OmpWorktreeSection show error rows instead of disappearing on IPC failure; MemoryTab guards its config card behind a loading spinner; OmpExtensionsSection requires confirm before uninstall via DestructiveActionDialog; OmpSessionTreeTab replaces window.confirm with DestructiveActionDialog; share URL and agent model IDs truncate with title tooltip; DAP breakpoint form uses i18n aria-labels; OmpSkillsSection/OmpWorktreeSection/OmpExtensionsSection use SettingsCard primitive; omp sections hidden when sidecar unavailable; KIND_LABELS i18n'd in OmpWorktreeSection; new unit tests for omp-todo-logic, session-tree, and ext-ui-state.
 
 ### Changes
 

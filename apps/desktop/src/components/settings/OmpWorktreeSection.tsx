@@ -7,53 +7,63 @@ import { useTranslation } from "react-i18next";
 import type { OmpWorktreeEntry } from "@pi-desktop/shared";
 import { api } from "../../lib/api";
 import { Badge } from "../ui";
-
-const KIND_LABELS: Record<OmpWorktreeEntry["kind"], string> = {
-  "pr-checkout": "PR",
-  "task-isolation": "task",
-  "empty": "empty",
-  "stray": "stray",
-};
+import { SettingsCard } from "../../features/settings/primitives";
 
 export function OmpWorktreeSection() {
   const { t } = useTranslation();
   const [worktrees, setWorktrees] = useState<OmpWorktreeEntry[] | null>(null);
   const [error, setError] = useState(false);
 
-  useEffect(() => {
+  const load = () => {
+    setError(false);
     api
       .ompWorktreeList()
       .then((res) => setWorktrees(res.worktrees))
       .catch(() => setError(true));
-  }, []);
+  };
 
-  if (error) return null;
+  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const kindLabel = (kind: OmpWorktreeEntry["kind"]): string => {
+    switch (kind) {
+      case "pr-checkout": return t("settings.ompWorktreesKindPr");
+      case "task-isolation": return t("settings.ompWorktreesKindTask");
+      case "empty": return t("settings.ompWorktreesKindEmpty");
+      case "stray": return t("settings.ompWorktreesKindStray");
+      default: return kind;
+    }
+  };
+
+  if (error) {
+    return (
+      <SettingsCard title={t("settings.ompWorktreesGroup")}>
+        <p className="settings-row-desc">{t("settings.ompWorktreesError")}</p>
+      </SettingsCard>
+    );
+  }
   if (!worktrees) {
     return (
-      <section className="settings-card-block">
-        <h2 className="settings-card-heading">{t("settings.ompWorktreesGroup")}</h2>
+      <SettingsCard title={t("settings.ompWorktreesGroup")}>
         <p className="settings-row-desc">{t("common.loading")}</p>
-      </section>
+      </SettingsCard>
     );
   }
   if (worktrees.length === 0) {
     return (
-      <section className="settings-card-block">
-        <h2 className="settings-card-heading">{t("settings.ompWorktreesGroup")}</h2>
+      <SettingsCard title={t("settings.ompWorktreesGroup")}>
         <p className="settings-row-desc">{t("settings.ompWorktreesEmpty")}</p>
-      </section>
+      </SettingsCard>
     );
   }
 
   return (
-    <section className="settings-card-block">
-      <h2 className="settings-card-heading">{t("settings.ompWorktreesGroup")}</h2>
+    <SettingsCard title={t("settings.ompWorktreesGroup")}>
       <ul className="omp-worktree-list">
         {worktrees.map((wt) => (
           <li key={wt.path} className="omp-worktree-row">
             <div className="omp-worktree-meta">
               <Badge tone={wt.orphanReason ? "warning" : "neutral"}>
-                {KIND_LABELS[wt.kind]}
+                {kindLabel(wt.kind)}
               </Badge>
               {wt.branch && (
                 <span className="omp-worktree-branch font-mono text-xs">{wt.branch}</span>
@@ -70,6 +80,6 @@ export function OmpWorktreeSection() {
           </li>
         ))}
       </ul>
-    </section>
+    </SettingsCard>
   );
 }

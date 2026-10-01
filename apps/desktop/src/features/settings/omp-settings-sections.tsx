@@ -22,13 +22,22 @@ const BUNDLED_AGENTS = ["task", "sonic", "scout", "reviewer", "security-reviewer
 
 export function OmpSettingsSections() {
   const { t } = useTranslation();
+  const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
   const [omp, setOmp] = useState<OmpSettingsValues>({});
   const [ompModels, setOmpModels] = useState<OmpModel[]>([]);
 
-  useEffect(() => {
-    void api.ompSettingsGet().then(setOmp).catch(() => undefined);
-    void api.ompModelsList().then((r) => setOmpModels(r.models)).catch(() => undefined);
+  const load = useCallback(() => {
+    setLoadState("loading");
+    Promise.all([api.ompSettingsGet(), api.ompModelsList()])
+      .then(([settings, models]) => {
+        setOmp(settings);
+        setOmpModels(models.models);
+        setLoadState("ready");
+      })
+      .catch(() => setLoadState("error"));
   }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   const save = useCallback(
     async (patch: OmpSettingsValues) => {
@@ -44,6 +53,21 @@ export function OmpSettingsSections() {
     },
     [omp],
   );
+
+  // L6: don't render omp sections when sidecar is not available.
+  if (loadState === "loading") {
+    return <p className="settings-row-desc">{t("common.loading")}</p>;
+  }
+  if (loadState === "error") {
+    return (
+      <div className="settings-row-desc">
+        <span>{t("settings.ompSidecarNotRunning")}</span>{" "}
+        <Button size="sm" variant="secondary" onClick={load}>
+          {t("settings.ompSidecarRetry")}
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -119,7 +143,8 @@ export function OmpSettingsSections() {
             { id: "", label: t("settings.ompAgentModelOverridesDefault") },
             ...ompModels.map((m) => {
               const fullId = `${m.provider.id}/${m.id}`;
-              return { id: fullId, label: fullId };
+              const label = fullId.length > 44 ? `${fullId.slice(0, 41)}…` : fullId;
+              return { id: fullId, label, title: fullId };
             }),
           ];
           return (

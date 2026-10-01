@@ -11,6 +11,7 @@ import { memo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "../../../stores/app-store";
 import type { OmpTodoPhase, OmpTodoItem } from "@pi-desktop/shared";
+import { hasActiveTasks } from "./omp-todo-logic";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -22,12 +23,6 @@ function statusIcon(status: OmpTodoItem["status"]): string {
     case "blocked": return "⊘";
     default: return "○";
   }
-}
-
-function hasActiveTasks(phases: OmpTodoPhase[]): boolean {
-  return phases.some((p) =>
-    p.tasks.some((t) => t.status !== "completed" && t.status !== "abandoned"),
-  );
 }
 
 // ─── row ──────────────────────────────────────────────────────────────────────
