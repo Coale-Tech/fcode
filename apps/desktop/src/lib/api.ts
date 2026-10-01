@@ -152,7 +152,7 @@ import type {
   OmpSessionSetTodosResult,
   OmpSessionEntriesResult,
   OmpSessionTreeResult,
-  OmpSessionSwitchResult,
+  OmpSessionBranchResult,
   OmpSessionBranchMessagesResult,
   OmpTodoPhase,
 } from "@pi-desktop/shared";
@@ -1756,9 +1756,9 @@ export const api = {
   /** Get the session tree for the current omp session. */
   ompSessionTree: () =>
     invoke<OmpSessionTreeResult>(IPC.invoke.ompSessionTree),
-  /** Switch the omp session to a different session file (branch navigation). */
-  ompSessionSwitch: (sessionPath: string) =>
-    invoke<OmpSessionSwitchResult>(IPC.invoke.ompSessionSwitch, { sessionPath }),
+  /** Fork the omp session from a user-message entry; returns its text for Composer prefill. */
+  ompSessionBranch: (entryId: string) =>
+    invoke<OmpSessionBranchResult>(IPC.invoke.ompSessionBranch, { entryId }),
   /** Get preview messages for the current branch. */
   ompSessionBranchMessages: () =>
     invoke<OmpSessionBranchMessagesResult>(IPC.invoke.ompSessionBranchMessages),

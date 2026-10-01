@@ -319,9 +319,8 @@ export interface OmpSessionEntry {
   parentId: string | null;
   type: string;
   timestamp?: string | number;
-  label?: string;
-  /** For message entries, the role of the message. */
-  role?: string;
+  /** Present on `type: "message"` entries (raw omp SessionEntry message). */
+  message?: { role?: string; content?: unknown };
 }
 
 /** A node in the session tree (recursive). */
@@ -343,8 +342,9 @@ export interface OmpSessionTreeResult {
   leafId: string | null;
 }
 
-/** Result of `omp.session.switch`. */
-export interface OmpSessionSwitchResult {
+/** Result of `omp.session.branch` — `text` is the forked user message, for Composer prefill. */
+export interface OmpSessionBranchResult {
+  text: string;
   cancelled: boolean;
 }
 

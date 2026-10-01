@@ -832,10 +832,10 @@ export class OmpBridge {
         this.ompCallAndForward(id, { type: "get_tree" });
         break;
 
-      case "omp.session.switch": {
-        const sessionPath = typeof p.sessionPath === "string" ? p.sessionPath.trim() : "";
-        if (!sessionPath) { this.respondError(id, "sessionPath required"); break; }
-        this.ompCallAndForward(id, { type: "switch_session", sessionPath });
+      case "omp.session.branch": {
+        const entryId = typeof p.entryId === "string" ? p.entryId.trim() : "";
+        if (!entryId) { this.respondError(id, "entryId required"); break; }
+        this.ompCallAndForward(id, { type: "branch", entryId });
         break;
       }
 

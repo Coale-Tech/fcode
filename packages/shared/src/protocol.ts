@@ -455,8 +455,8 @@ export const IPC = {
     ompSessionEntries: "pi-desktop/omp/session/entries",
     /** Get the session tree for the current omp session. */
     ompSessionTree: "pi-desktop/omp/session/tree",
-    /** Switch the current omp session to a different session file. */
-    ompSessionSwitch: "pi-desktop/omp/session/switch",
+    /** Fork the current omp session from a user-message entry. */
+    ompSessionBranch: "pi-desktop/omp/session/branch",
     /** Get preview messages for the current branch. */
     ompSessionBranchMessages: "pi-desktop/omp/session/branchMessages",
     /** Trigger /share slash command and return the snapshot URL. */
