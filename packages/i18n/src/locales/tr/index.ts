@@ -403,6 +403,7 @@ export const tr = {
     toolBlockNotice: "Not",
     toolBlockError: "Hata",
     toolBlockMore: "{{count}} tane daha gizli",
+    toolScreenshot: "Ekran görüntüsü",
     toolChipExit: "çıkış {{count}}",
     toolChipMatches_one: "1 eşleşme",
     toolChipMatches_other: "{{count}} eşleşme",

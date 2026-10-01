@@ -394,6 +394,7 @@ export const de = {
     "toolBlockNotice": "Hinweis",
     "toolBlockError": "Fehler",
     "toolBlockMore": "{{count}} mehr ausgeblendet",
+    "toolScreenshot": "Screenshot",
     "toolChipExit": "beenden {{count}}",
     "toolChipMatches_one": "1 Treffer",
     "toolChipMatches_other": "{{count}} Treffer",
