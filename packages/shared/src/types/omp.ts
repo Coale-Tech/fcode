@@ -244,3 +244,55 @@ export interface OmpSettingsValues {
   "collab.displayName"?: string;
   "collab.autoStart"?: "off" | "view" | "control";
 }
+
+/** One installed omp skillshare package (from skills.json + skills.lock.json on disk). */
+export interface OmpInstalledSkillEntry {
+  /** `@scope/name` package id. */
+  id: string;
+  /** `"project"` when installed in the nearest `.omp/` dir; `"user"` for `~/.omp/agent/`. */
+  scope: "project" | "user";
+  /** Locked version; absent when the manifest entry was never installed. */
+  version?: string;
+  /** Manifest semver range; absent for a lock entry without a manifest entry. */
+  range?: string;
+  /** True when the store directory is present with the correct integrity hash. */
+  stored: boolean;
+}
+
+/** Result of `ompInstalledSkillsList`. */
+export interface OmpInstalledSkillsListResult {
+  skills: OmpInstalledSkillEntry[];
+}
+
+/**
+ * Aggregated historical stats from `omp stats --json` (subset of DashboardStats.overall).
+ * Absent when omp binary is unreachable or the stats DB has never been synced.
+ */
+export interface OmpHistoricalStatsResult {
+  totalRequests: number;
+  totalCost: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  cacheRate: number;
+  /** ISO-8601 timestamp of when the stats were collected. */
+  collectedAt: string;
+}
+
+/** One agent-managed git worktree under `~/.omp/wt/` (from disk scan). */
+export interface OmpWorktreeEntry {
+  /** Absolute path to the worktree directory. */
+  path: string;
+  /** Classification: PR checkout, task-isolation dir, empty dir, or unrecognised dir. */
+  kind: "pr-checkout" | "task-isolation" | "empty" | "stray";
+  /** Branch name when available. */
+  branch?: string;
+  /** Parent repo root when this is a registered git worktree. */
+  parentRepo?: string;
+  /** Non-null when the entry is unhealthy and should be cleared. */
+  orphanReason?: string;
+}
+
+/** Result of `ompWorktreeList`. */
+export interface OmpWorktreeListResult {
+  worktrees: OmpWorktreeEntry[];
+}

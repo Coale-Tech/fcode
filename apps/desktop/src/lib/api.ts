@@ -145,6 +145,9 @@ import type {
   OmpSessionStatsResult,
   OmpSubagentListResult,
   OmpSubagentMessagesResult,
+  OmpInstalledSkillsListResult,
+  OmpHistoricalStatsResult,
+  OmpWorktreeListResult,
 } from "@pi-desktop/shared";
 import {
   defaultCommandShellForPlatform,
@@ -1728,4 +1731,16 @@ export const api = {
   /** Fetch the message history for one subagent by id. */
   ompSubagentMessages: (params?: { subagentId?: string; sessionFile?: string; fromByte?: number }) =>
     invoke<OmpSubagentMessagesResult>(IPC.invoke.ompSubagentMessages, params ?? {}),
+  /** List omp skillshare packages installed in ~/.omp/agent/ (reads JSON files directly). */
+  ompInstalledSkillsList: () =>
+    invoke<OmpInstalledSkillsListResult>(IPC.invoke.ompInstalledSkillsList),
+  /** Historical AI usage stats from `omp stats --json`. */
+  ompHistoricalStats: () =>
+    invoke<OmpHistoricalStatsResult>(IPC.invoke.ompHistoricalStats),
+  /** List agent-managed git worktrees under ~/.omp/wt/. */
+  ompWorktreeList: () =>
+    invoke<OmpWorktreeListResult>(IPC.invoke.ompWorktreeList),
+  /** Reveal an omp skill store directory in the system file manager. */
+  ompSkillReveal: (id: string, version: string) =>
+    invoke<{ ok: boolean }>(IPC.invoke.ompSkillReveal, { id, version }),
 };

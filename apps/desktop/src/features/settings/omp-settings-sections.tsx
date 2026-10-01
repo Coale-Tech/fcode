@@ -1,6 +1,7 @@
 /**
- * Settings UI sections for the four omp settings groups:
- * Task Subagents / Eval & Python / Browser / Collab.
+ * Settings UI sections for the omp settings groups:
+ * Task Subagents / Eval & Python / Browser / Collab /
+ * Installed Skills / Usage / Agent Worktrees.
  * Rendered inside the AI settings tab.
  */
 import { useCallback, useEffect, useState } from "react";
@@ -10,6 +11,9 @@ import { api } from "../../lib/api";
 import { Input, SettingsToggle } from "../../components/ui";
 import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect";
 import { SettingsCard, SettingsRow } from "./primitives";
+import { OmpSkillsSection } from "../../components/settings/OmpSkillsSection";
+import { OmpUsageSection } from "../../components/settings/OmpUsageSection";
+import { OmpWorktreeSection } from "../../components/settings/OmpWorktreeSection";
 
 export function OmpSettingsSections() {
   const { t } = useTranslation();
@@ -245,6 +249,15 @@ export function OmpSettingsSections() {
           />
         </SettingsRow>
       </SettingsCard>
+
+      {/* ── Installed omp Skills ─────────────────────────────────── */}
+      <OmpSkillsSection />
+
+      {/* ── Historical Usage ─────────────────────────────────────── */}
+      <OmpUsageSection />
+
+      {/* ── Agent Worktrees ──────────────────────────────────────── */}
+      <OmpWorktreeSection />
     </>
   );
 }
