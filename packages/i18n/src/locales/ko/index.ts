@@ -1285,6 +1285,11 @@ sklm: {
     permissionModeAsk: "매번 묻기",
     permissionModeAcceptEdits: "편집 자동 승인",
     permissionModeAuto: "완전 자동",
+    toolApprovalMode: "도구 승인 모드",
+    toolApprovalModeDesc: "omp 도구 중 어느 티어가 확인을 필요로 하는지 설정합니다. 에이전트를 재시작한 후 적용됩니다.",
+    toolApprovalModeAlwaysAsk: "매번 묻기",
+    toolApprovalModeWrite: "읽기 자동 승인",
+    toolApprovalModeYolo: "전체 자동 승인",
     closeBehaviorTitle: "닫기 동작",
     closeBehaviorDesc:
       "주 창을 닫을 때의 동작입니다. macOS에서는 앱이 항상 Dock에 유지됩니다.",

@@ -6,6 +6,7 @@ import {
   type GlobalPermissionMode,
   type PluginScenicThemesDestinationMeta,
   type ShortcutPlatform,
+  type ToolApprovalMode,
 } from "@pi-desktop/shared";
 import { useAppStore } from "../../stores/app-store";
 import { api } from "../../lib/api";
@@ -101,6 +102,7 @@ export function SettingsPage() {
   const [settingsRecoveryFailed, setSettingsRecoveryFailed] = useState(false);
   const [extensions, setExtensions] = useState<PluginScenicThemesDestinationMeta[]>([]);
   const [activeExtension, setActiveExtension] = useState<PluginScenicThemesDestinationMeta | null>(null);
+  const [toolApprovalMode, setToolApprovalMode] = useState<ToolApprovalMode>("always-ask");
   const seenSettingsTabNonce = useRef(settingsTabNonce);
   // setSettingsTab means "show this built-in category", even when the tab id
   // does not change. Dismiss a plugin page before paint; an anchor-only deep
@@ -125,6 +127,10 @@ export function SettingsPage() {
     refresh();
     return api.onPluginChanged(refresh);
   }, []);
+  useEffect(() => {
+    void api.toolApprovalModeGet().then(setToolApprovalMode).catch(() => undefined);
+  }, []);
+
 
   useEffect(() => {
     if (activeExtension && !extensions.some((entry) => entry.ref === activeExtension.ref)) {
@@ -465,6 +471,26 @@ export function SettingsPage() {
                         label: t("settings.permissionModeAcceptEdits"),
                       },
                       { id: "auto", label: t("settings.permissionModeAuto") },
+                    ]}
+                  />
+                </SettingsRow>
+                <SettingsRow
+                  title={t("settings.toolApprovalMode")}
+                  description={t("settings.toolApprovalModeDesc")}
+                >
+                  <SettingsMenuSelect
+                    className="settings-permission-select"
+                    label={t("settings.toolApprovalMode")}
+                    value={toolApprovalMode}
+                    onChange={(mode) => {
+                      const m = mode as ToolApprovalMode;
+                      setToolApprovalMode(m);
+                      void api.toolApprovalModeSet(m).catch(() => undefined);
+                    }}
+                    options={[
+                      { id: "always-ask", label: t("settings.toolApprovalModeAlwaysAsk") },
+                      { id: "write", label: t("settings.toolApprovalModeWrite") },
+                      { id: "yolo", label: t("settings.toolApprovalModeYolo") },
                     ]}
                   />
                 </SettingsRow>

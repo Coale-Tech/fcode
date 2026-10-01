@@ -135,6 +135,7 @@ import type {
   OmpLoginStartResult,
   OmpSessionBranchResult,
   HindsightLocalState,
+  ToolApprovalMode,
   OmpSessionStatsResult,
 } from "@pi-desktop/shared";
 import {
@@ -1646,6 +1647,10 @@ export const api = {
   /** Persist config; `token` is write-only. Restarts the agent sidecar. */
   memorySetConfig: (input: MemoryConfig & { token?: string }) =>
     invoke<MemoryConfigView>(IPC.invoke.memorySetConfig, input),
+  toolApprovalModeGet: () => invoke<ToolApprovalMode>(IPC.invoke.toolApprovalModeGet),
+  /** Persist approval mode; restarts the agent sidecar. */
+  toolApprovalModeSet: (mode: ToolApprovalMode) =>
+    invoke<ToolApprovalMode>(IPC.invoke.toolApprovalModeSet, { mode }),
   /** List login providers known to omp. */
   ompLoginProviders: () =>
     invoke<OmpLoginProvidersResult>(IPC.invoke.ompLoginProviders),
