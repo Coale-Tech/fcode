@@ -137,6 +137,7 @@ import type {
   HindsightListMentalModelsResult,
   HindsightRefreshMentalModelResult,
   BenchBootstrapResult,
+  HindsightSetBankMissionResult,
   ToolApprovalMode,
   OmpSessionStatsResult,
 } from "@pi-desktop/shared";
@@ -1661,6 +1662,10 @@ export const api = {
   /** Write reflect/retain mission text to the active Hindsight bank and persist locally. */
   hindsightSetBankMission: (bankMission: string, retainMission: string) =>
     invoke<HindsightSetBankMissionResult>(IPC.invoke.hindsightSetBankMission, { bankMission, retainMission }),
+  toolApprovalModeGet: () => invoke<ToolApprovalMode>(IPC.invoke.toolApprovalModeGet),
+  /** Persist approval mode; restarts the agent sidecar. */
+  toolApprovalModeSet: (mode: ToolApprovalMode) =>
+    invoke<ToolApprovalMode>(IPC.invoke.toolApprovalModeSet, { mode }),
   /** List login providers known to omp. */
   ompLoginProviders: () =>
     invoke<OmpLoginProvidersResult>(IPC.invoke.ompLoginProviders),
