@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -112,10 +113,19 @@ export function Composer({
   // One inspector in the composer toolbar, always the newest turn with usage.
   // After each turn ends, refresh context window from omp state for accurate occupancy.
   const [ompContextUsage, setOmpContextUsage] = useState<OmpStateResult["contextUsage"] | null>(null);
+  const [ompAutoCompactionEnabled, setOmpAutoCompactionEnabled] = useState<boolean | undefined>(undefined);
   useEffect(() => {
     if (isRunning) return;
-    void api.ompState().then((s) => setOmpContextUsage(s.contextUsage ?? null)).catch(() => {});
+    void api.ompState().then((s) => {
+      setOmpContextUsage(s.contextUsage ?? null);
+      if (typeof s.autoCompactionEnabled === "boolean") setOmpAutoCompactionEnabled(s.autoCompactionEnabled);
+    }).catch(() => {});
   }, [isRunning]);
+  const handleToggleAutoCompaction = useCallback((enabled: boolean) => {
+    setOmpAutoCompactionEnabled(enabled);
+    void api.ompAutoCompactionSet(enabled).catch(() => {});
+  }, []);
+
   const composerContextUsage = useMemo(
     () =>
       latestTurnContextInspector(
@@ -610,6 +620,8 @@ export function Composer({
             modelLabel={modelLabel}
             thinkingLabel={thinkingLabel}
             contextUsage={composerContextUsage ?? null}
+            autoCompactionEnabled={ompAutoCompactionEnabled}
+            onToggleAutoCompaction={handleToggleAutoCompaction}
             enhancementDraft={enhancementDraft}
             value={value}
             modelReady={modelReady}

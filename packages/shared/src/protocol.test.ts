@@ -333,6 +333,7 @@ describe("Plan protocol contracts", () => {
     expect(IPC.invoke.ompLoginStart).toBe("pi-desktop/omp/login/start");
     expect(IPC.invoke.ompSessionBranch).toBe("pi-desktop/omp/session/branch");
     expect(IPC.invoke.ompSessionRename).toBe("pi-desktop/omp/session/rename");
+    expect(IPC.invoke.ompAutoCompactionSet).toBe("pi-desktop/omp/auto-compaction/set");
     for (const channel of [
       IPC.invoke.ompModelsList,
       IPC.invoke.ompModelsSet,
@@ -344,6 +345,7 @@ describe("Plan protocol contracts", () => {
       IPC.invoke.ompLoginStart,
       IPC.invoke.ompSessionBranch,
       IPC.invoke.ompSessionRename,
+      IPC.invoke.ompAutoCompactionSet,
     ]) {
       expect(IPC_WHITELIST.has(channel)).toBe(true);
     }

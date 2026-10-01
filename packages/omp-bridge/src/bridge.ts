@@ -607,6 +607,10 @@ export class OmpBridge {
       case "omp.session.rename":
         this.ompCallAndForward(id, { type: "set_session_name", ...p });
         break;
+      case "omp.auto-compaction.set":
+        this.ompCallAndForward(id, { type: "set_auto_compaction", ...p });
+        break;
+
 
       default:
         this.respondError(id, `Unknown method: ${method}`, -32601);

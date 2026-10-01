@@ -357,6 +357,7 @@ export const de = {
     "usageToolsSummary": "{{count}} Werkzeugtypen · {{calls}} Aufrufe · ~{{tokens}} Token",
     "usageNoTools": "Keine Tool-Aufrufe in dieser Runde",
     "usageCompaction": "Verdichtet {{times}}× · Zusammenfassung",
+    "usageAutoCompact": "Automatische Verdichtung",
     "compactionRow": "Kontext komprimiert · #{{times}}",
     "compactionRowSummary": "Zusammenfassung ≈{{tokens}} Token",
     "compactionRowNoSummary": "keine Zusammenfassung generiert",

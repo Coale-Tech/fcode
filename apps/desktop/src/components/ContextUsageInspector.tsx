@@ -40,6 +40,8 @@ export function ContextUsageInspector({
   responseDurationMs,
   responseOutputTokens,
   responseOutputEstimated = false,
+  autoCompactionEnabled,
+  onToggleAutoCompaction,
 }: {
   usage: MessageUsage;
   turnUsage: MessageUsage;
@@ -48,6 +50,8 @@ export function ContextUsageInspector({
   responseDurationMs?: number;
   responseOutputTokens?: number;
   responseOutputEstimated?: boolean;
+  autoCompactionEnabled?: boolean;
+  onToggleAutoCompaction?: (enabled: boolean) => void;
 }) {
   const { t } = useTranslation();
   const panelId = useId();
@@ -355,6 +359,18 @@ export function ContextUsageInspector({
             {t("chat.usageCompaction", { times: compaction.generation })}
           </span>
           <strong title={compaction.summarized && !compaction.fallback && compaction.summary?.trim() ? compaction.summary : undefined}>~{formatCompactTokenCount(compaction.summaryTokens)}</strong>
+        </div>
+      ) : null}
+      {onToggleAutoCompaction !== undefined && autoCompactionEnabled !== undefined ? (
+        <div className="context-inspector-auto-compact">
+          <label className="context-inspector-auto-compact-label">
+            <span>{t("chat.usageAutoCompact")}</span>
+            <input
+              type="checkbox"
+              checked={autoCompactionEnabled}
+              onChange={(e) => onToggleAutoCompaction(e.target.checked)}
+            />
+          </label>
         </div>
       ) : null}
     </div>

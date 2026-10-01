@@ -50,6 +50,8 @@ export type ComposerToolbarProps = {
   modelLabel: string;
   thinkingLabel: string;
   contextUsage: ContextUsage | null;
+  autoCompactionEnabled?: boolean;
+  onToggleAutoCompaction?: (enabled: boolean) => void;
   enhancementDraft: string;
   value: string;
   modelReady: boolean;
@@ -89,6 +91,8 @@ export function ComposerToolbar({
   modelLabel,
   thinkingLabel,
   contextUsage,
+  autoCompactionEnabled,
+  onToggleAutoCompaction,
   enhancementDraft,
   value,
   modelReady,
@@ -191,7 +195,7 @@ export function ComposerToolbar({
       </div>
 
       <div className="composer-right">
-        {contextUsage ? <ContextUsageInspector {...contextUsage} /> : null}
+        {contextUsage ? <ContextUsageInspector {...contextUsage} autoCompactionEnabled={autoCompactionEnabled} onToggleAutoCompaction={onToggleAutoCompaction} /> : null}
         <ComposerModelPicker
           t={t}
           controller={modelMenu}
