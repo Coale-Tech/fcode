@@ -191,3 +191,34 @@ export type SidecarExtUiEvent =
   | { kind: "editor_text"; sessionId: string; text: string };
 /** omp tool approval mode. Controls which tool tiers are auto-approved. */
 export type ToolApprovalMode = "always-ask" | "write" | "yolo";
+
+/**
+ * User-controlled omp settings persisted in `omp-settings.json` and injected
+ * into the overlay on sidecar restart. Only the configured subset is written;
+ * absent keys keep omp's own defaults.
+ */
+export interface OmpSettingsValues {
+  // Task / isolation
+  "task.isolation.enabled"?: boolean;
+  "isolation.backend"?: "auto" | "apfs" | "btrfs" | "zfs" | "reflink" | "overlayfs" | "projfs" | "block-clone" | "rcopy";
+  "worktree.clone"?: boolean;
+  "task.maxConcurrency"?: number;
+  "task.maxRecursionDepth"?: number;
+  // Eval / Python
+  "eval.py"?: boolean;
+  "eval.js"?: boolean;
+  "eval.tools.enabled"?: boolean;
+  "python.kernelMode"?: "session" | "per-call";
+  "python.interpreter"?: string;
+  // Browser
+  "browser.enabled"?: boolean;
+  "browser.cdpUrl"?: string;
+  "browser.relay"?: boolean;
+  "browser.relayUrl"?: string;
+  "browser.headless"?: boolean;
+  // Collab
+  "collab.relayUrl"?: string;
+  "collab.webUrl"?: string;
+  "collab.displayName"?: string;
+  "collab.autoStart"?: "off" | "view" | "control";
+}
