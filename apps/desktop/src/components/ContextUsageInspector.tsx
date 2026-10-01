@@ -67,6 +67,7 @@ export function ContextUsageInspector({
   onToggleAutoRetry?: (enabled: boolean) => void;
   sessionStats?: OmpSessionStatsResult | null;
 }) {
+  const { t } = useTranslation();
   const panelId = useId();
   // The transcript shows one row per compaction; the inspector adds what those
   // rows cannot — how much of the model context the newest summary occupies.
