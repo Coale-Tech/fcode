@@ -348,7 +348,20 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
   });
   registerBenchIpc({ registrar, mainWindow: getMainWindow });
   registerBuildIpc({ registrar, mainWindow: getMainWindow, browserPane: dependencies.browserPane });
-  registerOmpIpc({ registrar, getSidecar, getMainWindow });
+  registerOmpIpc({
+    registrar,
+    getSidecar,
+    pickExportPath: async () => {
+      const options = {
+        title: "Export transcript",
+        defaultPath: `transcript-${Date.now()}.html`,
+        filters: [{ name: "HTML", extensions: ["html"] }],
+      };
+      const owner = getMainWindow();
+      const save = owner ? await dialog.showSaveDialog(owner, options) : await dialog.showSaveDialog(options);
+      return save.canceled || !save.filePath ? null : save.filePath;
+    },
+  });
   registerMemoryIpc({
     registrar,
     dataDir,

@@ -9,7 +9,6 @@
  * The `open_url` notification emitted by the bridge during `omp.login.start`
  * is handled in `runtime/sidecar.ts` (wireSidecar), not here.
  */
-import { dialog, BrowserWindow } from "electron";
 import { ErrorCodes, IPC } from "@pi-desktop/shared";
 import type {
   OmpCommandsListResult,
@@ -39,7 +38,8 @@ import type { IpcRegistrar } from "./types";
 export type OmpIpcDependencies = {
   registrar: IpcRegistrar;
   getSidecar: () => AgentSidecar | null;
-  getMainWindow: () => BrowserWindow | null;
+  /** Native save dialog; resolves null when cancelled. Injected so this module stays electron-free. */
+  pickExportPath?: () => Promise<string | null>;
 };
 
 /** Throw a typed INVALID_ARGUMENT error. */
@@ -55,8 +55,8 @@ function unavailable(): never {
 }
 
 /** Register all omp IPC channels. */
-export function registerOmpIpc({ registrar, getSidecar, getMainWindow }: OmpIpcDependencies): void {
-  const { handle, handleWithEvent } = registrar;
+export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpcDependencies): void {
+  const { handle } = registrar;
 
 
   // ── omp.models.list ────────────────────────────────────────────────────────
@@ -168,24 +168,11 @@ export function registerOmpIpc({ registrar, getSidecar, getMainWindow }: OmpIpcD
   );
 
   // ── omp.session.exportHtml ─────────────────────────────────────────────────
-  handleWithEvent(IPC.invoke.ompSessionExportHtml, async (event) => {
+  handle(IPC.invoke.ompSessionExportHtml, async () => {
     const sidecar = getSidecar() ?? unavailable();
-    const owner = BrowserWindow.fromWebContents(event.sender) ?? getMainWindow() ?? undefined;
-    const save = owner
-      ? await dialog.showSaveDialog(owner, {
-          title: "Export transcript",
-          defaultPath: `transcript-${Date.now()}.html`,
-          filters: [{ name: "HTML", extensions: ["html"] }],
-        })
-      : await dialog.showSaveDialog({
-          title: "Export transcript",
-          defaultPath: `transcript-${Date.now()}.html`,
-          filters: [{ name: "HTML", extensions: ["html"] }],
-        });
-    if (save.canceled || !save.filePath) return null;
-    return sidecar.call<OmpSessionExportHtmlResult>("omp.session.exportHtml", {
-      outputPath: save.filePath,
-    });
+    const outputPath = pickExportPath ? await pickExportPath() : null;
+    if (!outputPath) return null;
+    return sidecar.call<OmpSessionExportHtmlResult>("omp.session.exportHtml", { outputPath });
   });
 
   // ── omp.session.lastAssistantText ──────────────────────────────────────────
