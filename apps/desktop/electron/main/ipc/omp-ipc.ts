@@ -9,6 +9,7 @@
  * The `open_url` notification emitted by the bridge during `omp.login.start`
  * is handled in `runtime/sidecar.ts` (wireSidecar), not here.
  */
+import { dialog, BrowserWindow } from "electron";
 import { ErrorCodes, IPC } from "@pi-desktop/shared";
 import type {
   OmpCommandsListResult,
@@ -17,6 +18,15 @@ import type {
   OmpModelsListResult,
   OmpModelsSetResult,
   OmpSessionBranchResult,
+  OmpSessionExportHtmlResult,
+  OmpSessionLastAssistantTextResult,
+  OmpSessionHandoffResult,
+  OmpSessionSetTodosResult,
+  OmpSessionEntriesResult,
+  OmpSessionTreeResult,
+  OmpSessionSwitchResult,
+  OmpSessionBranchMessagesResult,
+  OmpTodoPhase,
   OmpSessionStatsResult,
   OmpStateResult,
   OmpSubagentListResult,
@@ -29,6 +39,7 @@ import type { IpcRegistrar } from "./types";
 export type OmpIpcDependencies = {
   registrar: IpcRegistrar;
   getSidecar: () => AgentSidecar | null;
+  getMainWindow: () => BrowserWindow | null;
 };
 
 /** Throw a typed INVALID_ARGUMENT error. */
@@ -44,8 +55,9 @@ function unavailable(): never {
 }
 
 /** Register all omp IPC channels. */
-export function registerOmpIpc({ registrar, getSidecar }: OmpIpcDependencies): void {
-  const { handle } = registrar;
+export function registerOmpIpc({ registrar, getSidecar, getMainWindow }: OmpIpcDependencies): void {
+  const { handle, handleWithEvent } = registrar;
+
 
   // ── omp.models.list ────────────────────────────────────────────────────────
   handle(IPC.invoke.ompModelsList, async () => {
@@ -154,4 +166,77 @@ export function registerOmpIpc({ registrar, getSidecar }: OmpIpcDependencies): v
       return sidecar.call<OmpSubagentMessagesResult>("omp.subagents.messages", params);
     },
   );
+
+  // ── omp.session.exportHtml ─────────────────────────────────────────────────
+  handleWithEvent(IPC.invoke.ompSessionExportHtml, async (event) => {
+    const sidecar = getSidecar() ?? unavailable();
+    const owner = BrowserWindow.fromWebContents(event.sender) ?? getMainWindow() ?? undefined;
+    const save = owner
+      ? await dialog.showSaveDialog(owner, {
+          title: "Export transcript",
+          defaultPath: `transcript-${Date.now()}.html`,
+          filters: [{ name: "HTML", extensions: ["html"] }],
+        })
+      : await dialog.showSaveDialog({
+          title: "Export transcript",
+          defaultPath: `transcript-${Date.now()}.html`,
+          filters: [{ name: "HTML", extensions: ["html"] }],
+        });
+    if (save.canceled || !save.filePath) return null;
+    return sidecar.call<OmpSessionExportHtmlResult>("omp.session.exportHtml", {
+      outputPath: save.filePath,
+    });
+  });
+
+  // ── omp.session.lastAssistantText ──────────────────────────────────────────
+  handle(IPC.invoke.ompSessionLastAssistantText, async () => {
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<OmpSessionLastAssistantTextResult>("omp.session.lastAssistantText");
+  });
+
+  // ── omp.session.handoff ────────────────────────────────────────────────────
+  handle(IPC.invoke.ompSessionHandoff, async (input: { customInstructions?: unknown } = {}) => {
+    const sidecar = getSidecar() ?? unavailable();
+    const params: Record<string, unknown> = {};
+    if (typeof input.customInstructions === "string" && input.customInstructions)
+      params.customInstructions = input.customInstructions;
+    return sidecar.call<OmpSessionHandoffResult>("omp.session.handoff", params);
+  });
+
+  // ── omp.session.setTodos ───────────────────────────────────────────────────
+  handle(IPC.invoke.ompSessionSetTodos, async (input: { phases?: unknown } = {}) => {
+    if (!Array.isArray(input?.phases)) invalid("phases (array) required");
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<OmpSessionSetTodosResult>("omp.session.setTodos", {
+      phases: input.phases as OmpTodoPhase[],
+    });
+  });
+
+  // ── omp.session.entries ────────────────────────────────────────────────────
+  handle(IPC.invoke.ompSessionEntries, async (input: { since?: unknown } = {}) => {
+    const sidecar = getSidecar() ?? unavailable();
+    const params: Record<string, unknown> = {};
+    if (typeof input.since === "string" && input.since) params.since = input.since;
+    return sidecar.call<OmpSessionEntriesResult>("omp.session.entries", params);
+  });
+
+  // ── omp.session.tree ───────────────────────────────────────────────────────
+  handle(IPC.invoke.ompSessionTree, async () => {
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<OmpSessionTreeResult>("omp.session.tree");
+  });
+
+  // ── omp.session.switch ─────────────────────────────────────────────────────
+  handle(IPC.invoke.ompSessionSwitch, async (input: { sessionPath?: unknown } = {}) => {
+    const sessionPath = typeof input?.sessionPath === "string" ? input.sessionPath.trim() : "";
+    if (!sessionPath) invalid("sessionPath required");
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<OmpSessionSwitchResult>("omp.session.switch", { sessionPath });
+  });
+
+  // ── omp.session.branchMessages ─────────────────────────────────────────────
+  handle(IPC.invoke.ompSessionBranchMessages, async () => {
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<OmpSessionBranchMessagesResult>("omp.session.branchMessages");
+  });
 }

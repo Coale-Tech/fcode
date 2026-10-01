@@ -6,7 +6,7 @@ import { headAsk } from "../lib/pending-asks";
 import { useTranscriptView } from "../hooks/use-transcript-view";
 import { TranscriptDisclosureProvider } from "../features/chat/transcript/disclosure";
 import { OmpSubagentsList } from "../features/chat/transcript/OmpSubagentsList";
-
+import { OmpTodoPanel } from "../features/chat/transcript/OmpTodoPanel";
 /**
  * One retained conversation pane (ADR 0137).
  *
@@ -87,6 +87,7 @@ export const SessionPane = memo(function SessionPane({
         />
       </TranscriptDisclosureProvider>
       {visible ? <OmpSubagentsList sessionId={sessionId} /> : null}
+      {visible ? <OmpTodoPanel sessionId={sessionId} /> : null}
     </div>
   );
 });

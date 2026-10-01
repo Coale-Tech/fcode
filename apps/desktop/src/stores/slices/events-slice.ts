@@ -2,6 +2,7 @@ import i18n from "i18next";
 import { projectMessageEnd, reconcilePersistedUserMessage } from "../../lib/session-transcript";
 import type {
   AgentEventEnvelope,
+  OmpTodoPhase,
   PlanningStateEvent,
   UiMessage,
 } from "@pi-desktop/shared";
@@ -377,6 +378,40 @@ export function createEventsSlice({
             : { pendingPermissions, pendingAsks };
         });
       }
+
+      // Extract todo phases from successful todo tool results.
+      if (event.type === "tool_end" && event.toolName === "todo" && !event.isError) {
+        const result = event.result;
+        const details = result && typeof result === "object" && "details" in result ? result.details : undefined;
+        const phases = details && typeof details === "object" && "phases" in details ? details.phases : undefined;
+        if (Array.isArray(phases)) {
+          set((state) => ({
+            sessionTodoPhases: {
+              ...state.sessionTodoPhases,
+              [envelope.sessionId]: phases as OmpTodoPhase[],
+            },
+          }));
+        }
+      }
+
+      // todo_reminder: forwarded from omp as agent.event; update phases from flat todo list.
+      if (event.type === "todo_reminder") {
+        const ev = event as unknown as { todos?: unknown };
+        if (Array.isArray(ev.todos) && ev.todos.length > 0) {
+          const phases: OmpTodoPhase[] = [{ name: "Todos", tasks: ev.todos as OmpTodoPhase["tasks"] }];
+          set((state) => ({
+            sessionTodoPhases: { ...state.sessionTodoPhases, [envelope.sessionId]: phases },
+          }));
+        }
+      }
+
+      // todo_auto_clear: omp cleared all todos; clear the panel.
+      if (event.type === "todo_auto_clear") {
+        set((state) => ({
+          sessionTodoPhases: { ...state.sessionTodoPhases, [envelope.sessionId]: [] },
+        }));
+      }
+
 
       if (event.type === "compaction_end" && event.ok && event.mark) {
         const mark = event.mark;

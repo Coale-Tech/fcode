@@ -198,6 +198,38 @@ function TranscriptBody({
     }
   };
 
+  const exportHtml = async () => {
+    if (!sessionId) return;
+    try {
+      const result = await api.ompSessionExportHtml(sessionId);
+      if (result.savedPath) showToast(t("chat.exportTranscriptSaved", { path: result.savedPath }), { variant: "success" });
+      // result.savedPath is null when user cancelled the save dialog
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : t("chat.exportTranscriptSaved", { path: "" }), { variant: "error" });
+    }
+  };
+
+  const copyLastReply = async () => {
+    if (!sessionId) return;
+    try {
+      const result = await api.ompSessionLastAssistantText(sessionId);
+      if (!result.text) { showToast(t("chat.copyLastReplyEmpty"), { variant: "info" }); return; }
+      await copyText(result.text);
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : t("chat.copyFailed"), { variant: "error" });
+    }
+  };
+
+  const handoff = async () => {
+    if (!sessionId) return;
+    try {
+      const result = await api.ompSessionHandoff(sessionId);
+      showToast(t("chat.handoffSaved", { path: result.savedPath }), { variant: "success" });
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : t("chat.handoff"), { variant: "error" });
+    }
+  };
+
   const onContextMenu = (event: ReactMouseEvent<HTMLDivElement>) => {
     openTranscriptMenu(event, {
       label: t("chat.conversationMenu"),
@@ -214,6 +246,9 @@ function TranscriptBody({
           onReturnToLatest?.();
           jumpToLatest();
         },
+        onExportHtml: () => void exportHtml(),
+        onCopyLastReply: () => void copyLastReply(),
+        onHandoff: () => void handoff(),
       }),
     });
   };

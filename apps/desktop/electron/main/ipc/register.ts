@@ -348,7 +348,7 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
   });
   registerBenchIpc({ registrar, mainWindow: getMainWindow });
   registerBuildIpc({ registrar, mainWindow: getMainWindow, browserPane: dependencies.browserPane });
-  registerOmpIpc({ registrar, getSidecar });
+  registerOmpIpc({ registrar, getSidecar, getMainWindow });
   registerMemoryIpc({
     registrar,
     dataDir,
