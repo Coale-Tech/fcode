@@ -2168,7 +2168,8 @@ sklm: {
       "file": "Fichiers",
       "plugin": "Vue du plugin",
       "subagent": "Sous-agent",
-    "session-tree": "Historique de session"
+    "session-tree": "Historique de session",
+      "tools": "Outils"
     },
     "pluginView": {
       "failed": "Cette vue n'a pas pu être chargée. Rechargez le plugin et réessayez.",
@@ -2848,6 +2849,20 @@ sklm: {
       "retry": "Réessayer",
       "continue": "Continuer",
       "dismiss": "Ignorer"
+    }
+  }
+,
+  "tools": {
+    "title": "Inspecteurs d'outils",
+    "noData": "Pas encore de données — les appels d'outils apparaissent ici pendant l'exécution de l'agent.",
+    "browserSteps": "Étapes",
+    "computerActions": "Actions",
+    "evalCell": "Cellule {{index}}",
+    "tabs": {
+      "browser": "Navigateur",
+      "eval": "Éval",
+      "computer": "Ordinateur",
+      "ida": "IDA"
     }
   }
 } satisfies EnglishCatalog;

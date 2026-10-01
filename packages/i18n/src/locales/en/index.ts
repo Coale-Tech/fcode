@@ -2187,6 +2187,7 @@ sklm: {
       plugin: "Plugin view",
       subagent: "Subagent",
       "session-tree": "Session history",
+      tools: "Tools",
     },
     pluginView: {
       failed: "This view could not be loaded. Reload the plugin and try again.",
@@ -2892,6 +2893,19 @@ importConfirm: "Imported extensions run inside the agent process with the same a
       retry: "Try again",
       continue: "Continue",
       dismiss: "Dismiss",
+    },
+  },
+  tools: {
+    title: "Tool Inspectors",
+    noData: "No data yet — tool calls appear here while the agent runs.",
+    browserSteps: "Steps",
+    computerActions: "Actions",
+    evalCell: "Cell {{index}}",
+    tabs: {
+      browser: "Browser",
+      eval: "Eval",
+      computer: "Computer",
+      ida: "IDA",
     },
   },
 } as const;

@@ -2184,7 +2184,8 @@ sklm: {
       file: "파일",
       plugin: "플러그인 화면",
       subagent: "서브에이전트",
-    "session-tree": "세션 기록"
+    "session-tree": "세션 기록",
+      tools: "도구",
     },
     pluginView: {
       failed: "이 화면을 불러올 수 없습니다. 플러그인을 새로 고친 후 다시 시도하세요.",
@@ -2890,6 +2891,19 @@ importConfirm: "가져온 확장은 에이전트 프로세스 안에서 에이�
       dismiss: "닫기",
     },
   },
+  tools: {
+    title: "도구 검사기",
+    noData: "아직 데이터가 없습니다 — 에이전트가 실행 중일 때 도구 호출이 여기에 표시됩니다.",
+    browserSteps: "단계",
+    computerActions: "작업",
+    evalCell: "셀 {{index}}",
+    tabs: {
+      browser: "브라우저",
+      eval: "실행",
+      computer: "컴퓨터",
+      ida: "IDA",
+    },
+  }
 } satisfies EnglishCatalog;
 
 export default ko;

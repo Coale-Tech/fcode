@@ -2154,7 +2154,8 @@ sklm: {
       file: "檔案",
       plugin: "外掛檢視",
       subagent: "子智慧體",
-    "session-tree": "工作階段歷史"
+    "session-tree": "工作階段歷史",
+      tools: "工具",
     },
     pluginView: {
       failed: "無法載入該檢視。請重新載入外掛後重試。",
@@ -2839,6 +2840,19 @@ sklm: {
       dismiss: "關閉",
     },
   },
+  tools: {
+    title: "工具檢查器",
+    noData: "尚無資料 — 代理程式執行時，工具呼叫將在此顯示。",
+    browserSteps: "步驟",
+    computerActions: "動作",
+    evalCell: "儲存格 {{index}}",
+    tabs: {
+      browser: "瀏覽器",
+      eval: "執行",
+      computer: "電腦",
+      ida: "IDA",
+    },
+  }
 } satisfies EnglishCatalog;
 
 export default zhTW;
