@@ -1277,6 +1277,11 @@ sklm: {
     permissionModeAsk: "Ask every time",
     permissionModeAcceptEdits: "Auto-accept edits",
     permissionModeAuto: "Full auto",
+    toolApprovalMode: "Tool approval mode",
+    toolApprovalModeDesc: "Which omp tool tiers require confirmation. Takes effect after restarting the agent.",
+    toolApprovalModeAlwaysAsk: "Ask every time",
+    toolApprovalModeWrite: "Auto-approve reads",
+    toolApprovalModeYolo: "Auto-approve all",
     closeBehaviorTitle: "Close behavior",
     closeBehaviorDesc:
       "What happens when you close the main window. macOS always keeps the app in the Dock.",
