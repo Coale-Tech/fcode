@@ -27,7 +27,10 @@ test("only assistant messages with visible text are checkpointable", () => {
   );
 });
 
-test("first snapshot is written immediately and a burst collapses to one trailing write", async () => {
+test("first snapshot is written immediately and a burst collapses to one trailing write", async (t) => {
+  // Freeze Date.now() so `due` is always 30 after the first flush regardless
+  // of real elapsed time (avoids flakiness under load when sleep(0) > intervalMs).
+  t.mock.timers.enable({ apis: ["Date"], now: 0 });
   const saved = [];
   const checkpointer = new InflightCheckpointer(async (checkpoint) => {
     saved.push(checkpoint.message.content);
@@ -47,7 +50,9 @@ test("first snapshot is written immediately and a burst collapses to one trailin
   checkpointer.dispose();
 });
 
-test("settle drops the pending snapshot once the final row is on its way", async () => {
+test("settle drops the pending snapshot once the final row is on its way", async (t) => {
+  // Freeze Date.now() so subsequent observes always compute due > 0 after flush.
+  t.mock.timers.enable({ apis: ["Date"], now: 0 });
   const saved = [];
   const checkpointer = new InflightCheckpointer(async (checkpoint) => {
     saved.push(checkpoint.message.content);

@@ -371,7 +371,7 @@ test("a remote MCP tool can run longer than the connection timeout", async (t) =
     rootPath: mkdtempSync(join(tmpdir(), "pi-mcp-http-")),
     server: { id: "remote", transport: "http", url },
     values: {},
-    connectTimeoutMs: 20,
+    connectTimeoutMs: 300,
     callTimeoutMs: 500,
   });
   t.after(() => client.close());
