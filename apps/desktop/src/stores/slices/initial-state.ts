@@ -88,5 +88,6 @@ export function createInitialState(): AppStateData {
     error: null,
     errorCode: null,
     errorRetriable: null,
+    sessionTodoPhases: {},
   };
 }

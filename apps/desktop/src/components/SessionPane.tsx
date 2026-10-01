@@ -6,6 +6,7 @@ import { headAsk } from "../lib/pending-asks";
 import { useTranscriptView } from "../hooks/use-transcript-view";
 import { TranscriptDisclosureProvider } from "../features/chat/transcript/disclosure";
 import { OmpSubagentsList } from "../features/chat/transcript/OmpSubagentsList";
+import { OmpTodoPanel } from "../features/chat/transcript/OmpTodoPanel";
 import { DapPanel } from "../features/chat/transcript/DapPanel";
 import { OmpCollabPanel } from "../features/chat/transcript/OmpCollabPanel";
 
@@ -92,6 +93,7 @@ export const SessionPane = memo(function SessionPane({
         />
       </TranscriptDisclosureProvider>
       {visible ? <OmpSubagentsList sessionId={sessionId} /> : null}
+      {visible ? <OmpTodoPanel sessionId={sessionId} /> : null}
       {visible ? <DapPanel sessionId={sessionId} /> : null}
       {visible && isOmpSession ? <OmpCollabPanel sessionId={sessionId} /> : null}
     </div>

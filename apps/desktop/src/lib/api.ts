@@ -146,6 +146,14 @@ import type {
   OmpShareResult,
   OmpSubagentListResult,
   OmpSubagentMessagesResult,
+  OmpSessionExportHtmlResult,
+  OmpSessionLastAssistantTextResult,
+  OmpSessionHandoffResult,
+  OmpSessionSetTodosResult,
+  OmpSessionEntriesResult,
+  OmpSessionTreeResult,
+  OmpSessionBranchMessagesResult,
+  OmpTodoPhase,
   OmpInstalledSkillsListResult,
   OmpHistoricalStatsResult,
   OmpWorktreeListResult,
@@ -1732,6 +1740,27 @@ export const api = {
   /** Fetch the message history for one subagent by id. */
   ompSubagentMessages: (params?: { subagentId?: string; sessionFile?: string; fromByte?: number }) =>
     invoke<OmpSubagentMessagesResult>(IPC.invoke.ompSubagentMessages, params ?? {}),
+  /** Export current omp session transcript as HTML via a native save dialog. Returns null if cancelled. */
+  ompSessionExportHtml: () =>
+    invoke<OmpSessionExportHtmlResult | null>(IPC.invoke.ompSessionExportHtml),
+  /** Get the last assistant text from the current omp session. */
+  ompSessionLastAssistantText: () =>
+    invoke<OmpSessionLastAssistantTextResult>(IPC.invoke.ompSessionLastAssistantText),
+  /** Trigger an ai-memory handoff for the current omp session. */
+  ompSessionHandoff: (params?: { customInstructions?: string }) =>
+    invoke<OmpSessionHandoffResult | null>(IPC.invoke.ompSessionHandoff, params ?? {}),
+  /** Pre-seed the todo list for the current omp session. */
+  ompSessionSetTodos: (phases: OmpTodoPhase[]) =>
+    invoke<OmpSessionSetTodosResult>(IPC.invoke.ompSessionSetTodos, { phases }),
+  /** Get flat history entries for the current omp session. */
+  ompSessionEntries: (params?: { since?: string }) =>
+    invoke<OmpSessionEntriesResult>(IPC.invoke.ompSessionEntries, params ?? {}),
+  /** Get the session tree for the current omp session. */
+  ompSessionTree: () =>
+    invoke<OmpSessionTreeResult>(IPC.invoke.ompSessionTree),
+  /** Get preview messages for the current branch. */
+  ompSessionBranchMessages: () =>
+    invoke<OmpSessionBranchMessagesResult>(IPC.invoke.ompSessionBranchMessages),
   /** List omp skillshare packages installed in ~/.omp/agent/ (reads JSON files directly). */
   ompInstalledSkillsList: () =>
     invoke<OmpInstalledSkillsListResult>(IPC.invoke.ompInstalledSkillsList),

@@ -9,6 +9,7 @@ import type {
   ContextCompactionMark,
   Mode,
   OmpMemoryStatusResult,
+  OmpTodoPhase,
   ModelInfo,
   OnboardingState,
   PermissionMode,
@@ -186,6 +187,8 @@ export type AppState = {
   settingsTabNonce: number;
   /** Latest polled omp memory status; null when agent is not running or not yet polled. */
   memoryStatus: OmpMemoryStatusResult | null;
+  /** Current todo phases per session, driven by todo_reminder / todo_auto_clear / todo tool events. */
+  sessionTodoPhases: Record<string, OmpTodoPhase[]>;
   navStack: Array<{ page: AppState["page"]; sessionId?: string }>;
   navIndex: number;
   error?: string | null;

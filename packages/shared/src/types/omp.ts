@@ -276,6 +276,83 @@ export interface OmpSettingsValues {
   "hindsight.mentalModelAutoSeed"?: boolean;
 }
 
+// ─── Session-data additions (feat/session-data) ──────────────────────────────
+
+/** A todo item in an omp phase list. */
+export interface OmpTodoItem {
+  id?: string;
+  content: string;
+  status: "pending" | "in_progress" | "completed" | "abandoned" | "blocked";
+  blocker?: string;
+}
+
+/** A named phase containing todo items. */
+export interface OmpTodoPhase {
+  id?: string;
+  name: string;
+  tasks: OmpTodoItem[];
+}
+
+/** Result of `omp.session.exportHtml`. */
+export interface OmpSessionExportHtmlResult {
+  path: string;
+}
+
+/** Result of `omp.session.lastAssistantText`. */
+export interface OmpSessionLastAssistantTextResult {
+  text: string | null;
+}
+
+/** Result of `omp.session.handoff`. */
+export interface OmpSessionHandoffResult {
+  savedPath?: string;
+}
+
+/** Result of `omp.session.setTodos`. */
+export interface OmpSessionSetTodosResult {
+  phases: OmpTodoPhase[];
+}
+
+/** A minimal session entry for the tree view (id/parentId/type/timestamp). */
+export interface OmpSessionEntry {
+  id: string;
+  parentId: string | null;
+  type: string;
+  timestamp?: string | number;
+  /** Present on `type: "message"` entries (raw omp SessionEntry message). */
+  message?: { role?: string; content?: unknown };
+}
+
+/** A node in the session tree (recursive). */
+export interface OmpSessionTreeNode {
+  entry: OmpSessionEntry;
+  children: OmpSessionTreeNode[];
+  label?: string;
+}
+
+/** Result of `omp.session.entries`. */
+export interface OmpSessionEntriesResult {
+  entries: OmpSessionEntry[];
+  leafId: string | null;
+}
+
+/** Result of `omp.session.tree`. */
+export interface OmpSessionTreeResult {
+  tree: OmpSessionTreeNode[];
+  leafId: string | null;
+}
+
+
+/** A message summary for a branch entry, returned by `get_branch_messages`. */
+export interface OmpBranchMessage {
+  entryId: string;
+  text: string;
+}
+
+/** Result of `omp.session.branchMessages`. */
+export interface OmpSessionBranchMessagesResult {
+  messages: OmpBranchMessage[];
+}
 /** One installed omp skillshare package (from skills.json + skills.lock.json on disk). */
 export interface OmpInstalledSkillEntry {
   /** `@scope/name` package id. */

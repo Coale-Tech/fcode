@@ -354,7 +354,6 @@ const TOOL_EVENT_RENAME: Record<string, string> = {
 
 /** omp event types to drop silently (no PI counterpart). */
 const DROP_EVENTS = new Set([
-  "todo_reminder", "todo_auto_clear",
   "ttsr_triggered",
   "ready", "negotiate_protocol",
 ]);
@@ -805,6 +804,40 @@ export class OmpBridge {
         this.ompCallAndForward(id, { type: "get_subagent_messages", ...p });
         break;
 
+      case "omp.session.exportHtml": {
+        const outputPath = typeof p.outputPath === "string" ? p.outputPath : undefined;
+        this.ompCallAndForward(id, { type: "export_html", ...(outputPath ? { outputPath } : {}) });
+        break;
+      }
+
+      case "omp.session.lastAssistantText":
+        this.ompCallAndForward(id, { type: "get_last_assistant_text" });
+        break;
+
+      case "omp.session.handoff": {
+        const customInstructions = typeof p.customInstructions === "string" ? p.customInstructions : undefined;
+        this.ompCallAndForward(id, { type: "handoff", ...(customInstructions ? { customInstructions } : {}) });
+        break;
+      }
+
+      case "omp.session.setTodos":
+        this.ompCallAndForward(id, { type: "set_todos", phases: p.phases ?? [] });
+        break;
+
+      case "omp.session.entries":
+        this.ompCallAndForward(id, { type: "get_entries", ...(p.since ? { since: p.since } : {}) });
+        break;
+
+      case "omp.session.tree":
+        this.ompCallAndForward(id, { type: "get_tree" });
+        break;
+
+
+      case "omp.session.branchMessages":
+        this.ompCallAndForward(id, { type: "get_branch_messages" });
+        break;
+
+
       // Session-scoped mode controls (queue modes, fast mode, retry)
       case "omp.modes.setSteeringMode":
         this.ompCallAndForward(id, { type: "set_steering_mode", mode: p.mode });
@@ -1175,6 +1208,14 @@ export class OmpBridge {
       }
       return;
     }
+
+    // todo_reminder / todo_auto_clear: forward as agent.event for the todo panel.
+    if (frame.type === "todo_reminder" || frame.type === "todo_auto_clear") {
+      const sessionId = this.sessions.keys().next().value ?? "";
+      this.notify("agent.event", { sessionId, ts: Date.now(), event: frame });
+      return;
+    }
+
 
     // Subagent full-event stream (subagent_event): relay inner event tagged with subagentId.
     if (frame.type === "subagent_event") {

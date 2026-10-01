@@ -451,6 +451,20 @@ export const IPC = {
     hindsightLocalStop: "pi-desktop/hindsight-local/stop",
     /** Managed local Hindsight server: get current supervisor state. */
     hindsightLocalStatus: "pi-desktop/hindsight-local/status",
+    /** Export current omp session transcript as HTML; returns the saved path. */
+    ompSessionExportHtml: "pi-desktop/omp/session/exportHtml",
+    /** Get the last assistant text from the current omp session. */
+    ompSessionLastAssistantText: "pi-desktop/omp/session/lastAssistantText",
+    /** Trigger an ai-memory handoff for the current omp session. */
+    ompSessionHandoff: "pi-desktop/omp/session/handoff",
+    /** Pre-seed the current omp session's todo list. */
+    ompSessionSetTodos: "pi-desktop/omp/session/setTodos",
+    /** Get the flat history entries for the current omp session. */
+    ompSessionEntries: "pi-desktop/omp/session/entries",
+    /** Get the session tree for the current omp session. */
+    ompSessionTree: "pi-desktop/omp/session/tree",
+    /** Get preview messages for the current branch. */
+    ompSessionBranchMessages: "pi-desktop/omp/session/branchMessages",
     /** Trigger /share slash command and return the snapshot URL. */
     ompShare: "pi-desktop/omp/share",
   },

@@ -19,6 +19,14 @@ import type {
   OmpModelsListResult,
   OmpModelsSetResult,
   OmpSessionBranchResult,
+  OmpSessionExportHtmlResult,
+  OmpSessionLastAssistantTextResult,
+  OmpSessionHandoffResult,
+  OmpSessionSetTodosResult,
+  OmpSessionEntriesResult,
+  OmpSessionTreeResult,
+  OmpSessionBranchMessagesResult,
+  OmpTodoPhase,
   OmpSessionStatsResult,
   OmpShareResult,
   OmpStateResult,
@@ -113,6 +121,8 @@ async function classifyWorktreeDir(
 export type OmpIpcDependencies = {
   registrar: IpcRegistrar;
   getSidecar: () => AgentSidecar | null;
+  /** Native save dialog; resolves null when cancelled. Injected so this module stays electron-free. */
+  pickExportPath?: () => Promise<string | null>;
 };
 
 /** Throw a typed INVALID_ARGUMENT error. */
@@ -128,8 +138,9 @@ function unavailable(): never {
 }
 
 /** Register all omp IPC channels. */
-export function registerOmpIpc({ registrar, getSidecar }: OmpIpcDependencies): void {
+export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpcDependencies): void {
   const { handle } = registrar;
+
 
   // ── omp.models.list ────────────────────────────────────────────────────────
   handle(IPC.invoke.ompModelsList, async () => {
@@ -238,6 +249,59 @@ export function registerOmpIpc({ registrar, getSidecar }: OmpIpcDependencies): v
       return sidecar.call<OmpSubagentMessagesResult>("omp.subagents.messages", params);
     },
   );
+
+  // ── omp.session.exportHtml ─────────────────────────────────────────────────
+  handle(IPC.invoke.ompSessionExportHtml, async () => {
+    const sidecar = getSidecar() ?? unavailable();
+    const outputPath = pickExportPath ? await pickExportPath() : null;
+    if (!outputPath) return null;
+    return sidecar.call<OmpSessionExportHtmlResult>("omp.session.exportHtml", { outputPath });
+  });
+
+  // ── omp.session.lastAssistantText ──────────────────────────────────────────
+  handle(IPC.invoke.ompSessionLastAssistantText, async () => {
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<OmpSessionLastAssistantTextResult>("omp.session.lastAssistantText");
+  });
+
+  // ── omp.session.handoff ────────────────────────────────────────────────────
+  handle(IPC.invoke.ompSessionHandoff, async (input: { customInstructions?: unknown } = {}) => {
+    const sidecar = getSidecar() ?? unavailable();
+    const params: Record<string, unknown> = {};
+    if (typeof input.customInstructions === "string" && input.customInstructions)
+      params.customInstructions = input.customInstructions;
+    return sidecar.call<OmpSessionHandoffResult>("omp.session.handoff", params);
+  });
+
+  // ── omp.session.setTodos ───────────────────────────────────────────────────
+  handle(IPC.invoke.ompSessionSetTodos, async (input: { phases?: unknown } = {}) => {
+    if (!Array.isArray(input?.phases)) invalid("phases (array) required");
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<OmpSessionSetTodosResult>("omp.session.setTodos", {
+      phases: input.phases as OmpTodoPhase[],
+    });
+  });
+
+  // ── omp.session.entries ────────────────────────────────────────────────────
+  handle(IPC.invoke.ompSessionEntries, async (input: { since?: unknown } = {}) => {
+    const sidecar = getSidecar() ?? unavailable();
+    const params: Record<string, unknown> = {};
+    if (typeof input.since === "string" && input.since) params.since = input.since;
+    return sidecar.call<OmpSessionEntriesResult>("omp.session.entries", params);
+  });
+
+  // ── omp.session.tree ───────────────────────────────────────────────────────
+  handle(IPC.invoke.ompSessionTree, async () => {
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<OmpSessionTreeResult>("omp.session.tree");
+  });
+
+
+  // ── omp.session.branchMessages ─────────────────────────────────────────────
+  handle(IPC.invoke.ompSessionBranchMessages, async () => {
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<OmpSessionBranchMessagesResult>("omp.session.branchMessages");
+  });
 
   // ── omp.skills.installed.list ──────────────────────────────────────────────
   // Reads ~/.omp/agent/skills.json + skills.lock.json directly — no omp RPC.
