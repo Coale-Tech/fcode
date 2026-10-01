@@ -436,6 +436,8 @@ export const IPC = {
     hindsightLocalStop: "pi-desktop/hindsight-local/stop",
     /** Managed local Hindsight server: get current supervisor state. */
     hindsightLocalStatus: "pi-desktop/hindsight-local/status",
+    /** Trigger /share slash command and return the snapshot URL. */
+    ompShare: "pi-desktop/omp/share",
   },
   event: {
     pluginChanged: "pi-desktop/event/pluginChanged",

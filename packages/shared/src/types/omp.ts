@@ -321,3 +321,11 @@ export interface OmpWorktreeEntry {
 export interface OmpWorktreeListResult {
   worktrees: OmpWorktreeEntry[];
 }
+
+/** Result of `omp.share` — snapshot URL from the `/share` slash command. */
+export interface OmpShareResult {
+  /** Extracted share URL, or null when omp returned no URL. */
+  url: string | null;
+  /** Raw text output from the `/share` command (for display). */
+  text: string | null;
+}

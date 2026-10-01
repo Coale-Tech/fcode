@@ -20,6 +20,7 @@ import type {
   OmpModelsSetResult,
   OmpSessionBranchResult,
   OmpSessionStatsResult,
+  OmpShareResult,
   OmpStateResult,
   OmpSubagentListResult,
   OmpSubagentMessagesResult,
@@ -338,5 +339,12 @@ export function registerOmpIpc({ registrar, getSidecar }: OmpIpcDependencies): v
     const storePath = join(homedir(), ".omp", "skillshare", scope!, name!, version);
     shell.showItemInFolder(storePath);
     return { ok: true };
+  });
+
+  // ── omp.share ──────────────────────────────────────────────────────────────
+  handle(IPC.invoke.ompShare, async () => {
+    const sidecar = getSidecar();
+    if (!sidecar) unavailable();
+    return sidecar.call<OmpShareResult>("omp.share");
   });
 }

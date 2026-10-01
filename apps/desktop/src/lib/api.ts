@@ -143,6 +143,7 @@ import type {
   ToolApprovalMode,
   OmpSettingsValues,
   OmpSessionStatsResult,
+  OmpShareResult,
   OmpSubagentListResult,
   OmpSubagentMessagesResult,
   OmpInstalledSkillsListResult,
@@ -1743,4 +1744,7 @@ export const api = {
   /** Reveal an omp skill store directory in the system file manager. */
   ompSkillReveal: (id: string, version: string) =>
     invoke<{ ok: boolean }>(IPC.invoke.ompSkillReveal, { id, version }),
+  /** Trigger the /share slash command and return the snapshot URL. */
+  ompShare: () =>
+    invoke<OmpShareResult>(IPC.invoke.ompShare),
 };
