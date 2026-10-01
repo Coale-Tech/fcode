@@ -198,6 +198,58 @@ function TranscriptBody({
     }
   };
 
+  const exportHtml = async () => {
+    if (!sessionId) return;
+    try {
+      const result = await api.ompSessionExportHtml();
+      // result is null when user cancelled the save dialog
+      if (result) showToast(t("chat.exportTranscriptSaved", { path: result.path }), { variant: "success" });
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : t("chat.copyFailed"), { variant: "error" });
+    }
+  };
+
+  const copyLastReply = async () => {
+    if (!sessionId) return;
+    try {
+      const result = await api.ompSessionLastAssistantText();
+      if (!result.text) { showToast(t("chat.copyLastReplyEmpty"), { variant: "info" }); return; }
+      await copyText(result.text);
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : t("chat.copyFailed"), { variant: "error" });
+    }
+  };
+
+  const handoff = async () => {
+    if (!sessionId) return;
+    try {
+      const result = await api.ompSessionHandoff();
+      if (result) showToast(t("chat.handoffSaved", { path: result.savedPath ?? "" }), { variant: "success" });
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : t("chat.handoff"), { variant: "error" });
+    }
+  };
+
+  const runCommand = async () => {
+    if (!sessionId) return;
+    // prompt() is available in Electron's renderer; minimal "Run command" dialog.
+    const command = window.prompt(t("chat.runCommandPrompt"));
+    if (!command?.trim()) return;
+    try {
+      await api.ompBash(command.trim());
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : t("chat.runCommandFailed"), { variant: "error" });
+    }
+  };
+
+  const abortRetry = async () => {
+    try {
+      await api.ompRetryAbort();
+    } catch {
+      // Ignore — no retry was pending or sidecar unavailable.
+    }
+  };
+
   const onContextMenu = (event: ReactMouseEvent<HTMLDivElement>) => {
     openTranscriptMenu(event, {
       label: t("chat.conversationMenu"),
@@ -214,6 +266,11 @@ function TranscriptBody({
           onReturnToLatest?.();
           jumpToLatest();
         },
+        onExportHtml: () => void exportHtml(),
+        onCopyLastReply: () => void copyLastReply(),
+        onHandoff: () => void handoff(),
+        onRunCommand: sessionId ? () => void runCommand() : undefined,
+        onAbortRetry: sessionId ? () => void abortRetry() : undefined,
       }),
     });
   };

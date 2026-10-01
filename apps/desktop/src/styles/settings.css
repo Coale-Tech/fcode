@@ -293,6 +293,19 @@
   white-space: nowrap;
 }
 
+.memory-status-dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: var(--radius-full);
+  background: var(--color-text-muted);
+}
+
+.memory-status-dot[data-health="ok"]       { background: var(--color-success); }
+.memory-status-dot[data-health="degraded"] { background: var(--color-warning); }
+.memory-status-dot[data-health="error"]    { background: var(--color-error); }
+/* off/unknown keep muted color */
+
 .settings-content {
   min-width: 0;
   flex: 1;

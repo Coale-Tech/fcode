@@ -10,11 +10,23 @@
  */
 import assert from "node:assert/strict";
 import test from "node:test";
-import { register } from "node:module";
+import { register, registerHooks } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
+
+// Stub Electron so `import { shell } from "electron"` works in Node.js test env.
+const electronStub = `data:text/javascript,${encodeURIComponent(`
+  export const shell = { showItemInFolder: () => {} };
+`)}`;
+registerHooks({
+  resolve(specifier, context, next) {
+    return specifier === "electron"
+      ? { url: electronStub, shortCircuit: true }
+      : next(specifier, context);
+  },
+});
 register(pathToFileURL(join(here, "helpers/ts-import-hooks.mjs")));
 
 const { IPC } = await import("@pi-desktop/shared");
@@ -46,6 +58,8 @@ test("no-input handlers throw AGENT_UNAVAILABLE when sidecar is null", async () 
     IPC.invoke.ompCommandsList,
     IPC.invoke.ompState,
     IPC.invoke.ompLoginProviders,
+    IPC.invoke.ompSessionStats,
+    IPC.invoke.ompSubagentList,
   ];
   for (const ch of nullInputChannels) {
     await assert.rejects(handlers.get(ch)(), (err) => {
@@ -63,6 +77,7 @@ test("input-required handlers throw AGENT_UNAVAILABLE when sidecar is null (vali
     [IPC.invoke.ompLoginStart, { providerId: "anthropic" }],
     [IPC.invoke.ompSessionBranch, { entryId: "entry-1" }],
     [IPC.invoke.ompSessionRename, { name: "Renamed" }],
+    [IPC.invoke.ompAutoCompactionSet, { enabled: true }],
   ];
   for (const [ch, input] of cases) {
     await assert.rejects(handlers.get(ch)(input), (err) => {
@@ -120,4 +135,14 @@ test("ompSessionRename rejects missing name without calling sidecar", async () =
     handlers.get(IPC.invoke.ompSessionRename)({}),
     (err) => { assert.equal(err.errorCode, "INVALID_ARGUMENT"); return true; },
   );
+});
+
+test("ompAutoCompactionSet rejects non-boolean enabled without calling sidecar", async () => {
+  const handlers = setup(unreachableSidecar());
+  for (const bad of [{}, { enabled: "true" }, { enabled: 1 }, { enabled: null }]) {
+    await assert.rejects(
+      handlers.get(IPC.invoke.ompAutoCompactionSet)(bad),
+      (err) => { assert.equal(err.errorCode, "INVALID_ARGUMENT"); return true; },
+    );
+  }
 });

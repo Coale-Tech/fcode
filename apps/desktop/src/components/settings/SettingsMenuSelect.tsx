@@ -27,6 +27,8 @@ import { AnchoredMenu } from "./AnchoredMenu";
 export type MenuSelectOption = {
   id: string;
   label: string;
+  /** Tooltip shown on the trigger when this option is selected (e.g. full model ID). */
+  title?: string;
   /** Listed but not selectable; the host may report an unavailable shell. */
   disabled?: boolean;
 };
@@ -114,6 +116,7 @@ export function SettingsMenuSelect({
             aria-haspopup="listbox"
             aria-expanded={open}
             aria-label={label}
+            title={current?.title}
             disabled={disabled || busy}
             onClick={() => {
               setActiveId(value);

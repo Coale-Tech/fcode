@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -8,6 +9,7 @@ import {
 import { useTranslation } from "react-i18next";
 import type {
   Mode,
+  OmpSessionStatsResult,
   OmpStateResult,
   PermissionMode,
 } from "@pi-desktop/shared";
@@ -62,6 +64,7 @@ import { useVoiceInput } from "../features/voice/useVoiceInput";
 import { VoiceOverlay } from "../features/voice/VoiceOverlay";
 import "../styles/voice.css";
 import { ComposerStatus } from "../features/chat/composer/ComposerStatus";
+import { ExtWidget } from "../features/chat/composer/ExtWidget";
 
 const EMPTY_QUEUED_PROMPTS: QueuedPrompt[] = [];
 
@@ -112,9 +115,36 @@ export function Composer({
   // One inspector in the composer toolbar, always the newest turn with usage.
   // After each turn ends, refresh context window from omp state for accurate occupancy.
   const [ompContextUsage, setOmpContextUsage] = useState<OmpStateResult["contextUsage"] | null>(null);
+  const [ompAutoCompactionEnabled, setOmpAutoCompactionEnabled] = useState<boolean | undefined>(undefined);
+  const [ompFastModeEnabled, setOmpFastModeEnabled] = useState<boolean | undefined>(undefined);
+  const [ompAutoRetryEnabled, setOmpAutoRetryEnabled] = useState<boolean | undefined>(undefined);
   useEffect(() => {
     if (isRunning) return;
-    void api.ompState().then((s) => setOmpContextUsage(s.contextUsage ?? null)).catch(() => {});
+    void api.ompState().then((s) => {
+      setOmpContextUsage(s.contextUsage ?? null);
+      if (typeof s.autoCompactionEnabled === "boolean") setOmpAutoCompactionEnabled(s.autoCompactionEnabled);
+      if (typeof s.fastModeEnabled === "boolean") setOmpFastModeEnabled(s.fastModeEnabled);
+      if (typeof (s as Record<string, unknown>).autoRetryEnabled === "boolean")
+        setOmpAutoRetryEnabled((s as Record<string, unknown>).autoRetryEnabled as boolean);
+    }).catch(() => {});
+  }, [isRunning]);
+  const handleToggleAutoCompaction = useCallback((enabled: boolean) => {
+    setOmpAutoCompactionEnabled(enabled);
+    void api.ompAutoCompactionSet(enabled).catch(() => {});
+  }, []);
+  const handleToggleFastMode = useCallback((enabled: boolean) => {
+    setOmpFastModeEnabled(enabled);
+    void api.ompFastSet(enabled).catch(() => {});
+  }, []);
+  const handleToggleAutoRetry = useCallback((enabled: boolean) => {
+    setOmpAutoRetryEnabled(enabled);
+    void api.ompRetrySetAutoRetry(enabled).catch(() => {});
+  }, []);
+
+  const [ompSessionStats, setOmpSessionStats] = useState<OmpSessionStatsResult | null>(null);
+  useEffect(() => {
+    if (isRunning) return;
+    void api.ompSessionStats().then(setOmpSessionStats).catch(() => {});
   }, [isRunning]);
   const composerContextUsage = useMemo(
     () =>
@@ -400,6 +430,14 @@ export function Composer({
     setPermissionOpen(false);
   }, [controlsBlocked]);
 
+  // set_editor_text: omp injects text into the Composer draft (fire-and-forget).
+  useEffect(() => {
+    return api.onSidecarExtUi((event) => {
+      if (event.kind !== "editor_text" || event.sessionId !== activeSessionId) return;
+      setValue(event.text);
+    });
+  }, [activeSessionId, setValue]);
+
   const submitController = useComposerSubmit({
     value,
     draftKey,
@@ -530,6 +568,7 @@ export function Composer({
             omp session is read-only: {activeSessionSummary?.readOnlyReason ?? "continuation unavailable"}.
           </div>
         ) : null}
+        <ExtWidget sessionId={activeSessionId ?? undefined} />
         <ComposerStatus
           t={t}
           queuedPrompts={queuedPrompts}
@@ -610,6 +649,12 @@ export function Composer({
             modelLabel={modelLabel}
             thinkingLabel={thinkingLabel}
             contextUsage={composerContextUsage ?? null}
+            autoCompactionEnabled={ompAutoCompactionEnabled}
+            onToggleAutoCompaction={handleToggleAutoCompaction}
+            fastModeEnabled={ompFastModeEnabled}
+            onToggleFastMode={handleToggleFastMode}
+            autoRetryEnabled={ompAutoRetryEnabled}
+            onToggleAutoRetry={handleToggleAutoRetry}
             enhancementDraft={enhancementDraft}
             value={value}
             modelReady={modelReady}

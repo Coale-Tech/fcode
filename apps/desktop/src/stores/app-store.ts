@@ -756,6 +756,13 @@ export const useAppStore = create<AppState>((set, get) => {
   }),
 
 
+  refreshMemoryStatus: async () => {
+    try {
+      set({ memoryStatus: await api.ompMemoryStatus() });
+    } catch {
+      set({ memoryStatus: null });
+    }
+  },
   clearComposerPrefill: () => set({ composerPrefill: null }),
   };
 });

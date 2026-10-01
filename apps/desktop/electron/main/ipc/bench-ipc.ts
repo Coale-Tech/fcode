@@ -126,11 +126,19 @@ export function registerBenchIpc({ registrar, mainWindow }: BenchIpcDependencies
         }
       }
 
+      const rawArgs = Array.isArray(input.args) ? input.args : [];
+      const SAFE_ARG_RE = /^[a-zA-Z0-9@_\-.\/]+$/;
+      const invalidArg = rawArgs.find((a) => typeof a !== "string" || !SAFE_ARG_RE.test(a));
+      if (invalidArg !== undefined) {
+        throw Object.assign(new Error(`invalid arg element: ${JSON.stringify(invalidArg)}`), {
+          errorCode: ErrorCodes.INVALID_ARGUMENT,
+        });
+      }
       const result = await benchSupervisor.runOneShot({
         benchPath,
         site: site ?? null,
         verb,
-        args: input.args ?? [],
+        args: rawArgs as string[],
       });
 
       return result;

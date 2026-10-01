@@ -128,9 +128,38 @@ import type {
   OmpThinkingLevelsResult,
   OmpCommandsListResult,
   OmpStateResult,
+  OmpMemoryStatusResult,
+  MemoryConfig,
+  MemoryConfigView,
   OmpLoginProvidersResult,
   OmpLoginStartResult,
   OmpSessionBranchResult,
+  HindsightListMentalModelsResult,
+  HindsightRefreshMentalModelResult,
+  BenchBootstrapResult,
+  HindsightSetBankMissionResult,
+  SidecarExtUiEvent,
+  HindsightLocalState,
+  ToolApprovalMode,
+  OmpSettingsValues,
+  OmpSessionStatsResult,
+  OmpShareResult,
+  OmpSubagentListResult,
+  OmpSubagentMessagesResult,
+  OmpSessionExportHtmlResult,
+  OmpSessionLastAssistantTextResult,
+  OmpSessionHandoffResult,
+  OmpSessionSetTodosResult,
+  OmpSessionEntriesResult,
+  OmpSessionTreeResult,
+  OmpSessionBranchMessagesResult,
+  OmpTodoPhase,
+  OmpInstalledSkillsListResult,
+  OmpHistoricalStatsResult,
+  OmpWorktreeListResult,
+  OmpExtensionListResult,
+  OmpExtensionMutateResult,
+  OmpBashResult,
 } from "@pi-desktop/shared";
 import {
   defaultCommandShellForPlatform,
@@ -1499,6 +1528,12 @@ export const api = {
       listener(payload as TrustedExtensionStatusEvent),
     );
   },
+  onSidecarExtUi: (listener: (event: SidecarExtUiEvent) => void) => {
+    if (!window.piDesktop?.on) return () => undefined;
+    return window.piDesktop.on(IPC.event.sidecarExtUi, (payload) =>
+      listener(payload as SidecarExtUiEvent),
+    );
+  },
   onToast: (listener: (message: string) => void) => {
     if (!window.piDesktop?.on) return () => undefined;
     return window.piDesktop.on(IPC.event.toast, (payload) =>
@@ -1634,6 +1669,33 @@ export const api = {
   /** Get the current omp session state snapshot. */
   ompState: () =>
     invoke<OmpStateResult>(IPC.invoke.ompState),
+  /** Memory backend health from the running omp session. */
+  ompMemoryStatus: () =>
+    invoke<OmpMemoryStatusResult>(IPC.invoke.ompMemoryStatus),
+  memoryGetConfig: () => invoke<MemoryConfigView>(IPC.invoke.memoryGetConfig),
+  /** Persist config; `token` is write-only. Restarts the agent sidecar. */
+  memorySetConfig: (input: MemoryConfig & { token?: string }) =>
+    invoke<MemoryConfigView>(IPC.invoke.memorySetConfig, input),
+  /** List mental-model pages for the active Hindsight bank. */
+  hindsightListMentalModels: () =>
+    invoke<HindsightListMentalModelsResult>(IPC.invoke.hindsightListMentalModels),
+  /** Trigger an out-of-band refresh for a named mental-model page. */
+  hindsightRefreshMentalModel: (modelId: string) =>
+    invoke<HindsightRefreshMentalModelResult>(IPC.invoke.hindsightRefreshMentalModel, { modelId }),
+  /** Seed the active memory backend with identity facts from the active Frappe bench. */
+  benchBootstrapMemory: () =>
+    invoke<BenchBootstrapResult>(IPC.invoke.benchBootstrapMemory),
+  /** Write reflect/retain mission text to the active Hindsight bank and persist locally. */
+  hindsightSetBankMission: (bankMission: string, retainMission: string) =>
+    invoke<HindsightSetBankMissionResult>(IPC.invoke.hindsightSetBankMission, { bankMission, retainMission }),
+  toolApprovalModeGet: () => invoke<ToolApprovalMode>(IPC.invoke.toolApprovalModeGet),
+  /** Persist approval mode; restarts the agent sidecar. */
+  toolApprovalModeSet: (mode: ToolApprovalMode) =>
+    invoke<ToolApprovalMode>(IPC.invoke.toolApprovalModeSet, { mode }),
+  ompSettingsGet: () => invoke<OmpSettingsValues>(IPC.invoke.ompSettingsGet),
+  /** Persist omp settings groups (task/eval/browser/collab); restarts the agent sidecar. */
+  ompSettingsSet: (patch: OmpSettingsValues) =>
+    invoke<OmpSettingsValues>(IPC.invoke.ompSettingsSet, patch as Record<string, unknown>),
   /** List login providers known to omp. */
   ompLoginProviders: () =>
     invoke<OmpLoginProvidersResult>(IPC.invoke.ompLoginProviders),
@@ -1650,4 +1712,122 @@ export const api = {
   /** Rename the current omp session. */
   ompSessionRename: (name: string) =>
     invoke<void>(IPC.invoke.ompSessionRename, { name }),
+  /** Detect available launchers for the local Hindsight server. */
+  hindsightLocalDetect: () =>
+    invoke<{ launchers: HindsightLocalState["launchers"]; state: HindsightLocalState }>(IPC.invoke.hindsightLocalDetect),
+  /** Start the managed local Hindsight server on the given port (default 8888). */
+  hindsightLocalStart: (port?: number) =>
+    invoke<HindsightLocalState>(IPC.invoke.hindsightLocalStart, { port }),
+  /** Stop the managed local Hindsight server. */
+  hindsightLocalStop: () =>
+    invoke<HindsightLocalState>(IPC.invoke.hindsightLocalStop),
+  /** Get current local Hindsight supervisor state. */
+  hindsightLocalStatus: () =>
+    invoke<HindsightLocalState>(IPC.invoke.hindsightLocalStatus),
+  /** Subscribe to local Hindsight server state changes from main process. */
+  onHindsightLocalStatus: (listener: (state: HindsightLocalState) => void) => {
+    if (!window.piDesktop?.on) return () => undefined;
+    return window.piDesktop.on(IPC.event.hindsightLocalStatus, (payload) =>
+      listener(payload as HindsightLocalState),
+    );
+  },
+  /** Enable or disable auto-compaction for the current omp session. */
+  ompAutoCompactionSet: (enabled: boolean) =>
+    invoke<void>(IPC.invoke.ompAutoCompactionSet, { enabled }),
+  /** Fetch session-wide token and cost totals from the running omp session. */
+  ompSessionStats: () =>
+    invoke<OmpSessionStatsResult>(IPC.invoke.ompSessionStats),
+  /** List all live subagents in the active omp session. */
+  ompSubagentList: () =>
+    invoke<OmpSubagentListResult>(IPC.invoke.ompSubagentList),
+  /** Fetch the message history for one subagent by id. */
+  ompSubagentMessages: (params?: { subagentId?: string; sessionFile?: string; fromByte?: number }) =>
+    invoke<OmpSubagentMessagesResult>(IPC.invoke.ompSubagentMessages, params ?? {}),
+  /** Export current omp session transcript as HTML via a native save dialog. Returns null if cancelled. */
+  ompSessionExportHtml: () =>
+    invoke<OmpSessionExportHtmlResult | null>(IPC.invoke.ompSessionExportHtml),
+  /** Get the last assistant text from the current omp session. */
+  ompSessionLastAssistantText: () =>
+    invoke<OmpSessionLastAssistantTextResult>(IPC.invoke.ompSessionLastAssistantText),
+  /** Trigger an ai-memory handoff for the current omp session. */
+  ompSessionHandoff: (params?: { customInstructions?: string }) =>
+    invoke<OmpSessionHandoffResult | null>(IPC.invoke.ompSessionHandoff, params ?? {}),
+  /** Pre-seed the todo list for the current omp session. */
+  ompSessionSetTodos: (phases: OmpTodoPhase[]) =>
+    invoke<OmpSessionSetTodosResult>(IPC.invoke.ompSessionSetTodos, { phases }),
+  /** Get flat history entries for the current omp session. */
+  ompSessionEntries: (params?: { since?: string }) =>
+    invoke<OmpSessionEntriesResult>(IPC.invoke.ompSessionEntries, params ?? {}),
+  /** Get the session tree for the current omp session. */
+  ompSessionTree: () =>
+    invoke<OmpSessionTreeResult>(IPC.invoke.ompSessionTree),
+  /** Get preview messages for the current branch. */
+  ompSessionBranchMessages: () =>
+    invoke<OmpSessionBranchMessagesResult>(IPC.invoke.ompSessionBranchMessages),
+  /** List omp skillshare packages installed in ~/.omp/agent/ (reads JSON files directly). */
+  ompInstalledSkillsList: () =>
+    invoke<OmpInstalledSkillsListResult>(IPC.invoke.ompInstalledSkillsList),
+  /** Historical AI usage stats from `omp stats --json`. */
+  ompHistoricalStats: () =>
+    invoke<OmpHistoricalStatsResult>(IPC.invoke.ompHistoricalStats),
+  /** List agent-managed git worktrees under ~/.omp/wt/. */
+  ompWorktreeList: () =>
+    invoke<OmpWorktreeListResult>(IPC.invoke.ompWorktreeList),
+  /** Reveal an omp skill store directory in the system file manager. */
+  ompSkillReveal: (id: string, version: string) =>
+    invoke<{ ok: boolean }>(IPC.invoke.ompSkillReveal, { id, version }),
+  /** Set steering mode for the active omp session. */
+  ompModesSetSteeringMode: (mode: "all" | "one-at-a-time") =>
+    invoke<void>(IPC.invoke.ompModesSetSteeringMode, { mode }),
+  /** Set follow-up mode for the active omp session. */
+  ompModesSetFollowUpMode: (mode: "all" | "one-at-a-time") =>
+    invoke<void>(IPC.invoke.ompModesSetFollowUpMode, { mode }),
+  /** Set interrupt mode for the active omp session. */
+  ompModesSetInterruptMode: (mode: "immediate" | "wait") =>
+    invoke<void>(IPC.invoke.ompModesSetInterruptMode, { mode }),
+  /** Toggle fast mode for the active omp session. */
+  ompFastSet: (enabled: boolean) =>
+    invoke<void>(IPC.invoke.ompFastSet, { enabled }),
+  /** Set auto-retry for the active omp session. */
+  ompRetrySetAutoRetry: (enabled: boolean) =>
+    invoke<void>(IPC.invoke.ompRetrySetAutoRetry, { enabled }),
+  /** Abort any pending retry in the active omp session. */
+  ompRetryAbort: () =>
+    invoke<void>(IPC.invoke.ompRetryAbort),
+  /** Queue a follow-up message after the current omp turn. */
+  agentFollowUp: (sessionId: string, content: string) =>
+    invoke<{ accepted: boolean }>(IPC.invoke.agentFollowUp, { sessionId, content }),
+  /** Abort the current omp turn and immediately start a new prompt. */
+  agentAbortAndPrompt: (sessionId: string, content: string) =>
+    invoke<{ accepted: boolean }>(IPC.invoke.agentAbortAndPrompt, { sessionId, content }),
+  /** Cycle to the next available omp model. */
+  ompCycleModel: () =>
+    invoke<void>(IPC.invoke.ompCycleModel),
+  /** Cycle to the next omp thinking level. */
+  ompCycleThinkingLevel: () =>
+    invoke<void>(IPC.invoke.ompCycleThinkingLevel),
+  /** Trigger the /share slash command and return the snapshot URL. */
+  ompShare: () =>
+    invoke<OmpShareResult>(IPC.invoke.ompShare),
+  /** List installed omp extensions (npm + marketplace plugins). */
+  ompExtensionsList: () =>
+    invoke<OmpExtensionListResult>(IPC.invoke.ompExtensionsList),
+  /** Install an omp extension by npm/git spec. Validates spec server-side; restarts sidecar. */
+  ompExtensionInstall: (spec: string) =>
+    invoke<OmpExtensionMutateResult>(IPC.invoke.ompExtensionInstall, { spec }),
+  /** Uninstall an omp extension by package name. Restarts sidecar. */
+  ompExtensionUninstall: (name: string) =>
+    invoke<OmpExtensionMutateResult>(IPC.invoke.ompExtensionUninstall, { name }),
+  /** Enable or disable an extension. Updates disabledExtensions and restarts sidecar. */
+  ompExtensionSetEnabled: (id: string, enabled: boolean) =>
+    invoke<OmpSettingsValues>(IPC.invoke.ompExtensionSetEnabled, { id, enabled }),
+  /** Run a shell command in omp's session cwd; bridge emits output as a transcript system block. */
+  ompBash: (command: string) =>
+    invoke<OmpBashResult>(IPC.invoke.ompBash, { command }),
+  /** Abort a running bash command. */
+  ompAbortBash: () =>
+    invoke<void>(IPC.invoke.ompAbortBash),
+  /** Set the omp event filter; null = all events, string[] = allowlist. */
+  ompSetEventFilter: (events: string[] | null) =>
+    invoke<void>(IPC.invoke.ompSetEventFilter, { events }),
 };

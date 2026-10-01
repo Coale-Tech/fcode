@@ -2,6 +2,7 @@ import i18n from "i18next";
 import { projectMessageEnd, reconcilePersistedUserMessage } from "../../lib/session-transcript";
 import type {
   AgentEventEnvelope,
+  OmpTodoPhase,
   PlanningStateEvent,
   UiMessage,
 } from "@pi-desktop/shared";
@@ -377,6 +378,38 @@ export function createEventsSlice({
             : { pendingPermissions, pendingAsks };
         });
       }
+
+      // Extract todo phases from successful todo tool results.
+      // tool_end has no toolName; look it up from the paired tool_start record.
+      if (event.type === "tool_end" && !event.isError) {
+        const toolStart = runtime.getToolStart(event.toolCallId);
+        if (toolStart?.toolName === "todo") {
+          const result = event.result;
+          const details = result && typeof result === "object" && "details" in result ? result.details : undefined;
+          const phases = details && typeof details === "object" && "phases" in details ? details.phases : undefined;
+          if (Array.isArray(phases)) {
+            set((state) => ({
+              sessionTodoPhases: {
+                ...state.sessionTodoPhases,
+                [envelope.sessionId]: phases as OmpTodoPhase[],
+              },
+            }));
+          }
+        }
+      }
+
+      if (event.type === "todo_reminder" && Array.isArray(event.todos) && event.todos.length > 0) {
+        const phases: OmpTodoPhase[] = [{ name: "Todos", tasks: event.todos as OmpTodoPhase["tasks"] }];
+        set((state) => ({
+          sessionTodoPhases: { ...state.sessionTodoPhases, [envelope.sessionId]: phases },
+        }));
+      }
+      if (event.type === "todo_auto_clear") {
+        set((state) => ({
+          sessionTodoPhases: { ...state.sessionTodoPhases, [envelope.sessionId]: [] },
+        }));
+      }
+
 
       if (event.type === "compaction_end" && event.ok && event.mark) {
         const mark = event.mark;

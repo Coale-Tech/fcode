@@ -1,5 +1,6 @@
 [workspace]
 members = ["crates/host-core"]
+exclude = ["omp"]
 resolver = "2"
 
 [workspace.package]

@@ -57,6 +57,9 @@ export interface OmpStateResult {
   sessionId: string;
   sessionName?: string;
   messageCount: number;
+  autoCompactionEnabled?: boolean;
+  /** When present: whether fast-mode is currently active for this session. */
+  fastModeEnabled?: boolean;
   contextUsage?: { tokensUsed?: number; tokensAvailable?: number; tokensTotal?: number; [key: string]: unknown };
   [key: string]: unknown;
 }
@@ -82,5 +85,424 @@ export interface OmpLoginStartResult {
 /** Result of `omp.session.branch`. */
 export interface OmpSessionBranchResult {
   text: string;
+  cancelled: boolean;
+}
+
+/** Result of `omp.memory.status` (omp `get_memory_status`). */
+export interface OmpMemoryStatusResult {
+  backend: "mnemopi" | "hindsight" | "local" | "sharpshooter" | "off";
+  active: boolean;
+  writable: boolean;
+  searchable: boolean;
+  scope?: string;
+  retainBank?: string;
+  workingCount?: number;
+  episodicCount?: number;
+  tripleCount?: number;
+  message?: string;
+  error?: string;
+  latencyMs: number;
+}
+
+/** Launcher available for a managed local Hindsight server. */
+export type HindsightLocalLauncher = "binary" | "uvx" | "docker";
+
+/** Live state of the managed local Hindsight server supervisor. */
+export interface HindsightLocalState {
+  /** Launchers found on PATH; empty when nothing is installed. */
+  launchers: HindsightLocalLauncher[];
+  state: "stopped" | "starting" | "running" | "failed" | "unavailable";
+  /** Port the server is (or will be) listening on. */
+  port?: number;
+  /** Human-readable reason for `failed` or `unavailable`. */
+  message?: string;
+}
+
+/** Result of `omp.session.stats` (omp `get_session_stats`). */
+export interface OmpSessionStatsResult {
+  userMessages: number;
+  tokens: {
+    input: number;
+    output: number;
+    cacheRead: number;
+    cacheWrite: number;
+    total: number;
+  };
+  /** Session cost in USD. Zero for local/uncounted models. */
+  cost: number;
+}
+
+/** Fcode-owned memory backend selection. The Hindsight token is write-only. */
+export interface MemoryConfig {
+  backend: "mnemopi" | "hindsight" | "sharpshooter" | "local" | "off";
+  hindsightUrl?: string;
+  hindsightBank?: string;
+  /** Reflect/recall mission text written to the bank via PUT on save. */
+  hindsightBankMission?: string;
+  /** Retain mission text written to the bank via PUT on save. */
+  hindsightRetainMission?: string;
+  /** When true, the local Hindsight supervisor starts automatically with the agent. */
+  hindsightLocal?: boolean;
+}
+export interface MemoryConfigView extends MemoryConfig {
+  hasToken: boolean;
+}
+
+/** Result of `hindsightSetBankMission`. */
+export interface HindsightSetBankMissionResult {
+  ok: boolean;
+}
+
+/** A mental-model page returned by the Hindsight API. */
+export interface HindsightMentalModelSummary {
+  id: string;
+  name: string;
+  content?: string;
+  tags?: string[];
+  updatedAt?: string;
+}
+
+/** Result of `hindsightListMentalModels`. */
+export interface HindsightListMentalModelsResult {
+  models: HindsightMentalModelSummary[];
+}
+
+/** Result of `hindsightRefreshMentalModel`. */
+export interface HindsightRefreshMentalModelResult {
+  operationId?: string;
+}
+
+/** Result of `benchBootstrapMemory`. */
+export interface BenchBootstrapResult {
+  ok: boolean;
+  benchPath: string;
+  sites: string[];
+  apps: string[];
+  /** Set for the hindsight backend; absent for mnemopi/off. */
+  retained?: boolean;
+  message?: string;
+}
+/**
+ * Payload emitted by the omp bridge for setStatus / setWidget / setTitle /
+ * set_editor_text extension_ui_request methods (sidecar.ext_ui notification).
+ */
+export type SidecarExtUiEvent =
+  | { kind: "status"; sessionId: string; key: string; text: string | undefined }
+  | { kind: "widget"; sessionId: string; key: string; lines: string[] | undefined }
+  | { kind: "title"; sessionId: string; title: string }
+  | { kind: "editor_text"; sessionId: string; text: string };
+/** omp tool approval mode. Controls which tool tiers are auto-approved. */
+export type ToolApprovalMode = "always-ask" | "write" | "yolo";
+
+/** A live subagent known to the omp session (mirrors RpcSubagentSnapshot). */
+export interface OmpSubagentSnapshot {
+  id: string;
+  index: number;
+  agent: string;
+  status: "running" | "completed" | "failed" | "aborted" | "timed_out" | "stopped" | "denied";
+  task?: string;
+  description?: string;
+  lastUpdate: number;
+}
+
+/** Result of `omp.subagents.list`. */
+export interface OmpSubagentListResult {
+  subagents: OmpSubagentSnapshot[];
+}
+
+/** Result of `omp.subagents.messages`. */
+export interface OmpSubagentMessagesResult {
+  /** Raw AgentMessage array from omp. */
+  messages: unknown[];
+}
+
+/**
+ * User-controlled omp settings persisted in `omp-settings.json` and injected
+ * into the overlay on sidecar restart. Only the configured subset is written;
+ * absent keys keep omp's own defaults.
+ */
+export interface OmpSettingsValues {
+  // Task / isolation
+  "task.isolation.enabled"?: boolean;
+  "isolation.backend"?: "auto" | "apfs" | "btrfs" | "zfs" | "reflink" | "overlayfs" | "projfs" | "block-clone" | "rcopy";
+  "worktree.clone"?: boolean;
+  "task.maxConcurrency"?: number;
+  "task.maxRecursionDepth"?: number;
+  "task.agentModelOverrides"?: Record<string, string>;
+  // Eval / Python
+  "eval.py"?: boolean;
+  "eval.js"?: boolean;
+  "eval.tools.enabled"?: boolean;
+  "python.kernelMode"?: "session" | "per-call";
+  "python.interpreter"?: string;
+  // Browser
+  "browser.enabled"?: boolean;
+  "browser.cdpUrl"?: string;
+  "browser.relay"?: boolean;
+  "browser.relayUrl"?: string;
+  "browser.headless"?: boolean;
+  // Collab
+  "collab.relayUrl"?: string;
+  "collab.webUrl"?: string;
+  "collab.displayName"?: string;
+  "collab.autoStart"?: "off" | "view" | "control";
+  // Queue modes (session interaction behaviour; omp/packages/coding-agent/src/modes/settings.ts)
+  "steeringMode"?: "all" | "one-at-a-time";
+  "followUpMode"?: "all" | "one-at-a-time";
+  "interruptMode"?: "immediate" | "wait";
+  "loop.mode"?: "prompt" | "compact" | "reset";
+  // LSP (omp/packages/coding-agent/src/lsp/settings.ts)
+  "lsp.enabled"?: boolean;
+  "lsp.formatOnWrite"?: boolean;
+  "lsp.diagnosticsOnWrite"?: boolean;
+  "lsp.diagnosticsOnEdit"?: boolean;
+  // IDA Pro (omp/packages/coding-agent/src/ida/settings.ts)
+  "ida.enabled"?: boolean;
+  "ida.python"?: string;
+  "ida.installDir"?: string;
+  // MCP (omp/packages/coding-agent/src/mcp/settings.ts)
+  "mcp.enableProjectConfig"?: boolean;
+  "mcp.renderMarkdownResults"?: boolean;
+  "mcp.notifications"?: boolean;
+  // Skills & Commands (omp/packages/coding-agent/src/extensibility/settings.ts)
+  "skills.enabled"?: boolean;
+  "skills.registryUrl"?: string;
+  "skills.customDirectories"?: string[];
+  "commands.enableClaudeUser"?: boolean;
+  "commands.enableClaudeProject"?: boolean;
+  // Extensions (omp/packages/coding-agent/src/extensibility/settings.ts)
+  "extensions"?: string[];
+  "disabledExtensions"?: string[];
+  // Hindsight behavioral (omp/packages/coding-agent/src/hindsight/settings.ts)
+  "hindsight.autoRecall"?: boolean;
+  "hindsight.autoRetain"?: boolean;
+  "hindsight.retainMode"?: "full-session" | "last-turn";
+  "hindsight.mentalModelsEnabled"?: boolean;
+  "hindsight.mentalModelAutoSeed"?: boolean;
+  // Mnemopi advanced (omp/packages/coding-agent/src/mnemopi/settings.ts)
+  // mnemopi.llmMode is forced to "session" by the bridge overlay; excluded.
+  // mnemopi.embeddingApiKey and mnemopi.llmApiKey are credentials; use secret store; excluded.
+  "mnemopi.scoping"?: "global" | "per-project" | "per-project-tagged";
+  "mnemopi.dbPath"?: string;
+  "mnemopi.bank"?: string;
+  "mnemopi.embeddingVariant"?: "en" | "multilingual";
+  "mnemopi.autoRecall"?: boolean;
+  "mnemopi.autoRetain"?: boolean;
+  "mnemopi.polyphonicRecall"?: boolean;
+  "mnemopi.enhancedRecall"?: boolean;
+  "mnemopi.proactiveLinking"?: boolean;
+  "mnemopi.noEmbeddings"?: boolean;
+  "mnemopi.embeddingModel"?: string;
+  "mnemopi.embeddingApiUrl"?: string;
+  "mnemopi.llmBaseUrl"?: string;
+  "mnemopi.llmModel"?: string;
+  "mnemopi.retainEveryNTurns"?: number;
+  "mnemopi.recallLimit"?: number;
+  "mnemopi.recallContextTurns"?: number;
+  "mnemopi.recallMaxQueryChars"?: number;
+  "mnemopi.injectionTokenLimit"?: number;
+  "mnemopi.debug"?: boolean;
+  // Hindsight advanced — remaining keys not in MemoryTab or omp-settings-sections
+  // hindsight.apiUrl/bankId/apiToken managed by MemoryTab; hindsight.bankMission/retainMission also MemoryTab.
+  // hindsight.retainContext is purely internal ("omp" constant); excluded.
+  // hindsight.recallTypes (array of strings) is complex; excluded for now.
+  "hindsight.scoping"?: "global" | "per-project" | "per-project-tagged";
+  "hindsight.bankIdPrefix"?: string;
+  "hindsight.retainEveryNTurns"?: number;
+  "hindsight.retainOverlapTurns"?: number;
+  "hindsight.recallBudget"?: "low" | "mid" | "high";
+  "hindsight.recallMaxTokens"?: number;
+  "hindsight.recallContextTurns"?: number;
+  "hindsight.recallMaxQueryChars"?: number;
+  "hindsight.debug"?: boolean;
+  "hindsight.requestTimeoutMs"?: number;
+  "hindsight.reflectTimeoutMs"?: number;
+  "hindsight.recallTimeoutMs"?: number;
+  "hindsight.retainTimeoutMs"?: number;
+  "hindsight.mentalModelMaxRenderChars"?: number;
+  // Sharpshooter (omp/packages/coding-agent/src/sharpshooter/settings.ts)
+  "sharpshooter.model"?: string;
+  "sharpshooter.intervalMinutes"?: number;
+  "sharpshooter.injectionTokenLimit"?: number;
+  // Local memory pipeline (omp/packages/coding-agent/src/memories/settings.ts)
+  // memories.enabled is legacy/hidden; excluded. Stage1/phase2 lease/retry/heartbeat are pipeline internals; excluded.
+  "memories.maxRolloutsPerStartup"?: number;
+  "memories.maxRolloutAgeDays"?: number;
+  "memories.minRolloutIdleHours"?: number;
+  "memories.summaryInjectionTokenLimit"?: number;
+  // Appearance — HTML export themes (omp/packages/coding-agent/src/modes/settings.ts)
+  "theme.dark"?: string;
+  "theme.light"?: string;
+}
+
+// ─── Session-data additions (feat/session-data) ──────────────────────────────
+
+/** A todo item in an omp phase list. */
+export interface OmpTodoItem {
+  id?: string;
+  content: string;
+  status: "pending" | "in_progress" | "completed" | "abandoned" | "blocked";
+  blocker?: string;
+}
+
+/** A named phase containing todo items. */
+export interface OmpTodoPhase {
+  id?: string;
+  name: string;
+  tasks: OmpTodoItem[];
+}
+
+/** Result of `omp.session.exportHtml`. */
+export interface OmpSessionExportHtmlResult {
+  path: string;
+}
+
+/** Result of `omp.session.lastAssistantText`. */
+export interface OmpSessionLastAssistantTextResult {
+  text: string | null;
+}
+
+/** Result of `omp.session.handoff`. */
+export interface OmpSessionHandoffResult {
+  savedPath?: string;
+}
+
+/** Result of `omp.session.setTodos`. */
+export interface OmpSessionSetTodosResult {
+  phases: OmpTodoPhase[];
+}
+
+/** A minimal session entry for the tree view (id/parentId/type/timestamp). */
+export interface OmpSessionEntry {
+  id: string;
+  parentId: string | null;
+  type: string;
+  timestamp?: string | number;
+  /** Present on `type: "message"` entries (raw omp SessionEntry message). */
+  message?: { role?: string; content?: unknown };
+}
+
+/** A node in the session tree (recursive). */
+export interface OmpSessionTreeNode {
+  entry: OmpSessionEntry;
+  children: OmpSessionTreeNode[];
+  label?: string;
+}
+
+/** Result of `omp.session.entries`. */
+export interface OmpSessionEntriesResult {
+  entries: OmpSessionEntry[];
+  leafId: string | null;
+}
+
+/** Result of `omp.session.tree`. */
+export interface OmpSessionTreeResult {
+  tree: OmpSessionTreeNode[];
+  leafId: string | null;
+}
+
+
+/** A message summary for a branch entry, returned by `get_branch_messages`. */
+export interface OmpBranchMessage {
+  entryId: string;
+  text: string;
+}
+
+/** Result of `omp.session.branchMessages`. */
+export interface OmpSessionBranchMessagesResult {
+  messages: OmpBranchMessage[];
+}
+/** One installed omp skillshare package (from skills.json + skills.lock.json on disk). */
+export interface OmpInstalledSkillEntry {
+  /** `@scope/name` package id. */
+  id: string;
+  /** `"project"` when installed in the nearest `.omp/` dir; `"user"` for `~/.omp/agent/`. */
+  scope: "project" | "user";
+  /** Locked version; absent when the manifest entry was never installed. */
+  version?: string;
+  /** Manifest semver range; absent for a lock entry without a manifest entry. */
+  range?: string;
+  /** True when the store directory is present with the correct integrity hash. */
+  stored: boolean;
+}
+
+/** Result of `ompInstalledSkillsList`. */
+export interface OmpInstalledSkillsListResult {
+  skills: OmpInstalledSkillEntry[];
+}
+
+/**
+ * Aggregated historical stats from `omp stats --json` (subset of DashboardStats.overall).
+ * Absent when omp binary is unreachable or the stats DB has never been synced.
+ */
+export interface OmpHistoricalStatsResult {
+  totalRequests: number;
+  totalCost: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  cacheRate: number;
+  /** ISO-8601 timestamp of when the stats were collected. */
+  collectedAt: string;
+}
+
+/** One agent-managed git worktree under `~/.omp/wt/` (from disk scan). */
+export interface OmpWorktreeEntry {
+  /** Absolute path to the worktree directory. */
+  path: string;
+  /** Classification: PR checkout, task-isolation dir, empty dir, or unrecognised dir. */
+  kind: "pr-checkout" | "task-isolation" | "empty" | "stray";
+  /** Branch name when available. */
+  branch?: string;
+  /** Parent repo root when this is a registered git worktree. */
+  parentRepo?: string;
+  /** Non-null when the entry is unhealthy and should be cleared. */
+  orphanReason?: string;
+}
+
+/** Result of `ompWorktreeList`. */
+export interface OmpWorktreeListResult {
+  worktrees: OmpWorktreeEntry[];
+}
+
+/** Result of `omp.share` — snapshot URL from the `/share` slash command. */
+export interface OmpShareResult {
+  /** Extracted share URL, or null when omp returned no URL. */
+  url: string | null;
+  /** Raw text output from the `/share` command (for display). */
+  text: string | null;
+}
+
+/** One installed omp extension (npm plugin or marketplace plugin). */
+export interface OmpExtensionEntry {
+  /** Unique identifier: npm package name for npm, plugin id for marketplace. */
+  id: string;
+  /** Display name (same as id for npm plugins). */
+  name: string;
+  /** Installed version, if known. */
+  version?: string;
+  /** Installation source. */
+  source: "npm" | "marketplace";
+  /** Whether the extension is currently enabled. */
+  enabled: boolean;
+  /** Short description from manifest, if available. */
+  description?: string;
+}
+
+/** Result of `ompExtensionsList`. */
+export interface OmpExtensionListResult {
+  extensions: OmpExtensionEntry[];
+}
+
+/** Result of `ompExtensionInstall` / `ompExtensionUninstall`. */
+export interface OmpExtensionMutateResult {
+  ok: boolean;
+  output: string;
+}
+
+/** Result of the omp `bash` RPC command. */
+export interface OmpBashResult {
+  /** Combined stdout+stderr from the command. */
+  output: string;
+  exitCode: number | undefined;
   cancelled: boolean;
 }

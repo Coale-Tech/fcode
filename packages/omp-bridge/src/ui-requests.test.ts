@@ -50,15 +50,46 @@ describe("mapExtensionUiRequest", () => {
     expect(result.questions[0].options).toEqual([]);
   });
 
-  it("maps editor → editor_refusal so turn does not hang (E9)", () => {
+  it("maps editor → asktool_request (multiline textarea)", () => {
     const result = mapExtensionUiRequest(
-      { id: "r4", method: "editor" },
+      { id: "r4", method: "editor", title: "Edit the plan", prefill: "Draft text" },
       "s1",
       openTool,
     );
-    expect(result?.type).toBe("editor_refusal");
-    if (result?.type !== "editor_refusal") return;
+    expect(result?.type).toBe("asktool_request");
+    if (result?.type !== "asktool_request") return;
     expect(result.requestId).toBe("r4");
+    expect(result.questions[0].question).toBe("Edit the plan");
+    expect(result.questions[0].multiline).toBe(true);
+    expect(result.questions[0].defaultText).toBe("Draft text");
+    expect(result.questions[0].options).toEqual([]);
+  });
+
+  it("editor submit: serializeAskAnswers returns the edited text (boundary)", () => {
+    // Simulates user submitting text in the multiline textarea.
+    expect(serializeAskAnswers([["Edited content"]])).toBe("Edited content");
+  });
+
+  it("editor cancel: serializeAskAnswers returns null (boundary)", () => {
+    // Simulates user clicking Decline — answers contain null.
+    expect(serializeAskAnswers([null])).toBeNull();
+  });
+
+  it("editor timeout: same as cancel — null answer produces null (boundary)", () => {
+    // Timeout arrives as a cancelled resolution from the bridge (answers: [null]).
+    expect(serializeAskAnswers([null])).toBeNull();
+  });
+
+  it("maps set_editor_text → set_editor_text with text and sessionId", () => {
+    const result = mapExtensionUiRequest(
+      { id: "re", method: "set_editor_text", text: "Hello from omp" },
+      "s1",
+      openTool,
+    );
+    expect(result?.type).toBe("set_editor_text");
+    if (result?.type !== "set_editor_text") return;
+    expect(result.text).toBe("Hello from omp");
+    expect(result.sessionId).toBe("s1");
   });
 
   it("maps cancel → null so the pending-request map entry is cleared (E9)", () => {
@@ -92,15 +123,40 @@ describe("mapExtensionUiRequest", () => {
     expect(result.url).toBe("https://preferred");
   });
 
-  it("drops setStatus / setWidget / setTitle → null", () => {
-    for (const method of ["setStatus", "setWidget", "setTitle"]) {
-      const result = mapExtensionUiRequest(
-        { id: "rx", method },
-        "s1",
-        openTool,
-      );
-      expect(result).toBeNull();
-    }
+  it("maps setStatus → ext_status with key and text", () => {
+    const result = mapExtensionUiRequest(
+      { id: "rx", method: "setStatus", statusKey: "progress", statusText: "Working…" },
+      "s1",
+      openTool,
+    );
+    expect(result?.type).toBe("ext_status");
+    if (result?.type !== "ext_status") return;
+    expect(result.key).toBe("progress");
+    expect(result.text).toBe("Working…");
+    expect(result.sessionId).toBe("s1");
+  });
+
+  it("maps setWidget → ext_widget with key and lines", () => {
+    const result = mapExtensionUiRequest(
+      { id: "ry", method: "setWidget", widgetKey: "info", widgetLines: ["line1", "line2"] },
+      "s1",
+      openTool,
+    );
+    expect(result?.type).toBe("ext_widget");
+    if (result?.type !== "ext_widget") return;
+    expect(result.key).toBe("info");
+    expect(result.lines).toEqual(["line1", "line2"]);
+  });
+
+  it("maps setTitle → ext_title with title", () => {
+    const result = mapExtensionUiRequest(
+      { id: "rz", method: "setTitle", title: "My Session" },
+      "s1",
+      openTool,
+    );
+    expect(result?.type).toBe("ext_title");
+    if (result?.type !== "ext_title") return;
+    expect(result.title).toBe("My Session");
   });
 
   it("falls back to req.id as toolCallId when no open tool is present", () => {

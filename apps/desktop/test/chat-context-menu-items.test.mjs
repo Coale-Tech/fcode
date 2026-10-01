@@ -145,6 +145,9 @@ test("the conversation menu copies the thread and keeps scroll actions", () => {
     "select-conversation",
     "scroll-top",
     "scroll-bottom",
+    "export-html",
+    "copy-last-reply",
+    "handoff",
   ]);
   assert.equal(items.find((item) => item.id === "copy-conversation").disabled, false);
 });

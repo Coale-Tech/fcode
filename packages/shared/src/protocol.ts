@@ -359,10 +359,56 @@ export const IPC = {
     ompThinkingSet: "pi-desktop/omp/thinking/set",
     ompCommandsList: "pi-desktop/omp/commands/list",
     ompState: "pi-desktop/omp/state",
+    ompMemoryStatus: "pi-desktop/omp/memory/status",
+    ompAutoCompactionSet: "pi-desktop/omp/auto-compaction/set",
+    memoryGetConfig: "pi-desktop/memory/getConfig",
+    memorySetConfig: "pi-desktop/memory/setConfig",
+    /** List mental-model pages for the active Hindsight bank. */
+    hindsightListMentalModels: "pi-desktop/hindsight/mentalModels/list",
+    /** Trigger an out-of-band refresh for a single mental-model page. */
+    hindsightRefreshMentalModel: "pi-desktop/hindsight/mentalModels/refresh",
+    /** Seed the active memory backend with Frappe bench identity facts. */
+    benchBootstrapMemory: "pi-desktop/bench/bootstrap/memory",
+    /** Write reflect/retain mission text to the active Hindsight bank via PUT. */
+    hindsightSetBankMission: "pi-desktop/hindsight/bank/mission",
     ompLoginProviders: "pi-desktop/omp/login/providers",
     ompLoginStart: "pi-desktop/omp/login/start",
     ompSessionBranch: "pi-desktop/omp/session/branch",
     ompSessionRename: "pi-desktop/omp/session/rename",
+    /** Tool approval mode (always-ask / write / yolo) persisted host-side. */
+    toolApprovalModeGet: "pi-desktop/tool-approval-mode/get",
+    toolApprovalModeSet: "pi-desktop/tool-approval-mode/set",
+    /** omp settings groups (task/eval/browser/collab) persisted host-side. */
+    ompSettingsGet: "pi-desktop/omp-settings/get",
+    ompSettingsSet: "pi-desktop/omp-settings/set",
+    ompSessionStats: "pi-desktop/omp/session/stats",
+    /** List all live subagents in the active omp session. */
+    ompSubagentList: "pi-desktop/omp/subagent/list",
+    /** Fetch the message history for one subagent by id. */
+    ompSubagentMessages: "pi-desktop/omp/subagent/messages",
+    /** List omp skillshare packages installed in ~/.omp/agent/ (user-global). */
+    ompInstalledSkillsList: "pi-desktop/omp/skills/installed/list",
+    /** Historical AI usage stats from omp stats --json (subset of DashboardStats). */
+    ompHistoricalStats: "pi-desktop/omp/stats/historical",
+    /** List agent-managed git worktrees under ~/.omp/wt/. */
+    ompWorktreeList: "pi-desktop/omp/worktrees/list",
+    /** Reveal an omp skill store directory in the system file manager. */
+    ompSkillReveal: "pi-desktop/omp/skills/reveal",
+    /** Queue mode controls (session-scoped RPC; mirrors set_steering/follow_up/interrupt_mode). */
+    ompModesSetSteeringMode: "pi-desktop/omp/modes/steering-mode/set",
+    ompModesSetFollowUpMode: "pi-desktop/omp/modes/follow-up-mode/set",
+    ompModesSetInterruptMode: "pi-desktop/omp/modes/interrupt-mode/set",
+    /** Fast-mode toggle (session-scoped RPC; mirrors set_fast_mode). */
+    ompFastSet: "pi-desktop/omp/fast/set",
+    /** Retry controls (session-scoped RPC; mirrors set_auto_retry / abort_retry). */
+    ompRetrySetAutoRetry: "pi-desktop/omp/retry/auto-retry/set",
+    ompRetryAbort: "pi-desktop/omp/retry/abort",
+    /** Queue while streaming (mirrors follow_up / abort_and_prompt RPC). */
+    agentFollowUp: "pi-desktop/agent/follow-up",
+    agentAbortAndPrompt: "pi-desktop/agent/abort-and-prompt",
+    /** Cycle model / thinking level (mirrors cycle_model / cycle_thinking_level RPC). */
+    ompCycleModel: "pi-desktop/omp/models/cycle",
+    ompCycleThinkingLevel: "pi-desktop/omp/thinking/cycle",
     /** Bench subsystem (Approach step 6): discovery, supervision, agent access. */
     benchList: "pi-desktop/bench/list",
     benchStart: "pi-desktop/bench/start",
@@ -397,6 +443,44 @@ export const IPC = {
     buildCheckWatchdog: "pi-desktop/build/checkWatchdog",
     /** Bench tab — scan bench apps for DocType JSON files + git status. */
     gitScanDoctypes: "pi-desktop/git/scanDoctypes",
+    /** Managed local Hindsight server: detect available launchers. */
+    hindsightLocalDetect: "pi-desktop/hindsight-local/detect",
+    /** Managed local Hindsight server: start the supervisor. */
+    hindsightLocalStart: "pi-desktop/hindsight-local/start",
+    /** Managed local Hindsight server: stop the supervisor. */
+    hindsightLocalStop: "pi-desktop/hindsight-local/stop",
+    /** Managed local Hindsight server: get current supervisor state. */
+    hindsightLocalStatus: "pi-desktop/hindsight-local/status",
+    /** Export current omp session transcript as HTML; returns the saved path. */
+    ompSessionExportHtml: "pi-desktop/omp/session/exportHtml",
+    /** Get the last assistant text from the current omp session. */
+    ompSessionLastAssistantText: "pi-desktop/omp/session/lastAssistantText",
+    /** Trigger an ai-memory handoff for the current omp session. */
+    ompSessionHandoff: "pi-desktop/omp/session/handoff",
+    /** Pre-seed the current omp session's todo list. */
+    ompSessionSetTodos: "pi-desktop/omp/session/setTodos",
+    /** Get the flat history entries for the current omp session. */
+    ompSessionEntries: "pi-desktop/omp/session/entries",
+    /** Get the session tree for the current omp session. */
+    ompSessionTree: "pi-desktop/omp/session/tree",
+    /** Get preview messages for the current branch. */
+    ompSessionBranchMessages: "pi-desktop/omp/session/branchMessages",
+    /** Trigger /share slash command and return the snapshot URL. */
+    ompShare: "pi-desktop/omp/share",
+    /** List installed omp extensions (npm + marketplace plugins) via omp plugin list --json. */
+    ompExtensionsList: "pi-desktop/omp/extensions/list",
+    /** Install an omp extension by npm/git spec via omp plugin install. Validates spec; restarts sidecar. */
+    ompExtensionInstall: "pi-desktop/omp/extensions/install",
+    /** Uninstall an omp extension by name via omp plugin uninstall. Restarts sidecar. */
+    ompExtensionUninstall: "pi-desktop/omp/extensions/uninstall",
+    /** Enable or disable an extension by toggling disabledExtensions in omp-settings. Restarts sidecar. */
+    ompExtensionSetEnabled: "pi-desktop/omp/extensions/setEnabled",
+    /** Run a shell command in omp's session cwd; output emitted as a system transcript block. */
+    ompBash: "pi-desktop/omp/bash",
+    /** Abort a running bash command started via ompBash. */
+    ompAbortBash: "pi-desktop/omp/abort-bash",
+    /** Set the omp event filter (null = all events; string[] = allowlist). */
+    ompSetEventFilter: "pi-desktop/omp/set-event-filter",
   },
   event: {
     pluginChanged: "pi-desktop/event/pluginChanged",
@@ -447,6 +531,10 @@ export const IPC = {
     buildWatcherLog: "pi-desktop/build/watcher/event/log",
     buildWatcherExit: "pi-desktop/build/watcher/event/exit",
     sidecarFatal: "pi-desktop/sidecar/event/fatal",
+    /** omp setStatus / setWidget / setTitle forwarded from the omp bridge. */
+    sidecarExtUi: "pi-desktop/sidecar/event/extUi",
+    /** Managed local Hindsight server state changed. */
+    hindsightLocalStatus: "pi-desktop/hindsight-local/event/status",
   },
 } as const;
 

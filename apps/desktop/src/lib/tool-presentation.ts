@@ -559,124 +559,176 @@ function resultBlocks(
     });
   }
 
-  switch (action) {
-    case "read": {
-      const content = stringAt(details, "content");
-      if (content !== null) {
-        const path = stringAt(details, "path") ?? stringAt(args, "path");
-        blocks.push(codeBlock("content", content, langForPath(path)));
-      }
-      break;
-    }
-    case "write": {
-      const content = stringAt(args, "content");
-      if (content !== null) {
-        const path = stringAt(args, "path") ?? stringAt(details, "path");
-        blocks.push(codeBlock("written", content, langForPath(path)));
-      }
-      break;
-    }
-    case "edit": {
-      const ops = stringAt(args, "ops");
-      // Workspace edits already own a ReviewChangeCard with the real diff;
-      // only scratch edits and imported sessions need the model's stated ops.
-      const reviewed =
-        reviewChangeFromMessage(message as unknown as UiMessage) !== null;
-      if (ops !== null && !reviewed) {
-        blocks.push(codeBlock("input", ops));
-      }
-      const warnings = stringArray(details?.warnings);
-      if (warnings) {
-        for (const warning of warnings) {
-          blocks.push({ kind: "note", role: "notice", text: warning });
+  // Rich tool-name rendering overrides action dispatch for known structured tools.
+  const toolNameNorm = (message.toolName ?? "").toLowerCase();
+  if (toolNameNorm === "eval") {
+    // Render each REPL cell as code + output blocks; `details.cells` is the
+    // canonical shape from EvalToolDetails (pi-tui/tools/eval.ts).
+    const cells = Array.isArray(details?.cells) ? (details.cells as unknown[]) : null;
+    if (cells && cells.length > 0) {
+      for (const raw of cells) {
+        const cell = asRecord(raw);
+        const code = stringAt(cell, "code");
+        const output = stringAt(cell, "output");
+        const lang = stringAt(cell, "language") === "js" ? "javascript" : "python";
+        if (code !== null) blocks.push(codeBlock("input", code, lang));
+        if (output) {
+          const isErr = stringAt(cell, "status") === "error";
+          blocks.push(codeBlock(isErr ? "stderr" : "output", output, "", isErr ? { tone: "error" } : undefined));
         }
       }
-      break;
+      mapped = true;
     }
-    case "run": {
-      const command = stringAt(args, "command", "cmd");
-      // The head already prints the command and copies it, so repeating it here
-      // would open a body that says the same thing twice before reaching the
-      // output the reader expanded for (D226). A permission card has no head of
-      // its own, so it still shows the command it is asking about.
-      if (command !== null && !options.hideSummaryArg) {
-        blocks.push(codeBlock("command", command, "bash"));
-      }
-      // Bash progress updates use `details.output`; the completed result uses
-      // `details.stdout`. A present empty stdout is meaningful too: it must
-      // suppress a stale progress snapshot rather than fall back to output.
-      const stdout =
-        typeof details?.stdout === "string"
-          ? details.stdout
-          : stringAt(details, "output");
-      if (stdout) blocks.push(codeBlock("stdout", stdout));
-      const stderr = stringAt(details, "stderr");
-      if (stderr !== null) {
-        blocks.push(codeBlock("stderr", stderr, "", { tone: "error" }));
-      }
-      mapped = command !== null;
-      break;
-    }
-    case "list": {
-      const paths = stringArray(details?.matches) ?? stringArray(details?.files);
-      const block = paths ? filesBlock(paths) : null;
-      if (block) blocks.push(block);
-      break;
-    }
-    case "search": {
-      const hits = details?.matches;
-      // `outputMode` decides the shape: content → path/line hits,
-      // filesWithMatches → a path list, count → hits per file.
-      const block = Array.isArray(hits) ? matchesBlock(hits) : null;
-      const paths = block ? null : stringArray(details?.files);
-      const grouped = block ?? (paths ? filesBlock(paths) : null);
-      const resolved = grouped ?? countsBlock(details?.counts);
-      if (resolved) blocks.push(resolved);
-      break;
-    }
-    case "delegate": {
-      // A lifecycle row (ADR 0089) has no brief and no report of its own: it
-      // reports on subagents. Its body is the roster the runtime returned, as
-      // a named table rather than the raw `delegations[]` JSON (D268).
-      if (delegationLifecycleKind(message.toolName)) {
-        // The joined reports are bounded at 50k chars by the runtime, which is
-        // far too much for a `note`: an output block scrolls within a fixed
-        // height and carries a copy button (D271).
-        const text = envelopeTextOf(message);
-        if (text) blocks.push(codeBlock("output", text, "markdown"));
-        const roster = rosterRows(details);
-        if (roster) blocks.push(roster);
+  } else if (toolNameNorm === "browser") {
+    // Show the navigated URL as a field, then any text output produced by
+    // display() calls (lives in the raw envelope's content[], not details).
+    const url = stringAt(details, "url");
+    if (url) blocks.push({ kind: "fields", role: "details", rows: [{ label: "URL", value: url }] });
+    const rawEnvelope = asRecord(message.toolResult);
+    const rawText = rawEnvelope ? envelopeText(rawEnvelope) : null;
+    if (rawText) blocks.push(codeBlock("output", rawText));
+    mapped = true;
+  } else if (toolNameNorm === "computer") {
+    // Text output from desktop automation scripts (display() calls in the
+    // run code) lives in the raw envelope; screenshots are rendered by
+    // ToolScreenshots separately.
+    const rawEnvelope = asRecord(message.toolResult);
+    const rawText = rawEnvelope ? envelopeText(rawEnvelope) : null;
+    if (rawText) blocks.push(codeBlock("output", rawText));
+    mapped = true;
+  } else if (toolNameNorm === "ida") {
+    // IDA action + database path as structured fields; exec output as a
+    // scrollable code block.
+    const idaAction = stringAt(details, "action");
+    const idaDb = stringAt(details, "db");
+    const fields: ToolFieldRow[] = [];
+    if (idaAction) fields.push({ label: "action", value: idaAction });
+    if (idaDb) fields.push({ label: "db", value: idaDb });
+    if (fields.length > 0) blocks.push({ kind: "fields", role: "details", rows: fields });
+    const rawEnvelope = asRecord(message.toolResult);
+    const rawText = rawEnvelope ? envelopeText(rawEnvelope) : null;
+    if (rawText) blocks.push(codeBlock("output", rawText));
+    mapped = true;
+  } else {
+    switch (action) {
+      case "read": {
+        const content = stringAt(details, "content");
+        if (content !== null) {
+          const path = stringAt(details, "path") ?? stringAt(args, "path");
+          blocks.push(codeBlock("content", content, langForPath(path)));
+        }
         break;
       }
-      // A delegation reads as brief in, report out. The counters that pi hands
-      // back (`turns`, `toolCalls`, `usage`) are a footer, and `agent` already
-      // labels the row, so neither repeats here.
-      const brief = stringAt(args, "task");
-      if (brief !== null) {
-        blocks.push(codeBlock("input", brief, "markdown", { label: "task" }));
+      case "write": {
+        const content = stringAt(args, "content");
+        if (content !== null) {
+          const path = stringAt(args, "path") ?? stringAt(details, "path");
+          blocks.push(codeBlock("written", content, langForPath(path)));
+        }
+        break;
       }
-      const report = options.hideDelegateReport
-        ? null
-        : delegateReport(message);
-      if (report !== null) blocks.push(codeBlock("output", report, "markdown"));
-      const counters = details
-        ? Object.fromEntries(
-            Object.entries(details).filter(
-              ([key]) =>
-                key !== "agent" &&
-                key !== "error" &&
-                key !== "modelId" &&
-                key !== "thinkingLevel",
-            ),
-          )
-        : {};
-      if (Object.keys(counters).length > 0) {
-        blocks.push(...recordBlocks(counters, "details"));
+      case "edit": {
+        const ops = stringAt(args, "ops");
+        // Workspace edits already own a ReviewChangeCard with the real diff;
+        // only scratch edits and imported sessions need the model's stated ops.
+        const reviewed =
+          reviewChangeFromMessage(message as unknown as UiMessage) !== null;
+        if (ops !== null && !reviewed) {
+          blocks.push(codeBlock("input", ops));
+        }
+        const warnings = stringArray(details?.warnings);
+        if (warnings) {
+          for (const warning of warnings) {
+            blocks.push({ kind: "note", role: "notice", text: warning });
+          }
+        }
+        break;
       }
-      break;
+      case "run": {
+        const command = stringAt(args, "command", "cmd");
+        // The head already prints the command and copies it, so repeating it here
+        // would open a body that says the same thing twice before reaching the
+        // output the reader expanded for (D226). A permission card has no head of
+        // its own, so it still shows the command it is asking about.
+        if (command !== null && !options.hideSummaryArg) {
+          blocks.push(codeBlock("command", command, "bash"));
+        }
+        // Bash progress updates use `details.output`; the completed result uses
+        // `details.stdout`. A present empty stdout is meaningful too: it must
+        // suppress a stale progress snapshot rather than fall back to output.
+        const stdout =
+          typeof details?.stdout === "string"
+            ? details.stdout
+            : stringAt(details, "output");
+        if (stdout) blocks.push(codeBlock("stdout", stdout));
+        const stderr = stringAt(details, "stderr");
+        if (stderr !== null) {
+          blocks.push(codeBlock("stderr", stderr, "", { tone: "error" }));
+        }
+        mapped = command !== null;
+        break;
+      }
+      case "list": {
+        const paths = stringArray(details?.matches) ?? stringArray(details?.files);
+        const block = paths ? filesBlock(paths) : null;
+        if (block) blocks.push(block);
+        break;
+      }
+      case "search": {
+        const hits = details?.matches;
+        // `outputMode` decides the shape: content → path/line hits,
+        // filesWithMatches → a path list, count → hits per file.
+        const block = Array.isArray(hits) ? matchesBlock(hits) : null;
+        const paths = block ? null : stringArray(details?.files);
+        const grouped = block ?? (paths ? filesBlock(paths) : null);
+        const resolved = grouped ?? countsBlock(details?.counts);
+        if (resolved) blocks.push(resolved);
+        break;
+      }
+      case "delegate": {
+        // A lifecycle row (ADR 0089) has no brief and no report of its own: it
+        // reports on subagents. Its body is the roster the runtime returned, as
+        // a named table rather than the raw `delegations[]` JSON (D268).
+        if (delegationLifecycleKind(message.toolName)) {
+          // The joined reports are bounded at 50k chars by the runtime, which is
+          // far too much for a `note`: an output block scrolls within a fixed
+          // height and carries a copy button (D271).
+          const text = envelopeTextOf(message);
+          if (text) blocks.push(codeBlock("output", text, "markdown"));
+          const roster = rosterRows(details);
+          if (roster) blocks.push(roster);
+          break;
+        }
+        // A delegation reads as brief in, report out. The counters that pi hands
+        // back (`turns`, `toolCalls`, `usage`) are a footer, and `agent` already
+        // labels the row, so neither repeats here.
+        const brief = stringAt(args, "task");
+        if (brief !== null) {
+          blocks.push(codeBlock("input", brief, "markdown", { label: "task" }));
+        }
+        const report = options.hideDelegateReport
+          ? null
+          : delegateReport(message);
+        if (report !== null) blocks.push(codeBlock("output", report, "markdown"));
+        const counters = details
+          ? Object.fromEntries(
+              Object.entries(details).filter(
+                ([key]) =>
+                  key !== "agent" &&
+                  key !== "error" &&
+                  key !== "modelId" &&
+                  key !== "thinkingLevel",
+              ),
+            )
+          : {};
+        if (Object.keys(counters).length > 0) {
+          blocks.push(...recordBlocks(counters, "details"));
+        }
+        break;
+      }
+      default:
+        break;
     }
-    default:
-      break;
   }
 
   // Host-side scoping notes ("results are truncated…", "N long lines were cut")

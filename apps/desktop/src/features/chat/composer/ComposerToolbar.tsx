@@ -3,6 +3,7 @@ import type { TFunction } from "i18next";
 import {
   keybindingDisplayParts,
   type Mode,
+  type OmpSessionStatsResult,
   type PermissionMode,
   type ShortcutPlatform,
   type SessionThinkingLevel,
@@ -50,6 +51,13 @@ export type ComposerToolbarProps = {
   modelLabel: string;
   thinkingLabel: string;
   contextUsage: ContextUsage | null;
+  autoCompactionEnabled?: boolean;
+  onToggleAutoCompaction?: (enabled: boolean) => void;
+  fastModeEnabled?: boolean;
+  onToggleFastMode?: (enabled: boolean) => void;
+  autoRetryEnabled?: boolean;
+  onToggleAutoRetry?: (enabled: boolean) => void;
+  sessionStats?: OmpSessionStatsResult | null;
   enhancementDraft: string;
   value: string;
   modelReady: boolean;
@@ -89,6 +97,13 @@ export function ComposerToolbar({
   modelLabel,
   thinkingLabel,
   contextUsage,
+  autoCompactionEnabled,
+  onToggleAutoCompaction,
+  fastModeEnabled,
+  onToggleFastMode,
+  autoRetryEnabled,
+  onToggleAutoRetry,
+  sessionStats,
   enhancementDraft,
   value,
   modelReady,
@@ -191,7 +206,7 @@ export function ComposerToolbar({
       </div>
 
       <div className="composer-right">
-        {contextUsage ? <ContextUsageInspector {...contextUsage} /> : null}
+        {contextUsage ? <ContextUsageInspector {...contextUsage} sessionStats={sessionStats} autoCompactionEnabled={autoCompactionEnabled} onToggleAutoCompaction={onToggleAutoCompaction} fastModeEnabled={fastModeEnabled} onToggleFastMode={onToggleFastMode} autoRetryEnabled={autoRetryEnabled} onToggleAutoRetry={onToggleAutoRetry} /> : null}
         <ComposerModelPicker
           t={t}
           controller={modelMenu}

@@ -102,6 +102,89 @@ describe("makeOmpOverlay (DX3 / DX6 / DX7 / DX10)", () => {
   });
 });
 
+describe("makeOmpOverlay memory section", () => {
+  const base = { dataDir: "/d", resourcesPath: "/r", screenshotsDir: "/s" };
+  it("omits memory when unset", () => {
+    expect(makeOmpOverlay(base)).not.toContain("memory:");
+  });
+  it("emits session llmMode and hindsight target, never a token", () => {
+    const o = makeOmpOverlay({
+      ...base,
+      memory: { backend: "hindsight", hindsightUrl: "http://h:8888", hindsightBank: "fcode" },
+    });
+    expect(o).toContain("backend: hindsight");
+    expect(o).toContain("llmMode: session");
+    expect(o).toContain('apiUrl: "http://h:8888"');
+    expect(o.toLowerCase()).not.toContain("token");
+  });
+  it("mnemopi emits no hindsight block", () => {
+    expect(makeOmpOverlay({ ...base, memory: { backend: "mnemopi" } })).not.toContain("hindsight:");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// YAML injection guards — agentModelOverrides key quoting (security)
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { parse as parseYaml } from "yaml";
+
+describe("makeOmpOverlay — agentModelOverrides YAML injection (security)", () => {
+  const base = { dataDir: "/d", resourcesPath: "/r", screenshotsDir: "/s" };
+
+  it("keys with newlines are quoted and do not inject extra YAML lines", () => {
+    const overlay = makeOmpOverlay({
+      ...base,
+      ompSettings: {
+        "task.agentModelOverrides": { "x:\n  approval_mode: allow-all-without-asking\n  y": "bad" },
+      },
+    });
+    const parsed = parseYaml(overlay) as Record<string, unknown>;
+    // The injected approval_mode must NOT appear at the top level.
+    expect(parsed).not.toHaveProperty("approval_mode");
+    // task.agentModelOverrides should contain exactly one entry.
+    const overrides = (parsed.task as Record<string, unknown>)?.agentModelOverrides as Record<string, unknown>;
+    expect(Object.keys(overrides)).toHaveLength(1);
+  });
+
+  it("keys with colons are quoted and do not split the mapping", () => {
+    const overlay = makeOmpOverlay({
+      ...base,
+      ompSettings: {
+        "task.agentModelOverrides": { "agent:extra": "model-id" },
+      },
+    });
+    const parsed = parseYaml(overlay) as Record<string, unknown>;
+    const overrides = (parsed.task as Record<string, unknown>)?.agentModelOverrides as Record<string, unknown>;
+    // The key "agent:extra" must be preserved as a single key, not split.
+    expect(Object.keys(overrides)).toHaveLength(1);
+    expect(Object.keys(overrides)[0]).toBe("agent:extra");
+  });
+
+  it("normal agent name and model id round-trips through YAML cleanly", () => {
+    const overlay = makeOmpOverlay({
+      ...base,
+      ompSettings: {
+        "task.agentModelOverrides": { "my-agent": "claude-opus-4" },
+      },
+    });
+    const parsed = parseYaml(overlay) as Record<string, unknown>;
+    const overrides = (parsed.task as Record<string, unknown>)?.agentModelOverrides as Record<string, unknown>;
+    expect(overrides["my-agent"]).toBe("claude-opus-4");
+  });
+
+  it("model id with special chars is quoted and round-trips", () => {
+    const overlay = makeOmpOverlay({
+      ...base,
+      ompSettings: {
+        "task.agentModelOverrides": { "agent": "model: with: colons\nnewline" },
+      },
+    });
+    const parsed = parseYaml(overlay) as Record<string, unknown>;
+    const overrides = (parsed.task as Record<string, unknown>)?.agentModelOverrides as Record<string, unknown>;
+    expect(overrides["agent"]).toBe("model: with: colons\nnewline");
+  });
+});
+
 describe("writeOmpOverlay (DX3 — overlay write failure is fatal)", () => {
   it("writes the overlay file and returns the path", () => {
     const overlayPath = writeOmpOverlay({

@@ -14,7 +14,7 @@
  *         everything else is `always-ask`.
  * DX10 — Protocol v1 fallback emits a system warning and keeps read-only.
  * E9   — All extension_ui_request methods are handled (cancel, editor, notify,
- *         setStatus/setWidget/setTitle explicitly ignored).
+ *         setStatus/setWidget/setTitle forward as sidecar.ext_ui notifications).
  * E10  — The outer NDJSON line is capped at NDJSON_LINE_CAP before reaching
  *         the main process.
  * E14  — open_session failure falls back to a new session; corrupt map = empty.
@@ -27,7 +27,7 @@ import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import { ErrorCodes, readNdjsonLines } from "@pi-desktop/shared";
+import { ErrorCodes, readNdjsonLines, type OmpSettingsValues } from "@pi-desktop/shared";
 import { capNdjsonLine, reassembleChunk } from "./chunks.js";
 import { SessionStore } from "./sessions.js";
 import { createBridgeState } from "./state.js";
@@ -77,6 +77,12 @@ interface OverlayOptions {
   dataDir: string;
   resourcesPath: string;
   screenshotsDir: string;
+  /** Memory backend selection; the Hindsight token travels via HINDSIGHT_API_TOKEN env, never here. */
+  memory?: { backend: "mnemopi" | "hindsight" | "sharpshooter" | "local" | "off"; hindsightUrl?: string; hindsightBank?: string };
+  /** Tool approval mode; defaults to "always-ask" (never yolo). */
+  approvalMode?: "always-ask" | "write" | "yolo";
+  /** User-configured omp settings groups; absent keys use omp's own defaults. */
+  ompSettings?: OmpSettingsValues;
 }
 
 /**
@@ -124,13 +130,49 @@ export function isReadOnlyExecuteMethod(method: string): boolean {
 export function makeOmpOverlay(opts: OverlayOptions): string {
   const skillsDir = resolve(join(opts.resourcesPath, "fcode-skills"));
   const screenshotsDir = resolve(opts.screenshotsDir);
+  const mode = opts.approvalMode ?? "always-ask";
+  const s = opts.ompSettings ?? {};
+
+  // Merge user browser settings onto Fcode's required defaults.
+  const browserEnabled  = s["browser.enabled"]  ?? true;
+  const browserHeadless = s["browser.headless"] ?? true;
+  const browserRelay    = s["browser.relay"]    ?? false;
+
+  // Skills: fcode-skills dir always first; user dirs appended.
+  const userSkillDirs = s["skills.customDirectories"] ?? [];
+
+  // Hindsight: collect all lines so we emit exactly one hindsight: block.
+  const hindsightLines: string[] = [];
+  if (opts.memory?.backend === "hindsight") {
+    if (opts.memory.hindsightUrl) hindsightLines.push(`  apiUrl: ${JSON.stringify(opts.memory.hindsightUrl)}`);
+    if (opts.memory.hindsightBank) hindsightLines.push(`  bankId: ${JSON.stringify(opts.memory.hindsightBank)}`);
+  }
+  if (s["hindsight.autoRecall"]                  !== undefined) hindsightLines.push(`  autoRecall: ${s["hindsight.autoRecall"]}`);
+  if (s["hindsight.autoRetain"]                  !== undefined) hindsightLines.push(`  autoRetain: ${s["hindsight.autoRetain"]}`);
+  if (s["hindsight.retainMode"]                  !== undefined) hindsightLines.push(`  retainMode: ${s["hindsight.retainMode"]}`);
+  if (s["hindsight.mentalModelsEnabled"]          !== undefined) hindsightLines.push(`  mentalModelsEnabled: ${s["hindsight.mentalModelsEnabled"]}`);
+  if (s["hindsight.mentalModelAutoSeed"]          !== undefined) hindsightLines.push(`  mentalModelAutoSeed: ${s["hindsight.mentalModelAutoSeed"]}`);
+  if (s["hindsight.scoping"]                      !== undefined) hindsightLines.push(`  scoping: ${s["hindsight.scoping"]}`);
+  if (s["hindsight.bankIdPrefix"]                 !== undefined && s["hindsight.bankIdPrefix"] !== "") hindsightLines.push(`  bankIdPrefix: ${JSON.stringify(s["hindsight.bankIdPrefix"])}`);
+  if (s["hindsight.retainEveryNTurns"]            !== undefined) hindsightLines.push(`  retainEveryNTurns: ${s["hindsight.retainEveryNTurns"]}`);
+  if (s["hindsight.retainOverlapTurns"]           !== undefined) hindsightLines.push(`  retainOverlapTurns: ${s["hindsight.retainOverlapTurns"]}`);
+  if (s["hindsight.recallBudget"]                 !== undefined) hindsightLines.push(`  recallBudget: ${s["hindsight.recallBudget"]}`);
+  if (s["hindsight.recallMaxTokens"]              !== undefined) hindsightLines.push(`  recallMaxTokens: ${s["hindsight.recallMaxTokens"]}`);
+  if (s["hindsight.recallContextTurns"]           !== undefined) hindsightLines.push(`  recallContextTurns: ${s["hindsight.recallContextTurns"]}`);
+  if (s["hindsight.recallMaxQueryChars"]          !== undefined) hindsightLines.push(`  recallMaxQueryChars: ${s["hindsight.recallMaxQueryChars"]}`);
+  if (s["hindsight.debug"]                        !== undefined) hindsightLines.push(`  debug: ${s["hindsight.debug"]}`);
+  if (s["hindsight.requestTimeoutMs"]             !== undefined) hindsightLines.push(`  requestTimeoutMs: ${s["hindsight.requestTimeoutMs"]}`);
+  if (s["hindsight.reflectTimeoutMs"]             !== undefined) hindsightLines.push(`  reflectTimeoutMs: ${s["hindsight.reflectTimeoutMs"]}`);
+  if (s["hindsight.recallTimeoutMs"]              !== undefined) hindsightLines.push(`  recallTimeoutMs: ${s["hindsight.recallTimeoutMs"]}`);
+  if (s["hindsight.retainTimeoutMs"]              !== undefined) hindsightLines.push(`  retainTimeoutMs: ${s["hindsight.retainTimeoutMs"]}`);
+  if (s["hindsight.mentalModelMaxRenderChars"]    !== undefined) hindsightLines.push(`  mentalModelMaxRenderChars: ${s["hindsight.mentalModelMaxRenderChars"]}`);
 
   // ponytail: YAML by hand — avoids a yaml dep for a ~20-line config file.
   return [
     "# omp overlay for Fcode — generated on each launch, do not edit.",
-    "# DX3: approval_mode always-ask so no writes are auto-approved.",
+    `# DX3: approval_mode ${mode} — controlled by Fcode Settings > AI > Tool approval mode.`,
     "tools:",
-    "  approval_mode: always-ask",
+    `  approval_mode: ${mode}`,
     "  approval:",
     "    # DX7: auto-approve read-only fcode_bench_execute calls.",
     "    fcode_bench_execute_read: allow",
@@ -140,14 +182,215 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
     "skills:",
     `  customDirectories:`,
     `    - "${skillsDir}"`,
+    ...userSkillDirs.map((d) => `    - ${JSON.stringify(d)}`),
     "  enableClaudeUser: true",
+    ...(s["skills.enabled"] !== undefined ? [`  enabled: ${s["skills.enabled"]}`] : []),
+    ...(s["skills.registryUrl"] ? [`  registryUrl: ${JSON.stringify(s["skills.registryUrl"])}`] : []),
     "",
     "browser:",
-    "  enabled: true",
-    "  headless: true",
+    `  enabled: ${browserEnabled}`,
+    `  headless: ${browserHeadless}`,
     `  screenshotDir: "${screenshotsDir}"`,
-    "  relay: false",
+    `  relay: ${browserRelay}`,
+    ...(s["browser.cdpUrl"]   ? [`  cdpUrl: ${JSON.stringify(s["browser.cdpUrl"])}`]   : []),
+    ...(s["browser.relayUrl"] ? [`  relayUrl: ${JSON.stringify(s["browser.relayUrl"])}`] : []),
+    ...(opts.memory
+      ? [
+          "",
+          "memory:",
+          `  backend: ${opts.memory.backend}`,
+          "mnemopi:",
+          "  llmMode: session",
+          ...(s["mnemopi.scoping"]           !== undefined ? [`  scoping: ${s["mnemopi.scoping"]}`]                                 : []),
+          ...(s["mnemopi.dbPath"]            ? [`  dbPath: ${JSON.stringify(s["mnemopi.dbPath"])}`]                                 : []),
+          ...(s["mnemopi.bank"]              ? [`  bank: ${JSON.stringify(s["mnemopi.bank"])}`]                                     : []),
+          ...(s["mnemopi.embeddingVariant"]  !== undefined ? [`  embeddingVariant: ${s["mnemopi.embeddingVariant"]}`]               : []),
+          ...(s["mnemopi.autoRecall"]        !== undefined ? [`  autoRecall: ${s["mnemopi.autoRecall"]}`]                           : []),
+          ...(s["mnemopi.autoRetain"]        !== undefined ? [`  autoRetain: ${s["mnemopi.autoRetain"]}`]                           : []),
+          ...(s["mnemopi.polyphonicRecall"]  !== undefined ? [`  polyphonicRecall: ${s["mnemopi.polyphonicRecall"]}`]               : []),
+          ...(s["mnemopi.enhancedRecall"]    !== undefined ? [`  enhancedRecall: ${s["mnemopi.enhancedRecall"]}`]                   : []),
+          ...(s["mnemopi.proactiveLinking"]  !== undefined ? [`  proactiveLinking: ${s["mnemopi.proactiveLinking"]}`]               : []),
+          ...(s["mnemopi.noEmbeddings"]      !== undefined ? [`  noEmbeddings: ${s["mnemopi.noEmbeddings"]}`]                       : []),
+          ...(s["mnemopi.embeddingModel"]    ? [`  embeddingModel: ${JSON.stringify(s["mnemopi.embeddingModel"])}`]                 : []),
+          ...(s["mnemopi.embeddingApiUrl"]   ? [`  embeddingApiUrl: ${JSON.stringify(s["mnemopi.embeddingApiUrl"])}`]               : []),
+          ...(s["mnemopi.llmBaseUrl"]        ? [`  llmBaseUrl: ${JSON.stringify(s["mnemopi.llmBaseUrl"])}`]                         : []),
+          ...(s["mnemopi.llmModel"]          ? [`  llmModel: ${JSON.stringify(s["mnemopi.llmModel"])}`]                             : []),
+          ...(s["mnemopi.retainEveryNTurns"] !== undefined ? [`  retainEveryNTurns: ${s["mnemopi.retainEveryNTurns"]}`]             : []),
+          ...(s["mnemopi.recallLimit"]       !== undefined ? [`  recallLimit: ${s["mnemopi.recallLimit"]}`]                         : []),
+          ...(s["mnemopi.recallContextTurns"]    !== undefined ? [`  recallContextTurns: ${s["mnemopi.recallContextTurns"]}`]       : []),
+          ...(s["mnemopi.recallMaxQueryChars"]   !== undefined ? [`  recallMaxQueryChars: ${s["mnemopi.recallMaxQueryChars"]}`]     : []),
+          ...(s["mnemopi.injectionTokenLimit"]   !== undefined ? [`  injectionTokenLimit: ${s["mnemopi.injectionTokenLimit"]}`]     : []),
+          ...(s["mnemopi.debug"]             !== undefined ? [`  debug: ${s["mnemopi.debug"]}`]                                     : []),
+        ]
+      : []),
+    ...(hindsightLines.length > 0 ? ["", "hindsight:", ...hindsightLines] : []),
+    // Task / isolation / eval / collab / LSP / IDA / MCP / commands settings
+    ...ompSettingsYaml(s),
   ].join("\n");
+}
+
+/**
+ * Generate YAML lines for the user-configured omp settings groups.
+ * Only emits sections where the user has set at least one key.
+ * Skills/browser/hindsight are handled inline in makeOmpOverlay to avoid duplicate keys.
+ */
+function ompSettingsYaml(s: OmpSettingsValues): string[] {
+  const lines: string[] = [];
+
+  // task section
+  const taskIso = s["task.isolation.enabled"];
+  const taskConc = s["task.maxConcurrency"];
+  const taskDepth = s["task.maxRecursionDepth"];
+  const taskModelOverrides = s["task.agentModelOverrides"];
+  if (taskIso !== undefined || taskConc !== undefined || taskDepth !== undefined || taskModelOverrides !== undefined) {
+    lines.push("", "task:");
+    if (taskIso !== undefined) { lines.push("  isolation:"); lines.push(`    enabled: ${taskIso}`); }
+    if (taskConc !== undefined) lines.push(`  maxConcurrency: ${taskConc}`);
+    if (taskDepth !== undefined) lines.push(`  maxRecursionDepth: ${taskDepth}`);
+    if (taskModelOverrides !== undefined && Object.keys(taskModelOverrides).length > 0) {
+      lines.push("  agentModelOverrides:");
+      for (const [agent, modelId] of Object.entries(taskModelOverrides)) {
+        lines.push(`    ${JSON.stringify(agent)}: ${JSON.stringify(modelId)}`);
+      }
+    }
+  }
+
+  // isolation section
+  if (s["isolation.backend"] !== undefined) {
+    lines.push("", "isolation:", `  backend: ${s["isolation.backend"]}`);
+  }
+
+  // worktree section
+  if (s["worktree.clone"] !== undefined) {
+    lines.push("", "worktree:", `  clone: ${s["worktree.clone"]}`);
+  }
+
+  // eval section
+  const evalPy = s["eval.py"];
+  const evalJs = s["eval.js"];
+  const evalTools = s["eval.tools.enabled"];
+  if (evalPy !== undefined || evalJs !== undefined || evalTools !== undefined) {
+    lines.push("", "eval:");
+    if (evalPy !== undefined) lines.push(`  py: ${evalPy}`);
+    if (evalJs !== undefined) lines.push(`  js: ${evalJs}`);
+    if (evalTools !== undefined) { lines.push("  tools:"); lines.push(`    enabled: ${evalTools}`); }
+  }
+
+  // python section
+  const pyMode = s["python.kernelMode"];
+  const pyInterp = s["python.interpreter"];
+  if (pyMode !== undefined || pyInterp !== undefined) {
+    lines.push("", "python:");
+    if (pyMode !== undefined) lines.push(`  kernelMode: ${pyMode}`);
+    if (pyInterp !== undefined && pyInterp !== "") lines.push(`  interpreter: ${JSON.stringify(pyInterp)}`);
+  }
+
+  // collab section
+  const collabRelay = s["collab.relayUrl"];
+  const collabWeb   = s["collab.webUrl"];
+  const collabName  = s["collab.displayName"];
+  const collabAuto  = s["collab.autoStart"];
+  if (collabRelay !== undefined || collabWeb !== undefined || collabName !== undefined || collabAuto !== undefined) {
+    lines.push("", "collab:");
+    if (collabRelay !== undefined && collabRelay !== "") lines.push(`  relayUrl: ${JSON.stringify(collabRelay)}`);
+    if (collabWeb   !== undefined && collabWeb   !== "") lines.push(`  webUrl: ${JSON.stringify(collabWeb)}`);
+    if (collabName  !== undefined && collabName  !== "") lines.push(`  displayName: ${JSON.stringify(collabName)}`);
+    if (collabAuto  !== undefined) lines.push(`  autoStart: ${collabAuto}`);
+  }
+
+  // queue modes / interaction section (steeringMode, followUpMode, interruptMode, loop.mode)
+  const steeringMode  = s["steeringMode"];
+  const followUpMode  = s["followUpMode"];
+  const interruptMode = s["interruptMode"];
+  const loopMode      = s["loop.mode"];
+  if (steeringMode  !== undefined) lines.push("", `steeringMode: ${steeringMode}`);
+  if (followUpMode  !== undefined) lines.push("", `followUpMode: ${followUpMode}`);
+  if (interruptMode !== undefined) lines.push("", `interruptMode: ${interruptMode}`);
+  if (loopMode      !== undefined) lines.push("", "loop:", `  mode: ${loopMode}`);
+  // lsp section
+  const lspEnabled = s["lsp.enabled"];
+  const lspFmt = s["lsp.formatOnWrite"];
+  const lspDiagWrite = s["lsp.diagnosticsOnWrite"];
+  const lspDiagEdit = s["lsp.diagnosticsOnEdit"];
+  if (lspEnabled !== undefined || lspFmt !== undefined || lspDiagWrite !== undefined || lspDiagEdit !== undefined) {
+    lines.push("", "lsp:");
+    if (lspEnabled   !== undefined) lines.push(`  enabled: ${lspEnabled}`);
+    if (lspFmt       !== undefined) lines.push(`  formatOnWrite: ${lspFmt}`);
+    if (lspDiagWrite !== undefined) lines.push(`  diagnosticsOnWrite: ${lspDiagWrite}`);
+    if (lspDiagEdit  !== undefined) lines.push(`  diagnosticsOnEdit: ${lspDiagEdit}`);
+  }
+
+  // ida section
+  const idaEnabled = s["ida.enabled"];
+  const idaPython = s["ida.python"];
+  const idaInstallDir = s["ida.installDir"];
+  if (idaEnabled !== undefined || idaPython !== undefined || idaInstallDir !== undefined) {
+    lines.push("", "ida:");
+    if (idaEnabled    !== undefined) lines.push(`  enabled: ${idaEnabled}`);
+    if (idaPython     !== undefined && idaPython !== "") lines.push(`  python: ${JSON.stringify(idaPython)}`);
+    if (idaInstallDir !== undefined && idaInstallDir !== "") lines.push(`  installDir: ${JSON.stringify(idaInstallDir)}`);
+  }
+
+  // mcp section
+  const mcpProjCfg = s["mcp.enableProjectConfig"];
+  const mcpMd = s["mcp.renderMarkdownResults"];
+  const mcpNotify = s["mcp.notifications"];
+  if (mcpProjCfg !== undefined || mcpMd !== undefined || mcpNotify !== undefined) {
+    lines.push("", "mcp:");
+    if (mcpProjCfg !== undefined) lines.push(`  enableProjectConfig: ${mcpProjCfg}`);
+    if (mcpMd      !== undefined) lines.push(`  renderMarkdownResults: ${mcpMd}`);
+    if (mcpNotify  !== undefined) lines.push(`  notifications: ${mcpNotify}`);
+  }
+
+  // commands section
+  const cmdClaudeUser = s["commands.enableClaudeUser"];
+  const cmdClaudeProj = s["commands.enableClaudeProject"];
+  if (cmdClaudeUser !== undefined || cmdClaudeProj !== undefined) {
+    lines.push("", "commands:");
+    if (cmdClaudeUser !== undefined) lines.push(`  enableClaudeUser: ${cmdClaudeUser}`);
+    if (cmdClaudeProj !== undefined) lines.push(`  enableClaudeProject: ${cmdClaudeProj}`);
+  }
+
+  // sharpshooter section (backend=sharpshooter; also configures extraction when using other backends)
+  const ssModel    = s["sharpshooter.model"];
+  const ssInterval = s["sharpshooter.intervalMinutes"];
+  const ssLimit    = s["sharpshooter.injectionTokenLimit"];
+  if (ssModel !== undefined || ssInterval !== undefined || ssLimit !== undefined) {
+    lines.push("", "sharpshooter:");
+    if (ssModel    !== undefined && ssModel !== "") lines.push(`  model: ${JSON.stringify(ssModel)}`);
+    if (ssInterval !== undefined) lines.push(`  intervalMinutes: ${ssInterval}`);
+    if (ssLimit    !== undefined) lines.push(`  injectionTokenLimit: ${ssLimit}`);
+  }
+
+  // memories section (local memory pipeline; backend=local)
+  const memMaxRollouts     = s["memories.maxRolloutsPerStartup"];
+  const memMaxAgeDays      = s["memories.maxRolloutAgeDays"];
+  const memMinIdleHours    = s["memories.minRolloutIdleHours"];
+  const memSummaryLimit    = s["memories.summaryInjectionTokenLimit"];
+  if (memMaxRollouts !== undefined || memMaxAgeDays !== undefined || memMinIdleHours !== undefined || memSummaryLimit !== undefined) {
+    lines.push("", "memories:");
+    if (memMaxRollouts  !== undefined) lines.push(`  maxRolloutsPerStartup: ${memMaxRollouts}`);
+    if (memMaxAgeDays   !== undefined) lines.push(`  maxRolloutAgeDays: ${memMaxAgeDays}`);
+    if (memMinIdleHours !== undefined) lines.push(`  minRolloutIdleHours: ${memMinIdleHours}`);
+    if (memSummaryLimit !== undefined) lines.push(`  summaryInjectionTokenLimit: ${memSummaryLimit}`);
+  }
+
+  // theme section (HTML export palette)
+  const themeDark  = s["theme.dark"];
+  const themeLight = s["theme.light"];
+  if (themeDark !== undefined || themeLight !== undefined) {
+    lines.push("", "theme:");
+    if (themeDark  !== undefined && themeDark  !== "") lines.push(`  dark: ${JSON.stringify(themeDark)}`);
+    if (themeLight !== undefined && themeLight !== "") lines.push(`  light: ${JSON.stringify(themeLight)}`);
+  }
+
+  // NOTE: `extensions` and `disabledExtensions` (OmpSettingsValues keys from
+  // omp/packages/coding-agent/src/extensibility/settings.ts) are NOT written to
+  // the overlay here. omp reads them directly from omp-settings.json (injected
+  // via FCODE_OMP_SETTINGS env var) when it resolves extensibility settings.
+  // The disable toggle in extensions-mgmt-ipc.ts writes to omp-settings.json
+  // and the env var refreshes on sidecar restart — no overlay entry needed.
+  return lines;
 }
 
 /**
@@ -184,12 +427,38 @@ const TOOL_EVENT_RENAME: Record<string, string> = {
 
 /** omp event types to drop silently (no PI counterpart). */
 const DROP_EVENTS = new Set([
-  "notice", "irc_message", "todo_reminder", "todo_auto_clear",
-  "ttsr_triggered", "auto_retry_start", "auto_retry_end",
-  "retry_fallback_start", "retry_fallback_end",
-  "goal_updated", "model_changed", "thinking_level_changed",
   "ready", "negotiate_protocol",
 ]);
+
+/** omp event types that surface as quiet system transcript lines. Key presence = handled. */
+const SYSTEM_LINE_EVENTS: Record<string, true> = {
+  notice: true,
+  auto_retry_start: true, auto_retry_end: true,
+  retry_fallback_start: true, retry_fallback_end: true,
+  goal_updated: true,
+  model_changed: true, thinking_level_changed: true,
+  session_settled: true,
+  /** Token-to-sample ratio limit reached; omp paused and resumed the session. */
+  ttsr_triggered: true,
+};
+
+/** Map a system-line event to a human-readable text label. */
+function systemLineText(frame: Record<string, unknown>): string {
+  const t = String(frame.type ?? "");
+  switch (t) {
+    case "notice":               return `[omp] ${String(frame.message ?? frame.text ?? t)}`;
+    case "auto_retry_start":     return `[omp] Retrying…`;
+    case "auto_retry_end":       return `[omp] Retry complete`;
+    case "retry_fallback_start": return `[omp] Fallback model: ${String(frame.model ?? "")}`;
+    case "retry_fallback_end":   return `[omp] Fallback complete`;
+    case "goal_updated":         return `[omp] Goal: ${String(frame.goal ?? frame.text ?? "")}`;
+    case "model_changed":        return `[omp] Model → ${String(frame.model ?? frame.modelId ?? "")}`;
+    case "thinking_level_changed": return `[omp] Thinking → ${String(frame.level ?? "")}`;
+    case "session_settled":      return `[omp] Session settled`;
+    case "ttsr_triggered":       return `[omp] Token-to-sample ratio limit; session paused and resumed`;
+    default:                     return `[omp] ${t}`;
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Main bridge class
@@ -317,6 +586,11 @@ export class OmpBridge {
   private tracer: ((dir: string, line: string) => void) | null = null;
   /** Whether set_subagent_subscription{progress} has been sent for this omp process (§9). */
   private subagentSubscribed = false;
+  /**
+   * One-shot resolvers for `command_output` frames — consumed in FIFO order.
+   * Used by `omp.share` to capture the text that `/share` emits before its ack.
+   */
+  private pendingCommandOutput: Array<(text: string) => void> = [];
 
   /** Enable raw-frame tracing to a file (FCODE_BRIDGE_TRACE=1). */
   setTracer(fn: (dir: string, line: string) => void): void {
@@ -589,6 +863,9 @@ export class OmpBridge {
       case "omp.commands.list":
         this.ompCallAndForward(id, { type: "get_available_commands" });
         break;
+      case "omp.memory.status":
+        this.ompCallAndForward(id, { type: "get_memory_status" });
+        break;
       case "omp.state":
         this.ompCallAndForward(id, { type: "get_state", ...p });
         break;
@@ -604,6 +881,141 @@ export class OmpBridge {
       case "omp.session.rename":
         this.ompCallAndForward(id, { type: "set_session_name", ...p });
         break;
+      case "omp.auto-compaction.set":
+        this.ompCallAndForward(id, { type: "set_auto_compaction", ...p });
+        break;
+
+      case "omp.session.stats":
+        this.ompCallAndForward(id, { type: "get_session_stats" });
+        break;
+
+      case "omp.subagents.list":
+        this.ompCallAndForward(id, { type: "get_subagents" });
+        break;
+
+      case "omp.subagents.messages":
+        this.ompCallAndForward(id, { type: "get_subagent_messages", ...p });
+        break;
+
+      case "omp.session.exportHtml": {
+        const outputPath = typeof p.outputPath === "string" ? p.outputPath : undefined;
+        this.ompCallAndForward(id, { type: "export_html", ...(outputPath ? { outputPath } : {}) });
+        break;
+      }
+
+      case "omp.session.lastAssistantText":
+        this.ompCallAndForward(id, { type: "get_last_assistant_text" });
+        break;
+
+      case "omp.session.handoff": {
+        const customInstructions = typeof p.customInstructions === "string" ? p.customInstructions : undefined;
+        this.ompCallAndForward(id, { type: "handoff", ...(customInstructions ? { customInstructions } : {}) });
+        break;
+      }
+
+      case "omp.session.setTodos":
+        this.ompCallAndForward(id, { type: "set_todos", phases: p.phases ?? [] });
+        break;
+
+      case "omp.session.entries":
+        this.ompCallAndForward(id, { type: "get_entries", ...(p.since ? { since: p.since } : {}) });
+        break;
+
+      case "omp.session.tree":
+        this.ompCallAndForward(id, { type: "get_tree" });
+        break;
+
+
+      case "omp.session.branchMessages":
+        this.ompCallAndForward(id, { type: "get_branch_messages" });
+        break;
+
+
+      // Session-scoped mode controls (queue modes, fast mode, retry)
+      case "omp.modes.setSteeringMode":
+        this.ompCallAndForward(id, { type: "set_steering_mode", mode: p.mode });
+        break;
+      case "omp.modes.setFollowUpMode":
+        this.ompCallAndForward(id, { type: "set_follow_up_mode", mode: p.mode });
+        break;
+      case "omp.modes.setInterruptMode":
+        this.ompCallAndForward(id, { type: "set_interrupt_mode", mode: p.mode });
+        break;
+      case "omp.fast.set":
+        this.ompCallAndForward(id, { type: "set_fast_mode", enabled: p.enabled });
+        break;
+      case "omp.retry.setAutoRetry":
+        this.ompCallAndForward(id, { type: "set_auto_retry", enabled: p.enabled });
+        break;
+      case "omp.retry.abort":
+        this.ompCallAndForward(id, { type: "abort_retry" });
+        break;
+      case "omp.models.cycle":
+        this.ompCallAndForward(id, { type: "cycle_model" });
+        break;
+      case "omp.thinking.cycle":
+        this.ompCallAndForward(id, { type: "cycle_thinking_level" });
+        break;
+
+      // Queue-while-streaming: follow_up / abort_and_prompt
+      case "agent.followUp": {
+        const sessionId = String(p.sessionId ?? "");
+        const content = String(p.content ?? "");
+        try {
+          await this.ompCall({ type: "follow_up", message: content, sessionId });
+          this.respond(id, { accepted: true });
+        } catch {
+          this.respond(id, { accepted: false });
+        }
+        break;
+      }
+      case "agent.abortAndPrompt": {
+        const sessionId = String(p.sessionId ?? "");
+        const content = String(p.content ?? "");
+        try {
+          await this.ompCall({ type: "abort_and_prompt", message: content, sessionId });
+          this.respond(id, { accepted: true });
+        } catch {
+          this.respond(id, { accepted: false });
+        }
+        break;
+      }
+
+      case "omp.share":
+        this.ompShareAndForward(id);
+        break;
+
+      case "omp.bash": {
+        // Run a shell command in omp's session cwd and emit output as a system
+        // transcript block so the user sees it without an extra round-trip.
+        const command = typeof p.command === "string" ? p.command : "";
+        if (!command) { this.respondError(id, "command required"); break; }
+        try {
+          const result = await this.ompCall({ type: "bash", command }) as Record<string, unknown>;
+          const output = String(result?.output ?? "").trim();
+          const exitCode = result?.exitCode ?? 0;
+          const sessionId = this.sessions.keys().next().value ?? "";
+          this.emitSystemMessage(
+            sessionId,
+            `$ ${command}\n${output}${output ? "\n" : ""}[exit ${String(exitCode)}]`,
+          );
+          this.respond(id, { ok: true });
+        } catch (e) {
+          this.respondError(id, String(e));
+        }
+        break;
+      }
+
+      case "omp.abort_bash":
+        this.ompCallAndForward(id, { type: "abort_bash" });
+        break;
+
+      case "omp.set_event_filter": {
+        // null = receive all events; string[] = allowlist of event type names.
+        const events = Array.isArray(p.events) ? (p.events as string[]) : null;
+        this.ompCallAndForward(id, { type: "set_event_filter", events });
+        break;
+      }
 
       default:
         this.respondError(id, `Unknown method: ${method}`, -32601);
@@ -615,6 +1027,46 @@ export class OmpBridge {
       .then((result) => this.respond(hostId, result))
       .catch((e) => this.respondError(hostId, String(e)));
   }
+
+  /**
+   * Drive the `/share` slash command and capture its `command_output` text.
+   * The `command_output` frame arrives on omp stdout BEFORE the response ack
+   * for local slash commands (agentInvoked:false), so the one-shot resolver
+   * is registered before the ompCall and is already settled when the ack comes.
+   */
+  private ompShareAndForward(hostId: string): void {
+    let resolveOutput!: (text: string) => void;
+    const textPromise = new Promise<string>((resolve) => {
+      resolveOutput = resolve;
+      this.pendingCommandOutput.push(resolve);
+    });
+    this.ompCall({ type: "prompt", message: "/share" })
+      .then(async (ack) => {
+        const invoked = (ack as Record<string, unknown>)?.agentInvoked;
+        if (invoked !== false) {
+          // Fell through to the LLM — no command_output coming; clean up.
+          const idx = this.pendingCommandOutput.indexOf(resolveOutput);
+          if (idx !== -1) this.pendingCommandOutput.splice(idx, 1);
+          this.respond(hostId, { url: null, text: null });
+          return;
+        }
+        // Slash command ran; command_output was (or will be) emitted before this ack.
+        const text = await Promise.race([
+          textPromise,
+          new Promise<string>((_, reject) =>
+            setTimeout(() => reject(new Error("command_output timeout")), 10_000),
+          ),
+        ]);
+        const match = text.match(/Share URL:\s*(\S+)/);
+        this.respond(hostId, { url: match?.[1] ?? null, text });
+      })
+      .catch((e: unknown) => {
+        const idx = this.pendingCommandOutput.indexOf(resolveOutput);
+        if (idx !== -1) this.pendingCommandOutput.splice(idx, 1);
+        this.respondError(hostId, String((e as Error)?.message ?? e));
+      });
+  }
+
 
   private async ompPrompt(opts: {
     sessionId: string;
@@ -643,12 +1095,11 @@ export class OmpBridge {
     }
 
     // omp has no per-session cwd/project field on new_session or open_session:
-    // cwd is fixed once at process spawn for the bridge's whole lifetime
-    // (start(), below). A single shared ompProcess also means open_session's
+    // cwd is fixed once at process spawn (start(), below) from FCODE_BENCH_PATH,
+    // which sidecar.ts sets to benchSupervisor.activeBenchPath on each launch.
+    // A single shared ompProcess also means open_session's
     // "most recent session in this directory" resume can race if two
     // Fcode sessions ever share a project.
-    // ponytail: single-cwd-per-process ceiling; upgrade path is one omp child
-    // per session (tracked as a follow-up to this fix).
     const sessionCmd: Record<string, unknown> = sessionType === "open_session" && sessionDir
       ? { type: "open_session", sessionDir }
       : { type: "new_session" };
@@ -804,6 +1255,13 @@ export class OmpBridge {
               this.registerHostTools()
                 .then((names) => {
                   process.stderr.write(`[omp-bridge] handshake: registered host tools: ${names.join(", ")}\n`);
+                  // Wire the event filter: null = receive all session events.
+                  // Called explicitly so the filter mechanism is exercised; upgrade
+                  // to an allowlist when event volume becomes a measurable concern.
+                  return this.ompCall({ type: "set_event_filter", events: null });
+                })
+                .then(() => {
+                  process.stderr.write("[omp-bridge] handshake: event filter cleared (all events)\n");
                 })
                 .catch((e: unknown) => {
                   const msg = String((e as Error)?.message ?? e);
@@ -864,6 +1322,46 @@ export class OmpBridge {
       return;
     }
 
+    // command_output: one-shot capture for slash commands like /share that emit text.
+    if (frame.type === "command_output") {
+      const callback = this.pendingCommandOutput.shift();
+      if (callback) callback(String(frame.text ?? ""));
+      return;
+    }
+
+    // irc_message: forward as a quiet system transcript line if content is plain text.
+    if (frame.type === "irc_message") {
+      const sessionId = this.sessions.keys().next().value ?? "";
+      const msg = frame.message as Record<string, unknown> | undefined;
+      const content = msg?.content;
+      if (typeof content === "string" && content.trim()) {
+        this.emitSystemMessage(sessionId, content.trim());
+      }
+      return;
+    }
+
+    // todo_reminder / todo_auto_clear: forward as agent.event for the todo panel.
+    if (frame.type === "todo_reminder" || frame.type === "todo_auto_clear") {
+      const sessionId = this.sessions.keys().next().value ?? "";
+      this.notify("agent.event", { sessionId, ts: Date.now(), event: frame });
+      return;
+    }
+
+
+    // Subagent full-event stream (subagent_event): relay inner event tagged with subagentId.
+    if (frame.type === "subagent_event") {
+      const payload = (frame.payload ?? {}) as Record<string, unknown>;
+      const subagentId = String(payload.id ?? "");
+      const sessionId = this.sessions.keys().next().value ?? "";
+      this.notify("agent.event", {
+        sessionId,
+        ts: Date.now(),
+        subagentId,
+        event: payload.event,
+      });
+      return;
+    }
+
     // Subagent lifecycle/progress frames → agent.event rows (§9).
     if (frame.type === "subagent_lifecycle" || frame.type === "subagent_progress") {
       this.handleSubagentFrame(frame);
@@ -873,6 +1371,11 @@ export class OmpBridge {
     // Agent events: map omp events to Fcode agent.event notifications.
     const rawType = String(frame.type ?? "");
     if (DROP_EVENTS.has(rawType)) return;
+    if (rawType in SYSTEM_LINE_EVENTS) {
+      const sessionId = this.sessions.keys().next().value ?? "";
+      this.emitSystemMessage(sessionId, systemLineText(frame));
+      return;
+    }
     const eventType = TOOL_EVENT_RENAME[rawType] ?? rawType;
     if (eventType !== rawType) frame.type = eventType;
 
@@ -927,12 +1430,6 @@ export class OmpBridge {
       return;
     }
 
-    if (mapped.type === "editor_refusal") {
-      // Immediately respond with a refusal so the tool turn doesn't hang (E9).
-      this.sendToOmp({ type: "extension_ui_response", id: req.id, cancelled: true });
-      return;
-    }
-
     if (mapped.type === "system_message") {
       this.emitSystemMessage(sessionId, mapped.text);
       return;
@@ -941,6 +1438,20 @@ export class OmpBridge {
     if (mapped.type === "open_url") {
       this.notify("sidecar.notification", { type: "open_url", url: mapped.url, sessionId });
       this.emitSystemMessage(sessionId, mapped.text);
+      return;
+    }
+
+    // setStatus / setWidget / setTitle / set_editor_text — fire-and-forget UI state updates.
+    if (
+      mapped.type === "ext_status" ||
+      mapped.type === "ext_widget" ||
+      mapped.type === "ext_title" ||
+      mapped.type === "set_editor_text"
+    ) {
+      // Renderer's SidecarExtUiEvent discriminates on `kind`, not the mapper's `type`.
+      const { type, ...rest } = mapped;
+      const kind = type === "set_editor_text" ? "editor_text" : type.slice("ext_".length);
+      this.notify("sidecar.ext_ui", { kind, ...rest });
       return;
     }
 
@@ -1050,6 +1561,7 @@ export class OmpBridge {
     ompBinary: string;
     overlayPath: string;
     modelsConfigPath?: string;
+    approvalMode?: "always-ask" | "write" | "yolo";
     cwd: string;
     env: NodeJS.ProcessEnv;
   }): Promise<void> {
@@ -1057,7 +1569,7 @@ export class OmpBridge {
     this.state.cwd = opts.cwd;
     this.sessionStore = new SessionStore(opts.dataDir);
 
-    const ompArgs = ["--mode", "rpc", "--approval-mode", "always-ask", "--config", opts.overlayPath];
+    const ompArgs = ["--mode", "rpc", "--approval-mode", opts.approvalMode ?? "always-ask", "--config", opts.overlayPath];
     if (opts.modelsConfigPath) ompArgs.push("--models-config", opts.modelsConfigPath);
 
     const child = spawn(
@@ -1107,6 +1619,20 @@ export class OmpBridge {
 // Entry point (when run as a standalone process)
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Safe parse of `FCODE_OMP_SETTINGS` JSON; returns empty on any failure. */
+function parseOmpSettings(raw: string | undefined): OmpSettingsValues {
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as OmpSettingsValues;
+    }
+  } catch {
+    // non-fatal
+  }
+  return {};
+}
+
 /** Main entry point for the sidecar process. */
 async function main(): Promise<void> {
   const bridge = new OmpBridge();
@@ -1114,11 +1640,29 @@ async function main(): Promise<void> {
   const dataDir = process.env.FCODE_DATA_DIR ?? join(homedir(), ".fcode-dev");
   const ompBinary = resolveOmpBinary({ resourcesPath, env: process.env as Record<string, string | undefined> });
 
+  const rawMode = process.env.FCODE_TOOL_APPROVAL_MODE;
+  const approvalMode: "always-ask" | "write" | "yolo" =
+    rawMode === "write" || rawMode === "yolo" ? rawMode : "always-ask";
   let overlayPath: string;
   try {
     const screenshotsDir = join(dataDir, "screenshots");
     mkdirSync(screenshotsDir, { recursive: true });
-    overlayPath = writeOmpOverlay({ dataDir, resourcesPath, screenshotsDir });
+    const backend = process.env.FCODE_MEMORY_BACKEND;
+    overlayPath = writeOmpOverlay({
+      dataDir,
+      resourcesPath,
+      screenshotsDir,
+      approvalMode,
+      ompSettings: parseOmpSettings(process.env.FCODE_OMP_SETTINGS),
+      memory:
+        backend === "mnemopi" || backend === "hindsight" || backend === "sharpshooter" || backend === "local" || backend === "off"
+          ? {
+              backend,
+              hindsightUrl: process.env.FCODE_HINDSIGHT_URL,
+              hindsightBank: process.env.FCODE_HINDSIGHT_BANK,
+            }
+          : undefined,
+    });
   } catch (e) {
     // DX3: overlay write failure is fatal — settle with a system message.
     process.stdout.write(
@@ -1171,6 +1715,7 @@ async function main(): Promise<void> {
     ompBinary,
     overlayPath,
     modelsConfigPath: process.env.FCODE_MODELS_CONFIG,
+    approvalMode,
     cwd,
     env: {
       ...process.env,
