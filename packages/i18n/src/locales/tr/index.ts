@@ -160,6 +160,9 @@ export const tr = {
     sessionSelected: "Seçili",
     sessionCompleted: "Bitti",
     sessionFailed: "İlgi gerekiyor",
+    sessionPermission: "İzin gerekli",
+    sessionRunningLabel: "Çalışıyor",
+    sessionPermissionLabel: "Onay bekliyor",
     sortSessions: "Projeleri ve sohbetleri sırala",
     sortRecent: "Son güncellenenler",
     sortOldest: "Eskiden yeniye",
@@ -194,6 +197,12 @@ export const tr = {
     hoverCardUpdatedAt: "Güncellendi {{when}}",
     hoverCardTemporarySpace: "Geçici",
     hoverCardBranchAria: "Dal {{name}}",
+  },
+  workspaceBar: {
+    noBench: "Bench seçilmedi",
+    chooseBench: "Bench seç",
+    running: "çalışıyor",
+    stopped: "durduruldu",
   },
   sessionCollaboration: {
     statusIdle: "Boşta",
@@ -547,6 +556,7 @@ export const tr = {
     modelBadgeReasoning: "akıl yürütme",
     modelBadgeVision: "görüntü",
     permissionMode: "İzin kipi",
+    permissionsLabel: "İzinler: {{mode}}",
     reasoningLevel: "Akıl yürütme düzeyi",
     reasoningSupportedBy: "Geçerli model {{model}} bu akıl yürütme düzeylerini destekliyor",
     permissionInherit: "Varsayılan",
@@ -2105,8 +2115,11 @@ sklm: {
   permission: {
     title: "İzin gerekiyor",
     allowPrompt: "<highlight>{{tool}}</highlight> çalıştırılsın mı?",
-    allowOnce: "Bir kez izin ver",
-    allowSession: "Bu sohbet için izin ver",
+    allowOnce: "Bu sefer izin ver",
+    allowSession: "Bu oturum için izin ver",
+    allowOnceHint: "Şimdi çalışır. Bir sonraki seferde tekrar sorulacak.",
+    allowSessionHint: "Bu araç, bu görevin geri kalanı için sormadan çalışır.",
+    denyHint: "Burada durur. Ajana reddedildiği bildirilir.",
     deny: "Reddet",
     risk: {
       high: "Yüksek risk",
@@ -2176,6 +2189,7 @@ sklm: {
       subagent: "Alt ajan",
     "session-tree": "Oturum geçmişi",
       tools: "Araçlar",
+      activity: "Etkinlik",
     },
     pluginView: {
       failed: "Bu görünüm yüklenemedi. Eklentiyi yeniden yükleyip deneyin.",
@@ -2224,6 +2238,15 @@ sklm: {
       reveal: "Finder’da göster",
       binary: "İkili dosya — önizleme yok",
       tooLarge: "Dosya önizlemek için çok büyük",
+    },
+    activity: {
+      decisionNeeded: "Kararınızı bekliyor",
+      reviewRequest: "İnceleme isteği",
+      todo: "Yapılacak {{done}} / {{total}}",
+      toolsRun: "Çalıştırılan araçlar",
+      changes: "Değişiklikler",
+      openReview: "İncelemeyi aç",
+      empty: "Henüz hiçbir şey çalıştırılmadı",
     },
   },
   palette: {

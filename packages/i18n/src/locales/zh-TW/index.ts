@@ -153,6 +153,9 @@ export const zhTW = {
     sessionSelected: "已選中",
     sessionCompleted: "已完成",
     sessionFailed: "未完成",
+    sessionPermission: "需要許可權",
+    sessionRunningLabel: "執行中",
+    sessionPermissionLabel: "待審批",
     sortSessions: "專案與對話排序",
     sortRecent: "最近更新",
     sortOldest: "最早建立",
@@ -187,6 +190,12 @@ export const zhTW = {
     hoverCardUpdatedAt: "更新於 {{when}}",
     hoverCardTemporarySpace: "臨時對話",
     hoverCardBranchAria: "分支 {{name}}",
+  },
+  workspaceBar: {
+    noBench: "未選擇 bench",
+    chooseBench: "選擇 bench",
+    running: "執行中",
+    stopped: "已停止",
   },
   sessionCollaboration: {
     statusIdle: "閒置",
@@ -542,6 +551,7 @@ export const zhTW = {
     modelBadgeReasoning: "推理",
     modelBadgeVision: "視覺",
     permissionMode: "許可權模式",
+    permissionsLabel: "許可權：{{mode}}",
     reasoningLevel: "推理等級",
     reasoningSupportedBy: "當前模型 {{model}} 支援的推理等級",
     permissionInherit: "跟隨預設",
@@ -2085,8 +2095,11 @@ sklm: {
   permission: {
     title: "需要許可權",
     allowPrompt: "允許 <highlight>{{tool}}</highlight> 執行嗎？",
-    allowOnce: "允許一次",
-    allowSession: "允許本次對話",
+    allowOnce: "允許本次",
+    allowSession: "允許本次任務",
+    allowOnceHint: "立即執行，下次將再次詢問。",
+    allowSessionHint: "本工具將在目前任務剩餘時間內無需確認直接執行。",
+    denyHint: "就此停止，將告知智慧體已被拒絕。",
     deny: "拒絕",
     risk: {
       high: "高風險",
@@ -2156,6 +2169,7 @@ sklm: {
       subagent: "子智慧體",
     "session-tree": "工作階段歷史",
       tools: "工具",
+      activity: "活動",
     },
     pluginView: {
       failed: "無法載入該檢視。請重新載入外掛後重試。",
@@ -2204,6 +2218,15 @@ sklm: {
       reveal: "在 Finder 中顯示",
       binary: "二進位制檔案，無法預覽",
       tooLarge: "檔案過大，無法預覽",
+    },
+    activity: {
+      decisionNeeded: "需要您決策",
+      reviewRequest: "審閱請求",
+      todo: "待辦 {{done}} / {{total}}",
+      toolsRun: "已執行工具",
+      changes: "變更",
+      openReview: "開啟審閱",
+      empty: "暫無執行記錄",
     },
   },
   palette: {

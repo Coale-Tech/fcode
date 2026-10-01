@@ -41,6 +41,7 @@ import {
   sidebarSessionStatus,
   type SidebarSessionStatus,
 } from "../lib/sidebar-session-status";
+import { sessionStatusLabel } from "../lib/session-status-label";
 import { ErrorCodes } from "@pi-desktop/shared";
 import type { SessionSummary } from "@pi-desktop/shared";
 import type {
@@ -1769,6 +1770,13 @@ export function Sidebar({
           ) : null}
         </button>
         <div className="sidebar-row-actions">
+          {sessionStatusLabel(status) ? (
+            <span className={`thread-item-status-label ${status}`}>
+              {status === "running"
+                ? t("nav.sessionRunningLabel", { defaultValue: "Running" })
+                : t("nav.sessionPermissionLabel", { defaultValue: "Needs approval" })}
+            </span>
+          ) : null}
           <TooltipButton
             type="button"
             className="thread-item-more"

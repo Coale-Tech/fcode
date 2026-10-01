@@ -60,11 +60,24 @@
 /* Decision cards are soft tiles (D297): risk rides in the tint and the risk
    pill rather than a coloured rail. */
 .permission-card {
+  position: relative;
+  overflow: hidden;
   width: min(100%, var(--chat-prose-max-width, 720px));
   margin: 10px 0;
   padding: 14px 16px;
   border-radius: var(--radius-md);
   background: color-mix(in oklab, var(--ds-warning) 7%, transparent);
+}
+
+/* Depleting timer bar across the top of the card */
+.permission-card-timer-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: color-mix(in oklab, var(--ds-warning) 55%, transparent);
+  transition: width 1s linear;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 
 .asktool-card {
@@ -966,10 +979,39 @@
 }
 
 .permission-card-actions {
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   margin-top: 12px;
+}
+
+.permission-action-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.permission-action-item .btn {
+  width: 100%;
+  text-align: left;
+  justify-content: flex-start;
+}
+
+.permission-action-hint {
+  padding-left: 4px;
+  color: var(--ds-text-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+}
+
+/* Deny button: danger-tinted ghost */
+.permission-deny-btn.btn-ghost {
+  color: var(--ds-error);
+}
+
+.permission-deny-btn.btn-ghost:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--ds-error) 10%, transparent);
+  color: var(--ds-error);
 }
 
 @media (max-width: 560px) {
@@ -977,10 +1019,6 @@
     align-items: flex-start;
     flex-direction: column;
     gap: 4px;
-  }
-
-  .permission-card-actions .btn {
-    flex: 1 1 auto;
   }
 }
 

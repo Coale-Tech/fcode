@@ -23,6 +23,7 @@ import { ModeIcon } from "./ComposerModeIcon";
 import { VoiceMicButton } from "../../voice/VoiceMicButton";
 import { ComposerModelPicker } from "./ComposerModelPicker";
 import {
+  MODE_CYCLE,
   MODE_LABEL_KEYS,
   nextMode,
 } from "./model";
@@ -151,39 +152,41 @@ export function ComposerToolbar({
             onCancel={onVoiceCancel}
           />
         )}
-        <TooltipButton
-          type="button"
-          className="icon-btn mode-chip composer-mode-chip"
-          data-mode={mode}
-          data-planning={planningLive ? "true" : undefined}
-          tooltip={planningLive ? t(`${mode}.planning`) : t("settings.mode")}
-          ariaLabel={planningLive ? t(`${mode}.planning`) : t("settings.mode")}
-          disabled={controlsBlocked}
-          onClick={async () => {
-            modelMenu.setOpen(false);
-            setPermissionOpen(false);
-            const next: Mode = nextMode(mode);
-            try {
-              await configureActiveSession({
-                mode: next,
-                providerId,
-                modelId,
-                thinkingLevel,
-              });
-            } catch (error) {
-              showToast(error instanceof Error ? error.message : String(error), {
-                variant: "error",
-              });
-            }
-          }}
-        >
-          <span className="composer-mode-chip-face" key={mode}>
-            <ModeIcon mode={mode} />
-            <span className="composer-mode-chip-label text-sm">
-              {t(MODE_LABEL_KEYS[mode])}
+        {(mode !== "agent" || MODE_CYCLE.length > 1) && (
+          <TooltipButton
+            type="button"
+            className="icon-btn mode-chip composer-mode-chip"
+            data-mode={mode}
+            data-planning={planningLive ? "true" : undefined}
+            tooltip={planningLive ? t(`${mode}.planning`) : t("settings.mode")}
+            ariaLabel={planningLive ? t(`${mode}.planning`) : t("settings.mode")}
+            disabled={controlsBlocked}
+            onClick={async () => {
+              modelMenu.setOpen(false);
+              setPermissionOpen(false);
+              const next: Mode = nextMode(mode);
+              try {
+                await configureActiveSession({
+                  mode: next,
+                  providerId,
+                  modelId,
+                  thinkingLevel,
+                });
+              } catch (error) {
+                showToast(error instanceof Error ? error.message : String(error), {
+                  variant: "error",
+                });
+              }
+            }}
+          >
+            <span className="composer-mode-chip-face" key={mode}>
+              <ModeIcon mode={mode} />
+              <span className="composer-mode-chip-label text-sm">
+                {t(MODE_LABEL_KEYS[mode])}
+              </span>
             </span>
-          </span>
-        </TooltipButton>
+          </TooltipButton>
+        )}
         <ComposerPermissionPicker t={t} mode={mode}
           composerPermissionMode={composerPermissionMode}
           permissionOpen={permissionOpen} setPermissionOpen={setPermissionOpen}

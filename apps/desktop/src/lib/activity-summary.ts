@@ -1,5 +1,6 @@
+import type { UiMessage } from "@pi-desktop/shared";
 import type { AssistantActivityItem } from "./assistant-turns";
-import { getToolAction } from "./tool-display";
+import { getToolAction, getToolDisplayName, getToolSummary } from "./tool-display";
 import { runOutcome } from "./tool-presentation";
 import { isDelegationActivityItem, subagentOutcome, type SubagentOutcome } from "./subagent-topology";
 
@@ -41,4 +42,27 @@ export function activitySummary(items: readonly AssistantActivityItem[], statuse
       return outcome === "failed" || outcome === "denied";
     }).length,
   };
+}
+
+export type ActivityTimelineRow = {
+  id: string;
+  name: string;
+  target: string;
+  status: "running" | "ok" | "error";
+  durationMs: number | undefined;
+};
+
+/** Build tool-timeline rows from all session messages (newest last). */
+export function buildActivityTimeline(messages: readonly UiMessage[]): ActivityTimelineRow[] {
+  return messages
+    .filter((m) => m.role === "tool" && m.toolName)
+    .map((m) => ({
+      id: m.toolCallId ?? m.id,
+      name: getToolDisplayName(m.toolName),
+      target: getToolSummary(m.toolName, m.toolArgs),
+      status: m.toolStatus === "running" ? "running"
+        : (m.toolStatus === "error" || m.toolStatus === "denied") ? "error"
+        : "ok",
+      durationMs: m.toolDurationMs,
+    }));
 }

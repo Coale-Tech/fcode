@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import {
   permissionSecondsLeft,
+  PERMISSION_TIMEOUT_MS,
   type PendingPermission,
 } from "../lib/pending-permissions";
 import { useAppStore } from "../stores/app-store";
@@ -118,12 +119,19 @@ export function PermissionCard({
     );
   }
 
+  const totalSeconds = PERMISSION_TIMEOUT_MS / 1000;
+  const pct = (secondsLeft / totalSeconds) * 100;
   return (
     <section
       className={`permission-card risk-${risk}`}
       role="region"
       aria-label={t("permission.title")}
     >
+      <div
+        className="permission-card-timer-bar"
+        style={{ width: `${pct}%` }}
+        aria-hidden="true"
+      />
       <div className="permission-card-header">
         <span className="permission-card-title" role="status" aria-live="polite">
           {t("permission.title")}
@@ -168,27 +176,37 @@ export function PermissionCard({
         </span>
       </div>
       <div className="permission-card-actions">
-        <Button
-          variant="ghost"
-          disabled={resolving}
-          onClick={() => void resolve("deny")}
-        >
-          {t("permission.deny")}
-        </Button>
-        <Button
-          variant="secondary"
-          disabled={resolving}
-          onClick={() => void resolve("allow-session")}
-        >
-          {t("permission.allowSession")}
-        </Button>
-        <Button
-          variant="primary"
-          disabled={resolving}
-          onClick={() => void resolve("allow-once")}
-        >
-          {t("permission.allowOnce")}
-        </Button>
+        <div className="permission-action-item">
+          <Button
+            variant="primary"
+            disabled={resolving}
+            onClick={() => void resolve("allow-once")}
+          >
+            {t("permission.allowOnce")}
+          </Button>
+          <span className="permission-action-hint">{t("permission.allowOnceHint")}</span>
+        </div>
+        <div className="permission-action-item">
+          <Button
+            variant="secondary"
+            disabled={resolving}
+            onClick={() => void resolve("allow-session")}
+          >
+            {t("permission.allowSession")}
+          </Button>
+          <span className="permission-action-hint">{t("permission.allowSessionHint")}</span>
+        </div>
+        <div className="permission-action-item">
+          <Button
+            variant="ghost"
+            className="permission-deny-btn"
+            disabled={resolving}
+            onClick={() => void resolve("deny")}
+          >
+            {t("permission.deny")}
+          </Button>
+          <span className="permission-action-hint">{t("permission.denyHint")}</span>
+        </div>
       </div>
     </section>
   );

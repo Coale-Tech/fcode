@@ -151,6 +151,9 @@ export const es = {
     "sessionSelected": "Seleccionado",
     "sessionCompleted": "Listo",
     "sessionFailed": "Necesita atención",
+    "sessionPermission": "Se requiere permiso",
+    "sessionRunningLabel": "En ejecución",
+    "sessionPermissionLabel": "Requiere aprobación",
     "sortSessions": "Ordenar proyectos y chats",
     "sortRecent": "Actualizado recientemente",
     "sortOldest": "Más antiguo primero",
@@ -185,6 +188,12 @@ export const es = {
     "hoverCardUpdatedAt": "Actualizado {{when}}",
     "hoverCardTemporarySpace": "Temporal",
     "hoverCardBranchAria": "Rama {{name}}"
+  },
+  "workspaceBar": {
+    "noBench": "Sin bench seleccionado",
+    "chooseBench": "Elegir bench",
+    "running": "en ejecución",
+    "stopped": "detenido"
   },
   "sessionCollaboration": {
     "statusIdle": "Inactivo",
@@ -538,6 +547,7 @@ export const es = {
     "modelBadgeReasoning": "razonamiento",
     "modelBadgeVision": "visión",
     "permissionMode": "Modo de permiso",
+    "permissionsLabel": "Permisos: {{mode}}",
     "reasoningLevel": "Nivel de razonamiento",
     "reasoningSupportedBy": "El modelo actual {{model}} admite estos niveles de razonamiento",
     "permissionInherit": "Predeterminado",
@@ -2099,8 +2109,11 @@ sklm: {
   "permission": {
     "title": "Permiso necesario",
     "allowPrompt": "¿Permitir que se ejecute <highlight>{{tool}}</highlight>?",
-    "allowOnce": "Permitir una vez",
-    "allowSession": "Permitir este chat",
+    "allowOnce": "Permitir esta vez",
+    "allowSession": "Permitir para esta sesión",
+    "allowOnceHint": "Se ejecuta ahora. Se le preguntará de nuevo la próxima vez.",
+    "allowSessionHint": "Esta herramienta se ejecuta sin preguntar durante el resto de esta tarea.",
+    "denyHint": "Se detiene aquí. Se informa al agente que fue rechazado.",
     "deny": "Denegar",
     "risk": {
       "high": "Riesgo alto",
@@ -2169,7 +2182,8 @@ sklm: {
       "plugin": "Vista de complemento",
       "subagent": "Subagente",
     "session-tree": "Historial de sesión",
-      "tools": "Herramientas"
+      "tools": "Herramientas",
+      "activity": "Actividad"
     },
     "pluginView": {
       "failed": "Esta vista no se pudo cargar. Vuelva a cargar el complemento e inténtelo de nuevo.",
@@ -2218,6 +2232,15 @@ sklm: {
       "reveal": "Mostrar en el Finder",
       "binary": "Archivo binario: vista previa no disponible",
       "tooLarge": "El archivo es demasiado grande para obtener una vista previa"
+    },
+    "activity": {
+      "decisionNeeded": "Necesita su decisión",
+      "reviewRequest": "Solicitud de revisión",
+      "todo": "Tarea {{done}} de {{total}}",
+      "toolsRun": "Herramientas ejecutadas",
+      "changes": "Cambios",
+      "openReview": "Abrir revisión",
+      "empty": "Aún no se ejecutó nada"
     }
   },
   "palette": {

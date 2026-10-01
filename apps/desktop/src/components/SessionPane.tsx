@@ -1,8 +1,9 @@
-import { memo, useMemo } from "react";
+import { memo, useEffect, useMemo } from "react";
 import { ChatTranscript } from "./ChatTranscript";
 import { useAppStore } from "../stores/app-store";
 import { headPermission, sessionPermissions } from "../lib/pending-permissions";
 import { headAsk } from "../lib/pending-asks";
+import { ACTIVITY_TAB } from "../lib/work-panel-tabs";
 import { useTranscriptView } from "../hooks/use-transcript-view";
 import { TranscriptDisclosureProvider } from "../features/chat/transcript/disclosure";
 import { OmpSubagentsList } from "../features/chat/transcript/OmpSubagentsList";
@@ -60,6 +61,20 @@ export const SessionPane = memo(function SessionPane({
         : transcript.focus,
     [transcript.focus, transcript.parentMessage],
   );
+  // Auto-open the Activity tab the first time a run starts or a permission
+  // arrives for this session. Once the panel has tabs, the context is non-empty
+  // so this never fires again — satisfying "never reopen after user closes it".
+  // Effect in SessionPane keeps UI heuristics out of shared state.
+  const neverOpened = useAppStore(
+    (s) => (s.workPanelContexts[sessionId]?.tabs.length ?? 0) === 0,
+  );
+  const openWorkPanelTabForSession = useAppStore((s) => s.openWorkPanelTabForSession);
+  useEffect(() => {
+    if (!neverOpened) return;
+    if (!isRunning && !pendingPermission) return;
+    openWorkPanelTabForSession(sessionId, ACTIVITY_TAB);
+  }, [neverOpened, isRunning, pendingPermission, sessionId, openWorkPanelTabForSession]);
+
 
   return (
     <div

@@ -57,7 +57,7 @@ export function ComposerPermissionPicker({t, mode, composerPermissionMode,
               }}
             >
               <span className="text-sm">
-                {t(PERMISSION_MODE_I18N_KEYS[composerPermissionMode])}
+                {t("chat.permissionsLabel", { mode: t(PERMISSION_MODE_I18N_KEYS[composerPermissionMode]) })}
               </span>
               <IconChevronDown size={12} />
             </TooltipButton>
