@@ -29,6 +29,7 @@ export function MemoryTab() {
   const status = useAppStore((s) => s.memoryStatus);
   const refresh = useAppStore((s) => s.refreshMemoryStatus);
   const [config, setConfig] = useState<MemoryConfigView | null>(null);
+  const [configLoading, setConfigLoading] = useState(true);
   const [draft, setDraft] = useState<MemoryConfig>({ backend: "mnemopi" });
   const [token, setToken] = useState("");
   const [saving, setSaving] = useState(false);
@@ -61,7 +62,7 @@ export function MemoryTab() {
         hindsightRetainMission: c.hindsightRetainMission,
         hindsightLocal: c.hindsightLocal,
       });
-    });
+    }).finally(() => setConfigLoading(false));
     // Detect launchers so the section renders even before any start/stop
     void api.hindsightLocalDetect().then((r) => setLocalState(r.state));
     // Subscribe to supervisor push events from main process
@@ -209,7 +210,11 @@ export function MemoryTab() {
 
       {/* ── Config card ──────────────────────────────────────────────────── */}
       <SettingsCard>
-        <SettingsRow title={t("settings.memoryBackend")}>
+        {configLoading ? (
+          <p className="settings-row-desc">{t("common.loading")}</p>
+        ) : (
+          <>
+          <SettingsRow title={t("settings.memoryBackend")}>
           <SettingsMenuSelect
             label={t("settings.memoryBackend")}
             value={draft.backend}
@@ -326,6 +331,8 @@ export function MemoryTab() {
           </button>
         </SettingsRow>
         {error && <div role="alert">{error}</div>}
+          </>
+        )}
       </SettingsCard>
 
       {/* ── Mental models card (Hindsight only) ──────────────────────────── */}

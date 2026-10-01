@@ -7,40 +7,47 @@ import { useTranslation } from "react-i18next";
 import type { OmpInstalledSkillEntry } from "@pi-desktop/shared";
 import { api } from "../../lib/api";
 import { Badge, Button } from "../ui";
+import { SettingsCard } from "../../features/settings/primitives";
 
 export function OmpSkillsSection() {
   const { t } = useTranslation();
   const [skills, setSkills] = useState<OmpInstalledSkillEntry[] | null>(null);
   const [error, setError] = useState(false);
 
-  useEffect(() => {
+  const load = () => {
+    setError(false);
     api
       .ompInstalledSkillsList()
       .then((res) => setSkills(res.skills))
       .catch(() => setError(true));
-  }, []);
+  };
 
-  if (error) return null;
+  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (error) {
+    return (
+      <SettingsCard title={t("settings.ompSkillsGroup")}>
+        <p className="settings-row-desc">{t("settings.ompSkillsError")}</p>
+      </SettingsCard>
+    );
+  }
   if (!skills) {
     return (
-      <section className="settings-card-block">
-        <h2 className="settings-card-heading">{t("settings.ompSkillsGroup")}</h2>
+      <SettingsCard title={t("settings.ompSkillsGroup")}>
         <p className="settings-row-desc">{t("common.loading")}</p>
-      </section>
+      </SettingsCard>
     );
   }
   if (skills.length === 0) {
     return (
-      <section className="settings-card-block">
-        <h2 className="settings-card-heading">{t("settings.ompSkillsGroup")}</h2>
+      <SettingsCard title={t("settings.ompSkillsGroup")}>
         <p className="settings-row-desc">{t("settings.ompSkillsEmpty")}</p>
-      </section>
+      </SettingsCard>
     );
   }
 
   return (
-    <section className="settings-card-block">
-      <h2 className="settings-card-heading">{t("settings.ompSkillsGroup")}</h2>
+    <SettingsCard title={t("settings.ompSkillsGroup")}>
       <ul className="model-provider-list">
         {skills.map((s) => (
           <li key={s.id} className="model-provider-row">
@@ -69,6 +76,6 @@ export function OmpSkillsSection() {
           </li>
         ))}
       </ul>
-    </section>
+    </SettingsCard>
   );
 }

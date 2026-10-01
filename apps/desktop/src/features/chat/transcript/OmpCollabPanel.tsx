@@ -84,6 +84,7 @@ export const OmpCollabPanel = memo(function OmpCollabPanel({
               target="_blank"
               rel="noreferrer"
               className="omp-collab-url"
+              title={state.url}
             >
               {state.url}
             </a>
