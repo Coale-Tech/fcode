@@ -1392,6 +1392,8 @@ sklm: {
     ompWorktreesGroup: "Ajan Çalışma Ağaçları",
     ompWorktreesEmpty: "~/.omp/wt/ altında ajan tarafından yönetilen çalışma ağacı bulunamadı.",
     ompWorktreesOrphan: "Yetim",
+    ompAgentModelOverridesDesc: "Bu yerleşik ajanın kullandığı modeli değiştirin. Oturum modelini kullanmak için Varsayılan olarak bırakın.",
+    ompAgentModelOverridesDefault: "Varsayılan",
     ompCollabPanelShare: "Anlık görüntü paylaş",
     ompCollabPanelShareDesc: "Upload an encrypted snapshot of this session and get a shareable link.",
     ompCollabPanelShareBtn: "Paylaş",

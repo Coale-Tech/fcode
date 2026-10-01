@@ -1378,6 +1378,8 @@ sklm: {
     ompWorktreesGroup: "代理工作树",
     ompWorktreesEmpty: "在 ~/.omp/wt/ 下未找到代理管理的工作树。",
     ompWorktreesOrphan: "孤立",
+    ompAgentModelOverridesDesc: "覆盖此内置 Agent 使用的模型。选择默认则沿用会话模型。",
+    ompAgentModelOverridesDefault: "默认",
     ompCollabPanelShare: "分享快照",
     ompCollabPanelShareDesc: "上传此会话的加密快照并获取可分享链接。",
     ompCollabPanelShareBtn: "分享",

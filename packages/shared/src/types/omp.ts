@@ -226,6 +226,7 @@ export interface OmpSettingsValues {
   "worktree.clone"?: boolean;
   "task.maxConcurrency"?: number;
   "task.maxRecursionDepth"?: number;
+  "task.agentModelOverrides"?: Record<string, string>;
   // Eval / Python
   "eval.py"?: boolean;
   "eval.js"?: boolean;

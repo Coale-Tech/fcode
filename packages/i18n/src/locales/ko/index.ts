@@ -1402,6 +1402,8 @@ sklm: {
     ompWorktreesGroup: "에이전트 워크트리",
     ompWorktreesEmpty: "~/.omp/wt/에서 에이전트 관리 워크트리를 찾을 수 없습니다.",
     ompWorktreesOrphan: "고아",
+    ompAgentModelOverridesDesc: "이 내장 에이전트가 사용할 모델을 재정의합니다. 세션 모델을 사용하려면 기본값으로 두세요.",
+    ompAgentModelOverridesDefault: "기본값",
     ompCollabPanelShare: "스냅샷 공유",
     ompCollabPanelShareDesc: "Upload an encrypted snapshot of this session and get a shareable link.",
     ompCollabPanelShareBtn: "공유",

@@ -1391,6 +1391,8 @@ sklm: {
     "ompWorktreesGroup": "Agenten-Worktrees",
     "ompWorktreesEmpty": "Keine agentengesteuerten Worktrees unter ~/.omp/wt/ gefunden.",
     "ompWorktreesOrphan": "Verwaist",
+    "ompAgentModelOverridesDesc": "Überschreibt das von diesem integrierten Agenten verwendete Modell. Auf Standard lassen, um das Sitzungsmodell zu verwenden.",
+    "ompAgentModelOverridesDefault": "Standard",
     "ompCollabPanelShare": "Snapshot teilen",
     "ompCollabPanelShareDesc": "Upload an encrypted snapshot of this session and get a shareable link.",
     "ompCollabPanelShareBtn": "Teilen",

@@ -1391,6 +1391,8 @@ sklm: {
     "ompWorktreesGroup": "Árboles de trabajo del agente",
     "ompWorktreesEmpty": "No se encontraron árboles de trabajo gestionados por agente en ~/.omp/wt/.",
     "ompWorktreesOrphan": "Huérfano",
+    "ompAgentModelOverridesDesc": "Reemplaza el modelo usado por este agente integrado. Deja en Predeterminado para usar el modelo de la sesión.",
+    "ompAgentModelOverridesDefault": "Predeterminado",
     "ompCollabPanelShare": "Compartir instantánea",
     "ompCollabPanelShareDesc": "Upload an encrypted snapshot of this session and get a shareable link.",
     "ompCollabPanelShareBtn": "Compartir",

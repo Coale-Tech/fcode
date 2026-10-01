@@ -1403,6 +1403,8 @@ sklm: {
     ompWorktreesGroup: "Agent Worktrees",
     ompWorktreesEmpty: "No agent-managed worktrees found under ~/.omp/wt/.",
     ompWorktreesOrphan: "Orphan",
+    ompAgentModelOverridesDesc: "Override the model used by this bundled agent. Leave at Default to use the session model.",
+    ompAgentModelOverridesDefault: "Default",
     ompCollabPanelShare: "Share Snapshot",
     ompCollabPanelShareDesc: "Upload an encrypted snapshot of this session and get a shareable link.",
     ompCollabPanelShareBtn: "Share",
