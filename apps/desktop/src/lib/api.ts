@@ -143,6 +143,7 @@ import type {
   ToolApprovalMode,
   OmpSettingsValues,
   OmpSessionStatsResult,
+  OmpShareResult,
   OmpSubagentListResult,
   OmpSubagentMessagesResult,
 } from "@pi-desktop/shared";
@@ -1758,4 +1759,7 @@ export const api = {
   /** Cycle to the next omp thinking level. */
   ompCycleThinkingLevel: () =>
     invoke<void>(IPC.invoke.ompCycleThinkingLevel),
+  /** Trigger the /share slash command and return the snapshot URL. */
+  ompShare: () =>
+    invoke<OmpShareResult>(IPC.invoke.ompShare),
 };
