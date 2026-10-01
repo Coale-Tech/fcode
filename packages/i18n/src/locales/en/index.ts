@@ -1404,6 +1404,8 @@ sklm: {
     ompLoopModeReset: "Reset",
     ompQueueModeAll: "All at once",
     ompQueueModeOneAtATime: "One at a time",
+    ompAgentModelOverridesDesc: "Override the model used by this bundled agent. Leave at Default to use the session model.",
+    ompAgentModelOverridesDefault: "Default",
     ompCollabPanelShare: "Share Snapshot",
     ompCollabPanelShareDesc: "Upload an encrypted snapshot of this session and get a shareable link.",
     ompCollabPanelShareBtn: "Share",

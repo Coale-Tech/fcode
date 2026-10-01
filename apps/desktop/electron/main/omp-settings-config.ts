@@ -16,7 +16,8 @@ type FieldSchema =
   | { type: "string" }
   | { type: "number"; min: number; max: number }
   | { type: "enum"; values: readonly string[] }
-  | { type: "array" };
+  | { type: "array" }
+  | { type: "record" };
 
 const ISOLATION_BACKENDS = ["auto", "apfs", "btrfs", "zfs", "reflink", "overlayfs", "projfs", "block-clone", "rcopy"] as const;
 const COLLAB_AUTO_START = ["off", "view", "control"] as const;
@@ -33,6 +34,7 @@ const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   "worktree.clone":           { type: "boolean" },
   "task.maxConcurrency":      { type: "number", min: 0, max: 256 },
   "task.maxRecursionDepth":   { type: "number", min: -1, max: 32 },
+  "task.agentModelOverrides": { type: "record" },
   // Eval / Python (omp/packages/coding-agent/src/eval/settings.ts)
   "eval.py":                  { type: "boolean" },
   "eval.js":                  { type: "boolean" },
@@ -143,6 +145,21 @@ export function validateOmpSettings(patch: Record<string, unknown>): OmpSettings
           throw new Error(`omp setting ${JSON.stringify(key)}: expected string[], got ${typeof value}`);
         }
         break;
+      case "record": {
+        if (typeof value !== "object" || value === null || Array.isArray(value)) {
+          throw new Error(`omp setting ${JSON.stringify(key)}: expected object, got ${Array.isArray(value) ? "array" : typeof value}`);
+        }
+        const rec: Record<string, string> = {};
+        for (const [agentName, modelId] of Object.entries(value as Record<string, unknown>)) {
+          if (!agentName) continue; // skip empty keys silently
+          if (typeof modelId !== "string") {
+            throw new Error(`omp setting ${JSON.stringify(key)}[${JSON.stringify(agentName)}]: expected string model id, got ${typeof modelId}`);
+          }
+          if (modelId !== "") rec[agentName] = modelId; // empty string clears the entry
+        }
+        out[key] = rec;
+        continue; // already stored
+      }
     }
     out[key] = value;
   }

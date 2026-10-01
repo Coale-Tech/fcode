@@ -1379,6 +1379,8 @@ sklm: {
     ompLoopModeReset: "Reset",
     ompQueueModeAll: "All at once",
     ompQueueModeOneAtATime: "One at a time",
+    ompAgentModelOverridesDesc: "覆寫此內建 Agent 使用的模型。選擇預設則沿用會話模型。",
+    ompAgentModelOverridesDefault: "預設",
     ompCollabPanelShare: "分享快照",
     ompCollabPanelShareDesc: "上傳此工作階段的加密快照並取得可分享連結。",
     ompCollabPanelShareBtn: "分享",

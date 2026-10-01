@@ -1392,6 +1392,8 @@ sklm: {
     "ompLoopModeReset": "Reset",
     "ompQueueModeAll": "All at once",
     "ompQueueModeOneAtATime": "One at a time",
+    "ompAgentModelOverridesDesc": "Reemplaza el modelo usado por este agente integrado. Deja en Predeterminado para usar el modelo de la sesión.",
+    "ompAgentModelOverridesDefault": "Predeterminado",
     "ompCollabPanelShare": "Compartir instantánea",
     "ompCollabPanelShareDesc": "Upload an encrypted snapshot of this session and get a shareable link.",
     "ompCollabPanelShareBtn": "Compartir",

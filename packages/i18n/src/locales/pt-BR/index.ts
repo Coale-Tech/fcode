@@ -1357,6 +1357,8 @@ export const ptBR = {
     ompLoopModeReset: "Reset",
     ompQueueModeAll: "All at once",
     ompQueueModeOneAtATime: "One at a time",
+    ompAgentModelOverridesDesc: "Substituir o modelo usado por este agente. Deixe em Padrão para usar o modelo da sessão.",
+    ompAgentModelOverridesDefault: "Padrão",
     ompCollabPanelShare: "Compartilhar snapshot",
     ompCollabPanelShareDesc: "Upload an encrypted snapshot of this session and get a shareable link.",
     ompCollabPanelShareBtn: "Compartilhar",

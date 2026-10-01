@@ -1403,6 +1403,8 @@ sklm: {
     ompLoopModeReset: "Reset",
     ompQueueModeAll: "All at once",
     ompQueueModeOneAtATime: "One at a time",
+    ompAgentModelOverridesDesc: "이 내장 에이전트가 사용할 모델을 재정의합니다. 세션 모델을 사용하려면 기본값으로 두세요.",
+    ompAgentModelOverridesDefault: "기본값",
     ompCollabPanelShare: "스냅샷 공유",
     ompCollabPanelShareDesc: "Upload an encrypted snapshot of this session and get a shareable link.",
     ompCollabPanelShareBtn: "공유",
