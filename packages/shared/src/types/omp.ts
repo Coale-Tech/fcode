@@ -164,3 +164,5 @@ export interface BenchBootstrapResult {
   retained?: boolean;
   message?: string;
 }
+/** omp tool approval mode. Controls which tool tiers are auto-approved. */
+export type ToolApprovalMode = "always-ask" | "write" | "yolo";

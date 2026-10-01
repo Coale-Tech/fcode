@@ -137,7 +137,7 @@ import type {
   HindsightListMentalModelsResult,
   HindsightRefreshMentalModelResult,
   BenchBootstrapResult,
-  HindsightSetBankMissionResult,
+  ToolApprovalMode,
   OmpSessionStatsResult,
 } from "@pi-desktop/shared";
 import {
