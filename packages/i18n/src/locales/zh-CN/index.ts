@@ -1363,6 +1363,8 @@ sklm: {
     ompCollabAutoStartOff: "Off",
     ompCollabAutoStartView: "View",
     ompCollabAutoStartControl: "Control",
+    ompAgentModelOverridesDesc: "覆盖此内置 Agent 使用的模型。选择默认则沿用会话模型。",
+    ompAgentModelOverridesDefault: "默认",
     ompCollabPanelShare: "分享快照",
     ompCollabPanelShareDesc: "上传此会话的加密快照并获取可分享链接。",
     ompCollabPanelShareBtn: "分享",
