@@ -300,6 +300,7 @@ Validated settings are serialised as JSON and passed to the bridge process as `F
 | 0.15.7-fcode.1 (preview) | — | — | not tested | not tested | not tested |
 | 0.15.7-fcode.2 (preview) | `ba344f5e69f2` | v2 (v1 read-only fallback) | not tested | not tested | not tested |
 | 0.16.0 | `ba344f5e69f2` | v2 (v1 read-only fallback) | not tested | not tested | not tested |
+| 0.17.0 | `ba344f5e69f2` | v2 (v1 read-only fallback) | not tested | not tested | not tested |
 
 The protocol smoke test (`apps/desktop/test/omp-protocol-smoke.test.mjs`) asserts that the pinned omp binary negotiates exactly protocol version 2. A pinned commit that stops offering v2 fails the release gate automatically.
 

@@ -2,6 +2,16 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const trEntries: ChangelogEntry[] = [
   {
+    "version": "0.17.0",
+    "date": "2026-10-01",
+    "highlights": [
+      "İş Paneli; mevcut ajan olaylarından beslenen tarayıcı/eval/computer/IDA alt panellerine sahip bir Tools sekmesi, geçmiş mesajlara göz atıp dal oluşturabildiğiniz bir Session History sekmesi ve canlı bir Todo listesi kazandı.",
+      "omp artık depoya entegre edildi; Ayarlar → AI, on bir yeni bölüm (Queue Modes, Task Subagents, Eval & Python, Browser, Collab, LSP, IDA Pro, MCP, Skills & Commands, Hindsight Behavior, HTML Export Theme) içeriyor ve Ayarlar → Extensions, yüklü omp eklentilerini yönetiyor.",
+      "Yerleşik dosya düzenleyici (Files, Mod+2) ayrı Code sayfasının yerini alıyor; DAP paneli kesme noktası yönetimi ve çalıştırma kontrolü kazandı; bağlam kullanım açılır penceresi oturum başına token istatistiklerini ve maliyeti gösteriyor.",
+    ],
+  },
+
+  {
     "version": "0.16.0",
     "date": "2026-09-29",
     "highlights": [
