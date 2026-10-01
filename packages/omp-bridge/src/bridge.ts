@@ -138,6 +138,21 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
   const browserHeadless = s["browser.headless"] ?? true;
   const browserRelay    = s["browser.relay"]    ?? false;
 
+  // Skills: fcode-skills dir always first; user dirs appended.
+  const userSkillDirs = s["skills.customDirectories"] ?? [];
+
+  // Hindsight: collect all lines so we emit exactly one hindsight: block.
+  const hindsightLines: string[] = [];
+  if (opts.memory?.backend === "hindsight") {
+    if (opts.memory.hindsightUrl) hindsightLines.push(`  apiUrl: ${JSON.stringify(opts.memory.hindsightUrl)}`);
+    if (opts.memory.hindsightBank) hindsightLines.push(`  bankId: ${JSON.stringify(opts.memory.hindsightBank)}`);
+  }
+  if (s["hindsight.autoRecall"]          !== undefined) hindsightLines.push(`  autoRecall: ${s["hindsight.autoRecall"]}`);
+  if (s["hindsight.autoRetain"]          !== undefined) hindsightLines.push(`  autoRetain: ${s["hindsight.autoRetain"]}`);
+  if (s["hindsight.retainMode"]          !== undefined) hindsightLines.push(`  retainMode: ${s["hindsight.retainMode"]}`);
+  if (s["hindsight.mentalModelsEnabled"] !== undefined) hindsightLines.push(`  mentalModelsEnabled: ${s["hindsight.mentalModelsEnabled"]}`);
+  if (s["hindsight.mentalModelAutoSeed"] !== undefined) hindsightLines.push(`  mentalModelAutoSeed: ${s["hindsight.mentalModelAutoSeed"]}`);
+
   // ponytail: YAML by hand — avoids a yaml dep for a ~20-line config file.
   return [
     "# omp overlay for Fcode — generated on each launch, do not edit.",
@@ -153,7 +168,10 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
     "skills:",
     `  customDirectories:`,
     `    - "${skillsDir}"`,
+    ...userSkillDirs.map((d) => `    - ${JSON.stringify(d)}`),
     "  enableClaudeUser: true",
+    ...(s["skills.enabled"] !== undefined ? [`  enabled: ${s["skills.enabled"]}`] : []),
+    ...(s["skills.registryUrl"] ? [`  registryUrl: ${JSON.stringify(s["skills.registryUrl"])}`] : []),
     "",
     "browser:",
     `  enabled: ${browserEnabled}`,
@@ -169,24 +187,18 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
           `  backend: ${opts.memory.backend}`,
           "mnemopi:",
           "  llmMode: session",
-          ...(opts.memory.backend === "hindsight" && opts.memory.hindsightUrl
-            ? [
-                "hindsight:",
-                `  apiUrl: ${JSON.stringify(opts.memory.hindsightUrl)}`,
-                ...(opts.memory.hindsightBank ? [`  bankId: ${JSON.stringify(opts.memory.hindsightBank)}`] : []),
-              ]
-            : []),
         ]
       : []),
-    // Task / isolation settings
+    ...(hindsightLines.length > 0 ? ["", "hindsight:", ...hindsightLines] : []),
+    // Task / isolation / eval / collab / LSP / IDA / MCP / commands settings
     ...ompSettingsYaml(s),
   ].join("\n");
 }
 
 /**
- * Generate YAML lines for the user-configured omp settings groups
- * (task, isolation, worktree, eval, python, collab).
+ * Generate YAML lines for the user-configured omp settings groups.
  * Only emits sections where the user has set at least one key.
+ * Skills/browser/hindsight are handled inline in makeOmpOverlay to avoid duplicate keys.
  */
 function ompSettingsYaml(s: OmpSettingsValues): string[] {
   const lines: string[] = [];
@@ -254,6 +266,49 @@ function ompSettingsYaml(s: OmpSettingsValues): string[] {
   if (followUpMode  !== undefined) lines.push("", `followUpMode: ${followUpMode}`);
   if (interruptMode !== undefined) lines.push("", `interruptMode: ${interruptMode}`);
   if (loopMode      !== undefined) lines.push("", "loop:", `  mode: ${loopMode}`);
+  // lsp section
+  const lspEnabled = s["lsp.enabled"];
+  const lspFmt = s["lsp.formatOnWrite"];
+  const lspDiagWrite = s["lsp.diagnosticsOnWrite"];
+  const lspDiagEdit = s["lsp.diagnosticsOnEdit"];
+  if (lspEnabled !== undefined || lspFmt !== undefined || lspDiagWrite !== undefined || lspDiagEdit !== undefined) {
+    lines.push("", "lsp:");
+    if (lspEnabled   !== undefined) lines.push(`  enabled: ${lspEnabled}`);
+    if (lspFmt       !== undefined) lines.push(`  formatOnWrite: ${lspFmt}`);
+    if (lspDiagWrite !== undefined) lines.push(`  diagnosticsOnWrite: ${lspDiagWrite}`);
+    if (lspDiagEdit  !== undefined) lines.push(`  diagnosticsOnEdit: ${lspDiagEdit}`);
+  }
+
+  // ida section
+  const idaEnabled = s["ida.enabled"];
+  const idaPython = s["ida.python"];
+  const idaInstallDir = s["ida.installDir"];
+  if (idaEnabled !== undefined || idaPython !== undefined || idaInstallDir !== undefined) {
+    lines.push("", "ida:");
+    if (idaEnabled    !== undefined) lines.push(`  enabled: ${idaEnabled}`);
+    if (idaPython     !== undefined && idaPython !== "") lines.push(`  python: ${JSON.stringify(idaPython)}`);
+    if (idaInstallDir !== undefined && idaInstallDir !== "") lines.push(`  installDir: ${JSON.stringify(idaInstallDir)}`);
+  }
+
+  // mcp section
+  const mcpProjCfg = s["mcp.enableProjectConfig"];
+  const mcpMd = s["mcp.renderMarkdownResults"];
+  const mcpNotify = s["mcp.notifications"];
+  if (mcpProjCfg !== undefined || mcpMd !== undefined || mcpNotify !== undefined) {
+    lines.push("", "mcp:");
+    if (mcpProjCfg !== undefined) lines.push(`  enableProjectConfig: ${mcpProjCfg}`);
+    if (mcpMd      !== undefined) lines.push(`  renderMarkdownResults: ${mcpMd}`);
+    if (mcpNotify  !== undefined) lines.push(`  notifications: ${mcpNotify}`);
+  }
+
+  // commands section
+  const cmdClaudeUser = s["commands.enableClaudeUser"];
+  const cmdClaudeProj = s["commands.enableClaudeProject"];
+  if (cmdClaudeUser !== undefined || cmdClaudeProj !== undefined) {
+    lines.push("", "commands:");
+    if (cmdClaudeUser !== undefined) lines.push(`  enableClaudeUser: ${cmdClaudeUser}`);
+    if (cmdClaudeProj !== undefined) lines.push(`  enableClaudeProject: ${cmdClaudeProj}`);
+  }
 
   return lines;
 }

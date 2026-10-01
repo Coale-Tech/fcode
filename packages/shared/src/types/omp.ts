@@ -248,4 +248,29 @@ export interface OmpSettingsValues {
   "followUpMode"?: "all" | "one-at-a-time";
   "interruptMode"?: "immediate" | "wait";
   "loop.mode"?: "prompt" | "compact" | "reset";
+  // LSP (omp/packages/coding-agent/src/lsp/settings.ts)
+  "lsp.enabled"?: boolean;
+  "lsp.formatOnWrite"?: boolean;
+  "lsp.diagnosticsOnWrite"?: boolean;
+  "lsp.diagnosticsOnEdit"?: boolean;
+  // IDA Pro (omp/packages/coding-agent/src/ida/settings.ts)
+  "ida.enabled"?: boolean;
+  "ida.python"?: string;
+  "ida.installDir"?: string;
+  // MCP (omp/packages/coding-agent/src/mcp/settings.ts)
+  "mcp.enableProjectConfig"?: boolean;
+  "mcp.renderMarkdownResults"?: boolean;
+  "mcp.notifications"?: boolean;
+  // Skills & Commands (omp/packages/coding-agent/src/extensibility/settings.ts)
+  "skills.enabled"?: boolean;
+  "skills.registryUrl"?: string;
+  "skills.customDirectories"?: string[];
+  "commands.enableClaudeUser"?: boolean;
+  "commands.enableClaudeProject"?: boolean;
+  // Hindsight behavioral (omp/packages/coding-agent/src/hindsight/settings.ts)
+  "hindsight.autoRecall"?: boolean;
+  "hindsight.autoRetain"?: boolean;
+  "hindsight.retainMode"?: "full-session" | "last-turn";
+  "hindsight.mentalModelsEnabled"?: boolean;
+  "hindsight.mentalModelAutoSeed"?: boolean;
 }

@@ -15,7 +15,8 @@ type FieldSchema =
   | { type: "boolean" }
   | { type: "string" }
   | { type: "number"; min: number; max: number }
-  | { type: "enum"; values: readonly string[] };
+  | { type: "enum"; values: readonly string[] }
+  | { type: "array" };
 
 const ISOLATION_BACKENDS = ["auto", "apfs", "btrfs", "zfs", "reflink", "overlayfs", "projfs", "block-clone", "rcopy"] as const;
 const COLLAB_AUTO_START = ["off", "view", "control"] as const;
@@ -23,6 +24,7 @@ const PYTHON_KERNEL_MODES = ["session", "per-call"] as const;
 const QUEUE_FLOW_MODES = ["all", "one-at-a-time"] as const;
 const INTERRUPT_MODES = ["immediate", "wait"] as const;
 const LOOP_MODES = ["prompt", "compact", "reset"] as const;
+const HINDSIGHT_RETAIN_MODES = ["full-session", "last-turn"] as const;
 
 const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   // Task / isolation (omp/packages/coding-agent/src/task/settings.ts)
@@ -53,6 +55,31 @@ const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   "followUpMode":             { type: "enum", values: QUEUE_FLOW_MODES },
   "interruptMode":            { type: "enum", values: INTERRUPT_MODES },
   "loop.mode":                { type: "enum", values: LOOP_MODES },
+  // LSP (omp/packages/coding-agent/src/lsp/settings.ts)
+  "lsp.enabled":              { type: "boolean" },
+  "lsp.formatOnWrite":        { type: "boolean" },
+  "lsp.diagnosticsOnWrite":   { type: "boolean" },
+  "lsp.diagnosticsOnEdit":    { type: "boolean" },
+  // IDA Pro (omp/packages/coding-agent/src/ida/settings.ts)
+  "ida.enabled":              { type: "boolean" },
+  "ida.python":               { type: "string" },
+  "ida.installDir":           { type: "string" },
+  // MCP (omp/packages/coding-agent/src/mcp/settings.ts)
+  "mcp.enableProjectConfig":  { type: "boolean" },
+  "mcp.renderMarkdownResults":{ type: "boolean" },
+  "mcp.notifications":        { type: "boolean" },
+  // Skills & Commands (omp/packages/coding-agent/src/extensibility/settings.ts)
+  "skills.enabled":           { type: "boolean" },
+  "skills.registryUrl":       { type: "string" },
+  "skills.customDirectories": { type: "array" },
+  "commands.enableClaudeUser":  { type: "boolean" },
+  "commands.enableClaudeProject": { type: "boolean" },
+  // Hindsight behavioral (omp/packages/coding-agent/src/hindsight/settings.ts)
+  "hindsight.autoRecall":          { type: "boolean" },
+  "hindsight.autoRetain":          { type: "boolean" },
+  "hindsight.retainMode":          { type: "enum", values: HINDSIGHT_RETAIN_MODES },
+  "hindsight.mentalModelsEnabled": { type: "boolean" },
+  "hindsight.mentalModelAutoSeed": { type: "boolean" },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -109,6 +136,11 @@ export function validateOmpSettings(patch: Record<string, unknown>): OmpSettings
           throw new Error(
             `omp setting ${JSON.stringify(key)}: invalid value ${JSON.stringify(value)}, expected one of ${rule.values.join(", ")}`,
           );
+        }
+        break;
+      case "array":
+        if (!Array.isArray(value) || !value.every((v) => typeof v === "string")) {
+          throw new Error(`omp setting ${JSON.stringify(key)}: expected string[], got ${typeof value}`);
         }
         break;
     }
