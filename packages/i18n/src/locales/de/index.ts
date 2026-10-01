@@ -1385,6 +1385,8 @@ sklm: {
     "ompCollabAutoStartOff": "Off",
     "ompCollabAutoStartView": "View",
     "ompCollabAutoStartControl": "Control",
+    "ompAgentModelOverridesDesc": "Überschreibt das von diesem integrierten Agenten verwendete Modell. Auf Standard lassen, um das Sitzungsmodell zu verwenden.",
+    "ompAgentModelOverridesDefault": "Standard",
     "ompCollabPanelShare": "Snapshot teilen",
     "ompCollabPanelShareDesc": "Upload an encrypted snapshot of this session and get a shareable link.",
     "ompCollabPanelShareBtn": "Teilen",
