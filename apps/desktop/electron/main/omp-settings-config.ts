@@ -20,6 +20,9 @@ type FieldSchema =
 const ISOLATION_BACKENDS = ["auto", "apfs", "btrfs", "zfs", "reflink", "overlayfs", "projfs", "block-clone", "rcopy"] as const;
 const COLLAB_AUTO_START = ["off", "view", "control"] as const;
 const PYTHON_KERNEL_MODES = ["session", "per-call"] as const;
+const QUEUE_FLOW_MODES = ["all", "one-at-a-time"] as const;
+const INTERRUPT_MODES = ["immediate", "wait"] as const;
+const LOOP_MODES = ["prompt", "compact", "reset"] as const;
 
 const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   // Task / isolation (omp/packages/coding-agent/src/task/settings.ts)
@@ -45,6 +48,11 @@ const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   "collab.webUrl":            { type: "string" },
   "collab.displayName":       { type: "string" },
   "collab.autoStart":         { type: "enum", values: COLLAB_AUTO_START },
+  // Queue modes (omp/packages/coding-agent/src/modes/settings.ts)
+  "steeringMode":             { type: "enum", values: QUEUE_FLOW_MODES },
+  "followUpMode":             { type: "enum", values: QUEUE_FLOW_MODES },
+  "interruptMode":            { type: "enum", values: INTERRUPT_MODES },
+  "loop.mode":                { type: "enum", values: LOOP_MODES },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

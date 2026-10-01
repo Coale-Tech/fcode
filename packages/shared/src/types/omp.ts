@@ -243,4 +243,9 @@ export interface OmpSettingsValues {
   "collab.webUrl"?: string;
   "collab.displayName"?: string;
   "collab.autoStart"?: "off" | "view" | "control";
+  // Queue modes (session interaction behaviour; omp/packages/coding-agent/src/modes/settings.ts)
+  "steeringMode"?: "all" | "one-at-a-time";
+  "followUpMode"?: "all" | "one-at-a-time";
+  "interruptMode"?: "immediate" | "wait";
+  "loop.mode"?: "prompt" | "compact" | "reset";
 }
