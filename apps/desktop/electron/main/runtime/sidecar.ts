@@ -1,6 +1,7 @@
 import { writeFileSync } from "node:fs";
 import { MEMORY_TOKEN_SECRET_REF, memoryEnv, readMemoryConfig } from "../memory-config";
 import { approvalModeEnv, readApprovalMode } from "../approval-mode-config";
+import { ompSettingsEnv, readOmpSettings } from "../omp-settings-config";
 import { join } from "node:path";
 import { IPC, type AgentEventEnvelope, type UiMessage } from "@pi-desktop/shared";
 import {
@@ -421,6 +422,8 @@ async function buildFcodeProvidersConfig(
   }
   // Tool approval mode — controls omp's --approval-mode on spawn.
   providerEnv = { ...providerEnv, ...approvalModeEnv(readApprovalMode(dataDir)) };
+  // omp settings groups (task / eval / browser / collab).
+  providerEnv = { ...providerEnv, ...ompSettingsEnv(readOmpSettings(dataDir)) };
 
   const s = new AgentSidecar((text) => logger.child("agent", text), providerEnv);
   wireSidecar(s);

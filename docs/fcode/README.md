@@ -275,6 +275,24 @@ See [ADR 0308](../adr/0308-memory-backends.md) for the full design rationale.
 
 ---
 
+## omp Settings Groups
+
+Fcode exposes four groups of omp runtime settings in **Settings → AI** (below the prompt enhancement card). Settings persist in `<dataDir>/omp-settings.json`; changes take effect after the sidecar restarts (same path as approval mode and memory).
+
+| Group | Key prefix | Controls |
+| --- | --- | --- |
+| Task Subagents | `task.*`, `isolation.*`, `worktree.*` | git-worktree isolation, backend, concurrency, recursion depth |
+| Eval & Python | `eval.*`, `python.*` | Python/JS eval backends, kernel mode, interpreter path |
+| Browser | `browser.*` | Playwright headless toggle, CDP URL, relay |
+| Collab | `collab.*` | Relay URL, web URL, display name, auto-start mode |
+
+The host validates every key against the omp schema (type, enum values, numeric range) before writing. Unknown keys and out-of-range values are rejected. `task.agentModelOverrides` is intentionally excluded — it is a free-form agent→model map best managed via the omp `/agents` hub.
+
+Validated settings are serialised as JSON and passed to the bridge process as `FCODE_OMP_SETTINGS`, where `makeOmpOverlay` merges them into the appropriate YAML sections.
+
+---
+
+
 ## Compatibility table
 
 | Fcode release | Pinned omp commit | Bridge protocol | Frappe v15 | Frappe v16 | Frappe v17 |
