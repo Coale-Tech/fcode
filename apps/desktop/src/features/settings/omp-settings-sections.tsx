@@ -289,6 +289,55 @@ export function OmpSettingsSections() {
         </SettingsRow>
       </SettingsCard>
 
+      {/* ── Queue Modes ──────────────────────────────────────────── */}
+      <SettingsCard title={t("settings.ompQueueModesGroup")}>
+        <SettingsRow title={t("settings.ompSteeringMode")} description={t("settings.ompSteeringModeDesc")}>
+          <SettingsMenuSelect
+            label={t("settings.ompSteeringMode")}
+            value={omp["steeringMode"] ?? "one-at-a-time"}
+            onChange={(v) => void save({ steeringMode: v as OmpSettingsValues["steeringMode"] })}
+            options={[
+              { id: "one-at-a-time", label: t("settings.ompQueueModeOneAtATime") },
+              { id: "all", label: t("settings.ompQueueModeAll") },
+            ]}
+          />
+        </SettingsRow>
+        <SettingsRow title={t("settings.ompFollowUpMode")} description={t("settings.ompFollowUpModeDesc")}>
+          <SettingsMenuSelect
+            label={t("settings.ompFollowUpMode")}
+            value={omp["followUpMode"] ?? "one-at-a-time"}
+            onChange={(v) => void save({ followUpMode: v as OmpSettingsValues["followUpMode"] })}
+            options={[
+              { id: "one-at-a-time", label: t("settings.ompQueueModeOneAtATime") },
+              { id: "all", label: t("settings.ompQueueModeAll") },
+            ]}
+          />
+        </SettingsRow>
+        <SettingsRow title={t("settings.ompInterruptMode")} description={t("settings.ompInterruptModeDesc")}>
+          <SettingsMenuSelect
+            label={t("settings.ompInterruptMode")}
+            value={omp["interruptMode"] ?? "immediate"}
+            onChange={(v) => void save({ interruptMode: v as OmpSettingsValues["interruptMode"] })}
+            options={[
+              { id: "immediate", label: t("settings.ompInterruptModeImmediate") },
+              { id: "wait", label: t("settings.ompInterruptModeWait") },
+            ]}
+          />
+        </SettingsRow>
+        <SettingsRow title={t("settings.ompLoopMode")} description={t("settings.ompLoopModeDesc")}>
+          <SettingsMenuSelect
+            label={t("settings.ompLoopMode")}
+            value={omp["loop.mode"] ?? "prompt"}
+            onChange={(v) => void save({ "loop.mode": v as OmpSettingsValues["loop.mode"] })}
+            options={[
+              { id: "prompt", label: t("settings.ompLoopModePrompt") },
+              { id: "compact", label: t("settings.ompLoopModeCompact") },
+              { id: "reset", label: t("settings.ompLoopModeReset") },
+            ]}
+          />
+        </SettingsRow>
+      </SettingsCard>
+
       {/* ── LSP ──────────────────────────────────────────────────── */}
       <SettingsCard title={t("settings.ompLspGroup")}>
         <SettingsRow title={t("settings.ompLspEnabled")} description={t("settings.ompLspEnabledDesc")}>

@@ -341,6 +341,83 @@ export function registerOmpIpc({ registrar, getSidecar }: OmpIpcDependencies): v
     return { ok: true };
   });
 
+
+  // ── omp.modes.setSteeringMode ──────────────────────────────────────────────
+  handle(IPC.invoke.ompModesSetSteeringMode, async (input: { mode?: unknown } = {}) => {
+    const mode = typeof input?.mode === "string" ? input.mode.trim() : "";
+    if (mode !== "all" && mode !== "one-at-a-time") invalid("mode must be 'all' or 'one-at-a-time'");
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<void>("omp.modes.setSteeringMode", { mode });
+  });
+
+  // ── omp.modes.setFollowUpMode ──────────────────────────────────────────────
+  handle(IPC.invoke.ompModesSetFollowUpMode, async (input: { mode?: unknown } = {}) => {
+    const mode = typeof input?.mode === "string" ? input.mode.trim() : "";
+    if (mode !== "all" && mode !== "one-at-a-time") invalid("mode must be 'all' or 'one-at-a-time'");
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<void>("omp.modes.setFollowUpMode", { mode });
+  });
+
+  // ── omp.modes.setInterruptMode ─────────────────────────────────────────────
+  handle(IPC.invoke.ompModesSetInterruptMode, async (input: { mode?: unknown } = {}) => {
+    const mode = typeof input?.mode === "string" ? input.mode.trim() : "";
+    if (mode !== "immediate" && mode !== "wait") invalid("mode must be 'immediate' or 'wait'");
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<void>("omp.modes.setInterruptMode", { mode });
+  });
+
+  // ── omp.fast.set ──────────────────────────────────────────────────────────
+  handle(IPC.invoke.ompFastSet, async (input: { enabled?: unknown } = {}) => {
+    if (typeof input?.enabled !== "boolean") invalid("enabled (boolean) required");
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<void>("omp.fast.set", { enabled: input.enabled });
+  });
+
+  // ── omp.retry.setAutoRetry ─────────────────────────────────────────────────
+  handle(IPC.invoke.ompRetrySetAutoRetry, async (input: { enabled?: unknown } = {}) => {
+    if (typeof input?.enabled !== "boolean") invalid("enabled (boolean) required");
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<void>("omp.retry.setAutoRetry", { enabled: input.enabled });
+  });
+
+  // ── omp.retry.abort ───────────────────────────────────────────────────────
+  handle(IPC.invoke.ompRetryAbort, async () => {
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<void>("omp.retry.abort");
+  });
+
+  // ── agent.followUp ────────────────────────────────────────────────────────
+  handle(IPC.invoke.agentFollowUp, async (input: { sessionId?: unknown; content?: unknown } = {}) => {
+    const sessionId = typeof input?.sessionId === "string" ? input.sessionId.trim() : "";
+    const content   = typeof input?.content   === "string" ? input.content          : "";
+    if (!sessionId) invalid("sessionId required");
+    if (!content)   invalid("content required");
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<{ accepted: boolean }>("agent.followUp", { sessionId, content });
+  });
+
+  // ── agent.abortAndPrompt ──────────────────────────────────────────────────
+  handle(IPC.invoke.agentAbortAndPrompt, async (input: { sessionId?: unknown; content?: unknown } = {}) => {
+    const sessionId = typeof input?.sessionId === "string" ? input.sessionId.trim() : "";
+    const content   = typeof input?.content   === "string" ? input.content          : "";
+    if (!sessionId) invalid("sessionId required");
+    if (!content)   invalid("content required");
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<{ accepted: boolean }>("agent.abortAndPrompt", { sessionId, content });
+  });
+
+  // ── omp.models.cycle ──────────────────────────────────────────────────────
+  handle(IPC.invoke.ompCycleModel, async () => {
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<void>("omp.models.cycle");
+  });
+
+  // ── omp.thinking.cycle ────────────────────────────────────────────────────
+  handle(IPC.invoke.ompCycleThinkingLevel, async () => {
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<void>("omp.thinking.cycle");
+  });
+
   // ── omp.share ──────────────────────────────────────────────────────────────
   handle(IPC.invoke.ompShare, async () => {
     const sidecar = getSidecar();

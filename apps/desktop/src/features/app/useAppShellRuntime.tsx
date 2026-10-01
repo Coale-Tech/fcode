@@ -839,6 +839,12 @@ export function useAppShellRuntime() {
           case "toggleFollowLog":
             useAppStore.getState().toggleBenchLogFollowTail();
             break;
+          case "cycleOmpModel":
+            void api.ompCycleModel().catch(() => undefined);
+            break;
+          case "cycleOmpThinking":
+            void api.ompCycleThinkingLevel().catch(() => undefined);
+            break;
         }
       };
       runShortcut(shortcut.id);
