@@ -444,6 +444,8 @@ export const IPC = {
     ompSessionSwitch: "pi-desktop/omp/session/switch",
     /** Get preview messages for the current branch. */
     ompSessionBranchMessages: "pi-desktop/omp/session/branchMessages",
+    /** Trigger /share slash command and return the snapshot URL. */
+    ompShare: "pi-desktop/omp/share",
   },
   event: {
     pluginChanged: "pi-desktop/event/pluginChanged",

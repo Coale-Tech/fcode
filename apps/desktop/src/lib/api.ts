@@ -143,6 +143,7 @@ import type {
   ToolApprovalMode,
   OmpSettingsValues,
   OmpSessionStatsResult,
+  OmpShareResult,
   OmpSubagentListResult,
   OmpSubagentMessagesResult,
   OmpSessionExportHtmlResult,
@@ -1761,4 +1762,7 @@ export const api = {
   /** Get preview messages for the current branch. */
   ompSessionBranchMessages: () =>
     invoke<OmpSessionBranchMessagesResult>(IPC.invoke.ompSessionBranchMessages),
+  /** Trigger the /share slash command and return the snapshot URL. */
+  ompShare: () =>
+    invoke<OmpShareResult>(IPC.invoke.ompShare),
 };
