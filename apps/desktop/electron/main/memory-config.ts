@@ -25,17 +25,27 @@ export function validateMemoryConfig(input: Partial<MemoryConfig>): MemoryConfig
   if (!backend) throw new Error("invalid memory backend");
   const out: MemoryConfig = { backend };
   if (backend === "hindsight") {
-    const url = String(input.hindsightUrl ?? "").trim();
-    let parsed: URL;
-    try {
-      parsed = new URL(url);
-    } catch {
-      throw new Error("Hindsight URL must be an http(s) URL");
+    // When the local supervisor is enabled, the URL is auto-set to localhost;
+    // require an explicit URL only when not using the local server.
+    const local = input.hindsightLocal === true;
+    if (local) {
+      out.hindsightLocal = true;
+      // URL is optional when local — supervisor injects localhost at runtime.
+      const url = String(input.hindsightUrl ?? "").trim();
+      if (url) out.hindsightUrl = url;
+    } else {
+      const url = String(input.hindsightUrl ?? "").trim();
+      let parsed: URL;
+      try {
+        parsed = new URL(url);
+      } catch {
+        throw new Error("Hindsight URL must be an http(s) URL");
+      }
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        throw new Error("Hindsight URL must be an http(s) URL");
+      }
+      out.hindsightUrl = url;
     }
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-      throw new Error("Hindsight URL must be an http(s) URL");
-    }
-    out.hindsightUrl = url;
     const bank = String(input.hindsightBank ?? "").trim();
     if (bank) out.hindsightBank = bank;
   }

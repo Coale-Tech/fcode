@@ -36,3 +36,19 @@ test("token only reaches env for hindsight", () => {
   assert.equal(memoryEnv(h, "tok").HINDSIGHT_API_TOKEN, "tok");
   assert.equal(memoryEnv({ backend: "mnemopi" }, "tok").HINDSIGHT_API_TOKEN, undefined);
 });
+
+test("hindsightLocal:true allows missing URL; sets flag on output", () => {
+  // With hindsightLocal, URL is optional (supervisor injects localhost URL at runtime)
+  assert.deepEqual(validateMemoryConfig({ backend: "hindsight", hindsightLocal: true }), {
+    backend: "hindsight",
+    hindsightLocal: true,
+  });
+  // URL is preserved when provided alongside hindsightLocal:true
+  assert.deepEqual(validateMemoryConfig({ backend: "hindsight", hindsightLocal: true, hindsightUrl: "http://localhost:8888" }), {
+    backend: "hindsight",
+    hindsightLocal: true,
+    hindsightUrl: "http://localhost:8888",
+  });
+  // Without hindsightLocal, URL is still required
+  assert.throws(() => validateMemoryConfig({ backend: "hindsight" }));
+});
