@@ -143,6 +143,7 @@ import type {
   ToolApprovalMode,
   OmpSettingsValues,
   OmpSessionStatsResult,
+  OmpShareResult,
   OmpSubagentListResult,
   OmpSubagentMessagesResult,
 } from "@pi-desktop/shared";
@@ -1728,4 +1729,7 @@ export const api = {
   /** Fetch the message history for one subagent by id. */
   ompSubagentMessages: (params?: { subagentId?: string; sessionFile?: string; fromByte?: number }) =>
     invoke<OmpSubagentMessagesResult>(IPC.invoke.ompSubagentMessages, params ?? {}),
+  /** Trigger the /share slash command and return the snapshot URL. */
+  ompShare: () =>
+    invoke<OmpShareResult>(IPC.invoke.ompShare),
 };
