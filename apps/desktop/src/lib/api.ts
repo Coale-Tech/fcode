@@ -155,6 +155,9 @@ import type {
   OmpSessionBranchResult,
   OmpSessionBranchMessagesResult,
   OmpTodoPhase,
+  OmpInstalledSkillsListResult,
+  OmpHistoricalStatsResult,
+  OmpWorktreeListResult,
 } from "@pi-desktop/shared";
 import {
   defaultCommandShellForPlatform,
@@ -1762,6 +1765,18 @@ export const api = {
   /** Get preview messages for the current branch. */
   ompSessionBranchMessages: () =>
     invoke<OmpSessionBranchMessagesResult>(IPC.invoke.ompSessionBranchMessages),
+  /** List omp skillshare packages installed in ~/.omp/agent/ (reads JSON files directly). */
+  ompInstalledSkillsList: () =>
+    invoke<OmpInstalledSkillsListResult>(IPC.invoke.ompInstalledSkillsList),
+  /** Historical AI usage stats from `omp stats --json`. */
+  ompHistoricalStats: () =>
+    invoke<OmpHistoricalStatsResult>(IPC.invoke.ompHistoricalStats),
+  /** List agent-managed git worktrees under ~/.omp/wt/. */
+  ompWorktreeList: () =>
+    invoke<OmpWorktreeListResult>(IPC.invoke.ompWorktreeList),
+  /** Reveal an omp skill store directory in the system file manager. */
+  ompSkillReveal: (id: string, version: string) =>
+    invoke<{ ok: boolean }>(IPC.invoke.ompSkillReveal, { id, version }),
   /** Set steering mode for the active omp session. */
   ompModesSetSteeringMode: (mode: "all" | "one-at-a-time") =>
     invoke<void>(IPC.invoke.ompModesSetSteeringMode, { mode }),

@@ -7,11 +7,23 @@
  */
 import assert from "node:assert/strict";
 import test from "node:test";
-import { register } from "node:module";
+import { register, registerHooks } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
+
+// Stub Electron so `import { shell } from "electron"` works in Node.js test env.
+const electronStub = `data:text/javascript,${encodeURIComponent(`
+  export const shell = { showItemInFolder: () => {} };
+`)}`;
+registerHooks({
+  resolve(specifier, context, next) {
+    return specifier === "electron"
+      ? { url: electronStub, shortCircuit: true }
+      : next(specifier, context);
+  },
+});
 register(pathToFileURL(join(here, "helpers/ts-import-hooks.mjs")));
 
 const { IPC } = await import("@pi-desktop/shared");
