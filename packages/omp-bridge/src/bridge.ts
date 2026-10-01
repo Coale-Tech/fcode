@@ -326,6 +326,12 @@ function ompSettingsYaml(s: OmpSettingsValues): string[] {
     if (themeLight !== undefined && themeLight !== "") lines.push(`  light: ${JSON.stringify(themeLight)}`);
   }
 
+  // NOTE: `extensions` and `disabledExtensions` (OmpSettingsValues keys from
+  // omp/packages/coding-agent/src/extensibility/settings.ts) are NOT written to
+  // the overlay here. omp reads them directly from omp-settings.json (injected
+  // via FCODE_OMP_SETTINGS env var) when it resolves extensibility settings.
+  // The disable toggle in extensions-mgmt-ipc.ts writes to omp-settings.json
+  // and the env var refreshes on sidecar restart — no overlay entry needed.
   return lines;
 }
 
@@ -363,7 +369,6 @@ const TOOL_EVENT_RENAME: Record<string, string> = {
 
 /** omp event types to drop silently (no PI counterpart). */
 const DROP_EVENTS = new Set([
-  "ttsr_triggered",
   "ready", "negotiate_protocol",
 ]);
 
@@ -375,6 +380,8 @@ const SYSTEM_LINE_EVENTS: Record<string, true> = {
   goal_updated: true,
   model_changed: true, thinking_level_changed: true,
   session_settled: true,
+  /** Token-to-sample ratio limit reached; omp paused and resumed the session. */
+  ttsr_triggered: true,
 };
 
 /** Map a system-line event to a human-readable text label. */
@@ -390,6 +397,7 @@ function systemLineText(frame: Record<string, unknown>): string {
     case "model_changed":        return `[omp] Model → ${String(frame.model ?? frame.modelId ?? "")}`;
     case "thinking_level_changed": return `[omp] Thinking → ${String(frame.level ?? "")}`;
     case "session_settled":      return `[omp] Session settled`;
+    case "ttsr_triggered":       return `[omp] Token-to-sample ratio limit; session paused and resumed`;
     default:                     return `[omp] ${t}`;
   }
 }
@@ -901,6 +909,38 @@ export class OmpBridge {
         this.ompShareAndForward(id);
         break;
 
+      case "omp.bash": {
+        // Run a shell command in omp's session cwd and emit output as a system
+        // transcript block so the user sees it without an extra round-trip.
+        const command = typeof p.command === "string" ? p.command : "";
+        if (!command) { this.respondError(id, "command required"); break; }
+        try {
+          const result = await this.ompCall({ type: "bash", command }) as Record<string, unknown>;
+          const output = String(result?.output ?? "").trim();
+          const exitCode = result?.exitCode ?? 0;
+          const sessionId = this.sessions.keys().next().value ?? "";
+          this.emitSystemMessage(
+            sessionId,
+            `$ ${command}\n${output}${output ? "\n" : ""}[exit ${String(exitCode)}]`,
+          );
+          this.respond(id, { ok: true });
+        } catch (e) {
+          this.respondError(id, String(e));
+        }
+        break;
+      }
+
+      case "omp.abort_bash":
+        this.ompCallAndForward(id, { type: "abort_bash" });
+        break;
+
+      case "omp.set_event_filter": {
+        // null = receive all events; string[] = allowlist of event type names.
+        const events = Array.isArray(p.events) ? (p.events as string[]) : null;
+        this.ompCallAndForward(id, { type: "set_event_filter", events });
+        break;
+      }
+
       default:
         this.respondError(id, `Unknown method: ${method}`, -32601);
     }
@@ -979,12 +1019,11 @@ export class OmpBridge {
     }
 
     // omp has no per-session cwd/project field on new_session or open_session:
-    // cwd is fixed once at process spawn for the bridge's whole lifetime
-    // (start(), below). A single shared ompProcess also means open_session's
+    // cwd is fixed once at process spawn (start(), below) from FCODE_BENCH_PATH,
+    // which sidecar.ts sets to benchSupervisor.activeBenchPath on each launch.
+    // A single shared ompProcess also means open_session's
     // "most recent session in this directory" resume can race if two
     // Fcode sessions ever share a project.
-    // ponytail: single-cwd-per-process ceiling; upgrade path is one omp child
-    // per session (tracked as a follow-up to this fix).
     const sessionCmd: Record<string, unknown> = sessionType === "open_session" && sessionDir
       ? { type: "open_session", sessionDir }
       : { type: "new_session" };
@@ -1140,6 +1179,13 @@ export class OmpBridge {
               this.registerHostTools()
                 .then((names) => {
                   process.stderr.write(`[omp-bridge] handshake: registered host tools: ${names.join(", ")}\n`);
+                  // Wire the event filter: null = receive all session events.
+                  // Called explicitly so the filter mechanism is exercised; upgrade
+                  // to an allowlist when event volume becomes a measurable concern.
+                  return this.ompCall({ type: "set_event_filter", events: null });
+                })
+                .then(() => {
+                  process.stderr.write("[omp-bridge] handshake: event filter cleared (all events)\n");
                 })
                 .catch((e: unknown) => {
                   const msg = String((e as Error)?.message ?? e);

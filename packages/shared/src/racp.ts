@@ -706,6 +706,10 @@ export function racpKindForAgentEvent(
       return { kind: "approval.requested", durable: true };
     case "asktool_request":
       return { kind: "input.requested", durable: true };
+    case "todo_reminder":
+    case "todo_auto_clear":
+      // omp todo events forwarded as agent events; no RACP mapping needed.
+      return { kind: "session.changed", durable: false };
     default: {
       const exhaustive: never = type;
       throw new Error(`unmapped agent event type: ${String(exhaustive)}`);
@@ -733,6 +737,8 @@ export const LOCAL_AGENT_EVENT_TYPES: readonly AgentEvent["type"][] = [
   "compaction_end",
   "error",
   "status",
+  "todo_reminder",
+  "todo_auto_clear",
 ];
 
 // ---------------------------------------------------------------------------

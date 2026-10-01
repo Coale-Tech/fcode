@@ -53,6 +53,10 @@ export type ComposerToolbarProps = {
   contextUsage: ContextUsage | null;
   autoCompactionEnabled?: boolean;
   onToggleAutoCompaction?: (enabled: boolean) => void;
+  fastModeEnabled?: boolean;
+  onToggleFastMode?: (enabled: boolean) => void;
+  autoRetryEnabled?: boolean;
+  onToggleAutoRetry?: (enabled: boolean) => void;
   sessionStats?: OmpSessionStatsResult | null;
   enhancementDraft: string;
   value: string;
@@ -95,6 +99,10 @@ export function ComposerToolbar({
   contextUsage,
   autoCompactionEnabled,
   onToggleAutoCompaction,
+  fastModeEnabled,
+  onToggleFastMode,
+  autoRetryEnabled,
+  onToggleAutoRetry,
   sessionStats,
   enhancementDraft,
   value,
@@ -198,7 +206,7 @@ export function ComposerToolbar({
       </div>
 
       <div className="composer-right">
-        {contextUsage ? <ContextUsageInspector {...contextUsage} sessionStats={sessionStats} autoCompactionEnabled={autoCompactionEnabled} onToggleAutoCompaction={onToggleAutoCompaction} /> : null}
+        {contextUsage ? <ContextUsageInspector {...contextUsage} sessionStats={sessionStats} autoCompactionEnabled={autoCompactionEnabled} onToggleAutoCompaction={onToggleAutoCompaction} fastModeEnabled={fastModeEnabled} onToggleFastMode={onToggleFastMode} autoRetryEnabled={autoRetryEnabled} onToggleAutoRetry={onToggleAutoRetry} /> : null}
         <ComposerModelPicker
           t={t}
           controller={modelMenu}

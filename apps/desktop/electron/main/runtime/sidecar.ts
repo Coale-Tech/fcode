@@ -424,6 +424,10 @@ async function buildFcodeProvidersConfig(
   providerEnv = { ...providerEnv, ...approvalModeEnv(readApprovalMode(dataDir)) };
   // omp settings groups (task / eval / browser / collab).
   providerEnv = { ...providerEnv, ...ompSettingsEnv(readOmpSettings(dataDir)) };
+  // Set omp's working directory to the active bench so the bash RPC and session
+  // path context use the correct project root instead of the user home directory.
+  const benchPath = benchSupervisor.activeBenchPath;
+  if (benchPath) providerEnv = { ...providerEnv, FCODE_BENCH_PATH: benchPath };
 
   const s = new AgentSidecar((text) => logger.child("agent", text), providerEnv);
   wireSidecar(s);

@@ -10,6 +10,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 - i18n: translate `cycleOmpModel`/`cycleOmpThinking` shortcut labels in all 8 non-English locales (pt-BR, zh-CN, zh-TW, de, es, fr, ko, tr); key parity test already enforces full coverage.
+- bridge/RPC: wire `bash`/`abort_bash`, `set_event_filter`, `ttsr_triggered` (→ system line); add fast-mode/auto-retry toggles in context inspector; "Run shell command…" + "Abort retry" transcript menu items; `subagentId?` on `AgentEventEnvelope`; `todo_reminder`/`todo_auto_clear` event types; `FCODE_BENCH_PATH` set from active bench; matrix updated.
 
 ### Changes
 

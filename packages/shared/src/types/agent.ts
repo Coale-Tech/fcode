@@ -274,7 +274,11 @@ export type AgentEvent =
       error?: { code: string; message: string };
     }
   | { type: "error"; error: AppError }
-  | { type: "status"; status: AgentStatus };
+  | { type: "status"; status: AgentStatus }
+  /** Forwarded from omp; drives OmpTodoPanel live task progress. */
+  | { type: "todo_reminder"; todos: unknown[] }
+  /** Forwarded from omp; clears the todo panel. */
+  | { type: "todo_auto_clear" };
 
 export type AgentEventEnvelope = {
   sessionId: string;
@@ -289,4 +293,9 @@ export type AgentEventEnvelope = {
   parentToolCallId?: string;
   /** Definition name of the emitting subagent. */
   agentName?: string;
+  /**
+   * Set when this envelope wraps a subagent_event frame (bridge.ts): the omp
+   * subagent id that emitted the inner event. Absent on main-session events.
+   */
+  subagentId?: string;
 };
