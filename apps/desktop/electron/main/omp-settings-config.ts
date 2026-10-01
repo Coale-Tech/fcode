@@ -85,6 +85,9 @@ const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   "hindsight.retainMode":          { type: "enum", values: HINDSIGHT_RETAIN_MODES },
   "hindsight.mentalModelsEnabled": { type: "boolean" },
   "hindsight.mentalModelAutoSeed": { type: "boolean" },
+  // Appearance — HTML export themes (omp/packages/coding-agent/src/modes/settings.ts)
+  "theme.dark":                    { type: "string" },
+  "theme.light":                   { type: "string" },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

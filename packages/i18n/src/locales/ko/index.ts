@@ -1539,6 +1539,11 @@ sklm: {
     ompHindsightMentalModelsEnabledDesc: "Load curated Hindsight reflect summaries into developer instructions at session start.",
     ompHindsightMentalModelAutoSeed: "Mental Model Auto-seed",
     ompHindsightMentalModelAutoSeedDesc: "Automatically create the built-in seed set of mental models on the active Hindsight bank.",
+    ompThemeGroup: "HTML 내보내기 테마",
+    ompThemeDark: "다크 테마",
+    ompThemeDarkDesc: "HTML 내보내기 시 다크 팔레트에 사용할 omp TUI 테마 이름(기본값: titanium). 비워두면 omp 기본값을 사용합니다.",
+    ompThemeLight: "라이트 테마",
+    ompThemeLightDesc: "HTML 내보내기 시 라이트 팔레트에 사용할 omp TUI 테마 이름(기본값: light). 비워두면 omp 기본값을 사용합니다.",
     closeBehaviorTitle: "닫기 동작",
     closeBehaviorDesc:
       "주 창을 닫을 때의 동작입니다. macOS에서는 앱이 항상 Dock에 유지됩니다.",

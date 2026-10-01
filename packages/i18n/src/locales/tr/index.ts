@@ -1529,6 +1529,11 @@ sklm: {
     ompHindsightMentalModelsEnabledDesc: "Load curated Hindsight reflect summaries into developer instructions at session start.",
     ompHindsightMentalModelAutoSeed: "Mental Model Auto-seed",
     ompHindsightMentalModelAutoSeedDesc: "Automatically create the built-in seed set of mental models on the active Hindsight bank.",
+    ompThemeGroup: "HTML Dışa Aktarma Teması",
+    ompThemeDark: "Koyu Tema",
+    ompThemeDarkDesc: "HTML dışa aktarmada koyu palet için kullanılacak omp TUI tema adı (varsayılan: titanium). Boş bırakırsanız omp varsayılanı kullanılır.",
+    ompThemeLight: "Açık Tema",
+    ompThemeLightDesc: "HTML dışa aktarmada açık palet için kullanılacak omp TUI tema adı (varsayılan: light). Boş bırakırsanız omp varsayılanı kullanılır.",
     closeBehaviorTitle: "Kapatma davranışı",
     closeBehaviorDesc:
       "Ana pencereyi kapattığınızda ne olur. macOS uygulamayı her zaman Dock’ta tutar.",

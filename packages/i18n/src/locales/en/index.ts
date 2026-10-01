@@ -1540,6 +1540,11 @@ sklm: {
     ompHindsightMentalModelsEnabledDesc: "Load curated Hindsight reflect summaries into developer instructions at session start.",
     ompHindsightMentalModelAutoSeed: "Mental Model Auto-seed",
     ompHindsightMentalModelAutoSeedDesc: "Automatically create the built-in seed set of mental models on the active Hindsight bank.",
+    ompThemeGroup: "HTML Export Theme",
+    ompThemeDark: "Dark Theme",
+    ompThemeDarkDesc: "omp TUI theme name for the dark palette in HTML export (default: titanium). Leave blank to use the omp default.",
+    ompThemeLight: "Light Theme",
+    ompThemeLightDesc: "omp TUI theme name for the light palette in HTML export (default: light). Leave blank to use the omp default.",
     closeBehaviorTitle: "Close behavior",
     closeBehaviorDesc:
       "What happens when you close the main window. macOS always keeps the app in the Dock.",
