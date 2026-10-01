@@ -1875,6 +1875,10 @@ sklm: {
       skipped: "질문 {{number}} 건너뜀",
     },
   },
+  editor: {
+    title: "텍스트 편집",
+    placeholder: "텍스트를 입력하세요…",
+  },
   /**
    * Host-owned window menu of a floating plugin widget (`ui.shape: "widget"`).
    * A widget has no control capsule, so its context menu carries these.
