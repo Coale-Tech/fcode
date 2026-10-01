@@ -533,6 +533,10 @@ export const tr = {
     thinkingShow: "Düşünmeyi göster",
     thinkingHide: "Düşünmeyi gizle",
     untitledTask: "Yeni görev",
+    extWidget: {
+      collapse: "Uzantı bileşenini daralt",
+      expand: "Uzantı bileşenini genişlet",
+    },
   },
   session: {
     renameTitle: "Görevi yeniden adlandır",

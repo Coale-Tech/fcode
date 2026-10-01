@@ -521,7 +521,11 @@ export const ptBR = {
     webSearchMore_other: "+{{count}} fontes adicionais",
     thinkingShow: "Mostrar raciocínio",
     thinkingHide: "Ocultar raciocínio",
-    untitledTask: "Tarefa sem título"
+    untitledTask: "Tarefa sem título",
+    extWidget: {
+      collapse: "Recolher widget de extensão",
+      expand: "Expandir widget de extensão",
+    },
   },
   session: {
     renameTitle: "Renomear tarefa",

@@ -138,6 +138,7 @@ import type {
   HindsightRefreshMentalModelResult,
   BenchBootstrapResult,
   HindsightSetBankMissionResult,
+  SidecarExtUiEvent,
   HindsightLocalState,
   ToolApprovalMode,
   OmpSessionStatsResult,
@@ -1507,6 +1508,12 @@ export const api = {
     if (!window.piDesktop?.on) return () => undefined;
     return window.piDesktop.on(IPC.event.extensionsStatus, (payload) =>
       listener(payload as TrustedExtensionStatusEvent),
+    );
+  },
+  onSidecarExtUi: (listener: (event: SidecarExtUiEvent) => void) => {
+    if (!window.piDesktop?.on) return () => undefined;
+    return window.piDesktop.on(IPC.event.sidecarExtUi, (payload) =>
+      listener(payload as SidecarExtUiEvent),
     );
   },
   onToast: (listener: (message: string) => void) => {
