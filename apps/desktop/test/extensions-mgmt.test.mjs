@@ -41,6 +41,23 @@ describe("validateInstallSpec", () => {
     assert.deepEqual(validateInstallSpec("https://github.com/user/repo.git"), { valid: true });
   });
 
+  // rejected: dangerous URI schemes
+  it("rejects file:// URI scheme", () => {
+    assert.equal(validateInstallSpec("file:///etc/passwd").valid, false);
+  });
+  it("rejects FILE:// (case-insensitive)", () => {
+    assert.equal(validateInstallSpec("FILE:///etc/passwd").valid, false);
+  });
+  it("rejects git+file:// URI scheme", () => {
+    assert.equal(validateInstallSpec("git+file:///home/user/.ssh/id_rsa").valid, false);
+  });
+  it("rejects svn+ URI scheme", () => {
+    assert.equal(validateInstallSpec("svn+ssh://example.com/repo").valid, false);
+  });
+  it("rejects hg+ URI scheme", () => {
+    assert.equal(validateInstallSpec("hg+https://example.com/repo").valid, false);
+  });
+
   // rejected: paths
   it("rejects a dot path '.'", () => {
     assert.equal(validateInstallSpec(".").valid, false);
