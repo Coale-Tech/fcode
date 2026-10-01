@@ -1,5 +1,5 @@
 /**
- * OMP IPC — registers all ten `pi-desktop/omp/*` channels (DX14 / plan §9).
+ * OMP IPC — registers all `pi-desktop/omp/*` channels (DX14 / plan §9).
  *
  * Each handler validates its inputs at the main-process trust boundary and
  * forwards the call to the omp sidecar via `sidecar.call("omp.*", params)`.
@@ -123,5 +123,12 @@ export function registerOmpIpc({ registrar, getSidecar }: OmpIpcDependencies): v
   handle(IPC.invoke.ompSessionStats, async () => {
     const sidecar = getSidecar() ?? unavailable();
     return sidecar.call<OmpSessionStatsResult>("omp.session.stats");
+  });
+
+  // ── omp.auto-compaction.set ────────────────────────────────────────────────
+  handle(IPC.invoke.ompAutoCompactionSet, async (input: { enabled?: unknown } = {}) => {
+    if (typeof input?.enabled !== "boolean") invalid("enabled (boolean) required");
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<void>("omp.auto-compaction.set", { enabled: input.enabled });
   });
 }

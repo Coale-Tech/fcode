@@ -366,6 +366,7 @@ export const tr = {
     usageToolsSummary: "{{count}} araç türü · {{calls}} çağrı · ~{{tokens}} token",
     usageNoTools: "Bu turda araç çağrısı yok",
     usageCompaction: "{{times}}× sıkıştırıldı · özet",
+    usageAutoCompact: "Otomatik sıkıştırma",
     compactionRow: "Bağlam sıkıştırıldı · #{{times}}",
     compactionRowSummary: "özet ≈{{tokens}} token",
     compactionRowNoSummary: "özet oluşturulmadı",
