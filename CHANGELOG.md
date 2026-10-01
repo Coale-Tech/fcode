@@ -19,6 +19,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - DocType browser moved to Bench; opening a DocType file opens it in Chat → Files. Migrate needs an explicit site when a bench has several.
 - Removed the whole-file `git restore` path; Review snapshot rollback is the only way to undo agent changes.
 - `navToCode` shortcut renamed `navToFiles`; custom bindings carry over. Saved `pi.file-manager` tabs move to `fcode.files`.
+- Settings → AI → Permissions: tool approval mode selector (Ask every time / Auto-approve reads / Auto-approve all) persisted host-side as `approval-mode.json`; passed to omp via `FCODE_TOOL_APPROVAL_MODE` env var and `--approval-mode` CLI flag; default stays `always-ask`. Changes take effect after the agent restarts.
 
 ## [0.16.0] — 2026-09-29
 

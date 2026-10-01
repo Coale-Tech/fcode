@@ -110,3 +110,6 @@ export interface MemoryConfig {
 export interface MemoryConfigView extends MemoryConfig {
   hasToken: boolean;
 }
+
+/** omp tool approval mode. Controls which tool tiers are auto-approved. */
+export type ToolApprovalMode = "always-ask" | "write" | "yolo";
