@@ -923,7 +923,7 @@
   border-radius: var(--radius-full);
   background: color-mix(in oklab, var(--ds-accent-blue, #2563eb) 12%, transparent);
   color: var(--ds-accent-blue, #2563eb);
-  line-height: 1.4;
+  line-height: var(--leading-normal);
 }
 
 /* scrollable content area */
