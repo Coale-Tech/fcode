@@ -2053,7 +2053,8 @@ sklm: {
       "file": "Archivos",
       "plugin": "Vista de complemento",
       "subagent": "Subagente",
-    "session-tree": "Historial de sesión"
+    "session-tree": "Historial de sesión",
+      "tools": "Herramientas"
     },
     "pluginView": {
       "failed": "Esta vista no se pudo cargar. Vuelva a cargar el complemento e inténtelo de nuevo.",
@@ -2733,6 +2734,20 @@ sklm: {
       "retry": "Inténtalo de nuevo",
       "continue": "Continuar",
       "dismiss": "Descartar"
+    }
+  }
+,
+  "tools": {
+    "title": "Inspectores de herramientas",
+    "noData": "Sin datos todavía — las llamadas a herramientas aparecen aquí mientras el agente se ejecuta.",
+    "browserSteps": "Pasos",
+    "computerActions": "Acciones",
+    "evalCell": "Celda {{index}}",
+    "tabs": {
+      "browser": "Navegador",
+      "eval": "Eval",
+      "computer": "Computadora",
+      "ida": "IDA"
     }
   }
 } satisfies EnglishCatalog;

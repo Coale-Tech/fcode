@@ -2039,7 +2039,8 @@ sklm: {
       file: "文件",
       plugin: "插件视图",
       subagent: "子智能体",
-    "session-tree": "会话历史"
+    "session-tree": "会话历史",
+      tools: "工具",
     },
     pluginView: {
       failed: "无法加载该视图。请重新加载插件后重试。",
@@ -2726,6 +2727,19 @@ sklm: {
       dismiss: "关闭",
     },
   },
+  tools: {
+    title: "工具检查器",
+    noData: "暂无数据 — 代理运行时工具调用将在此显示。",
+    browserSteps: "步骤",
+    computerActions: "操作",
+    evalCell: "单元格 {{index}}",
+    tabs: {
+      browser: "浏览器",
+      eval: "执行",
+      computer: "计算机",
+      ida: "IDA",
+    },
+  }
 } satisfies EnglishCatalog;
 
 export default zhCN;
