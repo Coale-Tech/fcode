@@ -324,7 +324,7 @@ export const DapPanel = memo(function DapPanel({
             value={bpFile}
             onChange={(e) => setBpFile(e.target.value)}
             placeholder={t("chat.dapBpFilePlaceholder")}
-            aria-label="file path"
+            aria-label={t("chat.dapAriaFilePath")}
             autoComplete="off"
             spellCheck={false}
           />
@@ -333,7 +333,7 @@ export const DapPanel = memo(function DapPanel({
             value={bpLine}
             onChange={(e) => setBpLine(e.target.value)}
             placeholder={t("chat.dapBpLinePlaceholder")}
-            aria-label="line number"
+            aria-label={t("chat.dapAriaLineNumber")}
             autoComplete="off"
             inputMode="numeric"
           />
@@ -342,7 +342,7 @@ export const DapPanel = memo(function DapPanel({
             value={bpCond}
             onChange={(e) => setBpCond(e.target.value)}
             placeholder={t("chat.dapBpCondPlaceholder")}
-            aria-label="condition"
+            aria-label={t("chat.dapAriaCondition")}
             autoComplete="off"
             spellCheck={false}
           />

@@ -213,12 +213,14 @@ export class HindsightSupervisor extends EventEmitter {
       const elapsed = Date.now() - spawnedAt;
 
       if (elapsed < FAST_EXIT_MS && LLM_KEY_PATTERNS.some((re) => re.test(output))) {
+        // Log snippet to main-process console only; never send raw subprocess
+        // output to the renderer (it may contain partial API key text).
         const snippet = this.buffer.tail(5).slice(0, 300);
+        console.error("[hindsight] fast-exit output:", snippet || `(exit ${code ?? "?"})`);
         this._setState({
           ...this._state,
           state: "unavailable",
-          // i18n note: this message is also shown raw in MemoryTab; keep it short
-          message: `Hindsight needs an LLM API key. Configure ~/.hindsight/config.toml. (${snippet || `exit ${code ?? "?"}`})`,
+          message: "Hindsight needs an LLM API key. Configure ~/.hindsight/config.toml.",
         });
       } else {
         this._setState({

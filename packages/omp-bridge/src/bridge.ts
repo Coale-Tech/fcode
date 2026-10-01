@@ -216,7 +216,7 @@ function ompSettingsYaml(s: OmpSettingsValues): string[] {
     if (taskModelOverrides !== undefined && Object.keys(taskModelOverrides).length > 0) {
       lines.push("  agentModelOverrides:");
       for (const [agent, modelId] of Object.entries(taskModelOverrides)) {
-        lines.push(`    ${agent}: ${JSON.stringify(modelId)}`);
+        lines.push(`    ${JSON.stringify(agent)}: ${JSON.stringify(modelId)}`);
       }
     }
   }
