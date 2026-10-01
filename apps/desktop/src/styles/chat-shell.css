@@ -1539,7 +1539,7 @@
   color: var(--ds-text-primary, #111);
   font-size: var(--text-xs, 11px);
   cursor: pointer;
-  line-height: 1.4;
+  line-height: var(--leading-normal);
 }
 .dap-btn:hover:not(:disabled) {
   background: color-mix(in oklab, var(--ds-accent-blue, #2563eb) 8%, var(--ds-bg-primary, #fff));
@@ -1574,13 +1574,13 @@
 
 .dap-bp-badge {
   flex-shrink: 0;
-  font-size: 9px;
+  font-size: var(--text-3xs);
   padding: 1px 4px;
   border-radius: var(--radius-full);
   background: color-mix(in oklab, var(--ds-text-tertiary, #999) 15%, transparent);
   color: var(--ds-text-tertiary, #999);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--tracking-wide);
 }
 .dap-bp-badge--failed {
   background: color-mix(in oklab, var(--ds-accent-red, #dc2626) 12%, transparent);
@@ -1594,9 +1594,9 @@
   background: none;
   border: none;
   color: var(--ds-text-tertiary, #999);
-  font-size: 13px;
+  font-size: var(--text-md);
   cursor: pointer;
-  line-height: 1;
+  line-height: var(--leading-none);
   border-radius: var(--radius-sm, 4px);
 }
 .dap-bp-remove:hover:not(:disabled) { color: var(--ds-accent-red, #dc2626); }
