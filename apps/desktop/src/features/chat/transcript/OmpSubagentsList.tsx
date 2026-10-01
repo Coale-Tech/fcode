@@ -73,6 +73,8 @@ function OmpSubagentMessagesPopover({
   const { t } = useTranslation();
   const [messages, setMessages] = useState<AgentMessage[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const prevFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     api
@@ -82,6 +84,33 @@ function OmpSubagentMessagesPopover({
         setError(e instanceof Error ? e.message : String(e)),
       );
   }, [entry.id]);
+
+  // Focus trap: save caller focus, trap Tab, restore on unmount.
+  useEffect(() => {
+    prevFocusRef.current = document.activeElement as HTMLElement;
+    const el = popoverRef.current;
+    if (!el) return;
+    const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const items = () => el.querySelectorAll<HTMLElement>(FOCUSABLE);
+    items()[0]?.focus();
+    const trap = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      const all = [...items()];
+      if (!all.length) return;
+      const first = all[0];
+      const last = all[all.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault(); last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault(); first.focus();
+      }
+    };
+    el.addEventListener("keydown", trap);
+    return () => {
+      el.removeEventListener("keydown", trap);
+      prevFocusRef.current?.focus();
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Close on Escape.
   useEffect(() => {
@@ -93,11 +122,12 @@ function OmpSubagentMessagesPopover({
   }, [onClose]);
 
   const title = entry.agent
-    ? `${entry.agent}${entry.task ? ` — ${entry.task.slice(0, 60)}` : ""}`
+    ? `${entry.agent}${entry.task ? ` — ${entry.task.slice(0, 80)}` : ""}`
     : t("chat.ompSubagentMessages");
 
   return (
     <div
+      ref={popoverRef}
       className="omp-subagents-popover"
       role="dialog"
       aria-modal="true"
@@ -177,7 +207,7 @@ const OmpSubagentRow = memo(function OmpSubagentRow({
         className={`omp-subagent-row omp-subagent-row--${entry.status}`}
         onClick={handleClick}
         aria-pressed={isOpen}
-        aria-label={`${statusLabel(entry.status, t)} — ${entry.agent}${entry.task ? `: ${entry.task}` : ""}`}
+        aria-label={`${statusLabel(entry.status, t)} — ${entry.agent}${entry.task ? `: ${entry.task.slice(0, 80)}` : ""}`}
       >
         <span
           className={`omp-subagent-status${isRunning ? " omp-subagent-status--running" : ""}`}
