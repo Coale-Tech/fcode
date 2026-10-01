@@ -1396,6 +1396,8 @@ sklm: {
     ompCollabAutoStartOff: "Off",
     ompCollabAutoStartView: "View",
     ompCollabAutoStartControl: "Control",
+    ompAgentModelOverridesDesc: "Bu yerleşik ajanın kullandığı modeli değiştirin. Oturum modelini kullanmak için Varsayılan olarak bırakın.",
+    ompAgentModelOverridesDefault: "Varsayılan",
     ompCollabPanelShare: "Anlık görüntü paylaş",
     ompCollabPanelShareDesc: "Upload an encrypted snapshot of this session and get a shareable link.",
     ompCollabPanelShareBtn: "Paylaş",

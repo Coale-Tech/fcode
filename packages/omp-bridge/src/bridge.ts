@@ -207,11 +207,18 @@ function ompSettingsYaml(s: OmpSettingsValues): string[] {
   const taskIso = s["task.isolation.enabled"];
   const taskConc = s["task.maxConcurrency"];
   const taskDepth = s["task.maxRecursionDepth"];
-  if (taskIso !== undefined || taskConc !== undefined || taskDepth !== undefined) {
+  const taskModelOverrides = s["task.agentModelOverrides"];
+  if (taskIso !== undefined || taskConc !== undefined || taskDepth !== undefined || taskModelOverrides !== undefined) {
     lines.push("", "task:");
     if (taskIso !== undefined) { lines.push("  isolation:"); lines.push(`    enabled: ${taskIso}`); }
     if (taskConc !== undefined) lines.push(`  maxConcurrency: ${taskConc}`);
     if (taskDepth !== undefined) lines.push(`  maxRecursionDepth: ${taskDepth}`);
+    if (taskModelOverrides !== undefined && Object.keys(taskModelOverrides).length > 0) {
+      lines.push("  agentModelOverrides:");
+      for (const [agent, modelId] of Object.entries(taskModelOverrides)) {
+        lines.push(`    ${agent}: ${JSON.stringify(modelId)}`);
+      }
+    }
   }
 
   // isolation section

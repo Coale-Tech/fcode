@@ -158,6 +158,71 @@ test("makeOmpOverlay does not emit new sections when ompSettings is empty", () =
   assert.ok(!yaml.includes("\ncollab:"), "no collab section");
 });
 
+// ─── task.agentModelOverrides boundary tests ──────────────────────────────
+
+test("validateOmpSettings accepts agentModelOverrides with unknown agent name", () => {
+  // Any agent name (including non-bundled custom agents) must be accepted
+  const out = validateOmpSettings({
+    "task.agentModelOverrides": { "my-custom-agent": "anthropic/claude-sonnet-4-5" },
+  });
+  assert.deepEqual(out["task.agentModelOverrides"], { "my-custom-agent": "anthropic/claude-sonnet-4-5" });
+});
+
+test("validateOmpSettings: empty string value clears that agent entry", () => {
+  // Empty string → entry is silently dropped (clear semantics)
+  const out = validateOmpSettings({
+    "task.agentModelOverrides": { task: "anthropic/claude-sonnet-4-5", sonic: "" },
+  });
+  assert.deepEqual(out["task.agentModelOverrides"], { task: "anthropic/claude-sonnet-4-5" });
+});
+
+test("validateOmpSettings: empty object clears all overrides", () => {
+  const out = validateOmpSettings({ "task.agentModelOverrides": {} });
+  assert.deepEqual(out["task.agentModelOverrides"], {});
+});
+
+test("validateOmpSettings rejects non-string model id in agentModelOverrides", () => {
+  assert.throws(
+    () => validateOmpSettings({ "task.agentModelOverrides": { task: 42 } }),
+    /expected string model id/,
+  );
+});
+
+test("validateOmpSettings rejects array as agentModelOverrides value", () => {
+  assert.throws(
+    () => validateOmpSettings({ "task.agentModelOverrides": ["task", "model"] }),
+    /expected object/,
+  );
+});
+
+test("validateOmpSettings rejects string as agentModelOverrides value", () => {
+  assert.throws(
+    () => validateOmpSettings({ "task.agentModelOverrides": "task=model" }),
+    /expected object/,
+  );
+});
+
+test("makeOmpOverlay emits agentModelOverrides under task section", () => {
+  const yaml = makeOmpOverlay({
+    ...BASE_OPTS,
+    ompSettings: {
+      "task.agentModelOverrides": { task: "anthropic/claude-sonnet-4-5", sonic: "openai/gpt-4o" },
+    },
+  });
+  assert.ok(yaml.includes("task:"), "task section present");
+  assert.ok(yaml.includes("agentModelOverrides:"), "agentModelOverrides subsection present");
+  assert.ok(yaml.includes('"anthropic/claude-sonnet-4-5"'), "task model present");
+  assert.ok(yaml.includes('"openai/gpt-4o"'), "sonic model present");
+});
+
+test("makeOmpOverlay does not emit agentModelOverrides when record is empty", () => {
+  const yaml = makeOmpOverlay({
+    ...BASE_OPTS,
+    ompSettings: { "task.agentModelOverrides": {} },
+  });
+  // Empty record → task section may not appear (no other task settings)
+  assert.ok(!yaml.includes("agentModelOverrides:"), "no agentModelOverrides for empty record");
+});
 // ─── New groups: validation ──────────────────────────────────────────────────
 
 test("validateOmpSettings accepts lsp.enabled boolean", () => {
