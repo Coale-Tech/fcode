@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import type { TrustedExtensionUiPrompt } from "@pi-desktop/shared";
 import { api } from "../lib/api";
 import { useAppStore } from "../stores/app-store";
+import { applyExtStatus, type ExtStatusState } from "../features/chat/composer/ext-ui-state";
 import { Button, TooltipButton } from "./ui";
 import { IconClose, IconPlug } from "./icons";
 
@@ -15,8 +16,10 @@ import { IconClose, IconPlug } from "./icons";
  */
 export function ExtensionPromptHost() {
   const [queue, setQueue] = useState<TrustedExtensionUiPrompt[]>([]);
-  // `ui.setStatus` / `ui.setWorkingMessage` texts per session and key.
-  const [status, setStatus] = useState<Record<string, Record<string, string>>>({});
+  // Plugin extension status: per session, per (extensionId+key).
+  const [extStatus, setExtStatus] = useState<Record<string, Record<string, string>>>({});
+  // omp setStatus: per session, per key.
+  const [ompStatus, setOmpStatus] = useState<Record<string, ExtStatusState>>({});
   const activeSessionId = useAppStore((state) => state.activeSessionId);
 
   useEffect(() => {
@@ -28,7 +31,7 @@ export function ExtensionPromptHost() {
       setQueue((prev) => (prev.some((p) => p.promptId === prompt.promptId) ? prev : [...prev, prompt]));
     });
     const offStatus = api.onExtensionStatus((event) => {
-      setStatus((prev) => {
+      setExtStatus((prev) => {
         const session = { ...(prev[event.sessionId] ?? {}) };
         const key = `${event.extensionId}\u0000${event.key}`;
         if (event.text) session[key] = event.text;
@@ -36,14 +39,24 @@ export function ExtensionPromptHost() {
         return { ...prev, [event.sessionId]: session };
       });
     });
+    const offOmp = api.onSidecarExtUi((event) => {
+      if (event.kind !== "status") return;
+      setOmpStatus((prev) => {
+        const session = applyExtStatus(prev[event.sessionId] ?? {}, event.key, event.text);
+        return { ...prev, [event.sessionId]: session };
+      });
+    });
     return () => {
       offPrompt();
       offStatus();
+      offOmp();
     };
   }, []);
 
   const current = queue[0];
-  const statusTexts = activeSessionId ? Object.values(status[activeSessionId] ?? {}) : [];
+  const pluginTexts = activeSessionId ? Object.values(extStatus[activeSessionId] ?? {}) : [];
+  const ompTexts = activeSessionId ? Object.values(ompStatus[activeSessionId] ?? {}) : [];
+  const statusTexts = [...pluginTexts, ...ompTexts];
 
   const settle = (value?: string | boolean) => {
     if (!current) return;

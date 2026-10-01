@@ -531,6 +531,10 @@ export const en = {
     thinkingShow: "Show thinking",
     thinkingHide: "Hide thinking",
     untitledTask: "New task",
+    extWidget: {
+      collapse: "Collapse extension widget",
+      expand: "Expand extension widget",
+    },
   },
   session: {
     renameTitle: "Rename task",

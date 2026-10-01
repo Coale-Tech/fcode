@@ -528,6 +528,10 @@ export const zhTW = {
     thinkingShow: "顯示思考過程",
     thinkingHide: "隱藏思考過程",
     untitledTask: "新建任務",
+    extWidget: {
+      collapse: "收合擴充元件",
+      expand: "展開擴充元件",
+    },
   },
   session: {
     renameTitle: "重新命名任務",

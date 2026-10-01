@@ -463,6 +463,8 @@ export const IPC = {
     buildWatcherLog: "pi-desktop/build/watcher/event/log",
     buildWatcherExit: "pi-desktop/build/watcher/event/exit",
     sidecarFatal: "pi-desktop/sidecar/event/fatal",
+    /** omp setStatus / setWidget / setTitle forwarded from the omp bridge. */
+    sidecarExtUi: "pi-desktop/sidecar/event/extUi",
     /** Managed local Hindsight server state changed. */
     hindsightLocalStatus: "pi-desktop/hindsight-local/event/status",
   },

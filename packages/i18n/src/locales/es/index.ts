@@ -523,7 +523,11 @@ export const es = {
     "webSearchMore_other": "+{{count}} fuentes más",
     "thinkingShow": "Mostrar pensamiento",
     "thinkingHide": "Ocultar pensamiento",
-    "untitledTask": "Nueva tarea"
+    "untitledTask": "Nueva tarea",
+    "extWidget": {
+      "collapse": "Contraer widget de extensión",
+      "expand": "Expandir widget de extensión",
+    },
   },
   "session": {
     "renameTitle": "Cambiar nombre de tarea",

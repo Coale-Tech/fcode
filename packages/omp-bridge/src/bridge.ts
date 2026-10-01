@@ -14,7 +14,7 @@
  *         everything else is `always-ask`.
  * DX10 — Protocol v1 fallback emits a system warning and keeps read-only.
  * E9   — All extension_ui_request methods are handled (cancel, editor, notify,
- *         setStatus/setWidget/setTitle explicitly ignored).
+ *         setStatus/setWidget/setTitle forward as sidecar.ext_ui notifications).
  * E10  — The outer NDJSON line is capped at NDJSON_LINE_CAP before reaching
  *         the main process.
  * E14  — open_session failure falls back to a new session; corrupt map = empty.
@@ -954,6 +954,12 @@ export class OmpBridge {
     if (mapped.type === "open_url") {
       this.notify("sidecar.notification", { type: "open_url", url: mapped.url, sessionId });
       this.emitSystemMessage(sessionId, mapped.text);
+      return;
+    }
+
+    // setStatus / setWidget / setTitle — fire-and-forget UI state updates (E9).
+    if (mapped.type === "ext_status" || mapped.type === "ext_widget" || mapped.type === "ext_title") {
+      this.notify("sidecar.ext_ui", mapped);
       return;
     }
 

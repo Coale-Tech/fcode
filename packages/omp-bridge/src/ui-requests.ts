@@ -9,7 +9,9 @@
  * - "cancel"   → clear the pending-request map entry (E9)
  * - "notify"   → system UiMessage
  * - "open_url" → shell.openExternal + system UiMessage
- * - "setStatus"/"setWidget"/"setTitle" → explicitly ignored
+ * - "setStatus" → ext_status (status bar / footer line, keyed by statusKey)
+ * - "setWidget" → ext_widget (collapsible block above composer, keyed by widgetKey)
+ * - "setTitle"  → ext_title (overrides session title display)
  */
 
 export interface OmpExtensionUiRequest {
@@ -22,6 +24,13 @@ export interface OmpExtensionUiRequest {
   launchUrl?: string;
   options?: Array<{ value: string; label?: string }>;
   defaultValue?: string;
+  /** setStatus wire fields */
+  statusKey?: string;
+  statusText?: string;
+  /** setWidget wire fields */
+  widgetKey?: string;
+  widgetLines?: string[];
+  widgetPlacement?: "aboveEditor" | "belowEditor";
 }
 
 export interface MappedToolPermissionRequest {
@@ -65,13 +74,36 @@ export interface MappedEditorRefusal {
   requestId: string;
 }
 
+export interface MappedExtStatus {
+  type: "ext_status";
+  sessionId: string;
+  key: string;
+  text: string | undefined;
+}
+
+export interface MappedExtWidget {
+  type: "ext_widget";
+  sessionId: string;
+  key: string;
+  lines: string[] | undefined;
+}
+
+export interface MappedExtTitle {
+  type: "ext_title";
+  sessionId: string;
+  title: string;
+}
+
 export type MappedUiRequest =
   | MappedToolPermissionRequest
   | MappedAskToolRequest
   | MappedSystemMessage
   | MappedOpenUrl
   | MappedEditorRefusal
-  | null; // null = cancel or ignored method
+  | MappedExtStatus
+  | MappedExtWidget
+  | MappedExtTitle
+  | null; // null = cancel
 
 /**
  * Map one omp extension_ui_request frame to its Fcode equivalent.
@@ -147,7 +179,29 @@ export function mapExtensionUiRequest(
       // Cleared by the caller; signal the pending-request map to drop the entry.
       return null;
 
-    // setStatus / setWidget / setTitle — no PI surface; ignore.
+    case "setStatus":
+      return {
+        type: "ext_status",
+        sessionId,
+        key: req.statusKey ?? "",
+        text: req.statusText,
+      };
+
+    case "setWidget":
+      return {
+        type: "ext_widget",
+        sessionId,
+        key: req.widgetKey ?? "",
+        lines: req.widgetLines,
+      };
+
+    case "setTitle":
+      return {
+        type: "ext_title",
+        sessionId,
+        title: req.title ?? "",
+      };
+
     default:
       return null;
   }
