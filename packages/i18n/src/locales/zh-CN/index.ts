@@ -525,6 +525,10 @@ export const zhCN = {
     thinkingShow: "显示思考过程",
     thinkingHide: "隐藏思考过程",
     untitledTask: "新建任务",
+    extWidget: {
+      collapse: "收起扩展组件",
+      expand: "展开扩展组件",
+    },
   },
   session: {
     renameTitle: "重命名任务",

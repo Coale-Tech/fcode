@@ -62,6 +62,7 @@ import { useVoiceInput } from "../features/voice/useVoiceInput";
 import { VoiceOverlay } from "../features/voice/VoiceOverlay";
 import "../styles/voice.css";
 import { ComposerStatus } from "../features/chat/composer/ComposerStatus";
+import { ExtWidget } from "../features/chat/composer/ExtWidget";
 
 const EMPTY_QUEUED_PROMPTS: QueuedPrompt[] = [];
 
@@ -530,6 +531,7 @@ export function Composer({
             omp session is read-only: {activeSessionSummary?.readOnlyReason ?? "continuation unavailable"}.
           </div>
         ) : null}
+        <ExtWidget sessionId={activeSessionId ?? undefined} />
         <ComposerStatus
           t={t}
           queuedPrompts={queuedPrompts}

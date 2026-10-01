@@ -92,15 +92,40 @@ describe("mapExtensionUiRequest", () => {
     expect(result.url).toBe("https://preferred");
   });
 
-  it("drops setStatus / setWidget / setTitle → null", () => {
-    for (const method of ["setStatus", "setWidget", "setTitle"]) {
-      const result = mapExtensionUiRequest(
-        { id: "rx", method },
-        "s1",
-        openTool,
-      );
-      expect(result).toBeNull();
-    }
+  it("maps setStatus → ext_status with key and text", () => {
+    const result = mapExtensionUiRequest(
+      { id: "rx", method: "setStatus", statusKey: "progress", statusText: "Working…" },
+      "s1",
+      openTool,
+    );
+    expect(result?.type).toBe("ext_status");
+    if (result?.type !== "ext_status") return;
+    expect(result.key).toBe("progress");
+    expect(result.text).toBe("Working…");
+    expect(result.sessionId).toBe("s1");
+  });
+
+  it("maps setWidget → ext_widget with key and lines", () => {
+    const result = mapExtensionUiRequest(
+      { id: "ry", method: "setWidget", widgetKey: "info", widgetLines: ["line1", "line2"] },
+      "s1",
+      openTool,
+    );
+    expect(result?.type).toBe("ext_widget");
+    if (result?.type !== "ext_widget") return;
+    expect(result.key).toBe("info");
+    expect(result.lines).toEqual(["line1", "line2"]);
+  });
+
+  it("maps setTitle → ext_title with title", () => {
+    const result = mapExtensionUiRequest(
+      { id: "rz", method: "setTitle", title: "My Session" },
+      "s1",
+      openTool,
+    );
+    expect(result?.type).toBe("ext_title");
+    if (result?.type !== "ext_title") return;
+    expect(result.title).toBe("My Session");
   });
 
   it("falls back to req.id as toolCallId when no open tool is present", () => {

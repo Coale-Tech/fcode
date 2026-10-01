@@ -530,6 +530,10 @@ export const ko = {
     thinkingShow: "생각 표시",
     thinkingHide: "생각 숨기기",
     untitledTask: "새 작업",
+    extWidget: {
+      collapse: "확장 위젯 접기",
+      expand: "확장 위젯 펼치기",
+    },
   },
   session: {
     renameTitle: "작업 이름 바꾸기",

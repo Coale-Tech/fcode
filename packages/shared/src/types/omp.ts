@@ -110,3 +110,12 @@ export interface MemoryConfig {
 export interface MemoryConfigView extends MemoryConfig {
   hasToken: boolean;
 }
+
+/**
+ * Payload emitted by the omp bridge for setStatus / setWidget / setTitle
+ * extension_ui_request methods (sidecar.ext_ui notification).
+ */
+export type SidecarExtUiEvent =
+  | { kind: "status"; sessionId: string; key: string; text: string | undefined }
+  | { kind: "widget"; sessionId: string; key: string; lines: string[] | undefined }
+  | { kind: "title"; sessionId: string; title: string };

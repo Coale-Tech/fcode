@@ -317,6 +317,11 @@ async function buildFcodeProvidersConfig(
       }
       return;
     }
+    // omp-bridge setStatus/setWidget/setTitle: forward as-is to renderer.
+    if (method === "sidecar.ext_ui") {
+      sendToRenderer(IPC.event.sidecarExtUi, params);
+      return;
+    }
     // permissions.request reaches the renderer once, via wireHost; the
     // sidecar no longer relays it (agent-sidecar.setHost filters it out).
   });

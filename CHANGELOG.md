@@ -20,6 +20,8 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Removed the whole-file `git restore` path; Review snapshot rollback is the only way to undo agent changes.
 - `navToCode` shortcut renamed `navToFiles`; custom bindings carry over. Saved `pi.file-manager` tabs move to `fcode.files`.
 
+- omp extension `setStatus` / `setWidget` / `setTitle` UI requests are now rendered: status entries appear in the existing extension status line, widget lines as a collapsible block above the composer, and `setTitle` overrides the session title in the topbar.
+
 ## [0.16.0] — 2026-09-29
 
 ### Compatibility

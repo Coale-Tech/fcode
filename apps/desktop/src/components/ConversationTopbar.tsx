@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "../stores/app-store";
 import {
@@ -6,6 +7,7 @@ import {
   IconSearch,
 } from "./icons";
 import { TooltipButton } from "./ui";
+import { api } from "../lib/api";
 
 function projectName(path?: string | null, name?: string | null) {
   if (name) return name;
@@ -38,11 +40,24 @@ export function ConversationTopbar({
   const sessions = useAppStore((s) => s.sessions);
   const workspace = useAppStore((s) => s.workspace);
 
+  // omp setTitle override: cleared on session change.
+  const [ompTitle, setOmpTitle] = useState<string | null>(null);
+  useEffect(() => {
+    setOmpTitle(null);
+  }, [activeSessionId]);
+  useEffect(() => {
+    return api.onSidecarExtUi((event) => {
+      if (event.kind !== "title" || event.sessionId !== activeSessionId) return;
+      setOmpTitle(event.title || null);
+    });
+  }, [activeSessionId]);
+
   const activeSession = sessions.find((session) => session.id === activeSessionId);
 
-  const fullTaskTitle = isDefaultSessionTitle(activeSession?.title)
-    ? t("chat.untitledTask")
-    : activeSession?.title || t("chat.untitledTask");
+  const fullTaskTitle = ompTitle
+    ?? (isDefaultSessionTitle(activeSession?.title)
+      ? t("chat.untitledTask")
+      : activeSession?.title || t("chat.untitledTask"));
   const project = projectName(workspace?.path, workspace?.name);
 
   return (

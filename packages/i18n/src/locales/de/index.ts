@@ -520,7 +520,11 @@ export const de = {
     "webSearchMore_other": "+{{count}} weitere Quellen",
     "thinkingShow": "Denken anzeigen",
     "thinkingHide": "Denken ausblenden",
-    "untitledTask": "Neue Aufgabe"
+    "untitledTask": "Neue Aufgabe",
+    "extWidget": {
+      "collapse": "Erweiterungs-Widget einklappen",
+      "expand": "Erweiterungs-Widget ausklappen",
+    },
   },
   "session": {
     "renameTitle": "Aufgabe umbenennen",

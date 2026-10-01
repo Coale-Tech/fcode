@@ -520,7 +520,11 @@ export const fr = {
     "webSearchMore_other": "+{{count}} autres sources",
     "thinkingShow": "Afficher la réflexion",
     "thinkingHide": "Masquer la réflexion",
-    "untitledTask": "Nouvelle tâche"
+    "untitledTask": "Nouvelle tâche",
+    "extWidget": {
+      "collapse": "Réduire le widget d'extension",
+      "expand": "Développer le widget d'extension",
+    },
   },
   "session": {
     "renameTitle": "Renommer la tâche",
