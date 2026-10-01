@@ -395,6 +395,7 @@ export const zhTW = {
     toolBlockNotice: "說明",
     toolBlockError: "錯誤",
     toolBlockMore: "還有 {{count}} 項未顯示",
+    toolScreenshot: "截圖",
     toolChipExit: "退出碼 {{count}}",
     toolChipMatches_one: "1 處匹配",
     toolChipMatches_other: "{{count}} 處匹配",
