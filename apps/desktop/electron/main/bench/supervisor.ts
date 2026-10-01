@@ -443,7 +443,8 @@ export class BenchSupervisor extends EventEmitter {
   }
 
   private spawnWatcher(proc: ManagedProcess, benchPath: string, site: string): void {
-    const env = benchChildEnv();
+    // watch-studio print()s without flushing; on a pipe Python block-buffers, so the Build tab would never see a line.
+    const env = { ...benchChildEnv(), PYTHONUNBUFFERED: "1" };
     const child = spawn("bench", ["--site", site, "watch-studio"], {
       cwd: benchPath,
       env,

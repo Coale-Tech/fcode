@@ -70,3 +70,10 @@ test("studio.api.save_page is NOT read-only", () => {
 test("empty string is NOT read-only", () => {
   assert.ok(!isReadOnlyBenchMethod(""));
 });
+
+// `bench execute` eval()s any non-importable method string, so an expression
+// that merely starts with an approved prefix must never skip the prompt.
+test("expression that starts with an approved prefix is NOT read-only (eval bypass)", () => {
+  assert.ok(!isReadOnlyBenchMethod("frappe.utils.now() and __import__('os').system('id')"));
+  assert.ok(!isReadOnlyBenchMethod("frappe.client.get\n.x"));
+});

@@ -545,6 +545,24 @@ const HOST_TOOL_SCHEMAS = [
       required: ["action"],
     },
   },
+  {
+    name: "fcode_studio",
+    description: "Studio publish/export controls on the active site. Always prompts. Reads and page edits do not use this tool: read Studio App/Page records with fcode_bench_execute_read (frappe.client.get_list / frappe.client.get) and edit exported page JSON on disk.",
+    parameters: {
+      type: "object",
+      properties: {
+        action: {
+          type: "string",
+          enum: ["publish_app", "unpublish_app", "enable_export", "disable_export", "publish_page", "unpublish_page", "revert_page"],
+        },
+        app: { type: "string", description: "Studio App name (publish_app, unpublish_app, enable_export, disable_export)" },
+        page: { type: "string", description: "Studio Page name (publish_page, unpublish_page, revert_page)" },
+        target_app: { type: "string", description: "Frappe app to export into (enable_export only)" },
+        site: { type: "string", description: "Frappe site name; defaults to the active site" },
+      },
+      required: ["action"],
+    },
+  },
 ] as const;
 
 export class OmpBridge {
