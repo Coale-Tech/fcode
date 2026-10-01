@@ -78,7 +78,7 @@ interface OverlayOptions {
   resourcesPath: string;
   screenshotsDir: string;
   /** Memory backend selection; the Hindsight token travels via HINDSIGHT_API_TOKEN env, never here. */
-  memory?: { backend: "mnemopi" | "hindsight" | "off"; hindsightUrl?: string; hindsightBank?: string };
+  memory?: { backend: "mnemopi" | "hindsight" | "sharpshooter" | "local" | "off"; hindsightUrl?: string; hindsightBank?: string };
   /** Tool approval mode; defaults to "always-ask" (never yolo). */
   approvalMode?: "always-ask" | "write" | "yolo";
   /** User-configured omp settings groups; absent keys use omp's own defaults. */
@@ -147,11 +147,25 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
     if (opts.memory.hindsightUrl) hindsightLines.push(`  apiUrl: ${JSON.stringify(opts.memory.hindsightUrl)}`);
     if (opts.memory.hindsightBank) hindsightLines.push(`  bankId: ${JSON.stringify(opts.memory.hindsightBank)}`);
   }
-  if (s["hindsight.autoRecall"]          !== undefined) hindsightLines.push(`  autoRecall: ${s["hindsight.autoRecall"]}`);
-  if (s["hindsight.autoRetain"]          !== undefined) hindsightLines.push(`  autoRetain: ${s["hindsight.autoRetain"]}`);
-  if (s["hindsight.retainMode"]          !== undefined) hindsightLines.push(`  retainMode: ${s["hindsight.retainMode"]}`);
-  if (s["hindsight.mentalModelsEnabled"] !== undefined) hindsightLines.push(`  mentalModelsEnabled: ${s["hindsight.mentalModelsEnabled"]}`);
-  if (s["hindsight.mentalModelAutoSeed"] !== undefined) hindsightLines.push(`  mentalModelAutoSeed: ${s["hindsight.mentalModelAutoSeed"]}`);
+  if (s["hindsight.autoRecall"]                  !== undefined) hindsightLines.push(`  autoRecall: ${s["hindsight.autoRecall"]}`);
+  if (s["hindsight.autoRetain"]                  !== undefined) hindsightLines.push(`  autoRetain: ${s["hindsight.autoRetain"]}`);
+  if (s["hindsight.retainMode"]                  !== undefined) hindsightLines.push(`  retainMode: ${s["hindsight.retainMode"]}`);
+  if (s["hindsight.mentalModelsEnabled"]          !== undefined) hindsightLines.push(`  mentalModelsEnabled: ${s["hindsight.mentalModelsEnabled"]}`);
+  if (s["hindsight.mentalModelAutoSeed"]          !== undefined) hindsightLines.push(`  mentalModelAutoSeed: ${s["hindsight.mentalModelAutoSeed"]}`);
+  if (s["hindsight.scoping"]                      !== undefined) hindsightLines.push(`  scoping: ${s["hindsight.scoping"]}`);
+  if (s["hindsight.bankIdPrefix"]                 !== undefined && s["hindsight.bankIdPrefix"] !== "") hindsightLines.push(`  bankIdPrefix: ${JSON.stringify(s["hindsight.bankIdPrefix"])}`);
+  if (s["hindsight.retainEveryNTurns"]            !== undefined) hindsightLines.push(`  retainEveryNTurns: ${s["hindsight.retainEveryNTurns"]}`);
+  if (s["hindsight.retainOverlapTurns"]           !== undefined) hindsightLines.push(`  retainOverlapTurns: ${s["hindsight.retainOverlapTurns"]}`);
+  if (s["hindsight.recallBudget"]                 !== undefined) hindsightLines.push(`  recallBudget: ${s["hindsight.recallBudget"]}`);
+  if (s["hindsight.recallMaxTokens"]              !== undefined) hindsightLines.push(`  recallMaxTokens: ${s["hindsight.recallMaxTokens"]}`);
+  if (s["hindsight.recallContextTurns"]           !== undefined) hindsightLines.push(`  recallContextTurns: ${s["hindsight.recallContextTurns"]}`);
+  if (s["hindsight.recallMaxQueryChars"]          !== undefined) hindsightLines.push(`  recallMaxQueryChars: ${s["hindsight.recallMaxQueryChars"]}`);
+  if (s["hindsight.debug"]                        !== undefined) hindsightLines.push(`  debug: ${s["hindsight.debug"]}`);
+  if (s["hindsight.requestTimeoutMs"]             !== undefined) hindsightLines.push(`  requestTimeoutMs: ${s["hindsight.requestTimeoutMs"]}`);
+  if (s["hindsight.reflectTimeoutMs"]             !== undefined) hindsightLines.push(`  reflectTimeoutMs: ${s["hindsight.reflectTimeoutMs"]}`);
+  if (s["hindsight.recallTimeoutMs"]              !== undefined) hindsightLines.push(`  recallTimeoutMs: ${s["hindsight.recallTimeoutMs"]}`);
+  if (s["hindsight.retainTimeoutMs"]              !== undefined) hindsightLines.push(`  retainTimeoutMs: ${s["hindsight.retainTimeoutMs"]}`);
+  if (s["hindsight.mentalModelMaxRenderChars"]    !== undefined) hindsightLines.push(`  mentalModelMaxRenderChars: ${s["hindsight.mentalModelMaxRenderChars"]}`);
 
   // ponytail: YAML by hand — avoids a yaml dep for a ~20-line config file.
   return [
@@ -187,6 +201,26 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
           `  backend: ${opts.memory.backend}`,
           "mnemopi:",
           "  llmMode: session",
+          ...(s["mnemopi.scoping"]           !== undefined ? [`  scoping: ${s["mnemopi.scoping"]}`]                                 : []),
+          ...(s["mnemopi.dbPath"]            ? [`  dbPath: ${JSON.stringify(s["mnemopi.dbPath"])}`]                                 : []),
+          ...(s["mnemopi.bank"]              ? [`  bank: ${JSON.stringify(s["mnemopi.bank"])}`]                                     : []),
+          ...(s["mnemopi.embeddingVariant"]  !== undefined ? [`  embeddingVariant: ${s["mnemopi.embeddingVariant"]}`]               : []),
+          ...(s["mnemopi.autoRecall"]        !== undefined ? [`  autoRecall: ${s["mnemopi.autoRecall"]}`]                           : []),
+          ...(s["mnemopi.autoRetain"]        !== undefined ? [`  autoRetain: ${s["mnemopi.autoRetain"]}`]                           : []),
+          ...(s["mnemopi.polyphonicRecall"]  !== undefined ? [`  polyphonicRecall: ${s["mnemopi.polyphonicRecall"]}`]               : []),
+          ...(s["mnemopi.enhancedRecall"]    !== undefined ? [`  enhancedRecall: ${s["mnemopi.enhancedRecall"]}`]                   : []),
+          ...(s["mnemopi.proactiveLinking"]  !== undefined ? [`  proactiveLinking: ${s["mnemopi.proactiveLinking"]}`]               : []),
+          ...(s["mnemopi.noEmbeddings"]      !== undefined ? [`  noEmbeddings: ${s["mnemopi.noEmbeddings"]}`]                       : []),
+          ...(s["mnemopi.embeddingModel"]    ? [`  embeddingModel: ${JSON.stringify(s["mnemopi.embeddingModel"])}`]                 : []),
+          ...(s["mnemopi.embeddingApiUrl"]   ? [`  embeddingApiUrl: ${JSON.stringify(s["mnemopi.embeddingApiUrl"])}`]               : []),
+          ...(s["mnemopi.llmBaseUrl"]        ? [`  llmBaseUrl: ${JSON.stringify(s["mnemopi.llmBaseUrl"])}`]                         : []),
+          ...(s["mnemopi.llmModel"]          ? [`  llmModel: ${JSON.stringify(s["mnemopi.llmModel"])}`]                             : []),
+          ...(s["mnemopi.retainEveryNTurns"] !== undefined ? [`  retainEveryNTurns: ${s["mnemopi.retainEveryNTurns"]}`]             : []),
+          ...(s["mnemopi.recallLimit"]       !== undefined ? [`  recallLimit: ${s["mnemopi.recallLimit"]}`]                         : []),
+          ...(s["mnemopi.recallContextTurns"]    !== undefined ? [`  recallContextTurns: ${s["mnemopi.recallContextTurns"]}`]       : []),
+          ...(s["mnemopi.recallMaxQueryChars"]   !== undefined ? [`  recallMaxQueryChars: ${s["mnemopi.recallMaxQueryChars"]}`]     : []),
+          ...(s["mnemopi.injectionTokenLimit"]   !== undefined ? [`  injectionTokenLimit: ${s["mnemopi.injectionTokenLimit"]}`]     : []),
+          ...(s["mnemopi.debug"]             !== undefined ? [`  debug: ${s["mnemopi.debug"]}`]                                     : []),
         ]
       : []),
     ...(hindsightLines.length > 0 ? ["", "hindsight:", ...hindsightLines] : []),
@@ -315,6 +349,30 @@ function ompSettingsYaml(s: OmpSettingsValues): string[] {
     lines.push("", "commands:");
     if (cmdClaudeUser !== undefined) lines.push(`  enableClaudeUser: ${cmdClaudeUser}`);
     if (cmdClaudeProj !== undefined) lines.push(`  enableClaudeProject: ${cmdClaudeProj}`);
+  }
+
+  // sharpshooter section (backend=sharpshooter; also configures extraction when using other backends)
+  const ssModel    = s["sharpshooter.model"];
+  const ssInterval = s["sharpshooter.intervalMinutes"];
+  const ssLimit    = s["sharpshooter.injectionTokenLimit"];
+  if (ssModel !== undefined || ssInterval !== undefined || ssLimit !== undefined) {
+    lines.push("", "sharpshooter:");
+    if (ssModel    !== undefined && ssModel !== "") lines.push(`  model: ${JSON.stringify(ssModel)}`);
+    if (ssInterval !== undefined) lines.push(`  intervalMinutes: ${ssInterval}`);
+    if (ssLimit    !== undefined) lines.push(`  injectionTokenLimit: ${ssLimit}`);
+  }
+
+  // memories section (local memory pipeline; backend=local)
+  const memMaxRollouts     = s["memories.maxRolloutsPerStartup"];
+  const memMaxAgeDays      = s["memories.maxRolloutAgeDays"];
+  const memMinIdleHours    = s["memories.minRolloutIdleHours"];
+  const memSummaryLimit    = s["memories.summaryInjectionTokenLimit"];
+  if (memMaxRollouts !== undefined || memMaxAgeDays !== undefined || memMinIdleHours !== undefined || memSummaryLimit !== undefined) {
+    lines.push("", "memories:");
+    if (memMaxRollouts  !== undefined) lines.push(`  maxRolloutsPerStartup: ${memMaxRollouts}`);
+    if (memMaxAgeDays   !== undefined) lines.push(`  maxRolloutAgeDays: ${memMaxAgeDays}`);
+    if (memMinIdleHours !== undefined) lines.push(`  minRolloutIdleHours: ${memMinIdleHours}`);
+    if (memSummaryLimit !== undefined) lines.push(`  summaryInjectionTokenLimit: ${memSummaryLimit}`);
   }
 
   // theme section (HTML export palette)
@@ -1533,7 +1591,7 @@ async function main(): Promise<void> {
       approvalMode,
       ompSettings: parseOmpSettings(process.env.FCODE_OMP_SETTINGS),
       memory:
-        backend === "mnemopi" || backend === "hindsight" || backend === "off"
+        backend === "mnemopi" || backend === "hindsight" || backend === "sharpshooter" || backend === "local" || backend === "off"
           ? {
               backend,
               hindsightUrl: process.env.FCODE_HINDSIGHT_URL,
