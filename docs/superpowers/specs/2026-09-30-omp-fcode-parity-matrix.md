@@ -189,15 +189,15 @@
 
 | Capability | omp source | Fcode surface | Status | Note |
 |---|---|---|---|---|
-| `/login` | `commands/login.ts` | partial (text → omp) | partial | Login via omp; `OmpAccountsSection` is the real UI |
-| `/models` | `commands/models.ts` | partial (text → omp) | partial | Model switch via model picker is the real UI |
-| `/skill` | `commands/skill.ts` | partial (text → omp) | partial | No dedicated skill management UI in Fcode |
-| `/collab` | `commands/collab.ts` | partial (text → omp) | partial | No collab UI tab; collab settings missing |
-| `/stats` | `commands/stats.ts` | partial (text → omp) | partial | No stats/usage tab in Fcode |
+| `/login` | `commands/login.ts` | `apps/desktop/src/components/settings/OmpAccountsSection.tsx:30` | surfaced | OAuth provider list + login button in Settings → Agent tab |
+| `/models` | `commands/models.ts` | `useComposerModelMenu.ts:369` + `OmpAccountsSection.tsx` | surfaced | Model picker in composer + accounts section covers all model-related actions |
+| `/skill` | `commands/skill.ts` | `OmpSkillsSection.tsx` (AI tab) + `SkillMarketPanel.tsx` (market) | partial | Installed skills panel shows id/version/scope/reveal; no search/install/publish from UI |
+| `/collab` | `commands/collab.ts` | `omp-settings-sections.tsx` Collab group | partial | Collab relay/web/display-name/auto-start settings wired; no live collab UI |
+| `/stats` | `commands/stats.ts` | `OmpUsageSection.tsx` (AI tab) + `ContextUsageInspector.tsx` | partial | Historical aggregates via `omp stats --json`; per-session stats in context ring |
 | `/settings` | `commands/settings.ts` | partial (text → omp) | partial | Opens TUI settings panel; Fcode has its own settings page |
-| `/ssh` | `commands/ssh.ts` | partial (text → omp) | partial | Remote host settings partially in Fcode dev Settings |
-| `/git` | `commands/git.ts` | partial (text → omp) | partial | No git TUI surface in Fcode |
-| `/worktree` | `commands/worktree.ts` | partial (text → omp) | partial | No worktree UI in Fcode |
+| `/ssh` | `commands/ssh.ts` | `RemoteHostsPage.tsx` (pi-host SSH pairing; separate system) | partial | omp SSH hosts (`~/.omp/agent/ssh-hosts.json`) are a different registry from Fcode's remote hosts |
+| `/git` | `commands/git.ts` | none | missing | `omp git` is a fullscreen interactive TUI requiring a real TTY; not embeddable in Fcode without a terminal panel |
+| `/worktree` | `commands/worktree.ts` | `OmpWorktreeSection.tsx` (AI tab) | partial | Lists agent worktrees under `~/.omp/wt/`; no clear/add operations from UI |
 | `/share` | `commands/share.ts` | partial (text → omp) | partial | No share UI in Fcode |
 
 ### 4.3 Built-in Agent Tools
@@ -327,7 +327,7 @@
 | `collab.webUrl` | `collab/settings.ts:21` | none | missing | Web collaboration viewer URL |
 | `collab.displayName` | `collab/settings.ts:34` | none | missing | Collaborator display name |
 | `collab.autoStart` | `collab/settings.ts:46` | none | missing | Auto-start collab mode |
-| Session stats (`get_session_stats`) | `rpc-types.ts:79` | none | missing | Token counts, cost per session |
+| Session stats (`get_session_stats`) | `rpc-types.ts:79` | `ContextUsageInspector.tsx`; historical: `OmpUsageSection.tsx` | partial | Per-session stats in context ring; all-time aggregates in AI settings via `omp stats --json` |
 
 ### 5.13 Extensions / Plugins / Skills (no Fcode omp tab)
 
