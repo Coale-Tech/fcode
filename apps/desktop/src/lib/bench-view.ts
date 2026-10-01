@@ -125,3 +125,8 @@ export function groupForSwitcher<T extends BenchSummary>(
   }
   return groups;
 }
+
+/** Key of a one-shot command's result: per bench, per verb (never verb alone). */
+export function oneshotKey(benchPath: string, verb: string): string {
+  return `${benchPath}\0${verb}`;
+}

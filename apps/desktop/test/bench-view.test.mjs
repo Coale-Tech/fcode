@@ -10,6 +10,7 @@ const {
   groupForSwitcher,
   matchesChip,
   matchesQuery,
+  oneshotKey,
   sortBenches,
   startBlockedBy,
   startBlockedCue,
@@ -76,4 +77,13 @@ test("groupForSwitcher places each matching bench in exactly one group", () => {
   assert.deepEqual(g.rest.map((x) => x.id), ["d"]);
   const filtered = groupForSwitcher(list, "v15", (x) => status[x.id]);
   assert.deepEqual([...filtered.running, ...filtered.attention, ...filtered.rest].map((x) => x.id), ["c", "d"]);
+});
+
+test("oneshotKey separates the same verb on different benches and different verbs on one bench", () => {
+  // A one-shot result stored by verb alone showed bench A's "✓ migrate" on bench B.
+  assert.notEqual(oneshotKey("/b/a", "migrate"), oneshotKey("/b/b", "migrate"));
+  assert.notEqual(oneshotKey("/b/a", "migrate"), oneshotKey("/b/a", "build"));
+  assert.equal(oneshotKey("/b/a", "migrate"), oneshotKey("/b/a", "migrate"));
+  // A path that ends like another bench's path + verb cannot collide.
+  assert.notEqual(oneshotKey("/b/a", "x"), oneshotKey("/b/a\0x", ""));
 });

@@ -34,6 +34,7 @@ import { api } from "../lib/api";
 import {
   baseName,
   benchStatusFor,
+  oneshotKey,
   startBlockedBy,
   startBlockedCue,
   type BenchSite,
@@ -422,11 +423,12 @@ export function BenchPage() {
     async (verb: string, site: string | undefined) => {
       if (!selectedBench) return;
       const t0 = Date.now();
-      setOneshotState((prev) => {
-        const next = new Map(prev);
-        next.set(verb, { status: "running" });
-        return next;
-      });
+      // Keyed by bench path: results belong to the bench they ran on, so
+      // switching tabs mid-run never shows or blocks another bench's verb.
+      const key = oneshotKey(selectedBench.path, verb);
+      const setEntry = (entry: OneshotEntry) =>
+        setOneshotState((prev) => new Map(prev).set(key, entry));
+      setEntry({ status: "running" });
       try {
         const result = await invoke<{ exitCode: number; output: string }>(IPC.invoke.benchRun, {
           benchPath: selectedBench.path,
@@ -435,26 +437,14 @@ export function BenchPage() {
         });
         const elapsed = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
         if (result.exitCode === 0) {
-          setOneshotState((prev) => {
-            const next = new Map(prev);
-            next.set(verb, { status: "ok", elapsed });
-            return next;
-          });
+          setEntry({ status: "ok", elapsed });
         } else {
           const tail = result.output.split("\n").slice(-20).join("\n");
-          setOneshotState((prev) => {
-            const next = new Map(prev);
-            next.set(verb, { status: "error", elapsed, output: tail });
-            return next;
-          });
+          setEntry({ status: "error", elapsed, output: tail });
         }
       } catch (err) {
         const elapsed = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
-        setOneshotState((prev) => {
-          const next = new Map(prev);
-          next.set(verb, { status: "error", elapsed, output: String(err) });
-          return next;
-        });
+        setEntry({ status: "error", elapsed, output: String(err) });
       }
     },
     [selectedBench],
@@ -808,7 +798,7 @@ function BenchDetail({
         )}
         <div className="wb-cmds">
           {ONESHOT_VERBS.map((verb) => {
-            const vs = oneshotState.get(verb);
+            const vs = oneshotState.get(oneshotKey(bench.path, verb));
             return (
               <div key={verb} className="wb-cmd">
                 <button
