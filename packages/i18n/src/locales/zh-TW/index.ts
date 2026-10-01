@@ -363,6 +363,8 @@ export const zhTW = {
     compactionRowSummary: "摘要 ≈{{tokens}} tokens",
     compactionRowNoSummary: "未生成摘要",
     compactionRowSummaryFailed: "摘要生成失敗 · 已保留近期上下文",
+    usageSessionLabel: "工作階段",
+    usageSessionCost: "費用 {{amount}}",
     scrollToBottom: "回到最新",
     minimap: "對話大綱",
     resultNeedsAttention: "這次任務需要處理一下",

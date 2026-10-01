@@ -9,6 +9,7 @@ import {
 import { useTranslation } from "react-i18next";
 import type {
   Mode,
+  OmpSessionStatsResult,
   OmpStateResult,
   PermissionMode,
 } from "@pi-desktop/shared";
@@ -126,6 +127,11 @@ export function Composer({
     void api.ompAutoCompactionSet(enabled).catch(() => {});
   }, []);
 
+  const [ompSessionStats, setOmpSessionStats] = useState<OmpSessionStatsResult | null>(null);
+  useEffect(() => {
+    if (isRunning) return;
+    void api.ompSessionStats().then(setOmpSessionStats).catch(() => {});
+  }, [isRunning]);
   const composerContextUsage = useMemo(
     () =>
       latestTurnContextInspector(
@@ -622,6 +628,7 @@ export function Composer({
             contextUsage={composerContextUsage ?? null}
             autoCompactionEnabled={ompAutoCompactionEnabled}
             onToggleAutoCompaction={handleToggleAutoCompaction}
+            sessionStats={ompSessionStats}
             enhancementDraft={enhancementDraft}
             value={value}
             modelReady={modelReady}

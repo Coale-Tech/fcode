@@ -371,6 +371,8 @@ export const tr = {
     compactionRowSummary: "özet ≈{{tokens}} token",
     compactionRowNoSummary: "özet oluşturulmadı",
     compactionRowSummaryFailed: "özet oluşturulamadı · son bağlam korundu",
+    usageSessionLabel: "Oturum",
+    usageSessionCost: "Maliyet {{amount}}",
     scrollToBottom: "En sona atla",
     minimap: "Sohbet özeti",
     resultNeedsAttention: "Bu görevin ilgiye ihtiyacı var",

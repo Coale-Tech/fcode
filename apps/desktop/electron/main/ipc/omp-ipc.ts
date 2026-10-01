@@ -17,6 +17,7 @@ import type {
   OmpModelsListResult,
   OmpModelsSetResult,
   OmpSessionBranchResult,
+  OmpSessionStatsResult,
   OmpStateResult,
   OmpThinkingLevelsResult,
 } from "@pi-desktop/shared";
@@ -116,6 +117,12 @@ export function registerOmpIpc({ registrar, getSidecar }: OmpIpcDependencies): v
     if (!name) invalid("name required");
     const sidecar = getSidecar() ?? unavailable();
     return sidecar.call<void>("omp.session.rename", { name });
+  });
+
+  // ── omp.session.stats ──────────────────────────────────────────────────────
+  handle(IPC.invoke.ompSessionStats, async () => {
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<OmpSessionStatsResult>("omp.session.stats");
   });
 
   // ── omp.auto-compaction.set ────────────────────────────────────────────────

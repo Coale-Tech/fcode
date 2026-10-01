@@ -3,6 +3,7 @@ import type { TFunction } from "i18next";
 import {
   keybindingDisplayParts,
   type Mode,
+  type OmpSessionStatsResult,
   type PermissionMode,
   type ShortcutPlatform,
   type SessionThinkingLevel,
@@ -52,6 +53,7 @@ export type ComposerToolbarProps = {
   contextUsage: ContextUsage | null;
   autoCompactionEnabled?: boolean;
   onToggleAutoCompaction?: (enabled: boolean) => void;
+  sessionStats?: OmpSessionStatsResult | null;
   enhancementDraft: string;
   value: string;
   modelReady: boolean;
@@ -93,6 +95,7 @@ export function ComposerToolbar({
   contextUsage,
   autoCompactionEnabled,
   onToggleAutoCompaction,
+  sessionStats,
   enhancementDraft,
   value,
   modelReady,
@@ -195,7 +198,7 @@ export function ComposerToolbar({
       </div>
 
       <div className="composer-right">
-        {contextUsage ? <ContextUsageInspector {...contextUsage} autoCompactionEnabled={autoCompactionEnabled} onToggleAutoCompaction={onToggleAutoCompaction} /> : null}
+        {contextUsage ? <ContextUsageInspector {...contextUsage} sessionStats={sessionStats} autoCompactionEnabled={autoCompactionEnabled} onToggleAutoCompaction={onToggleAutoCompaction} /> : null}
         <ComposerModelPicker
           t={t}
           controller={modelMenu}
