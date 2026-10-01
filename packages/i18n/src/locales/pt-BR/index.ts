@@ -392,6 +392,7 @@ export const ptBR = {
     toolBlockNotice: "Aviso",
     toolBlockError: "Erro",
     toolBlockMore: "mais {{count}} itens ocultos",
+    toolScreenshot: "Captura de tela",
     toolChipExit: "código de saída {{count}}",
     toolChipMatches_one: "1 correspondência",
     toolChipMatches_other: "{{count}} correspondências",

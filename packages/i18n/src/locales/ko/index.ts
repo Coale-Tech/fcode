@@ -403,6 +403,7 @@ export const ko = {
     toolBlockNotice: "참고",
     toolBlockError: "오류",
     toolBlockMore: "외 {{count}}개 숨김",
+    toolScreenshot: "스크린샷",
     toolChipExit: "종료 {{count}}",
     toolChipMatches_one: "일치 1개",
     toolChipMatches_other: "일치 {{count}}개",
