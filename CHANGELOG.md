@@ -20,6 +20,8 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Removed the whole-file `git restore` path; Review snapshot rollback is the only way to undo agent changes.
 - `navToCode` shortcut renamed `navToFiles`; custom bindings carry over. Saved `pi.file-manager` tabs move to `fcode.files`.
 
+- Settings → Memory: Hindsight mental-model pages list with per-page refresh button; Frappe bench bootstrap action that seeds bench path, sites, and installed apps into the active memory backend (Hindsight HTTP API; Mnemopi explains it manages context automatically).
+
 ## [0.16.0] — 2026-09-29
 
 ### Compatibility

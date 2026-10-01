@@ -134,6 +134,9 @@ import type {
   OmpLoginProvidersResult,
   OmpLoginStartResult,
   OmpSessionBranchResult,
+  HindsightListMentalModelsResult,
+  HindsightRefreshMentalModelResult,
+  BenchBootstrapResult,
 } from "@pi-desktop/shared";
 import {
   defaultCommandShellForPlatform,
@@ -1644,6 +1647,15 @@ export const api = {
   /** Persist config; `token` is write-only. Restarts the agent sidecar. */
   memorySetConfig: (input: MemoryConfig & { token?: string }) =>
     invoke<MemoryConfigView>(IPC.invoke.memorySetConfig, input),
+  /** List mental-model pages for the active Hindsight bank. */
+  hindsightListMentalModels: () =>
+    invoke<HindsightListMentalModelsResult>(IPC.invoke.hindsightListMentalModels),
+  /** Trigger an out-of-band refresh for a named mental-model page. */
+  hindsightRefreshMentalModel: (modelId: string) =>
+    invoke<HindsightRefreshMentalModelResult>(IPC.invoke.hindsightRefreshMentalModel, { modelId }),
+  /** Seed the active memory backend with identity facts from the active Frappe bench. */
+  benchBootstrapMemory: () =>
+    invoke<BenchBootstrapResult>(IPC.invoke.benchBootstrapMemory),
   /** List login providers known to omp. */
   ompLoginProviders: () =>
     invoke<OmpLoginProvidersResult>(IPC.invoke.ompLoginProviders),

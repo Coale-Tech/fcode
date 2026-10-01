@@ -110,3 +110,33 @@ export interface MemoryConfig {
 export interface MemoryConfigView extends MemoryConfig {
   hasToken: boolean;
 }
+
+/** A mental-model page returned by the Hindsight API. */
+export interface HindsightMentalModelSummary {
+  id: string;
+  name: string;
+  content?: string;
+  tags?: string[];
+  updatedAt?: string;
+}
+
+/** Result of `hindsightListMentalModels`. */
+export interface HindsightListMentalModelsResult {
+  models: HindsightMentalModelSummary[];
+}
+
+/** Result of `hindsightRefreshMentalModel`. */
+export interface HindsightRefreshMentalModelResult {
+  operationId?: string;
+}
+
+/** Result of `benchBootstrapMemory`. */
+export interface BenchBootstrapResult {
+  ok: boolean;
+  benchPath: string;
+  sites: string[];
+  apps: string[];
+  /** Set for the hindsight backend; absent for mnemopi/off. */
+  retained?: boolean;
+  message?: string;
+}

@@ -362,6 +362,12 @@ export const IPC = {
     ompMemoryStatus: "pi-desktop/omp/memory/status",
     memoryGetConfig: "pi-desktop/memory/getConfig",
     memorySetConfig: "pi-desktop/memory/setConfig",
+    /** List mental-model pages for the active Hindsight bank. */
+    hindsightListMentalModels: "pi-desktop/hindsight/mentalModels/list",
+    /** Trigger an out-of-band refresh for a single mental-model page. */
+    hindsightRefreshMentalModel: "pi-desktop/hindsight/mentalModels/refresh",
+    /** Seed the active memory backend with Frappe bench identity facts. */
+    benchBootstrapMemory: "pi-desktop/bench/bootstrap/memory",
     ompLoginProviders: "pi-desktop/omp/login/providers",
     ompLoginStart: "pi-desktop/omp/login/start",
     ompSessionBranch: "pi-desktop/omp/session/branch",
