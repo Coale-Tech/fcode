@@ -32,8 +32,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { IPC, type Result } from "@pi-desktop/shared";
-import type { Precondition } from "../components/PreconditionList";
-import { PreconditionList } from "../components/PreconditionList";
+import { buildChecks, checksFor, failing } from "../lib/build-checks";
 import { useAppStore } from "../stores/app-store";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -62,6 +61,11 @@ export function BuildPage() {
 
   // Bench status (polled every 2s)
   const [benchStatus, setBenchStatus] = useState<BenchStatus>("stopped");
+  const [benchPath, setBenchPath] = useState<string | null>(null);
+  const [site, setSite] = useState<string | null>(null);
+  // Check keys whose banner the user dismissed; pruned once the check recovers.
+  const [dismissed, setDismissed] = useState<string[]>([]);
+  const [copied, setCopied] = useState(false);
 
   // Build availability — installed apps query
   const [listAppsStatus, setListAppsStatus] = useState<ListAppsStatus>("loading");
@@ -100,8 +104,12 @@ export function BuildPage() {
     const poll = async () => {
       if (cancelled) return;
       try {
-        const s = await invoke<{ status: BenchStatus }>(IPC.invoke.benchStatus);
-        if (!cancelled) setBenchStatus(s.status);
+        const s = await invoke<{ status: BenchStatus; benchPath: string | null; site: string | null }>(IPC.invoke.benchStatus);
+        if (!cancelled) {
+          setBenchStatus(s.status);
+          setBenchPath(s.benchPath);
+          setSite(s.site);
+        }
       } catch { /* ignore */ }
     };
     poll();
@@ -358,29 +366,31 @@ export function BuildPage() {
   const studioInstalled = installedApps.includes("studio");
   const builderInstalled = installedApps.includes("builder");
 
-  // Studio precondition items (plan D13)
-  const preconditions: Precondition[] = [
-    {
-      label: "Bench is running",
-      ok: benchStatus === "running",
-      remedy: "bench start",
-    },
-    {
-      label: "Studio app installed",
-      ok: studioInstalled,
-      remedy: "bench get-app studio && bench --site <site> install-app studio",
-    },
-    {
-      label: "developer_mode enabled",
-      ok: developerMode === true,
-      remedy: 'bench set-config -g developer_mode 1 && bench --site <site> clear-cache',
-    },
-    {
-      label: "watchdog Python package installed",
-      ok: watchdogOk === true,
-      remedy: "env/bin/pip install watchdog",
-    },
-  ];
+  const allChecks = buildChecks({
+    benchRunning: benchStatus === "running",
+    appsLoaded: listAppsStatus === "loaded",
+    studioInstalled,
+    developerMode,
+    watchdogOk,
+    site,
+  });
+  const checks = checksFor(canvas, allChecks);
+  const problems = failing(checks);
+  const firstProblem = problems[0];
+  const showBanner = firstProblem !== undefined && !dismissed.includes(firstProblem.key);
+  const benchDown = allChecks[0].state === "fail";
+  const benchName = benchPath?.split(/[\\/]/).filter(Boolean).pop() ?? null;
+  const problemKeys = problems.map((p) => p.key).join(",");
+  useEffect(() => {
+    setDismissed((d) => d.filter((k) => problemKeys.split(",").includes(k)));
+  }, [problemKeys]);
+
+  const goBench = () => setPage("bench");
+  const copyRemedy = async (cmd: string) => {
+    await navigator.clipboard.writeText(cmd);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1_500);
+  };
 
   const handleReload = () => {
     void invoke(IPC.invoke.buildCanvasAction, { action: "reload" });
@@ -391,31 +401,27 @@ export function BuildPage() {
   const benchBadge = BENCH_BADGES[benchStatus];
   const watcherHue = watcherStatus === "running" ? "green" : watcherStatus === "failed" ? "red" : "amber";
 
+  const otherApps = installedApps.filter((a) => a !== "studio" && a !== "builder");
+
   return (
     <main className="wb-page build-page" aria-label="Build">
-      {/* Context sidebar: the supervised bench and the apps installed on it */}
+      {/* Context sidebar: the apps installed on the supervised bench */}
       <aside className="context-sidebar">
         <div className="wb-sidebar-nav">
-          <div className="wb-sidebar-hd"><span>Bench</span></div>
-          <div className="wb-row is-static">
-            <div className="wb-row-top">
-              <span className="wb-row-name">Local bench</span>
-              <span className={`wb-badge wb-badge-${benchBadge.hue}`}>
-                <span className={`wb-dot wb-dot-${benchBadge.hue}`} aria-hidden="true" />
-                {benchBadge.label}
-              </span>
-            </div>
-            {benchStatus === "running" && listAppsStatus === "loaded" && (
-              <div className="wb-row-meta">localhost:{webserverPort}</div>
-            )}
-          </div>
-
-          <div className="wb-sidebar-hd"><span>Installed apps</span></div>
           {listAppsStatus === "loaded" ? (
             <ul className="wb-list">
-              {installedApps.map((app) => (
+              {(["studio", "builder"] as const).map((app) => (
                 <li key={app} className="wb-row is-static">
-                  <span className="wb-row-name">{app}</span>
+                  <span className="wb-row-top">
+                    <span className={`wb-dot wb-dot-${installedApps.includes(app) ? "green" : "gray"}`} aria-hidden="true" />
+                    <span className="wb-row-name">{app}</span>
+                    {!installedApps.includes(app) && <span className="wb-muted">not installed</span>}
+                  </span>
+                </li>
+              ))}
+              {otherApps.map((app) => (
+                <li key={app} className="wb-row is-static build-app-other">
+                  <span className="wb-row-name wb-muted">{app}</span>
                 </li>
               ))}
             </ul>
@@ -428,6 +434,39 @@ export function BuildPage() {
       </aside>
 
       <section className="island">
+        {/* Header: bench context + the one action that fits the current state */}
+        <div className="build-hd">
+          <span className="build-bench" title={benchPath ?? undefined}>{benchName ?? "No bench"}</span>
+          {site && <span className="wb-note wb-muted">on {site}</span>}
+          {benchStatus === "running" && listAppsStatus === "loaded" && (
+            <span className="wb-note wb-muted">:{webserverPort}</span>
+          )}
+          <span className={`wb-badge wb-badge-${benchBadge.hue}`}>
+            <span className={`wb-dot wb-dot-${benchBadge.hue}`} aria-hidden="true" />
+            {benchBadge.label}
+          </span>
+          <span className="wb-spacer" />
+          {benchDown ? (
+            <button type="button" className="wb-btn wb-btn-solid wb-btn-sm" onClick={goBench}>
+              Start bench
+            </button>
+          ) : problems.length > 0 ? (
+            <button type="button" className="wb-btn wb-btn-solid wb-btn-sm" onClick={() => setDismissed([])}>
+              Fix {problems.length} issue{problems.length === 1 ? "" : "s"}
+            </button>
+          ) : canvas === "builder" ? (
+            <button
+              type="button"
+              className="wb-btn wb-btn-solid wb-btn-sm"
+              disabled={syncStatus === "loading" || !builderInstalled || benchStatus !== "running"}
+              onClick={() => void doSync()}
+              aria-label="Sync Builder files to site database"
+            >
+              {syncStatus === "loading" ? "Syncing…" : "Sync files → site"}
+            </button>
+          ) : null}
+        </div>
+
         {/* Studio / Builder underline tabs */}
         <div className="wb-tabs">
           <div role="group" aria-label="Canvas" className="wb-tab-group">
@@ -493,6 +532,20 @@ export function BuildPage() {
           </button>
         </div>
 
+        {/* Problem banner: the first failing check, with its fix */}
+        {showBanner && (
+          <div className={`build-banner ${firstProblem.key === "bench" ? "is-red" : "is-amber"}`} role="alert">
+            <strong>{firstProblem.problem}</strong>
+            <code className="build-banner-cmd">{firstProblem.remedy}</code>
+            <button type="button" className="wb-btn wb-btn-ghost wb-btn-sm" onClick={() => void copyRemedy(firstProblem.remedy)}>
+              {copied ? "Copied" : "Copy"}
+            </button>
+            <button type="button" className="wb-btn wb-btn-ghost wb-btn-sm" onClick={() => setDismissed((d) => [...d, firstProblem.key])}>
+              Dismiss
+            </button>
+          </div>
+        )}
+
         {/* ── Canvas area ───────────────────────────────────────────────────── */}
         {/* T14 a11y: announce canvas focus */}
         <div aria-live="polite" aria-atomic="true" className="sr-only">
@@ -516,16 +569,14 @@ export function BuildPage() {
             studioInstalled={studioInstalled}
             builderInstalled={builderInstalled}
             syncDimmed={syncStatus === "loading"}
-            onStartBench={() => setPage("bench")}
             onRetryApps={() => void loadApps()}
           />
         </div>
 
-        {/* Bottom control strip: watcher / sync state + preconditions */}
-        <div className="wb-strip">
+        {/* Status bar: watcher / sync state left, the four checks right */}
+        <div className="wb-strip build-status">
           <div role="toolbar" aria-label="Build controls" className="wb-strip-row build-control-strip">
-            {/* list-apps loading/error feedback */}
-            {listAppsStatus === "loading" && (
+            {listAppsStatus === "loading" && benchStatus === "running" && (
               <span className="wb-note wb-muted" aria-live="polite">Checking installed apps…</span>
             )}
             {listAppsStatus === "error" && (
@@ -541,13 +592,7 @@ export function BuildPage() {
                 <span className={`wb-dot wb-dot-${watcherHue}`} aria-hidden="true" />
                 {watcherStatus === "starting" && "watch-studio starting…"}
                 {watcherStatus === "running" && `watching${watcherLastImport ? ` · last import ${watcherLastImport}` : ""}`}
-                {watcherStatus === "failed" && "watch-studio stopped (see preconditions)"}
-              </span>
-            )}
-            {/* developer_mode off warning (amber) */}
-            {canvas === "studio" && watcherStatus === "running" && developerMode === false && (
-              <span className="wb-note wb-text-amber" role="alert">
-                ⚠ developer_mode is off — imports are disabled
+                {watcherStatus === "failed" && "watch-studio stopped"}
               </span>
             )}
 
@@ -555,28 +600,24 @@ export function BuildPage() {
             {canvas === "builder" && syncStatus === "success" && syncMsg && (
               <span className="wb-note wb-text-green" aria-live="polite">{syncMsg}</span>
             )}
-
-            <span className="wb-spacer" />
-
-            {/* Builder sync note */}
             {canvas === "builder" && listAppsStatus === "loaded" && (
               <span className="wb-note wb-muted">Files are the source; sync to apply</span>
             )}
-            {canvas === "builder" && (
-              <button
-                type="button"
-                className="wb-btn wb-btn-solid wb-btn-sm"
-                disabled={
-                  syncStatus === "loading" ||
-                  !builderInstalled ||
-                  benchStatus !== "running"
-                }
-                onClick={() => void doSync()}
-                aria-label="Sync Builder files to site database"
-              >
-                {syncStatus === "loading" ? "Syncing…" : "Sync files → site"}
-              </button>
-            )}
+
+            <span className="wb-spacer" />
+
+            <ul className="build-checks" aria-label="Build checks">
+              {checks.map((c) => (
+                <li key={c.key} className={`build-check is-${c.state}`}>
+                  <span
+                    className={`wb-dot wb-dot-${c.state === "ok" ? "green" : c.state === "fail" ? "red" : "gray"}`}
+                    aria-hidden="true"
+                  />
+                  {c.short}
+                  <span className="sr-only">: {c.state}</span>
+                </li>
+              ))}
+            </ul>
           </div>
 
           {/* Sync error */}
@@ -588,11 +629,6 @@ export function BuildPage() {
                 Dismiss
               </button>
             </div>
-          )}
-
-          {/* Studio precondition checklist (only when any fail) */}
-          {canvas === "studio" && (
-            <PreconditionList items={preconditions} />
           )}
         </div>
       </section>
@@ -610,7 +646,6 @@ function CanvasOverlay({
   studioInstalled,
   builderInstalled,
   syncDimmed,
-  onStartBench,
   onRetryApps,
 }: {
   canvas: Canvas;
@@ -620,17 +655,13 @@ function CanvasOverlay({
   studioInstalled: boolean;
   builderInstalled: boolean;
   syncDimmed: boolean;
-  onStartBench: () => void;
   onRetryApps: () => void;
 }) {
-  // Bench not running → most prominent message
+  // Bench not running → the header action and banner carry the CTA
   if (benchStatus !== "running") {
     return (
       <div className="wb-overlay">
         <p className="wb-empty-title">Bench not running</p>
-        <button type="button" className="wb-btn wb-btn-solid" onClick={onStartBench}>
-          Start bench
-        </button>
       </div>
     );
   }
