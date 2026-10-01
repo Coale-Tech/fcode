@@ -1,12 +1,12 @@
 /**
- * Boundary tests for the DAP session panel reducer (feat/dap-panel).
+ * Boundary tests for the DAP session panel reducer (feat/dap-breakpoints).
  *
  * Covers:
  *   - stopped event updates session status and stores frames/variables
  *   - continued/running event updates status back to running
  *   - terminated session is kept but marked terminated
- *   - unknown session in snapshot is created correctly
- *   - unrecognised action type falls back safely (unknown sessions)
+ *   - breakpoint add/remove/verify-failed (optimistic + reconciliation)
+ *   - debug_tool_start stores pending call; tool_result reconciles breakpoints
  */
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -17,7 +17,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 register(pathToFileURL(join(here, "helpers/ts-import-hooks.mjs")));
 
-const { dapPanelReducer, EMPTY_DAP_STATE } = await import(
+const { dapPanelReducer, EMPTY_DAP_STATE, bpKey } = await import(
   "../src/lib/dap-panel.ts"
 );
 
@@ -172,4 +172,155 @@ test("tool_result with no recognisable details returns same state", () => {
     details: { action: "sessions", success: true },
   });
   assert.equal(state, EMPTY_DAP_STATE, "same reference when nothing to update");
+});
+
+// ─── breakpoint: optimistic add ───────────────────────────────────────────────
+
+test("bp_add_optimistic creates pending breakpoint", () => {
+  const next = dapPanelReducer(EMPTY_DAP_STATE, {
+    type: "bp_add_optimistic",
+    file: "/app/main.py",
+    line: 42,
+  });
+  const bp = next.breakpoints.get(bpKey("/app/main.py", 42));
+  assert.ok(bp, "breakpoint created");
+  assert.equal(bp.pending, true);
+  assert.equal(bp.verified, false);
+  assert.equal(bp.failed, false);
+  assert.equal(bp.file, "/app/main.py");
+  assert.equal(bp.line, 42);
+});
+
+test("bp_add_optimistic with condition stores condition", () => {
+  const next = dapPanelReducer(EMPTY_DAP_STATE, {
+    type: "bp_add_optimistic",
+    file: "/app/main.py",
+    line: 10,
+    condition: "x > 5",
+  });
+  assert.equal(next.breakpoints.get(bpKey("/app/main.py", 10))?.condition, "x > 5");
+});
+
+// ─── breakpoint: optimistic remove ────────────────────────────────────────────
+
+test("bp_remove_optimistic deletes existing breakpoint", () => {
+  const withBp = dapPanelReducer(EMPTY_DAP_STATE, {
+    type: "bp_add_optimistic",
+    file: "/app/main.py",
+    line: 42,
+  });
+  const removed = dapPanelReducer(withBp, {
+    type: "bp_remove_optimistic",
+    file: "/app/main.py",
+    line: 42,
+  });
+  assert.equal(removed.breakpoints.has(bpKey("/app/main.py", 42)), false);
+});
+
+test("bp_remove_optimistic on nonexistent key returns same reference", () => {
+  const same = dapPanelReducer(EMPTY_DAP_STATE, {
+    type: "bp_remove_optimistic",
+    file: "/app/main.py",
+    line: 99,
+  });
+  assert.equal(same, EMPTY_DAP_STATE);
+});
+
+// ─── breakpoint: tool_result reconciliation ───────────────────────────────────
+
+test("set_breakpoint tool_result verifies optimistic bp", () => {
+  // 1. optimistic add
+  const s1 = dapPanelReducer(EMPTY_DAP_STATE, {
+    type: "bp_add_optimistic", file: "/app/main.py", line: 42,
+  });
+  // 2. track the in-flight call
+  const s2 = dapPanelReducer(s1, {
+    type: "debug_tool_start", toolCallId: "call-1",
+    action: "set_breakpoint", file: "/app/main.py", line: 42,
+  });
+  assert.ok(s2.pendingCalls.has("call-1"), "pending call stored");
+  // 3. tool result arrives with verified breakpoint
+  const s3 = dapPanelReducer(s2, {
+    type: "tool_result",
+    toolCallId: "call-1",
+    isError: false,
+    details: {
+      action: "set_breakpoint",
+      breakpoints: [{ line: 42, verified: true }],
+    },
+  });
+  const bp = s3.breakpoints.get(bpKey("/app/main.py", 42));
+  assert.ok(bp, "breakpoint present");
+  assert.equal(bp.verified, true);
+  assert.equal(bp.pending, false);
+  assert.equal(bp.failed, false);
+  assert.equal(s3.pendingCalls.has("call-1"), false, "pending call cleared");
+});
+
+test("set_breakpoint tool_result marks bp failed when verified=false", () => {
+  const s1 = dapPanelReducer(EMPTY_DAP_STATE, {
+    type: "bp_add_optimistic", file: "/app/main.py", line: 99,
+  });
+  const s2 = dapPanelReducer(s1, {
+    type: "debug_tool_start", toolCallId: "call-2",
+    action: "set_breakpoint", file: "/app/main.py", line: 99,
+  });
+  const s3 = dapPanelReducer(s2, {
+    type: "tool_result",
+    toolCallId: "call-2",
+    isError: false,
+    details: {
+      action: "set_breakpoint",
+      breakpoints: [{ line: 99, verified: false, message: "No code at line" }],
+    },
+  });
+  const bp = s3.breakpoints.get(bpKey("/app/main.py", 99));
+  assert.ok(bp, "breakpoint present");
+  assert.equal(bp.verified, false);
+  assert.equal(bp.failed, true);
+  assert.equal(bp.pending, false);
+});
+
+test("set_breakpoint tool_result with isError reverts optimistic add", () => {
+  const s1 = dapPanelReducer(EMPTY_DAP_STATE, {
+    type: "bp_add_optimistic", file: "/app/main.py", line: 5,
+  });
+  const s2 = dapPanelReducer(s1, {
+    type: "debug_tool_start", toolCallId: "call-3",
+    action: "set_breakpoint", file: "/app/main.py", line: 5,
+  });
+  const s3 = dapPanelReducer(s2, {
+    type: "tool_result",
+    toolCallId: "call-3",
+    isError: true,
+    details: { action: "set_breakpoint" },
+  });
+  assert.equal(s3.breakpoints.has(bpKey("/app/main.py", 5)), false, "reverted on error");
+  assert.equal(s3.pendingCalls.has("call-3"), false, "pending call cleared on error");
+});
+
+test("remove_breakpoint tool_result updates file bp list", () => {
+  // start with two bps
+  const s1 = dapPanelReducer(EMPTY_DAP_STATE, { type: "bp_add_optimistic", file: "/app/main.py", line: 10 });
+  const s2 = dapPanelReducer(s1,              { type: "bp_add_optimistic", file: "/app/main.py", line: 20 });
+  // track remove of line 10
+  const s3 = dapPanelReducer(s2, {
+    type: "debug_tool_start", toolCallId: "call-4",
+    action: "remove_breakpoint", file: "/app/main.py", line: 10,
+  });
+  // optimistic remove
+  const s4 = dapPanelReducer(s3, { type: "bp_remove_optimistic", file: "/app/main.py", line: 10 });
+  // tool result: only line 20 remains (verified)
+  const s5 = dapPanelReducer(s4, {
+    type: "tool_result",
+    toolCallId: "call-4",
+    isError: false,
+    details: {
+      action: "remove_breakpoint",
+      breakpoints: [{ line: 20, verified: true }],
+    },
+  });
+  assert.equal(s5.breakpoints.has(bpKey("/app/main.py", 10)), false, "removed bp gone");
+  assert.ok(s5.breakpoints.has(bpKey("/app/main.py", 20)), "remaining bp present");
+  assert.equal(s5.breakpoints.get(bpKey("/app/main.py", 20))?.verified, true);
 });
