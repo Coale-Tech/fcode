@@ -386,6 +386,21 @@ export const IPC = {
     ompSubagentList: "pi-desktop/omp/subagent/list",
     /** Fetch the message history for one subagent by id. */
     ompSubagentMessages: "pi-desktop/omp/subagent/messages",
+    /** Queue mode controls (session-scoped RPC; mirrors set_steering/follow_up/interrupt_mode). */
+    ompModesSetSteeringMode: "pi-desktop/omp/modes/steering-mode/set",
+    ompModesSetFollowUpMode: "pi-desktop/omp/modes/follow-up-mode/set",
+    ompModesSetInterruptMode: "pi-desktop/omp/modes/interrupt-mode/set",
+    /** Fast-mode toggle (session-scoped RPC; mirrors set_fast_mode). */
+    ompFastSet: "pi-desktop/omp/fast/set",
+    /** Retry controls (session-scoped RPC; mirrors set_auto_retry / abort_retry). */
+    ompRetrySetAutoRetry: "pi-desktop/omp/retry/auto-retry/set",
+    ompRetryAbort: "pi-desktop/omp/retry/abort",
+    /** Queue while streaming (mirrors follow_up / abort_and_prompt RPC). */
+    agentFollowUp: "pi-desktop/agent/follow-up",
+    agentAbortAndPrompt: "pi-desktop/agent/abort-and-prompt",
+    /** Cycle model / thinking level (mirrors cycle_model / cycle_thinking_level RPC). */
+    ompCycleModel: "pi-desktop/omp/models/cycle",
+    ompCycleThinkingLevel: "pi-desktop/omp/thinking/cycle",
     /** Bench subsystem (Approach step 6): discovery, supervision, agent access. */
     benchList: "pi-desktop/bench/list",
     benchStart: "pi-desktop/bench/start",
