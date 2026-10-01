@@ -37,6 +37,7 @@ import { registerVoiceIpc } from "./voice-ipc";
 import type { IpcRegistrar } from "./types";
 import { registerOmpIpc } from "./omp-ipc";
 import { registerMemoryIpc } from "./memory-ipc";
+import { registerHindsightLocalIpc } from "./hindsight-local-ipc";
 import { registerApprovalModeIpc } from "./approval-mode-ipc";
 import type { createTraySessions } from "../tray-sessions";
 import type { createTaskbarUnreadBadge } from "../taskbar-unread-badge";
@@ -354,6 +355,7 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     getSidecar,
     restartSidecar: async () => dependencies.onProviderMutation?.(),
   });
+  registerHindsightLocalIpc({ registrar, mainWindow: getMainWindow });
   registerApprovalModeIpc({
     registrar,
     dataDir,

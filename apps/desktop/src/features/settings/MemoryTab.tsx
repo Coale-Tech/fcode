@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type {
   BenchBootstrapResult,
+  HindsightLocalState,
   HindsightMentalModelSummary,
   MemoryConfig,
   MemoryConfigView,
@@ -32,6 +33,8 @@ export function MemoryTab() {
   const [token, setToken] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [localState, setLocalState] = useState<HindsightLocalState>({ launchers: [], state: "stopped" });
+  const [localBusy, setLocalBusy] = useState(false);
 
   // ── Mental models state (Hindsight only) ──────────────────────────────────
   const [models, setModels] = useState<HindsightMentalModelSummary[] | null>(null);
@@ -56,7 +59,18 @@ export function MemoryTab() {
         hindsightBank: c.hindsightBank,
         hindsightBankMission: c.hindsightBankMission,
         hindsightRetainMission: c.hindsightRetainMission,
+        hindsightLocal: c.hindsightLocal,
       });
+    });
+    // Detect launchers so the section renders even before any start/stop
+    void api.hindsightLocalDetect().then((r) => setLocalState(r.state));
+    // Subscribe to supervisor push events from main process
+    return api.onHindsightLocalStatus((state) => {
+      setLocalState(state);
+      // When local server becomes running, auto-fill the URL draft
+      if (state.state === "running" && state.port) {
+        setDraft((prev: MemoryConfig) => ({ ...prev, hindsightUrl: `http://localhost:${state.port}`, hindsightLocal: true }));
+      }
     });
   }, []);
 
@@ -83,7 +97,7 @@ export function MemoryTab() {
     try {
       setConfig(await api.memorySetConfig({ ...draft, token: token || undefined }));
       setToken("");
-      setTimeout(() => void refresh(), 3000);
+      setTimeout(() => void refresh(), 3_000);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -136,6 +150,35 @@ export function MemoryTab() {
       setBootstrapError(e instanceof Error ? e.message : String(e));
     } finally {
       setBootstrapping(false);
+    }
+  };
+
+  const startLocal = async () => {
+    setLocalBusy(true);
+    try {
+      setLocalState(await api.hindsightLocalStart());
+    } finally {
+      setLocalBusy(false);
+    }
+  };
+
+  const stopLocal = async () => {
+    setLocalBusy(true);
+    try {
+      setLocalState(await api.hindsightLocalStop());
+    } finally {
+      setLocalBusy(false);
+    }
+  };
+
+  const localStatusLabel = (): string => {
+    switch (localState.state) {
+      case "stopped": return t("settings.memoryLocalStopped");
+      case "starting": return t("settings.memoryLocalStarting");
+      case "running": return t("settings.memoryLocalRunning", { port: localState.port ?? 8888 });
+      case "failed": return t("settings.memoryLocalFailed", { message: localState.message ?? "" });
+      case "unavailable": return t("settings.memoryLocalUnavailable", { message: localState.message ?? "" });
+      default: return "";
     }
   };
 
@@ -237,6 +280,44 @@ export function MemoryTab() {
                 {missionResult === "ok" ? t("settings.memoryHindsightMissionSaved") : missionResult}
               </div>
             )}
+
+            {/* Local server section — always shown when backend=hindsight */}
+            <SettingsRow
+              title={t("settings.memoryLocalHeading")}
+              description={
+                localState.launchers.length === 0
+                  ? t("settings.memoryLocalNotFound")
+                  : localStatusLabel()
+              }
+            >
+              {localState.launchers.length > 0 && (
+                <>
+                  {(localState.state === "stopped" || localState.state === "failed" || localState.state === "unavailable") && (
+                    <button
+                      type="button"
+                      disabled={localBusy}
+                      data-testid="hindsight-local-start"
+                      onClick={() => void startLocal()}
+                    >
+                      {t("settings.memoryLocalStart")}
+                    </button>
+                  )}
+                  {(localState.state === "starting" || localState.state === "running") && (
+                    <button
+                      type="button"
+                      disabled={localBusy || localState.state === "starting"}
+                      data-testid="hindsight-local-stop"
+                      onClick={() => void stopLocal()}
+                    >
+                      {t("settings.memoryLocalStop")}
+                    </button>
+                  )}
+                </>
+              )}
+            </SettingsRow>
+            {localState.state === "unavailable" && (
+              <SettingsRow description={t("settings.memoryLocalLlmNote")} title="">{null}</SettingsRow>
+            )}
           </>
         )}
         <SettingsRow title={t("settings.memorySave")} description={t("settings.memorySaveNote")}>
@@ -250,60 +331,46 @@ export function MemoryTab() {
       {/* ── Mental models card (Hindsight only) ──────────────────────────── */}
       {config?.backend === "hindsight" && (
         <SettingsCard title={t("settings.memoryMentalModelsTitle")}>
-          {modelsLoading && (
-            <SettingsRow title={t("settings.memoryMentalModelsLoading")}>{null}</SettingsRow>
-          )}
-          {modelsError && (
-            <SettingsRow title={t("settings.memoryMentalModelsError")} detail={modelsError}>{null}</SettingsRow>
-          )}
+          {modelsLoading && <p>{t("settings.memoryMentalModelsLoading")}</p>}
+          {modelsError && <p role="alert">{modelsError}</p>}
           {!modelsLoading && !modelsError && models !== null && models.length === 0 && (
-            <SettingsRow title={t("settings.memoryMentalModelsEmpty")}>{null}</SettingsRow>
+            <p>{t("settings.memoryMentalModelsEmpty")}</p>
           )}
-          {models?.map((m) => (
-            <SettingsRow
-              key={m.id}
-              title={m.name}
-              description={m.updatedAt ? t("settings.memoryMentalModelUpdated", { date: m.updatedAt.slice(0, 10) }) : undefined}
-              detail={
-                m.content ? (
-                  <span className="memory-model-snippet">{m.content.slice(0, 120)}{m.content.length > 120 ? "…" : ""}</span>
-                ) : undefined
-              }
-            >
-              <button
-                type="button"
-                disabled={refreshingId === m.id}
-                onClick={() => void refreshModel(m.id)}
-                data-testid={`refresh-model-${m.id}`}
-              >
-                {refreshingId === m.id
-                  ? t("settings.memoryMentalModelRefreshing")
-                  : t("settings.memoryMentalModelRefresh")}
-              </button>
-            </SettingsRow>
-          ))}
-          {!modelsLoading && (
-            <SettingsRow title={t("settings.memoryMentalModelsReload")}>
-              <button
-                type="button"
-                disabled={modelsLoading}
-                onClick={() => {
-                  setModelsLoading(true);
-                  setModelsError(null);
-                  void api.hindsightListMentalModels()
-                    .then((r) => setModels(r.models))
-                    .catch((e: unknown) => setModelsError(e instanceof Error ? e.message : String(e)))
-                    .finally(() => setModelsLoading(false));
-                }}
-              >
-                {t("settings.memoryMentalModelsReload")}
-              </button>
-            </SettingsRow>
+          {models && models.length > 0 && (
+            <ul>
+              {models.map((m) => (
+                <li key={m.id} data-testid="mental-model-row">
+                  <span>{m.name}</span>
+                  {m.updatedAt && <span>{t("settings.memoryMentalModelUpdated", { date: m.updatedAt })}</span>}
+                  <button
+                    type="button"
+                    disabled={refreshingId === m.id}
+                    onClick={() => void refreshModel(m.id)}
+                    data-testid={`refresh-model-${m.id}`}
+                  >
+                    {refreshingId === m.id
+                      ? t("settings.memoryMentalModelRefreshing")
+                      : t("settings.memoryMentalModelRefresh")}
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
+          <SettingsRow title={t("settings.memoryMentalModelsReload")}>
+            <button type="button" onClick={() => {
+              setModelsLoading(true);
+              void api.hindsightListMentalModels()
+                .then((r) => setModels(r.models))
+                .catch((e: unknown) => setModelsError(e instanceof Error ? e.message : String(e)))
+                .finally(() => setModelsLoading(false));
+            }}>
+              {t("settings.memoryMentalModelsReload")}
+            </button>
+          </SettingsRow>
         </SettingsCard>
       )}
 
-      {/* ── Bench bootstrap card ──────────────────────────────────────────── */}
+      {/* ── Bench bootstrap card ─────────────────────────────────────────── */}
       <SettingsCard title={t("settings.memoryBenchBootstrapTitle")}>
         <SettingsRow
           title={t("settings.memoryBenchBootstrap")}
@@ -319,14 +386,9 @@ export function MemoryTab() {
           </button>
         </SettingsRow>
         {bootstrapResult && (
-          <SettingsRow
-            title={bootstrapResult.ok ? t("settings.memoryBenchBootstrapOk") : t("settings.memoryBenchBootstrapFailed")}
-            detail={
-              bootstrapResult.ok
-                ? `${bootstrapResult.benchPath} · ${bootstrapResult.apps.length} apps · ${bootstrapResult.sites.length} sites${bootstrapResult.message ? ` · ${bootstrapResult.message}` : ""}`
-                : (bootstrapResult.message ?? "")
-            }
-          >{null}</SettingsRow>
+          <div role="status" data-testid="bootstrap-result">
+            {t("settings.memoryBenchBootstrapOk")}
+          </div>
         )}
         {bootstrapError && <div role="alert">{bootstrapError}</div>}
       </SettingsCard>
