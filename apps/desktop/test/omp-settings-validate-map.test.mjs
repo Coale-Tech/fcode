@@ -223,3 +223,99 @@ test("makeOmpOverlay does not emit agentModelOverrides when record is empty", ()
   // Empty record → task section may not appear (no other task settings)
   assert.ok(!yaml.includes("agentModelOverrides:"), "no agentModelOverrides for empty record");
 });
+// ─── New groups: validation ──────────────────────────────────────────────────
+
+test("validateOmpSettings accepts lsp.enabled boolean", () => {
+  assert.equal(validateOmpSettings({ "lsp.enabled": false })["lsp.enabled"], false);
+});
+
+test("validateOmpSettings rejects lsp.enabled non-boolean", () => {
+  assert.throws(() => validateOmpSettings({ "lsp.enabled": "yes" }), /expected boolean/);
+});
+
+test("validateOmpSettings accepts hindsight.retainMode enum", () => {
+  assert.equal(validateOmpSettings({ "hindsight.retainMode": "full-session" })["hindsight.retainMode"], "full-session");
+  assert.equal(validateOmpSettings({ "hindsight.retainMode": "last-turn" })["hindsight.retainMode"], "last-turn");
+});
+
+test("validateOmpSettings rejects invalid hindsight.retainMode", () => {
+  assert.throws(() => validateOmpSettings({ "hindsight.retainMode": "chunked" }), /invalid value/);
+});
+
+test("validateOmpSettings accepts skills.customDirectories string[]", () => {
+  const out = validateOmpSettings({ "skills.customDirectories": ["/a", "/b"] });
+  assert.deepEqual(out["skills.customDirectories"], ["/a", "/b"]);
+});
+
+test("validateOmpSettings rejects skills.customDirectories with non-string item", () => {
+  assert.throws(() => validateOmpSettings({ "skills.customDirectories": ["/a", 42] }), /expected string\[\]/);
+});
+
+test("validateOmpSettings rejects skills.customDirectories non-array", () => {
+  assert.throws(() => validateOmpSettings({ "skills.customDirectories": "/a:/b" }), /expected string\[\]/);
+});
+
+test("validateOmpSettings accepts empty skills.customDirectories", () => {
+  const out = validateOmpSettings({ "skills.customDirectories": [] });
+  assert.deepEqual(out["skills.customDirectories"], []);
+});
+
+// ─── Overlay: new sections ───────────────────────────────────────────────────
+
+test("makeOmpOverlay emits lsp section", () => {
+  const yaml = makeOmpOverlay({ ...BASE_OPTS, ompSettings: { "lsp.enabled": false, "lsp.formatOnWrite": true } });
+  assert.ok(yaml.includes("\nlsp:"), "lsp section present");
+  assert.ok(yaml.includes("enabled: false"), "lsp disabled");
+  assert.ok(yaml.includes("formatOnWrite: true"), "formatOnWrite set");
+});
+
+test("makeOmpOverlay emits mcp section", () => {
+  const yaml = makeOmpOverlay({ ...BASE_OPTS, ompSettings: { "mcp.enableProjectConfig": false, "mcp.notifications": true } });
+  assert.ok(yaml.includes("\nmcp:"), "mcp section present");
+  assert.ok(yaml.includes("enableProjectConfig: false"), "project config disabled");
+  assert.ok(yaml.includes("notifications: true"), "notifications enabled");
+});
+
+test("makeOmpOverlay emits ida section", () => {
+  const yaml = makeOmpOverlay({ ...BASE_OPTS, ompSettings: { "ida.enabled": true, "ida.installDir": "/opt/ida" } });
+  assert.ok(yaml.includes("\nida:"), "ida section present");
+  assert.ok(yaml.includes("enabled: true"), "ida enabled");
+  assert.ok(yaml.includes('"/opt/ida"'), "installDir present");
+});
+
+test("makeOmpOverlay emits commands section", () => {
+  const yaml = makeOmpOverlay({ ...BASE_OPTS, ompSettings: { "commands.enableClaudeUser": true } });
+  assert.ok(yaml.includes("\ncommands:"), "commands section present");
+  assert.ok(yaml.includes("enableClaudeUser: true"), "enableClaudeUser set");
+});
+
+test("makeOmpOverlay appends user skill dirs to base skills block", () => {
+  const yaml = makeOmpOverlay({ ...BASE_OPTS, ompSettings: { "skills.customDirectories": ["/my/skills"] } });
+  const skillsIdx = yaml.indexOf("\nskills:");
+  const userDirIdx = yaml.indexOf('"/my/skills"');
+  assert.ok(skillsIdx >= 0, "skills section present");
+  assert.ok(userDirIdx > skillsIdx, "user dir after skills header");
+  // No second skills: block
+  assert.equal(yaml.indexOf("\nskills:", skillsIdx + 1), -1, "no duplicate skills: block");
+});
+
+test("makeOmpOverlay emits single hindsight block with behavioral settings", () => {
+  const yaml = makeOmpOverlay({
+    ...BASE_OPTS,
+    memory: { backend: "hindsight", hindsightUrl: "http://localhost:3000", hindsightBank: "my-bank" },
+    ompSettings: { "hindsight.autoRecall": false, "hindsight.retainMode": "last-turn" },
+  });
+  // Should have exactly one hindsight: block
+  const firstIdx = yaml.indexOf("\nhindsight:");
+  assert.ok(firstIdx >= 0, "hindsight block present");
+  assert.equal(yaml.indexOf("\nhindsight:", firstIdx + 1), -1, "no duplicate hindsight: block");
+  assert.ok(yaml.includes("autoRecall: false"), "autoRecall present");
+  assert.ok(yaml.includes("retainMode: last-turn"), "retainMode present");
+  assert.ok(yaml.includes("http://localhost:3000"), "apiUrl present");
+});
+
+test("makeOmpOverlay emits hindsight behavioral settings even without memory config", () => {
+  const yaml = makeOmpOverlay({ ...BASE_OPTS, ompSettings: { "hindsight.mentalModelsEnabled": false } });
+  assert.ok(yaml.includes("\nhindsight:"), "hindsight block present even without memory config");
+  assert.ok(yaml.includes("mentalModelsEnabled: false"), "mentalModelsEnabled set");
+});
