@@ -268,6 +268,9 @@ export interface OmpSettingsValues {
   "skills.customDirectories"?: string[];
   "commands.enableClaudeUser"?: boolean;
   "commands.enableClaudeProject"?: boolean;
+  // Extensions (omp/packages/coding-agent/src/extensibility/settings.ts)
+  "extensions"?: string[];
+  "disabledExtensions"?: string[];
   // Hindsight behavioral (omp/packages/coding-agent/src/hindsight/settings.ts)
   "hindsight.autoRecall"?: boolean;
   "hindsight.autoRetain"?: boolean;
@@ -411,4 +414,31 @@ export interface OmpShareResult {
   url: string | null;
   /** Raw text output from the `/share` command (for display). */
   text: string | null;
+}
+
+/** One installed omp extension (npm plugin or marketplace plugin). */
+export interface OmpExtensionEntry {
+  /** Unique identifier: npm package name for npm, plugin id for marketplace. */
+  id: string;
+  /** Display name (same as id for npm plugins). */
+  name: string;
+  /** Installed version, if known. */
+  version?: string;
+  /** Installation source. */
+  source: "npm" | "marketplace";
+  /** Whether the extension is currently enabled. */
+  enabled: boolean;
+  /** Short description from manifest, if available. */
+  description?: string;
+}
+
+/** Result of `ompExtensionsList`. */
+export interface OmpExtensionListResult {
+  extensions: OmpExtensionEntry[];
+}
+
+/** Result of `ompExtensionInstall` / `ompExtensionUninstall`. */
+export interface OmpExtensionMutateResult {
+  ok: boolean;
+  output: string;
 }

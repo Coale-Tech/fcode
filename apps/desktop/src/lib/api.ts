@@ -157,6 +157,8 @@ import type {
   OmpInstalledSkillsListResult,
   OmpHistoricalStatsResult,
   OmpWorktreeListResult,
+  OmpExtensionListResult,
+  OmpExtensionMutateResult,
 } from "@pi-desktop/shared";
 import {
   defaultCommandShellForPlatform,
@@ -1806,4 +1808,16 @@ export const api = {
   /** Trigger the /share slash command and return the snapshot URL. */
   ompShare: () =>
     invoke<OmpShareResult>(IPC.invoke.ompShare),
+  /** List installed omp extensions (npm + marketplace plugins). */
+  ompExtensionsList: () =>
+    invoke<OmpExtensionListResult>(IPC.invoke.ompExtensionsList),
+  /** Install an omp extension by npm/git spec. Validates spec server-side; restarts sidecar. */
+  ompExtensionInstall: (spec: string) =>
+    invoke<OmpExtensionMutateResult>(IPC.invoke.ompExtensionInstall, { spec }),
+  /** Uninstall an omp extension by package name. Restarts sidecar. */
+  ompExtensionUninstall: (name: string) =>
+    invoke<OmpExtensionMutateResult>(IPC.invoke.ompExtensionUninstall, { name }),
+  /** Enable or disable an extension. Updates disabledExtensions and restarts sidecar. */
+  ompExtensionSetEnabled: (id: string, enabled: boolean) =>
+    invoke<OmpSettingsValues>(IPC.invoke.ompExtensionSetEnabled, { id, enabled }),
 };

@@ -40,6 +40,7 @@ import { registerMemoryIpc } from "./memory-ipc";
 import { registerHindsightLocalIpc } from "./hindsight-local-ipc";
 import { registerApprovalModeIpc } from "./approval-mode-ipc";
 import { registerOmpSettingsIpc } from "./omp-settings-ipc";
+import { registerExtensionsMgmtIpc } from "./extensions-mgmt-ipc";
 import type { createTraySessions } from "../tray-sessions";
 import type { createTaskbarUnreadBadge } from "../taskbar-unread-badge";
 
@@ -376,6 +377,11 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     restartSidecar: async () => dependencies.onProviderMutation?.(),
   });
   registerOmpSettingsIpc({
+    registrar,
+    dataDir,
+    restartSidecar: async () => dependencies.onProviderMutation?.(),
+  });
+  registerExtensionsMgmtIpc({
     registrar,
     dataDir,
     restartSidecar: async () => dependencies.onProviderMutation?.(),

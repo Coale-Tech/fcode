@@ -76,6 +76,9 @@ const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   "skills.customDirectories": { type: "array" },
   "commands.enableClaudeUser":  { type: "boolean" },
   "commands.enableClaudeProject": { type: "boolean" },
+  // Extensions (omp/packages/coding-agent/src/extensibility/settings.ts)
+  extensions:                   { type: "array" },
+  disabledExtensions:           { type: "array" },
   // Hindsight behavioral (omp/packages/coding-agent/src/hindsight/settings.ts)
   "hindsight.autoRecall":          { type: "boolean" },
   "hindsight.autoRetain":          { type: "boolean" },
