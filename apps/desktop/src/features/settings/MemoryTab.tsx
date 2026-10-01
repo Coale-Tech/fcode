@@ -43,11 +43,20 @@ export function MemoryTab() {
   const [bootstrapping, setBootstrapping] = useState(false);
   const [bootstrapResult, setBootstrapResult] = useState<BenchBootstrapResult | null>(null);
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
+  // ── Bank mission state (Hindsight only) ───────────────────────────────────
+  const [missionSaving, setMissionSaving] = useState(false);
+  const [missionResult, setMissionResult] = useState<string | null>(null);
 
   useEffect(() => {
     void api.memoryGetConfig().then((c) => {
       setConfig(c);
-      setDraft({ backend: c.backend, hindsightUrl: c.hindsightUrl, hindsightBank: c.hindsightBank });
+      setDraft({
+        backend: c.backend,
+        hindsightUrl: c.hindsightUrl,
+        hindsightBank: c.hindsightBank,
+        hindsightBankMission: c.hindsightBankMission,
+        hindsightRetainMission: c.hindsightRetainMission,
+      });
     });
   }, []);
 
@@ -79,6 +88,22 @@ export function MemoryTab() {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const applyMission = async () => {
+    setMissionSaving(true);
+    setMissionResult(null);
+    try {
+      await api.hindsightSetBankMission(
+        draft.hindsightBankMission ?? "",
+        draft.hindsightRetainMission ?? "",
+      );
+      setMissionResult("ok");
+    } catch (e) {
+      setMissionResult(e instanceof Error ? e.message : String(e));
+    } finally {
+      setMissionSaving(false);
     }
   };
 
@@ -174,6 +199,44 @@ export function MemoryTab() {
             >
               <Input type="password" autoComplete="off" value={token} onChange={(e) => setToken(e.target.value)} />
             </SettingsRow>
+            <SettingsRow
+              title={t("settings.memoryHindsightBankMission")}
+              description={t("settings.memoryHindsightBankMissionNote")}
+            >
+              <Input
+                value={draft.hindsightBankMission ?? ""}
+                onChange={(e) => setDraft({ ...draft, hindsightBankMission: e.target.value })}
+              />
+            </SettingsRow>
+            <SettingsRow
+              title={t("settings.memoryHindsightRetainMission")}
+              description={t("settings.memoryHindsightRetainMissionNote")}
+            >
+              <Input
+                value={draft.hindsightRetainMission ?? ""}
+                onChange={(e) => setDraft({ ...draft, hindsightRetainMission: e.target.value })}
+              />
+            </SettingsRow>
+            <SettingsRow
+              title={t("settings.memoryHindsightApplyMission")}
+              description={t("settings.memoryHindsightApplyMissionNote")}
+            >
+              <button
+                type="button"
+                disabled={missionSaving}
+                onClick={() => void applyMission()}
+                data-testid="apply-mission-btn"
+              >
+                {missionSaving
+                  ? t("settings.memoryHindsightApplyMissionSaving")
+                  : t("settings.memoryHindsightApplyMission")}
+              </button>
+            </SettingsRow>
+            {missionResult && (
+              <div role="status" data-testid="mission-result">
+                {missionResult === "ok" ? t("settings.memoryHindsightMissionSaved") : missionResult}
+              </div>
+            )}
           </>
         )}
         <SettingsRow title={t("settings.memorySave")} description={t("settings.memorySaveNote")}>

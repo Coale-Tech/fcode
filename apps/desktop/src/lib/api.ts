@@ -137,6 +137,7 @@ import type {
   HindsightListMentalModelsResult,
   HindsightRefreshMentalModelResult,
   BenchBootstrapResult,
+  HindsightSetBankMissionResult,
   OmpSessionStatsResult,
 } from "@pi-desktop/shared";
 import {
@@ -1657,6 +1658,9 @@ export const api = {
   /** Seed the active memory backend with identity facts from the active Frappe bench. */
   benchBootstrapMemory: () =>
     invoke<BenchBootstrapResult>(IPC.invoke.benchBootstrapMemory),
+  /** Write reflect/retain mission text to the active Hindsight bank and persist locally. */
+  hindsightSetBankMission: (bankMission: string, retainMission: string) =>
+    invoke<HindsightSetBankMissionResult>(IPC.invoke.hindsightSetBankMission, { bankMission, retainMission }),
   /** List login providers known to omp. */
   ompLoginProviders: () =>
     invoke<OmpLoginProvidersResult>(IPC.invoke.ompLoginProviders),

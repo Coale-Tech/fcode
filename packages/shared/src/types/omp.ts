@@ -120,9 +120,18 @@ export interface MemoryConfig {
   backend: "mnemopi" | "hindsight" | "off";
   hindsightUrl?: string;
   hindsightBank?: string;
+  /** Reflect/recall mission text written to the bank via PUT on save. */
+  hindsightBankMission?: string;
+  /** Retain mission text written to the bank via PUT on save. */
+  hindsightRetainMission?: string;
 }
 export interface MemoryConfigView extends MemoryConfig {
   hasToken: boolean;
+}
+
+/** Result of `hindsightSetBankMission`. */
+export interface HindsightSetBankMissionResult {
+  ok: boolean;
 }
 
 /** A mental-model page returned by the Hindsight API. */

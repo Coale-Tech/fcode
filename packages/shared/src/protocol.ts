@@ -368,6 +368,8 @@ export const IPC = {
     hindsightRefreshMentalModel: "pi-desktop/hindsight/mentalModels/refresh",
     /** Seed the active memory backend with Frappe bench identity facts. */
     benchBootstrapMemory: "pi-desktop/bench/bootstrap/memory",
+    /** Write reflect/retain mission text to the active Hindsight bank via PUT. */
+    hindsightSetBankMission: "pi-desktop/hindsight/bank/mission",
     ompLoginProviders: "pi-desktop/omp/login/providers",
     ompLoginStart: "pi-desktop/omp/login/start",
     ompSessionBranch: "pi-desktop/omp/session/branch",

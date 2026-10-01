@@ -10,6 +10,7 @@ import type {
   BenchBootstrapResult,
   HindsightListMentalModelsResult,
   HindsightRefreshMentalModelResult,
+  HindsightSetBankMissionResult,
   MemoryConfig,
   MemoryConfigView,
   OmpMemoryStatusResult,
@@ -112,6 +113,33 @@ export function registerMemoryIpc({ registrar, dataDir, getHost, getSidecar, res
       const bankId = config.hindsightBank ?? "omp";
       const res = await hindsightRefreshMentalModel(config.hindsightUrl, token, bankId, modelId);
       return { operationId: res.operation_id };
+    },
+  );
+
+  // ── Hindsight bank mission update ────────────────────────────────────────
+
+  handle(
+    IPC.invoke.hindsightSetBankMission,
+    async (input: { bankMission?: unknown; retainMission?: unknown } = {}): Promise<HindsightSetBankMissionResult> => {
+      const config = readMemoryConfig(dataDir);
+      if (config.backend !== "hindsight" || !config.hindsightUrl) {
+        throw Object.assign(new Error("Hindsight is not configured"), { errorCode: "INVALID_STATE" });
+      }
+      const bankMission = typeof input?.bankMission === "string" ? input.bankMission.trim() : undefined;
+      const retainMission = typeof input?.retainMission === "string" ? input.retainMission.trim() : undefined;
+      const token = await getToken();
+      const bankId = config.hindsightBank ?? "omp";
+      await hindsightCreateBank(config.hindsightUrl, token, bankId, {
+        reflectMission: bankMission || undefined,
+        retainMission: retainMission || undefined,
+      });
+      // Persist mission text locally so it pre-fills on next open.
+      writeMemoryConfig(dataDir, {
+        ...config,
+        hindsightBankMission: bankMission || undefined,
+        hindsightRetainMission: retainMission || undefined,
+      });
+      return { ok: true };
     },
   );
 

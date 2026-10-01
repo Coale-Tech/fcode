@@ -255,3 +255,27 @@ test("hindsightListMentalModels: empty items array is valid", async () => {
     server.close();
   }
 });
+
+test("hindsightCreateBank covers bank-mission: PUT carries reflectMission + retainMission", async () => {
+  // This is the same call made by hindsightSetBankMission IPC handler;
+  // verifies the endpoint and payload shape against the Hindsight client source
+  // (omp/packages/coding-agent/src/hindsight/client.ts createBank → PUT /v1/default/banks/{bank_id}).
+  const captured = [];
+  const { server, baseUrl } = await mockServer((req, res, body) => {
+    captured.push({ method: req.method, url: req.url, body });
+    jsonResponse(res, 200, { id: "omp" });
+  });
+  try {
+    await hindsightCreateBank(baseUrl, "bearer-token", "omp", {
+      reflectMission: "You are a senior Frappe developer. Recall patterns relevant to the current task.",
+      retainMission: "Extract only concrete facts, patterns, and decisions from this conversation.",
+    });
+    const [call] = captured;
+    assert.equal(call.method, "PUT");
+    assert.ok(call.url.endsWith("/omp"), "PUT to bank endpoint");
+    assert.equal(call.body?.reflectMission, "You are a senior Frappe developer. Recall patterns relevant to the current task.");
+    assert.equal(call.body?.retainMission, "Extract only concrete facts, patterns, and decisions from this conversation.");
+  } finally {
+    server.close();
+  }
+});
