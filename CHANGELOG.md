@@ -9,6 +9,7 @@ The two early previews used `0.15.7-fcode.N` (PI-Desktop 0.15.7 plus a prereleas
 The PI-Desktop release each version is based on is listed in its Compatibility table.
 
 ## [Unreleased]
+- i18n: translate `cycleOmpModel`/`cycleOmpThinking` shortcut labels in all 8 non-English locales (pt-BR, zh-CN, zh-TW, de, es, fr, ko, tr); key parity test already enforces full coverage.
 
 ### Changes
 
