@@ -342,11 +342,6 @@ export interface OmpSessionTreeResult {
   leafId: string | null;
 }
 
-/** Result of `omp.session.branch` — `text` is the forked user message, for Composer prefill. */
-export interface OmpSessionBranchResult {
-  text: string;
-  cancelled: boolean;
-}
 
 /** A message summary for a branch entry, returned by `get_branch_messages`. */
 export interface OmpBranchMessage {

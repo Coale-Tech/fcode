@@ -832,12 +832,6 @@ export class OmpBridge {
         this.ompCallAndForward(id, { type: "get_tree" });
         break;
 
-      case "omp.session.branch": {
-        const entryId = typeof p.entryId === "string" ? p.entryId.trim() : "";
-        if (!entryId) { this.respondError(id, "entryId required"); break; }
-        this.ompCallAndForward(id, { type: "branch", entryId });
-        break;
-      }
 
       case "omp.session.branchMessages":
         this.ompCallAndForward(id, { type: "get_branch_messages" });

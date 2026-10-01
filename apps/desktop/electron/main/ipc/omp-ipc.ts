@@ -25,7 +25,6 @@ import type {
   OmpSessionSetTodosResult,
   OmpSessionEntriesResult,
   OmpSessionTreeResult,
-  OmpSessionBranchResult,
   OmpSessionBranchMessagesResult,
   OmpTodoPhase,
   OmpSessionStatsResult,
@@ -297,13 +296,6 @@ export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpc
     return sidecar.call<OmpSessionTreeResult>("omp.session.tree");
   });
 
-  // ── omp.session.branch ─────────────────────────────────────────────────────
-  handle(IPC.invoke.ompSessionBranch, async (input: { entryId?: unknown } = {}) => {
-    const entryId = typeof input?.entryId === "string" ? input.entryId.trim() : "";
-    if (!entryId) invalid("entryId required");
-    const sidecar = getSidecar() ?? unavailable();
-    return sidecar.call<OmpSessionBranchResult>("omp.session.branch", { entryId });
-  });
 
   // ── omp.session.branchMessages ─────────────────────────────────────────────
   handle(IPC.invoke.ompSessionBranchMessages, async () => {
