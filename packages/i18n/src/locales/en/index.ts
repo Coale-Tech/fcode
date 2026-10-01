@@ -364,6 +364,7 @@ export const en = {
     usageToolsSummary: "{{count}} tool types · {{calls}} calls · ~{{tokens}} tokens",
     usageNoTools: "No tool calls in this turn",
     usageCompaction: "Compacted {{times}}× · summary",
+    usageAutoCompact: "Auto-compact",
     compactionRow: "Context compacted · #{{times}}",
     compactionRowSummary: "summary ≈{{tokens}} tokens",
     compactionRowNoSummary: "no summary generated",

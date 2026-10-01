@@ -51,6 +51,8 @@ export type ComposerToolbarProps = {
   modelLabel: string;
   thinkingLabel: string;
   contextUsage: ContextUsage | null;
+  autoCompactionEnabled?: boolean;
+  onToggleAutoCompaction?: (enabled: boolean) => void;
   sessionStats?: OmpSessionStatsResult | null;
   enhancementDraft: string;
   value: string;
@@ -91,6 +93,8 @@ export function ComposerToolbar({
   modelLabel,
   thinkingLabel,
   contextUsage,
+  autoCompactionEnabled,
+  onToggleAutoCompaction,
   sessionStats,
   enhancementDraft,
   value,
@@ -194,7 +198,7 @@ export function ComposerToolbar({
       </div>
 
       <div className="composer-right">
-        {contextUsage ? <ContextUsageInspector {...contextUsage} sessionStats={sessionStats} /> : null}
+        {contextUsage ? <ContextUsageInspector {...contextUsage} sessionStats={sessionStats} autoCompactionEnabled={autoCompactionEnabled} onToggleAutoCompaction={onToggleAutoCompaction} /> : null}
         <ComposerModelPicker
           t={t}
           controller={modelMenu}

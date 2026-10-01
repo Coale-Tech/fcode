@@ -607,6 +607,10 @@ export class OmpBridge {
       case "omp.session.rename":
         this.ompCallAndForward(id, { type: "set_session_name", ...p });
         break;
+      case "omp.auto-compaction.set":
+        this.ompCallAndForward(id, { type: "set_auto_compaction", ...p });
+        break;
+
       case "omp.session.stats":
         this.ompCallAndForward(id, { type: "get_session_stats" });
         break;

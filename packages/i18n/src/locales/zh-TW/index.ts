@@ -358,6 +358,7 @@ export const zhTW = {
     usageToolsSummary: "{{count}} 種工具 · {{calls}} 次呼叫 · 約 {{tokens}} tokens",
     usageNoTools: "本輪沒有呼叫工具",
     usageCompaction: "已壓縮 {{times}} 次 · 摘要",
+    usageAutoCompact: "自動壓縮",
     compactionRow: "上下文已壓縮 · 第 {{times}} 次",
     compactionRowSummary: "摘要 ≈{{tokens}} tokens",
     compactionRowNoSummary: "未生成摘要",

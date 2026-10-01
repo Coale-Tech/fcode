@@ -57,6 +57,7 @@ export interface OmpStateResult {
   sessionId: string;
   sessionName?: string;
   messageCount: number;
+  autoCompactionEnabled?: boolean;
   contextUsage?: { tokensUsed?: number; tokensAvailable?: number; tokensTotal?: number; [key: string]: unknown };
   [key: string]: unknown;
 }
