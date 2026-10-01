@@ -225,7 +225,7 @@ export function isKnownWorkPanelTab(tab: WorkPanelTab): boolean {
     Boolean(tab) &&
     (tab.kind === "new" || tab.kind === "review" ||
       tab.kind === "file" || tab.kind === "plugin" ||
-      tab.kind === "subagent" || tab.kind === "session-tree")
+      tab.kind === "session-tree" || tab.kind === "subagent")
   );
 }
 
