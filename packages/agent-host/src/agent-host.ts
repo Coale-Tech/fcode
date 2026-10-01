@@ -361,6 +361,8 @@ export class AgentHost {
       }
       case "turn_start":
       case "turn_end":
+      case "todo_reminder":
+      case "todo_auto_clear":
         this.emit(state, "turn.activity", { event }, meta2);
         return;
       default: {
