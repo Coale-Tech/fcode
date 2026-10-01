@@ -1367,3 +1367,157 @@
   color: var(--ds-text-muted, #999);
   font-style: italic;
 }
+
+/* ── DapPanel — read-only DAP session inspector ─────────────────────────── */
+
+.dap-panel {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  background: var(--ds-bg-secondary, #f5f5f5);
+  border-top: 1px solid var(--ds-border-subtle, rgba(0,0,0,.08));
+  padding: 6px 12px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.dap-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.dap-panel-title {
+  font-size: var(--text-xs, 11px);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ds-text-secondary, #666);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.dap-count {
+  font-size: var(--text-xs, 11px);
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--ds-accent-blue, #2563eb) 12%, transparent);
+  color: var(--ds-accent-blue, #2563eb);
+}
+
+.dap-sessions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dap-session {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px;
+  border-radius: var(--radius-sm, 4px);
+  font-size: var(--text-sm, 12px);
+  color: var(--ds-text-primary, #111);
+}
+
+.dap-dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-round);
+  background: var(--ds-text-tertiary, #999);
+}
+
+.dap-dot--running   { background: var(--ds-accent-blue, #2563eb); animation: dap-pulse 1.2s ease-in-out infinite; }
+.dap-dot--stopped   { background: var(--ds-accent-orange, #ea580c); }
+.dap-dot--launching,
+.dap-dot--configuring { background: var(--ds-text-tertiary, #999); animation: dap-pulse 1.2s ease-in-out infinite; }
+.dap-dot--terminated { background: var(--ds-text-tertiary, #999); opacity: 0.4; }
+
+@keyframes dap-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+.dap-adapter {
+  font-weight: var(--font-weight-medium);
+  flex-shrink: 0;
+}
+
+.dap-program {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ds-text-secondary, #666);
+  font-size: var(--text-xs, 11px);
+}
+
+.dap-status-label {
+  flex-shrink: 0;
+  font-size: var(--text-xs, 11px);
+  color: var(--ds-text-tertiary, #999);
+}
+
+.dap-session--stopped .dap-status-label { color: var(--ds-accent-orange, #ea580c); }
+.dap-session--running .dap-status-label { color: var(--ds-accent-blue, #2563eb); }
+.dap-session--terminated .dap-status-label { opacity: 0.5; }
+
+.dap-bp-count {
+  flex-shrink: 0;
+  font-size: var(--text-xs, 11px);
+  color: var(--ds-text-tertiary, #999);
+}
+
+.dap-section-label {
+  font-size: var(--text-xs, 11px);
+  font-weight: var(--font-weight-semibold);
+  color: var(--ds-text-tertiary, #999);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  padding: 4px 4px 2px;
+}
+
+.dap-frames { margin-top: 4px; }
+.dap-vars   { margin-top: 4px; }
+
+.dap-frames-list,
+.dap-vars-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.dap-frame {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  font-size: var(--text-xs, 11px);
+}
+
+.dap-frame-name {
+  flex-shrink: 0;
+  font-weight: var(--font-weight-medium);
+  color: var(--ds-text-primary, #111);
+}
+
+.dap-frame-loc {
+  color: var(--ds-text-tertiary, #999);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dap-var {
+  display: grid;
+  grid-template-columns: 120px auto 1fr;
+  gap: 6px;
+  padding: 2px 4px;
+  font-size: var(--text-xs, 11px);
+  font-family: var(--font-mono);
+}
+
+.dap-var-name  { color: var(--ds-accent-blue, #2563eb); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dap-var-type  { color: var(--ds-text-tertiary, #999); flex-shrink: 0; }
+.dap-var-value { color: var(--ds-text-primary, #111); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
