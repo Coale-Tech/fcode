@@ -838,6 +838,8 @@ export const ptBR = {
       navToBuild: "Ir para Build",
       navToBench: "Ir para Bench",
       toggleFollowLog: "Alternar acompanhamento de log",
+      cycleOmpModel: "Cycle model",
+      cycleOmpThinking: "Cycle thinking level",
     },
     skills: "Habilidades",
     skillsGlobalPath: "Caminho global de habilidades",

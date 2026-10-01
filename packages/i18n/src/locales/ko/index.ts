@@ -1020,6 +1020,8 @@ sklm: {
       navToBuild: "빌드로 이동",
       navToBench: "Bench로 이동",
       toggleFollowLog: "로그 팔로우 전환",
+      cycleOmpModel: "Cycle model",
+      cycleOmpThinking: "Cycle thinking level",
     },
     skills: "스킬",
     skillsGlobalPath: "전역 스킬 경로",

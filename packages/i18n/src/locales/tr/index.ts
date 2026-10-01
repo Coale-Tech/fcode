@@ -1010,6 +1010,8 @@ sklm: {
       navToBuild: "Build'e git",
       navToBench: "Bench'e git",
       toggleFollowLog: "Günlük takibini aç/kapat",
+      cycleOmpModel: "Cycle model",
+      cycleOmpThinking: "Cycle thinking level",
     },
     skills: "Beceriler",
     skillsGlobalPath: "Genel beceriler yolu",

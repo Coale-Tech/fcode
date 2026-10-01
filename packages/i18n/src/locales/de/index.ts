@@ -1012,6 +1012,8 @@ sklm: {
       "navToBuild": "Zu Build wechseln",
       "navToBench": "Zu Bench wechseln",
       "toggleFollowLog": "Protokoll-Mitlauf umschalten",
+      "cycleOmpModel": "Cycle model",
+      "cycleOmpThinking": "Cycle thinking level",
     },
     "skills": "Fähigkeiten",
     "skillsGlobalPath": "Globaler Kompetenzpfad",

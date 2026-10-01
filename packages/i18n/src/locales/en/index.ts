@@ -860,6 +860,8 @@ sklm: {
       navToBuild: "Go to Build",
       navToBench: "Go to Bench",
       toggleFollowLog: "Toggle log follow-tail",
+      cycleOmpModel: "Cycle model",
+      cycleOmpThinking: "Cycle thinking level",
     },
     skills: "Skills",
     skillsGlobalPath: "Global skills path",

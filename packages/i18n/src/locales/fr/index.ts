@@ -1012,6 +1012,8 @@ sklm: {
       "navToBuild": "Aller à Build",
       "navToBench": "Aller à Bench",
       "toggleFollowLog": "Basculer le suivi du journal",
+      "cycleOmpModel": "Cycle model",
+      "cycleOmpThinking": "Cycle thinking level",
     },
     "skills": "Compétences",
     "skillsGlobalPath": "Parcours de compétences global",

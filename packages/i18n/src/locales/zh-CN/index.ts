@@ -997,6 +997,8 @@ sklm: {
       navToBuild: "前往构建",
       navToBench: "前往 Bench",
       toggleFollowLog: "切换日志跟随",
+      cycleOmpModel: "Cycle model",
+      cycleOmpThinking: "Cycle thinking level",
     },
     skills: "技能",
     skillsGlobalPath: "全局技能路径",
