@@ -21,6 +21,8 @@
 const DOT_PREFIXES: readonly string[] = [
   "frappe.client.get",
   "frappe.client.get_list",
+  "frappe.client.get_value",
+  "frappe.client.get_count",
   "frappe.db.get_value",
   "frappe.db.count",
   "frappe.utils",
