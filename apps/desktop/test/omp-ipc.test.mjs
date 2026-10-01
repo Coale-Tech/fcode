@@ -46,6 +46,7 @@ test("no-input handlers throw AGENT_UNAVAILABLE when sidecar is null", async () 
     IPC.invoke.ompCommandsList,
     IPC.invoke.ompState,
     IPC.invoke.ompLoginProviders,
+    IPC.invoke.ompSessionStats,
   ];
   for (const ch of nullInputChannels) {
     await assert.rejects(handlers.get(ch)(), (err) => {
@@ -63,6 +64,7 @@ test("input-required handlers throw AGENT_UNAVAILABLE when sidecar is null (vali
     [IPC.invoke.ompLoginStart, { providerId: "anthropic" }],
     [IPC.invoke.ompSessionBranch, { entryId: "entry-1" }],
     [IPC.invoke.ompSessionRename, { name: "Renamed" }],
+    [IPC.invoke.ompAutoCompactionSet, { enabled: true }],
   ];
   for (const [ch, input] of cases) {
     await assert.rejects(handlers.get(ch)(input), (err) => {
@@ -120,4 +122,14 @@ test("ompSessionRename rejects missing name without calling sidecar", async () =
     handlers.get(IPC.invoke.ompSessionRename)({}),
     (err) => { assert.equal(err.errorCode, "INVALID_ARGUMENT"); return true; },
   );
+});
+
+test("ompAutoCompactionSet rejects non-boolean enabled without calling sidecar", async () => {
+  const handlers = setup(unreachableSidecar());
+  for (const bad of [{}, { enabled: "true" }, { enabled: 1 }, { enabled: null }]) {
+    await assert.rejects(
+      handlers.get(IPC.invoke.ompAutoCompactionSet)(bad),
+      (err) => { assert.equal(err.errorCode, "INVALID_ARGUMENT"); return true; },
+    );
+  }
 });

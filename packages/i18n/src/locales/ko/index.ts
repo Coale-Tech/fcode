@@ -366,6 +366,7 @@ export const ko = {
     usageToolsSummary: "도구 유형 {{count}}개 · 호출 {{calls}}회 · 약 {{tokens}}토큰",
     usageNoTools: "이번 턴에 도구 호출 없음",
     usageCompaction: "{{times}}회 압축됨 · 요약",
+    usageAutoCompact: "자동 압축",
     compactionRow: "컨텍스트 압축됨 · #{{times}}",
     compactionRowSummary: "요약 약 {{tokens}}토큰",
     compactionRowNoSummary: "생성된 요약 없음",

@@ -355,6 +355,7 @@ export const ptBR = {
     usageToolsSummary: "{{count}} tipos de ferramenta · {{calls}} chamadas · ~{{tokens}} tokens",
     usageNoTools: "Nenhuma chamada de ferramenta nesta rodada",
     usageCompaction: "Compactado {{times}}× · resumo",
+    usageAutoCompact: "Compactação automática",
     compactionRow: "Contexto compactado · #{{times}}",
     compactionRowSummary: "resumo ≈{{tokens}} tokens",
     compactionRowNoSummary: "Nenhum resumo gerado",
