@@ -369,6 +369,7 @@ export const IPC = {
     /** Tool approval mode (always-ask / write / yolo) persisted host-side. */
     toolApprovalModeGet: "pi-desktop/tool-approval-mode/get",
     toolApprovalModeSet: "pi-desktop/tool-approval-mode/set",
+    ompSessionStats: "pi-desktop/omp/session/stats",
     /** Bench subsystem (Approach step 6): discovery, supervision, agent access. */
     benchList: "pi-desktop/bench/list",
     benchStart: "pi-desktop/bench/start",

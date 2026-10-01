@@ -361,6 +361,8 @@ export const es = {
     "compactionRowSummary": "resumen ≈{{tokens}} tokens",
     "compactionRowNoSummary": "no se generó ningún resumen",
     "compactionRowSummaryFailed": "falló la generación del resumen · se conservó el contexto reciente",
+    "usageSessionLabel": "Sesión",
+    "usageSessionCost": "Costo {{amount}}",
     "scrollToBottom": "Saltar a la última",
     "minimap": "Esquema de la conversación",
     "resultNeedsAttention": "Esta tarea necesita atención",
