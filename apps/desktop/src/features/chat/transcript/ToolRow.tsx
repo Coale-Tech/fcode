@@ -1,4 +1,5 @@
 import { GeneratedImages } from "./GeneratedImages";
+import { ToolScreenshots } from "./ToolScreenshots";
 import "../../../styles/generated-images.css";
 import {
   Fragment,
@@ -552,6 +553,7 @@ export const ToolRow = memo(function ToolRow({
         </div>
       ) : null}
       {!imagesInTurn && <GeneratedImages message={message} />}
+      {inlineOpen && <ToolScreenshots message={message} />}
       {inlineOpen && delegate ? (
         <SubagentRunRows
           run={delegate}
