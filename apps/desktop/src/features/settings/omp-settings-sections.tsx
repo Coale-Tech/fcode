@@ -1,13 +1,14 @@
 /**
- * Settings UI sections for the four omp settings groups:
- * Task Subagents / Eval & Python / Browser / Collab.
+ * Settings UI sections for omp settings groups:
+ * Task Subagents / Eval & Python / Browser / Collab /
+ * LSP / IDA Pro / MCP / Skills & Commands / Hindsight Behavior.
  * Rendered inside the AI settings tab.
  */
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { OmpSettingsValues } from "@pi-desktop/shared";
 import { api } from "../../lib/api";
-import { Input, SettingsToggle } from "../../components/ui";
+import { Button, Input, SettingsToggle } from "../../components/ui";
 import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect";
 import { SettingsCard, SettingsRow } from "./primitives";
 
@@ -242,6 +243,220 @@ export function OmpSettingsSections() {
               { id: "view", label: t("settings.ompCollabAutoStartView") },
               { id: "control", label: t("settings.ompCollabAutoStartControl") },
             ]}
+          />
+        </SettingsRow>
+      </SettingsCard>
+
+      {/* ── LSP ──────────────────────────────────────────────────── */}
+      <SettingsCard title={t("settings.ompLspGroup")}>
+        <SettingsRow title={t("settings.ompLspEnabled")} description={t("settings.ompLspEnabledDesc")}>
+          <SettingsToggle
+            checked={omp["lsp.enabled"] !== false}
+            label={t("settings.ompLspEnabled")}
+            onChange={() => void save({ "lsp.enabled": !(omp["lsp.enabled"] !== false) })}
+          />
+        </SettingsRow>
+        <SettingsRow title={t("settings.ompLspFormatOnWrite")} description={t("settings.ompLspFormatOnWriteDesc")}>
+          <SettingsToggle
+            checked={omp["lsp.formatOnWrite"] === true}
+            label={t("settings.ompLspFormatOnWrite")}
+            onChange={() => void save({ "lsp.formatOnWrite": !(omp["lsp.formatOnWrite"] === true) })}
+          />
+        </SettingsRow>
+        <SettingsRow title={t("settings.ompLspDiagnosticsOnWrite")} description={t("settings.ompLspDiagnosticsOnWriteDesc")}>
+          <SettingsToggle
+            checked={omp["lsp.diagnosticsOnWrite"] !== false}
+            label={t("settings.ompLspDiagnosticsOnWrite")}
+            onChange={() => void save({ "lsp.diagnosticsOnWrite": !(omp["lsp.diagnosticsOnWrite"] !== false) })}
+          />
+        </SettingsRow>
+        <SettingsRow title={t("settings.ompLspDiagnosticsOnEdit")} description={t("settings.ompLspDiagnosticsOnEditDesc")}>
+          <SettingsToggle
+            checked={omp["lsp.diagnosticsOnEdit"] === true}
+            label={t("settings.ompLspDiagnosticsOnEdit")}
+            onChange={() => void save({ "lsp.diagnosticsOnEdit": !(omp["lsp.diagnosticsOnEdit"] === true) })}
+          />
+        </SettingsRow>
+      </SettingsCard>
+
+      {/* ── IDA Pro ──────────────────────────────────────────────── */}
+      <SettingsCard title={t("settings.ompIdaGroup")}>
+        <SettingsRow title={t("settings.ompIdaEnabled")} description={t("settings.ompIdaEnabledDesc")}>
+          <SettingsToggle
+            checked={omp["ida.enabled"] !== false}
+            label={t("settings.ompIdaEnabled")}
+            onChange={() => void save({ "ida.enabled": !(omp["ida.enabled"] !== false) })}
+          />
+        </SettingsRow>
+        <SettingsRow title={t("settings.ompIdaPython")} description={t("settings.ompIdaPythonDesc")}>
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              value={omp["ida.python"] ?? ""}
+              placeholder={t("settings.ompIdaPythonPlaceholder")}
+              aria-label={t("settings.ompIdaPython")}
+              onChange={(e) => setOmp((prev) => ({ ...prev, "ida.python": e.target.value }))}
+              onBlur={(e) => void save({ "ida.python": e.target.value })}
+              onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+            />
+            <Button size="sm" onClick={() => void api.pickProjectFolders().then((r) => { if (r.folders[0]) void save({ "ida.python": r.folders[0] }); })}>
+              {t("settings.ompPickFolder")}
+            </Button>
+          </div>
+        </SettingsRow>
+        <SettingsRow title={t("settings.ompIdaInstallDir")} description={t("settings.ompIdaInstallDirDesc")}>
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              value={omp["ida.installDir"] ?? ""}
+              placeholder={t("settings.ompIdaInstallDirPlaceholder")}
+              aria-label={t("settings.ompIdaInstallDir")}
+              onChange={(e) => setOmp((prev) => ({ ...prev, "ida.installDir": e.target.value }))}
+              onBlur={(e) => void save({ "ida.installDir": e.target.value })}
+              onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+            />
+            <Button size="sm" onClick={() => void api.pickProjectFolders().then((r) => { if (r.folders[0]) void save({ "ida.installDir": r.folders[0] }); })}>
+              {t("settings.ompPickFolder")}
+            </Button>
+          </div>
+        </SettingsRow>
+      </SettingsCard>
+
+      {/* ── MCP ──────────────────────────────────────────────────── */}
+      <SettingsCard title={t("settings.ompMcpGroup")}>
+        <SettingsRow title={t("settings.ompMcpEnableProjectConfig")} description={t("settings.ompMcpEnableProjectConfigDesc")}>
+          <SettingsToggle
+            checked={omp["mcp.enableProjectConfig"] !== false}
+            label={t("settings.ompMcpEnableProjectConfig")}
+            onChange={() => void save({ "mcp.enableProjectConfig": !(omp["mcp.enableProjectConfig"] !== false) })}
+          />
+        </SettingsRow>
+        <SettingsRow title={t("settings.ompMcpRenderMarkdownResults")} description={t("settings.ompMcpRenderMarkdownResultsDesc")}>
+          <SettingsToggle
+            checked={omp["mcp.renderMarkdownResults"] !== false}
+            label={t("settings.ompMcpRenderMarkdownResults")}
+            onChange={() => void save({ "mcp.renderMarkdownResults": !(omp["mcp.renderMarkdownResults"] !== false) })}
+          />
+        </SettingsRow>
+        <SettingsRow title={t("settings.ompMcpNotifications")} description={t("settings.ompMcpNotificationsDesc")}>
+          <SettingsToggle
+            checked={omp["mcp.notifications"] === true}
+            label={t("settings.ompMcpNotifications")}
+            onChange={() => void save({ "mcp.notifications": !(omp["mcp.notifications"] === true) })}
+          />
+        </SettingsRow>
+      </SettingsCard>
+
+      {/* ── Skills & Commands ────────────────────────────────────── */}
+      <SettingsCard title={t("settings.ompExtensibilityGroup")}>
+        <SettingsRow title={t("settings.ompSkillsEnabled")} description={t("settings.ompSkillsEnabledDesc")}>
+          <SettingsToggle
+            checked={omp["skills.enabled"] !== false}
+            label={t("settings.ompSkillsEnabled")}
+            onChange={() => void save({ "skills.enabled": !(omp["skills.enabled"] !== false) })}
+          />
+        </SettingsRow>
+        <SettingsRow title={t("settings.ompSkillsRegistryUrl")} description={t("settings.ompSkillsRegistryUrlDesc")}>
+          <Input
+            type="text"
+            value={omp["skills.registryUrl"] ?? ""}
+            placeholder={t("settings.ompSkillsRegistryUrlPlaceholder")}
+            aria-label={t("settings.ompSkillsRegistryUrl")}
+            onChange={(e) => setOmp((prev) => ({ ...prev, "skills.registryUrl": e.target.value }))}
+            onBlur={(e) => void save({ "skills.registryUrl": e.target.value })}
+            onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+          />
+        </SettingsRow>
+        <SettingsRow title={t("settings.ompSkillsCustomDirectories")} description={t("settings.ompSkillsCustomDirectoriesDesc")}>
+          <div className="flex flex-col gap-1.5">
+            {(omp["skills.customDirectories"] ?? []).map((dir, i) => (
+              <div key={i} className="flex gap-2">
+                <Input
+                  type="text"
+                  value={dir}
+                  aria-label={`${t("settings.ompSkillsCustomDirectories")} ${i + 1}`}
+                  onChange={(e) => {
+                    const dirs = [...(omp["skills.customDirectories"] ?? [])];
+                    dirs[i] = e.target.value;
+                    setOmp((prev) => ({ ...prev, "skills.customDirectories": dirs }));
+                  }}
+                  onBlur={(e) => {
+                    const dirs = [...(omp["skills.customDirectories"] ?? [])];
+                    dirs[i] = e.target.value;
+                    void save({ "skills.customDirectories": dirs });
+                  }}
+                  onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                />
+                <Button size="sm" onClick={() => {
+                  const dirs = (omp["skills.customDirectories"] ?? []).filter((_, j) => j !== i);
+                  void save({ "skills.customDirectories": dirs });
+                }}>✕</Button>
+              </div>
+            ))}
+            <Button size="sm" onClick={() => void api.pickProjectFolders().then((r) => {
+              if (r.folders.length > 0) {
+                void save({ "skills.customDirectories": [...(omp["skills.customDirectories"] ?? []), ...r.folders] });
+              }
+            })}>
+              {t("settings.ompSkillsAddDirectory")}
+            </Button>
+          </div>
+        </SettingsRow>
+        <SettingsRow title={t("settings.ompCommandsEnableClaudeUser")} description={t("settings.ompCommandsEnableClaudeUserDesc")}>
+          <SettingsToggle
+            checked={omp["commands.enableClaudeUser"] === true}
+            label={t("settings.ompCommandsEnableClaudeUser")}
+            onChange={() => void save({ "commands.enableClaudeUser": !(omp["commands.enableClaudeUser"] === true) })}
+          />
+        </SettingsRow>
+        <SettingsRow title={t("settings.ompCommandsEnableClaudeProject")} description={t("settings.ompCommandsEnableClaudeProjectDesc")}>
+          <SettingsToggle
+            checked={omp["commands.enableClaudeProject"] !== false}
+            label={t("settings.ompCommandsEnableClaudeProject")}
+            onChange={() => void save({ "commands.enableClaudeProject": !(omp["commands.enableClaudeProject"] !== false) })}
+          />
+        </SettingsRow>
+      </SettingsCard>
+
+      {/* ── Hindsight Behavior ───────────────────────────────────── */}
+      <SettingsCard title={t("settings.ompHindsightGroup")}>
+        <SettingsRow title={t("settings.ompHindsightAutoRecall")} description={t("settings.ompHindsightAutoRecallDesc")}>
+          <SettingsToggle
+            checked={omp["hindsight.autoRecall"] !== false}
+            label={t("settings.ompHindsightAutoRecall")}
+            onChange={() => void save({ "hindsight.autoRecall": !(omp["hindsight.autoRecall"] !== false) })}
+          />
+        </SettingsRow>
+        <SettingsRow title={t("settings.ompHindsightAutoRetain")} description={t("settings.ompHindsightAutoRetainDesc")}>
+          <SettingsToggle
+            checked={omp["hindsight.autoRetain"] !== false}
+            label={t("settings.ompHindsightAutoRetain")}
+            onChange={() => void save({ "hindsight.autoRetain": !(omp["hindsight.autoRetain"] !== false) })}
+          />
+        </SettingsRow>
+        <SettingsRow title={t("settings.ompHindsightRetainMode")} description={t("settings.ompHindsightRetainModeDesc")}>
+          <SettingsMenuSelect
+            label={t("settings.ompHindsightRetainMode")}
+            value={omp["hindsight.retainMode"] ?? "full-session"}
+            onChange={(v) => void save({ "hindsight.retainMode": v as "full-session" | "last-turn" })}
+            options={[
+              { id: "full-session", label: t("settings.ompHindsightRetainModeFullSession") },
+              { id: "last-turn", label: t("settings.ompHindsightRetainModeLastTurn") },
+            ]}
+          />
+        </SettingsRow>
+        <SettingsRow title={t("settings.ompHindsightMentalModelsEnabled")} description={t("settings.ompHindsightMentalModelsEnabledDesc")}>
+          <SettingsToggle
+            checked={omp["hindsight.mentalModelsEnabled"] !== false}
+            label={t("settings.ompHindsightMentalModelsEnabled")}
+            onChange={() => void save({ "hindsight.mentalModelsEnabled": !(omp["hindsight.mentalModelsEnabled"] !== false) })}
+          />
+        </SettingsRow>
+        <SettingsRow title={t("settings.ompHindsightMentalModelAutoSeed")} description={t("settings.ompHindsightMentalModelAutoSeedDesc")}>
+          <SettingsToggle
+            checked={omp["hindsight.mentalModelAutoSeed"] !== false}
+            label={t("settings.ompHindsightMentalModelAutoSeed")}
+            onChange={() => void save({ "hindsight.mentalModelAutoSeed": !(omp["hindsight.mentalModelAutoSeed"] !== false) })}
           />
         </SettingsRow>
       </SettingsCard>
