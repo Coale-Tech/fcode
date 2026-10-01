@@ -1020,7 +1020,6 @@
   padding: 3px 8px;
   border-radius: var(--radius-sm);
   background: color-mix(in oklab, var(--ds-bg-primary, #fff) 80%, transparent);
-  backdrop-filter: blur(4px);
   font-size: var(--text-xs, 11px);
   pointer-events: none;
 }
