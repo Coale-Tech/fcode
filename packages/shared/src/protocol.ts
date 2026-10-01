@@ -386,6 +386,14 @@ export const IPC = {
     ompSubagentList: "pi-desktop/omp/subagent/list",
     /** Fetch the message history for one subagent by id. */
     ompSubagentMessages: "pi-desktop/omp/subagent/messages",
+    /** List omp skillshare packages installed in ~/.omp/agent/ (user-global). */
+    ompInstalledSkillsList: "pi-desktop/omp/skills/installed/list",
+    /** Historical AI usage stats from omp stats --json (subset of DashboardStats). */
+    ompHistoricalStats: "pi-desktop/omp/stats/historical",
+    /** List agent-managed git worktrees under ~/.omp/wt/. */
+    ompWorktreeList: "pi-desktop/omp/worktrees/list",
+    /** Reveal an omp skill store directory in the system file manager. */
+    ompSkillReveal: "pi-desktop/omp/skills/reveal",
     /** Queue mode controls (session-scoped RPC; mirrors set_steering/follow_up/interrupt_mode). */
     ompModesSetSteeringMode: "pi-desktop/omp/modes/steering-mode/set",
     ompModesSetFollowUpMode: "pi-desktop/omp/modes/follow-up-mode/set",

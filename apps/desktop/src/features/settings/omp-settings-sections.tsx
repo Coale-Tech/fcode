@@ -1,7 +1,8 @@
 /**
  * Settings UI sections for omp settings groups:
  * Task Subagents / Eval & Python / Browser / Collab /
- * LSP / IDA Pro / MCP / Skills & Commands / Hindsight Behavior.
+ * LSP / IDA Pro / MCP / Skills & Commands / Hindsight Behavior /
+ * Installed Skills / Usage / Agent Worktrees.
  * Rendered inside the AI settings tab.
  */
 import { useCallback, useEffect, useState } from "react";
@@ -11,6 +12,9 @@ import { api } from "../../lib/api";
 import { Button, Input, SettingsToggle } from "../../components/ui";
 import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect";
 import { SettingsCard, SettingsRow } from "./primitives";
+import { OmpSkillsSection } from "../../components/settings/OmpSkillsSection";
+import { OmpUsageSection } from "../../components/settings/OmpUsageSection";
+import { OmpWorktreeSection } from "../../components/settings/OmpWorktreeSection";
 
 /** Bundled omp agent names (from omp/packages/coding-agent/src/task/agents.ts). */
 const BUNDLED_AGENTS = ["task", "sonic", "scout", "reviewer", "security-reviewer"] as const;
@@ -547,6 +551,14 @@ export function OmpSettingsSections() {
           />
         </SettingsRow>
       </SettingsCard>
+      {/* ── Installed omp Skills ─────────────────────────────────── */}
+      <OmpSkillsSection />
+
+      {/* ── Historical Usage ─────────────────────────────────────── */}
+      <OmpUsageSection />
+
+      {/* ── Agent Worktrees ──────────────────────────────────────── */}
+      <OmpWorktreeSection />
     </>
   );
 }
