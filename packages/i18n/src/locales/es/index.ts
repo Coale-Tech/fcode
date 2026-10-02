@@ -2929,7 +2929,12 @@ sklm: {
     "sidebar": {
       "showWorkers": "Mostrar sesiones de trabajo",
       "hideWorkers": "Ocultar sesiones de trabajo"
-    }
+    },
+    "notify": {
+      "blocked": "Tarea bloqueada: {title}",
+      "done": "Tarea completada: {title}",
+      "dailyCap": "Kanban: límite diario de {count} tareas iniciadas alcanzado"
+    },
   }
 
 } satisfies EnglishCatalog;

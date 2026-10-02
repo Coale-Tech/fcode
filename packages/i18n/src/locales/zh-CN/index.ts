@@ -2919,7 +2919,12 @@ sklm: {
     "sidebar": {
       "showWorkers": "显示工作会话",
       "hideWorkers": "隐藏工作会话"
-    }
+    },
+    "notify": {
+      "blocked": "任务已阻塞：{title}",
+      "done": "任务已完成：{title}",
+      "dailyCap": "看板：已达到每日 {count} 个任务启动上限"
+    },
   }
 
 } satisfies EnglishCatalog;

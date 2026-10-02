@@ -2958,7 +2958,12 @@ importConfirm: "İçe aktarılan uzantılar ajan sürecinde, ajanın kendi araç
     "sidebar": {
       "showWorkers": "Çalışan oturumlarını göster",
       "hideWorkers": "Çalışan oturumlarını gizle"
-    }
+    },
+    "notify": {
+      "blocked": "Görev engellendi: {title}",
+      "done": "Görev tamamlandı: {title}",
+      "dailyCap": "Kanban: günlük {count} başlatma sınırına ulaşıldı"
+    },
   }
 
 } satisfies EnglishCatalog;

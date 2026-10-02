@@ -2883,7 +2883,12 @@ export const ptBR = {
     "sidebar": {
       "showWorkers": "Mostrar sessões de trabalho",
       "hideWorkers": "Ocultar sessões de trabalho"
-    }
+    },
+    "notify": {
+      "blocked": "Tarefa bloqueada: {title}",
+      "done": "Tarefa concluída: {title}",
+      "dailyCap": "Kanban: limite diário de {count} inicializações atingido"
+    },
   }
 
 } satisfies EnglishCatalog;

@@ -2917,7 +2917,12 @@ sklm: {
     "sidebar": {
       "showWorkers": "顯示工作階段",
       "hideWorkers": "隱藏工作階段"
-    }
+    },
+    "notify": {
+      "blocked": "任務已封鎖：{title}",
+      "done": "任務已完成：{title}",
+      "dailyCap": "看板：已達到每日 {count} 個任務啟動上限"
+    },
   }
 
 } satisfies EnglishCatalog;

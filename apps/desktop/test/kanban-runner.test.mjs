@@ -18,7 +18,7 @@ function makeRunner(overrides = {}) {
   let board = emptyBoard();
   const sessions = [];
   const prompts = [];
-  const toasts = [];
+  const dailyCapCounts = [];
   let enabled = true;
   let paused = false;
 
@@ -40,13 +40,13 @@ function makeRunner(overrides = {}) {
     prompt: async (sessionId, content) => {
       prompts.push({ sessionId, content });
     },
-    sendToast: (msg) => toasts.push(msg),
+    notifyDailyCap: (count) => dailyCapCounts.push(count),
     sendChanged: () => {},
     report: (err) => { throw err; },
   };
 
   const runner = createKanbanRunner({ ...defaults, ...overrides });
-  return { runner, get board() { return board; }, set board(b) { board = b; }, sessions, prompts, toasts, setEnabled: (v) => { enabled = v; }, };
+  return { runner, get board() { return board; }, set board(b) { board = b; }, sessions, prompts, toasts: dailyCapCounts, setEnabled: (v) => { enabled = v; }, };
 }
 
 function addReadyTask(state, opts = {}) {
@@ -125,7 +125,7 @@ test("daily spawn cap fires a toast and stops claiming", async () => {
   addReadyTask(state, { projectPath: "/p3" });
   await state.runner.tick();
   assert.equal(state.sessions.length, 2);
-  assert.equal(state.toasts.some((t) => t.includes("daily spawn cap")), true);
+  assert.equal(state.toasts.length > 0, true);
 });
 
 // ── Turn-end nudge ────────────────────────────────────────────────────────────

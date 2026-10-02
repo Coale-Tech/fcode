@@ -2968,7 +2968,12 @@ importConfirm: "가져온 확장은 에이전트 프로세스 안에서 에이�
     "sidebar": {
       "showWorkers": "워커 세션 표시",
       "hideWorkers": "워커 세션 숨기기"
-    }
+    },
+    "notify": {
+      "blocked": "작업 차단됨: {title}",
+      "done": "작업 완료: {title}",
+      "dailyCap": "칸반: 하루 {count}개 시작 한도에 도달했습니다"
+    },
   }
 
 } satisfies EnglishCatalog;

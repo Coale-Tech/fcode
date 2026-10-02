@@ -2973,6 +2973,11 @@ importConfirm: "Imported extensions run inside the agent process with the same a
       showWorkers: "Show worker sessions",
       hideWorkers: "Hide worker sessions",
     },
+    notify: {
+      blocked: "Task blocked: {title}",
+      done: "Task done: {title}",
+      dailyCap: "Kanban: daily spawn cap of {count} reached",
+    },
   },
 } as const;
 

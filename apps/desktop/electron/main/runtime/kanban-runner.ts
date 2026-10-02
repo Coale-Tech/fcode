@@ -1,6 +1,6 @@
 /**
  * Kanban dispatcher — ticks every 15 s and on every board change.
- * Injected deps: createSession, prompt, sendToast, sendEvent, getSettings, getBoard, saveBoard.
+ * Injected deps: createSession, prompt, notifyDailyCap, sendChanged, getSettings, getBoard, saveBoard.
  * No Electron direct imports; all side effects come through the injected deps.
  */
 import { randomUUID } from "node:crypto";
@@ -25,8 +25,8 @@ export type KanbanRunnerDeps = {
   createSession: (input: { title: string; projectPath: string }) => Promise<string>;
   /** Deliver a prompt to a session. */
   prompt: (sessionId: string, content: string) => Promise<unknown>;
-  /** Emit a toast to the renderer. */
-  sendToast: (message: string) => void;
+  /** Notify renderer that daily spawn cap has been hit. */
+  notifyDailyCap: (maxSpawns: number) => void;
   /** Emit a kanbanChanged event to the renderer. */
   sendChanged: () => void;
   /** Report internal errors. */
@@ -57,7 +57,7 @@ export type KanbanRunner = {
 };
 
 export function createKanbanRunner(deps: KanbanRunnerDeps): KanbanRunner {
-  const { getSettings, getBoard, saveBoard, createSession, prompt, sendToast, sendChanged, report } = deps;
+  const { getSettings, getBoard, saveBoard, createSession, prompt, notifyDailyCap, sendChanged, report } = deps;
 
   // sessionId → taskId
   const sessionToCardId = new Map<string, string>();
@@ -148,7 +148,7 @@ export function createKanbanRunner(deps: KanbanRunnerDeps): KanbanRunner {
       if (todaySpawned >= settings.maxDailySpawns) {
         if (!dailyCapNotified) {
           dailyCapNotified = true;
-          sendToast(`Kanban: daily spawn cap of ${settings.maxDailySpawns} reached`);
+          notifyDailyCap(settings.maxDailySpawns);
         }
         updateBoard(board);
         return;
@@ -166,7 +166,7 @@ export function createKanbanRunner(deps: KanbanRunnerDeps): KanbanRunner {
         // Re-check daily cap after each claim (board was updated by claimTask)
         const todaySpawnedNow = board.dailyStats.find((s) => s.date === d)?.spawned ?? 0;
         if (todaySpawnedNow >= settings.maxDailySpawns) {
-          if (!dailyCapNotified) { dailyCapNotified = true; sendToast(`Kanban: daily spawn cap of ${settings.maxDailySpawns} reached`); }
+          if (!dailyCapNotified) { dailyCapNotified = true; notifyDailyCap(settings.maxDailySpawns); }
           break;
         }
 

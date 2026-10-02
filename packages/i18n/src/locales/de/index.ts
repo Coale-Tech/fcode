@@ -2929,7 +2929,12 @@ sklm: {
     "sidebar": {
       "showWorkers": "Arbeitersitzungen anzeigen",
       "hideWorkers": "Arbeitersitzungen ausblenden"
-    }
+    },
+    "notify": {
+      "blocked": "Aufgabe blockiert: {title}",
+      "done": "Aufgabe erledigt: {title}",
+      "dailyCap": "Kanban: Tageslimit von {count} Starts erreicht"
+    },
   }
 
 } satisfies EnglishCatalog;
