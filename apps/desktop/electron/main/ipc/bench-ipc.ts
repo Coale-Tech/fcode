@@ -27,7 +27,10 @@ export function registerBenchIpc({ registrar, mainWindow, discover = discoverBen
   });
 
   benchSupervisor.on("status", (status) => {
-    mainWindow()?.webContents.send(IPC.event.benchStatus, { status });
+    mainWindow()?.webContents.send(IPC.event.benchLog, {
+      process: "start",
+      line: { ts: Date.now(), text: `[status] ${status}` },
+    });
   });
 
   // Gap 1 / T6: forward start-failure to renderer so it can show error UI
