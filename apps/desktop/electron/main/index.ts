@@ -1116,7 +1116,7 @@ const kanbanRunner = createKanbanRunner({
   },
   sendToast: (message) => sendToRenderer(IPC.event.toast, { message }),
   sendChanged: () => sendToRenderer(IPC.event.kanbanChanged, {}),
-  report: (error) => logger.app("kanban", "error", String(error)),
+  report: (error) => logger.app("runtime", "error", String(error)),
   onBoardMutation: (prev, next) => {
     for (const task of next.tasks) {
       const old = prev.tasks.find((t) => t.id === task.id);
@@ -1158,7 +1158,13 @@ const sidecarRuntime = createSidecarRuntime({
   activeUserSkills,
   pluginActiveInProject,
   currentNetworkProxy,
-  kanban: kanbanRunner,
+  kanban: {
+    enabled: () => readKanbanSettings(dataDir).enabled,
+    getBoard: () => loadBoard(dataDir),
+    saveBoard: (board) => { void saveBoard(dataDir, board); },
+    sendChanged: () => sendToRenderer(IPC.event.kanbanChanged, {}),
+    sessionToCard: () => kanbanRunner.sessionToCard(),
+  },
 });
 emitAgentEvent = sidecarRuntime.emitAgentEvent;
 const { wireSidecar, startSidecar } = sidecarRuntime;

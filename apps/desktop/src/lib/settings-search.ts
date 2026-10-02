@@ -16,6 +16,7 @@ export type SettingsTabId =
   | "projects"
   | "sync"
   | "remoteHosts"
+  | "voice"
   | "kanban"
   | "about";
 

@@ -33,6 +33,7 @@ import {
   IconSparkles,
   IconCloudDown,
   IconMic,
+  IconKanban as IconColumns,
 } from "../../components/icons";
 import { Badge, Button, cx, SegmentedControl, SettingsToggle } from "../../components/ui";
 import { ModelConfigPage } from "../../components/settings/ModelConfigPage";
@@ -241,6 +242,7 @@ export function SettingsPage() {
       sync: <IconCloudDown size={14} />,
       remoteHosts: <IconGlobe size={14} />,
       voice: <IconMic size={14} />,
+      kanban: <IconColumns size={14} />,
       about: <IconInfo size={14} />,
     };
     return navEntries.map((entry) => ({

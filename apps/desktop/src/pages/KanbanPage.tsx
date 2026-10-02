@@ -34,8 +34,8 @@ function useKanbanBoard() {
   const refresh = useCallback(async () => {
     const req = ++revision.current;
     try {
-      const { value } = await api.kanbanList();
-      if (revision.current === req && value) setBoard(value.board);
+      const result = await api.kanbanList();
+      if (revision.current === req) setBoard(result.board);
     } catch (e) {
       setError(String(e));
     }
@@ -205,7 +205,7 @@ function NewCardSheet({
       await api.kanbanCreate({ title: title.trim(), body, projectPath: workspacePath });
       onDone();
     } catch (e) {
-      showToast({ message: String(e), variant: "error" });
+      showToast(String(e), { variant: "error" });
     } finally {
       setBusy(false);
     }
@@ -252,8 +252,10 @@ export function KanbanPage() {
   // HD2: listen for permission_request events and map sessionId → taskId
   useEffect(() => {
     if (!board) return;
-    const sessionToTask = new Map(
-      board.tasks.filter((t) => t.sessionId).map((t) => [t.sessionId!, t.id]),
+    const sessionToTask = new Map<string, string>(
+      board.tasks
+        .filter((t: KanbanTask): t is KanbanTask & { sessionId: string } => typeof t.sessionId === "string")
+        .map((t: KanbanTask & { sessionId: string }) => [t.sessionId, t.id]),
     );
     const bridge = window.piDesktop;
     if (!bridge?.on) return;
@@ -267,12 +269,12 @@ export function KanbanPage() {
         const ev = payload as { event: { type?: string }; sessionId: string };
         if (ev.event?.type === "tool_permission_request") {
           const taskId = sessionToTask.get(ev.sessionId);
-          if (taskId) setNeedsApproval((prev) => new Set([...prev, taskId]));
+          if (taskId) setNeedsApproval((prev: Set<string>) => new Set<string>([...prev, taskId]));
         }
         // Clear when session ends (agent_end / error)
         if (ev.event?.type === "agent_end" || ev.event?.type === "error") {
           const taskId = sessionToTask.get(ev.sessionId);
-          if (taskId) setNeedsApproval((prev) => { const n = new Set(prev); n.delete(taskId); return n; });
+          if (taskId) setNeedsApproval((prev: Set<string>) => { const n = new Set<string>(prev); n.delete(taskId); return n; });
         }
       }
     });
@@ -284,7 +286,7 @@ export function KanbanPage() {
       await api.kanbanMove(taskId, status);
       await refresh();
     } catch (e) {
-      showToast({ message: String(e), variant: "error" });
+      showToast(String(e), { variant: "error" });
     }
   }, [refresh, showToast]);
 
@@ -293,7 +295,7 @@ export function KanbanPage() {
       await api.kanbanArchive(taskId, archived);
       await refresh();
     } catch (e) {
-      showToast({ message: String(e), variant: "error" });
+      showToast(String(e), { variant: "error" });
     }
   }, [refresh, showToast]);
 
@@ -303,7 +305,7 @@ export function KanbanPage() {
       await api.kanbanSetPaused(next);
       setPaused(next);
     } catch (e) {
-      showToast({ message: String(e), variant: "error" });
+      showToast(String(e), { variant: "error" });
     }
   };
 
@@ -323,9 +325,9 @@ export function KanbanPage() {
     );
   }
 
-  const visibleTasks = board.tasks.filter((t) => !t.archived);
+  const visibleTasks = board.tasks.filter((t: KanbanTask) => !t.archived);
   const tasksByColumn = Object.fromEntries(
-    COLUMNS.map((col) => [col, visibleTasks.filter((t) => t.status === col)]),
+    COLUMNS.map((col) => [col, visibleTasks.filter((t: KanbanTask) => t.status === col)]),
   ) as Record<KanbanStatus, KanbanTask[]>;
 
   const empty = visibleTasks.length === 0;
