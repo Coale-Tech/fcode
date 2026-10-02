@@ -40,7 +40,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const REPO = join(__dirname, "../..");
-const RENDERER_DIR = join(REPO, "apps/desktop/out/renderer");
+const RENDERER_DIR = process.env.PARITY_RENDERER_DIR ?? join(REPO, "apps/desktop/out/renderer");
 const SHOTS_DIR = process.env.PARITY_SHOTS ?? "/tmp/parity/shots";
 const REPORT_PATH = process.env.PARITY_REPORT ?? "/tmp/parity/settings-parity.md";
 const CSS_ONLY = process.env.PARITY_CSS_ONLY === "1";
