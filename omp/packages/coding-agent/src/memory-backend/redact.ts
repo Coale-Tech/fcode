@@ -230,3 +230,23 @@ export function redactRememberWrite<M extends string | object, O>(memory: M, opt
 	) as O;
 	return [scrubbedMemory, scrubbedOptions];
 }
+
+/**
+ * Strip prompt-injection vectors from a single line of memory text: control/
+ * format chars, angle brackets (`<system>`, `</skills>`), backticks, and `~~~`
+ * fences, then collapse whitespace. Apply on BOTH write and read paths so a
+ * hand-edited or previously-stored line cannot reassemble an injection vector
+ * after the credential redactor removes a token.
+ *
+ * Mirrors the private `neutralizeInjection` in `memories/index.ts` — kept here
+ * so every injection path (local summary, hindsight recall, mnemopi recall) can
+ * share one implementation without a cross-package dependency.
+ */
+export function neutralizeInjection(text: string): string {
+	return text
+		.replace(/[\p{Cc}\p{Cf}]/gu, " ")
+		.replace(/[<>`]/g, "")
+		.replace(/~{2,}/g, "~")
+		.replace(/\s+/g, " ")
+		.trim();
+}
