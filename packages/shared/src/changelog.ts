@@ -30,6 +30,16 @@ export type ChangelogEntry = {
 
 const enEntries: ChangelogEntry[] = [
   {
+    version: "0.17.1",
+    date: "2026-10-02",
+    highlights: [
+      "The Chat page gains an Activity tab in the Work Panel (to-do progress, tools run, changes, pending approvals), a clearer approval card and a bar that shows the real bench and site; the Bench page uses tabs and the Build page leads with a header and an always-visible checks bar.",
+      "Fixed chat showing \"Working…\" forever with an empty Activity tab, and tool approvals that never reached omp: streamed text, thinking, tool rows and the permission card now work against real omp.",
+      "macOS builds without a Developer ID signature now offer a download from the Releases page instead of an in-app \"Restart to update\" that did nothing.",
+    ],
+  },
+
+  {
     version: "0.17.0",
     date: "2026-10-01",
     highlights: [
@@ -863,6 +873,16 @@ const enEntries: ChangelogEntry[] = [
 
 const zhCNEntries: ChangelogEntry[] = [
   {
+    version: "0.17.1",
+    date: "2026-10-02",
+    highlights: [
+      "聊天页面的工作面板新增 Activity 标签页（待办进度、已运行工具、变更与待处理审批）、更清晰的审批卡片和显示真实 Bench/站点的状态栏；Bench 页面改为标签页，Build 页面以页头和常驻检查栏为先。",
+      "修复聊天一直显示“Working…”、Activity 为空，以及工具审批从未到达 omp 的问题：流式文本、思考、工具行和权限卡片现已在真实 omp 上正常工作。",
+      "没有 Developer ID 签名的 macOS 版本现在会提供 Releases 页面的下载链接，而不是点击后毫无反应的应用内“重启以更新”。",
+    ],
+  },
+
+  {
     version: "0.17.0",
     date: "2026-10-01",
     highlights: [
@@ -1694,6 +1714,16 @@ const zhCNEntries: ChangelogEntry[] = [
 ];
 
 const zhTWEntries: ChangelogEntry[] = [
+  {
+    version: "0.17.1",
+    date: "2026-10-02",
+    highlights: [
+      "聊天頁面的工作面板新增 Activity 分頁（待辦進度、已執行工具、變更與待處理審批）、更清楚的審批卡片和顯示真實 Bench/站點的狀態列；Bench 頁面改為分頁，Build 頁面以頁首和常駐檢查列為先。",
+      "修復聊天一直顯示「Working…」、Activity 為空，以及工具審批從未傳達 omp 的問題：串流文字、思考、工具列和權限卡片現已在真實 omp 上正常運作。",
+      "沒有 Developer ID 簽章的 macOS 版本現在會提供 Releases 頁面的下載連結，而不是點擊後毫無反應的應用內「重新啟動以更新」。",
+    ],
+  },
+
   {
     version: "0.17.0",
     date: "2026-10-01",

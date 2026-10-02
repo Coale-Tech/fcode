@@ -9,9 +9,23 @@ The two early previews used `0.15.7-fcode.N` (PI-Desktop 0.15.7 plus a prereleas
 The PI-Desktop release each version is based on is listed in its Compatibility table.
 
 ## [Unreleased]
-- Fix: chat showed "Working…" forever and the Activity tab stayed empty. The omp bridge forwarded omp's raw frames, which carry no `sessionId`/`turnId`, so the host rejected every event. The bridge now stamps the active prompt's ids and converts omp assistant messages to PI messages with streamed text and thinking deltas.
-- Fix: tool approvals hung. omp asks "Allow tool: …" as an `Approve`/`Deny` select that the bridge mapped to an empty question card, and the answer was routed to host-core instead of omp. Approvals now show the permission card and Allow/Deny reaches omp, so the tool runs or is declined.
-- Fix: macOS builds without a Developer ID signature (current releases) fell into in-app update mode and "Restart to update" did nothing (Squirrel.Mac: "Could not get code signature"); unsigned apps now use the manual download-from-releases flow.
+
+## [0.17.1] — 2026-10-02
+
+### Compatibility
+
+| Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
+|-------|-----------------|-----------|-----------------|--------|
+| 0.17.1 | 0.15.7 | `ba344f5e69f2` | v2 (v1 read-only fallback) | v15, v16 |
+
+### Fixed
+
+- Chat showed "Working…" forever and the Activity tab stayed empty. The omp bridge forwarded omp's raw frames, which carry no `sessionId`/`turnId`, so the host rejected every event. The bridge now stamps the active prompt's ids and converts omp assistant messages to PI messages with streamed text and thinking deltas.
+- Tool approvals hung. omp asks "Allow tool: …" as an `Approve`/`Deny` select that the bridge mapped to an empty question card, and the answer was routed to host-core instead of omp. Approvals now show the permission card and Allow/Deny reaches omp, so the tool runs or is declined.
+- macOS builds without a Developer ID signature (current releases) fell into in-app update mode and "Restart to update" did nothing (Squirrel.Mac: "Could not get code signature"); unsigned apps now use the manual download-from-releases flow.
+
+### Changed
+
 - Bench page: the bench sidebar list is replaced by tabs. An "All benches" tab (filter, All / Running / Failed / version chips, running-first table) plus one closable tab per opened bench, each with a header switcher to jump between benches. Start is disabled with a "Stop <bench> first" cue on every other bench while one runs (the supervisor is single-bench); "Stop all running" is gone. A stopped bench collapses its empty log.
 - Build page redesigned header-first: a header shows the bench, site, port and status with one action that fits the state (Start bench, Fix N issues, or Sync files on Builder). A banner under the tabs shows the first failing check with its fix command (Copy, Dismiss), and the sidebar is a plain app list. A bottom status bar always shows the four Studio checks with labels, so health is visible when everything passes. Replaces the hidden-when-passing precondition list.
 - Chat page: new **Activity** tab in the Work Panel (to-do progress, tools-run timeline, changes summary, a "Needs your decision" link to the pending approval) that auto-opens on the first run or permission request of a session. Approval card now stacks Allow this once / Allow for this session / Deny with a consequence line each and a depleting timeout bar. The bench bar (`WorkspaceBar`) now reads the real bench, site and run state instead of always showing "No bench · No site · stopped"; sidebar rows show an always-visible `···` button plus Running / Needs approval labels; the dead single-option mode chip is hidden.

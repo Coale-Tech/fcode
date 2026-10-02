@@ -2,6 +2,16 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const ptBREntries: ChangelogEntry[] = [
   {
+    "version": "0.17.1",
+    "date": "2026-10-02",
+    "highlights": [
+      "A página Chat ganha uma aba Activity no Work Panel (progresso de tarefas, ferramentas executadas, alterações, aprovações pendentes), um cartão de aprovação mais claro e uma barra com o bench e o site reais; a página Bench usa abas e a página Build começa com um cabeçalho e uma barra de verificações sempre visível.",
+      "Corrigido: o chat exibia “Working…” para sempre com a aba Activity vazia, e as aprovações de ferramentas nunca chegavam ao omp. Texto em streaming, raciocínio, linhas de ferramentas e o cartão de permissão agora funcionam com o omp real.",
+      "Builds do macOS sem assinatura Developer ID agora oferecem um download na página de Releases em vez de um “Reiniciar para atualizar” no app que não fazia nada.",
+    ],
+  },
+
+  {
     "version": "0.17.0",
     "date": "2026-10-01",
     "highlights": [

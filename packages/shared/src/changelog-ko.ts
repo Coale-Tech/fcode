@@ -2,6 +2,16 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const koEntries: ChangelogEntry[] = [
   {
+    version: "0.17.1",
+    date: "2026-10-02",
+    highlights: [
+      "채팅 페이지의 작업 패널에 Activity 탭(할 일 진행률, 실행된 도구, 변경 사항, 대기 중인 승인), 더 명확한 승인 카드, 실제 벤치와 사이트를 보여 주는 바가 추가되었고, Bench 페이지는 탭으로, Build 페이지는 헤더와 항상 표시되는 점검 바로 시작합니다.",
+      "채팅이 “Working…”만 계속 표시하고 Activity 탭이 비어 있던 문제와, 도구 승인이 omp에 전달되지 않던 문제를 수정했습니다. 스트리밍 텍스트, 사고 과정, 도구 행, 권한 카드가 실제 omp에서 정상 동작합니다.",
+      "Developer ID 서명이 없는 macOS 빌드는 아무 반응이 없던 앱 내 “재시작하여 업데이트” 대신 Releases 페이지의 다운로드를 안내합니다.",
+    ],
+  },
+
+  {
     version: "0.17.0",
     date: "2026-10-01",
     highlights: [

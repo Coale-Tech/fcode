@@ -2,6 +2,16 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const trEntries: ChangelogEntry[] = [
   {
+    "version": "0.17.1",
+    "date": "2026-10-02",
+    "highlights": [
+      "Sohbet sayfasının Work Panel'ine Activity sekmesi (yapılacaklar ilerlemesi, çalıştırılan araçlar, değişiklikler, bekleyen onaylar), daha anlaşılır bir onay kartı ve gerçek bench ile siteyi gösteren bir çubuk eklendi; Bench sayfası sekmelere geçti, Build sayfası bir başlık ve her zaman görünen kontrol çubuğuyla başlıyor.",
+      "Düzeltme: sohbet, boş bir Activity sekmesiyle sonsuza dek “Working…” gösteriyordu ve araç onayları omp'ye hiç ulaşmıyordu. Akan metin, düşünme, araç satırları ve izin kartı artık gerçek omp ile çalışıyor.",
+      "Developer ID imzası olmayan macOS sürümleri, hiçbir şey yapmayan uygulama içi “Güncellemek için yeniden başlat” yerine Releases sayfasından indirme sunuyor.",
+    ],
+  },
+
+  {
     "version": "0.17.0",
     "date": "2026-10-01",
     "highlights": [

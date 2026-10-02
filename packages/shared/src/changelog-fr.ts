@@ -2,6 +2,16 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const frEntries: ChangelogEntry[] = [
   {
+    "version": "0.17.1",
+    "date": "2026-10-02",
+    "highlights": [
+      "La page Chat gagne un onglet Activity dans le Work Panel (progression des tâches, outils exécutés, modifications, approbations en attente), une carte d'approbation plus claire et une barre affichant le vrai bench et le vrai site ; la page Bench utilise des onglets et la page Build s'ouvre sur un en-tête et une barre de vérifications toujours visible.",
+      "Corrigé : le chat affichait « Working… » indéfiniment avec un onglet Activity vide, et les approbations d'outils n'atteignaient jamais omp. Le texte en streaming, la réflexion, les lignes d'outils et la carte de permission fonctionnent désormais avec le vrai omp.",
+      "Les builds macOS sans signature Developer ID proposent désormais un téléchargement depuis la page Releases au lieu d'un « Redémarrer pour mettre à jour » intégré qui ne faisait rien.",
+    ],
+  },
+
+  {
     "version": "0.17.0",
     "date": "2026-10-01",
     "highlights": [
