@@ -37,7 +37,7 @@
 
 .work-panel.is-exiting {
   overflow: hidden;
-  animation: work-panel-out var(--motion-duration-fast) var(--motion-ease-in)
+  animation: work-panel-out var(--motion-duration-fast) var(--motion-ease-out)
     both;
 }
 
