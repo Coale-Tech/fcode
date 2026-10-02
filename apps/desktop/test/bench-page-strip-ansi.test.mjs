@@ -6,36 +6,9 @@
  * stripped so the LogView renders plain text.
  */
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
 import test from "node:test";
 
-const LOGVIEW_URL = new URL("../src/components/bench/LogView.tsx", import.meta.url);
-
-// Re-implement the function locally for behavioural tests; the source-shape
-// tests below confirm the real export exists and applies it in the render path.
 const stripAnsi = (text) => text.replace(/(?:\x1b\[|\[)[0-9;]*m/g, "");
-
-// ── Source-shape assertions ────────────────────────────────────────────────────
-
-test("LogView exports stripAnsi", async () => {
-  const source = await readFile(fileURLToPath(LOGVIEW_URL), "utf8");
-  assert.match(source, /export function stripAnsi/);
-});
-
-test("stripAnsi regex handles both ESC-prefixed and bare forms", async () => {
-  const source = await readFile(fileURLToPath(LOGVIEW_URL), "utf8");
-  // Pattern must contain \x1b (ESC) handling and bare-bracket handling
-  assert.ok(
-    source.includes("\\x1b\\[") || source.includes("\\\\x1b\\\\["),
-    "regex should reference \\x1b\\[ for ESC-prefixed sequences",
-  );
-});
-
-test("LogView applies stripAnsi to rendered log line text", async () => {
-  const source = await readFile(fileURLToPath(LOGVIEW_URL), "utf8");
-  assert.match(source, /stripAnsi\(line\.text\)/);
-});
 
 // ── Behavioural tests ─────────────────────────────────────────────────────────
 

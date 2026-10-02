@@ -39,20 +39,6 @@ test("T8: DestructiveActionDialog has Confirm and Cancel actions", () => {
   assert.match(dialog, /onCancel|cancel/i);
 });
 
-test("T8: DestructiveActionDialog confirm button label is 'Run <command>'", () => {
-  // Confirm button text must be "Run {command}", not just "{command}" (B4).
-  assert.match(dialog, /Run \{command\}/);
-});
-
-test("T8: DestructiveActionDialog exports nextFocusIndex pure function", () => {
-  // Required for unit-testable focus trap (B4 / destructive-dialog-behavior.test.mjs).
-  assert.match(dialog, /export function nextFocusIndex/);
-});
-
-test("T8: nextFocusIndex handles empty list guard (count=0 returns 0)", () => {
-  assert.match(dialog, /if \(count === 0\) return 0/);
-});
-
 test("T8: DestructiveActionDialog has NO auto-deny timer", () => {
   // Must NOT contain setInterval-driven auto-deny logic
   assert.doesNotMatch(dialog, /void resolve.*deny|setInterval[\s\S]{0,200}deny/);

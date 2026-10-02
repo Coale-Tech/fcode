@@ -47,7 +47,3 @@ export function deriveBenchOnboarding(
     start: status === "running",
   };
 }
-
-// Re-export useBenchContext under the name useBenchStatus so callers only need
-// one import for both the hook and the pure helpers.
-export { useBenchContext as useBenchStatus } from "../hooks/use-bench-context";

@@ -1,26 +1,20 @@
 /**
  * WorkspaceBar — persistent context strip at the foot of the main pane (T1).
  *
- * Polls bench state via useBenchStatus (use-bench-status.ts, B8 fix).
+ * Self-sufficient: polls IPC.invoke.benchStatus every 3 s via useBenchContext.
  * Shows: bench name · active site · bench run state · agent working indicator.
  *
  * Styled (28px, Espresso ink) by `.workspace-bar` in chat-shell.css.
  */
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "../stores/app-store";
-import { useBenchStatus, benchStatusDisplay } from "../lib/use-bench-status";
+import { useBenchContext } from "../hooks/use-bench-context";
 
 export function WorkspaceBar() {
   const { t } = useTranslation();
   const isRunning = useAppStore((s) => s.isRunning);
   const setPage = useAppStore((s) => s.setPage);
-  const bench = useBenchStatus();
-
-  // Map WorkspaceBarState.kind to benchStatusDisplay label+cls.
-  const benchName = bench.kind !== "empty" ? bench.benchName : null;
-  const { label: runLabel, cls: runCls } = benchStatusDisplay(
-    bench.kind === "running" ? "running" : "stopped",
-  );
+  const bench = useBenchContext();
 
   return (
     <div className="workspace-bar" role="status" aria-label="Workspace context">
@@ -39,7 +33,7 @@ export function WorkspaceBar() {
         </>
       ) : (
         <>
-          <span className="workspace-bar-bench">{benchName}</span>
+          <span className="workspace-bar-bench">{bench.benchName}</span>
 
           {bench.site && (
             <>
@@ -51,11 +45,15 @@ export function WorkspaceBar() {
           <span className="workspace-bar-sep" aria-hidden="true">·</span>
 
           <span
-            className={`workspace-bar-run-state ${runCls}`}
-            aria-label={`Bench ${runLabel}`}
+            className={`workspace-bar-run-state ${bench.kind === "running" ? "is-running" : "is-stopped"}`}
+            aria-label={bench.kind === "running"
+              ? t("workspaceBar.running", { defaultValue: "running" })
+              : t("workspaceBar.stopped", { defaultValue: "stopped" })}
           >
             <span className="workspace-bar-dot" aria-hidden="true" />
-            {runLabel}
+            {bench.kind === "running"
+              ? t("workspaceBar.running", { defaultValue: "running" })
+              : t("workspaceBar.stopped", { defaultValue: "stopped" })}
           </span>
         </>
       )}
