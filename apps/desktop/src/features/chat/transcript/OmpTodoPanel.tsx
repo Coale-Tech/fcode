@@ -13,6 +13,9 @@ import { useAppStore } from "../../../stores/app-store";
 import type { OmpTodoPhase, OmpTodoItem } from "@pi-desktop/shared";
 import { hasActiveTasks } from "./omp-todo-logic";
 
+// Stable fallback: a fresh [] per selector call never settles in useSyncExternalStore.
+const EMPTY_PHASES: OmpTodoPhase[] = [];
+
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 function statusIcon(status: OmpTodoItem["status"]): string {
@@ -60,7 +63,7 @@ export const OmpTodoPanel = memo(function OmpTodoPanel({
 }) {
   const { t } = useTranslation();
   const phases = useAppStore((s) =>
-    sessionId ? (s.sessionTodoPhases[sessionId] ?? []) : [],
+    sessionId ? (s.sessionTodoPhases[sessionId] ?? EMPTY_PHASES) : EMPTY_PHASES,
   );
   const [collapsed, setCollapsed] = useState(false);
 
