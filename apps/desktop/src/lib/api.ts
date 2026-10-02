@@ -151,12 +151,14 @@ import type {
   OmpSessionHandoffResult,
   OmpSessionSetTodosResult,
   OmpSessionEntriesResult,
-  OmpSessionTreeResult,
   OmpSessionBranchMessagesResult,
   OmpTodoPhase,
   OmpInstalledSkillsListResult,
   OmpHistoricalStatsResult,
   OmpWorktreeListResult,
+  OmpWorktreeClearResult,
+  OmpWorktreePruneResult,
+  OmpWorktreeAddResult,
   OmpExtensionListResult,
   OmpExtensionMutateResult,
   OmpBashResult,
@@ -1758,9 +1760,6 @@ export const api = {
   /** Get flat history entries for the current omp session. */
   ompSessionEntries: (params?: { since?: string }) =>
     invoke<OmpSessionEntriesResult>(IPC.invoke.ompSessionEntries, params ?? {}),
-  /** Get the session tree for the current omp session. */
-  ompSessionTree: () =>
-    invoke<OmpSessionTreeResult>(IPC.invoke.ompSessionTree),
   /** Get preview messages for the current branch. */
   ompSessionBranchMessages: () =>
     invoke<OmpSessionBranchMessagesResult>(IPC.invoke.ompSessionBranchMessages),
@@ -1773,6 +1772,15 @@ export const api = {
   /** List agent-managed git worktrees under ~/.omp/wt/. */
   ompWorktreeList: () =>
     invoke<OmpWorktreeListResult>(IPC.invoke.ompWorktreeList),
+  /** Clear a specific agent worktree. force=true skips dirty check. */
+  ompWorktreeClear: (path: string, force = false) =>
+    invoke<OmpWorktreeClearResult>(IPC.invoke.ompWorktreeClear, { path, force }),
+  /** Prune orphaned worktrees under ~/.omp/wt/. force=true skips dirty check. */
+  ompWorktreePrune: (force = false) =>
+    invoke<OmpWorktreePruneResult>(IPC.invoke.ompWorktreePrune, { force }),
+  /** Add a new git worktree under ~/.omp/wt/ for repoPath + branch. */
+  ompWorktreeAdd: (repoPath: string, branch: string) =>
+    invoke<OmpWorktreeAddResult>(IPC.invoke.ompWorktreeAdd, { repoPath, branch }),
   /** Reveal an omp skill store directory in the system file manager. */
   ompSkillReveal: (id: string, version: string) =>
     invoke<{ ok: boolean }>(IPC.invoke.ompSkillReveal, { id, version }),

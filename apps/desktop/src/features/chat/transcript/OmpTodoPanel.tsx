@@ -6,12 +6,17 @@
  *   - todo tool tool_end events (primary source, has full phase structure)
  *   - todo_reminder omp events (flat list fallback)
  *   - todo_auto_clear omp events (clear)
+ *
+ * Each task has a toggle button; clicking calls set_todos via editTodosWithRevert.
+ * Agent events always win: if an agent event updates sessionTodoPhases during a
+ * save call, the RPC result is silently discarded.
  */
-import { memo, useState } from "react";
+import { memo, useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "../../../stores/app-store";
 import type { OmpTodoPhase, OmpTodoItem } from "@pi-desktop/shared";
-import { hasActiveTasks } from "./omp-todo-logic";
+import { api } from "../../../lib/api";
+import { hasActiveTasks, toggleTaskStatus, editTodosWithRevert } from "./omp-todo-logic";
 
 // Stable fallback: a fresh [] per selector call never settles in useSyncExternalStore.
 const EMPTY_PHASES: OmpTodoPhase[] = [];
@@ -20,17 +25,28 @@ const EMPTY_PHASES: OmpTodoPhase[] = [];
 
 function statusIcon(status: OmpTodoItem["status"]): string {
   switch (status) {
-    case "completed": return "✓";
-    case "in_progress": return "◉";
-    case "abandoned": return "✗";
-    case "blocked": return "⊘";
-    default: return "○";
+    case "completed":  return "✓";
+    case "abandoned":  return "✗";
+    case "in_progress":return "●";
+    case "blocked":    return "!";
+    default:           return "○";
   }
 }
 
 // ─── row ──────────────────────────────────────────────────────────────────────
 
-const TodoPhaseRow = memo(function TodoPhaseRow({ phase }: { phase: OmpTodoPhase }) {
+const TodoPhaseRow = memo(function TodoPhaseRow({
+  phase,
+  phaseIdx,
+  onToggle,
+  saving,
+}: {
+  phase: OmpTodoPhase;
+  phaseIdx: number;
+  onToggle: (phaseIdx: number, taskIdx: number) => void;
+  saving: boolean;
+}) {
+  const { t } = useTranslation();
   return (
     <div className="omp-todo-phase">
       {phase.name && <div className="omp-todo-phase-name">{phase.name}</div>}
@@ -40,9 +56,21 @@ const TodoPhaseRow = memo(function TodoPhaseRow({ phase }: { phase: OmpTodoPhase
             key={task.id ?? i}
             className={`omp-todo-task omp-todo-task--${task.status}`}
           >
-            <span className="omp-todo-task-icon" aria-hidden>
-              {statusIcon(task.status)}
-            </span>
+            <button
+              type="button"
+              className="omp-todo-task-toggle"
+              disabled={saving}
+              onClick={() => onToggle(phaseIdx, i)}
+              aria-label={
+                task.status === "completed"
+                  ? t("chat.ompTodoMarkPending")
+                  : t("chat.ompTodoMarkDone")
+              }
+            >
+              <span className="omp-todo-task-icon" aria-hidden>
+                {statusIcon(task.status)}
+              </span>
+            </button>
             <span className="omp-todo-task-content">{task.content}</span>
             {task.blocker && (
               <span className="omp-todo-task-blocker"> ({task.blocker})</span>
@@ -66,6 +94,49 @@ export const OmpTodoPanel = memo(function OmpTodoPanel({
     sessionId ? (s.sessionTodoPhases[sessionId] ?? EMPTY_PHASES) : EMPTY_PHASES,
   );
   const [collapsed, setCollapsed] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  // Last failed nextPhases, kept for the retry action.
+  const pendingRef = useRef<OmpTodoPhase[] | null>(null);
+
+  const doSave = useCallback(
+    async (nextPhases: OmpTodoPhase[]) => {
+      if (!sessionId) return;
+      setSaving(true);
+      setEditError(null);
+      pendingRef.current = nextPhases;
+      const prevPhases = phases;
+      const result = await editTodosWithRevert({
+        prevPhases,
+        nextPhases,
+        getCurrentPhases: () =>
+          useAppStore.getState().sessionTodoPhases[sessionId] ?? EMPTY_PHASES,
+        setPhases: (ps) =>
+          useAppStore.setState((state) => ({
+            sessionTodoPhases: { ...state.sessionTodoPhases, [sessionId]: ps },
+          })),
+        callSetTodos: (ps) => api.ompSessionSetTodos(ps),
+      });
+      setSaving(false);
+      if (!result.ok) {
+        setEditError(result.error ?? t("chat.ompTodoEditError", { error: "" }));
+      } else {
+        pendingRef.current = null;
+      }
+    },
+    [sessionId, phases, t],
+  );
+
+  const handleToggle = useCallback(
+    (phaseIdx: number, taskIdx: number) => {
+      void doSave(toggleTaskStatus(phases, phaseIdx, taskIdx));
+    },
+    [phases, doSave],
+  );
+
+  const handleRetry = useCallback(() => {
+    if (pendingRef.current) void doSave(pendingRef.current);
+  }, [doSave]);
 
   if (!sessionId || phases.length === 0 || !hasActiveTasks(phases)) return null;
 
@@ -94,8 +165,28 @@ export const OmpTodoPanel = memo(function OmpTodoPanel({
       {!collapsed && (
         <div className="omp-todo-panel-body">
           {phases.map((phase, i) => (
-            <TodoPhaseRow key={phase.id ?? i} phase={phase} />
+            <TodoPhaseRow
+              key={phase.id ?? i}
+              phase={phase}
+              phaseIdx={i}
+              onToggle={handleToggle}
+              saving={saving}
+            />
           ))}
+          {editError && (
+            <div className="omp-todo-panel-error" role="alert">
+              <span className="omp-todo-panel-error-text">
+                {t("chat.ompTodoEditError", { error: editError })}
+              </span>
+              <button
+                type="button"
+                className="omp-todo-panel-retry"
+                onClick={handleRetry}
+              >
+                {t("chat.ompTodoEditRetry")}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
