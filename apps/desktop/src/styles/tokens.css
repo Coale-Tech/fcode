@@ -68,7 +68,25 @@
 
   /* Settings / fields */
   --ds-settings-field-bg:   var(--surface-elevation-1);
-  --ds-settings-nav-active: var(--surface-alpha-gray-2);
+  --ds-settings-nav-active:           var(--surface-elevation-3);  /* FD2 restyle → Raven active */
+  /* Settings-specific design tokens — Raven restyle (F/S1).
+     FD3: numeric --radius-N steps only inside Settings; global named scale untouched.
+     FD5: settings rail keeps macOS vibrancy via .sidebar-surface on darwin (allowed mismatch). */
+  --ds-settings-nav-item-hover-bg:    var(--surface-gray-3);
+  --ds-settings-nav-item-active-bg:   var(--surface-elevation-3);
+  --ds-settings-nav-item-shadow:      var(--shadow-sm);
+  --ds-settings-nav-group-ink:        var(--ink-gray-5);
+  --ds-settings-nav-label-ink:        var(--ink-gray-6);
+  --ds-settings-nav-label-active-ink: var(--ink-gray-8);
+  --ds-settings-separator:            var(--outline-gray-2);
+  --ds-settings-header-ink:           var(--ink-gray-8);
+  --ds-settings-desc-ink:             var(--ink-gray-6);
+  --ds-settings-section-ink:          var(--ink-gray-5);
+  --ds-settings-row-label-ink:        var(--ink-gray-8);
+  --ds-settings-row-desc-ink:         var(--ink-gray-5);
+  /* Radii: numeric steps, no named --radius-sm/-md/-lg (FD3) */
+  --ds-settings-radius-item:          var(--radius-1);  /* 4px — nav items, controls */
+  --ds-settings-radius-ctrl:          var(--radius-1);  /* 4px — buttons, inputs, selects */
   --ds-field-inset-bg:      var(--surface-gray-2);
   --ds-field-inset-focus-bg:var(--surface-elevation-2);
 
@@ -126,7 +144,7 @@
 
   /* Geometry tokens (not colours; kept as-is) */
   --ds-sidebar-width:              256px;
-  --ds-settings-nav-width:         275px;
+  --ds-settings-nav-width:         224px;  /* FD2: Raven w-56 = 224px (was 275px) */
   --ds-toolbar-height:             46px;
   --ds-control-size:               28px;
   --ds-field-height:               calc(18px + var(--text-base) * var(--leading-body));
