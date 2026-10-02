@@ -940,6 +940,7 @@ sklm: {
       remoteHosts: "远程主机",
       info: "信息",
       voice: "语音",
+      kanban: "看板",
     },
     configSync: {
       title: "云同步",
@@ -2912,7 +2913,55 @@ sklm: {
       computer: "计算机",
       ida: "IDA",
     },
+  },
+  "kanban": {
+    "title": "看板",
+    "empty": "暂无卡片，创建一个开始吧。",
+    "newCard": "新建卡片",
+    "addCard": "添加卡片",
+    "columns": {
+      "triage": "分类",
+      "todo": "待办",
+      "ready": "就绪",
+      "running": "进行中",
+      "blocked": "阻塞",
+      "done": "完成"
+    },
+    "card": {
+      "comment": "添加评论…",
+      "archive": "归档",
+      "unarchive": "取消归档",
+      "moveTo": "移动到…",
+      "showRuns": "查看运行记录",
+      "nudge": "提醒",
+      "needsApproval": "需要批准",
+      "blocked": "已阻塞",
+      "gaveUp": "已放弃"
+    },
+    "dispatcher": {
+      "pause": "暂停调度器",
+      "resume": "恢复调度器",
+      "paused": "调度器已暂停"
+    },
+    "settings": {
+      "title": "看板设置",
+      "enabled": "启用看板",
+      "maxInProgress": "最大进行中数量",
+      "maxRuntimeSeconds": "最大运行时长（秒）",
+      "maxAgentCardsPerSession": "每会话最大代理卡片数",
+      "maxDailySpawns": "每日最大启动次数"
+    },
+    "sidebar": {
+      "showWorkers": "显示工作会话",
+      "hideWorkers": "隐藏工作会话"
+    },
+    "notify": {
+      "blocked": "任务已阻塞：{title}",
+      "done": "任务已完成：{title}",
+      "dailyCap": "看板：已达到每日 {count} 个任务启动上限"
+    },
   }
+
 } satisfies EnglishCatalog;
 
 export default zhCN;

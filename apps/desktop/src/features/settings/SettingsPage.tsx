@@ -33,6 +33,7 @@ import {
   IconSparkles,
   IconCloudDown,
   IconMic,
+  IconKanban as IconColumns,
 } from "../../components/icons";
 import { Badge, Button, cx, SegmentedControl, SettingsToggle } from "../../components/ui";
 import { ModelConfigPage } from "../../components/settings/ModelConfigPage";
@@ -63,6 +64,7 @@ import { CloseBehaviorSection, DeveloperSection } from "./developer-sections";
 import { PluginScenicThemesDestination } from "../../components/settings/PluginScenicThemesDestination";
 import { ConfigSyncPage } from "../../components/settings/ConfigSyncPage";
 import { OmpSettingsSections } from "./omp-settings-sections";
+import { KanbanSettingsSection } from "./KanbanSettingsSection";
 
 type SettingsTab = ReturnType<typeof useAppStore.getState>["settingsTab"];
 
@@ -240,6 +242,7 @@ export function SettingsPage() {
       sync: <IconCloudDown size={14} />,
       remoteHosts: <IconGlobe size={14} />,
       voice: <IconMic size={14} />,
+      kanban: <IconColumns size={14} />,
       about: <IconInfo size={14} />,
     };
     return navEntries.map((entry) => ({
@@ -631,6 +634,7 @@ export function SettingsPage() {
               )}
             </div>
           )}
+          {tab === "kanban" && <KanbanSettingsSection />}
           </>}
 
           </div>

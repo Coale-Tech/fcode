@@ -55,6 +55,11 @@ const BuildPage = lazy(() =>
     default: module.BuildPage,
   })),
 );
+const KanbanPage = lazy(() =>
+  import("../../pages/KanbanPage").then((module) => ({
+    default: module.KanbanPage,
+  })),
+);
 
 export function AppShell() {
   const {
@@ -282,6 +287,10 @@ export function AppShell() {
                   ) : page === "build" ? (
                     <div className="route-surface route-page">
                       <BuildPage />
+                    </div>
+                  ) : page === "kanban" ? (
+                    <div className="route-surface route-page">
+                      <KanbanPage />
                     </div>
                   ) : (
                     <ChatSurface visible={page === "chat"} />

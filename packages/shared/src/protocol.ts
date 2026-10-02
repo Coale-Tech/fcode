@@ -485,6 +485,28 @@ export const IPC = {
     ompAbortBash: "pi-desktop/omp/abort-bash",
     /** Set the omp event filter (null = all events; string[] = allowlist). */
     ompSetEventFilter: "pi-desktop/omp/set-event-filter",
+    /** Kanban board: list all tasks, links, comments, runs. */
+    kanbanList: "pi-desktop/kanban/list",
+    /** Kanban board: create a user card (lands in triage/todo/ready per rules). */
+    kanbanCreate: "pi-desktop/kanban/create",
+    /** Kanban board: move a card to a different status column (user action). */
+    kanbanMove: "pi-desktop/kanban/move",
+    /** Kanban board: add a parent→child link. */
+    kanbanLink: "pi-desktop/kanban/link",
+    /** Kanban board: add a comment to a task. */
+    kanbanComment: "pi-desktop/kanban/comment",
+    /** Kanban board: archive or unarchive a task. */
+    kanbanArchive: "pi-desktop/kanban/archive",
+    /** Kanban board: list runs for a task. */
+    kanbanListRuns: "pi-desktop/kanban/listRuns",
+    /** Kanban board: get + set settings (enabled, caps). */
+    kanbanSettingsGet: "pi-desktop/kanban/settings/get",
+    /** Kanban board: get + set settings. */
+    kanbanSettingsSet: "pi-desktop/kanban/settings/set",
+    /** Kanban board: pause or resume the dispatcher. */
+    kanbanSetPaused: "pi-desktop/kanban/setPaused",
+    /** Kanban board: trigger an immediate dispatcher tick. */
+    kanbanNudge: "pi-desktop/kanban/nudge",
   },
   event: {
     pluginChanged: "pi-desktop/event/pluginChanged",
@@ -539,6 +561,8 @@ export const IPC = {
     sidecarExtUi: "pi-desktop/sidecar/event/extUi",
     /** Managed local Hindsight server state changed. */
     hindsightLocalStatus: "pi-desktop/hindsight-local/event/status",
+    /** Kanban board changed (tasks/runs/links updated by dispatcher or user). */
+    kanbanChanged: "pi-desktop/kanban/event/changed",
   },
 } as const;
 

@@ -950,6 +950,7 @@ sklm: {
       remoteHosts: "원격 호스트",
       info: "정보",
       voice: "음성",
+      kanban: "Kanban",
     },
     configSync: {
       title: "Cloud sync",
@@ -2961,7 +2962,55 @@ importConfirm: "가져온 확장은 에이전트 프로세스 안에서 에이�
       computer: "컴퓨터",
       ida: "IDA",
     },
+  },
+  "kanban": {
+    "title": "칸반",
+    "empty": "카드가 없습니다. 하나를 만들어 시작하세요.",
+    "newCard": "새 카드",
+    "addCard": "카드 추가",
+    "columns": {
+      "triage": "분류",
+      "todo": "할 일",
+      "ready": "준비됨",
+      "running": "실행 중",
+      "blocked": "차단됨",
+      "done": "완료"
+    },
+    "card": {
+      "comment": "댓글 추가…",
+      "archive": "보관",
+      "unarchive": "보관 해제",
+      "moveTo": "이동…",
+      "showRuns": "실행 기록 보기",
+      "nudge": "재촉",
+      "needsApproval": "승인 필요",
+      "blocked": "차단됨",
+      "gaveUp": "포기함"
+    },
+    "dispatcher": {
+      "pause": "디스패처 일시정지",
+      "resume": "디스패처 재개",
+      "paused": "디스패처 일시정지됨"
+    },
+    "settings": {
+      "title": "칸반 설정",
+      "enabled": "칸반 보드 활성화",
+      "maxInProgress": "최대 진행 중 수",
+      "maxRuntimeSeconds": "최대 실행 시간(초)",
+      "maxAgentCardsPerSession": "세션당 최대 에이전트 카드 수",
+      "maxDailySpawns": "일일 최대 생성 수"
+    },
+    "sidebar": {
+      "showWorkers": "워커 세션 표시",
+      "hideWorkers": "워커 세션 숨기기"
+    },
+    "notify": {
+      "blocked": "작업 차단됨: {title}",
+      "done": "작업 완료: {title}",
+      "dailyCap": "칸반: 하루 {count}개 시작 한도에 도달했습니다"
+    },
   }
+
 } satisfies EnglishCatalog;
 
 export default ko;

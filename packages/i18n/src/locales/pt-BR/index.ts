@@ -926,7 +926,8 @@ export const ptBR = {
       sync: "Sincronização",
       remoteHosts: "Hosts remotos",
       info: "Sobre",
-      voice: "Voz"
+      voice: "Voz",
+      kanban: "Kanban"
     },
     general: "Geral",
     ai: "IA",
@@ -2876,7 +2877,55 @@ export const ptBR = {
       computer: "Computador",
       ida: "IDA",
     },
+  },
+  "kanban": {
+    "title": "Kanban",
+    "empty": "Nenhum cartão ainda. Crie um para começar.",
+    "newCard": "Novo cartão",
+    "addCard": "Adicionar cartão",
+    "columns": {
+      "triage": "Triagem",
+      "todo": "A fazer",
+      "ready": "Pronto",
+      "running": "Em execução",
+      "blocked": "Bloqueado",
+      "done": "Concluído"
+    },
+    "card": {
+      "comment": "Adicionar comentário…",
+      "archive": "Arquivar",
+      "unarchive": "Desarquivar",
+      "moveTo": "Mover para…",
+      "showRuns": "Ver execuções",
+      "nudge": "Incentivar",
+      "needsApproval": "Requer aprovação",
+      "blocked": "Bloqueado",
+      "gaveUp": "Desistiu"
+    },
+    "dispatcher": {
+      "pause": "Pausar despachante",
+      "resume": "Retomar despachante",
+      "paused": "Despachante pausado"
+    },
+    "settings": {
+      "title": "Configurações do Kanban",
+      "enabled": "Ativar quadro Kanban",
+      "maxInProgress": "Máx. em andamento",
+      "maxRuntimeSeconds": "Tempo máx. de execução (segundos)",
+      "maxAgentCardsPerSession": "Máx. cartões de agente por sessão",
+      "maxDailySpawns": "Máx. inicializações diárias"
+    },
+    "sidebar": {
+      "showWorkers": "Mostrar sessões de trabalho",
+      "hideWorkers": "Ocultar sessões de trabalho"
+    },
+    "notify": {
+      "blocked": "Tarefa bloqueada: {title}",
+      "done": "Tarefa concluída: {title}",
+      "dailyCap": "Kanban: limite diário de {count} inicializações atingido"
+    },
   }
+
 } satisfies EnglishCatalog;
 
 export default ptBR;

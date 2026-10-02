@@ -17,6 +17,7 @@ export type SettingsTabId =
   | "sync"
   | "remoteHosts"
   | "voice"
+  | "kanban"
   | "about";
 
 export type SettingsNavGroupId =
@@ -330,6 +331,21 @@ export const SETTINGS_NAV: SettingsNavEntry[] = [
       "settings.remoteHosts.statusOnline",
       "settings.remoteHosts.statusOffline",
       "settings.remoteHosts.experimental",
+    ],
+  },
+  {
+    id: "kanban",
+    labelKey: "settings.nav.kanban",
+    titleKey: "kanban.settings.title",
+    group: "agent",
+    keywordKeys: [
+      "kanban.settings.enabled",
+      "kanban.settings.maxInProgress",
+      "kanban.settings.maxRuntimeSeconds",
+      "kanban.settings.maxAgentCardsPerSession",
+      "kanban.settings.maxDailySpawns",
+      "kanban.dispatcher.pause",
+      "kanban.dispatcher.resume",
     ],
   },
   {

@@ -29,6 +29,12 @@ export type EventPersistenceDependencies = {
   isStaleTerminalEvent: (envelope: AgentEventEnvelope) => boolean;
   finishApprovedExecution: (...args: any[]) => Promise<void>;
   emitAgentEvent: (envelope: AgentEventEnvelope) => void;
+  /**
+   * Called after an `agent_end` or `error` terminal event is processed.
+   * The kanban dispatcher uses this to detect workers that ended without
+   * calling `kanban_complete` / `kanban_block` and nudge them.
+   */
+  onTurnEnd?: (sessionId: string) => void;
 };
 
 export function createEventPersistence({
@@ -50,6 +56,7 @@ export function createEventPersistence({
   isStaleTerminalEvent,
   finishApprovedExecution,
   emitAgentEvent,
+  onTurnEnd,
 }: EventPersistenceDependencies): {
   subagentTagged: (message: UiMessage, envelope: AgentEventEnvelope) => UiMessage;
   persistAgentEvent: (envelope: AgentEventEnvelope) => UiMessage | undefined;
@@ -167,6 +174,7 @@ function persistAgentEvent(envelope: AgentEventEnvelope): UiMessage | undefined 
           data: String(error),
         });
       });
+    onTurnEnd?.(envelope.sessionId);
     return;
   }
   if (event.type === "agent_end") {
@@ -230,6 +238,7 @@ function persistAgentEvent(envelope: AgentEventEnvelope): UiMessage | undefined 
         });
       }
     })();
+    onTurnEnd?.(envelope.sessionId);
     return;
   }
   if (event.type === "turn_end" && !envelope.parentToolCallId) {

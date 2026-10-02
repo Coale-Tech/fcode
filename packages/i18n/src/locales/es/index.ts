@@ -941,7 +941,8 @@ sklm: {
       "sync": "Sincronización en la nube",
       "remoteHosts": "Hosts remotos",
       "info": "Información",
-      "voice": "Voz"
+      "voice": "Voz",
+      "kanban": "Kanban"
     },
     "configSync": {
       title: "Cloud sync",
@@ -2922,7 +2923,55 @@ sklm: {
       "computer": "Computadora",
       "ida": "IDA"
     }
+  },
+  "kanban": {
+    "title": "Kanban",
+    "empty": "Aún no hay tarjetas. Crea una para empezar.",
+    "newCard": "Nueva tarjeta",
+    "addCard": "Agregar tarjeta",
+    "columns": {
+      "triage": "Triaje",
+      "todo": "Por hacer",
+      "ready": "Listo",
+      "running": "En ejecución",
+      "blocked": "Bloqueado",
+      "done": "Hecho"
+    },
+    "card": {
+      "comment": "Agregar comentario…",
+      "archive": "Archivar",
+      "unarchive": "Desarchivar",
+      "moveTo": "Mover a…",
+      "showRuns": "Ver ejecuciones",
+      "nudge": "Impulsar",
+      "needsApproval": "Requiere aprobación",
+      "blocked": "Bloqueado",
+      "gaveUp": "Abandonado"
+    },
+    "dispatcher": {
+      "pause": "Pausar despachador",
+      "resume": "Reanudar despachador",
+      "paused": "Despachador pausado"
+    },
+    "settings": {
+      "title": "Configuración de Kanban",
+      "enabled": "Activar tablero Kanban",
+      "maxInProgress": "Máx. en progreso",
+      "maxRuntimeSeconds": "Tiempo máx. de ejecución (segundos)",
+      "maxAgentCardsPerSession": "Máx. tarjetas de agente por sesión",
+      "maxDailySpawns": "Máx. inicios diarios"
+    },
+    "sidebar": {
+      "showWorkers": "Mostrar sesiones de trabajo",
+      "hideWorkers": "Ocultar sesiones de trabajo"
+    },
+    "notify": {
+      "blocked": "Tarea bloqueada: {title}",
+      "done": "Tarea completada: {title}",
+      "dailyCap": "Kanban: límite diario de {count} tareas iniciadas alcanzado"
+    },
   }
+
 } satisfies EnglishCatalog;
 
 export default es;

@@ -122,6 +122,9 @@ import {
 import { createSessionLaunchRuntime } from "./runtime/session-launch";
 import { createSessionCoordination } from "./runtime/session-coordination";
 import { createScheduledRuntime } from "./runtime/scheduled";
+import { createKanbanRunner } from "./runtime/kanban-runner";
+import { readKanbanSettings, writeKanbanSettings } from "./runtime/kanban-settings";
+import { loadBoard, saveBoard } from "./runtime/kanban-store";
 import { createDesktopServices } from "./services/desktop-services";
 import { createPluginServices } from "./services/plugin-services";
 import { wirePluginThemeRuntimeServices } from "./plugin-theme-services";
@@ -1063,6 +1066,9 @@ const {
   dispatchExecutionForProposal,
 } = planRuntime;
 
+// Mutable ref for kanban turn-end callback (late-bound after runner creation).
+let _kanbanTurnEnd: ((sessionId: string) => void) | undefined;
+
 const eventPersistence = createEventPersistence({
   runtimeState,
   steeringReplies,
@@ -1082,8 +1088,68 @@ const eventPersistence = createEventPersistence({
   isStaleTerminalEvent,
   finishApprovedExecution,
   emitAgentEvent: (envelope) => emitAgentEvent(envelope),
+  onTurnEnd: (sessionId) => _kanbanTurnEnd?.(sessionId),
 });
 const { persistAgentEvent } = eventPersistence;
+
+// ── Kanban notification helper ─────────────────────────────────────────────────
+const emitKanbanMutation = (prev: import("./runtime/kanban-core").KanbanBoard, next: import("./runtime/kanban-core").KanbanBoard) => {
+  const labels = catalogs[resolveLocale(updaterLocale)];
+  for (const task of next.tasks) {
+    const old = prev.tasks.find((t) => t.id === task.id);
+    if (!old || old.status === task.status) continue;
+    if (task.status === "blocked" || task.status === "done") {
+      const msg = task.status === "blocked"
+        ? labels.kanban.notify.blocked.replace("{title}", task.title)
+        : labels.kanban.notify.done.replace("{title}", task.title);
+      sendToRenderer(IPC.event.toast, { message: msg });
+      const notification = {
+        id: crypto.randomUUID(),
+        kind: task.status === "done" ? "task.completed" : "task.failed",
+        sessionId: task.sessionId ?? task.id,
+        sessionTitle: task.title,
+        turnId: crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+        readAt: null,
+      } as const;
+      sendToRenderer(IPC.event.notificationChanged, { notification });
+    }
+  }
+};
+
+// ── Kanban runner (wired after event-persistence, before sidecar) ─────────────
+const kanbanRunner = createKanbanRunner({
+  getSettings: () => readKanbanSettings(dataDir),
+  getBoard: () => loadBoard(dataDir),
+  saveBoard: (board) => { void saveBoard(dataDir, board); },
+  createSession: async (input) => {
+    const h = host;
+    if (!h) throw new Error("host unavailable");
+    const res = await h.call<{ session?: { id?: string } | null }>("session.create", {
+      title: input.title,
+      projectPath: input.projectPath,
+      mode: "agent",
+    });
+    const sessionId = res.session?.id;
+    if (!sessionId) throw new Error("session.create returned no id");
+    return sessionId;
+  },
+  prompt: async (sessionId, content) => {
+    const h = host;
+    if (!h) throw new Error("host unavailable");
+    await h.call("agent.prompt", { sessionId, content });
+  },
+  notifyDailyCap: (maxSpawns) => {
+    const labels = catalogs[resolveLocale(updaterLocale)];
+    sendToRenderer(IPC.event.toast, { message: labels.kanban.notify.dailyCap.replace("{count}", String(maxSpawns)) });
+  },
+  sendChanged: () => sendToRenderer(IPC.event.kanbanChanged, {}),
+  report: (error) => logger.app("runtime", "error", String(error)),
+  onBoardMutation: emitKanbanMutation,
+});
+// Late-bind onTurnEnd: captured by the closure already passed to createEventPersistence.
+_kanbanTurnEnd = (sessionId) => kanbanRunner.onTurnEnd(sessionId);
+
 
 const sidecarRuntime = createSidecarRuntime({
   runtimeState,
@@ -1113,6 +1179,13 @@ const sidecarRuntime = createSidecarRuntime({
   activeUserSkills,
   pluginActiveInProject,
   currentNetworkProxy,
+  kanban: {
+    enabled: () => readKanbanSettings(dataDir).enabled,
+    getBoard: () => loadBoard(dataDir),
+    saveBoard: (board) => { void saveBoard(dataDir, board); },
+    sendChanged: () => sendToRenderer(IPC.event.kanbanChanged, {}),
+    sessionToCard: () => kanbanRunner.sessionToCard(),
+  },
 });
 emitAgentEvent = sidecarRuntime.emitAgentEvent;
 const { wireSidecar, startSidecar } = sidecarRuntime;
@@ -1259,6 +1332,15 @@ function registerIpc() {
     sendToRenderer,
     voiceService,
     onProviderMutation: () => { void superviseRestart("sidecar"); },
+    kanban: {
+      getBoard: () => loadBoard(dataDir),
+      saveBoard: (board) => { void saveBoard(dataDir, board); },
+      getSettings: () => readKanbanSettings(dataDir),
+      saveSettings: (s) => { void writeKanbanSettings(dataDir, s); },
+      runner: kanbanRunner,
+      sendChanged: () => sendToRenderer(IPC.event.kanbanChanged, {}),
+      onBoardMutation: emitKanbanMutation,
+    },
   });
 }
 
@@ -1423,3 +1505,8 @@ registerApplicationActivation({
   isApplicationBooted: () => applicationLifecycleState.applicationBooted,
   hasVisibleWindow,
 });
+
+// Reclaim any kanban tasks whose sessions didn't survive the last process exit.
+// activeTurns is empty at startup; running tasks with no live session get re-queued.
+kanbanRunner.reclaimZombies(new Set(activeTurns.keys()));
+kanbanRunner.start();
