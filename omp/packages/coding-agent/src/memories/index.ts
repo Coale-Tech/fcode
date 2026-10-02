@@ -18,7 +18,7 @@ import {
 import type { ModelRegistry } from "../config/model-registry";
 import { getModelMatchPreferences, resolveModelRoleValue } from "../config/model-resolver";
 import type { Settings } from "../config/settings";
-import { redactMemorySecrets as redactSecrets } from "../memory-backend/redact";
+import { neutralizeInjection, redactMemorySecrets as redactSecrets } from "../memory-backend/redact";
 import type { MemoryBackendSaveInput, MemoryBackendSaveResult } from "../memory-backend/types";
 import consolidationTemplate from "../prompts/memories/consolidation.md" with { type: "text" };
 import consolidationSystemTemplate from "../prompts/memories/consolidation_system.md" with { type: "text" };
@@ -164,9 +164,24 @@ interface MemoryInstructionSession {
 	sessionManager: Pick<AgentSession["sessionManager"], "getSessionFile">;
 }
 
+/**
+ * Filename of the user-profile file under the agent directory. Cross-project;
+ * written by the user via Settings > Memory and read at every session start.
+ */
+const USER_PROFILE_FILE = "USER.md";
+/** Hard cap on user-profile content in prompt injection (~1 KB, ~256 tokens). */
+const USER_PROFILE_MAX_CHARS = 1024;
+
+/** Absolute path to the user-profile file. Used by the desktop to read/write it. */
+export function getUserProfilePath(agentDir: string): string {
+	return path.join(agentDir, USER_PROFILE_FILE);
+}
+
 interface MemoryToolDeveloperInstructionsSnapshot {
 	summary: string;
 	learned: string;
+	/** Optional cross-project user profile from `<agentDir>/USER.md`. */
+	userProfile?: string;
 }
 
 interface CachedMemoryToolDeveloperInstructions {
@@ -189,6 +204,19 @@ function getMemoryInstructionSessionFile(session: MemoryInstructionSession): str
 	return session.sessionManager.getSessionFile() ?? undefined;
 }
 
+/**
+ * Sanitize a multi-line memory text block at read time: neutralize injection
+ * delimiters THEN redact secrets per line. Mirrors `readLearnedLessons` and
+ * applies whenever a local file is injected into the system prompt without
+ * going through write-time normalization.
+ */
+function sanitizeInjectedBlock(raw: string): string {
+	return raw
+		.split("\n")
+		.map(line => redactSecrets(neutralizeInjection(line)))
+		.join("\n");
+}
+
 async function readMemoryToolDeveloperInstructionsSnapshot(
 	agentDir: string,
 	settings: Settings,
@@ -199,13 +227,34 @@ async function readMemoryToolDeveloperInstructionsSnapshot(
 
 	let summary = "";
 	try {
-		summary = (await Bun.file(path.join(memoryRoot, "memory_summary.md")).text()).trim();
+		const raw = (await Bun.file(path.join(memoryRoot, "memory_summary.md")).text()).trim();
+		if (raw) {
+			// Neutralize per line, matching readLearnedLessons — a hand-edited or
+			// planted summary_md bypasses write-time normalization and would reach
+			// the system prompt unfiltered without this guard.
+			summary = sanitizeInjectedBlock(raw);
+		}
 	} catch {
 		// Missing or unreadable summary — injection is best-effort; fall through
 		// so any captured lessons still surface on their own.
 	}
 	const learned = await readLearnedLessons(memoryRoot);
-	return { summary, learned };
+
+	// User profile: a cross-project file the user maintains in Settings > Memory.
+	let userProfile: string | undefined;
+	try {
+		const raw = (await Bun.file(getUserProfilePath(agentDir)).text()).trim();
+		if (raw) {
+			// Truncate to cap, then sanitize — the user types free text so any
+			// control char or angle bracket must be stripped before injection.
+			const capped = raw.length > USER_PROFILE_MAX_CHARS ? raw.slice(0, USER_PROFILE_MAX_CHARS) : raw;
+			userProfile = sanitizeInjectedBlock(capped);
+		}
+	} catch {
+		// Absent or unreadable USER.md is normal; skip silently.
+	}
+
+	return { summary, learned, userProfile };
 }
 
 function renderMemoryToolDeveloperInstructionsSnapshot(
@@ -215,7 +264,7 @@ function renderMemoryToolDeveloperInstructionsSnapshot(
 	if (!snapshot) return undefined;
 	const cfg = loadMemoryConfig(settings);
 	if (!cfg.enabled) return undefined;
-	if (!snapshot.summary && !snapshot.learned) return undefined;
+	if (!snapshot.summary && !snapshot.learned && !snapshot.userProfile) return undefined;
 
 	const summaryOut = snapshot.summary
 		? truncateByApproxTokens(snapshot.summary, cfg.summaryInjectionTokenLimit).trim()
@@ -229,11 +278,12 @@ function renderMemoryToolDeveloperInstructionsSnapshot(
 	const learnedBudget = Math.max(0, cfg.summaryInjectionTokenLimit - Math.ceil(summaryOut.length / 4));
 	const learnedOut =
 		snapshot.learned && learnedBudget > 0 ? truncateByApproxTokens(snapshot.learned, learnedBudget).trim() : "";
-	if (!summaryOut && !learnedOut) return undefined;
+	if (!summaryOut && !learnedOut && !snapshot.userProfile) return undefined;
 
 	return prompt.render(readPathTemplate, {
 		memory_summary: summaryOut,
 		learned: learnedOut,
+		user_profile: snapshot.userProfile ?? "",
 	});
 }
 
@@ -1307,20 +1357,6 @@ const MAX_LEARNED_LESSONS = 100;
 const MAX_LEARNED_CONTENT_CHARS = 2000;
 const MAX_LEARNED_CONTEXT_CHARS = 400;
 
-/**
- * Strip prompt-injection vectors from a single line of lesson text: control/
- * format chars, angle brackets (`</skills>`), backticks, and `~~~` fences, then
- * collapse whitespace. Applied on BOTH write and read (the block renders
- * unescaped into the system prompt), mirroring managed-skill descriptions.
- */
-function neutralizeInjection(text: string): string {
-	return text
-		.replace(/[\p{Cc}\p{Cf}]/gu, " ")
-		.replace(/[<>`]/g, "")
-		.replace(/~{2,}/g, "~")
-		.replace(/\s+/g, " ")
-		.trim();
-}
 
 /** Slice to `maxChars`, dropping a trailing unpaired high surrogate. */
 function boundChars(text: string, maxChars: number): string {
