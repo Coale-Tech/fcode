@@ -45,7 +45,7 @@ test("only explicit sidebar entrance plays the expand keyframe", () => {
   assert.match(exitingBlock, /pointer-events:\s*none/);
   assert.match(
     exitingBlock,
-    /animation:\s*sidebar-out var\(--motion-duration-fast\) var\(--motion-ease-in\) both/,
+    /animation:\s*sidebar-out var\(--motion-duration-fast\) var\(--motion-ease-out\) both/,
   );
   // Both keyframes are declared, and the win32 variant keeps the dock opaque.
   assert.match(globalStyles, /@keyframes sidebar-in\s*\{/);
@@ -102,7 +102,7 @@ test("a collapsed sidebar keeps the preferred chat band and only changes motion"
   assert.doesNotMatch(collapsedBlock, /--chat-composer-max-width:\s*640px/);
   assert.match(
     collapsedBlock,
-    /--chat-width-transition:\s*var\(--motion-duration-fast\) var\(--motion-ease-in\)/,
+    /--chat-width-transition:\s*var\(--motion-duration-fast\) var\(--motion-ease-out\)/,
   );
 
   const threadContentBlock =
@@ -139,7 +139,7 @@ test("the top bar's collapsed lead-in tracks the dock instead of snapping", () =
     globalStyles.match(/\.conversation-topbar\.ct-collapsed\s*\{[\s\S]*?\}/)?.[0] ?? "";
   assert.match(
     collapsedBlock,
-    /transition:\s*padding-left var\(--motion-duration-fast\) var\(--motion-ease-in\)/,
+    /transition:\s*padding-left var\(--motion-duration-fast\) var\(--motion-ease-out\)/,
   );
 
   const leadBlock =
@@ -168,7 +168,7 @@ test("the top bar's collapsed lead-in tracks the dock instead of snapping", () =
     )?.[0] ?? "";
   assert.match(leadCollapsedBlock, /left:\s*var\(--ct-lead-inset\)/);
   assert.match(leadCollapsedBlock, /opacity:\s*1/);
-  assert.match(leadCollapsedBlock, /opacity var\(--motion-duration-fast\) var\(--motion-ease-in\)/);
+  assert.match(leadCollapsedBlock, /opacity var\(--motion-duration-fast\) var\(--motion-ease-out\)/);
 
   // Because the slot is out of flow, the title's collapsed offset must be
   // derived from the same inset the button is positioned at, or the two drift.

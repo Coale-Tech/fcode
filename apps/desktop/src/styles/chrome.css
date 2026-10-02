@@ -48,7 +48,7 @@
 }
 
 .startup-splash.is-exiting {
-  animation: startup-splash-out var(--motion-duration-normal) var(--motion-ease-in) both;
+  animation: startup-splash-out var(--motion-duration-normal) var(--motion-ease-out) both;
   pointer-events: none;
 }
 
@@ -350,7 +350,7 @@
 
 .sidebar.is-exiting {
   pointer-events: none;
-  animation: sidebar-out var(--motion-duration-fast) var(--motion-ease-in) both;
+  animation: sidebar-out var(--motion-duration-fast) var(--motion-ease-out) both;
 }
 
 @keyframes sidebar-in {
@@ -539,7 +539,7 @@
   /* The out-of-flow .ct-lead reserves no space of its own, so the title's
    * offset is the inset plus the 28px button and .ct-left's 8px gap. */
   padding-left: calc(var(--ct-lead-inset) + 36px);
-  transition: padding-left var(--motion-duration-fast) var(--motion-ease-in);
+  transition: padding-left var(--motion-duration-fast) var(--motion-ease-out);
 }
 
 .conversation-topbar .ct-left,
@@ -781,8 +781,8 @@
   opacity: 1;
   pointer-events: auto;
   transition:
-    left var(--motion-duration-fast) var(--motion-ease-in),
-    opacity var(--motion-duration-fast) var(--motion-ease-in);
+    left var(--motion-duration-fast) var(--motion-ease-out),
+    opacity var(--motion-duration-fast) var(--motion-ease-out);
 }
 
 .conversation-topbar .ct-lead > .ct-icon-btn {
