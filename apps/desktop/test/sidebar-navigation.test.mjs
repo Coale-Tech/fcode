@@ -318,24 +318,21 @@ test("related session links show only active running state", () => {
   assert.match(globalStyles, /\.sidebar-session-hover-card-session-link-status::before\s*\{[\s\S]*?sidebar-status-breathe/);
 });
 
-test("hidden row actions stay out of the row's click path", () => {
-  // Resting state: the invisible control is not a pointer target at all.
+test("row actions always visible dimmed; full on hover/focus/open", () => {
+  // Resting state: always visible but dimmed (ink-5, opacity 0.4), pointer-events auto.
   assert.match(
     globalStyles,
-    /\.thread-item-more\s*\{[^}]*opacity:\s*0;[^}]*pointer-events:\s*none;[^}]*\}/s,
+    /\.thread-item-more\s*\{[^}]*opacity:\s*0\.4;[^}]*pointer-events:\s*auto;[^}]*\}/s,
   );
   assert.match(
     globalStyles,
     /\.thread-item:focus-within \.thread-item-more,\s*\n\.thread-item-more:focus-visible\s*\{[^}]*pointer-events:\s*auto;/s,
   );
-  // Without hover there is no reveal, so a no-hover pointer gets the controls
-  // visible and tappable instead of an invisible gutter.
+  // Without hover there is no hover-reveal; the control was already visible.
   assert.match(
     globalStyles,
     /@media \(hover: none\)\s*\{[\s\S]*?\.sidebar-row-actions \.thread-item-more,[\s\S]*?opacity:\s*1;\s*\n\s*pointer-events:\s*auto;/,
   );
-  // The row itself stays clickable where the hidden control used to swallow
-  // the click, and spelled-out controls never double-fire the row.
   assert.match(sidebarSource, /if \(target\?\.closest\("button, \[data-action\]"\)\) return;/);
   assert.match(sidebarSource, /className=\{`thread-item[\s\S]*?onClick=\{\(event\) => \{/);
 });
@@ -351,7 +348,7 @@ test("a blurred window releases latched row hover and actions", () => {
   );
   assert.match(
     globalStyles,
-    /\.sidebar\[data-window-blur="true"\] \.thread-item:hover \.thread-item-more:not\(\[aria-expanded="true"\]\),[\s\S]*?opacity:\s*0;\s*\n\s*pointer-events:\s*none;/,
+    /\.sidebar\[data-window-blur="true"\] \.thread-item:hover \.thread-item-more:not\(\[aria-expanded="true"\]\),[\s\S]*?opacity:\s*0\.4;\s*\n\s*pointer-events:\s*auto;/,
   );
 });
 

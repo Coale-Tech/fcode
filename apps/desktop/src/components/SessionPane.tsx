@@ -1,14 +1,18 @@
-import { memo, useMemo } from "react";
+import { memo, useEffect, useMemo } from "react";
 import { ChatTranscript } from "./ChatTranscript";
 import { useAppStore } from "../stores/app-store";
 import { headPermission, sessionPermissions } from "../lib/pending-permissions";
 import { headAsk } from "../lib/pending-asks";
+import { ACTIVITY_TAB } from "../lib/work-panel-tabs";
 import { useTranscriptView } from "../hooks/use-transcript-view";
 import { TranscriptDisclosureProvider } from "../features/chat/transcript/disclosure";
 import { OmpSubagentsList } from "../features/chat/transcript/OmpSubagentsList";
 import { OmpTodoPanel } from "../features/chat/transcript/OmpTodoPanel";
 import { DapPanel } from "../features/chat/transcript/DapPanel";
 import { OmpCollabPanel } from "../features/chat/transcript/OmpCollabPanel";
+
+// ponytail: session ids only; grows by one string per session, never cleared.
+const activityAutoOpened = new Set<string>();
 
 /**
  * One retained conversation pane (ADR 0137).
@@ -60,6 +64,19 @@ export const SessionPane = memo(function SessionPane({
         : transcript.focus,
     [transcript.focus, transcript.parentMessage],
   );
+  // Auto-open the Activity tab once per session, on the first run or permission
+  // request. The set lives outside tab state, so closing the last tab (which
+  // leaves `tabs: []`) cannot re-arm it.
+  const neverOpened = useAppStore(
+    (s) => (s.workPanelContexts[sessionId]?.tabs.length ?? 0) === 0,
+  );
+  const openWorkPanelTabForSession = useAppStore((s) => s.openWorkPanelTabForSession);
+  useEffect(() => {
+    if (activityAutoOpened.has(sessionId) || (!isRunning && !pendingPermission)) return;
+    activityAutoOpened.add(sessionId);
+    if (neverOpened) openWorkPanelTabForSession(sessionId, ACTIVITY_TAB);
+  }, [neverOpened, isRunning, pendingPermission, sessionId, openWorkPanelTabForSession]);
+
 
   return (
     <div

@@ -160,6 +160,9 @@ export const ko = {
     sessionSelected: "선택됨",
     sessionCompleted: "완료",
     sessionFailed: "확인 필요",
+    sessionPermission: "권한 필요",
+    sessionRunningLabel: "실행 중",
+    sessionPermissionLabel: "승인 필요",
     sortSessions: "프로젝트와 채팅 정렬",
     sortRecent: "최근 업데이트순",
     sortOldest: "오래된 순",
@@ -194,6 +197,12 @@ export const ko = {
     hoverCardUpdatedAt: "{{when}} 업데이트됨",
     hoverCardTemporarySpace: "임시",
     hoverCardBranchAria: "브랜치 {{name}}",
+  },
+  workspaceBar: {
+    noBench: "선택된 bench 없음",
+    chooseBench: "bench 선택",
+    running: "실행 중",
+    stopped: "중지됨",
   },
   sessionCollaboration: {
     statusIdle: "대기",
@@ -547,6 +556,7 @@ export const ko = {
     modelBadgeReasoning: "추론",
     modelBadgeVision: "비전",
     permissionMode: "권한 모드",
+    permissionsLabel: "권한: {{mode}}",
     reasoningLevel: "추론 수준",
     reasoningSupportedBy: "현재 모델 {{model}}은(는) 다음 추론 수준을 지원합니다",
     permissionInherit: "기본값",
@@ -2115,8 +2125,11 @@ sklm: {
   permission: {
     title: "권한 필요",
     allowPrompt: "<highlight>{{tool}}</highlight> 실행을 허용할까요?",
-    allowOnce: "한 번 허용",
-    allowSession: "이 채팅에서 허용",
+    allowOnce: "이번만 허용",
+    allowSession: "이 작업에 대해 허용",
+    allowOnceHint: "지금 실행됩니다. 다음에는 다시 묻습니다.",
+    allowSessionHint: "이 도구는 이 작업이 끝날 때까지 묻지 않고 실행됩니다.",
+    denyHint: "여기서 중지됩니다. 에이전트에게 거부되었음을 알립니다.",
     deny: "거부",
     risk: {
       high: "높은 위험",
@@ -2186,6 +2199,7 @@ sklm: {
       subagent: "서브에이전트",
     "session-tree": "세션 기록",
       tools: "도구",
+      activity: "활동",
     },
     pluginView: {
       failed: "이 화면을 불러올 수 없습니다. 플러그인을 새로 고친 후 다시 시도하세요.",
@@ -2234,6 +2248,15 @@ sklm: {
       reveal: "Finder에서 보기",
       binary: "바이너리 파일 — 미리 볼 수 없음",
       tooLarge: "파일이 너무 커서 미리 볼 수 없음",
+    },
+    activity: {
+      decisionNeeded: "결정이 필요합니다",
+      reviewRequest: "검토 요청",
+      todo: "할 일 {{done}} / {{total}}",
+      toolsRun: "실행된 도구",
+      changes: "변경 사항",
+      openReview: "검토 열기",
+      empty: "아직 실행된 것이 없습니다",
     },
   },
   palette: {

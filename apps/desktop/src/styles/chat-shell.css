@@ -129,6 +129,23 @@
   background: var(--surface-green-6);
 }
 
+.workspace-bar-choose-btn {
+  padding: 0 6px;
+  height: 18px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--outline-gray-2);
+  color: var(--ink-gray-6);
+  font-size: var(--text-xs);
+  line-height: var(--leading-none);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.workspace-bar-choose-btn:hover {
+  background: var(--surface-gray-2);
+  color: var(--ink-gray-8);
+}
+
 .chat-surface,
 .route-page {
   position: relative;

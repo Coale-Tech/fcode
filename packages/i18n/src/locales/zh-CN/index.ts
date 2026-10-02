@@ -153,6 +153,9 @@ export const zhCN = {
     sessionSelected: "已选中",
     sessionCompleted: "已完成",
     sessionFailed: "未完成",
+    sessionPermission: "需要权限",
+    sessionRunningLabel: "运行中",
+    sessionPermissionLabel: "待审批",
     sortSessions: "项目与对话排序",
     sortRecent: "最近更新",
     sortOldest: "最早创建",
@@ -187,6 +190,12 @@ export const zhCN = {
     hoverCardUpdatedAt: "更新于 {{when}}",
     hoverCardTemporarySpace: "临时对话",
     hoverCardBranchAria: "分支 {{name}}",
+  },
+  workspaceBar: {
+    noBench: "未选择 bench",
+    chooseBench: "选择 bench",
+    running: "运行中",
+    stopped: "已停止",
   },
   sessionCollaboration: {
     statusIdle: "空闲",
@@ -542,6 +551,7 @@ export const zhCN = {
     modelBadgeReasoning: "推理",
     modelBadgeVision: "视觉",
     permissionMode: "权限模式",
+    permissionsLabel: "权限：{{mode}}",
     reasoningLevel: "推理等级",
     reasoningSupportedBy: "当前模型 {{model}} 支持的推理等级",
     permissionInherit: "跟随默认",
@@ -2085,8 +2095,11 @@ sklm: {
   permission: {
     title: "需要权限",
     allowPrompt: "允许 <highlight>{{tool}}</highlight> 运行吗？",
-    allowOnce: "允许一次",
-    allowSession: "允许本次对话",
+    allowOnce: "允许本次",
+    allowSession: "允许本次任务",
+    allowOnceHint: "立即执行，下次将再次询问。",
+    allowSessionHint: "本工具将在当前任务剩余时间内无需确认直接运行。",
+    denyHint: "就此停止，将告知智能体已被拒绝。",
     deny: "拒绝",
     risk: {
       high: "高风险",
@@ -2156,6 +2169,7 @@ sklm: {
       subagent: "子智能体",
     "session-tree": "会话历史",
       tools: "工具",
+      activity: "活动",
     },
     pluginView: {
       failed: "无法加载该视图。请重新加载插件后重试。",
@@ -2204,6 +2218,15 @@ sklm: {
       reveal: "在 Finder 中显示",
       binary: "二进制文件，无法预览",
       tooLarge: "文件过大，无法预览",
+    },
+    activity: {
+      decisionNeeded: "需要您决策",
+      reviewRequest: "审阅请求",
+      todo: "待办 {{done}} / {{total}}",
+      toolsRun: "已运行工具",
+      changes: "变更",
+      openReview: "打开审阅",
+      empty: "暂无运行记录",
     },
   },
   palette: {

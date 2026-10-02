@@ -158,6 +158,9 @@ export const en = {
     sessionSelected: "Selected",
     sessionCompleted: "Done",
     sessionFailed: "Needs attention",
+    sessionPermission: "Permission required",
+    sessionRunningLabel: "Running",
+    sessionPermissionLabel: "Needs approval",
     sortSessions: "Sort projects and chats",
     sortRecent: "Recently updated",
     sortOldest: "Oldest first",
@@ -192,6 +195,12 @@ export const en = {
     hoverCardUpdatedAt: "Updated {{when}}",
     hoverCardTemporarySpace: "Temporary",
     hoverCardBranchAria: "Branch {{name}}",
+  },
+  workspaceBar: {
+    noBench: "No bench selected",
+    chooseBench: "Choose bench",
+    running: "running",
+    stopped: "stopped",
   },
   sessionCollaboration: {
     statusIdle: "Idle",
@@ -545,6 +554,7 @@ export const en = {
     modelBadgeReasoning: "reasoning",
     modelBadgeVision: "vision",
     permissionMode: "Permission mode",
+    permissionsLabel: "Permissions: {{mode}}",
     reasoningLevel: "Reasoning level",
     reasoningSupportedBy: "Current model {{model}} supports these reasoning levels",
     permissionInherit: "Default",
@@ -2117,8 +2127,11 @@ sklm: {
   permission: {
     title: "Permission needed",
     allowPrompt: "Allow <highlight>{{tool}}</highlight> to run?",
-    allowOnce: "Allow once",
-    allowSession: "Allow for this chat",
+    allowOnce: "Allow this once",
+    allowSession: "Allow for this session",
+    allowOnceHint: "Runs now. You will be asked again next time.",
+    allowSessionHint: "This tool runs without asking for the rest of this task.",
+    denyHint: "Stops here. The agent is told it was refused.",
     deny: "Deny",
     risk: {
       high: "High risk",
@@ -2188,6 +2201,7 @@ sklm: {
       subagent: "Subagent",
       "session-tree": "Session history",
       tools: "Tools",
+      activity: "Activity",
     },
     pluginView: {
       failed: "This view could not be loaded. Reload the plugin and try again.",
@@ -2236,6 +2250,15 @@ sklm: {
       reveal: "Reveal in Finder",
       binary: "Binary file — preview unavailable",
       tooLarge: "File is too large to preview",
+    },
+    activity: {
+      decisionNeeded: "Needs your decision",
+      reviewRequest: "Review request",
+      todo: "To-do {{done}} of {{total}}",
+      toolsRun: "Tools run",
+      changes: "Changes",
+      openReview: "Open Review",
+      empty: "Nothing ran yet",
     },
   },
   palette: {

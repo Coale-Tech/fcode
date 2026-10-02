@@ -423,6 +423,18 @@
   color: var(--ds-accent);
 }
 
+/* Short visible label next to the status dot for running/permission sessions. */
+.thread-item-status-label {
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  color: var(--ds-text-secondary);
+  pointer-events: none;
+}
+
+.thread-item-status-label.permission {
+  color: var(--ds-warning);
+}
+
 .sidebar-project-pin {
   flex: 0 0 auto;
   color: var(--ds-accent);
@@ -444,9 +456,9 @@
   justify-content: center;
   border-radius: var(--radius-2xs);
   color: var(--ds-text-muted);
-  opacity: 0;
-  /* The hidden control is not a pointer target until its row reveals it. */
-  pointer-events: none;
+  /* Dimmed ink-5 at rest; revealed fully on hover/focus/open. */
+  opacity: 0.4;
+  pointer-events: auto;
   transition:
     opacity var(--motion-duration-fast) var(--motion-ease-out),
     background var(--motion-duration-fast) var(--motion-ease-out),
@@ -1066,13 +1078,12 @@
   color: var(--ds-text-primary);
 }
 
-/* A blurred window keeps :hover latched on the row or header under the cursor,
- * so the hover reveals collapse back to their resting, pointer-inert state. */
+/* A blurred window collapses hover-reveal to the resting dim state. */
 .sidebar[data-window-blur="true"] .thread-item:hover .thread-item-more:not([aria-expanded="true"]),
 .sidebar[data-window-blur="true"] .sidebar-session-group-header:hover .thread-item-more:not([aria-expanded="true"]),
 .sidebar[data-window-blur="true"] .sidebar-session-group-header:hover .sidebar-session-group-add {
-  opacity: 0;
-  pointer-events: none;
+  opacity: 0.4;
+  pointer-events: auto;
 }
 
 /* An open menu trigger stays visible; its wrapper is inert while blurred. */

@@ -16,6 +16,7 @@ import {
   workPanelTabReorderShouldArm,
 } from "../../lib/work-panel-tab-reorder";
 import {
+  ACTIVITY_TAB,
   FILE_MANAGER_PLUGIN_TAB,
   hasPluginView,
   isKnownWorkPanelTab,
@@ -35,6 +36,7 @@ import { cx } from "../ui";
 import { TooltipButton } from "../ui";
 import type { IconProps } from "../icons";
 import {
+  IconActivity,
   IconBot,
   IconBranch,
   IconClose,
@@ -47,6 +49,7 @@ import {
   IconWrench,
 } from "../icons";
 import { ReviewTab } from "./ReviewTab";
+import { OmpActivityTab } from "../../features/work-panel/OmpActivityTab";
 import { FilesTab } from "./FilesTab";
 import { PluginViewTab } from "./PluginViewTab";
 import { SubagentTranscriptTab } from "./SubagentTranscriptTab";
@@ -71,6 +74,7 @@ const TAB_ICONS = {
   subagent: IconBot,
   "session-tree": IconBranch,
   tools: IconWrench,
+  activity: IconActivity,
 } as const;
 
 type WorkPanelResizeState = {
@@ -143,6 +147,12 @@ function workPanelTools(
       )
     : allViews;
   return [
+    {
+      id: "activity",
+      tab: ACTIVITY_TAB,
+      label: t("panel.tabs.activity"),
+      icon: IconActivity,
+    },
     {
       id: "review",
       tab: toolWorkPanelTab("review"),
@@ -933,6 +943,16 @@ export function WorkPanel({
           </div>
         </header>
         <div className="work-panel-body">
+          {activeTab?.kind === "activity" && (
+            <div
+              id={`work-panel-surface-${activeTab.id}`}
+              className="work-panel-tabpane"
+              role="tabpanel"
+              aria-labelledby={`work-panel-tab-${activeTab.id}`}
+            >
+              <OmpActivityTab />
+            </div>
+          )}
           {activeTab?.kind === "subagent" && (
             <div
               key={activeTab.id}

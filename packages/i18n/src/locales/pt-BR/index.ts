@@ -150,6 +150,9 @@ export const ptBR = {
     sessionSelected: "Selecionada",
     sessionCompleted: "Concluída",
     sessionFailed: "Requer atenção",
+    sessionPermission: "Permissão necessária",
+    sessionRunningLabel: "Em execução",
+    sessionPermissionLabel: "Aguardando aprovação",
     sortSessions: "Ordenar projetos e conversas",
     sortRecent: "Atualizados recentemente",
     sortOldest: "Mais antigos primeiro",
@@ -184,6 +187,12 @@ export const ptBR = {
     hoverCardUpdatedAt: "Atualizado {{when}}",
     hoverCardTemporarySpace: "Temporário",
     hoverCardBranchAria: "Ramificação {{name}}"
+  },
+  workspaceBar: {
+    noBench: "Nenhum bench selecionado",
+    chooseBench: "Escolher bench",
+    running: "em execução",
+    stopped: "parado",
   },
   sessionCollaboration: {
     statusIdle: "Ocioso",
@@ -536,6 +545,7 @@ export const ptBR = {
     modelBadgeReasoning: "Raciocínio",
     modelBadgeVision: "Visão",
     permissionMode: "Modo de permissão",
+    permissionsLabel: "Permissões: {{mode}}",
     reasoningLevel: "Nível de raciocínio",
     reasoningSupportedBy: "O modelo atual {{model}} suporta estes níveis de raciocínio",
     permissionInherit: "Herdar",
@@ -2054,8 +2064,11 @@ export const ptBR = {
   permission: {
     title: "Permissão necessária",
     allowPrompt: "Permitir a execução de <highlight>{{tool}}</highlight>?",
-    allowOnce: "Permitir uma vez",
-    allowSession: "Permitir nesta conversa",
+    allowOnce: "Permitir esta vez",
+    allowSession: "Permitir para esta sessão",
+    allowOnceHint: "Executa agora. Você será perguntado novamente na próxima vez.",
+    allowSessionHint: "Esta ferramenta é executada sem perguntar pelo restante desta tarefa.",
+    denyHint: "Para aqui. O agente é informado de que foi recusado.",
     deny: "Negar",
     risk: {
       high: "Alto risco",
@@ -2121,6 +2134,7 @@ export const ptBR = {
       subagent: "Subagente",
     "session-tree": "Histórico de sessão",
       tools: "Ferramentas",
+      activity: "Atividade",
     },
     pluginView: {
       failed: "Não foi possível carregar esta visualização. Recarregue o plugin e tente novamente.",
@@ -2169,6 +2183,15 @@ export const ptBR = {
       reveal: "Revelar no Finder",
       binary: "Arquivo binário — pré-visualização indisponível",
       tooLarge: "O arquivo é grande demais para pré-visualização"
+    },
+    activity: {
+      decisionNeeded: "Precisa da sua decisão",
+      reviewRequest: "Solicitação de revisão",
+      todo: "Tarefa {{done}} de {{total}}",
+      toolsRun: "Ferramentas executadas",
+      changes: "Alterações",
+      openReview: "Abrir revisão",
+      empty: "Nada foi executado ainda",
     }
   },
   palette: {

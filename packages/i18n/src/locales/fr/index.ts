@@ -151,6 +151,9 @@ export const fr = {
     "sessionSelected": "Sélectionné",
     "sessionCompleted": "Terminé",
     "sessionFailed": "Nécessite une attention particulière",
+    "sessionPermission": "Autorisation requise",
+    "sessionRunningLabel": "En cours",
+    "sessionPermissionLabel": "En attente d'approbation",
     "sortSessions": "Trier les projets et les discussions",
     "sortRecent": "Récemment mis à jour",
     "sortOldest": "Le plus ancien en premier",
@@ -185,6 +188,12 @@ export const fr = {
     "hoverCardUpdatedAt": "{{when}} mis à jour",
     "hoverCardTemporarySpace": "Temporaire",
     "hoverCardBranchAria": "Branche {{name}}"
+  },
+  "workspaceBar": {
+    "noBench": "Aucun bench sélectionné",
+    "chooseBench": "Choisir un bench",
+    "running": "en cours",
+    "stopped": "arrêté"
   },
   "sessionCollaboration": {
     "statusIdle": "Inactif",
@@ -538,6 +547,7 @@ export const fr = {
     "modelBadgeReasoning": "raisonnement",
     "modelBadgeVision": "vision",
     "permissionMode": "Mode d'autorisation",
+    "permissionsLabel": "Autorisations : {{mode}}",
     "reasoningLevel": "Niveau de raisonnement",
     "reasoningSupportedBy": "Le modèle actuel {{model}} prend en charge ces niveaux de raisonnement",
     "permissionInherit": "Par défaut",
@@ -2099,8 +2109,11 @@ sklm: {
   "permission": {
     "title": "Autorisation requise",
     "allowPrompt": "Autoriser <highlight>{{tool}}</highlight> à s'exécuter ?",
-    "allowOnce": "Autoriser une fois",
-    "allowSession": "Autoriser cette discussion",
+    "allowOnce": "Autoriser cette fois",
+    "allowSession": "Autoriser pour cette session",
+    "allowOnceHint": "S'exécute maintenant. Il vous sera demandé à nouveau la prochaine fois.",
+    "allowSessionHint": "Cet outil s'exécute sans demander pour le reste de cette tâche.",
+    "denyHint": "S'arrête ici. L'agent est informé du refus.",
     "deny": "Refuser",
     "risk": {
       "high": "Risque élevé",
@@ -2169,7 +2182,8 @@ sklm: {
       "plugin": "Vue du plugin",
       "subagent": "Sous-agent",
     "session-tree": "Historique de session",
-      "tools": "Outils"
+      "tools": "Outils",
+      "activity": "Activité"
     },
     "pluginView": {
       "failed": "Cette vue n'a pas pu être chargée. Rechargez le plugin et réessayez.",
@@ -2218,6 +2232,15 @@ sklm: {
       "reveal": "Révéler dans le Finder",
       "binary": "Fichier binaire — aperçu indisponible",
       "tooLarge": "Le fichier est trop volumineux pour être prévisualisé"
+    },
+    "activity": {
+      "decisionNeeded": "Votre décision est requise",
+      "reviewRequest": "Demande de révision",
+      "todo": "Tâche {{done}} sur {{total}}",
+      "toolsRun": "Outils exécutés",
+      "changes": "Modifications",
+      "openReview": "Ouvrir la révision",
+      "empty": "Rien n'a encore été exécuté"
     }
   },
   "palette": {

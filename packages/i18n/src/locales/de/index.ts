@@ -151,6 +151,9 @@ export const de = {
     "sessionSelected": "Ausgewählt",
     "sessionCompleted": "Fertig",
     "sessionFailed": "Benötigt Aufmerksamkeit",
+    "sessionPermission": "Berechtigung erforderlich",
+    "sessionRunningLabel": "Läuft",
+    "sessionPermissionLabel": "Wartet auf Genehmigung",
     "sortSessions": "Projekte und Chats sortieren",
     "sortRecent": "Kürzlich aktualisiert",
     "sortOldest": "Älteste zuerst",
@@ -185,6 +188,12 @@ export const de = {
     "hoverCardUpdatedAt": "Aktualisiert {{when}}",
     "hoverCardTemporarySpace": "Temporär",
     "hoverCardBranchAria": "Zweig {{name}}"
+  },
+  "workspaceBar": {
+    "noBench": "Keine Bench ausgewählt",
+    "chooseBench": "Bench auswählen",
+    "running": "läuft",
+    "stopped": "gestoppt"
   },
   "sessionCollaboration": {
     "statusIdle": "Inaktiv",
@@ -538,6 +547,7 @@ export const de = {
     "modelBadgeReasoning": "Begründung",
     "modelBadgeVision": "Vision",
     "permissionMode": "Berechtigungsmodus",
+    "permissionsLabel": "Berechtigungen: {{mode}}",
     "reasoningLevel": "Argumentationsebene",
     "reasoningSupportedBy": "Aktuelles Modell {{model}} unterstützt diese Argumentationsebenen",
     "permissionInherit": "Standard",
@@ -2099,8 +2109,11 @@ sklm: {
   "permission": {
     "title": "Berechtigung erforderlich",
     "allowPrompt": "Ausführung von <highlight>{{tool}}</highlight> zulassen?",
-    "allowOnce": "Einmal zulassen",
-    "allowSession": "Für diesen Chat zulassen",
+    "allowOnce": "Einmalig zulassen",
+    "allowSession": "Für diese Sitzung zulassen",
+    "allowOnceHint": "Wird jetzt ausgeführt. Sie werden beim nächsten Mal erneut gefragt.",
+    "allowSessionHint": "Dieses Werkzeug wird für den Rest dieser Aufgabe ohne Rückfrage ausgeführt.",
+    "denyHint": "Bricht hier ab. Der Agent wird über die Ablehnung informiert.",
     "deny": "Ablehnen",
     "risk": {
       "high": "Hohes Risiko",
@@ -2169,7 +2182,8 @@ sklm: {
       "plugin": "Plugin-Ansicht",
       "subagent": "Subagent",
     "session-tree": "Sitzungsverlauf",
-      "tools": "Werkzeuge"
+      "tools": "Werkzeuge",
+      "activity": "Aktivität"
     },
     "pluginView": {
       "failed": "Diese Ansicht konnte nicht geladen werden. Laden Sie das Plugin neu und versuchen Sie es erneut.",
@@ -2218,6 +2232,15 @@ sklm: {
       "reveal": "Im Finder anzeigen",
       "binary": "Binärdatei – Vorschau nicht verfügbar",
       "tooLarge": "Datei ist zu groß für die Vorschau"
+    },
+    "activity": {
+      "decisionNeeded": "Ihre Entscheidung erforderlich",
+      "reviewRequest": "Überprüfungsanfrage",
+      "todo": "Aufgabe {{done}} von {{total}}",
+      "toolsRun": "Ausgeführte Werkzeuge",
+      "changes": "Änderungen",
+      "openReview": "Überprüfung öffnen",
+      "empty": "Noch nichts ausgeführt"
     }
   },
   "palette": {
