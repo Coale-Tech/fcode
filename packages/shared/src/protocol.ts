@@ -507,6 +507,10 @@ export const IPC = {
     kanbanSetPaused: "pi-desktop/kanban/setPaused",
     /** Kanban board: trigger an immediate dispatcher tick. */
     kanbanNudge: "pi-desktop/kanban/nudge",
+    /** Read the cross-project user-profile text from ~/.omp/agent/USER.md. */
+    ompUserProfileGet: "pi-desktop/omp/user-profile/get",
+    /** Write the cross-project user-profile text to ~/.omp/agent/USER.md (cap 1024 chars). */
+    ompUserProfileSet: "pi-desktop/omp/user-profile/set",
   },
   event: {
     pluginChanged: "pi-desktop/event/pluginChanged",

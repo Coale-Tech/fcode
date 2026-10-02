@@ -518,3 +518,14 @@ export interface OmpBashResult {
   exitCode: number | undefined;
   cancelled: boolean;
 }
+
+/** Result of `ompUserProfileGet` — raw text from ~/.omp/agent/USER.md (empty when absent). */
+export interface OmpUserProfileGetResult {
+  text: string;
+}
+
+/** Result of `ompUserProfileSet` — ok on success, error message on failure. */
+export interface OmpUserProfileSetResult {
+  ok: boolean;
+  error?: string;
+}

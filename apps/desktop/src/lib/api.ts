@@ -162,6 +162,8 @@ import type {
   OmpExtensionListResult,
   OmpExtensionMutateResult,
   OmpBashResult,
+  OmpUserProfileGetResult,
+  OmpUserProfileSetResult,
   KanbanBoard,
   KanbanSettings,
   KanbanRun,
@@ -1874,4 +1876,10 @@ export const api = {
   /** Kanban: trigger an immediate dispatcher tick. */
   kanbanNudge: () =>
     invoke<void>(IPC.invoke.kanbanNudge),
+  /** Read cross-project user profile from ~/.omp/agent/USER.md. */
+  ompUserProfileGet: () =>
+    invoke<OmpUserProfileGetResult>(IPC.invoke.ompUserProfileGet),
+  /** Write cross-project user profile to ~/.omp/agent/USER.md (server caps at 1024 chars). */
+  ompUserProfileSet: (text: string) =>
+    invoke<OmpUserProfileSetResult>(IPC.invoke.ompUserProfileSet, { text }),
 };

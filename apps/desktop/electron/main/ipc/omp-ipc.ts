@@ -37,9 +37,11 @@ import type {
   OmpWorktreeClearResult,
   OmpWorktreePruneResult,
   OmpWorktreeAddResult,
+  OmpUserProfileGetResult,
+  OmpUserProfileSetResult,
 } from "@pi-desktop/shared";
 import { existsSync } from "node:fs";
-import { readFile, readdir, rm, stat } from "node:fs/promises";
+import { readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { execFile } from "node:child_process";
@@ -160,6 +162,50 @@ function unavailable(): never {
   throw Object.assign(new Error("omp sidecar unavailable"), {
     errorCode: ErrorCodes.AGENT_UNAVAILABLE,
   });
+}
+
+const USER_PROFILE_MAX_CHARS = 1024;
+const USER_PROFILE_FILE = "USER.md";
+
+/**
+ * Read the user profile from `<agentDir>/USER.md`.
+ * Returns empty string when the file is absent or unreadable.
+ * Exported for unit testing.
+ */
+export async function readUserProfile(
+  agentDir: string,
+  read: (path: string) => Promise<string> = (p) => readFile(p, "utf8"),
+): Promise<string> {
+  try {
+    return (await read(join(agentDir, USER_PROFILE_FILE))).trim();
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Write the user profile to `<agentDir>/USER.md` atomically (temp+rename).
+ * Content is truncated to USER_PROFILE_MAX_CHARS before writing.
+ * Returns `{ ok: true }` on success; `{ ok: false, error }` otherwise.
+ * Exported for unit testing (injected write/rename for atomicity testing).
+ */
+export async function writeUserProfile(
+  agentDir: string,
+  text: string,
+  write: (path: string, data: string) => Promise<void> = (p, d) => writeFile(p, d, "utf8"),
+  ren:   (src: string, dest: string) => Promise<void>  = rename,
+): Promise<OmpUserProfileSetResult> {
+  const raw = text.slice(0, USER_PROFILE_MAX_CHARS);
+  const dest = join(agentDir, USER_PROFILE_FILE);
+  const tmp  = `${dest}.tmp.${Date.now()}`;
+  try {
+    await write(tmp, raw);
+    await ren(tmp, dest);
+    return { ok: true };
+  } catch (e) {
+    rm(tmp, { force: true }).catch(() => { /* ignore */ });
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
 }
 
 /** Register all omp IPC channels. */
@@ -618,5 +664,21 @@ export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpc
     const events = Array.isArray(input?.events) ? (input.events as string[]) : null;
     const sidecar = getSidecar() ?? unavailable();
     return sidecar.call<void>("omp.set_event_filter", { events });
+  });
+
+  // ── omp.user-profile.get ──────────────────────────────────────────────────
+  // Reads ~/.omp/agent/USER.md; returns empty string when absent.
+  handle(IPC.invoke.ompUserProfileGet, async (): Promise<OmpUserProfileGetResult> => {
+    const text = await readUserProfile(join(homedir(), ".omp", "agent"));
+    return { text };
+  });
+
+  // ── omp.user-profile.set ──────────────────────────────────────────────────
+  // Writes ~/.omp/agent/USER.md atomically (temp+rename); caps at 1024 chars.
+  handle(IPC.invoke.ompUserProfileSet, async (
+    input: { text?: unknown } = {},
+  ): Promise<OmpUserProfileSetResult> => {
+    if (typeof input?.text !== "string") invalid("text (string) required");
+    return writeUserProfile(join(homedir(), ".omp", "agent"), input.text as string);
   });
 }
