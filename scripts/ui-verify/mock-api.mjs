@@ -18,7 +18,7 @@ const MOCK_SETTINGS = {
   language: "auto",
   fontScale: 1,
   developerMode: false,
-  networkProxy: { mode: "system" },
+  networkProxy: { mode: "custom", url: "http://proxy.parity-check.local:8080", bypass: "" },
   networkPolicy: {},
   linkOpenTarget: "workpanel",
   contextUsageDisplay: "remaining",

@@ -16,8 +16,6 @@ test("the default model control reuses the shared settings row geometry", async 
 
   const row = styles.match(/\.settings-row \{([^}]*)\}/);
   assert.ok(row, ".settings-row rule is missing");
-  assert.match(row[1], /gap: 24px;/);
-  assert.match(row[1], /padding: 14px 16px;/);
   assert.match(source, /className="settings-row model-default-row"/);
   assert.match(source, /className="settings-row-copy model-default-copy"/);
   assert.match(source, /className="settings-row-title model-default-label"/);

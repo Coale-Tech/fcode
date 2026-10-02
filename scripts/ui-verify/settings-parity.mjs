@@ -369,15 +369,21 @@ async function runRendererMode() {
     }
 
     // Computed-style dump for element map
+    // Track last tab to avoid redundant navigations
+    let currentTab = "general";
     for (const entry of SETTINGS_ELEMENT_MAP) {
       if (entry.exception) continue;
 
-      // Navigate to a tab where the element should be visible
-      await page.evaluate(() => {
-        window.__PI_DESKTOP__?.setPage("settings");
-        window.__PI_DESKTOP__?.setSettingsTab("general");
-      });
-      await page.waitForTimeout(300);
+      // Navigate to the tab where this element is expected to live
+      const targetTab = entry.tab ?? "general";
+      if (targetTab !== currentTab) {
+        await page.evaluate((t) => {
+          window.__PI_DESKTOP__?.setPage("settings");
+          window.__PI_DESKTOP__?.setSettingsTab(t);
+        }, targetTab);
+        await page.waitForTimeout(400);
+        currentTab = targetTab;
+      }
 
       const actual = await page.evaluate(
         ({ selector, properties }) => {
@@ -407,19 +413,39 @@ async function runRendererMode() {
 
       for (const [prop, expectedRaw] of Object.entries(entry.expected)) {
         const actRaw = actual[prop] ?? "(not set)";
-        const expNum = parseFloat(expectedRaw);
-        const actNum = parseFloat(actRaw);
-        const numericMatch = !isNaN(expNum) && !isNaN(actNum) && Math.abs(expNum - actNum) < 0.5;
-        const exactMatch = actRaw === expectedRaw;
 
-        if (!numericMatch && !exactMatch) {
+        /** Normalize a CSS time value to ms (browsers return s for 300ms+). */
+        const toMs = (v) => {
+          const m = v.trim().match(/^([\d.]+)s$/);
+          return m ? String(Math.round(parseFloat(m[1]) * 1000)) + "ms" : v.trim();
+        };
+
+        // Normalize time units on both sides so "300ms" == "0.3s"
+        const expN = prop.includes("duration") ? toMs(expectedRaw) : expectedRaw;
+        // Actual may be comma-separated when multiple transitions are declared.
+        const actParts = actRaw.split(/,\s*/);
+        const actN = prop.includes("duration")
+          ? actParts.map(toMs).join(", ")
+          : actRaw;
+
+        // For transition-duration or transition-timing-function, the browser
+        // repeats the value once per transition; accept if every part matches.
+        const multiMatch = (prop === "transition-timing-function" || prop === "transition-duration") &&
+          actParts.map((p) => prop.includes("duration") ? toMs(p) : p.trim()).every((p) => p === expN);
+
+        const expNum = parseFloat(expN);
+        const actNum = parseFloat(actN);
+        const numericMatch = !isNaN(expNum) && !isNaN(actNum) && Math.abs(expNum - actNum) < 0.5;
+        const exactMatch = actN === expN;
+
+        if (!multiMatch && !numericMatch && !exactMatch) {
           mismatches.push({
             id: entry.id,
             label: `${entry.label} [${theme}]`,
             selector: entry.selector,
             property: prop,
-            expected: expectedRaw,
-            actual: actRaw,
+            expected: expN,
+            actual: actN,
             mode: "renderer",
             theme,
           });

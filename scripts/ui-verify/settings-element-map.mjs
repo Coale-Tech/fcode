@@ -200,6 +200,8 @@ export const SETTINGS_ELEMENT_MAP = [
   {
     id: "row-detail",
     label: "Row detail (.settings-row-detail)",
+    // SettingsRow detail prop renders on AI tab (prompt-enhancement-card.tsx:52)
+    tab: "ai",
     selector: ".settings-row-detail",
     properties: ["font-size"],
     expected: {
@@ -212,12 +214,14 @@ export const SETTINGS_ELEMENT_MAP = [
   {
     id: "toggle-track",
     label: "Toggle track (.settings-toggle)",
+    // SettingsToggle appears on General tab (enter-to-send, close-behavior)
+    tab: "general",
     selector: ".settings-toggle",
     properties: ["width", "height", "transition-duration"],
     expected: {
       width: "32px",           // Raven md: h-5 w-8 = 20×32
       height: "20px",
-      "transition-duration": "300ms",  // FD4
+      "transition-duration": "300ms",  // FD4 (browser may report 0.3s — normalized)
     },
     exception: null,
   },
@@ -226,6 +230,7 @@ export const SETTINGS_ELEMENT_MAP = [
   {
     id: "toggle-thumb",
     label: "Toggle thumb (.settings-toggle-thumb)",
+    tab: "general",
     selector: ".settings-toggle-thumb",
     properties: ["width", "height"],
     expected: {
@@ -239,6 +244,8 @@ export const SETTINGS_ELEMENT_MAP = [
   {
     id: "btn-ctrl",
     label: "Button in settings (.settings-shell .btn)",
+    // AgentCapabilityLayout renders .btn on the agent tab
+    tab: "agent",
     selector: ".settings-shell .btn",
     properties: ["border-top-left-radius"],
     expected: {
@@ -251,6 +258,9 @@ export const SETTINGS_ELEMENT_MAP = [
   {
     id: "field-input",
     label: "Field input in settings (.settings-shell .field-input)",
+    // NetworkProxySection on General tab shows .field-input when mode=custom.
+    // mock-api.mjs sets networkProxy.mode="custom" for this check.
+    tab: "general",
     selector: ".settings-shell .field-input",
     properties: ["border-top-left-radius"],
     expected: {
@@ -263,6 +273,8 @@ export const SETTINGS_ELEMENT_MAP = [
   {
     id: "menu-select-trigger",
     label: "Menu select trigger (.settings-menu-select-trigger)",
+    // SettingsMenuSelect appears on AI tab (permission mode, tool approval)
+    tab: "ai",
     selector: ".settings-menu-select-trigger",
     properties: ["border-top-left-radius"],
     expected: {
