@@ -928,11 +928,6 @@ export class OmpBridge {
         this.ompCallAndForward(id, { type: "get_entries", ...(p.since ? { since: p.since } : {}) });
         break;
 
-      case "omp.session.tree":
-        this.ompCallAndForward(id, { type: "get_tree" });
-        break;
-
-
       case "omp.session.branchMessages":
         this.ompCallAndForward(id, { type: "get_branch_messages" });
         break;

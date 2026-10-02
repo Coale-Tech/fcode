@@ -267,8 +267,8 @@ Row counts: **surfaced 107** · **partial 31** · **missing 86** · **total 224*
 | `memory.backend` selector | `omp/packages/coding-agent/src/memory-backend/settings.ts:12` | `MemoryTab.tsx:32` backend draft; `api.ts` `memorySetConfig`/`memoryGetConfig`; `bridge.ts:183–190` | surfaced | Off / Mnemopi / Hindsight selector with live health card (polled every 15 s) |
 | Hindsight settings (URL/bank/token/missions) | `omp/packages/coding-agent/src/hindsight/settings.ts` | `MemoryTab.tsx:56–66`; `bridge.ts:144–153` hindsightLines; `api.ts` `hindsightListMentalModels/RefreshMentalModel/SetBankMission` | surfaced | URL, bank, write-only token, bank mission, retain mission; mental-model list with per-page refresh; Frappe bench bootstrap action |
 | Local Hindsight supervisor | `omp internal` | `apps/desktop/electron/main/hindsight-local/supervisor.ts`; `MemoryTab.tsx` Start/Stop | surfaced | Detects `hindsight-api`/`uvx`/`docker` on PATH; manages supervised local server; auto-fills URL field |
-| Hindsight behavioral settings (`autoRecall` / `autoRetain` / `retainMode` / `mentalModelsEnabled` / `mentalModelAutoSeed`) | `hindsight/settings.ts` | `bridge.ts:150–154` reads from OmpSettingsValues | partial | bridge.ts reads these keys; absent from `OmpSettingsValues` type (`shared/src/types/omp.ts`) — type gap; no UI can save them |
-| Mnemopi settings (22 keys: `mnemopi.dbPath`, `mnemopi.bank`, `mnemopi.autoRecall`, `mnemopi.llmMode`, etc.) | `omp/packages/coding-agent/src/mnemopi/settings.ts` | backend selectable; `llmMode` hardcoded `session` at `bridge.ts:189` | partial | Backend selectable in MemoryTab; individual 22 mnemopi keys absent from `OmpSettingsValues` type; no per-key UI |
+| Hindsight behavioral settings (`autoRecall` / `autoRetain` / `retainMode` / `mentalModelsEnabled` / `mentalModelAutoSeed`) | `hindsight/settings.ts` | `bridge.ts:150–154` reads from `OmpSettingsValues`; keys added to type at `shared/src/types/omp.ts:276–281` | surfaced | 5 keys added to `OmpSettingsValues` (feat/018-d); bridge reads them via overlay; no per-key UI but config is now live |
+| Mnemopi settings (22 keys: `mnemopi.dbPath`, `mnemopi.bank`, `mnemopi.autoRecall`, `mnemopi.llmMode`, etc.) | `omp/packages/coding-agent/src/mnemopi/settings.ts` | 22 keys added to `OmpSettingsValues` type at `shared/src/types/omp.ts:282–304` (feat/018-d); `llmMode` forced to `session` by bridge overlay | surfaced | All 22 keys now in type; bridge reads them; `llmMode` intentionally locked to `session` by overlay; no per-key settings UI |
 | Local memory pipeline (`memories/`) | `omp/packages/coding-agent/src/memories/` | none | missing | No UI, no config |
 | Sharpshooter | `omp/packages/coding-agent/src/sharpshooter/` | none | missing | No UI or config |
 
@@ -462,9 +462,9 @@ Row counts: **surfaced 107** · **partial 31** · **missing 86** · **total 224*
 
 ## Top Gaps (ranked by user value for Frappe developers)
 
-1. **Mnemopi per-key settings** — `mnemopi.*` keys (22) absent from `OmpSettingsValues` type; `llmMode` hardcoded `session` at `bridge.ts:189`. Bridge reads them from the type, so config is dead. Add the 22 keys to `OmpSettingsValues` and expose a settings section.
+1. ✅ **Mnemopi per-key settings** — surfaced (feat/018-d): 22 `mnemopi.*` keys added to `OmpSettingsValues` type (`shared/src/types/omp.ts:282–304`); `llmMode` locked to `session` by bridge overlay intentionally; bridge now reads all 22 keys. No per-key UI yet.
 
-2. **`hindsight.autoRecall/autoRetain/retainMode/mentalModelsEnabled/mentalModelAutoSeed`** — `bridge.ts:150–154` reads these from `OmpSettingsValues` but they are absent from the type (`shared/src/types/omp.ts`). Type gap = dead config paths. Add the 5 keys to `OmpSettingsValues`.
+2. ✅ **`hindsight.autoRecall/autoRetain/retainMode/mentalModelsEnabled/mentalModelAutoSeed`** — surfaced (feat/018-d): 5 keys added to `OmpSettingsValues` type (`shared/src/types/omp.ts:276–281`); bridge reads them via overlay. Type gap closed.
 
 3. **`set_fast_mode` / `set_auto_retry` / `abort_retry`** — ✅ surfaced (PR fix/audit-bridge-rpc): toggles added to `ContextUsageInspector`; abort-retry in transcript menu.
 

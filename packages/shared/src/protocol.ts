@@ -392,6 +392,12 @@ export const IPC = {
     ompHistoricalStats: "pi-desktop/omp/stats/historical",
     /** List agent-managed git worktrees under ~/.omp/wt/. */
     ompWorktreeList: "pi-desktop/omp/worktrees/list",
+    /** Clear a specific agent worktree; refuses dirty tree unless force=true. */
+    ompWorktreeClear: "pi-desktop/omp/worktrees/clear",
+    /** Prune all orphaned worktrees under ~/.omp/wt/; refuses dirty ones unless force=true. */
+    ompWorktreePrune: "pi-desktop/omp/worktrees/prune",
+    /** Add a new git worktree under ~/.omp/wt/. */
+    ompWorktreeAdd: "pi-desktop/omp/worktrees/add",
     /** Reveal an omp skill store directory in the system file manager. */
     ompSkillReveal: "pi-desktop/omp/skills/reveal",
     /** Queue mode controls (session-scoped RPC; mirrors set_steering/follow_up/interrupt_mode). */
@@ -461,8 +467,6 @@ export const IPC = {
     ompSessionSetTodos: "pi-desktop/omp/session/setTodos",
     /** Get the flat history entries for the current omp session. */
     ompSessionEntries: "pi-desktop/omp/session/entries",
-    /** Get the session tree for the current omp session. */
-    ompSessionTree: "pi-desktop/omp/session/tree",
     /** Get preview messages for the current branch. */
     ompSessionBranchMessages: "pi-desktop/omp/session/branchMessages",
     /** Trigger /share slash command and return the snapshot URL. */

@@ -25,7 +25,6 @@ import type {
   OmpSessionHandoffResult,
   OmpSessionSetTodosResult,
   OmpSessionEntriesResult,
-  OmpSessionTreeResult,
   OmpSessionBranchMessagesResult,
   OmpTodoPhase,
   OmpSessionStatsResult,
@@ -35,9 +34,12 @@ import type {
   OmpSubagentMessagesResult,
   OmpThinkingLevelsResult,
   OmpWorktreeListResult,
+  OmpWorktreeClearResult,
+  OmpWorktreePruneResult,
+  OmpWorktreeAddResult,
 } from "@pi-desktop/shared";
 import { existsSync } from "node:fs";
-import { readFile, readdir, stat } from "node:fs/promises";
+import { readFile, readdir, rm, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { execFile } from "node:child_process";
@@ -117,6 +119,28 @@ async function classifyWorktreeDir(
     if (s?.isDirectory()) return { path: dir, kind: "task-isolation" };
   }
   return null;
+}
+
+/**
+ * Returns true when the git worktree at `dir` has uncommitted changes.
+ * Returns false on any error (not a git repo, git not available, etc.).
+ * Exported for unit testing.
+ */
+export async function checkWorktreeDirty(
+  dir: string,
+  runGitStatus = async (d: string) => {
+    const { stdout } = await execFileP("git", ["-C", d, "status", "--porcelain"], {
+      timeout: 10_000,
+    });
+    return stdout;
+  },
+): Promise<boolean> {
+  try {
+    const out = await runGitStatus(dir);
+    return out.trim().length > 0;
+  } catch {
+    return false;
+  }
 }
 
 export type OmpIpcDependencies = {
@@ -291,13 +315,6 @@ export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpc
     return sidecar.call<OmpSessionEntriesResult>("omp.session.entries", params);
   });
 
-  // ── omp.session.tree ───────────────────────────────────────────────────────
-  handle(IPC.invoke.ompSessionTree, async () => {
-    const sidecar = getSidecar() ?? unavailable();
-    return sidecar.call<OmpSessionTreeResult>("omp.session.tree");
-  });
-
-
   // ── omp.session.branchMessages ─────────────────────────────────────────────
   handle(IPC.invoke.ompSessionBranchMessages, async () => {
     const sidecar = getSidecar() ?? unavailable();
@@ -391,6 +408,95 @@ export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpc
     }
     return { worktrees };
   });
+
+  // ── omp.worktrees.clear ────────────────────────────────────────────────────
+  // Removes a specific worktree directory. Refuses if dirty unless force=true.
+  handle(IPC.invoke.ompWorktreeClear, async (
+    input: { path?: unknown; force?: unknown } = {},
+  ): Promise<OmpWorktreeClearResult> => {
+    const wtPath = typeof input?.path === "string" ? input.path.trim() : "";
+    const force = input?.force === true;
+    if (!wtPath) invalid("path required");
+    if (!force && (await checkWorktreeDirty(wtPath))) {
+      return { ok: false, error: "dirty" };
+    }
+    try {
+      await rm(wtPath, { recursive: true, force: true });
+      // Best-effort: prune dead entries from any parent repo.
+      try {
+        const gitFile = join(wtPath, ".git");
+        const head = await readFile(gitFile, "utf8").catch(() => "");
+        const m = /gitdir:\s*(.+)/.exec(head.trim());
+        if (m) {
+          const parentRepo = m[1].trim().replace(/\/\.git\/worktrees\/.+$/, "");
+          await execFileP("git", ["-C", parentRepo, "worktree", "prune"], {
+            timeout: 10_000,
+          }).catch(() => { /* best-effort */ });
+        }
+      } catch { /* best-effort */ }
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : String(e) };
+    }
+  });
+
+  // ── omp.worktrees.prune ────────────────────────────────────────────────────
+  // Prune all orphaned (empty / stray) worktrees under ~/.omp/wt/.
+  // Refuses dirty worktrees unless force=true.
+  handle(IPC.invoke.ompWorktreePrune, async (
+    input: { force?: unknown } = {},
+  ): Promise<OmpWorktreePruneResult> => {
+    const force = input?.force === true;
+    const wtRoot = join(homedir(), ".omp", "wt");
+    let topLevel: string[];
+    try { topLevel = await readdir(wtRoot); } catch { return { ok: true, pruned: [] }; }
+    const pruned: string[] = [];
+    const errors: string[] = [];
+    for (const name of topLevel) {
+      const dir = join(wtRoot, name);
+      const s = await stat(dir).catch(() => null);
+      if (!s?.isDirectory()) continue;
+      const entry = await classifyWorktreeDir(dir);
+      // Only prune orphaned (null classified) or empty/stray entries
+      if (entry && entry.kind !== "empty" && entry.kind !== "stray") continue;
+      if (!force && (await checkWorktreeDirty(dir))) {
+        errors.push(`dirty:${dir}`);
+        continue;
+      }
+      try {
+        await rm(dir, { recursive: true, force: true });
+        pruned.push(dir);
+      } catch (e) {
+        errors.push(e instanceof Error ? e.message : String(e));
+      }
+    }
+    if (errors.length > 0 && pruned.length === 0) {
+      return { ok: false, pruned, error: errors.join("; ") };
+    }
+    return { ok: true, pruned };
+  });
+
+  // ── omp.worktrees.add ──────────────────────────────────────────────────────
+  // Creates a new git worktree under ~/.omp/wt/ for a given repo + branch.
+  handle(IPC.invoke.ompWorktreeAdd, async (
+    input: { repoPath?: unknown; branch?: unknown } = {},
+  ): Promise<OmpWorktreeAddResult> => {
+    const repoPath = typeof input?.repoPath === "string" ? input.repoPath.trim() : "";
+    const branch   = typeof input?.branch   === "string" ? input.branch.trim()   : "";
+    if (!repoPath) invalid("repoPath required");
+    if (!branch)   invalid("branch required");
+    const wtName = `${branch.replace(/[^a-zA-Z0-9._-]/g, "-")}-${Date.now()}`;
+    const wtPath = join(homedir(), ".omp", "wt", wtName);
+    try {
+      await execFileP("git", ["-C", repoPath, "worktree", "add", wtPath, branch], {
+        timeout: 30_000,
+      });
+      return { ok: true, path: wtPath };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : String(e) };
+    }
+  });
+
 
   // ── omp.skills.reveal ──────────────────────────────────────────────────────
   // Takes @scope/name id + version and shows the omp skillshare store dir.

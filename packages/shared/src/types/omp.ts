@@ -382,22 +382,9 @@ export interface OmpSessionEntry {
   message?: { role?: string; content?: unknown };
 }
 
-/** A node in the session tree (recursive). */
-export interface OmpSessionTreeNode {
-  entry: OmpSessionEntry;
-  children: OmpSessionTreeNode[];
-  label?: string;
-}
-
 /** Result of `omp.session.entries`. */
 export interface OmpSessionEntriesResult {
   entries: OmpSessionEntry[];
-  leafId: string | null;
-}
-
-/** Result of `omp.session.tree`. */
-export interface OmpSessionTreeResult {
-  tree: OmpSessionTreeNode[];
   leafId: string | null;
 }
 
@@ -462,6 +449,31 @@ export interface OmpWorktreeEntry {
 /** Result of `ompWorktreeList`. */
 export interface OmpWorktreeListResult {
   worktrees: OmpWorktreeEntry[];
+}
+
+/** Result of `ompWorktreeClear` (clear one worktree). */
+export interface OmpWorktreeClearResult {
+  ok: boolean;
+  /** OS error message when ok is false. */
+  error?: string;
+}
+
+/** Result of `ompWorktreePrune` (prune all orphaned worktrees). */
+export interface OmpWorktreePruneResult {
+  ok: boolean;
+  /** Paths that were pruned. */
+  pruned: string[];
+  /** OS error message when ok is false. */
+  error?: string;
+}
+
+/** Result of `ompWorktreeAdd` (add a new worktree). */
+export interface OmpWorktreeAddResult {
+  ok: boolean;
+  /** Absolute path to the created worktree. */
+  path?: string;
+  /** OS error message when ok is false. */
+  error?: string;
 }
 
 /** Result of `omp.share` — snapshot URL from the `/share` slash command. */
