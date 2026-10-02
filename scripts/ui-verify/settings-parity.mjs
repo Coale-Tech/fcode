@@ -61,31 +61,127 @@ const { SETTINGS_ELEMENT_MAP, DUMP_PROPERTIES } = await import(
 // ── MODE B: CSS source analysis ─────────────────────────────────────────────
 
 /**
- * Resolve a selector's property value from the raw CSS text by finding the
- * first matching rule block and extracting the property.
- * Returns undefined when not found; handles :root custom properties.
+ * Build a flat map of all CSS custom properties from :root and @theme blocks.
+ * Follows multi-hop var() chains up to depth 8.
  */
-function cssExtract(css, selector, property) {
-  // Escape special chars in selector for use in regex
+function buildTokenMap(css) {
+  const map = {};
+  // Match :root and @theme blocks (non-nested)
+  const blockRe = /(?::root(?:\[data-[^\]]*\])?|@theme(?:\s+\w+)?)\s*\{([^}]*)\}/gs;
+  let m;
+  while ((m = blockRe.exec(css)) !== null) {
+    const propRe = /(--[\w-]+)\s*:\s*([^;]+);/g;
+    let p;
+    while ((p = propRe.exec(m[1])) !== null) {
+      // Prefer :root values over @theme (cascade order: @theme is Tailwind util, :root wins)
+      if (!(p[1] in map)) map[p[1]] = p[2].trim();
+    }
+  }
+  return map;
+}
+
+/** Resolve a CSS var() chain using the token map; returns the terminal literal or null. */
+function resolveVar(tokenMap, value, depth = 0) {
+  if (depth > 8) return null;
+  const m = value.trim().match(/^var\((--[\w-]+)(?:\s*,\s*(.+))?\)$/);
+  if (!m) return value.trim();
+  const resolved = tokenMap[m[1]] ?? m[2];
+  if (resolved === undefined) return null;
+  return resolveVar(tokenMap, resolved.trim(), depth + 1);
+}
+
+/**
+ * Extract a CSS property value from the first block matching `selector`.
+ * Handles simple shorthand expansion for padding-*, border-*-radius, transition-*.
+ */
+function cssExtract(css, selector, property, tokenMap) {
   const selectorRe = selector
     .replace(/[.[\]()*+?^${}|\\]/g, "\\$&")
     .replace(/\s+/g, "\\s+");
-  const blockRe = new RegExp(
-    selectorRe + "\\s*\\{([^}]*)\\}",
-    "s",
-  );
-  const block = blockRe.exec(css);
-  if (!block) return undefined;
-  const propRe = new RegExp(
-    property.replace(/-/g, "-") + "\\s*:\\s*([^;]+);",
-  );
-  const match = propRe.exec(block[1]);
-  return match ? match[1].trim() : undefined;
+
+  // Find a block body that contains the selector (handles multi-selector rules).
+  // Scan for the selector text in CSS, then find the nearest `{ ... }` block.
+  let body;
+  const anchored = new RegExp("(?:^|\\n)\\s*" + selectorRe + "(?:\\s*[,{\\n])", "ms");
+  const anchM = anchored.exec(css);
+  if (anchM) {
+    const after = css.slice(anchM.index + anchM[0].length);
+    const openIdx = css.indexOf("{", anchM.index);
+    const closeIdx = openIdx !== -1 ? css.indexOf("}", openIdx) : -1;
+    if (openIdx !== -1 && closeIdx !== -1) body = css.slice(openIdx + 1, closeIdx);
+  }
+  if (!body) return undefined;
+
+  /** Resolve a raw CSS value: follow var() chains, extract calc(Npx) for font-scale. */
+  const resolve = (raw) => {
+    if (!tokenMap) return raw;
+    let v = raw.trim();
+    if (v.startsWith("var(")) v = resolveVar(tokenMap, v) ?? v;
+    if (v.startsWith("calc(")) {
+      const m = v.match(/calc\((\d+(?:\.\d+)?px)/);
+      if (m) return m[1];
+    }
+    return v;
+  };
+
+  // Exact property match
+  const exactM = new RegExp(property.replace(/-/g, "\\-") + "\\s*:\\s*([^;]+);").exec(body);
+  if (exactM) return resolve(exactM[1].trim());
+
+  const sides = { top: 0, right: 1, bottom: 2, left: 3 };
+
+  // padding-* from padding shorthand (correctly handles CSS 2-value: V H)
+  if (property.startsWith("padding-")) {
+    const side = property.slice("padding-".length);
+    const idx = sides[side];
+    if (idx !== undefined) {
+      const padM = /\bpadding\s*:\s*([^;]+);/.exec(body);
+      if (padM) {
+        const val = padM[1].trim();
+        const parts = [];
+        let depth = 0, cur = "";
+        for (const ch of val) {
+          if (ch === "(") { depth++; cur += ch; }
+          else if (ch === ")") { depth--; cur += ch; }
+          else if (ch === " " && depth === 0 && cur) { parts.push(cur); cur = ""; }
+          else if (ch !== " " || depth > 0) cur += ch;
+        }
+        if (cur) parts.push(cur);
+        // 2-value: first = vertical (top/bottom), second = horizontal (right/left)
+        const v = parts.length === 1 ? parts[0] :
+                  parts.length === 2 ? (idx % 2 === 0 ? parts[0] : parts[1]) :
+                  parts.length === 3 ? (idx === 0 ? parts[0] : idx === 2 ? parts[2] : parts[1]) :
+                  parts[idx] ?? parts[0];
+        return resolve(v.trim());
+      }
+    }
+  }
+
+  // border-*-*-radius from border-radius shorthand
+  if (property.startsWith("border-") && property.endsWith("-radius")) {
+    const radM = /\bborder-radius\s*:\s*([^;]+);/.exec(body);
+    if (radM) return resolve(radM[1].trim().split(/\s+/)[0]);
+  }
+
+  // transition-duration / transition-timing-function from transition shorthand
+  if (property === "transition-duration" || property === "transition-timing-function") {
+    const tM = /\btransition\s*:\s*([^;]+);/.exec(body);
+    if (tM) {
+      const first = tM[1].split(",")[0].trim().split(/\s+/);
+      const durationRe = /^\d+(?:\.\d+)?m?s$/;
+      const easingRe = /^(ease|ease-in|ease-out|ease-in-out|linear|cubic-bezier)/;
+      if (property === "transition-duration") return first.find((t) => durationRe.test(t)) ?? null;
+      return first.find((t) => easingRe.test(t)) ?? null;
+    }
+  }
+
+  return undefined;
 }
 
-/** Resolve a CSS custom property from the :root block. */
-function resolveCssVar(css, varName) {
-  const rootBlockRe = /:root\s*\{([^}]*)\}/gs;
+/** Resolve a CSS custom property from :root and @theme blocks. */
+function resolveCssVar(css, varName, tokenMap) {
+  if (tokenMap) return tokenMap[varName] ?? undefined;
+  const rootBlockRe = /(?::root|@theme\b)\s*\{([^}]*)\}/gs;
   let m;
   while ((m = rootBlockRe.exec(css)) !== null) {
     const propRe = new RegExp(
@@ -109,6 +205,9 @@ async function runCssMode() {
     css = css.replace(`@import "./${name}";`, content);
   }
 
+  // Build a flat token map for var() resolution (handles @theme + :root)
+  const tokenMap = buildTokenMap(css);
+
   const mismatches = [];
   const ok = [];
 
@@ -119,51 +218,45 @@ async function runCssMode() {
     }
 
     for (const [prop, expectedRaw] of Object.entries(entry.expected)) {
-      // For CSS source mode, we look for the property in the matching block.
-      // We also try to resolve CSS variable references one level deep.
-      let actual = cssExtract(css, entry.selector, prop);
+      const actual = cssExtract(css, entry.selector, prop, tokenMap);
 
-      // If the actual is a var(), try to resolve one hop
-      if (actual?.startsWith("var(")) {
-        const varName = actual.match(/var\((--[^,)]+)/)?.[1];
-        if (varName) {
-          const resolved = resolveCssVar(css, varName);
-          if (resolved) actual = `${actual} → ${resolved}`;
+      if (actual === undefined || actual === null) {
+        // CSS defaults: no rule = transparent background, no rule = 0px radius
+        const defaultMatch =
+          (prop === "background-color" && (expectedRaw === "rgba(0, 0, 0, 0)" || expectedRaw === "transparent")) ||
+          (prop.endsWith("-radius") && (expectedRaw === "0px" || expectedRaw === "0"));
+        if (defaultMatch) {
+          ok.push({ id: entry.id, label: entry.label, property: prop, status: "OK (CSS default)" });
+          continue;
         }
+        mismatches.push({
+          id: entry.id, label: entry.label, selector: entry.selector,
+          property: prop, expected: expectedRaw,
+          actual: "(not found in CSS source)",
+          mode: "css",
+        });
+        continue;
       }
 
-      if (actual === undefined) {
+      // Numeric comparison (tolerates 0.5px rounding)
+      const expNum = parseFloat(expectedRaw);
+      const actNum = parseFloat(actual);
+      const numericMatch = !isNaN(expNum) && !isNaN(actNum) && Math.abs(expNum - actNum) < 0.5;
+      const exactMatch = actual === expectedRaw;
+
+      // For color/background, allow "transparent" to match rgba(0,0,0,0)
+      const transparentMatch =
+        expectedRaw === "rgba(0, 0, 0, 0)" &&
+        (actual === "transparent" || actual === "rgba(0,0,0,0)" || actual === "rgba(0, 0, 0, 0)");
+
+      if (!numericMatch && !exactMatch && !transparentMatch) {
         mismatches.push({
-          id: entry.id,
-          label: entry.label,
-          selector: entry.selector,
-          property: prop,
-          expected: expectedRaw,
-          actual: "(rule not found in CSS)",
+          id: entry.id, label: entry.label, selector: entry.selector,
+          property: prop, expected: expectedRaw, actual,
           mode: "css",
         });
       } else {
-        // Loose numeric comparison: strip px, compare as numbers when both are numeric
-        const expNum = parseFloat(expectedRaw);
-        const actRaw = actual.split("→").pop().trim();
-        const actNum = parseFloat(actRaw);
-        const numericMatch =
-          !isNaN(expNum) && !isNaN(actNum) && Math.abs(expNum - actNum) < 0.5;
-        const exactMatch = actRaw === expectedRaw || actual === expectedRaw;
-
-        if (!numericMatch && !exactMatch) {
-          mismatches.push({
-            id: entry.id,
-            label: entry.label,
-            selector: entry.selector,
-            property: prop,
-            expected: expectedRaw,
-            actual,
-            mode: "css",
-          });
-        } else {
-          ok.push({ id: entry.id, label: entry.label, property: prop, status: "OK" });
-        }
+        ok.push({ id: entry.id, label: entry.label, property: prop, status: "OK" });
       }
     }
   }

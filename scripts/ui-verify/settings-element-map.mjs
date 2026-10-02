@@ -288,3 +288,110 @@ export const DUMP_PROPERTIES = [
   "transition-duration", "transition-timing-function",
   "min-height",
 ];
+
+// ── §5.3 Raven primitives — verbatim from Raven components/ui/*.tsx ──────────
+// Extracted 2026-10-02 from:
+//   /Users/mac/ERPNext/coaletecherp/apps/raven/apps/web/src/components/ui/
+//
+// CHECKBOX (checkbox.tsx)
+// ─────────────────────────────────────────────────────────────────────────────
+// Root: `peer border data-[state=checked]:text-ink-base shrink-0 transition outline-none align-middle`
+//       `rounded-sm` (= 4px)
+//       `border-outline-gray-4 data-[state=checked]:bg-ink-gray-8 data-[state=checked]:border-ink-gray-8`
+//   Hover: `hover:border-outline-gray-7 hover:shadow-checkbox-hover hover:data-[state=checked]:bg-ink-gray-7 ...`
+//   Active: `active:border-outline-gray-6 active:data-[state=checked]:bg-ink-gray-6 ...`
+//   Focus: `focus-visible:border-outline-gray-8 focus-visible:focus-ring ...`
+//   Disabled: `disabled:border-outline-gray-2 disabled:bg-surface-gray-1 disabled:cursor-not-allowed ...`
+//   Size md: `size-4` (16×16px)   size sm: `size-3.5` (14×14px)
+//   Indicator: `<CheckIcon>` size-3 (12px) or size-2.5 (10px)
+//
+// SELECT (select.tsx)
+// ─────────────────────────────────────────────────────────────────────────────
+// Trigger base: `flex w-fit items-center justify-between gap-2 min-w-0 transition-colors outline-none border border-transparent`
+//   Focus: `focus-visible:bg-surface-base focus-visible:border-outline-gray-4 focus-visible:shadow-sm focus-visible:focus-ring`
+//   Active: `active:bg-surface-base active:shadow-sm active:border-outline-gray-4 data-[state=open]:border-outline-gray-4`
+//   Placeholder: `placeholder:text-ink-gray-4 text-ink-gray-8`
+//   Disabled: `disabled:bg-surface-gray-1 disabled:text-ink-gray-3 disabled:cursor-not-allowed`
+//   Invalid: `aria-invalid:focus-ring-red aria-invalid:border-outline-red-3`
+//   Size sm: `text-base rounded py-1.5 px-2 h-7` (height 28px, radius 4px)
+//   Size md: `text-base rounded py-1.5 px-2.5 h-8` (height 32px, radius 4px)
+//   Size lg: `text-xl rounded-md py-1.5 px-3 h-10` (height 40px, radius 10px)
+//   Variant subtle: `bg-surface-gray-2 hover:bg-surface-gray-3 hover:border-outline-elevation-2`
+//   Variant outline: `bg-surface-base border-outline-gray-2 hover:border-outline-gray-3 hover:shadow-sm`
+// Content: `bg-surface-elevation-2 rounded-lg min-w-40 ring-1 ring-black/5 shadow-2xl`
+//   Animate: `data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 ...`
+// Item: `rounded py-1.5 pe-8 px-2 focus:bg-surface-gray-2 text-ink-gray-7 text-base`
+// Separator: `bg-outline-elevation-2 mx-0.5 my-1 h-px`
+//
+// TEXTAREA (textarea.tsx)
+// ─────────────────────────────────────────────────────────────────────────────
+// Base: `flex field-sizing-content w-full transition-colors outline-none border border-transparent`
+//   `placeholder:text-ink-gray-4 text-ink-gray-8`
+//   Focus: `focus-visible:bg-surface-base focus-visible:border-outline-gray-4 focus-visible:shadow-sm focus-visible:focus-ring`
+//   Active: `active:bg-surface-base active:shadow-textarea-active active:border-outline-gray-4`
+//   Disabled: `disabled:bg-surface-gray-1 disabled:text-ink-gray-3 disabled:cursor-not-allowed`
+//   Invalid: `aria-invalid:focus-ring-red aria-invalid:border-outline-red-3`
+//   Size sm: `text-p-base rounded py-1.5 px-2 min-h-15` (radius 4px)
+//   Size md: `text-p-base rounded-md py-2.5 px-3 min-h-20.5` (radius 10px)
+//   Size lg: `text-p-lg rounded-md py-3 px-3.5 min-h-25.5` (radius 10px)
+//   Variant subtle: `bg-surface-gray-2 hover:bg-surface-gray-3 hover:border-outline-elevation-2`
+//   Variant outline: `bg-surface-base border-outline-gray-2 hover:border-outline-gray-3 hover:shadow-sm`
+//
+// BADGE (badge.tsx)
+// ─────────────────────────────────────────────────────────────────────────────
+// Base: `inline-flex items-center justify-center select-none rounded-full whitespace-nowrap gap-1 w-fit shrink-0 overflow-clip`
+// Size sm: `h-4 text-xs px-1.5` (16px, 12px font)
+// Size md: `h-5 text-xs px-1.5` (20px, 12px font)
+// Size lg: `h-6 text-sm px-2`  (24px, 13px font)
+// Variant × Theme combinations (examples):
+//   subtle gray: `text-ink-gray-6 bg-surface-gray-2`
+//   solid gray: `text-ink-base bg-surface-gray-10`
+//   outline gray: `text-ink-gray-6 border-outline-gray-2 bg-transparent border`
+//   solid blue: `text-ink-blue-1 bg-surface-blue-7`
+//   subtle green: `text-ink-green-8 bg-surface-green-2`
+//   subtle red: `text-ink-red-8 bg-surface-red-2`
+//   solid red: `text-ink-red-1 bg-surface-red-7`
+//
+// TOOLTIP (tooltip.tsx)
+// ─────────────────────────────────────────────────────────────────────────────
+// Provider: `delayDuration = 500`
+// Content: `bg-surface-gray-10 shadow-xl text-ink-base rounded px-2 py-1 text-p-xs`
+//   Animate: `animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 ...`
+//   `z-50 w-fit origin-(--radix-tooltip-content-transform-origin)`
+//   sideOffset: 2
+// Arrow: `fill-surface-gray-10` width 8 height 4
+//
+// DIALOG (dialog.tsx)
+// ─────────────────────────────────────────────────────────────────────────────
+// Overlay: `fixed inset-0 z-50 bg-black-200 dark:bg-black-700`
+//   Animate: `data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0`
+// Content: `bg-surface-elevation-1 shadow-xl rounded-xl`
+//   `fixed top-[50%] left-[50%] z-50 flex flex-col w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%]`
+//   `gap-4 p-6 duration-200 outline-none sm:max-w-lg max-h-[90vh] overflow-y-auto`
+//   Animate: `data-[state=open]:animate-in data-[state=closed]:animate-out ... zoom-out-95 zoom-in-95`
+// Header: `flex flex-col gap-2 sm:text-start`
+// Footer: `flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2`
+// Title: `text-base-medium` (font-weight-medium)
+// Description: `text-p-sm text-ink-gray-5`
+//
+// SEPARATOR (separator.tsx)
+// ─────────────────────────────────────────────────────────────────────────────
+// Root: `bg-outline-gray-2 shrink-0`
+//   Horizontal: `data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full` (1px)
+//   Vertical: `data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px`
+// Default: horizontal, decorative=true
+// Used between settings form rows (SettingsFormRow) in Raven's settings panels.
+//
+// ── Fcode mapping notes ──────────────────────────────────────────────────────
+// - Checkbox: not used directly in Settings pages (Raven uses it internally).
+//   Fcode uses <input type="checkbox"> with settings-specific CSS.
+// - Select: Raven's <SelectTrigger> rounded = 4px. Fcode .field-select now uses
+//   --ds-settings-radius-ctrl = var(--radius-1) = 4px inside .settings-shell (S4).
+// - Textarea: Raven rounded = 4px (sm). Fcode .field-textarea now uses
+//   --ds-settings-radius-ctrl = 4px inside .settings-shell (S4).
+// - Badge: Raven rounded-full. Fcode .badge already uses var(--radius-full). ✓
+// - Tooltip: Raven rounded = 4px. Fcode tooltips use --radius-sm = 10px (Fcode scale).
+//   This is a Fcode-only control (exception §5.5.1) — styling is Fcode's own.
+// - Dialog: Raven rounded-xl = 20px. Fcode dialogs use --radius-xl = 20px. ✓
+// - Separator: Raven bg-outline-gray-2, 1px. Fcode uses --ds-settings-separator
+//   = var(--outline-gray-2), 1px border-bottom on .settings-panel .settings-row (S3). ✓
