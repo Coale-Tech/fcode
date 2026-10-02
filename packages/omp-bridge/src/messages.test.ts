@@ -133,3 +133,29 @@ describe("OmpBridge stamps session/turn on omp frames", () => {
     expect(events[2].event).toMatchObject({ toolCallId: "call_1", toolName: "bash" });
   });
 });
+
+describe("tool_permission.resolve answers omp's select-style approval", () => {
+  const orig = process.stdout.write.bind(process.stdout);
+  afterEach(() => {
+    process.stdout.write = orig;
+  });
+
+  function resolveWith(decision: string): Record<string, unknown> {
+    const bridge = new OmpBridge();
+    (bridge as unknown as { activeTurn: unknown }).activeTurn = { sessionId: "s1", turnId: "t1" };
+    const sent: Record<string, unknown>[] = [];
+    (bridge as unknown as { sendToOmp: (m: Record<string, unknown>) => void }).sendToOmp = (m) => sent.push(m);
+    process.stdout.write = (() => true) as typeof process.stdout.write;
+    bridge.handleOmpFrame(JSON.stringify({ type: "tool_execution_start", toolCallId: "c1", toolName: "bash", args: {} }));
+    bridge.handleOmpFrame(
+      JSON.stringify({ type: "extension_ui_request", id: "u1", method: "select", title: "Allow tool: bash\nCommand: ls", options: ["Approve", "Deny"] }),
+    );
+    bridge.handleHostFrame({ jsonrpc: "2.0", id: "h1", method: "tool_permission.resolve", params: { requestId: "u1", decision } });
+    return sent[0];
+  }
+
+  it("Approve / Deny values, not a boolean", () => {
+    expect(resolveWith("allow_once")).toEqual({ type: "extension_ui_response", id: "u1", value: "Approve" });
+    expect(resolveWith("deny")).toEqual({ type: "extension_ui_response", id: "u1", value: "Deny" });
+  });
+});

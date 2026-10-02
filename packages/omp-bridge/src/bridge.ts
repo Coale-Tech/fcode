@@ -576,7 +576,7 @@ export class OmpBridge {
   private sessionStore: SessionStore | null = null;
   private state = createBridgeState(homedir());
   /** Map of omp request id → PI pending request info */
-  private pendingUiRequests = new Map<string, { sessionId: string; toolCallId: string; toolName: string }>();
+  private pendingUiRequests = new Map<string, { sessionId: string; toolCallId: string; toolName: string; viaSelect: boolean }>();
   /** Per-session most-recent open tool_execution_start */
   private openTools = new Map<string, { toolCallId: string; toolName: string }>();
   /** Tracks in-flight `prompt` calls awaiting their terminal prompt_result frame. */
@@ -826,12 +826,12 @@ export class OmpBridge {
 
       case "tool_permission.resolve": {
         const requestId = String(p.requestId ?? "");
-        const decision = String(p.decision ?? "");
-        this.sendToOmp({
-          type: "extension_ui_response",
-          id: requestId,
-          confirmed: decision !== "deny",
-        });
+        const approved = String(p.decision ?? "") !== "deny";
+        // omp asks tool approval as a select ["Approve","Deny"]; older confirm requests want a boolean.
+        const answer = this.pendingUiRequests.get(requestId)?.viaSelect
+          ? { value: approved ? "Approve" : "Deny" }
+          : { confirmed: approved };
+        this.sendToOmp({ type: "extension_ui_response", id: requestId, ...answer });
         this.pendingUiRequests.delete(requestId);
         this.respond(id, {});
         break;
@@ -1466,6 +1466,7 @@ export class OmpBridge {
       sessionId,
       toolCallId: openTool?.toolCallId ?? req.id,
       toolName: openTool?.toolName ?? req.title ?? "tool",
+      viaSelect: req.method === "select",
     });
 
     const { type, ...request } = mapped;

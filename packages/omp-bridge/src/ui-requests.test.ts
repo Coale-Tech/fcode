@@ -39,6 +39,27 @@ describe("mapExtensionUiRequest", () => {
     expect(result.questions[0].multiSelect).toBe(false);
   });
 
+  // Real omp frame: tool approval arrives as a select with plain-string options.
+  it("maps omp's 'Allow tool' select → tool_permission_request with the command preview", () => {
+    const result = mapExtensionUiRequest(
+      { id: "r9", method: "select", title: "Allow tool: bash\nCommand: ls /tmp", options: ["Approve", "Deny"] },
+      "s1",
+      openTool,
+    );
+    expect(result).toMatchObject({
+      type: "tool_permission_request",
+      requestId: "r9",
+      toolCallId: "tc1",
+      toolName: "bash",
+      argsPreview: "Command: ls /tmp",
+    });
+  });
+
+  it("keeps an ordinary select with plain-string options as an ask", () => {
+    const result = mapExtensionUiRequest({ id: "r10", method: "select", title: "Pick", options: ["x", "y"] }, "s1", openTool);
+    expect(result).toMatchObject({ type: "asktool_request", questions: [{ options: ["x", "y"] }] });
+  });
+
   it("maps input → asktool_request", () => {
     const result = mapExtensionUiRequest(
       { id: "r3", method: "input", message: "Enter value" },

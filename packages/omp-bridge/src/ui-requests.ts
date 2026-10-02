@@ -23,7 +23,7 @@ export interface OmpExtensionUiRequest {
   message?: string;
   url?: string;
   launchUrl?: string;
-  options?: Array<{ value: string; label?: string }>;
+  options?: Array<string | { value: string; label?: string }>;
   /** editor request: initial text for the multiline textarea */
   prefill?: string;
   defaultValue?: string;
@@ -145,7 +145,23 @@ export function mapExtensionUiRequest(
 
     case "select":
     case "input": {
-      const options = req.options?.map((o) => o.value) ?? [];
+      const options = req.options?.map((o) => (typeof o === "string" ? o : o.value)) ?? [];
+      // omp asks tool approval as select ["Approve","Deny"] titled "Allow tool: <name>\n<details>".
+      const approval = req.method === "select" && options.join() === "Approve,Deny"
+        ? /^Allow tool: ([^\n]+)\n?([\s\S]*)$/.exec(req.title ?? "")
+        : null;
+      if (approval) {
+        return {
+          type: "tool_permission_request",
+          requestId: req.id,
+          sessionId,
+          toolCallId,
+          toolName: openTool?.toolName ?? approval[1],
+          argsPreview: approval[2],
+          risk: "high",
+          reason: "",
+        };
+      }
       return {
         type: "asktool_request",
         requestId: req.id,
