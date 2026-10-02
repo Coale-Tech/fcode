@@ -9,6 +9,7 @@ The two early previews used `0.15.7-fcode.N` (PI-Desktop 0.15.7 plus a prereleas
 The PI-Desktop release each version is based on is listed in its Compatibility table.
 
 ## [Unreleased]
+- Fix: macOS builds without a Developer ID signature (current releases) fell into in-app update mode and "Restart to update" did nothing (Squirrel.Mac: "Could not get code signature"); unsigned apps now use the manual download-from-releases flow.
 
 ## [0.17.0] — 2026-10-01
 
