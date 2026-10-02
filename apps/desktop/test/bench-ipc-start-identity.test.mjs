@@ -21,10 +21,24 @@ const { IPC } = await import("@pi-desktop/shared");
 const { registerBenchIpc } = await import("../electron/main/ipc/bench-ipc.ts");
 const { benchSupervisor } = await import("../electron/main/bench/supervisor.ts");
 
+/** Fake discover that accepts the given paths as discovered benches. */
+function makeDiscover(...paths) {
+  return async () => ({
+    benches: paths.map((p) => ({
+      id: p,
+      path: p,
+      version: 15,
+      sites: [{ name: "test.localhost", isDefault: true }],
+    })),
+    failedRoots: [],
+  });
+}
+
 function registerAndCapture() {
   const handlers = new Map();
   const registrar = { handle: (channel, fn) => handlers.set(channel, fn) };
-  registerBenchIpc({ registrar, mainWindow: () => null });
+  // Pass fake discover so B10(d) validation passes for the test paths
+  registerBenchIpc({ registrar, mainWindow: () => null, discover: makeDiscover("/benches/a", "/benches/b") });
   return handlers.get(IPC.invoke.benchStart);
 }
 

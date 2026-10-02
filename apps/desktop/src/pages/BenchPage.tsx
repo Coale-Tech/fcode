@@ -94,6 +94,8 @@ async function invoke<T>(channel: string, args?: unknown): Promise<T> {
   return result.data;
 }
 
+const NO_LOGS: LogLine[] = [];
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function BenchPage() {
@@ -141,8 +143,10 @@ export function BenchPage() {
   // T16: cross-fade key for bench selection transition
   const [detailKey, setDetailKey] = useState(0);
 
-  // Bench whose log is in logLines (the supervisor streams one bench's log at a time).
-  const [logOwner, setLogOwner] = useState<string | null>(null);
+  // Bench whose log is in logLines; ref tracks it synchronously for the status poll.
+  const [logPath, setLogPath] = useState<string | null>(null);
+  const logPathRef = useRef<string | null>(null);
+  logPathRef.current = logPath;
 
   // ── Load bench list ───────────────────────────────────────────────────────
 
@@ -179,9 +183,15 @@ export function BenchPage() {
     const poll = async () => {
       if (cancelled) return;
       try {
-        const s = await invoke<{ status: BenchStatus; benchPath: string | null }>(IPC.invoke.benchStatus);
+        const s = await invoke<{ status: BenchStatus; benchPath: string | null; logs?: LogLine[] }>(IPC.invoke.benchStatus);
         setStatus(s.status);
         setActiveBenchPath(s.benchPath);
+        // B9: re-seed log buffer when the supervisor's bench changes (e.g. started outside this page).
+        if (s.benchPath && s.benchPath !== logPathRef.current) {
+          logPathRef.current = s.benchPath;
+          setLogPath(s.benchPath);
+          setLogLines(s.logs ?? []);
+        }
       } catch { /* ignore */ }
     };
     poll();
@@ -289,13 +299,6 @@ export function BenchPage() {
     .map((id) => benches.find((b) => b.id === id))
     .filter((b): b is BenchSummary => b !== undefined);
 
-  // A new bench taking over the supervisor owns the log from here on.
-  useEffect(() => {
-    if (activeBenchPath !== null && activeBenchPath !== logOwner) {
-      setLogOwner(activeBenchPath);
-      setLogLines([]);
-    }
-  }, [activeBenchPath, logOwner]);
 
   useEffect(() => {
     if (!selectedBench) {
@@ -363,14 +366,13 @@ export function BenchPage() {
 
   const handleStart = useCallback(
     async (bench: BenchSummary) => {
-      // The control is disabled while another bench runs; this covers a click
-      // that raced the status poll.
       if (startBlockedBy(status, activeBenchPath, bench.path)) return;
-      // Gap 1 / T6: clear previous failure; Gap 5: clear warnings; Gap 3: start timer
       setStartFailure(null);
       setWarnings([]);
-      setLogLines([]);
       startMsRef.current = Date.now();
+      // B9: re-own the log buffer (selectedBench is the focused bench in the tab view).
+      if (selectedBench) { setLogPath(selectedBench.path); }
+      setLogLines([]);
       try {
         await invoke(IPC.invoke.benchStart, { benchPath: bench.path });
         setStatus("starting");
@@ -394,7 +396,7 @@ export function BenchPage() {
         }
       }
     },
-    [status, activeBenchPath],
+    [status, activeBenchPath, selectedBench],
   );
 
   const handleStop = useCallback(async (bench: BenchSummary) => {
@@ -602,7 +604,7 @@ export function BenchPage() {
               onShowAll={showAll}
               status={displayStatus}
               blocker={blocker}
-              logLines={logOwner === selectedBench.path ? logLines : []}
+              logLines={selectedBench.path === logPath ? logLines : NO_LOGS}
               followTail={followTail}
               onFollowTailChange={setFollowTail}
               onStart={() => void handleStart(selectedBench)}
@@ -918,7 +920,7 @@ export function ProcessPanel({
       {/* Gap 3 / T6: status + elapsed (Start/Stop live in the header) */}
       <div className="wb-status-line">
         <StatusBadge status={status} />
-        {elapsedLabel && <span className="wb-muted">{elapsedLabel}</span>}
+        {elapsedLabel && (status === "starting" || status === "running") && <span className="wb-muted">{elapsedLabel}</span>}
       </div>
 
       {/* Gap 5 / T6: port-conflict warnings */}
