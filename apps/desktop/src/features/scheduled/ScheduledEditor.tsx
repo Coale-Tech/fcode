@@ -9,6 +9,7 @@ import {
   type ScheduledModelSelection,
 } from "./ScheduledExecutionSettings";
 import { useAppStore } from "../../stores/app-store";
+import { SCHEDULED_TEMPLATES } from "./scheduled-templates";
 import "./scheduled-editor.css";
 
 export type ScheduledDraft = Pick<ScheduledTask, "title" | "prompt" | "cadence" | "schedule"> & {
@@ -128,6 +129,28 @@ export function ScheduledEditor({
       <h2 className="text-md-plus font-medium">
         {t(task ? "scheduled.edit" : "scheduled.create")}
       </h2>
+      {!task && (
+        <Field label={t("scheduled.templatePicker")}>
+          <SettingsMenuSelect
+            label={t("scheduled.templatePicker")}
+            value=""
+            options={[
+              { id: "", label: t("scheduled.templateNone") },
+              ...SCHEDULED_TEMPLATES.map((tmpl) => ({ id: tmpl.id, label: t(tmpl.nameKey) })),
+            ]}
+            onChange={(id) => {
+              const tmpl = SCHEDULED_TEMPLATES.find((t) => t.id === id);
+              if (!tmpl) return;
+              setTitle(tmpl.title);
+              setPrompt(tmpl.prompt);
+              setCadence(tmpl.cadence);
+              setHour(String(tmpl.schedule.hour).padStart(2, "0"));
+              setMinute(String(tmpl.schedule.minute).padStart(2, "0"));
+              setWeekdays(tmpl.schedule.weekdays ?? [tmpl.schedule.weekday]);
+            }}
+          />
+        </Field>
+      )}
       <Field label={t("nav.newTask")}>
         <Input
           required

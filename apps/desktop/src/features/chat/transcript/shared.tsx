@@ -24,12 +24,13 @@ import { isThinkingActive, resolveThinkingDisplayMode } from "../../../lib/turn-
 import { TranscriptSearchContext } from "../../../lib/transcript-search-context";
 import { disclosureKey, useAutomaticDisclosure } from "./disclosure";
 export { useAutomaticDisclosure } from "./disclosure";
-import { messageThinking as thinkingText } from "../../../lib/assistant-turns";
+import { messageThinking as thinkingText, type AssistantActivityItem } from "../../../lib/assistant-turns";
 import { useReferencedImageDataUrl } from "../../../lib/use-referenced-image-data-url";
 import { useVerifiedChatText } from "../../../hooks/use-verified-chat-text";
 import { isHtmlFilePath } from "../../../lib/chat-links";
 import type { SourcePositionProps } from "../../../lib/markdown-source";
 import { getToolAction, type ToolAction } from "../../../lib/tool-display";
+import { summarizeTurn } from "./turn-summary";
 import { calculateTokenRate } from "../../../lib/context-usage";
 import { useAppStore } from "../../../stores/app-store";
 import { Markdown, useCopy } from "../../../components/Markdown";
@@ -155,11 +156,13 @@ export function MessageMeta({
   usage,
   responseDurationMs,
   responseOutputTokens,
+  items,
 }: {
   modelId?: string;
   usage?: MessageUsage;
   responseDurationMs?: number;
   responseOutputTokens?: number;
+  items?: readonly AssistantActivityItem[];
 }) {
   const { t } = useTranslation();
   const throughput = calculateTokenRate(
@@ -167,11 +170,25 @@ export function MessageMeta({
     responseDurationMs,
   );
   const showThroughput = !usage && throughput !== undefined;
-  if (!modelId && !showThroughput) {
+  const summary = items && items.length > 0 ? summarizeTurn(items) : null;
+  const summaryParts = summary
+    ? [
+        summary.edited > 0 && t("chat.turnSummaryEdited", { count: summary.edited }),
+        summary.ran > 0 && t("chat.turnSummaryRan", { count: summary.ran }),
+        summary.read > 0 && t("chat.turnSummaryRead", { count: summary.read }),
+        summary.fetched > 0 && t("chat.turnSummaryFetched", { count: summary.fetched }),
+        summary.searched > 0 && t("chat.turnSummarySearched", { count: summary.searched }),
+      ].filter(Boolean)
+    : [];
+  const summaryText = summaryParts.join(" · ");
+  if (!modelId && !showThroughput && !summaryText) {
     return null;
   }
   return (
     <div className="message-meta">
+      {summaryText ? (
+        <span className="message-meta-chip summary">{summaryText}</span>
+      ) : null}
       {modelId ? (
         <span className="message-meta-chip model" title={modelId}>
           {modelId}

@@ -21,6 +21,7 @@ export function ScheduledPage() {
   const [busy, setBusy] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState("");
+  const [health, setHealth] = useState<{ lastTickAt: number | undefined; lastError: string | undefined; hostAvailable: boolean } | null>(null);
   const mounted = useRef(false);
   const revision = useRef(0);
   const refresh = useCallback(async () => {
@@ -33,6 +34,7 @@ export function ScheduledPage() {
       ]);
       if (!mounted.current || request !== revision.current) return;
       setTasks(taskResult.tasks);
+      if (taskResult.health) setHealth(taskResult.health);
       setRuns(runResult.runs);
       setProjects(projectResult.projects);
       setError("");
@@ -123,6 +125,16 @@ export function ScheduledPage() {
             {t("scheduled.runs")}
           </Button>
         </div>
+        {health && (health.lastError || !health.lastTickAt || Date.now() - (health.lastTickAt ?? 0) > 90_000) && (
+          <Panel>
+            <p role="alert">
+              {health.lastError
+                ? t("scheduled.healthError", { error: health.lastError })
+                : t("scheduled.healthStale")}
+            </p>
+            <Button onClick={() => void refresh()}>{t("scheduled.healthRetry")}</Button>
+          </Panel>
+        )}
         {error && (
           <Panel>
             <p role="alert">{error}</p>
