@@ -31,6 +31,8 @@ export type KanbanRunnerDeps = {
   sendChanged: () => void;
   /** Report internal errors. */
   report: (error: unknown) => void;
+  /** Called after every board mutation; diff prev vs next for notifications. */
+  onBoardMutation?: (prev: KanbanBoard, next: KanbanBoard) => void;
 };
 
 /** Nudge prompt sent to a worker that ended without kanban_complete/kanban_block. */
@@ -71,8 +73,10 @@ export function createKanbanRunner(deps: KanbanRunnerDeps): KanbanRunner {
   let dailyCapNotified = false;
 
   const updateBoard = (next: KanbanBoard) => {
+    const prev = getBoard();
     saveBoard(next);
     sendChanged();
+    deps.onBoardMutation?.(prev, next);
   };
 
   // ── Timeout enforcement ───────────────────────────────────────────────────

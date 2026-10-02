@@ -7,6 +7,7 @@ const {
   emptyBoard,
   createTask,
   claimTask,
+  completeTask,
 } = await import("../electron/main/runtime/kanban-core.ts");
 
 const { createKanbanRunner } = await import("../electron/main/runtime/kanban-runner.ts");
@@ -191,4 +192,37 @@ test("reclaimZombies leaves live sessions alone", () => {
   state.board = claimTask(state.board, taskId, "live-session", "run-1");
   state.runner.reclaimZombies(new Set(["live-session"]));
   assert.equal(state.board.tasks.find((t) => t.id === taskId).status, "running");
+});
+
+// ── No-double-mutation guard ──────────────────────────────────────────────────
+
+test("kanban_complete before onTurnEnd prevents gave_up double-mutation", async () => {
+  const state = makeRunner();
+  addReadyTask(state);
+  await state.runner.tick();
+
+  const sessionId = state.sessions[0].id;
+  const task = state.board.tasks.find((t) => t.status === "running");
+  assert.ok(task, "task should be running after tick");
+
+  // Simulate kanban_complete tool: complete the task (status → done)
+  state.board = completeTask(state.board, task.id, task.currentRunId, "done");
+  // Task is now done; onTurnEnd guard checks t.status !== "running" → returns early
+  state.runner.onTurnEnd(sessionId);
+
+  assert.equal(
+    state.board.tasks.find((t) => t.id === task.id).status,
+    "done",
+    "task must remain done, not blocked as gave_up",
+  );
+});
+
+// ── Dispatcher: re-pause ──────────────────────────────────────────────────────
+
+test("paused=true prevents claim on explicit tick", async () => {
+  const state = makeRunner();
+  addReadyTask(state);
+  state.runner.pause(true);
+  await state.runner.tick();
+  assert.equal(state.sessions.length, 0, "no session claimed while paused");
 });

@@ -1117,6 +1117,14 @@ const kanbanRunner = createKanbanRunner({
   sendToast: (message) => sendToRenderer(IPC.event.toast, { message }),
   sendChanged: () => sendToRenderer(IPC.event.kanbanChanged, {}),
   report: (error) => logger.app("kanban", "error", String(error)),
+  onBoardMutation: (prev, next) => {
+    for (const task of next.tasks) {
+      const old = prev.tasks.find((t) => t.id === task.id);
+      if (!old || old.status === task.status) continue;
+      if (task.status === "blocked") sendToRenderer(IPC.event.toast, { message: `Task blocked: ${task.title}` });
+      if (task.status === "done") sendToRenderer(IPC.event.toast, { message: `Task done: ${task.title}` });
+    }
+  },
 });
 // Late-bind onTurnEnd: captured by the closure already passed to createEventPersistence.
 _kanbanTurnEnd = (sessionId) => kanbanRunner.onTurnEnd(sessionId);
@@ -1304,6 +1312,14 @@ function registerIpc() {
       saveSettings: (s) => { void writeKanbanSettings(dataDir, s); },
       runner: kanbanRunner,
       sendChanged: () => sendToRenderer(IPC.event.kanbanChanged, {}),
+      onBoardMutation: (prev, next) => {
+        for (const task of next.tasks) {
+          const old = prev.tasks.find((t) => t.id === task.id);
+          if (!old || old.status === task.status) continue;
+          if (task.status === "blocked") sendToRenderer(IPC.event.toast, { message: `Task blocked: ${task.title}` });
+          if (task.status === "done") sendToRenderer(IPC.event.toast, { message: `Task done: ${task.title}` });
+        }
+      },
     },
   });
 }

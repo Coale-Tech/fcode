@@ -917,7 +917,8 @@ export const ptBR = {
       sync: "Sincronização",
       remoteHosts: "Hosts remotos",
       info: "Sobre",
-      voice: "Voz"
+      voice: "Voz",
+      kanban: "Kanban"
     },
     general: "Geral",
     ai: "IA",

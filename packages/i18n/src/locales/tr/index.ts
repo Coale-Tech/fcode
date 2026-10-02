@@ -941,6 +941,7 @@ sklm: {
       remoteHosts: "Uzak ana bilgisayarlar",
       info: "Bilgi",
       voice: "Ses",
+      kanban: "Kanban",
     },
     configSync: {
       title: "Bulut senkronizasyonu",

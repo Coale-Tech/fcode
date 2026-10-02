@@ -90,5 +90,6 @@ export function createInitialState(): AppStateData {
     errorRetriable: null,
     sessionTodoPhases: {},
     showKanbanSessions: false,
+    kanbanEnabled: false,
   };
 }

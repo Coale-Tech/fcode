@@ -23,6 +23,7 @@ const {
   wouldCreateCycle,
   incrementNudge,
   todaySpawnCount,
+  agentCardCountForSession,
 } = await import("../electron/main/runtime/kanban-core.ts");
 
 const { loadBoard, saveBoard } = await import("../electron/main/runtime/kanban-store.ts");
@@ -374,4 +375,31 @@ test("addComment appends a comment with forced author", () => {
   const b2 = addComment(b1, taskId, "kanban-worker", "good progress");
   assert.equal(b2.comments.length, 1);
   assert.equal(b2.comments[0].author, "kanban-worker");
+});
+
+// ── agentCardCountForSession ──────────────────────────────────────────────────
+
+test("agentCardCountForSession counts agent tasks linked to a session via runs", () => {
+  let board = emptyBoard();
+  // Agent-created tasks start in triage; force to ready so claimTask works
+  const { board: b1, taskId: t1 } = createTask(board, {
+    title: "Agent task 1", body: "", projectPath: "/p", createdBy: "agent",
+  });
+  const b1r = { ...b1, tasks: b1.tasks.map((t) => t.id === t1 ? { ...t, status: "ready" } : t) };
+  const b2 = claimTask(b1r, t1, "session-A", "run-1");
+  // User-created task claimed by session-A (should NOT be counted)
+  const { board: b3, taskId: t2 } = createTask(b2, {
+    title: "User task", body: "", projectPath: "/p", createdBy: "user",
+  });
+  const b4 = claimTask(b3, t2, "session-A", "run-2");
+  // Agent task by different session
+  const { board: b5, taskId: t3 } = createTask(b4, {
+    title: "Agent task 2", body: "", projectPath: "/p", createdBy: "agent",
+  });
+  const b5r = { ...b5, tasks: b5.tasks.map((t) => t.id === t3 ? { ...t, status: "ready" } : t) };
+  const b6 = claimTask(b5r, t3, "session-B", "run-3");
+
+  assert.equal(agentCardCountForSession(b6, "session-A"), 1, "only agent tasks for session-A");
+  assert.equal(agentCardCountForSession(b6, "session-B"), 1, "agent task for session-B");
+  assert.equal(agentCardCountForSession(b6, "session-X"), 0, "unknown session returns 0");
 });

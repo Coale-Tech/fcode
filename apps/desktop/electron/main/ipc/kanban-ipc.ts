@@ -25,6 +25,8 @@ export type KanbanIpcDependencies = {
   saveSettings: (settings: KanbanSettings) => void;
   runner: KanbanRunner;
   sendChanged: () => void;
+  /** Called after every board mutation; diff prev vs next for notifications. */
+  onBoardMutation?: (prev: KanbanBoard, next: KanbanBoard) => void;
 };
 
 export function registerKanbanIpc({
@@ -35,13 +37,16 @@ export function registerKanbanIpc({
   saveSettings,
   runner,
   sendChanged,
+  onBoardMutation,
 }: KanbanIpcDependencies): void {
   const { handle } = registrar;
 
   const mutate = (fn: (board: KanbanBoard) => KanbanBoard) => {
-    const next = fn(getBoard());
+    const prev = getBoard();
+    const next = fn(prev);
     saveBoard(next);
     sendChanged();
+    onBoardMutation?.(prev, next);
     return next;
   };
 

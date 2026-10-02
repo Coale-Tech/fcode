@@ -932,7 +932,8 @@ sklm: {
       "sync": "Cloud-Synchronisierung",
       "remoteHosts": "Remote-Hosts",
       "info": "Informationen",
-      "voice": "Sprache"
+      "voice": "Sprache",
+      "kanban": "Kanban"
     },
     "configSync": {
       title: "Cloud sync",

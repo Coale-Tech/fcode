@@ -255,8 +255,9 @@ export function KanbanPage() {
     const sessionToTask = new Map(
       board.tasks.filter((t) => t.sessionId).map((t) => [t.sessionId!, t.id]),
     );
-    const win = window as { electron?: { on?: (ch: string, cb: (payload: unknown) => void) => () => void } };
-    const off = win.electron?.on?.(IPC.event.agentEvent, (payload) => {
+    const bridge = window.piDesktop;
+    if (!bridge?.on) return;
+    const off = bridge.on(IPC.event.agentMessage, (payload) => {
       if (
         payload &&
         typeof payload === "object" &&

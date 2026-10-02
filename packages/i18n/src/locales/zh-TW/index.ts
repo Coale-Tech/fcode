@@ -931,6 +931,7 @@ sklm: {
       remoteHosts: "遠端主機",
       info: "資訊",
       voice: "語音",
+      kanban: "看板",
     },
     configSync: {
       title: "雲端同步",

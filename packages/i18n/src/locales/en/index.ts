@@ -940,6 +940,7 @@ sklm: {
       remoteHosts: "Remote hosts",
       info: "Info",
       voice: "Voice",
+      kanban: "Kanban",
     },
     general: "General",
     ai: "AI",

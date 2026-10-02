@@ -941,6 +941,7 @@ sklm: {
       remoteHosts: "원격 호스트",
       info: "정보",
       voice: "음성",
+      kanban: "Kanban",
     },
     configSync: {
       title: "Cloud sync",

@@ -40,6 +40,7 @@ export function createInteractionSlice({
   | "setBenchLogFollowTail"
   | "toggleBenchLogFollowTail"
   | "setShowKanbanSessions"
+  | "setKanbanEnabled"
   | "canNavBack"
   | "canNavForward"
   | "navBack"
@@ -96,6 +97,7 @@ export function createInteractionSlice({
     toggleBenchLogFollowTail: () =>
       set((state) => ({ benchLogFollowTail: !state.benchLogFollowTail })),
     setShowKanbanSessions: (showKanbanSessions) => set({ showKanbanSessions }),
+    setKanbanEnabled: (kanbanEnabled) => set({ kanbanEnabled }),
     canNavBack: () => get().navIndex > 0,
     canNavForward: () => get().navIndex < get().navStack.length - 1,
 

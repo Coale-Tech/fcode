@@ -931,6 +931,7 @@ sklm: {
       remoteHosts: "远程主机",
       info: "信息",
       voice: "语音",
+      kanban: "看板",
     },
     configSync: {
       title: "云同步",
