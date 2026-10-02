@@ -13,16 +13,14 @@
  *  - Linux deb (no $APPIMAGE in env) → notify + link.
  *  - Unpackaged dev runs → disabled (no app-update.yml in resources).
  */
-import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import { app, shell } from "electron";
 import electronUpdaterPkg from "electron-updater";
 import type { UpdateInfo, ProgressInfo } from "electron-updater";
 import {
   formatChangelogNotes,
   IPC,
-  type UpdateMode,
   type UpdateState,
 } from "@pi-desktop/shared";
 import type { Logger } from "./logger";
@@ -31,6 +29,11 @@ import {
   raceWithTimeout,
   UPDATE_CHECK_TIMEOUT_CODE,
 } from "./update-timeout";
+import {
+  isMacAppSigned,
+  resolveUpdateMode,
+  type WindowsDistribution,
+} from "./update-mode";
 
 const { autoUpdater } = electronUpdaterPkg;
 
@@ -57,37 +60,6 @@ export type UpdaterOptions = {
   isPackaged?: boolean;
   distribution?: WindowsDistribution;
 };
-
-export type WindowsDistribution = "installed" | "zip";
-
-export function resolveUpdateMode(
-  platform: NodeJS.Platform,
-  isPackaged: boolean,
-  env: NodeJS.ProcessEnv = process.env,
-  distribution?: WindowsDistribution,
-  macSigned = true,
-): UpdateMode {
-  if (!isPackaged) return "disabled";
-  if (platform === "win32") {
-    return env.PORTABLE_EXECUTABLE_FILE || distribution === "zip"
-      ? "manual"
-      : "in-app";
-  }
-  // Squirrel.Mac refuses to swap an app without a real code signature
-  // ("Could not get code signature for running application"), so unsigned
-  // builds fall back to the download-from-releases flow.
-  if (platform === "darwin") return macSigned ? "in-app" : "manual";
-  if (platform === "linux" && env.APPIMAGE) return "in-app";
-  // non-AppImage linux installs
-  return "manual";
-}
-
-/** True when the running .app has a non-ad-hoc signature Squirrel.Mac accepts. */
-function isMacAppSigned(): boolean {
-  const bundle = dirname(dirname(dirname(process.execPath)));
-  const r = spawnSync("codesign", ["-dv", "--verbose=2", bundle], { encoding: "utf8" });
-  return r.status === 0 && !/Signature=adhoc/.test(`${r.stdout}${r.stderr}`);
-}
 
 export class AppUpdaterController {
   private readonly logger: Logger;
