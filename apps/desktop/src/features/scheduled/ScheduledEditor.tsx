@@ -139,7 +139,7 @@ export function ScheduledEditor({
               ...SCHEDULED_TEMPLATES.map((tmpl) => ({ id: tmpl.id, label: t(tmpl.nameKey) })),
             ]}
             onChange={(id) => {
-              const tmpl = SCHEDULED_TEMPLATES.find((t) => t.id === id);
+              const tmpl = SCHEDULED_TEMPLATES.find((tmplEntry) => tmplEntry.id === id);
               if (!tmpl) return;
               setTitle(tmpl.title);
               setPrompt(tmpl.prompt);
