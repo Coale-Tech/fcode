@@ -11,6 +11,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 ## [Unreleased]
 - Fix: macOS builds without a Developer ID signature (current releases) fell into in-app update mode and "Restart to update" did nothing (Squirrel.Mac: "Could not get code signature"); unsigned apps now use the manual download-from-releases flow.
 - Bench page: the bench sidebar list is replaced by tabs. An "All benches" tab (filter, All / Running / Failed / version chips, running-first table) plus one closable tab per opened bench, each with a header switcher to jump between benches. Start is disabled with a "Stop <bench> first" cue on every other bench while one runs (the supervisor is single-bench); "Stop all running" is gone. A stopped bench collapses its empty log.
+- Build page redesigned header-first: a header shows the bench, site, port and status with one action that fits the state (Start bench, Fix N issues, or Sync files on Builder). A banner under the tabs shows the first failing check with its fix command (Copy, Dismiss), and the sidebar is a plain app list. A bottom status bar always shows the four Studio checks with labels, so health is visible when everything passes. Replaces the hidden-when-passing precondition list.
 
 ## [0.17.0] — 2026-10-01
 
