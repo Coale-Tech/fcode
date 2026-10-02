@@ -93,17 +93,9 @@ test("main process registers update handlers and the auto-check lifecycle", () =
 });
 
 test("updater gates delivery mode by platform and delivery policy", () => {
-  // Packaged macOS, Windows NSIS, and Linux AppImage use in-app delivery.
-  // Dev builds are disabled outright.
-  assert.match(updaterSource, /if \(!isPackaged\) return "disabled"/);
-  assert.match(updaterSource, /win32.*in-app|in-app.*win32/s);
-  assert.match(
-    updaterSource,
-    /PORTABLE_EXECUTABLE_FILE[\s\S]*distribution === "zip"/,
-  );
-  assert.match(updaterSource, /piDistribution/);
-  assert.match(updaterSource, /platform === "darwin"[\s\S]*return "in-app"/);
-  assert.match(updaterSource, /APPIMAGE/);
+  // resolveUpdateMode and isMacAppSigned are in update-mode.ts and tested
+  // behaviourally in update-mode.test.mjs; only the AppUpdaterController
+  // wiring that stays in updater.ts is checked here.
   assert.match(updaterSource, /autoInstallOnAppQuit = true/);
   assert.match(
     updaterSource,
