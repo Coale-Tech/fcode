@@ -122,6 +122,9 @@ import {
 import { createSessionLaunchRuntime } from "./runtime/session-launch";
 import { createSessionCoordination } from "./runtime/session-coordination";
 import { createScheduledRuntime } from "./runtime/scheduled";
+import { createKanbanRunner } from "./runtime/kanban-runner";
+import { readKanbanSettings, writeKanbanSettings } from "./runtime/kanban-settings";
+import { loadBoard, saveBoard } from "./runtime/kanban-store";
 import { createDesktopServices } from "./services/desktop-services";
 import { createPluginServices } from "./services/plugin-services";
 import { wirePluginThemeRuntimeServices } from "./plugin-theme-services";
@@ -1063,6 +1066,9 @@ const {
   dispatchExecutionForProposal,
 } = planRuntime;
 
+// Mutable ref for kanban turn-end callback (late-bound after runner creation).
+let _kanbanTurnEnd: ((sessionId: string) => void) | undefined;
+
 const eventPersistence = createEventPersistence({
   runtimeState,
   steeringReplies,
@@ -1082,8 +1088,39 @@ const eventPersistence = createEventPersistence({
   isStaleTerminalEvent,
   finishApprovedExecution,
   emitAgentEvent: (envelope) => emitAgentEvent(envelope),
+  onTurnEnd: (sessionId) => _kanbanTurnEnd?.(sessionId),
 });
 const { persistAgentEvent } = eventPersistence;
+
+// ── Kanban runner (wired after event-persistence, before sidecar) ─────────────
+const kanbanRunner = createKanbanRunner({
+  getSettings: () => readKanbanSettings(dataDir),
+  getBoard: () => loadBoard(dataDir),
+  saveBoard: (board) => { void saveBoard(dataDir, board); },
+  createSession: async (input) => {
+    const h = host;
+    if (!h) throw new Error("host unavailable");
+    const res = await h.call<{ session?: { id?: string } | null }>("session.create", {
+      title: input.title,
+      projectPath: input.projectPath,
+      mode: "agent",
+    });
+    const sessionId = res.session?.id;
+    if (!sessionId) throw new Error("session.create returned no id");
+    return sessionId;
+  },
+  prompt: async (sessionId, content) => {
+    const h = host;
+    if (!h) throw new Error("host unavailable");
+    await h.call("agent.prompt", { sessionId, content });
+  },
+  sendToast: (message) => sendToRenderer(IPC.event.toast, { message }),
+  sendChanged: () => sendToRenderer(IPC.event.kanbanChanged, {}),
+  report: (error) => logger.app("kanban", "error", String(error)),
+});
+// Late-bind onTurnEnd: captured by the closure already passed to createEventPersistence.
+_kanbanTurnEnd = (sessionId) => kanbanRunner.onTurnEnd(sessionId);
+
 
 const sidecarRuntime = createSidecarRuntime({
   runtimeState,
@@ -1113,6 +1150,7 @@ const sidecarRuntime = createSidecarRuntime({
   activeUserSkills,
   pluginActiveInProject,
   currentNetworkProxy,
+  kanban: kanbanRunner,
 });
 emitAgentEvent = sidecarRuntime.emitAgentEvent;
 const { wireSidecar, startSidecar } = sidecarRuntime;
@@ -1259,6 +1297,14 @@ function registerIpc() {
     sendToRenderer,
     voiceService,
     onProviderMutation: () => { void superviseRestart("sidecar"); },
+    kanban: {
+      getBoard: () => loadBoard(dataDir),
+      saveBoard: (board) => { void saveBoard(dataDir, board); },
+      getSettings: () => readKanbanSettings(dataDir),
+      saveSettings: (s) => { void writeKanbanSettings(dataDir, s); },
+      runner: kanbanRunner,
+      sendChanged: () => sendToRenderer(IPC.event.kanbanChanged, {}),
+    },
   });
 }
 
@@ -1423,3 +1469,8 @@ registerApplicationActivation({
   isApplicationBooted: () => applicationLifecycleState.applicationBooted,
   hasVisibleWindow,
 });
+
+// Reclaim any kanban tasks whose sessions didn't survive the last process exit.
+// activeTurns is empty at startup; running tasks with no live session get re-queued.
+kanbanRunner.reclaimZombies(new Set(activeTurns.keys()));
+kanbanRunner.start();

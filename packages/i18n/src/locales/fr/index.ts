@@ -2887,7 +2887,50 @@ sklm: {
       "computer": "Ordinateur",
       "ida": "IDA"
     }
+  },
+  "kanban": {
+    "title": "Kanban",
+    "empty": "Aucune carte pour l'instant. Créez-en une pour commencer.",
+    "newCard": "Nouvelle carte",
+    "addCard": "Ajouter une carte",
+    "columns": {
+      "triage": "Triage",
+      "todo": "À faire",
+      "ready": "Prêt",
+      "running": "En cours",
+      "blocked": "Bloqué",
+      "done": "Terminé"
+    },
+    "card": {
+      "comment": "Ajouter un commentaire…",
+      "archive": "Archiver",
+      "unarchive": "Désarchiver",
+      "moveTo": "Déplacer vers…",
+      "showRuns": "Voir les exécutions",
+      "nudge": "Relancer",
+      "needsApproval": "Approbation requise",
+      "blocked": "Bloqué",
+      "gaveUp": "Abandonné"
+    },
+    "dispatcher": {
+      "pause": "Suspendre le répartiteur",
+      "resume": "Reprendre le répartiteur",
+      "paused": "Répartiteur suspendu"
+    },
+    "settings": {
+      "title": "Paramètres Kanban",
+      "enabled": "Activer le tableau Kanban",
+      "maxInProgress": "Max. en cours",
+      "maxRuntimeSeconds": "Durée max. d'exécution (secondes)",
+      "maxAgentCardsPerSession": "Max. cartes d'agent par session",
+      "maxDailySpawns": "Max. lancements quotidiens"
+    },
+    "sidebar": {
+      "showWorkers": "Afficher les sessions de travail",
+      "hideWorkers": "Masquer les sessions de travail"
+    }
   }
+
 } satisfies EnglishCatalog;
 
 export default fr;

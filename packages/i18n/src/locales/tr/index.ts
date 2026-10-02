@@ -2916,7 +2916,50 @@ importConfirm: "İçe aktarılan uzantılar ajan sürecinde, ajanın kendi araç
       computer: "Bilgisayar",
       ida: "IDA",
     },
+  },
+  "kanban": {
+    "title": "Kanban",
+    "empty": "Henüz kart yok. Başlamak için bir tane oluşturun.",
+    "newCard": "Yeni kart",
+    "addCard": "Kart ekle",
+    "columns": {
+      "triage": "Önceliklendirme",
+      "todo": "Yapılacak",
+      "ready": "Hazır",
+      "running": "Çalışıyor",
+      "blocked": "Engellendi",
+      "done": "Tamamlandı"
+    },
+    "card": {
+      "comment": "Yorum ekle…",
+      "archive": "Arşivle",
+      "unarchive": "Arşivden çıkar",
+      "moveTo": "Taşı…",
+      "showRuns": "Çalışmaları göster",
+      "nudge": "Dürt",
+      "needsApproval": "Onay gerekiyor",
+      "blocked": "Engellendi",
+      "gaveUp": "Vazgeçti"
+    },
+    "dispatcher": {
+      "pause": "Dağıtıcıyı duraklat",
+      "resume": "Dağıtıcıyı sürdür",
+      "paused": "Dağıtıcı duraklatıldı"
+    },
+    "settings": {
+      "title": "Kanban ayarları",
+      "enabled": "Kanban panosunu etkinleştir",
+      "maxInProgress": "Maks. süren görev",
+      "maxRuntimeSeconds": "Maks. çalışma süresi (saniye)",
+      "maxAgentCardsPerSession": "Oturum başına maks. ajan kartı",
+      "maxDailySpawns": "Günlük maks. başlatma"
+    },
+    "sidebar": {
+      "showWorkers": "Çalışan oturumlarını göster",
+      "hideWorkers": "Çalışan oturumlarını gizle"
+    }
   }
+
 } satisfies EnglishCatalog;
 
 export default tr;

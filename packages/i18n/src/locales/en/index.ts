@@ -2931,6 +2931,48 @@ importConfirm: "Imported extensions run inside the agent process with the same a
       ida: "IDA",
     },
   },
+  kanban: {
+    title: "Kanban",
+    empty: "No cards yet. Create one to get started.",
+    newCard: "New card",
+    addCard: "Add card",
+    columns: {
+      triage: "Triage",
+      todo: "To do",
+      ready: "Ready",
+      running: "Running",
+      blocked: "Blocked",
+      done: "Done",
+    },
+    card: {
+      comment: "Add comment…",
+      archive: "Archive",
+      unarchive: "Unarchive",
+      moveTo: "Move to…",
+      showRuns: "Show runs",
+      nudge: "Nudge",
+      needsApproval: "Needs approval",
+      blocked: "Blocked",
+      gaveUp: "Gave up",
+    },
+    dispatcher: {
+      pause: "Pause dispatcher",
+      resume: "Resume dispatcher",
+      paused: "Dispatcher paused",
+    },
+    settings: {
+      title: "Kanban settings",
+      enabled: "Enable Kanban board",
+      maxInProgress: "Max in progress",
+      maxRuntimeSeconds: "Max runtime (seconds)",
+      maxAgentCardsPerSession: "Max agent cards per session",
+      maxDailySpawns: "Max daily spawns",
+    },
+    sidebar: {
+      showWorkers: "Show worker sessions",
+      hideWorkers: "Hide worker sessions",
+    },
+  },
 } as const;
 
 type DeepStringify<T> = {

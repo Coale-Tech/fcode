@@ -1,6 +1,7 @@
 import type { CSSProperties, SVGProps } from "react";
 import {
   Activity,
+  Columns,
   AppWindow,
   Archive,
   ArchiveRestore,
@@ -248,6 +249,7 @@ export const IconTriangleAlert = icon(TriangleAlert);
 /* Password field reveal toggle (see PasswordInput). */
 export const IconEye = icon(Eye);
 export const IconEyeOff = icon(EyeOff);
+export const IconKanban = icon(Columns);
 
 export function IconStop({ size = 16, style, ...props }: IconProps) {
   return (

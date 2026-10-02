@@ -2887,7 +2887,50 @@ sklm: {
       "computer": "Computer",
       "ida": "IDA"
     }
+  },
+  "kanban": {
+    "title": "Kanban",
+    "empty": "Noch keine Karten. Erstellen Sie eine, um zu beginnen.",
+    "newCard": "Neue Karte",
+    "addCard": "Karte hinzufügen",
+    "columns": {
+      "triage": "Triage",
+      "todo": "Aufgaben",
+      "ready": "Bereit",
+      "running": "Läuft",
+      "blocked": "Blockiert",
+      "done": "Erledigt"
+    },
+    "card": {
+      "comment": "Kommentar hinzufügen…",
+      "archive": "Archivieren",
+      "unarchive": "Dearchivieren",
+      "moveTo": "Verschieben nach…",
+      "showRuns": "Läufe anzeigen",
+      "nudge": "Anstoßen",
+      "needsApproval": "Genehmigung erforderlich",
+      "blocked": "Blockiert",
+      "gaveUp": "Aufgegeben"
+    },
+    "dispatcher": {
+      "pause": "Dispatcher pausieren",
+      "resume": "Dispatcher fortsetzen",
+      "paused": "Dispatcher pausiert"
+    },
+    "settings": {
+      "title": "Kanban-Einstellungen",
+      "enabled": "Kanban-Board aktivieren",
+      "maxInProgress": "Max. in Bearbeitung",
+      "maxRuntimeSeconds": "Max. Laufzeit (Sekunden)",
+      "maxAgentCardsPerSession": "Max. Agentenkarten pro Sitzung",
+      "maxDailySpawns": "Max. tägliche Starts"
+    },
+    "sidebar": {
+      "showWorkers": "Arbeitersitzungen anzeigen",
+      "hideWorkers": "Arbeitersitzungen ausblenden"
+    }
   }
+
 } satisfies EnglishCatalog;
 
 export default de;

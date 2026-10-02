@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "../stores/app-store";
 import { memoryHealth } from "../features/settings/MemoryTab";
 import {
   IconChat,
   IconClock,
+  IconKanban,
   IconMonitor,
   IconPlug,
   IconServer,
@@ -30,6 +32,13 @@ export function NavRail() {
   const canNavBack = useAppStore((s) => s.canNavBack);
   const memStatus = useAppStore((s) => s.memoryStatus);
   const mHealth = memoryHealth(memStatus);
+  // Fetch once on mount; tolerate missing API gracefully.
+  const [kanbanEnabled, setKanbanEnabled] = useState(false);
+  useEffect(() => {
+    import("../lib/api").then(({ api }) =>
+      api.kanbanSettingsGet().then((res) => setKanbanEnabled(res.settings.enabled)).catch(() => {})
+    ).catch(() => {});
+  }, []);
 
   return (
     <nav className="nav-rail sidebar-surface" aria-label="Primary">
@@ -83,6 +92,19 @@ export function NavRail() {
         >
           <IconClock size={16} aria-hidden />
         </TooltipButton>
+        {kanbanEnabled && (
+          <TooltipButton
+            type="button"
+            className={cx("nav-rail-btn", page === "kanban" && "active")}
+            data-nav="kanban"
+            tooltip={t("kanban.title")}
+            ariaLabel={t("kanban.title")}
+            onClick={() => setPage("kanban")}
+            aria-pressed={page === "kanban"}
+          >
+            <IconKanban size={16} aria-hidden />
+          </TooltipButton>
+        )}
         <TooltipButton
           type="button"
           className={cx("nav-rail-btn", page === "plugins" && "active")}

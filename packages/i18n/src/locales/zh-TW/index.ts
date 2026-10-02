@@ -2875,7 +2875,50 @@ sklm: {
       computer: "電腦",
       ida: "IDA",
     },
+  },
+  "kanban": {
+    "title": "看板",
+    "empty": "尚無卡片，建立一張開始吧。",
+    "newCard": "新增卡片",
+    "addCard": "加入卡片",
+    "columns": {
+      "triage": "分類",
+      "todo": "待辦",
+      "ready": "就緒",
+      "running": "進行中",
+      "blocked": "阻塞",
+      "done": "完成"
+    },
+    "card": {
+      "comment": "新增評論…",
+      "archive": "封存",
+      "unarchive": "取消封存",
+      "moveTo": "移至…",
+      "showRuns": "查看執行記錄",
+      "nudge": "提醒",
+      "needsApproval": "需要核准",
+      "blocked": "已阻塞",
+      "gaveUp": "已放棄"
+    },
+    "dispatcher": {
+      "pause": "暫停調度器",
+      "resume": "恢復調度器",
+      "paused": "調度器已暫停"
+    },
+    "settings": {
+      "title": "看板設定",
+      "enabled": "啟用看板",
+      "maxInProgress": "最大進行中數量",
+      "maxRuntimeSeconds": "最大執行時長（秒）",
+      "maxAgentCardsPerSession": "每會話最大代理卡片數",
+      "maxDailySpawns": "每日最大啟動次數"
+    },
+    "sidebar": {
+      "showWorkers": "顯示工作階段",
+      "hideWorkers": "隱藏工作階段"
+    }
   }
+
 } satisfies EnglishCatalog;
 
 export default zhTW;

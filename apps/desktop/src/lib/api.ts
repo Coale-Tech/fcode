@@ -160,6 +160,9 @@ import type {
   OmpExtensionListResult,
   OmpExtensionMutateResult,
   OmpBashResult,
+  KanbanBoard,
+  KanbanSettings,
+  KanbanRun,
 } from "@pi-desktop/shared";
 import {
   defaultCommandShellForPlatform,
@@ -1830,4 +1833,37 @@ export const api = {
   /** Set the omp event filter; null = all events, string[] = allowlist. */
   ompSetEventFilter: (events: string[] | null) =>
     invoke<void>(IPC.invoke.ompSetEventFilter, { events }),
+  /** Kanban: list all tasks, links, comments, runs. */
+  kanbanList: () =>
+    invoke<{ board: KanbanBoard }>(IPC.invoke.kanbanList),
+  /** Kanban: create a new user task card. Returns the new taskId. */
+  kanbanCreate: (input: { title: string; body: string; projectPath: string; priority?: number }) =>
+    invoke<{ taskId: string }>(IPC.invoke.kanbanCreate, input),
+  /** Kanban: move a task to a different status column. */
+  kanbanMove: (taskId: string, status: string) =>
+    invoke<{ board: KanbanBoard }>(IPC.invoke.kanbanMove, { taskId, status }),
+  /** Kanban: add a parent→child link between tasks. */
+  kanbanLink: (parentId: string, childId: string) =>
+    invoke<{ board: KanbanBoard }>(IPC.invoke.kanbanLink, { parentId, childId }),
+  /** Kanban: add a comment to a task. */
+  kanbanComment: (taskId: string, body: string) =>
+    invoke<{ board: KanbanBoard }>(IPC.invoke.kanbanComment, { taskId, body }),
+  /** Kanban: archive or unarchive a task. */
+  kanbanArchive: (taskId: string, archived: boolean) =>
+    invoke<{ board: KanbanBoard }>(IPC.invoke.kanbanArchive, { taskId, archived }),
+  /** Kanban: list runs for a given task. */
+  kanbanListRuns: (taskId: string) =>
+    invoke<{ runs: KanbanRun[] }>(IPC.invoke.kanbanListRuns, { taskId }),
+  /** Kanban: get current settings (enabled, caps). */
+  kanbanSettingsGet: () =>
+    invoke<{ settings: KanbanSettings }>(IPC.invoke.kanbanSettingsGet),
+  /** Kanban: update settings. */
+  kanbanSettingsSet: (settings: Partial<KanbanSettings>) =>
+    invoke<{ settings: KanbanSettings }>(IPC.invoke.kanbanSettingsSet, { settings }),
+  /** Kanban: pause or resume the dispatcher. */
+  kanbanSetPaused: (paused: boolean) =>
+    invoke<void>(IPC.invoke.kanbanSetPaused, { paused }),
+  /** Kanban: trigger an immediate dispatcher tick. */
+  kanbanNudge: () =>
+    invoke<void>(IPC.invoke.kanbanNudge),
 };

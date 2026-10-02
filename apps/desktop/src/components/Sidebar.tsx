@@ -464,6 +464,8 @@ export function Sidebar({
   }, [selectedIds.size, sessionMenu, projectMenu, sectionMenu, sortOpen]);
 
   const showArchived = sessionView.archived;
+  const showKanbanSessions = useAppStore((s) => s.showKanbanSessions);
+  const setShowKanbanSessions = useAppStore((s) => s.setShowKanbanSessions);
   const sessionSort = sessionView.sort;
   const displaySessionSort: Exclude<SessionSort, "manual"> =
     sessionSort === "manual" ? "recent" : sessionSort;
@@ -631,11 +633,11 @@ export function Sidebar({
       : sessions.filter(
           (session) => !sessionArchived(session, sessionMeta[session.id]),
         );
-    // Empty sessions are durable sidebar rows now. Their message count, not
-    // their title, controls New Task reuse, so a manual rename never changes
-    // the empty-slot behavior.
-    return candidates;
-  }, [sessions, showArchived, sessionMeta]);
+    // HD4: hide [kanban] worker sessions by default; toggle via showKanbanSessions.
+    return showKanbanSessions
+      ? candidates
+      : candidates.filter((s) => !s.title?.startsWith("[kanban]"));
+  }, [sessions, showArchived, showKanbanSessions, sessionMeta]);
 
   const compareSessions = useCallback((a: SessionSummary, b: SessionSummary) => {
     const aMeta = sessionMeta[a.id] ?? {};
@@ -2067,6 +2069,10 @@ export function Sidebar({
           <button type="button" role="menuitemcheckbox" aria-checked={showArchived} data-action="toggle-show-archived" onClick={toggleShowArchived}>
             <span>{showArchived ? t("nav.hideArchived", { defaultValue: "Hide archived" }) : t("nav.showArchived", { defaultValue: "Show archived" })}</span>
             <span className={`sidebar-checkbox ${showArchived ? "checked" : ""}`}>{showArchived ? "✓" : ""}</span>
+          </button>
+          <button type="button" role="menuitemcheckbox" aria-checked={showKanbanSessions} data-action="toggle-show-kanban-sessions" onClick={() => setShowKanbanSessions(!showKanbanSessions)}>
+            <span>{showKanbanSessions ? t("kanban.sidebar.hideWorkers") : t("kanban.sidebar.showWorkers")}</span>
+            <span className={`sidebar-checkbox ${showKanbanSessions ? "checked" : ""}`}>{showKanbanSessions ? "✓" : ""}</span>
           </button>
         </div>,
       );
