@@ -2208,6 +2208,7 @@ sklm: {
     "session-tree": "Oturum geçmişi",
       tools: "Araçlar",
       activity: "Etkinlik",
+      worktree: "Çalışma ağaçları",
     },
     pluginView: {
       failed: "Bu görünüm yüklenemedi. Eklentiyi yeniden yükleyip deneyin.",

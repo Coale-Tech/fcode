@@ -2218,6 +2218,7 @@ sklm: {
     "session-tree": "세션 기록",
       tools: "도구",
       activity: "활동",
+      worktree: "작업 트리",
     },
     pluginView: {
       failed: "이 화면을 불러올 수 없습니다. 플러그인을 새로 고친 후 다시 시도하세요.",

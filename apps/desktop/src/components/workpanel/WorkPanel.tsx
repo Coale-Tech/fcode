@@ -25,6 +25,7 @@ import {
   pluginWorkPanelTab,
   SESSION_TREE_TAB,
   TOOLS_TAB,
+  WORKTREE_TAB,
   subagentTabDisplayLabels,
   toolWorkPanelTab,
 } from "../../lib/work-panel-tabs";
@@ -47,6 +48,7 @@ import {
   IconPlug,
   IconPlus,
   IconWrench,
+  IconFolder,
 } from "../icons";
 import { ReviewTab } from "./ReviewTab";
 import { OmpActivityTab } from "../../features/work-panel/OmpActivityTab";
@@ -54,6 +56,7 @@ import { FilesTab } from "./FilesTab";
 import { PluginViewTab } from "./PluginViewTab";
 import { SubagentTranscriptTab } from "./SubagentTranscriptTab";
 import { OmpSessionTreeTab } from "../../features/work-panel/OmpSessionTreeTab";
+import { OmpWorktreeTab } from "../../features/work-panel/OmpWorktreeTab";
 import { ToolsPanelTab } from "../../features/work-panel/ToolsPanelTab";
 import { WorkTabEmpty } from "./WorkTabEmpty";
 import {
@@ -75,6 +78,7 @@ const TAB_ICONS = {
   "session-tree": IconBranch,
   tools: IconWrench,
   activity: IconActivity,
+  worktree: IconFolder,
 } as const;
 
 type WorkPanelResizeState = {
@@ -170,6 +174,12 @@ function workPanelTools(
       tab: TOOLS_TAB,
       label: t("panel.tabs.tools"),
       icon: IconWrench,
+    },
+    {
+      id: "worktree",
+      tab: WORKTREE_TAB,
+      label: t("panel.tabs.worktree"),
+      icon: IconFolder,
     },
     ...pluginViews.map((view) => {
       const Icon = pluginViewIcon(view.icon);
@@ -992,6 +1002,16 @@ export function WorkPanel({
               aria-labelledby={`work-panel-tab-${activeTab.id}`}
             >
               <ToolsPanelTab sessionId={activeSessionId} />
+            </div>
+          )}
+          {activeTab?.kind === "worktree" && (
+            <div
+              id={`work-panel-surface-${activeTab.id}`}
+              className="work-panel-tabpane"
+              role="tabpanel"
+              aria-labelledby={`work-panel-tab-${activeTab.id}`}
+            >
+              <OmpWorktreeTab />
             </div>
           )}
           {activeTab?.kind === "file" && (

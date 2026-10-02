@@ -38,8 +38,8 @@ Row counts: **surfaced 107** · **partial 31** · **missing 86** · **total 224*
 | `set_fast_mode` | `rpc-types.ts:39` | `bridge.ts:860` `omp.fast.set`; `omp-ipc.ts:433–438`; `api.ts:1788` `ompFastSet`; `ContextUsageInspector.tsx` toggle | surfaced | Toggled in context inspector popover alongside auto-compact |
 | `get_available_commands` | `rpc-types.ts:40` | `bridge.ts:571` via `omp.commands.list` | surfaced | Merged into composer autocomplete (`use-composer-autocomplete.ts:136`) |
 | `get_entries` | `rpc-types.ts:41` | `bridge.ts:836` `omp.session.entries`; `omp-ipc.ts:285–291`; `api.ts:1758` `ompSessionEntries`; `OmpSessionTreeTab.tsx:48` | surfaced | Session history tab in Work Panel; renders entry list; click to fork |
-| `get_tree` | `rpc-types.ts:42` | removed (feat/018-d): bridge/IPC/API/type deleted | surfaced | Dead surface removed; `OmpSessionTreeTab` uses `get_entries`; zero callers confirmed |
-| `set_todos` | `rpc-types.ts:43` | `bridge.ts:832` `omp.session.setTodos`; `omp-ipc.ts:276–283`; `api.ts:1755` `ompSessionSetTodos`; `OmpTodoPanel.tsx` edit (feat/018-d) | surfaced | `OmpTodoPanel` now calls `set_todos` via `editTodosWithRevert`; error surfaces inline; agent events win on conflict |
+| `get_tree` | `rpc-types.ts:42` | `bridge.ts:840` `omp.session.tree`; `omp-ipc.ts:293–297`; `api.ts:1761` `ompSessionTree` | partial | Bridge+IPC+API wired; `OmpSessionTreeTab` uses `get_entries` not `get_tree`; no confirmed renderer consumer |
+| `set_todos` | `rpc-types.ts:43` | `bridge.ts:832` `omp.session.setTodos`; `omp-ipc.ts:276–283`; `api.ts:1755` `ompSessionSetTodos` | partial | Bridge+IPC+API wired; `OmpTodoPanel.tsx` reads `todo_reminder` events only, does not call `set_todos` |
 | `set_host_tools` | `rpc-types.ts:44` | `bridge.ts:947` auto on handshake | surfaced | Registers `fcode_bench_execute`, `fcode_bench_run`, `fcode_canvas` tools |
 | `set_host_uri_schemes` | `rpc-types.ts:45` | none | missing | Not bridged; no custom URI scheme host |
 | `set_subagent_subscription` | `rpc-types.ts:46` | `bridge.ts:677` auto on first prompt | surfaced | Level `progress` subscribed once per omp process |
@@ -468,7 +468,7 @@ Row counts: **surfaced 107** · **partial 31** · **missing 86** · **total 224*
 
 3. **`set_fast_mode` / `set_auto_retry` / `abort_retry`** — ✅ surfaced (PR fix/audit-bridge-rpc): toggles added to `ContextUsageInspector`; abort-retry in transcript menu.
 
-4. ✅ **`get_tree` / `set_todos`** — `get_tree`: dead surface removed (feat/018-d); bridge/IPC/API/type deleted, zero callers confirmed. `set_todos`: surfaced (feat/018-d) — `OmpTodoPanel` now calls `set_todos` with editable todo support. `get_branch_messages`: still partial (bridge+IPC+API wired; no confirmed renderer consumer).
+4. **`get_tree` / `get_branch_messages` / `set_todos`** — bridge+IPC+API wired; no confirmed renderer consumer. `OmpSessionTreeTab` already uses `get_entries`; tree/branch-messages could add depth.
 
 5. **Browser/eval/computer/IDA live panels** — events visible in transcript with rich tool rows; still no live viewports. Browser preview and Python REPL panels would close the IDE gap for Frappe developers testing web forms.
 

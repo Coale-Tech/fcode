@@ -2201,7 +2201,8 @@ sklm: {
       "subagent": "Sous-agent",
     "session-tree": "Historique de session",
       "tools": "Outils",
-      "activity": "Activité"
+      "activity": "Activité",
+      "worktree": "Arbres de travail"
     },
     "pluginView": {
       "failed": "Cette vue n'a pas pu être chargée. Rechargez le plugin et réessayez.",

@@ -2188,6 +2188,7 @@ sklm: {
     "session-tree": "工作階段歷史",
       tools: "工具",
       activity: "活動",
+      worktree: "工作樹",
     },
     pluginView: {
       failed: "無法載入該檢視。請重新載入外掛後重試。",

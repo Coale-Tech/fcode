@@ -2153,6 +2153,7 @@ export const ptBR = {
     "session-tree": "Histórico de sessão",
       tools: "Ferramentas",
       activity: "Atividade",
+      worktree: "Árvores de trabalho",
     },
     pluginView: {
       failed: "Não foi possível carregar esta visualização. Recarregue o plugin e tente novamente.",

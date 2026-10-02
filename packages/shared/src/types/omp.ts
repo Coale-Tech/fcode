@@ -382,6 +382,13 @@ export interface OmpSessionEntry {
   message?: { role?: string; content?: unknown };
 }
 
+/** Result of `omp.session.entries`. */
+export interface OmpSessionEntriesResult {
+  entries: OmpSessionEntry[];
+  leafId: string | null;
+}
+
+
 /** A message summary for a branch entry, returned by `get_branch_messages`. */
 export interface OmpBranchMessage {
   entryId: string;

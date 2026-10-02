@@ -2188,6 +2188,7 @@ sklm: {
     "session-tree": "会话历史",
       tools: "工具",
       activity: "活动",
+      worktree: "工作树",
     },
     pluginView: {
       failed: "无法加载该视图。请重新加载插件后重试。",

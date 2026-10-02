@@ -2201,7 +2201,8 @@ sklm: {
       "subagent": "Subagent",
     "session-tree": "Sitzungsverlauf",
       "tools": "Werkzeuge",
-      "activity": "Aktivität"
+      "activity": "Aktivität",
+      "worktree": "Arbeitsbäume"
     },
     "pluginView": {
       "failed": "Diese Ansicht konnte nicht geladen werden. Laden Sie das Plugin neu und versuchen Sie es erneut.",

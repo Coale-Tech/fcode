@@ -2220,6 +2220,7 @@ sklm: {
       "session-tree": "Session history",
       tools: "Tools",
       activity: "Activity",
+      worktree: "Worktrees",
     },
     pluginView: {
       failed: "This view could not be loaded. Reload the plugin and try again.",
