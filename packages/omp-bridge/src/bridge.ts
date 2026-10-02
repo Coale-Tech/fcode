@@ -36,6 +36,7 @@ import {
   serializeAskAnswers,
 } from "./ui-requests.js";
 import type { OmpExtensionUiRequest } from "./ui-requests.js";
+import { adaptMessageFrame } from "./messages.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Binary resolution (T7 / DX6)
@@ -580,6 +581,8 @@ export class OmpBridge {
   private openTools = new Map<string, { toolCallId: string; toolName: string }>();
   /** Tracks in-flight `prompt` calls awaiting their terminal prompt_result frame. */
   private promptResultPending = new Map<string, { sessionId: string; turnId: string }>();
+  /** Session/turn of the most recent prompt; omp frames don't carry them. */
+  private activeTurn?: { sessionId: string; turnId: string };
   /** Handshake timer — cleared when omp emits "ready" (E9 / failure-handling). */
   private readyTimer: NodeJS.Timeout | null = null;
   /** Optional trace writer set by main() when FCODE_BRIDGE_TRACE=1. */
@@ -1151,6 +1154,7 @@ export class OmpBridge {
     // prompt_result frame correlated on the same id (see handleOmpFrame).
     const promptId = randomUUID();
     this.promptResultPending.set(promptId, { sessionId, turnId });
+    this.activeTurn = { sessionId, turnId };
     const ack = (await this.ompCall({ type: "prompt", message: content, turnId }, promptId)) as {
       agentInvoked?: boolean;
     };
@@ -1393,30 +1397,31 @@ export class OmpBridge {
     }
 
     if (PASSTHROUGH_EVENTS.has(eventType)) {
+      // omp frames carry no sessionId/turnId: stamp the one active prompt.
+      const turn = this.activeTurn;
+      const sessionId = turn?.sessionId ?? String(frame.sessionId ?? "");
       // Track open tool calls (for synthesizing toolCallId when ui_request arrives).
       if (eventType === "tool_start") {
-        const sessionId = String(frame.sessionId ?? "");
         this.openTools.set(sessionId, {
           toolCallId: String(frame.toolCallId ?? frame.id ?? ""),
           toolName: String(frame.toolName ?? ""),
         });
       }
-      if (eventType === "tool_end") {
-        const sessionId = String(frame.sessionId ?? "");
-        this.openTools.delete(sessionId);
-      }
+      if (eventType === "tool_end") this.openTools.delete(sessionId);
 
+      const event = eventType.startsWith("message_") ? adaptMessageFrame(frame) : frame;
+      if (!event) return;
       this.notify("agent.event", {
-        sessionId: frame.sessionId,
-        turnId: frame.turnId,
+        sessionId,
+        turnId: turn?.turnId ?? frame.turnId,
         ts: Date.now(),
-        event: frame,
+        event,
       });
     }
   }
 
   private handleUiRequest(req: OmpExtensionUiRequest): void {
-    const sessionId = String(req.sessionId ?? "unknown");
+    const sessionId = String(req.sessionId ?? this.activeTurn?.sessionId ?? "unknown");
     const openTool = this.openTools.get(sessionId);
 
     const mapped = mapExtensionUiRequest(req, sessionId, openTool);
