@@ -45,9 +45,9 @@ test("BenchPage.handleStop sends the selected bench's path so a mismatched stop 
     source.indexOf("const handleStop"),
     source.indexOf("const handleStop") + 400,
   );
-  assert.match(handleStop, /if\s*\(!selectedBench\)\s*return;/);
+  assert.match(handleStop, /async \(bench: BenchSummary\)/);
   assert.match(
     handleStop,
-    /invoke\(IPC\.invoke\.benchStop,\s*\{\s*benchPath:\s*selectedBench\.path\s*\}\)/,
+    /invoke\(IPC\.invoke\.benchStop,\s*\{\s*benchPath:\s*bench\.path\s*\}\)/,
   );
 });

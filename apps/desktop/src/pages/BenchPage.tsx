@@ -1,11 +1,15 @@
 /**
- * T4 — Bench cockpit: master-detail bench browser.
+ * Bench page: tabs + switcher (61 benches don't fit a sidebar list).
  *
- * Layout (Espresso E frame): context sidebar (256px bench list, with
- * unreadable discovery roots as failed entries) + island (selected bench:
- * header, sites/processes/one-shot commands on top, log console below).
+ * Layout (Espresso E frame): one island. Tab strip = "All benches" (filterable
+ * table, unreadable discovery roots as failed entries) + one closable tab per
+ * opened bench. A bench tab has a header switcher, Start/Stop, sites/processes/
+ * one-shot commands on top and the log console below.
  *
- * T16 — the bench detail pane cross-fades on bench selection at
+ * BenchSupervisor is single-bench: while another bench runs, every Start is
+ * disabled with a "Stop X first" cue (lib/bench-view startBlockedBy).
+ *
+ * T16 — the tab panel cross-fades on tab change at
  *         --motion-duration-fast / --motion-ease-out.
  *
  * DX12 — zero-bench empty state with copy-paste bench init commands and a
@@ -13,38 +17,33 @@
  *
  * Accessibility (design-phase D32):
  *   - <main> landmark with aria-label="Bench".
- *   - Bench list is a listbox with roving tabindex.
+ *   - Tab strip is a tablist with roving tabindex; switcher is a combobox.
  *   - Log viewer gains role="log" aria-live (inside LogView).
- *   - Focus returned to list on dialog close.
+ *   - Focus returned to the trigger on dialog close.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ErrorCodes, IPC, type Result } from "@pi-desktop/shared";
 import { useAppStore } from "../stores/app-store";
 import { LogView } from "../components/bench/LogView";
+import { AllBenches } from "../components/bench/AllBenches";
+import { StatusBadge, StatusDot } from "../components/bench/BenchBadges";
+import { BenchSwitcher } from "../components/bench/BenchSwitcher";
 import { DestructiveActionDialog } from "../components/DestructiveActionDialog";
-import { IconPlay, IconSquare } from "../components/icons";
+import { IconClose, IconPlay, IconSquare } from "../components/icons";
 import { api } from "../lib/api";
+import {
+  baseName,
+  benchStatusFor,
+  oneshotKey,
+  startBlockedBy,
+  startBlockedCue,
+  type BenchSite,
+  type BenchStatus,
+  type BenchSummary,
+} from "../lib/bench-view";
 import { DocTypeTree } from "../components/code/DocTypeTree";
 import { preferredFileWorkPanelTab } from "../lib/work-panel-tabs";
 import { useTranslation } from "react-i18next";
-
-// ── Types (mirrored from discovery.ts / supervisor.ts) ───────────────────────
-
-type BenchVersion = 15 | 16 | 17 | null; // null = unparseable (DX13)
-
-type BenchSite = {
-  name: string;
-  isDefault: boolean;
-};
-
-type BenchSummary = {
-  id: string;
-  path: string;
-  version: BenchVersion;
-  sites: BenchSite[];
-};
-
-type BenchStatus = "stopped" | "starting" | "running" | "failed";
 
 type LogLine = {
   ts: number;
@@ -101,7 +100,9 @@ export function BenchPage() {
   // Discovery
   const [benches, setBenches] = useState<BenchSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Tabs: "all" (the All benches table) or a bench id; openIds are the bench tabs in open order.
+  const [tab, setTab] = useState<string>("all");
+  const [openIds, setOpenIds] = useState<string[]>([]);
   // Gap 4 / T6: failed roots surfaced by discovery
   const [failedRoots, setFailedRoots] = useState<Array<{ root: string; reason: string }>>([]);
 
@@ -140,7 +141,8 @@ export function BenchPage() {
   // T16: cross-fade key for bench selection transition
   const [detailKey, setDetailKey] = useState(0);
 
-  const listRef = useRef<HTMLUListElement>(null);
+  // Bench whose log is in logLines (the supervisor streams one bench's log at a time).
+  const [logOwner, setLogOwner] = useState<string | null>(null);
 
   // ── Load bench list ───────────────────────────────────────────────────────
 
@@ -154,15 +156,16 @@ export function BenchPage() {
       }>(IPC.invoke.benchList);
       setBenches(discovered);
       setFailedRoots(failed ?? []);
-      if (discovered.length > 0 && !selectedId) {
-        setSelectedId(discovered[0].id);
-      }
+      // Drop tabs for benches that no longer exist.
+      const ids = discovered.map((b) => b.id);
+      setOpenIds((prev) => prev.filter((id) => ids.includes(id)));
+      setTab((prev) => (prev === "all" || ids.includes(prev) ? prev : "all"));
     } catch {
       // discovery error: show empty state
     } finally {
       setLoading(false);
     }
-  }, [selectedId]);
+  }, []);
 
   useEffect(() => {
     loadBenches();
@@ -259,15 +262,40 @@ export function BenchPage() {
   }, [status]);
 
 
-  // ── Bench selection ───────────────────────────────────────────────────────
+  // ── Tabs ──────────────────────────────────────────────────────────────────
 
-  const selectBench = useCallback((id: string) => {
-    setSelectedId(id);
+  const openBench = useCallback((id: string) => {
+    setOpenIds((ids) => (ids.includes(id) ? ids : [...ids, id]));
+    setTab(id);
     setDetailKey((k) => k + 1); // triggers T16 cross-fade
-    setLogLines([]);
   }, []);
 
-  const selectedBench = benches.find((b) => b.id === selectedId) ?? null;
+  const showAll = useCallback(() => {
+    setTab("all");
+    setDetailKey((k) => k + 1);
+  }, []);
+
+  const closeTab = useCallback(
+    (id: string) => {
+      const i = openIds.indexOf(id);
+      setOpenIds(openIds.filter((x) => x !== id));
+      if (tab === id) setTab(openIds[i - 1] ?? "all");
+    },
+    [openIds, tab],
+  );
+
+  const selectedBench = tab === "all" ? null : (benches.find((b) => b.id === tab) ?? null);
+  const openBenches = openIds
+    .map((id) => benches.find((b) => b.id === id))
+    .filter((b): b is BenchSummary => b !== undefined);
+
+  // A new bench taking over the supervisor owns the log from here on.
+  useEffect(() => {
+    if (activeBenchPath !== null && activeBenchPath !== logOwner) {
+      setLogOwner(activeBenchPath);
+      setLogLines([]);
+    }
+  }, [activeBenchPath, logOwner]);
 
   useEffect(() => {
     if (!selectedBench) {
@@ -286,13 +314,15 @@ export function BenchPage() {
   const displayStatus: BenchStatus =
     selectedBench && selectedBench.path === activeBenchPath ? status : "stopped";
 
-  // A different bench is running/starting while this one is selected —
-  // Start must be disabled, or clicking it either no-ops or (bench-ipc.ts)
-  // throws a CONFLICT the user never asked for (cross-bench Start bug).
-  const anotherBenchRunning =
-    (status === "running" || status === "starting") &&
-    activeBenchPath !== null &&
-    (!selectedBench || selectedBench.path !== activeBenchPath);
+  // BenchSupervisor runs one bench at a time: while a different bench runs,
+  // Start is disabled (it would be rejected with CONFLICT) and cues which
+  // bench to stop first. Same rule drives the All benches table.
+  const blocker = startBlockedBy(status, activeBenchPath, selectedBench?.path ?? null);
+  const tableBlocker = startBlockedBy(status, activeBenchPath, null);
+  const statusOf = useCallback(
+    (b: BenchSummary) => benchStatusFor(b.path, status, activeBenchPath),
+    [status, activeBenchPath],
+  );
 
   // Gap 3 / T6: tick the elapsed timer while the displayed bench is active
   useEffect(() => {
@@ -309,65 +339,67 @@ export function BenchPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [displayStatus]);
 
-  // ── Roving tabindex ───────────────────────────────────────────────────────
+  // ── Tab keyboard (roving tabindex) ────────────────────────────────────────
 
-  const handleListKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLUListElement>) => {
-      if (!benches.length) return;
-      const idx = benches.findIndex((b) => b.id === selectedId);
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        selectBench(benches[Math.min(idx + 1, benches.length - 1)].id);
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        selectBench(benches[Math.max(idx - 1, 0)].id);
-      } else if (e.key === "Home") {
-        e.preventDefault();
-        selectBench(benches[0].id);
-      } else if (e.key === "End") {
-        e.preventDefault();
-        selectBench(benches[benches.length - 1].id);
-      }
+  const handleTabKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      const order = ["all", ...openBenches.map((b) => b.id)];
+      const idx = order.indexOf(tab);
+      let next: number;
+      if (e.key === "ArrowRight") next = Math.min(idx + 1, order.length - 1);
+      else if (e.key === "ArrowLeft") next = Math.max(idx - 1, 0);
+      else if (e.key === "Home") next = 0;
+      else if (e.key === "End") next = order.length - 1;
+      else return;
+      e.preventDefault();
+      setTab(order[next]);
+      setDetailKey((k) => k + 1);
+      document.getElementById(`bench-tab-${order[next]}`)?.focus();
     },
-    [benches, selectedId, selectBench],
+    [openBenches, tab],
   );
 
   // ── Start / stop ──────────────────────────────────────────────────────────
 
-  const handleStart = useCallback(async () => {
-    if (!selectedBench) return;
-    // Gap 1 / T6: clear previous failure; Gap 5: clear warnings; Gap 3: start timer
-    setStartFailure(null);
-    setWarnings([]);
-    startMsRef.current = Date.now();
-    try {
-      await invoke(IPC.invoke.benchStart, { benchPath: selectedBench.path });
-      setStatus("starting");
-      setActiveBenchPath(selectedBench.path);
-    } catch (err) {
-      startMsRef.current = null;
-      const errorCode = err instanceof Error ? (err as Error & { errorCode?: string }).errorCode : undefined;
-      if (errorCode === ErrorCodes.CONFLICT) {
-        setStartFailure({
-          benchPath: selectedBench.path,
-          failure: {
-            code: ErrorCodes.CONFLICT,
-            problem: "Can't start this bench",
-            cause: err instanceof Error ? err.message : String(err),
-            fix: "Stop the running bench, then retry.",
-            docsUrl: "",
-          },
-        });
-      } else {
-        console.error("[BenchPage] start failed", err);
+  const handleStart = useCallback(
+    async (bench: BenchSummary) => {
+      // The control is disabled while another bench runs; this covers a click
+      // that raced the status poll.
+      if (startBlockedBy(status, activeBenchPath, bench.path)) return;
+      // Gap 1 / T6: clear previous failure; Gap 5: clear warnings; Gap 3: start timer
+      setStartFailure(null);
+      setWarnings([]);
+      setLogLines([]);
+      startMsRef.current = Date.now();
+      try {
+        await invoke(IPC.invoke.benchStart, { benchPath: bench.path });
+        setStatus("starting");
+        setActiveBenchPath(bench.path);
+      } catch (err) {
+        startMsRef.current = null;
+        const errorCode = err instanceof Error ? (err as Error & { errorCode?: string }).errorCode : undefined;
+        if (errorCode === ErrorCodes.CONFLICT) {
+          setStartFailure({
+            benchPath: bench.path,
+            failure: {
+              code: ErrorCodes.CONFLICT,
+              problem: "Can't start this bench",
+              cause: err instanceof Error ? err.message : String(err),
+              fix: "Stop the running bench, then retry.",
+              docsUrl: "",
+            },
+          });
+        } else {
+          console.error("[BenchPage] start failed", err);
+        }
       }
-    }
-  }, [selectedBench]);
+    },
+    [status, activeBenchPath],
+  );
 
-  const handleStop = useCallback(async () => {
-    if (!selectedBench) return;
+  const handleStop = useCallback(async (bench: BenchSummary) => {
     try {
-      await invoke(IPC.invoke.benchStop, { benchPath: selectedBench.path });
+      await invoke(IPC.invoke.benchStop, { benchPath: bench.path });
       setStatus("stopped");
       setActiveBenchPath(null);
       // Gap 3 / T6: clear timer on explicit stop
@@ -378,7 +410,7 @@ export function BenchPage() {
     } catch (err) {
       console.error("[BenchPage] stop failed", err);
     }
-  }, [selectedBench]);
+  }, []);
 
   // Gap 2 / T6: track per-verb one-shot state (result of runOneShot)
   // Consequences for destructive verbs (T8 — plan D14)
@@ -391,11 +423,12 @@ export function BenchPage() {
     async (verb: string, site: string | undefined) => {
       if (!selectedBench) return;
       const t0 = Date.now();
-      setOneshotState((prev) => {
-        const next = new Map(prev);
-        next.set(verb, { status: "running" });
-        return next;
-      });
+      // Keyed by bench path: results belong to the bench they ran on, so
+      // switching tabs mid-run never shows or blocks another bench's verb.
+      const key = oneshotKey(selectedBench.path, verb);
+      const setEntry = (entry: OneshotEntry) =>
+        setOneshotState((prev) => new Map(prev).set(key, entry));
+      setEntry({ status: "running" });
       try {
         const result = await invoke<{ exitCode: number; output: string }>(IPC.invoke.benchRun, {
           benchPath: selectedBench.path,
@@ -404,26 +437,14 @@ export function BenchPage() {
         });
         const elapsed = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
         if (result.exitCode === 0) {
-          setOneshotState((prev) => {
-            const next = new Map(prev);
-            next.set(verb, { status: "ok", elapsed });
-            return next;
-          });
+          setEntry({ status: "ok", elapsed });
         } else {
           const tail = result.output.split("\n").slice(-20).join("\n");
-          setOneshotState((prev) => {
-            const next = new Map(prev);
-            next.set(verb, { status: "error", elapsed, output: tail });
-            return next;
-          });
+          setEntry({ status: "error", elapsed, output: tail });
         }
       } catch (err) {
         const elapsed = `${((Date.now() - t0) / 1000).toFixed(1)}s`;
-        setOneshotState((prev) => {
-          const next = new Map(prev);
-          next.set(verb, { status: "error", elapsed, output: String(err) });
-          return next;
-        });
+        setEntry({ status: "error", elapsed, output: String(err) });
       }
     },
     [selectedBench],
@@ -518,114 +539,126 @@ export function BenchPage() {
 
   return (
     <main className="wb-page bench-page" aria-label="Bench">
-      <aside className="context-sidebar">
-        <nav aria-label="Discovered benches" className="wb-sidebar-nav">
-          <div className="wb-sidebar-hd">
-            <span>Benches</span>
-            {!loading && <span className="wb-count">{benches.length}</span>}
-          </div>
+      <section className="island" aria-label="Benches">
+        <div className="wb-btabs" role="tablist" aria-label="Bench tabs" onKeyDown={handleTabKeyDown}>
+          <button
+            type="button"
+            role="tab"
+            id="bench-tab-all"
+            aria-selected={tab === "all"}
+            aria-controls="bench-panel"
+            tabIndex={tab === "all" ? 0 : -1}
+            className={`wb-btab${tab === "all" ? " is-active" : ""}`}
+            onClick={showAll}
+          >
+            All benches
+            {!loading && <span className="wb-badge wb-badge-gray">{benches.length}</span>}
+          </button>
+          {openBenches.map((b) => {
+            const name = baseName(b.path);
+            return (
+              <div key={b.id} className={`wb-btab-wrap${tab === b.id ? " is-active" : ""}`}>
+                <button
+                  type="button"
+                  role="tab"
+                  id={`bench-tab-${b.id}`}
+                  aria-selected={tab === b.id}
+                  aria-controls="bench-panel"
+                  tabIndex={tab === b.id ? 0 : -1}
+                  className="wb-btab"
+                  title={b.path}
+                  onClick={() => openBench(b.id)}
+                >
+                  <StatusDot status={statusOf(b)} />
+                  <span className="wb-truncate">{name}</span>
+                </button>
+                <button
+                  type="button"
+                  className="wb-btab-close"
+                  aria-label={`Close ${name}`}
+                  onClick={() => closeTab(b.id)}
+                >
+                  <IconClose size={12} aria-hidden="true" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
 
-          {loading ? (
+        {/* T16: keyed so the fade-in replays on tab change */}
+        <div
+          key={detailKey}
+          id="bench-panel"
+          role="tabpanel"
+          aria-labelledby={`bench-tab-${selectedBench ? selectedBench.id : "all"}`}
+          className="wb-tabpanel wb-fade-in"
+        >
+          {selectedBench ? (
+            <BenchDetail
+              bench={selectedBench}
+              benches={benches}
+              statusOf={statusOf}
+              onPick={(b) => openBench(b.id)}
+              onShowAll={showAll}
+              status={displayStatus}
+              blocker={blocker}
+              logLines={logOwner === selectedBench.path ? logLines : []}
+              followTail={followTail}
+              onFollowTailChange={setFollowTail}
+              onStart={() => void handleStart(selectedBench)}
+              onStop={() => void handleStop(selectedBench)}
+              onRun={handleRun}
+              onOpenDocTypeFile={handleOpenDocTypeFile}
+              elapsedLabel={elapsedLabel}
+              // Stale failures from a different bench must not follow the
+              // selection here or into Retry's onStart (cross-bench Start-
+              // failure leak) — see selectVisibleStartFailure above.
+              startFailure={selectVisibleStartFailure(startFailure, selectedBench)}
+              warnings={warnings}
+              oneshotState={oneshotState}
+              migrateSite={migrateSite}
+              onMigrateSiteChange={setMigrateSite}
+              onMigrateDocTypes={docTypeMigrateAction}
+            />
+          ) : loading ? (
             <BenchListSkeleton />
+          ) : benches.length === 0 && failedRoots.length === 0 ? (
+            <ZeroBenchState />
           ) : (
-            benches.length > 0 && (
-              <ul
-                ref={listRef}
-                role="listbox"
-                aria-label="Select a bench"
-                aria-activedescendant={selectedId ? `bench-item-${selectedId}` : undefined}
-                onKeyDown={handleListKeyDown}
-                className="wb-list"
-              >
-                {benches.map((bench) => {
-                  const isSelected = bench.id === selectedId;
-                  const defaultSite = bench.sites.find((s) => s.isDefault)?.name;
-                  return (
-                    <li
-                      key={bench.id}
-                      id={`bench-item-${bench.id}`}
-                      role="option"
-                      aria-selected={isSelected}
-                      tabIndex={isSelected ? 0 : -1}
-                      onClick={() => selectBench(bench.id)}
-                      className={`wb-row${isSelected ? " is-active" : ""}`}
-                    >
+            <>
+              {benches.length > 0 && (
+                <AllBenches
+                  benches={benches}
+                  statusOf={statusOf}
+                  blocker={tableBlocker}
+                  onOpen={(b) => openBench(b.id)}
+                  onStart={(b) => void handleStart(b)}
+                  onStop={(b) => void handleStop(b)}
+                />
+              )}
+              {/* Gap 4 / T6: discovery roots that could not be read, as failed entries */}
+              {failedRoots.length > 0 && (
+                <div className="wb-failed-roots" role="alert">
+                  <p className="wb-sidebar-note">
+                    {benches.length > 0
+                      ? `${failedRoots.length} root${failedRoots.length > 1 ? "s" : ""} unreadable — fix permissions and refresh.`
+                      : "All discovery roots unreadable — fix permissions and refresh."}
+                  </p>
+                  {failedRoots.map((fr) => (
+                    <div key={fr.root} className="wb-row is-static" title={fr.root}>
                       <div className="wb-row-top">
-                        <span className="wb-row-name">{baseName(bench.path)}</span>
-                        <StatusBadge status={bench.path === activeBenchPath ? status : "stopped"} />
+                        <span className="wb-row-name">{baseName(fr.root)}</span>
+                        <StatusBadge status="failed" />
                       </div>
-                      <div className="wb-row-meta">
-                        {defaultSite && <span className="wb-truncate">{defaultSite}</span>}
-                        <VersionBadge version={bench.version} />
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )
-          )}
-
-          {/* Gap 4 / T6: discovery roots that could not be read, as failed entries */}
-          {!loading && failedRoots.length > 0 && (
-            <div className="wb-failed-roots" role="alert">
-              <p className="wb-sidebar-note">
-                {benches.length > 0
-                  ? `${failedRoots.length} root${failedRoots.length > 1 ? "s" : ""} unreadable — fix permissions and refresh.`
-                  : "All discovery roots unreadable — fix permissions and refresh."}
-              </p>
-              {failedRoots.map((fr) => (
-                <div key={fr.root} className="wb-row is-static" title={fr.root}>
-                  <div className="wb-row-top">
-                    <span className="wb-row-name">{baseName(fr.root)}</span>
-                    <StatusBadge status="failed" />
-                  </div>
-                  <div className="wb-row-error">{fr.reason}</div>
-                  <code className="wb-row-meta wb-mono wb-truncate">{fr.root}</code>
+                      <div className="wb-row-error">{fr.reason}</div>
+                      <code className="wb-row-meta wb-mono wb-truncate">{fr.root}</code>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
-        </nav>
-      </aside>
-
-      {/* Detail — T16: keyed so the fade-in replays on bench selection */}
-      <section
-        key={detailKey}
-        className="island wb-fade-in"
-        aria-label={selectedBench ? `Bench detail: ${selectedBench.path}` : "Bench detail"}
-      >
-        {selectedBench ? (
-          <BenchDetail
-            bench={selectedBench}
-            status={displayStatus}
-            anotherBenchRunning={anotherBenchRunning}
-            logLines={logLines}
-            followTail={followTail}
-            onFollowTailChange={setFollowTail}
-            onStart={handleStart}
-            onStop={handleStop}
-            onRun={handleRun}
-            onOpenDocTypeFile={handleOpenDocTypeFile}
-            elapsedLabel={elapsedLabel}
-            // Stale failures from a different bench must not follow the
-            // selection here or into Retry's onStart (cross-bench Start-
-            // failure leak) — see selectVisibleStartFailure above.
-            startFailure={selectVisibleStartFailure(startFailure, selectedBench)}
-            warnings={warnings}
-            oneshotState={oneshotState}
-            migrateSite={migrateSite}
-            onMigrateSiteChange={setMigrateSite}
-            onMigrateDocTypes={docTypeMigrateAction}
-          />
-        ) : loading ? null : benches.length === 0 && failedRoots.length === 0 ? (
-          <ZeroBenchState />
-        ) : (
-          <div className="wb-empty">
-            <p className="wb-muted">
-              {benches.length === 0 ? "Could not read any bench roots." : "Select a bench"}
-            </p>
-          </div>
-        )}
+        </div>
       </section>
 
       {/* T8 / T14: DestructiveActionDialog overlay — no auto-deny timer (plan D14/D31) */}
@@ -648,8 +681,12 @@ export function BenchPage() {
 
 function BenchDetail({
   bench,
+  benches,
+  statusOf,
+  onPick,
+  onShowAll,
   status,
-  anotherBenchRunning,
+  blocker,
   logLines,
   followTail,
   onFollowTailChange,
@@ -666,8 +703,13 @@ function BenchDetail({
   onMigrateDocTypes,
 }: {
   bench: BenchSummary;
+  benches: BenchSummary[];
+  statusOf: (bench: BenchSummary) => BenchStatus;
+  onPick: (bench: BenchSummary) => void;
+  onShowAll: () => void;
   status: BenchStatus;
-  anotherBenchRunning: boolean;
+  /** Path of the bench that blocks Start for this one, or null. */
+  blocker: string | null;
   logLines: LogLine[];
   followTail: boolean;
   onFollowTailChange: (v: boolean) => void;
@@ -683,13 +725,38 @@ function BenchDetail({
   onMigrateSiteChange: (site: string) => void;
   onMigrateDocTypes: ((el: HTMLButtonElement) => void) | undefined;
 }) {
+  const canStart = status === "stopped" || status === "failed";
+  // Nothing streams for a bench that is not running: collapse the empty log.
+  const logCollapsed = logLines.length === 0 && (status === "stopped" || status === "failed");
   return (
     <>
-      {/* Header */}
+      {/* Header: switcher, path, primary Start/Stop */}
       <header className="wb-island-hd">
-        <span className="wb-island-title">{baseName(bench.path)}</span>
-        <VersionBadge version={bench.version} />
+        <BenchSwitcher current={bench} benches={benches} statusOf={statusOf} onPick={onPick} onShowAll={onShowAll} />
         <span className="wb-path wb-truncate" title={bench.path}>{bench.path}</span>
+        {canStart && blocker && <span className="wb-muted wb-cue">{startBlockedCue(blocker)}</span>}
+        {canStart ? (
+          <button
+            type="button"
+            className="wb-btn wb-btn-solid"
+            onClick={onStart}
+            disabled={blocker !== null}
+            title={blocker ? startBlockedCue(blocker) : undefined}
+          >
+            <IconPlay size={14} aria-hidden="true" />
+            Start bench
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="wb-btn wb-btn-subtle"
+            onClick={onStop}
+            disabled={status === "starting"}
+          >
+            <IconSquare size={14} aria-hidden="true" />
+            Stop
+          </button>
+        )}
       </header>
 
       {/* Top of the console split: sites, processes, one-shot commands */}
@@ -698,9 +765,8 @@ function BenchDetail({
           <SiteList sites={bench.sites} />
           <ProcessPanel
             status={status}
-            anotherBenchRunning={anotherBenchRunning}
+            blocker={blocker}
             onStart={onStart}
-            onStop={onStop}
             elapsedLabel={elapsedLabel}
             startFailure={startFailure}
             warnings={warnings}
@@ -732,7 +798,7 @@ function BenchDetail({
         )}
         <div className="wb-cmds">
           {ONESHOT_VERBS.map((verb) => {
-            const vs = oneshotState.get(verb);
+            const vs = oneshotState.get(oneshotKey(bench.path, verb));
             return (
               <div key={verb} className="wb-cmd">
                 <button
@@ -772,24 +838,31 @@ function BenchDetail({
       </div>
 
       {/* Bottom of the console split: log viewer (T5) */}
-      <div className="wb-log">
-        <div className="wb-island-hd">
+      {logCollapsed ? (
+        <div className="wb-log-collapsed">
           <span className="wb-log-title">Log</span>
-          <button
-            type="button"
-            className="wb-btn wb-btn-ghost wb-btn-sm"
-            onClick={() => onFollowTailChange(!followTail)}
-          >
-            {followTail ? "⇊ following" : "⇊ follow"}
-          </button>
+          <span className="wb-muted">Starts when the bench starts</span>
         </div>
-        <LogView
-          lines={logLines}
-          followTail={followTail}
-          onFollowTailChange={onFollowTailChange}
-          className="bench-log-view"
-        />
-      </div>
+      ) : (
+        <div className="wb-log">
+          <div className="wb-island-hd">
+            <span className="wb-log-title">Log</span>
+            <button
+              type="button"
+              className="wb-btn wb-btn-ghost wb-btn-sm"
+              onClick={() => onFollowTailChange(!followTail)}
+            >
+              {followTail ? "⇊ following" : "⇊ follow"}
+            </button>
+          </div>
+          <LogView
+            lines={logLines}
+            followTail={followTail}
+            onFollowTailChange={onFollowTailChange}
+            className="bench-log-view"
+          />
+        </div>
+      )}
       {/* DocTypes panel — browse-only; never mutates on browse */}
       <div className="wb-doctypes">
         <div className="wb-sec-lbl">DocTypes</div>
@@ -825,17 +898,16 @@ function SiteList({ sites }: { sites: BenchSite[] }) {
 // selectVisibleStartFailure selector that decides its `startFailure` prop.
 export function ProcessPanel({
   status,
-  anotherBenchRunning,
+  blocker,
   onStart,
-  onStop,
   elapsedLabel,
   startFailure,
   warnings,
 }: {
-  anotherBenchRunning: boolean;
   status: BenchStatus;
+  /** Path of the bench that blocks Retry, or null. */
+  blocker: string | null;
   onStart: () => void;
-  onStop: () => void;
   elapsedLabel: string;
   startFailure: StartFailureState | null;
   warnings: string[];
@@ -843,27 +915,10 @@ export function ProcessPanel({
   return (
     <div className="wb-panel">
       <div className="wb-sec-lbl">Processes</div>
-      {/* Gap 3 / T6: status + elapsed */}
+      {/* Gap 3 / T6: status + elapsed (Start/Stop live in the header) */}
       <div className="wb-status-line">
         <StatusBadge status={status} />
         {elapsedLabel && <span className="wb-muted">{elapsedLabel}</span>}
-        <span className="wb-spacer" />
-        {status === "stopped" || status === "failed" ? (
-          <button type="button" className="wb-btn wb-btn-solid" onClick={onStart} disabled={anotherBenchRunning}>
-            <IconPlay size={14} aria-hidden="true" />
-            Start bench
-          </button>
-        ) : (
-          <button
-            type="button"
-            className="wb-btn wb-btn-subtle"
-            onClick={onStop}
-            disabled={status === "starting"}
-          >
-            <IconSquare size={14} aria-hidden="true" />
-            Stop
-          </button>
-        )}
       </div>
 
       {/* Gap 5 / T6: port-conflict warnings */}
@@ -897,7 +952,13 @@ export function ProcessPanel({
             </a>
           )}
           <div className="wb-actions">
-            <button type="button" className="wb-btn wb-btn-solid wb-btn-sm" onClick={onStart} disabled={anotherBenchRunning}>
+            <button
+              type="button"
+              className="wb-btn wb-btn-solid wb-btn-sm"
+              onClick={onStart}
+              disabled={blocker !== null}
+              title={blocker ? startBlockedCue(blocker) : undefined}
+            >
               Retry
             </button>
             {startFailure.logTail && (
@@ -919,27 +980,6 @@ export function ProcessPanel({
         </div>
       )}
     </div>
-  );
-}
-
-function VersionBadge({ version }: { version: BenchVersion }) {
-  if (version === null) {
-    return (
-      <span className="wb-badge wb-badge-amber" title="Frappe version undetected">
-        ?
-      </span>
-    );
-  }
-  return <span className="wb-badge wb-badge-gray">v{version}</span>;
-}
-
-function StatusBadge({ status }: { status: BenchStatus }) {
-  const hue = STATUS_HUES[status];
-  return (
-    <span className={`wb-badge wb-badge-${hue}`}>
-      <span className={`wb-dot wb-dot-${hue}`} aria-hidden="true" />
-      {STATUS_LABELS[status]}
-    </span>
   );
 }
 
@@ -1040,22 +1080,3 @@ function CopyCmd({
 
 const ONESHOT_VERBS = ["migrate", "clear-cache", "build"];
 
-// Status hues: Espresso reserves hue for status only (subtle badge + dot).
-const STATUS_HUES: Record<BenchStatus, "green" | "amber" | "red" | "gray"> = {
-  running: "green",
-  starting: "amber",
-  failed: "red",
-  stopped: "gray",
-};
-
-const STATUS_LABELS: Record<BenchStatus, string> = {
-  running: "Running",
-  starting: "Starting…",
-  failed: "Failed",
-  stopped: "Stopped",
-};
-
-/** Last path segment; discovery roots may be Windows paths. */
-function baseName(path: string): string {
-  return path.split(/[\\/]/).filter(Boolean).pop() ?? path;
-}
