@@ -122,7 +122,7 @@ import {
 import { createSessionLaunchRuntime } from "./runtime/session-launch";
 import { createSessionCoordination } from "./runtime/session-coordination";
 import { createScheduledRuntime } from "./runtime/scheduled";
-import { createKanbanRunner } from "./runtime/kanban-runner";
+import { createKanbanWiring } from "./runtime/kanban-wiring";
 import { readKanbanSettings, writeKanbanSettings } from "./runtime/kanban-settings";
 import { loadBoard, saveBoard } from "./runtime/kanban-store";
 import { createDesktopServices } from "./services/desktop-services";
@@ -1092,62 +1092,14 @@ const eventPersistence = createEventPersistence({
 });
 const { persistAgentEvent } = eventPersistence;
 
-// ── Kanban notification helper ─────────────────────────────────────────────────
-const emitKanbanMutation = (prev: import("./runtime/kanban-core").KanbanBoard, next: import("./runtime/kanban-core").KanbanBoard) => {
-  const labels = catalogs[resolveLocale(updaterLocale)];
-  for (const task of next.tasks) {
-    const old = prev.tasks.find((t) => t.id === task.id);
-    if (!old || old.status === task.status) continue;
-    if (task.status === "blocked" || task.status === "done") {
-      const msg = task.status === "blocked"
-        ? labels.kanban.notify.blocked.replace("{title}", task.title)
-        : labels.kanban.notify.done.replace("{title}", task.title);
-      sendToRenderer(IPC.event.toast, { message: msg });
-      const notification = {
-        id: crypto.randomUUID(),
-        kind: task.status === "done" ? "task.completed" : "task.failed",
-        sessionId: task.sessionId ?? task.id,
-        sessionTitle: task.title,
-        turnId: crypto.randomUUID(),
-        createdAt: new Date().toISOString(),
-        readAt: null,
-      } as const;
-      sendToRenderer(IPC.event.notificationChanged, { notification });
-    }
-  }
-};
-
-// ── Kanban runner (wired after event-persistence, before sidecar) ─────────────
-const kanbanRunner = createKanbanRunner({
-  getSettings: () => readKanbanSettings(dataDir),
-  getBoard: () => loadBoard(dataDir),
-  saveBoard: (board) => { void saveBoard(dataDir, board); },
-  createSession: async (input) => {
-    const h = host;
-    if (!h) throw new Error("host unavailable");
-    const res = await h.call<{ session?: { id?: string } | null }>("session.create", {
-      title: input.title,
-      projectPath: input.projectPath,
-      mode: "agent",
-    });
-    const sessionId = res.session?.id;
-    if (!sessionId) throw new Error("session.create returned no id");
-    return sessionId;
-  },
-  prompt: async (sessionId, content) => {
-    const h = host;
-    if (!h) throw new Error("host unavailable");
-    await h.call("agent.prompt", { sessionId, content });
-  },
-  notifyDailyCap: (maxSpawns) => {
-    const labels = catalogs[resolveLocale(updaterLocale)];
-    sendToRenderer(IPC.event.toast, { message: labels.kanban.notify.dailyCap.replace("{count}", String(maxSpawns)) });
-  },
-  sendChanged: () => sendToRenderer(IPC.event.kanbanChanged, {}),
-  report: (error) => logger.app("runtime", "error", String(error)),
-  onBoardMutation: emitKanbanMutation,
+// ── Kanban runner + notifications (see runtime/kanban-wiring.ts) ─────────────
+const { kanbanRunner, emitKanbanMutation } = createKanbanWiring({
+  dataDir,
+  getHost: () => host,
+  sendToRenderer,
+  getLabels: () => catalogs[resolveLocale(updaterLocale)],
+  logError: (error) => logger.app("runtime", "error", String(error)),
 });
-// Late-bind onTurnEnd: captured by the closure already passed to createEventPersistence.
 _kanbanTurnEnd = (sessionId) => kanbanRunner.onTurnEnd(sessionId);
 
 

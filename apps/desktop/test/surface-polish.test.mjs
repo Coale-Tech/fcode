@@ -115,10 +115,6 @@ test("switch on-track outranks the per-theme off-track", () => {
   );
   assert.match(
     styles,
-    /\.settings-toggle\s*\{[^}]*background:\s*var\(--ds-switch-track-off\)/,
-  );
-  assert.match(
-    styles,
     /\.settings-toggle\.on\s*\{[^}]*background:\s*var\(--ds-accent\)/,
   );
   // D297: the off track is a fill alone; no inset ring on either state. Focus

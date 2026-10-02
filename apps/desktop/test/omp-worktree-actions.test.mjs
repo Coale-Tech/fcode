@@ -23,6 +23,8 @@ const fsPromisesStub = `data:text/javascript,${encodeURIComponent(`
   export async function readFile(p) { return ""; }
   export async function readdir(p) { return []; }
   export async function rm(p, opts) { return; }
+  export async function rename(a, b) { return; }
+  export async function writeFile(p, d) { return; }
   export async function stat(p) { throw Object.assign(new Error("ENOENT"), { code: "ENOENT" }); }
 `)}`;
 
