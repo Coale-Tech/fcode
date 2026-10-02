@@ -1,7 +1,7 @@
 import { IPC } from "@pi-desktop/shared";
 import type { HostProcess } from "../host-process";
 import type { IpcRegistrar } from "./types";
-import { executeScheduledTask } from "../runtime/scheduled-runner";
+import { executeScheduledTask, getSchedulerHealth } from "../runtime/scheduled-runner";
 
 export type ScheduledIpcDependencies = {
   registrar: IpcRegistrar;
@@ -39,7 +39,8 @@ export function registerScheduledIpc({
 
   handle(IPC.invoke.scheduledList, async (host: HostProcess | null) => {
     if (!host) throw new Error("host unavailable");
-    return host.call("scheduled.list");
+    const result = await host.call<{ tasks: unknown[] }>("scheduled.list");
+    return { ...result, health: getSchedulerHealth() };
   });
   handle(IPC.invoke.scheduledCreate, async (host: HostProcess | null, input: any = {}) => {
     if (!host) throw new Error("host unavailable");

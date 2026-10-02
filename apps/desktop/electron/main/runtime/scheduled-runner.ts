@@ -1,3 +1,17 @@
+/** Module-level health state updated by the active runner instance (I.5). */
+export type SchedulerHealth = {
+  lastTickAt: number | undefined;
+  lastError: string | undefined;
+  hostAvailable: boolean;
+};
+
+let _health: SchedulerHealth = { lastTickAt: undefined, lastError: undefined, hostAvailable: false };
+
+/** Current scheduler health; read by the scheduled IPC handler (I.5). */
+export function getSchedulerHealth(): SchedulerHealth {
+  return { ..._health };
+}
+
 type Host = { call<T>(method: string, params?: Record<string, unknown>): Promise<T> };
 export type ScheduledLaunch = { sessionId: string; prompt: string; runId: string };
 
@@ -44,10 +58,13 @@ export function createScheduledRunner(options: {
   const tick = async () => {
     if (stopped || polling) return;
     const host = options.getHost();
+    _health.hostAvailable = host !== null;
     if (!host) return;
     polling = true;
     try {
       const { ids } = await host.call<{ ids: string[] }>("scheduled.due");
+      _health.lastTickAt = Date.now();
+      _health.lastError = undefined;
       for (const id of ids) {
         if (stopped || options.getHost() !== host) break;
         if (dispatches.get(id)?.host === host) continue;
@@ -68,6 +85,7 @@ export function createScheduledRunner(options: {
         })();
       }
     } catch (error) {
+      _health.lastError = error instanceof Error ? error.message : String(error);
       options.report(error);
     } finally {
       polling = false;

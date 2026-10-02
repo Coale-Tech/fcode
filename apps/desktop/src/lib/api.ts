@@ -868,7 +868,7 @@ export const api = {
   listPullRequests: () =>
     invoke<{ pulls: PullRequestSummary[]; error?: string }>(IPC.invoke.pullsList),
   listScheduled: () =>
-    invoke<{ tasks: ScheduledTask[] }>(IPC.invoke.scheduledList),
+    invoke<{ tasks: ScheduledTask[]; health?: { lastTickAt: number | undefined; lastError: string | undefined; hostAvailable: boolean } }>(IPC.invoke.scheduledList),
   createScheduled: (input: {
     title?: string;
     prompt: string;
