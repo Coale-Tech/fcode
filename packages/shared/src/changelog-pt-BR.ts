@@ -2,6 +2,21 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const ptBREntries: ChangelogEntry[] = [
   {
+    "version": "0.18.0",
+    "date": "2026-10-02",
+    "highlights": [
+      "Configurações redesenhadas para corresponder ao layout do Raven: linhas planas com separadores, trilho fixo de 224 px com a navegação do Raven e controles atualizados; macOS mantém o trilho de vidro com vibrância.",
+      "Novo quadro Kanban (desativado por padrão; ative em Configurações → Kanban): cartões iniciam sessões de agente com ferramentas de worker, botão de pausa e limites por sessão; sessões [kanban] ficam ocultas na barra lateral por padrão.",
+      "Proteção de memória: o resumo de memória e todos os textos de recuperação são neutralizados e redigidos antes de chegar ao prompt; um novo perfil de usuário (Configurações → Memória) é injetado em cada projeto (limite de 1 KB); use `/learn <texto>` para criar um novo skill.",
+      "O chat ganha um chip de resumo de ações por turno, modelos no editor de tarefas agendadas e um indicador de saúde do agendador que aparece apenas quando o agendador trava.",
+      "A lista de tarefas no chat é editável com reversão em caso de erro; a aba /worktree adiciona ações de adicionar/limpar/podar (forçar para árvores sujas); a chamada de ponte de árvore de sessão não utilizada é removida.",
+      "Correções do banco: Frappe v16 atinge Running, Stop funciona durante a inicialização, sair para o processo completo, conflitos de porta do redis são nomeados, aprovações de leitura por nome exato funcionam, a descoberta requer site_config.json, o diálogo de migração tem armadilha de foco, códigos ANSI são removidos dos logs.",
+      "Movimento: o diálogo de pesquisa abre instantaneamente (sem animação de entrada); todas as transições de saída e colapso usam ease-out.",
+      "Release: tags estáveis não podem mais ser enviadas sem assinatura via workflow_dispatch (guarda CI); a detecção de assinatura do atualizador é extraída em seu próprio módulo e testada.",
+    ],
+  },
+
+  {
     "version": "0.17.1",
     "date": "2026-10-02",
     "highlights": [

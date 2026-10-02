@@ -2,6 +2,21 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const esEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.0",
+    "date": "2026-10-02",
+    "highlights": [
+      "Ajustes rediseñados según el diseño de Raven: filas planas con separadores, un rail fijo de 224 px con la navegación de Raven y controles actualizados; macOS conserva el rail de vidrio con vibración.",
+      "Nuevo tablero Kanban (desactivado por defecto; actívalo en Ajustes → Kanban): las tarjetas inician sesiones de agente con herramientas de trabajador, interruptor de pausa y límites por sesión; las sesiones [kanban] se ocultan en la barra lateral por defecto.",
+      "Refuerzo de memoria: el resumen de memoria y todos los textos de recuperación son neutralizados y redactados antes de llegar al prompt; un nuevo perfil de usuario (Ajustes → Memoria) se inyecta en cada proyecto (límite de 1 KB); usa `/learn <texto>` para crear un nuevo skill.",
+      "El chat gana un chip de resumen de acciones por turno, plantillas en el editor de tareas programadas y un indicador de salud del planificador que aparece solo cuando se detiene.",
+      "La lista de tareas en el chat es editable con reversión en caso de error; la pestaña /worktree añade acciones de agregar/borrar/podar (forzar para árboles con cambios); se elimina la llamada de puente del árbol de sesión sin uso.",
+      "Correcciones del banco: Frappe v16 alcanza Running, Stop funciona al iniciar, salir detiene el árbol de procesos, los conflictos de puerto de redis se nombran, las aprobaciones de lectura con nombre exacto funcionan, la detección requiere site_config.json, el diálogo de migración tiene trampa de foco, los códigos ANSI se eliminan de los registros.",
+      "Movimiento: el diálogo de búsqueda se abre instantáneamente (sin animación de entrada); todas las transiciones de salida y colapso usan ease-out.",
+      "Release: las etiquetas estables ya no pueden distribuirse sin firma mediante workflow_dispatch (guardia CI); la detección de firma del actualizador se extrae en su propio módulo y se prueba.",
+    ],
+  },
+
+  {
     "version": "0.17.1",
     "date": "2026-10-02",
     "highlights": [

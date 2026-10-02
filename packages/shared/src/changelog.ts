@@ -30,6 +30,21 @@ export type ChangelogEntry = {
 
 const enEntries: ChangelogEntry[] = [
   {
+    version: "0.18.0",
+    date: "2026-10-02",
+    highlights: [
+      "Settings redesigned to match Raven's layout: flat rows with separators, a 224 px fixed navigation rail with Raven nav motion, and updated controls; macOS keeps the glass vibrancy rail.",
+      "New Kanban board (off by default; enable in Settings → Kanban): cards start agent sessions with worker tools, a pause switch, and per-session caps; [kanban] sessions are hidden in the sidebar by default.",
+      "Memory hardening: the memory summary and all recall text are neutralized and redacted before reaching the prompt; a new user profile (Settings → Memory) is injected in every project (1 KB cap); `/learn <text>` slash command authors a new skill.",
+      "Chat gains a per-turn action summary chip, schedule templates in the scheduler editor, and a scheduler health badge that appears only when the scheduler stalls.",
+      "Editable to-do list in chat with revert on error; /worktree tab with add/clear/prune (force required for dirty trees); unused session-tree bridge call removed.",
+      "Bench fixes: Frappe v16 reaches Running, Stop works while starting, quit stops the full process tree, redis port conflicts are named, exact-name read approvals work, discovery requires site_config.json, migrate dialog has a focus trap, ANSI codes stripped from logs.",
+      "Motion: the search dialog opens instantly (no entrance animation); all exit and collapse transitions now use ease-out.",
+      "Release guard: stable tags can no longer ship unsigned via workflow_dispatch (CI check); updater signature detection extracted and tested.",
+    ],
+  },
+
+  {
     version: "0.17.1",
     date: "2026-10-02",
     highlights: [
@@ -873,6 +888,21 @@ const enEntries: ChangelogEntry[] = [
 
 const zhCNEntries: ChangelogEntry[] = [
   {
+    version: "0.18.0",
+    date: "2026-10-02",
+    highlights: [
+      "设置页面已按照 Raven 布局重新设计：带分隔线的平行行、224 px 固定导航栏配 Raven 导航动画及更新的控件；macOS 保留玻璃毛玻璃效果导航栏。",
+      "新增看板（默认关闭；在设置 → 看板中启用）：卡片启动代理会话，显示工作线程工具、暂停开关和每会话上限；[kanban] 会话默认在侧边栏中隐藏。",
+      "内存安全加固：内存摘要及所有召回文本在到达提示词前均经过中和与脱敏；新增用户档案（设置 → 内存），注入每个项目（上限 1 KB）；使用 `/learn <文本>` 编写新技能。",
+      "聊天新增每轮操作摘要芯片、调度编辑器中的任务模板，以及仅在调度器停滞时显示的调度器健康徽章。",
+      "聊天中的待办事项列表可编辑，错误时可回滚；/worktree 标签页新增添加/清除/精简操作（脏工作树需强制）；已删除未使用的会话树桥调用。",
+      "Bench 修复：Frappe v16 可正常进入运行状态，启动时可停止，退出时停止完整进程树，redis 端口冲突命名，精确名称读取审批正常，发现功能需要 site_config.json，迁移对话框添加焦点陷阱，日志中的 ANSI 代码被清除。",
+      "动效：搜索对话框现在即时打开（无进入动画）；所有退出和折叠过渡使用 ease-out。",
+      "发布保护：稳定标签不再能通过 workflow_dispatch 以未签名方式发布（CI 保护）；更新器签名检测已提取到独立模块并测试。",
+    ],
+  },
+
+  {
     version: "0.17.1",
     date: "2026-10-02",
     highlights: [
@@ -1714,6 +1744,21 @@ const zhCNEntries: ChangelogEntry[] = [
 ];
 
 const zhTWEntries: ChangelogEntry[] = [
+  {
+    version: "0.18.0",
+    date: "2026-10-02",
+    highlights: [
+      "設定頁面已按照 Raven 佈局重新設計：帶分隔線的平行行、224 px 固定導航欄配 Raven 導航動畫及更新的控件；macOS 保留玻璃毛玻璃效果導航欄。",
+      "新增看板（預設關閉；在設定 → 看板中啟用）：卡片啟動代理工作階段，顯示工作者工具、暫停開關和每工作階段上限；[kanban] 工作階段預設在側邊欄中隱藏。",
+      "記憶體安全強化：記憶體摘要及所有回憶文字在到達提示詞前均經過中和與脫敏；新增使用者個人檔案（設定 → 記憶體），注入每個專案（上限 1 KB）；使用 `/learn <文字>` 撰寫新技能。",
+      "聊天新增每輪操作摘要晶片、排程編輯器中的任務範本，以及僅在排程器停滯時顯示的排程器健康徽章。",
+      "聊天中的待辦事項清單可編輯，錯誤時可回復；/worktree 標籤頁新增新增/清除/修剪操作（髒工作樹需強制）；已移除未使用的工作階段樹橋呼叫。",
+      "Bench 修復：Frappe v16 可正常進入執行狀態，啟動時可停止，退出時停止完整程序樹，redis 連接埠衝突命名，精確名稱讀取審批正常，探索功能需要 site_config.json，遷移對話框新增焦點陷阱，日誌中的 ANSI 碼已清除。",
+      "動效：搜尋對話框現在即時開啟（無進入動畫）；所有退出和折疊過渡使用 ease-out。",
+      "發布保護：穩定標籤不再能透過 workflow_dispatch 以未簽名方式發布（CI 保護）；更新器簽名偵測已提取到獨立模組並進行測試。",
+    ],
+  },
+
   {
     version: "0.17.1",
     date: "2026-10-02",
