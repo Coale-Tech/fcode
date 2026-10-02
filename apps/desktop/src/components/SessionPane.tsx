@@ -11,6 +11,9 @@ import { OmpTodoPanel } from "../features/chat/transcript/OmpTodoPanel";
 import { DapPanel } from "../features/chat/transcript/DapPanel";
 import { OmpCollabPanel } from "../features/chat/transcript/OmpCollabPanel";
 
+// ponytail: session ids only; grows by one string per session, never cleared.
+const activityAutoOpened = new Set<string>();
+
 /**
  * One retained conversation pane (ADR 0137).
  *
@@ -61,18 +64,17 @@ export const SessionPane = memo(function SessionPane({
         : transcript.focus,
     [transcript.focus, transcript.parentMessage],
   );
-  // Auto-open the Activity tab the first time a run starts or a permission
-  // arrives for this session. Once the panel has tabs, the context is non-empty
-  // so this never fires again — satisfying "never reopen after user closes it".
-  // Effect in SessionPane keeps UI heuristics out of shared state.
+  // Auto-open the Activity tab once per session, on the first run or permission
+  // request. The set lives outside tab state, so closing the last tab (which
+  // leaves `tabs: []`) cannot re-arm it.
   const neverOpened = useAppStore(
     (s) => (s.workPanelContexts[sessionId]?.tabs.length ?? 0) === 0,
   );
   const openWorkPanelTabForSession = useAppStore((s) => s.openWorkPanelTabForSession);
   useEffect(() => {
-    if (!neverOpened) return;
-    if (!isRunning && !pendingPermission) return;
-    openWorkPanelTabForSession(sessionId, ACTIVITY_TAB);
+    if (activityAutoOpened.has(sessionId) || (!isRunning && !pendingPermission)) return;
+    activityAutoOpened.add(sessionId);
+    if (neverOpened) openWorkPanelTabForSession(sessionId, ACTIVITY_TAB);
   }, [neverOpened, isRunning, pendingPermission, sessionId, openWorkPanelTabForSession]);
 
 

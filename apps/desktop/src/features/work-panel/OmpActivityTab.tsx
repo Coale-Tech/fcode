@@ -22,6 +22,9 @@ import { reviewChangesFromMessages } from "../../lib/workspace-review";
 import { formatToolDuration } from "../../lib/tool-display";
 import { toolWorkPanelTab } from "../../lib/work-panel-tabs";
 
+// Stable fallback: a fresh [] per call breaks useSyncExternalStore snapshot caching.
+const EMPTY_PHASES: OmpTodoPhase[] = [];
+
 export const OmpActivityTab = memo(function OmpActivityTab() {
   const { t } = useTranslation();
   const sessionId = useAppStore((s) => s.activeSessionId);
@@ -30,7 +33,7 @@ export const OmpActivityTab = memo(function OmpActivityTab() {
     headPermission(s.pendingPermissions, sessionId ?? undefined),
   );
   const phases = useAppStore<OmpTodoPhase[]>((s) =>
-    sessionId ? (s.sessionTodoPhases[sessionId] ?? []) : [],
+    sessionId ? (s.sessionTodoPhases[sessionId] ?? EMPTY_PHASES) : EMPTY_PHASES,
   );
   const openWorkPanelTab = useAppStore((s) => s.openWorkPanelTab);
 
