@@ -4,7 +4,7 @@
  */
 import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { join, delimiter } from "node:path";
 import { tmpdir } from "node:os";
 import test from "node:test";
 import { register } from "node:module";
@@ -14,7 +14,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 register(pathToFileURL(pjoin(here, "helpers/ts-import-hooks.mjs")));
 
-const { discoverBenches, parseSiteConfig } = await import(
+const { discoverBenches, parseSiteConfig, defaultRoots, DEFAULT_ROOTS } = await import(
   "../electron/main/bench/discovery.ts"
 );
 
@@ -166,4 +166,82 @@ test("discoverBenches returns failedRoots for unreadable directories (T6 Gap4)",
   const failed = failedRoots.find((f) => f.root === badRoot);
   assert.ok(failed, "badRoot must appear in failedRoots");
   assert.ok(typeof failed.reason === "string" && failed.reason.length > 0, "reason must be non-empty");
+});
+
+// B10(a): dirs without site_config.json must not appear as sites
+test("readSites excludes dirs without site_config.json (B10a)", async (t) => {
+  const root = mkdtempSync(join(tmpdir(), "bench-disc-sites-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+
+  const bench = join(root, "mybench");
+  mkdirSync(join(bench, "apps", "frappe", "frappe"), { recursive: true });
+  mkdirSync(join(bench, "sites"), { recursive: true });
+  writeFileSync(join(bench, "apps", "frappe", "frappe", "__init__.py"), '__version__ = "16.0.0"\n');
+
+  // Real site: has site_config.json
+  mkdirSync(join(bench, "sites", "real.local"), { recursive: true });
+  writeFileSync(join(bench, "sites", "real.local", "site_config.json"), JSON.stringify({ webserver_port: 8000 }));
+
+  // Log/import folder: no site_config.json — should be excluded
+  mkdirSync(join(bench, "sites", "import_2025"), { recursive: true });
+  writeFileSync(join(bench, "sites", "import_2025", "some.log"), "data");
+
+  const { benches } = await discoverBenches({ roots: [root] });
+  assert.equal(benches.length, 1);
+  const siteNames = benches[0].sites.map((s) => s.name);
+  assert.ok(siteNames.includes("real.local"), "real site must be included");
+  assert.ok(!siteNames.includes("import_2025"), "log folder must be excluded");
+});
+
+// B10(b): defaultRoots() falls back to ~/ERPNext when env is unset
+test("defaultRoots() falls back to ~/ERPNext when FCODE_BENCH_ROOTS is unset (B10b)", (t) => {
+  const saved = process.env.FCODE_BENCH_ROOTS;
+  delete process.env.FCODE_BENCH_ROOTS;
+  t.after(() => {
+    if (saved !== undefined) process.env.FCODE_BENCH_ROOTS = saved;
+    else delete process.env.FCODE_BENCH_ROOTS;
+  });
+
+  const roots = defaultRoots();
+  assert.deepEqual(roots, DEFAULT_ROOTS);
+});
+
+// B10(b): FCODE_BENCH_ROOTS env overrides the default roots at call time
+test("defaultRoots() uses FCODE_BENCH_ROOTS env when set (B10b)", async (t) => {
+  const root = mkdtempSync(join(tmpdir(), "bench-disc-env-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+
+  const saved = process.env.FCODE_BENCH_ROOTS;
+  process.env.FCODE_BENCH_ROOTS = root;
+  t.after(() => {
+    if (saved !== undefined) process.env.FCODE_BENCH_ROOTS = saved;
+    else delete process.env.FCODE_BENCH_ROOTS;
+  });
+
+  // defaultRoots() must reflect the env at call time
+  assert.deepEqual(defaultRoots(), [root]);
+
+  // discoverBenches() with no explicit roots must use the env path
+  mkdirSync(join(root, "envbench", "apps", "frappe", "frappe"), { recursive: true });
+  mkdirSync(join(root, "envbench", "sites"), { recursive: true });
+  writeFileSync(join(root, "envbench", "apps", "frappe", "frappe", "__init__.py"), '__version__ = "16.0.0"\n');
+  mkdirSync(join(root, "envbench", "sites", "s.local"), { recursive: true });
+  writeFileSync(join(root, "envbench", "sites", "s.local", "site_config.json"), JSON.stringify({}));
+
+  const { benches } = await discoverBenches();
+  assert.equal(benches.length, 1, "bench from FCODE_BENCH_ROOTS must be discovered");
+  assert.ok(benches[0].path.includes("envbench"));
+});
+
+// B10(b): multiple paths in FCODE_BENCH_ROOTS (delimiter-separated)
+test("defaultRoots() splits multiple paths in FCODE_BENCH_ROOTS (B10b)", (t) => {
+  const saved = process.env.FCODE_BENCH_ROOTS;
+  const paths = ["/tmp/a", "/tmp/b"];
+  process.env.FCODE_BENCH_ROOTS = paths.join(delimiter);
+  t.after(() => {
+    if (saved !== undefined) process.env.FCODE_BENCH_ROOTS = saved;
+    else delete process.env.FCODE_BENCH_ROOTS;
+  });
+
+  assert.deepEqual(defaultRoots(), paths);
 });

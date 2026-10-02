@@ -49,6 +49,7 @@ export const BENCH_FAILURE_CODES = {
   BENCH_NOT_FOUND: "BENCH_NOT_FOUND",
   WRONG_PYTHON_ENV: "WRONG_PYTHON_ENV",
   PORT_BOUND: "PORT_BOUND",
+  REDIS_PORT_BOUND: "REDIS_PORT_BOUND",
   REDIS_DOWN: "REDIS_DOWN",
   MARIADB_DOWN: "MARIADB_DOWN",
   MISSING_SITE: "MISSING_SITE",
@@ -101,11 +102,34 @@ export function classifyBenchFailure(
     };
   }
 
+  // B6: Redis-specific port conflict — redis can't bind its cache/queue port
+  // (distinct from "Redis not running"). Markers: "Failed listening on port X" or
+  // "Could not create server TCP listening socket host:X: bind: Address already in use".
+  const isRedisPortConflict =
+    (out.includes("failed listening on port") || out.includes("could not create server tcp listening socket")) &&
+    (out.includes("address already in use") || out.includes("bind:"));
+  if (isRedisPortConflict) {
+    const foundPorts: string[] = [];
+    for (const m of output.matchAll(/(?:port |:)(\d{4,5})\b/gi)) {
+      if (!foundPorts.includes(m[1])) foundPorts.push(m[1]);
+    }
+    const portStr = foundPorts.length > 0 ? foundPorts.join("/") : null;
+    return {
+      code: BENCH_FAILURE_CODES.REDIS_PORT_BOUND,
+      problem: portStr ? `Redis port ${portStr} is already in use` : "A Redis port is already in use",
+      cause: "A stale Redis process from a previous bench session is still holding this port.",
+      fix: portStr
+        ? `Stop the stale Redis: \`redis-cli -p ${foundPorts[0]} shutdown\` or \`lsof -ti:${portStr.replace("/", ",:")} | xargs kill -9\``
+        : "Find and stop the stale Redis process: `ps aux | grep redis`, then kill the stale PID.",
+      docsUrl: `${FRAPPE_DOCS}user/en/bench/bench-commands-cheatsheet`,
+    };
+  }
+
   if (out.includes("address already in use") || out.includes("port") && out.includes("in use")) {
     return {
       code: BENCH_FAILURE_CODES.PORT_BOUND,
       problem: "Web server port is already in use",
-      cause: "Another process is listening on the bench's HTTP port (default 8000).",
+      cause: "Another process is listening on the bench's configured HTTP port.",
       fix: "Stop the conflicting process, or change `webserver_port` in sites/common_site_config.json.",
       docsUrl: `${FRAPPE_DOCS}user/en/bench/bench-commands-cheatsheet`,
     };
@@ -269,6 +293,8 @@ export class BenchSupervisor extends EventEmitter {
   activeBenchPath: string | null = null;
   /** Currently selected site, or null. */
   activeSite: string | null = null;
+  /** Epoch-ms when the current bench start began; null when stopped (contract). */
+  startedAt: number | null = null;
 
   private status: BenchStatus = "stopped";
   private readonly processes = new Map<string, ManagedProcess>();
@@ -286,7 +312,7 @@ export class BenchSupervisor extends EventEmitter {
   /**
    * Start `bench start` in the active bench (E4: argv spawn, shell:false).
    */
-  async start(benchPath: string): Promise<{ conflict: boolean }> {
+  async start(benchPath: string, site?: string): Promise<{ conflict: boolean }> {
     if (this.status === "running" || this.status === "starting") {
       // Same bench already running/starting is a harmless idempotent no-op;
       // a DIFFERENT bench is a conflict the caller must surface, not silently
@@ -294,6 +320,8 @@ export class BenchSupervisor extends EventEmitter {
       return { conflict: this.activeBenchPath !== benchPath };
     }
     this.activeBenchPath = benchPath;
+    this.activeSite = site ?? null;      // B2: set site from caller (resolved by bench-ipc)
+    this.startedAt = Date.now();         // contract: track when this start began
     this.status = "starting";
     this.emit("status", this.status);
 
@@ -319,7 +347,13 @@ export class BenchSupervisor extends EventEmitter {
         this.emit("log", { process: "start", line: logLine });
 
         // Heuristic: Frappe prints "Starting watchdog" or serves requests once ready
-        if (this.status === "starting" && (line.includes("Serving on") || line.includes("Watching files"))) {
+        // Heuristic: Frappe v15 prints "Serving on" / "Watching files";
+        // Frappe v16 prints "Running on http://…" (B1).
+        if (this.status === "starting" && (
+          line.includes("Serving on") ||
+          line.includes("Watching files") ||
+          line.includes("Running on http://")
+        )) {
           this.status = "running";
           this.emit("status", this.status);
         }
@@ -369,6 +403,8 @@ export class BenchSupervisor extends EventEmitter {
     this.stopWatcher();
     this.status = "stopped";
     this.activeBenchPath = null;
+    this.activeSite = null;
+    this.startedAt = null;
     this.emit("status", this.status);
   }
 
