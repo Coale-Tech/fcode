@@ -2,6 +2,16 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const deEntries: ChangelogEntry[] = [
   {
+    "version": "0.17.1",
+    "date": "2026-10-02",
+    "highlights": [
+      "Die Chat-Seite erhält im Work-Panel einen Activity-Tab (To-do-Fortschritt, ausgeführte Tools, Änderungen, offene Freigaben), eine klarere Freigabekarte und eine Leiste mit echtem Bench und Site; die Bench-Seite nutzt Tabs, die Build-Seite beginnt mit einer Kopfzeile und einer stets sichtbaren Prüfleiste.",
+      "Behoben: Der Chat zeigte endlos „Working…“ mit leerem Activity-Tab, und Tool-Freigaben erreichten omp nie. Gestreamter Text, Denken, Tool-Zeilen und die Berechtigungskarte funktionieren jetzt mit echtem omp.",
+      "macOS-Builds ohne Developer-ID-Signatur bieten nun einen Download von der Releases-Seite an, statt eines In-App-„Neustart zum Update“, das nichts tat.",
+    ],
+  },
+
+  {
     "version": "0.17.0",
     "date": "2026-10-01",
     "highlights": [

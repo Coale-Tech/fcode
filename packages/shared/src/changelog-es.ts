@@ -2,6 +2,16 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const esEntries: ChangelogEntry[] = [
   {
+    "version": "0.17.1",
+    "date": "2026-10-02",
+    "highlights": [
+      "La página Chat añade una pestaña Activity en el Work Panel (progreso de tareas, herramientas ejecutadas, cambios, aprobaciones pendientes), una tarjeta de aprobación más clara y una barra con el bench y el sitio reales; la página Bench usa pestañas y la página Build empieza con un encabezado y una barra de comprobaciones siempre visible.",
+      "Corregido: el chat mostraba «Working…» sin fin con la pestaña Activity vacía, y las aprobaciones de herramientas nunca llegaban a omp. El texto en streaming, el razonamiento, las filas de herramientas y la tarjeta de permisos ya funcionan con omp real.",
+      "Las compilaciones de macOS sin firma Developer ID ahora ofrecen una descarga desde la página de Releases en lugar de un «Reiniciar para actualizar» dentro de la app que no hacía nada.",
+    ],
+  },
+
+  {
     "version": "0.17.0",
     "date": "2026-10-01",
     "highlights": [
