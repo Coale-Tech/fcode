@@ -13,8 +13,9 @@
  *  - Linux deb (no $APPIMAGE in env) → notify + link.
  *  - Unpackaged dev runs → disabled (no app-update.yml in resources).
  */
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { app, shell } from "electron";
 import electronUpdaterPkg from "electron-updater";
 import type { UpdateInfo, ProgressInfo } from "electron-updater";
@@ -64,6 +65,7 @@ export function resolveUpdateMode(
   isPackaged: boolean,
   env: NodeJS.ProcessEnv = process.env,
   distribution?: WindowsDistribution,
+  macSigned = true,
 ): UpdateMode {
   if (!isPackaged) return "disabled";
   if (platform === "win32") {
@@ -71,10 +73,20 @@ export function resolveUpdateMode(
       ? "manual"
       : "in-app";
   }
-  if (platform === "darwin") return "in-app";
+  // Squirrel.Mac refuses to swap an app without a real code signature
+  // ("Could not get code signature for running application"), so unsigned
+  // builds fall back to the download-from-releases flow.
+  if (platform === "darwin") return macSigned ? "in-app" : "manual";
   if (platform === "linux" && env.APPIMAGE) return "in-app";
   // non-AppImage linux installs
   return "manual";
+}
+
+/** True when the running .app has a non-ad-hoc signature Squirrel.Mac accepts. */
+function isMacAppSigned(): boolean {
+  const bundle = dirname(dirname(dirname(process.execPath)));
+  const r = spawnSync("codesign", ["-dv", "--verbose=2", bundle], { encoding: "utf8" });
+  return r.status === 0 && !/Signature=adhoc/.test(`${r.stdout}${r.stderr}`);
 }
 
 export class AppUpdaterController {
@@ -138,6 +150,7 @@ export class AppUpdaterController {
       isPackaged,
       process.env,
       distribution,
+      platform === "darwin" && isPackaged ? isMacAppSigned() : true,
     );
     this.state = {
       mode,
