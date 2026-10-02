@@ -826,14 +826,18 @@ export class OmpBridge {
 
       case "tool_permission.resolve": {
         const requestId = String(p.requestId ?? "");
+        const pending = this.pendingUiRequests.get(requestId);
+        // Not ours (e.g. a host-core request): let the caller route it elsewhere.
+        if (!pending) {
+          this.respond(id, { handled: false });
+          break;
+        }
         const approved = String(p.decision ?? "") !== "deny";
         // omp asks tool approval as a select ["Approve","Deny"]; older confirm requests want a boolean.
-        const answer = this.pendingUiRequests.get(requestId)?.viaSelect
-          ? { value: approved ? "Approve" : "Deny" }
-          : { confirmed: approved };
+        const answer = pending.viaSelect ? { value: approved ? "Approve" : "Deny" } : { confirmed: approved };
         this.sendToOmp({ type: "extension_ui_response", id: requestId, ...answer });
         this.pendingUiRequests.delete(requestId);
-        this.respond(id, {});
+        this.respond(id, { handled: true });
         break;
       }
 

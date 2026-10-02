@@ -158,4 +158,15 @@ describe("tool_permission.resolve answers omp's select-style approval", () => {
     expect(resolveWith("allow_once")).toEqual({ type: "extension_ui_response", id: "u1", value: "Approve" });
     expect(resolveWith("deny")).toEqual({ type: "extension_ui_response", id: "u1", value: "Deny" });
   });
+
+  it("an id the bridge never issued reports handled:false and sends nothing to omp", () => {
+    const bridge = new OmpBridge();
+    const sent: unknown[] = [];
+    (bridge as unknown as { sendToOmp: (m: unknown) => void }).sendToOmp = (m) => sent.push(m);
+    const out: string[] = [];
+    process.stdout.write = ((s: string) => (out.push(s), true)) as typeof process.stdout.write;
+    bridge.handleHostFrame({ jsonrpc: "2.0", id: "h2", method: "tool_permission.resolve", params: { requestId: "nope", decision: "allow-once" } });
+    expect(sent).toEqual([]);
+    expect(JSON.parse(out.join("")).result).toEqual({ handled: false });
+  });
 });

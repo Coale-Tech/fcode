@@ -804,6 +804,18 @@ export function registerAgentIpc({
       }
       return { requestId: resolution.requestId, ...decisionPatch };
     }
+    // Desktop prompts bypass `startTurn`, so omp's own approvals carry no
+    // origin; ask the sidecar first — host-core would answer NOT_FOUND.
+    const viaSidecar = await sidecar
+      ?.call<{ handled?: boolean }>("tool_permission.resolve", {
+        requestId: resolution.requestId,
+        decision: resolution.decision,
+      })
+      .catch(() => undefined);
+    if (viaSidecar?.handled) {
+      agentHostBridge?.settleApproval(resolution.requestId, decisionPatch);
+      return { requestId: resolution.requestId, ...decisionPatch };
+    }
     if (!host) throw new Error("host unavailable");
     const resolved = await host.call("permissions.resolve", resolution);
     agentHostBridge?.settleApproval(resolution.requestId, decisionPatch);
