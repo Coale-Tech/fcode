@@ -2,6 +2,14 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const esEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.1",
+    "date": "2026-10-03",
+    "highlights": [
+      "Se corrige una fuga de procesos: al cambiar proveedor, backend de memoria, modo de aprobación, ajuste de omp o extensión, ahora se detiene el proceso de agente anterior en lugar de dejarlo (con sus ayudantes) en ejecución tras cerrar la app.",
+    ],
+  },
+
+  {
     "version": "0.18.0",
     "date": "2026-10-02",
     "highlights": [

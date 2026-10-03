@@ -2,6 +2,14 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const deEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.1",
+    "date": "2026-10-03",
+    "highlights": [
+      "Prozesslecks behoben: Beim Ändern von Anbieter, Speicher-Backend, Genehmigungsmodus, omp-Einstellung oder Erweiterung wird der vorherige Agentenprozess jetzt beendet und läuft samt Hilfsprozessen nicht mehr nach dem Beenden der App weiter.",
+    ],
+  },
+
+  {
     "version": "0.18.0",
     "date": "2026-10-02",
     "highlights": [

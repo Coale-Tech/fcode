@@ -2,6 +2,14 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const trEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.1",
+    "date": "2026-10-03",
+    "highlights": [
+      "İşlem sızıntısı düzeltildi: sağlayıcı, bellek arka ucu, onay modu, omp ayarı veya uzantı değiştirildiğinde önceki ajan işlemi artık durduruluyor; uygulamadan çıkıldıktan sonra işlem ve yardımcıları çalışmaya devam etmiyor.",
+    ],
+  },
+
+  {
     "version": "0.18.0",
     "date": "2026-10-02",
     "highlights": [

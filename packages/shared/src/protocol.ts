@@ -2,7 +2,7 @@ export const PROTOCOL_VERSION = 11 as const;
 export const SCHEMA_VERSION = 16 as const;
 export const APP_ID = "com.coaletech.fcode";
 export const APP_NAME = "Fcode";
-export const APP_VERSION = "0.18.0";
+export const APP_VERSION = "0.18.1";
 
 export const APP_MENU_COMMANDS = [
   "newTask",

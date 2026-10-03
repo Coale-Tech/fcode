@@ -2,6 +2,14 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const koEntries: ChangelogEntry[] = [
   {
+    version: "0.18.1",
+    date: "2026-10-03",
+    highlights: [
+      "프로세스 누수를 수정했습니다. 공급자, 메모리 백엔드, 승인 모드, omp 설정 또는 확장을 변경하면 이전 에이전트 프로세스가 중지되며, 앱 종료 후에도 해당 프로세스와 보조 프로세스가 남지 않습니다.",
+    ],
+  },
+
+  {
     version: "0.18.0",
     date: "2026-10-02",
     highlights: [

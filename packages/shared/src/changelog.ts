@@ -30,6 +30,14 @@ export type ChangelogEntry = {
 
 const enEntries: ChangelogEntry[] = [
   {
+    version: "0.18.1",
+    date: "2026-10-03",
+    highlights: [
+      "Fixed a process leak: changing a provider, memory backend, approval mode, omp setting or extension now stops the previous agent process instead of leaving it (and its helpers) running after you quit.",
+    ],
+  },
+
+  {
     version: "0.18.0",
     date: "2026-10-02",
     highlights: [
@@ -889,6 +897,14 @@ const enEntries: ChangelogEntry[] = [
 
 const zhCNEntries: ChangelogEntry[] = [
   {
+    version: "0.18.1",
+    date: "2026-10-03",
+    highlights: [
+      "修复进程泄漏：更改提供商、记忆后端、审批模式、omp 设置或扩展时，现在会停止之前的智能体进程，不再在退出应用后遗留该进程及其辅助进程。",
+    ],
+  },
+
+  {
     version: "0.18.0",
     date: "2026-10-02",
     highlights: [
@@ -1746,6 +1762,14 @@ const zhCNEntries: ChangelogEntry[] = [
 ];
 
 const zhTWEntries: ChangelogEntry[] = [
+  {
+    version: "0.18.1",
+    date: "2026-10-03",
+    highlights: [
+      "修正程序洩漏：變更供應商、記憶後端、核准模式、omp 設定或擴充功能時，現在會停止先前的代理程式程序，不再於結束應用程式後遺留該程序及其輔助程序。",
+    ],
+  },
+
   {
     version: "0.18.0",
     date: "2026-10-02",

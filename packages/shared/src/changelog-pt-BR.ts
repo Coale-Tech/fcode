@@ -2,6 +2,14 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const ptBREntries: ChangelogEntry[] = [
   {
+    "version": "0.18.1",
+    "date": "2026-10-03",
+    "highlights": [
+      "Corrigido um vazamento de processos: alterar provedor, backend de memória, modo de aprovação, configuração do omp ou extensão agora encerra o processo de agente anterior em vez de deixá-lo (e seus auxiliares) em execução após fechar o app.",
+    ],
+  },
+
+  {
     "version": "0.18.0",
     "date": "2026-10-02",
     "highlights": [

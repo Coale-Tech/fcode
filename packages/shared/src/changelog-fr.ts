@@ -2,6 +2,14 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const frEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.1",
+    "date": "2026-10-03",
+    "highlights": [
+      "Correction d'une fuite de processus : modifier un fournisseur, le backend mémoire, le mode d'approbation, un réglage omp ou une extension arrête désormais le processus d'agent précédent au lieu de le laisser (avec ses assistants) tourner après la fermeture de l'app.",
+    ],
+  },
+
+  {
     "version": "0.18.0",
     "date": "2026-10-02",
     "highlights": [

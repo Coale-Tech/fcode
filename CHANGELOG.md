@@ -10,6 +10,18 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 
+## [0.18.1] — 2026-10-03
+
+### Compatibility
+
+| Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
+|-------|-----------------|-----------|-----------------|--------|
+| 0.18.1 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
+
+### Fixed
+
+- Changing a provider, memory backend, approval mode, omp setting or extension no longer leaves the previous agent process (and its MCP helpers) running as an orphan after the app quits; the old process is stopped and its open turn is settled as interrupted.
+
 ## [0.18.0] — 2026-10-02
 
 ### Compatibility
@@ -51,7 +63,6 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Frappe v16 benches now reach the Running state; Stop is honoured while a bench is still starting.
 - Quitting the app now stops the full bench process tree (honcho, gunicorn, redis-server).
 - Redis port conflicts are named in the supervisor error message.
-- Changing a provider, memory backend, approval mode, omp setting or extension no longer leaves the previous agent process (and its MCP helpers) running as an orphan after the app quits; the old process is stopped and its open turn is settled as interrupted.
 - Exact-name read-tier tool approvals now match correctly (the previous prefix-based match allowed over-broad auto-approvals).
 - Bench discovery now requires `site_config.json` to be present; `FCODE_BENCH_ROOTS` can extend the search roots.
 - The migrate confirmation dialog now has a focus trap.
@@ -131,6 +142,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Security: YAML injection via `agentModelOverrides` key fixed (agent key now `JSON.stringify`-quoted in overlay); `validateOmpSettings` rejects keys with non-identifier chars (newlines, colons, spaces); `file:`/`git+file:`/`svn+`/`hg+` URI schemes blocked in `validateInstallSpec`; collab panel only renders `<a>` for http(s) URLs; Hindsight supervisor strips raw process output from IPC state message; port validated 1024–65535 in `hindsightLocalStart`; `benchRun` validates each `args` element against an identifier-safe regex.
 - `inflight-checkpoint.test.mjs` flaky timing fixed (freeze `Date.now()` via `t.mock.timers`); `plugin-mcp.test.mjs` `connectTimeoutMs` 20 → 300.
 
+[0.18.1]: https://github.com/Coale-Tech/fcode/releases/tag/v0.18.1
 [0.18.0]: https://github.com/Coale-Tech/fcode/releases/tag/v0.18.0
 [0.17.1]: https://github.com/Coale-Tech/fcode/releases/tag/v0.17.1
 [0.17.0]: https://github.com/Coale-Tech/fcode/releases/tag/v0.17.0
