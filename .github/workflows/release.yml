@@ -194,7 +194,7 @@ jobs:
         # timeout. The addon only depends on omp's Rust inputs, the OS, and
         # the arch, so it's identical across runs until the pin moves.
         id: omp-native-restore
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: omp/packages/natives/native/*.node
           key: omp-native-${{ runner.os }}-${{ runner.arch }}-ci-${{ hashFiles('omp/crates/**', 'omp/Cargo.lock', 'omp/rust-toolchain.toml') }}
@@ -242,7 +242,7 @@ jobs:
         # restore/save and force this with always() so a good compile still
         # gets cached even when something downstream in the same run fails.
         if: always() && steps.omp-native-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: omp/packages/natives/native/*.node
           key: omp-native-${{ runner.os }}-${{ runner.arch }}-ci-${{ hashFiles('omp/crates/**', 'omp/Cargo.lock', 'omp/rust-toolchain.toml') }}
