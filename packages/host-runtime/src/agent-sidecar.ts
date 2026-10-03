@@ -83,6 +83,15 @@ const HOST_PROXY_ALLOWED = new Set([
   "fcode_canvas",
   "fcode_canvas_read",
   "fcode_studio",
+  // Kanban tools (handlers: desktop runtime/sidecar.ts; only registered with omp while kanban.enabled).
+  "kanban_show",
+  "kanban_complete",
+  "kanban_block",
+  "kanban_comment",
+  "kanban_create",
+  "kanban_link",
+  "kanban_list",
+  "kanban_unblock",
 ]);
 
 /** Host-side answers for the `extensions.*` proxy methods. */

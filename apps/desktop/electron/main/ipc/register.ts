@@ -68,7 +68,9 @@ export type RegisterIpcDependencies = {
   mcpOAuth?: McpOAuthManager;
   [name: string]: any;
   /** Optional kanban board deps; absent when kanban runner is not wired yet. */
-  kanban?: Omit<KanbanIpcDependencies, "registrar">;
+  kanban?: Omit<KanbanIpcDependencies, "registrar"> & {
+    bindInvoke: (invoke: (channel: string, args: readonly unknown[]) => Promise<unknown>) => void;
+  };
 };
 
 function wrap<T>(fn: () => Promise<T>): Promise<Result<T>> {
@@ -334,6 +336,11 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     },
   });
   if (dependencies.kanban) {
+    dependencies.kanban.bindInvoke(async (channel, args) => {
+      const handler = ipcHandlers.get(channel);
+      if (!handler) throw new Error("kanban prompt handler unavailable");
+      return handler(...args);
+    });
     registerKanbanIpc({ registrar, ...dependencies.kanban });
   }
   registerWorkspaceIpc({

@@ -3021,7 +3021,6 @@ importConfirm: "가져온 확장은 에이전트 프로세스 안에서 에이�
     "settings": {
       "title": "칸반 설정",
       "enabled": "칸반 보드 활성화",
-      "maxInProgress": "최대 진행 중 수",
       "maxRuntimeSeconds": "최대 실행 시간(초)",
       "maxAgentCardsPerSession": "세션당 최대 에이전트 카드 수",
       "maxDailySpawns": "일일 최대 생성 수"

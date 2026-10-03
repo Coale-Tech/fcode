@@ -1093,7 +1093,7 @@ const eventPersistence = createEventPersistence({
 const { persistAgentEvent } = eventPersistence;
 
 // ── Kanban runner + notifications (see runtime/kanban-wiring.ts) ─────────────
-const { kanbanRunner, emitKanbanMutation } = createKanbanWiring({
+const { kanbanRunner, emitKanbanMutation, bindInvoke: bindKanbanInvoke } = createKanbanWiring({
   dataDir,
   getHost: () => host,
   sendToRenderer,
@@ -1292,6 +1292,7 @@ function registerIpc() {
       runner: kanbanRunner,
       sendChanged: () => sendToRenderer(IPC.event.kanbanChanged, {}),
       onBoardMutation: emitKanbanMutation,
+      bindInvoke: bindKanbanInvoke,
     },
   });
 }

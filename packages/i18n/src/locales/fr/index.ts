@@ -2982,7 +2982,6 @@ sklm: {
     "settings": {
       "title": "Paramètres Kanban",
       "enabled": "Activer le tableau Kanban",
-      "maxInProgress": "Max. en cours",
       "maxRuntimeSeconds": "Durée max. d'exécution (secondes)",
       "maxAgentCardsPerSession": "Max. cartes d'agent par session",
       "maxDailySpawns": "Max. lancements quotidiens"

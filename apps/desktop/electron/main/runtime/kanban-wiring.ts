@@ -44,6 +44,13 @@ export function createKanbanWiring(deps: {
     }
   };
 
+  // Bound by registerIpc: workers must go through the real agentPrompt handler
+  // (sidecar launch params, durable turn). The host has no `agent.prompt`.
+  let invokeIpc: ((channel: string, args: readonly unknown[]) => Promise<unknown>) | null = null;
+  const bindInvoke = (fn: typeof invokeIpc) => {
+    invokeIpc = fn;
+  };
+
   const requireHost = () => {
     const h = getHost();
     if (!h) throw new Error("host unavailable");
@@ -51,7 +58,9 @@ export function createKanbanWiring(deps: {
   };
 
   const kanbanRunner = createKanbanRunner({
-    getSettings: () => readKanbanSettings(dataDir),
+    // omp runs one session at a time (bridge ompPrompt swaps sessions per prompt),
+    // so concurrent workers would clobber each other. Lift when omp gets per-session processes.
+    getSettings: () => ({ ...readKanbanSettings(dataDir), maxInProgress: 1 }),
     getBoard: () => loadBoard(dataDir),
     saveBoard: (board) => {
       void saveBoard(dataDir, board);
@@ -67,7 +76,8 @@ export function createKanbanWiring(deps: {
       return sessionId;
     },
     prompt: async (sessionId, content) => {
-      await requireHost().call("agent.prompt", { sessionId, content });
+      if (!invokeIpc) throw new Error("agent prompt handler unavailable");
+      await invokeIpc(IPC.invoke.agentPrompt, [{ sessionId, content }]);
     },
     notifyDailyCap: (maxSpawns) => {
       sendToRenderer(IPC.event.toast, {
@@ -79,5 +89,5 @@ export function createKanbanWiring(deps: {
     onBoardMutation: emitKanbanMutation,
   });
 
-  return { kanbanRunner, emitKanbanMutation };
+  return { kanbanRunner, emitKanbanMutation, bindInvoke };
 }

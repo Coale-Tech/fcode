@@ -2936,7 +2936,6 @@ export const ptBR = {
     "settings": {
       "title": "Configurações do Kanban",
       "enabled": "Ativar quadro Kanban",
-      "maxInProgress": "Máx. em andamento",
       "maxRuntimeSeconds": "Tempo máx. de execução (segundos)",
       "maxAgentCardsPerSession": "Máx. cartões de agente por sessão",
       "maxDailySpawns": "Máx. inicializações diárias"
