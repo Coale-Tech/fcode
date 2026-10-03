@@ -180,6 +180,15 @@ test("a password target reaches ssh through the askpass helper and nowhere else"
 
 test("a key-authenticated transport is handed no askpass material", { timeout: TEST_TIMEOUT_MS }, async (t) => {
   const binary = await writeFixture(t, FIXTURES.argvAndEnv, "ssh-no-askpass");
+  // The transport inherits the app's env. Hide the developer's own SSH_ASKPASS
+  // (common on macOS): the assertion is that the transport adds none, not that
+  // the machine has none.
+  const ambient = { SSH_ASKPASS: process.env.SSH_ASKPASS, SSH_ASKPASS_REQUIRE: process.env.SSH_ASKPASS_REQUIRE };
+  delete process.env.SSH_ASKPASS;
+  delete process.env.SSH_ASKPASS_REQUIRE;
+  t.after(() => {
+    for (const [key, value] of Object.entries(ambient)) if (value !== undefined) process.env[key] = value;
+  });
   const transport = createSystemSshTransport({ host: "remote.example" }, { binary });
   t.after(() => transport.dispose());
 
