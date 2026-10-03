@@ -26,12 +26,18 @@ export type KanbanTask = {
   createdBy: KanbanCreator;
   projectPath: string;
   sessionId?: string;
+  modelOverride?: string;
   blockKind?: KanbanBlockKind;
+  blockReason?: string;
+  result?: string;
   archived: boolean;
   consecutiveFailures: number;
   createdAt: number;
-  updatedAt: number;
+  startedAt?: number;
+  completedAt?: number;
 };
+
+export type KanbanEvent = { id: string; taskId: string; kind: string; payload?: unknown; ts: number };
 
 export type KanbanLink = { parentId: string; childId: string };
 
@@ -56,6 +62,8 @@ export type KanbanRun = {
   taskId: string;
   sessionId: string;
   status: KanbanRunStatus;
+  summary?: string;
+  error?: string;
   startedAt: number;
   endedAt?: number;
   nudgeCount: number;
@@ -66,6 +74,7 @@ export type KanbanBoard = {
   links: KanbanLink[];
   comments: KanbanComment[];
   runs: KanbanRun[];
+  events: KanbanEvent[];
   dailyStats: { date: string; spawned: number }[];
 };
 

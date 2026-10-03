@@ -1847,7 +1847,15 @@ export const api = {
   kanbanList: () =>
     invoke<{ board: KanbanBoard; paused: boolean }>(IPC.invoke.kanbanList),
   /** Kanban: create a new user task card. Returns the new taskId. */
-  kanbanCreate: (input: { title: string; body: string; projectPath: string; priority?: number }) =>
+  kanbanCreate: (input: {
+    title: string;
+    body: string;
+    projectPath: string;
+    priority?: number;
+    parentIds?: string[];
+    /** Column the card is created in (default: ready, or todo with a parent). */
+    status?: "triage" | "todo";
+  }) =>
     invoke<{ taskId: string }>(IPC.invoke.kanbanCreate, input),
   /** Kanban: move a task to a different status column. */
   kanbanMove: (taskId: string, status: string) =>
@@ -1855,6 +1863,12 @@ export const api = {
   /** Kanban: add a parent→child link between tasks. */
   kanbanLink: (parentId: string, childId: string) =>
     invoke<{ board: KanbanBoard }>(IPC.invoke.kanbanLink, { parentId, childId }),
+  /** Kanban: remove a parent→child link. */
+  kanbanUnlink: (parentId: string, childId: string) =>
+    invoke<{ board: KanbanBoard }>(IPC.invoke.kanbanUnlink, { parentId, childId }),
+  /** Kanban: edit a task's title, description or priority. */
+  kanbanUpdate: (taskId: string, patch: { title?: string; body?: string; priority?: number }) =>
+    invoke<{ board: KanbanBoard }>(IPC.invoke.kanbanUpdate, { taskId, ...patch }),
   /** Kanban: add a comment to a task. */
   kanbanComment: (taskId: string, body: string) =>
     invoke<{ board: KanbanBoard }>(IPC.invoke.kanbanComment, { taskId, body }),

@@ -428,6 +428,13 @@ export function addLink(
   );
 }
 
+/** Remove a parent→child link (no-op when absent). */
+export function removeLink(board: KanbanBoard, parentId: string, childId: string): KanbanBoard {
+  const links = board.links.filter((l) => !(l.parentId === parentId && l.childId === childId));
+  if (links.length === board.links.length) return board;
+  return appendEvent({ ...board, links }, childId, "unlinked", { parentId });
+}
+
 // ── comment ───────────────────────────────────────────────────────────────────
 
 export function addComment(board: KanbanBoard, taskId: string, author: string, body: string): KanbanBoard {
@@ -450,6 +457,32 @@ export function moveTask(board: KanbanBoard, taskId: string, toStatus: KanbanSta
 
 export function archiveTask(board: KanbanBoard, taskId: string, archived: boolean): KanbanBoard {
   return mapTask(board, taskId, (t) => ({ ...t, archived }));
+}
+
+/** Edit user-facing fields. Blank title is rejected; priority is clamped to a non-negative integer. */
+export function updateTask(
+  board: KanbanBoard,
+  taskId: string,
+  patch: { title?: string; body?: string; priority?: number },
+): KanbanBoard {
+  if (!task(board, taskId)) return board;
+  const title = patch.title === undefined ? undefined : patch.title.trim();
+  if (title === "") return board;
+  const priority =
+    patch.priority === undefined || !Number.isFinite(patch.priority)
+      ? undefined
+      : Math.max(0, Math.trunc(patch.priority));
+  return appendEvent(
+    mapTask(board, taskId, (t) => ({
+      ...t,
+      ...(title !== undefined ? { title } : {}),
+      ...(patch.body !== undefined ? { body: patch.body } : {}),
+      ...(priority !== undefined ? { priority } : {}),
+    })),
+    taskId,
+    "edited",
+    { fields: Object.keys(patch).filter((k) => (patch as Record<string, unknown>)[k] !== undefined) },
+  );
 }
 
 // ── daily cap helpers ─────────────────────────────────────────────────────────
