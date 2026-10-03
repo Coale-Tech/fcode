@@ -17,18 +17,21 @@ export type SettingsTabId =
   | "sync"
   | "remoteHosts"
   | "voice"
+  | "aiAgents"
+  | "aiTools"
+  | "aiExtensions"
   | "kanban"
   | "about";
 
 export type SettingsNavGroupId =
   | "preferences"
-  | "agent"
+  | "ai"
   | "workspace"
   | "system";
 
 export const SETTINGS_NAV_GROUP_LABELS: Record<SettingsNavGroupId, string> = {
   preferences: "settings.groupPreferences",
-  agent: "settings.groupAgent",
+  ai: "settings.groupAi",
   workspace: "settings.groupWorkspace",
   system: "settings.groupSystem",
 };
@@ -86,9 +89,9 @@ export const SETTINGS_NAV: SettingsNavEntry[] = [
   },
   {
     id: "ai",
-    labelKey: "settings.nav.ai",
-    titleKey: "settings.ai",
-    group: "preferences",
+    labelKey: "settings.nav.aiDefaults",
+    titleKey: "settings.nav.aiDefaults",
+    group: "ai",
     keywordKeys: [
       "settings.permissions",
       "settings.permissionMode",
@@ -125,80 +128,9 @@ export const SETTINGS_NAV: SettingsNavEntry[] = [
       "settings.promptEnhancementModelFollow",
       "settings.promptEnhancementThinking",
       "settings.largePasteThreshold",
-      "settings.ompTaskGroup",
-      "settings.ompTaskIsolation",
-      "settings.ompIsolationBackend",
-      "settings.ompWorktreeClone",
-      "settings.ompTaskMaxConcurrency",
-      "settings.ompTaskMaxRecursionDepth",
-      "settings.ompEvalGroup",
-      "settings.ompEvalPy",
-      "settings.ompEvalJs",
-      "settings.ompEvalTools",
-      "settings.ompPythonKernelMode",
-      "settings.ompPythonInterpreter",
-      "settings.ompBrowserGroup",
-      "settings.ompBrowserEnabled",
-      "settings.ompBrowserHeadless",
-      "settings.ompBrowserCdpUrl",
-      "settings.ompBrowserRelay",
-      "settings.ompBrowserRelayUrl",
-      "settings.ompCollabGroup",
-      "settings.ompCollabRelayUrl",
-      "settings.ompCollabWebUrl",
-      "settings.ompCollabDisplayName",
-      "settings.ompCollabAutoStart",
-      // Queue Modes
-      "settings.ompQueueModesGroup",
-      "settings.ompSteeringMode",
-      "settings.ompFollowUpMode",
-      "settings.ompInterruptMode",
-      "settings.ompLoopMode",
-      "settings.ompQueueModeAll",
-      "settings.ompQueueModeOneAtATime",
-      // LSP
-      "settings.ompLspGroup",
-      "settings.ompLspEnabled",
-      "settings.ompLspFormatOnWrite",
-      "settings.ompLspDiagnosticsOnWrite",
-      "settings.ompLspDiagnosticsOnEdit",
-      // IDA Pro
-      "settings.ompIdaGroup",
-      "settings.ompIdaEnabled",
-      "settings.ompIdaPython",
-      "settings.ompIdaInstallDir",
-      // MCP
-      "settings.ompMcpGroup",
-      "settings.ompMcpEnableProjectConfig",
-      "settings.ompMcpRenderMarkdownResults",
-      "settings.ompMcpNotifications",
-      // Skills & Commands
-      "settings.ompExtensibilityGroup",
-      "settings.ompSkillsEnabled",
-      "settings.ompSkillsRegistryUrl",
-      "settings.ompSkillsCustomDirectories",
-      "settings.ompCommandsEnableClaudeUser",
-      "settings.ompCommandsEnableClaudeProject",
-      // Hindsight Behavior
-      "settings.ompHindsightGroup",
-      "settings.ompHindsightAutoRecall",
-      "settings.ompHindsightAutoRetain",
-      "settings.ompHindsightRetainMode",
-      "settings.ompHindsightMentalModelsEnabled",
-      "settings.ompHindsightMentalModelAutoSeed",
-      // HTML Export Theme
       "settings.ompThemeGroup",
       "settings.ompThemeDark",
       "settings.ompThemeLight",
-      // Agent Model Overrides
-      "settings.ompAgentModelOverridesDesc",
-      "settings.ompAgentModelOverridesDefault",
-      // Extensions / Skills / Worktrees (installed)
-      "settings.ompExtGroup",
-      "settings.ompExtInstall",
-      "settings.ompExtUninstall",
-      "settings.ompSkillsGroup",
-      "settings.ompWorktreesGroup",
     ],
   },
   {
@@ -234,7 +166,7 @@ export const SETTINGS_NAV: SettingsNavEntry[] = [
     id: "instructions",
     labelKey: "settings.nav.instructions",
     titleKey: "settings.instructions",
-    group: "agent",
+    group: "ai",
     keywordKeys: [
       "settings.instructionsGlobal",
       "settings.instructionsPath",
@@ -244,7 +176,7 @@ export const SETTINGS_NAV: SettingsNavEntry[] = [
     id: "agent",
     labelKey: "settings.nav.models",
     titleKey: "settings.configuration",
-    group: "agent",
+    group: "ai",
     keywordKeys: [
       "settings.providers",
       "settings.models",
@@ -258,12 +190,18 @@ export const SETTINGS_NAV: SettingsNavEntry[] = [
     id: "memory",
     labelKey: "settings.nav.memory",
     titleKey: "settings.memoryTitle",
-    group: "agent",
+    group: "ai",
     keywordKeys: [
       "settings.memoryTitle",
       "settings.memoryBackend",
       "settings.memoryHindsightUrl",
       "settings.memoryHindsightToken",
+      "settings.ompHindsightGroup",
+      "settings.ompHindsightAutoRecall",
+      "settings.ompHindsightAutoRetain",
+      "settings.ompHindsightRetainMode",
+      "settings.ompHindsightMentalModelsEnabled",
+      "settings.ompHindsightMentalModelAutoSeed",
     ],
   },
   {
@@ -334,10 +272,90 @@ export const SETTINGS_NAV: SettingsNavEntry[] = [
     ],
   },
   {
+    id: "aiAgents",
+    labelKey: "settings.nav.aiAgents",
+    titleKey: "settings.nav.aiAgents",
+    group: "ai",
+    keywordKeys: [
+      "settings.ompTaskGroup",
+      "settings.ompTaskIsolation",
+      "settings.ompIsolationBackend",
+      "settings.ompWorktreeClone",
+      "settings.ompTaskMaxConcurrency",
+      "settings.ompTaskMaxRecursionDepth",
+      "settings.ompCollabGroup",
+      "settings.ompCollabRelayUrl",
+      "settings.ompCollabWebUrl",
+      "settings.ompCollabDisplayName",
+      "settings.ompCollabAutoStart",
+      "settings.ompQueueModesGroup",
+      "settings.ompSteeringMode",
+      "settings.ompFollowUpMode",
+      "settings.ompInterruptMode",
+      "settings.ompLoopMode",
+      "settings.ompQueueModeAll",
+      "settings.ompQueueModeOneAtATime",
+      "settings.ompAgentModelOverridesDesc",
+      "settings.ompAgentModelOverridesDefault",
+      "settings.ompWorktreesGroup",
+    ],
+  },
+  {
+    id: "aiTools",
+    labelKey: "settings.nav.aiTools",
+    titleKey: "settings.nav.aiTools",
+    group: "ai",
+    keywordKeys: [
+      "settings.ompEvalGroup",
+      "settings.ompEvalPy",
+      "settings.ompEvalJs",
+      "settings.ompEvalTools",
+      "settings.ompPythonKernelMode",
+      "settings.ompPythonInterpreter",
+      "settings.ompBrowserGroup",
+      "settings.ompBrowserEnabled",
+      "settings.ompBrowserHeadless",
+      "settings.ompBrowserCdpUrl",
+      "settings.ompBrowserRelay",
+      "settings.ompBrowserRelayUrl",
+      "settings.ompLspGroup",
+      "settings.ompLspEnabled",
+      "settings.ompLspFormatOnWrite",
+      "settings.ompLspDiagnosticsOnWrite",
+      "settings.ompLspDiagnosticsOnEdit",
+      "settings.ompIdaGroup",
+      "settings.ompIdaEnabled",
+      "settings.ompIdaPython",
+      "settings.ompIdaInstallDir",
+      "settings.ompMcpGroup",
+      "settings.ompMcpEnableProjectConfig",
+      "settings.ompMcpRenderMarkdownResults",
+      "settings.ompMcpNotifications",
+    ],
+  },
+  {
+    id: "aiExtensions",
+    labelKey: "settings.nav.aiExtensions",
+    titleKey: "settings.nav.aiExtensions",
+    group: "ai",
+    keywordKeys: [
+      "settings.ompExtensibilityGroup",
+      "settings.ompSkillsEnabled",
+      "settings.ompSkillsRegistryUrl",
+      "settings.ompSkillsCustomDirectories",
+      "settings.ompCommandsEnableClaudeUser",
+      "settings.ompCommandsEnableClaudeProject",
+      "settings.ompExtGroup",
+      "settings.ompExtInstall",
+      "settings.ompExtUninstall",
+      "settings.ompSkillsGroup",
+    ],
+  },
+  {
     id: "kanban",
     labelKey: "settings.nav.kanban",
     titleKey: "kanban.settings.title",
-    group: "agent",
+    group: "ai",
     keywordKeys: [
       "kanban.settings.enabled",
       "kanban.settings.maxInProgress",

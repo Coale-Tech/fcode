@@ -51,14 +51,7 @@ export function registerKanbanIpc({
   };
 
   handle(IPC.invoke.kanbanList, async () => {
-    const board = getBoard();
-    return {
-      tasks: board.tasks,
-      links: board.links,
-      comments: board.comments,
-      runs: board.runs,
-      paused: runner.isPaused(),
-    };
+    return { board: getBoard(), paused: runner.isPaused() };
   });
 
   handle(IPC.invoke.kanbanCreate, async (input: {
@@ -96,7 +89,7 @@ export function registerKanbanIpc({
     if (!taskId || !status) throw new Error("taskId and status required");
     const next = mutate((board) => moveTask(board, taskId, status));
     void runner.tick().catch(() => undefined);
-    return { task: next.tasks.find((t) => t.id === taskId) ?? null };
+    return { board: next };
   });
 
   handle(IPC.invoke.kanbanLink, async (input: { parentId?: string; childId?: string } = {}) => {
@@ -109,7 +102,7 @@ export function registerKanbanIpc({
     const b2 = recomputeReady(next);
     saveBoard(b2);
     sendChanged();
-    return { ok: true };
+    return { board: b2 };
   });
 
   handle(IPC.invoke.kanbanComment, async (input: { taskId?: string; body?: string; author?: string } = {}) => {
@@ -117,33 +110,36 @@ export function registerKanbanIpc({
     const body = String(input.body ?? "").trim();
     const author = String(input.author ?? "user").trim();
     if (!taskId || !body) throw new Error("taskId and body required");
-    mutate((board) => addComment(board, taskId, author, body));
-    return { ok: true };
+    return { board: mutate((board) => addComment(board, taskId, author, body)) };
   });
 
   handle(IPC.invoke.kanbanArchive, async (input: { taskId?: string; archived?: boolean } = {}) => {
     const taskId = String(input.taskId ?? "").trim();
     if (!taskId) throw new Error("taskId required");
     const archived = input.archived !== false; // default true
-    mutate((board) => archiveTask(board, taskId, archived));
-    return { ok: true };
+    return { board: mutate((board) => archiveTask(board, taskId, archived)) };
   });
 
-  handle(IPC.invoke.kanbanListRuns, async (taskId: string) => {
+  handle(IPC.invoke.kanbanListRuns, async (input: { taskId?: string } = {}) => {
+    const taskId = String(input.taskId ?? "");
     const board = getBoard();
     return { runs: board.runs.filter((r) => r.taskId === taskId) };
   });
 
-  handle(IPC.invoke.kanbanSettingsGet, async () => getSettings());
+  handle(IPC.invoke.kanbanSettingsGet, async () => ({ settings: getSettings() }));
 
-  handle(IPC.invoke.kanbanSettingsSet, async (input: unknown) => {
-    const settings = validateKanbanSettings(input);
+  // Renderer sends a partial patch; merge over the stored settings so a single
+  // toggle never resets the other fields to defaults.
+  handle(IPC.invoke.kanbanSettingsSet, async (input: { settings?: Partial<KanbanSettings> } = {}) => {
+    const settings = validateKanbanSettings({ ...getSettings(), ...input.settings });
     saveSettings(settings);
-    return settings;
+    sendChanged(); // NavRail refetches `enabled` on this event
+    void runner.tick().catch(() => undefined);
+    return { settings };
   });
 
-  handle(IPC.invoke.kanbanSetPaused, async (paused: boolean) => {
-    runner.pause(typeof paused === "boolean" ? paused : false);
+  handle(IPC.invoke.kanbanSetPaused, async (input: { paused?: boolean } = {}) => {
+    runner.pause(input.paused === true);
     return { paused: runner.isPaused() };
   });
 

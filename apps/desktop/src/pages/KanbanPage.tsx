@@ -29,13 +29,16 @@ const STATUS_MOVE_TARGETS: Record<KanbanStatus, KanbanStatus[]> = {
 function useKanbanBoard() {
   const [board, setBoard] = useState<KanbanBoard | null>(null);
   const [error, setError] = useState("");
+  const [paused, setPaused] = useState(false);
   const revision = useRef(0);
 
   const refresh = useCallback(async () => {
     const req = ++revision.current;
     try {
       const result = await api.kanbanList();
-      if (revision.current === req) setBoard(result.board);
+      if (revision.current !== req) return;
+      setBoard(result.board);
+      setPaused(result.paused);
     } catch (e) {
       setError(String(e));
     }
@@ -45,11 +48,10 @@ function useKanbanBoard() {
 
   // Listen for board changes from the main process
   useEffect(() => {
-    const win = window as { electron?: { on?: (ch: string, cb: () => void) => () => void } };
-    return win.electron?.on?.(IPC.event.kanbanChanged, refresh);
+    return window.piDesktop?.on?.(IPC.event.kanbanChanged, () => { void refresh(); });
   }, [refresh]);
 
-  return { board, error, refresh };
+  return { board, error, refresh, paused, setPaused };
 }
 
 // ── Drag state ────────────────────────────────────────────────────────────────
@@ -243,9 +245,8 @@ export function KanbanPage() {
   const { t } = useTranslation();
   const showToast = useAppStore((s) => s.showToast);
   const workspacePath = useAppStore((s) => s.workspace?.path ?? "");
-  const { board, error, refresh } = useKanbanBoard();
+  const { board, error, refresh, paused, setPaused } = useKanbanBoard();
   const [showNewCard, setShowNewCard] = useState(false);
-  const [paused, setPaused] = useState(false);
   // taskId → true for tasks whose running session needs approval
   const [needsApproval, setNeedsApproval] = useState<Set<string>>(new Set());
 

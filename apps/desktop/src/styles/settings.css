@@ -343,16 +343,32 @@
   width: 100%;
 }
 
+/* Raven panel header: 16/16 semibold title, 14/21 ink-gray-6 description 4px below. */
+.settings-page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 24px;
+}
+
 .settings-section-title {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 0 0 28px;
+  gap: 8px;
+  margin: 0;
   color: var(--ds-settings-header-ink);
   font-size: var(--text-xl);
   font-weight: var(--font-weight-semibold);
   letter-spacing: 0.015em;
-  line-height: var(--leading-heading);
+  line-height: 1.25;
+}
+
+.settings-section-desc {
+  margin: 0;
+  color: var(--ds-settings-header-desc-ink);
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-regular);
+  line-height: 1.5;
 }
 
 .settings-nav-experimental {
@@ -373,14 +389,15 @@
 }
 
 .settings-card-block {
-  margin-bottom: 28px;
+  margin-bottom: 16px;
 }
 
+/* Raven section header: 14px regular ink-gray-5, no card chrome. */
 .settings-card-heading {
-  margin: 0 0 10px;
+  margin: 0 0 4px;
   color: var(--ds-settings-section-ink);
   font-size: var(--text-base);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-regular);
 }
 
 /* The heading's help mark sits beside the heading rather than inside it: a
@@ -905,11 +922,19 @@
   flex: 1;
 }
 
+/* Raven row: label 14/21 regular ink-gray-8, description 13/1.5 ink-gray-5. */
 .settings-row-title {
   color: var(--ds-settings-row-label-ink);
   font-size: var(--text-base);
-  font-weight: var(--font-weight-medium);
-  line-height: var(--leading-compact);
+  font-weight: var(--font-weight-regular);
+  line-height: 1.5;
+}
+
+.settings-row-desc {
+  color: var(--ds-settings-row-desc-ink);
+  font-size: var(--text-md);
+  font-weight: var(--font-weight-regular);
+  line-height: 1.5;
 }
 
 /* A row's live value (not an explanation): visible, and secondary to the

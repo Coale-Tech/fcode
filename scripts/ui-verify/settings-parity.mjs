@@ -334,7 +334,7 @@ async function runRendererMode() {
   const shots = [];
 
   const themes = ["light", "dark"];
-  const tabs = ["general", "ai", "memory", "agent", "shortcuts", "about"];
+  const tabs = (process.env.PARITY_TABS ?? "general,ai,aiAgents,aiTools,aiExtensions,memory,agent,shortcuts,about,kanban").split(",");
 
   for (const theme of themes) {
     // Open one page per theme for screenshots

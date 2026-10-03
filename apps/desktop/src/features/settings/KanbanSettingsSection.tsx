@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { KanbanSettings } from "@pi-desktop/shared";
 import { api } from "../../lib/api";
 import { SettingsCard, SettingsRow } from "./primitives";
-import { SettingsToggle } from "../../components/ui";
+import { Input, SettingsToggle } from "../../components/ui";
 
 export function KanbanSettingsSection() {
   const { t } = useTranslation();
@@ -12,6 +12,7 @@ export function KanbanSettingsSection() {
 
   useEffect(() => {
     void api.kanbanSettingsGet().then((r) => setSettings(r.settings)).catch(() => {});
+    void api.kanbanList().then((r) => setPaused(r.paused)).catch(() => {});
   }, []);
 
   const save = async (patch: Partial<KanbanSettings>) => {
@@ -31,7 +32,7 @@ export function KanbanSettingsSection() {
 
   return (
     <div className="settings-stack">
-      <SettingsCard title={t("kanban.settings.title")}>
+      <SettingsCard>
         <SettingsRow title={t("kanban.settings.enabled")}>
           <SettingsToggle
             checked={settings.enabled}
@@ -40,35 +41,31 @@ export function KanbanSettingsSection() {
           />
         </SettingsRow>
         <SettingsRow title={t("kanban.settings.maxInProgress")}>
-          <input
+          <Input
             type="number" min={1} max={10}
-            className="settings-number-input"
-            value={settings.maxInProgress}
-            onChange={(e) => void save({ maxInProgress: Number(e.target.value) })}
+            defaultValue={settings.maxInProgress}
+            onBlur={(e) => void save({ maxInProgress: Number(e.target.value) })}
           />
         </SettingsRow>
         <SettingsRow title={t("kanban.settings.maxRuntimeSeconds")}>
-          <input
+          <Input
             type="number" min={60} max={86400}
-            className="settings-number-input"
-            value={settings.maxRuntimeSeconds}
-            onChange={(e) => void save({ maxRuntimeSeconds: Number(e.target.value) })}
+            defaultValue={settings.maxRuntimeSeconds}
+            onBlur={(e) => void save({ maxRuntimeSeconds: Number(e.target.value) })}
           />
         </SettingsRow>
         <SettingsRow title={t("kanban.settings.maxAgentCardsPerSession")}>
-          <input
+          <Input
             type="number" min={1} max={100}
-            className="settings-number-input"
-            value={settings.maxAgentCardsPerSession}
-            onChange={(e) => void save({ maxAgentCardsPerSession: Number(e.target.value) })}
+            defaultValue={settings.maxAgentCardsPerSession}
+            onBlur={(e) => void save({ maxAgentCardsPerSession: Number(e.target.value) })}
           />
         </SettingsRow>
         <SettingsRow title={t("kanban.settings.maxDailySpawns")}>
-          <input
+          <Input
             type="number" min={1} max={1000}
-            className="settings-number-input"
-            value={settings.maxDailySpawns}
-            onChange={(e) => void save({ maxDailySpawns: Number(e.target.value) })}
+            defaultValue={settings.maxDailySpawns}
+            onBlur={(e) => void save({ maxDailySpawns: Number(e.target.value) })}
           />
         </SettingsRow>
         <SettingsRow title={t("kanban.dispatcher.pause")}>

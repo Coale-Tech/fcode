@@ -357,12 +357,12 @@ test("settings nav keeps a flat searchable index with titled visual groups", () 
   assert.match(settingsPageSource, /SETTINGS_NAV_GROUP_LABELS/);
   assert.match(settingsPageSource, /className="settings-nav-group-label"/);
   assert.match(settingsSearchSource, /group: "preferences"/);
-  assert.match(settingsSearchSource, /group: "agent"/);
+  assert.match(settingsSearchSource, /group: "ai"/);
   assert.match(settingsSearchSource, /group: "workspace"/);
   assert.match(settingsSearchSource, /group: "system"/);
   for (const key of [
     "settings.groupPreferences",
-    "settings.groupAgent",
+    "settings.groupAi",
     "settings.groupWorkspace",
     "settings.groupSystem",
   ]) {

@@ -14,6 +14,7 @@ import { useAppStore } from "../../stores/app-store";
 import { Input, SettingsToggle } from "../../components/ui";
 import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect";
 import { SettingsCard, SettingsRow } from "./primitives";
+import { OmpSettingsSections } from "./omp-settings-sections";
 
 export type MemoryHealth = "ok" | "degraded" | "error" | "off" | "unknown";
 
@@ -788,7 +789,7 @@ export function MemoryTab() {
           </details>
         </section>
       )}
-
+      <OmpSettingsSections part="memory" />
     </div>
   );
 }

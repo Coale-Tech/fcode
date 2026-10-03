@@ -1845,7 +1845,7 @@ export const api = {
     invoke<void>(IPC.invoke.ompSetEventFilter, { events }),
   /** Kanban: list all tasks, links, comments, runs. */
   kanbanList: () =>
-    invoke<{ board: KanbanBoard }>(IPC.invoke.kanbanList),
+    invoke<{ board: KanbanBoard; paused: boolean }>(IPC.invoke.kanbanList),
   /** Kanban: create a new user task card. Returns the new taskId. */
   kanbanCreate: (input: { title: string; body: string; projectPath: string; priority?: number }) =>
     invoke<{ taskId: string }>(IPC.invoke.kanbanCreate, input),
@@ -1872,7 +1872,7 @@ export const api = {
     invoke<{ settings: KanbanSettings }>(IPC.invoke.kanbanSettingsSet, { settings }),
   /** Kanban: pause or resume the dispatcher. */
   kanbanSetPaused: (paused: boolean) =>
-    invoke<void>(IPC.invoke.kanbanSetPaused, { paused }),
+    invoke<{ paused: boolean }>(IPC.invoke.kanbanSetPaused, { paused }),
   /** Kanban: trigger an immediate dispatcher tick. */
   kanbanNudge: () =>
     invoke<void>(IPC.invoke.kanbanNudge),

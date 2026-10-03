@@ -84,6 +84,7 @@
   --ds-settings-section-ink:          var(--ink-gray-5);
   --ds-settings-row-label-ink:        var(--ink-gray-8);
   --ds-settings-row-desc-ink:         var(--ink-gray-5);
+  --ds-settings-header-desc-ink:      var(--ink-gray-6);
   /* Radii: numeric steps, no named --radius-sm/-md/-lg (FD3) */
   --ds-settings-radius-item:          var(--radius-1);  /* 4px — nav items, controls */
   --ds-settings-radius-ctrl:          var(--radius-1);  /* 4px — buttons, inputs, selects */

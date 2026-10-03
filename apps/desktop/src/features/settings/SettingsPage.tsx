@@ -33,6 +33,9 @@ import {
   IconSparkles,
   IconCloudDown,
   IconMic,
+  IconPlug,
+  IconWorkflow,
+  IconWrench,
   IconKanban as IconColumns,
 } from "../../components/icons";
 import { Badge, Button, cx, SegmentedControl, SettingsToggle } from "../../components/ui";
@@ -242,6 +245,9 @@ export function SettingsPage() {
       sync: <IconCloudDown size={14} />,
       remoteHosts: <IconGlobe size={14} />,
       voice: <IconMic size={14} />,
+      aiAgents: <IconWorkflow size={14} />,
+      aiTools: <IconWrench size={14} />,
+      aiExtensions: <IconPlug size={14} />,
       kanban: <IconColumns size={14} />,
       about: <IconInfo size={14} />,
     };
@@ -283,6 +289,7 @@ export function SettingsPage() {
 
   const activeNavItem = navItems.find((item) => item.id === tab);
   const activeTitleKey = activeNavItem?.titleKey ?? "settings.title";
+  const activeDescription = activeExtension ? "" : t(`settings.navDesc.${tab}`, { defaultValue: "" });
   const tabNeedsSettings = ["general", "ai", "shortcuts", "agent"].includes(tab);
 
   return (
@@ -383,12 +390,15 @@ export function SettingsPage() {
       <div className="settings-content" ref={contentRef}>
         <div className="settings-content-inner">
           <div className="settings-content-enter">
-          <h1 className="settings-section-title">
-            <span>{activeExtension?.label ?? t(activeTitleKey)}</span>
-            {!activeExtension && activeNavItem?.experimentalBadgeKey ? (
-              <Badge tone="warning">{t(activeNavItem.experimentalBadgeKey)}</Badge>
-            ) : null}
-          </h1>
+          <header className="settings-page-header">
+            <h1 className="settings-section-title">
+              <span>{activeExtension?.label ?? t(activeTitleKey)}</span>
+              {!activeExtension && activeNavItem?.experimentalBadgeKey ? (
+                <Badge tone="warning">{t(activeNavItem.experimentalBadgeKey)}</Badge>
+              ) : null}
+            </h1>
+            {activeDescription ? <p className="settings-section-desc">{activeDescription}</p> : null}
+          </header>
 
           {activeExtension ? (
             <PluginScenicThemesDestination destination={activeExtension} selectTheme={selectPluginTheme} />
@@ -561,7 +571,15 @@ export function SettingsPage() {
                 settings={settings}
                 saveSettings={saveSettings}
               />
-              <OmpSettingsSections />
+              <OmpSettingsSections part="defaults" />
+            </div>
+          )}
+
+          {(tab === "aiAgents" || tab === "aiTools" || tab === "aiExtensions") && (
+            <div className="settings-stack">
+              <OmpSettingsSections
+                part={tab === "aiAgents" ? "agents" : tab === "aiTools" ? "tools" : "extensions"}
+              />
             </div>
           )}
 
