@@ -359,8 +359,8 @@
   color: var(--ds-settings-header-ink);
   font-size: var(--text-xl);
   font-weight: var(--font-weight-semibold);
-  letter-spacing: 0.015em;
-  line-height: 1.25;
+  letter-spacing: var(--tracking-wide);
+  line-height: var(--leading-tight);
 }
 
 .settings-section-desc {
@@ -368,7 +368,7 @@
   color: var(--ds-settings-header-desc-ink);
   font-size: var(--text-base);
   font-weight: var(--font-weight-regular);
-  line-height: 1.5;
+  line-height: var(--leading-relaxed);
 }
 
 .settings-nav-experimental {
@@ -927,14 +927,14 @@
   color: var(--ds-settings-row-label-ink);
   font-size: var(--text-base);
   font-weight: var(--font-weight-regular);
-  line-height: 1.5;
+  line-height: var(--leading-relaxed);
 }
 
 .settings-row-desc {
   color: var(--ds-settings-row-desc-ink);
   font-size: var(--text-md);
   font-weight: var(--font-weight-regular);
-  line-height: 1.5;
+  line-height: var(--leading-relaxed);
 }
 
 /* A row's live value (not an explanation): visible, and secondary to the

@@ -112,7 +112,7 @@
 
 .kanban-card-title-text {
   flex: 1;
-  line-height: 1.4;
+  line-height: var(--leading-normal);
 }
 
 .kanban-card-actions {
