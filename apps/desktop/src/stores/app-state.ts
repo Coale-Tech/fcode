@@ -176,7 +176,11 @@ export type AppState = {
   toasts: ToastItem[];
   notifications: AppNotification[];
   unreadNotificationCount: number;
-  page: "chat" | "pulls" | "scheduled" | "plugins" | "settings" | "build" | "bench";
+  page: "chat" | "pulls" | "scheduled" | "plugins" | "settings" | "build" | "bench" | "kanban";
+  /** Whether [kanban] worker sessions are shown in the sidebar. Default false (hidden). */
+  showKanbanSessions: boolean;
+  /** Whether the kanban feature is enabled (mirrored from KanbanSettings.enabled). */
+  kanbanEnabled: boolean;
   /** Bench log view follows new output while true; toggleFollowLog (Mod+Shift+B) flips it. */
   benchLogFollowTail: boolean;
   /** Tab ids come from the shared settings index. */
@@ -351,6 +355,8 @@ export type AppState = {
   setSettingsAnchor: (key: string | null) => void;
   setBenchLogFollowTail: (follow: boolean) => void;
   toggleBenchLogFollowTail: () => void;
+  setShowKanbanSessions: (show: boolean) => void;
+  setKanbanEnabled: (enabled: boolean) => void;
   navBack: () => void;
   navForward: () => void;
   canNavBack: () => boolean;

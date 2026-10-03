@@ -2,6 +2,21 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const trEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.0",
+    "date": "2026-10-02",
+    "highlights": [
+      "Ayarlar, Raven düzenine uyacak şekilde yeniden tasarlandı: ayırıcılı düz satırlar, Raven gezinme hareketli 224 px sabit ray ve güncellenmiş kontroller; macOS cam titreşim rayını koruyor. Yeni «Yapay Zeka» grubu kendi sayfalarına ayrıldı (izinler, ajanlar, araçlar, uzantılar, bellek, Kanban); açıklamalar artık her satırın altında.",
+      "Yeni Kanban panosu (varsayılan olarak devre dışı; Ayarlar → Kanban'dan etkinleştirin): kartlar ajan oturumları başlatır, worker araçlarını, duraklama anahtarını ve oturum başına sınırları gösterir; [kanban] oturumları varsayılan olarak kenar çubuğunda gizlidir.",
+      "Bellek güçlendirme: bellek özeti ve tüm geri çağırma metinleri, prompt'a ulaşmadan önce nötralize edilir ve düzenlenir; yeni bir kullanıcı profili (Ayarlar → Bellek) her projeye enjekte edilir (1 KB sınır); yeni skill oluşturmak için `/learn <metin>` kullanın.",
+      "Sohbet, her tur için eylem özeti çipi, planlayıcı editöründe zamanlama şablonları ve yalnızca planlayıcı durduğunda görünen sağlık rozeti kazanıyor.",
+      "Sohbetteki yapılacaklar listesi düzenlenebilir, hata durumunda geri alınabilir; /worktree sekmesi ekle/temizle/budama ekler (kirli ağaçlar için zorla gerekli); kullanılmayan oturum ağacı köprü çağrısı kaldırıldı.",
+      "Bench düzeltmeleri: Frappe v16 Running durumuna ulaşıyor, başlatma sırasında Stop çalışıyor, çıkış tam süreç ağacını durduruyor, redis port çakışmaları adlandırılıyor, tam ad okuma onayları çalışıyor, keşif site_config.json gerektiriyor, taşıma iletişim kutusu odak tuzağına sahip, ANSI kodları loglardan temizleniyor.",
+      "Hareket: arama iletişim kutusu anında açılıyor (giriş animasyonu yok); tüm çıkış ve daraltma geçişleri ease-out kullanıyor.",
+      "Sürüm koruması: kararlı etiketler artık workflow_dispatch üzerinden imzasız gönderilemez (CI koruması); güncelleyici imza algılama kendi modülüne çıkarıldı ve test edildi.",
+    ],
+  },
+
+  {
     "version": "0.17.1",
     "date": "2026-10-02",
     "highlights": [

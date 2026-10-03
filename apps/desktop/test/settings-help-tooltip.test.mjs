@@ -20,34 +20,6 @@ function cssRule(selector) {
   return styles.slice(start, styles.indexOf("}", start));
 }
 
-/*
-  A settings page is a list of decisions. Explanatory prose used to sit in a
-  permanent second line under every title, which buried the decisions it was
-  explaining; it now lives behind a question mark and shows up on hover or
-  focus (D601).
-*/
-test("a settings row explains itself from a help icon, not a second line", () => {
-  // The copy travels as a string, because that is what a tooltip can carry.
-  assert.match(
-    primitives,
-    /\/\*\* Explanatory copy, revealed on demand from the help icon\. \*\/\n {2}description\?: string;/,
-  );
-  assert.match(primitives, /\{description \? <HelpIcon label=\{description\} \/> : null\}/);
-  // A card heading follows the same rule as a row.
-  assert.match(primitives, /export function SettingsCard\(\{/);
-  assert.match(primitives, /\n {2}description\?: string;\n/);
-  // The retired always-on line must not come back through the renderers.
-  assert.doesNotMatch(primitives, /settings-row-desc">\{description\}/);
-  // The heading's mark is a sibling, not a child: a nested button joins the
-  // heading's accessible name, and a screen reader's heading list would then
-  // read out the explanation instead of the title.
-  assert.match(primitives, /<div className="settings-card-heading-help">/);
-  assert.match(
-    primitives,
-    /<h3 className="settings-card-heading">\{title\}<\/h3>/,
-  );
-});
-
 test("the help icon is a focusable button whose name is the sentence", () => {
   const start = ui.indexOf("export function HelpIcon(");
   assert.ok(start >= 0, "ui.tsx should export HelpIcon");

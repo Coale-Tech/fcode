@@ -33,6 +33,18 @@ import { studioExpression } from "../bench/studio-actions";
 import { pythonLiteral } from "../bench/python-literal";
 import { shell } from "electron";
 import { parseAllowedExternalUrl } from "../safe-open-external";
+import type { KanbanBoard } from "./kanban-core";
+import {
+  createTask as kanbanCreateTask,
+  completeTask as kanbanCompleteTask,
+  blockTask as kanbanBlockTask,
+  addLink as kanbanAddLink,
+  addComment as kanbanAddComment,
+  moveTask as kanbanMoveTask,
+  agentCardCountForSession,
+  recomputeReady as kanbanRecomputeReady,
+  type KanbanBlockKind,
+} from "./kanban-core";
 
 export type SidecarRuntimeDependencies = {
   runtimeState: RuntimeState;
@@ -67,6 +79,14 @@ export type SidecarRuntimeDependencies = {
   activeUserSkills: (projectPath: string | undefined) => Promise<any[]>;
   pluginActiveInProject: (pluginId: string, projectPath: string | null | undefined) => boolean;
   currentNetworkProxy: () => any;
+  /** Injected by index.ts once the kanban runner is ready. */
+  kanban?: {
+    enabled: () => boolean;
+    getBoard: () => KanbanBoard;
+    saveBoard: (board: KanbanBoard) => void;
+    sendChanged: () => void;
+    sessionToCard: () => ReadonlyMap<string, string>;
+  };
 };
 
 export function createSidecarRuntime({
@@ -97,6 +117,7 @@ export function createSidecarRuntime({
   activeUserSkills,
   pluginActiveInProject,
   currentNetworkProxy,
+  kanban,
 }: SidecarRuntimeDependencies): {
   emitAgentEvent: (envelope: AgentEventEnvelope) => void;
   wireSidecar: (sidecar: AgentSidecar) => void;
@@ -965,6 +986,127 @@ async function buildFcodeProvidersConfig(
         };
     }
   });
+
+  // ── Kanban worker tools ───────────────────────────────────────────────────
+  // All tools are global (setLocalTool has no per-session scope; K0 spike #2).
+  // Worker-only tools guard by checking sessionToCard; chat tools are open.
+  // Subagent identity cannot be distinguished from parent (K0 spike #3): gap
+  // accepted — subagents of a worker session can call worker tools for that card.
+  if (kanban) {
+    const kb = kanban;
+
+    const kbError = (msg: string) => ({ ok: false as const, isError: true, content: msg });
+    const notEnabled = () => kbError("kanban: feature is disabled (kanban.enabled = false)");
+    const notWorker = (name: string) => kbError(`${name}: only callable from a kanban worker session`);
+
+    const updateBoard = (board: KanbanBoard) => { kb.saveBoard(board); kb.sendChanged(); };
+
+    // kanban_show — worker only: returns the card and parent results
+    s.setLocalTool("kanban_show", async ({ sessionId }) => {
+      if (!kb.enabled()) return notEnabled();
+      const taskId = kb.sessionToCard().get(sessionId);
+      if (!taskId) return notWorker("kanban_show");
+      const board = kb.getBoard();
+      const task = board.tasks.find((t) => t.id === taskId);
+      if (!task) return kbError("kanban_show: task not found");
+      const parents = board.links
+        .filter((l) => l.childId === taskId)
+        .map((l) => board.tasks.find((t) => t.id === l.parentId))
+        .filter((t) => t != null);
+      const comments = board.comments.filter((c) => c.taskId === taskId);
+      return { ok: true, content: JSON.stringify({ task, parents, comments }) };
+    });
+
+    // kanban_complete — worker only
+    s.setLocalTool("kanban_complete", async ({ sessionId, args }) => {
+      if (!kb.enabled()) return notEnabled();
+      const taskId = kb.sessionToCard().get(sessionId);
+      if (!taskId) return notWorker("kanban_complete");
+      const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+      updateBoard(kanbanCompleteTask(kb.getBoard(), taskId, a.summary != null ? String(a.summary) : undefined, a.result != null ? String(a.result) : undefined));
+      return { ok: true, content: "Task marked complete." };
+    });
+
+    // kanban_block — worker only
+    s.setLocalTool("kanban_block", async ({ sessionId, args }) => {
+      if (!kb.enabled()) return notEnabled();
+      const taskId = kb.sessionToCard().get(sessionId);
+      if (!taskId) return notWorker("kanban_block");
+      const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+      const reason = String(a.reason ?? "blocked");
+      const kind = (["dependency","needs_input","capability","transient","gave_up"].includes(String(a.kind ?? ""))
+        ? String(a.kind) : "needs_input") as KanbanBlockKind;
+      updateBoard(kanbanBlockTask(kb.getBoard(), taskId, reason, kind));
+      return { ok: true, content: "Task blocked." };
+    });
+
+    // kanban_comment — worker only (author forced from session's card id)
+    s.setLocalTool("kanban_comment", async ({ sessionId, args }) => {
+      if (!kb.enabled()) return notEnabled();
+      const taskId = kb.sessionToCard().get(sessionId);
+      if (!taskId) return notWorker("kanban_comment");
+      const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+      const body = String(a.body ?? "").trim();
+      if (!body) return kbError("kanban_comment: body required");
+      updateBoard(kanbanAddComment(kb.getBoard(), taskId, `worker:${sessionId.slice(0, 8)}`, body));
+      return { ok: true, content: "Comment added." };
+    });
+
+    // kanban_create — any session (agent-created cards always land in triage)
+    s.setLocalTool("kanban_create", async ({ sessionId, args }) => {
+      if (!kb.enabled()) return notEnabled();
+      const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+      const title = String(a.title ?? "").trim();
+      const projectPath = String(a.projectPath ?? "").trim();
+      if (!title || !projectPath) return kbError("kanban_create: title and projectPath required");
+      const count = agentCardCountForSession(kb.getBoard(), sessionId);
+      if (count >= 20) return kbError("kanban_create: per-session card limit reached (20)");
+      const { board: next, taskId } = kanbanCreateTask(kb.getBoard(), {
+        title, body: String(a.body ?? ""),
+        projectPath, createdBy: "agent",
+        modelOverride: a.modelOverride != null ? String(a.modelOverride) : undefined,
+        parentIds: Array.isArray(a.parentIds) ? a.parentIds.map(String) : [],
+      });
+      updateBoard(next);
+      return { ok: true, content: JSON.stringify({ taskId }) };
+    });
+
+    // kanban_link — any session
+    s.setLocalTool("kanban_link", async ({ args }) => {
+      if (!kb.enabled()) return notEnabled();
+      const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+      const parentId = String(a.parentId ?? "").trim();
+      const childId = String(a.childId ?? "").trim();
+      if (!parentId || !childId) return kbError("kanban_link: parentId and childId required");
+      const next = kanbanAddLink(kb.getBoard(), parentId, childId);
+      if (!next) return kbError("kanban_link: cycle detected or invalid task ids");
+      const recomputed = kanbanRecomputeReady(next);
+      updateBoard(recomputed);
+      return { ok: true, content: "Link added." };
+    });
+
+    // kanban_list — non-worker chat sessions
+    s.setLocalTool("kanban_list", async ({ sessionId }) => {
+      if (!kb.enabled()) return notEnabled();
+      if (kb.sessionToCard().has(sessionId)) return kbError("kanban_list: use kanban_show from a worker session");
+      const visible = kb.getBoard().tasks.filter((t) => !t.archived);
+      return { ok: true, content: JSON.stringify(visible) };
+    });
+
+    // kanban_unblock — non-worker chat sessions
+    s.setLocalTool("kanban_unblock", async ({ sessionId, args }) => {
+      if (!kb.enabled()) return notEnabled();
+      if (kb.sessionToCard().has(sessionId)) return kbError("kanban_unblock: not callable from a worker session");
+      const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+      const taskId = String(a.taskId ?? "").trim();
+      if (!taskId) return kbError("kanban_unblock: taskId required");
+      const board = kb.getBoard();
+      const task = board.tasks.find((t) => t.id === taskId);
+      if (!task || task.status !== "blocked") return kbError("kanban_unblock: task not found or not blocked");
+      updateBoard(kanbanMoveTask(board, taskId, "ready"));
+      return { ok: true, content: "Task unblocked." };
+    });
+  }
   runtimeState.sidecar = s;
   if (runtimeState.host) s.setHost(runtimeState.host);
   await s.call("sidecar.configure", {

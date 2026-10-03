@@ -587,6 +587,10 @@ export const fr = {
     "ompTodoPanel": "Liste des tâches à faire",
     "ompTodoPanelTitle": "À faire",
     "ompTodoPanelProgress": "{{done}}/{{total}}",
+    "ompTodoMarkDone": "Marquer comme terminé",
+    "ompTodoMarkPending": "Marquer comme en attente",
+    "ompTodoEditError": "Échec de l'enregistrement : {{error}}",
+    "ompTodoEditRetry": "Réessayer",
     "ompSessionTreeRefresh": "Actualiser l'arbre de session",
     "ompSessionTreeLoading": "Chargement de l'historique de session…",
     "ompSessionTreeEmpty": "Aucun historique de session trouvé",
@@ -598,6 +602,11 @@ export const fr = {
     "ompSessionBranchMessagesCopied": "{{count}} message(s) copié(s)",
     "ompSessionBranchMessagesEmpty": "Aucun message de branche dans la session actuelle",
     "ompSessionBranchConsequence": "forks this session from the selected message",
+    "turnSummaryEdited": "{{count}} modifié(s)",
+    "turnSummaryRan": "{{count}} exécuté(s)",
+    "turnSummaryRead": "{{count}} lu(s)",
+    "turnSummaryFetched": "{{count}} récupéré(s)",
+    "turnSummarySearched": "{{count}} recherché(s)",
   },
   "session": {
     "renameTitle": "Renommer la tâche",
@@ -805,6 +814,13 @@ export const fr = {
     "memoryLocalPipelineMinRolloutIdleHoursDesc": "Min hours a thread must be idle before processing (default: 12)",
     "memoryLocalPipelineSummaryInjectionTokenLimit": "Summary Injection Limit",
     "memoryLocalPipelineSummaryInjectionTokenLimitDesc": "Max tokens of summary memories injected into context (default: 5000)",
+    "memoryUserProfileTitle": "Profil utilisateur",
+    "memoryUserProfileLabel": "À mon sujet",
+    "memoryUserProfileDesc": "Injecté dans le prompt système de chaque projet. Rester concis : nom, rôle, préférences clés (1 024 caractères max).",
+    "memoryUserProfileCounter": "{{count}} / {{max}}",
+    "memoryUserProfileSave": "Enregistrer",
+    "memoryUserProfileSaving": "Enregistrement…",
+    "memoryUserProfileSaved": "Profil enregistré.",
     "power": "Alimentation",
     "keepAwakeWhileRunning": "Garder l'ordinateur éveillé",
     "keepAwakeWhileRunningDesc": "Empêche la veille due à l'inactivité pendant l'exécution de Fcode. L'écran peut s'éteindre ; la veille manuelle et la fermeture du capot restent possibles.",
@@ -913,7 +929,7 @@ sklm: {
     "theme": "Thème",
     "mode": "Mode par défaut",
     "groupPreferences": "Préférences",
-    "groupAgent": "Agent",
+    "groupAi": "IA",
     "groupWorkspace": "Espace de travail",
     "groupSystem": "Système",
     "groupExtensions": "Extensions",
@@ -921,6 +937,10 @@ sklm: {
       "memory": "Memory",
       "general": "Général",
       "ai": "IA",
+      "aiDefaults": "Autorisations et valeurs par défaut",
+      "aiAgents": "Agents et tâches",
+      "aiTools": "Outils",
+      "aiExtensions": "Extensions",
       "shortcuts": "Raccourcis",
       "instructions": "Instructions",
       "models": "Modèles",
@@ -932,7 +952,23 @@ sklm: {
       "sync": "Synchronisation cloud",
       "remoteHosts": "Hôtes distants",
       "info": "Informations",
-      "voice": "Voix"
+      "voice": "Voix",
+      "kanban": "Kanban"
+    },
+    "navDesc": {
+      "general": "Apparence, langue, alimentation et réseau.",
+      "ai": "Autorisations et valeurs par défaut pour les conversations et les agents.",
+      "aiAgents": "Sous-agents, files d'attente, collaboration et worktrees.",
+      "aiTools": "Exécution de code, navigateur, LSP, IDA et MCP.",
+      "aiExtensions": "Skills, commandes et extensions installées.",
+      "shortcuts": "Raccourcis clavier pour les actions courantes.",
+      "agent": "Configurer les fournisseurs et modèles d'IA.",
+      "instructions": "Instructions appliquées à chaque session.",
+      "memory": "Comment Fcode se souvient d'une session à l'autre.",
+      "import": "Importer les réglages d'autres outils de code.",
+      "projects": "Archiver, restaurer et supprimer des projets.",
+      "about": "Version, journaux, retours et mises à jour.",
+      "kanban": "Exécuter des tâches d'agents depuis un tableau.",
     },
     "configSync": {
       title: "Cloud sync",
@@ -1557,6 +1593,20 @@ sklm: {
     "ompWorktreesKindTask": "task",
     "ompWorktreesKindEmpty": "empty",
     "ompWorktreesKindStray": "stray",
+    "ompWorktreeClear": "Supprimer",
+    "ompWorktreePrune": "Élaguer tout",
+    "ompWorktreeAdd": "Ajouter un espace de travail",
+    "ompWorktreeClearConsequence": "supprime définitivement le répertoire de l'espace de travail",
+    "ompWorktreePruneConsequence": "supprime définitivement tous les espaces de travail orphelins",
+    "ompWorktreeDirtyRefuse": "L'espace de travail a des modifications non validées. Cochez Forcer pour supprimer quand même.",
+    "ompWorktreeForce": "Forcer (ignorer l'état non propre)",
+    "ompWorktreeClearError": "Échec de la suppression de {{path}} : {{error}}",
+    "ompWorktreePruneError": "Échec de l'élagage : {{error}}",
+    "ompWorktreeAddRepoPath": "Chemin du dépôt",
+    "ompWorktreeAddBranch": "Nom de la branche",
+    "ompWorktreeAddSubmit": "Ajouter",
+    "ompWorktreeAddError": "Échec de l'ajout de l'espace de travail : {{error}}",
+    "ompWorktreeRetry": "Réessayer",
     "ompExtGroup": "Extensions omp",
     "ompExtEmpty": "Aucune extension omp installée. Utilisez le champ ci-dessus pour installer depuis npm ou une URL git.",
     "ompExtInstall": "Installer",
@@ -2104,7 +2154,18 @@ sklm: {
     "delete": "Supprimer",
     "lastRun": "Dernière exécution",
     "never": "Jamais",
-    "tasks": "Tâches"
+    "tasks": "Tâches",
+    "templatePicker": "Utiliser un modèle",
+    "templateNone": "Tâche vide",
+    "templateDailyDigest": "Résumé quotidien",
+    "templateWeeklyReview": "Revue hebdomadaire",
+    "templateMorningStandup": "Point matinal",
+    "templateDependencyCheck": "Vérification des dépendances",
+    "templateTestSweep": "Passage de tests",
+    "templateInboxTriage": "Triage de la boîte de réception",
+    "healthStale": "Le planificateur ne répond pas",
+    "healthError": "Erreur du planificateur : {{error}}",
+    "healthRetry": "Réessayer",
   },
   "permission": {
     "title": "Autorisation requise",
@@ -2183,7 +2244,8 @@ sklm: {
       "subagent": "Sous-agent",
     "session-tree": "Historique de session",
       "tools": "Outils",
-      "activity": "Activité"
+      "activity": "Activité",
+      "worktree": "Arbres de travail"
     },
     "pluginView": {
       "failed": "Cette vue n'a pas pu être chargée. Rechargez le plugin et réessayez.",
@@ -2887,7 +2949,54 @@ sklm: {
       "computer": "Ordinateur",
       "ida": "IDA"
     }
+  },
+  "kanban": {
+    "title": "Kanban",
+    "empty": "Aucune carte pour l'instant. Créez-en une pour commencer.",
+    "newCard": "Nouvelle carte",
+    "addCard": "Ajouter une carte",
+    "columns": {
+      "triage": "Triage",
+      "todo": "À faire",
+      "ready": "Prêt",
+      "running": "En cours",
+      "blocked": "Bloqué",
+      "done": "Terminé"
+    },
+    "card": {
+      "comment": "Ajouter un commentaire…",
+      "archive": "Archiver",
+      "unarchive": "Désarchiver",
+      "moveTo": "Déplacer vers…",
+      "showRuns": "Voir les exécutions",
+      "nudge": "Relancer",
+      "needsApproval": "Approbation requise",
+      "blocked": "Bloqué",
+      "gaveUp": "Abandonné"
+    },
+    "dispatcher": {
+      "pause": "Suspendre le répartiteur",
+      "resume": "Reprendre le répartiteur",
+      "paused": "Répartiteur suspendu"
+    },
+    "settings": {
+      "title": "Paramètres Kanban",
+      "enabled": "Activer le tableau Kanban",
+      "maxRuntimeSeconds": "Durée max. d'exécution (secondes)",
+      "maxAgentCardsPerSession": "Max. cartes d'agent par session",
+      "maxDailySpawns": "Max. lancements quotidiens"
+    },
+    "sidebar": {
+      "showWorkers": "Afficher les sessions de travail",
+      "hideWorkers": "Masquer les sessions de travail"
+    },
+    "notify": {
+      "blocked": "Tâche bloquée: {title}",
+      "done": "Tâche terminée: {title}",
+      "dailyCap": "Kanban: limite quotidienne de {count} démarrages atteinte"
+    },
   }
+
 } satisfies EnglishCatalog;
 
 export default fr;

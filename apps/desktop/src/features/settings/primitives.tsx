@@ -16,13 +16,9 @@ import { HelpIcon, Input, SegmentedControl } from "../../components/ui";
 import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect";
 
 /**
- * One settings decision: the title and its control on a single line.
- *
- * The explanation never occupies a permanent second line — it is reached from
- * the question mark beside the title, which keeps a card scannable (D601).
- * `detail` is the exception in kind, not in styling: a row that shows a live
- * value (the pinned default model) keeps it visible, because that is data the
- * user came to read, not prose explaining a switch.
+ * One settings decision, as Raven lays it out: title and optional inline
+ * description on the left, the control on the right.
+ * `detail` is a live value (the pinned default model), not explanation.
  */
 export function SettingsRow({
   title,
@@ -31,7 +27,6 @@ export function SettingsRow({
   children,
 }: {
   title: string;
-  /** Explanatory copy, revealed on demand from the help icon. */
   description?: string;
   /** Live row metadata that stays visible (not an explanation). */
   detail?: ReactNode;
@@ -40,10 +35,8 @@ export function SettingsRow({
   return (
     <div className="settings-row">
       <div className="settings-row-copy">
-        <div className="settings-row-title">
-          {title}
-          {description ? <HelpIcon label={description} /> : null}
-        </div>
+        <div className="settings-row-title">{title}</div>
+        {description ? <div className="settings-row-desc">{description}</div> : null}
         {detail ? <div className="settings-row-detail">{detail}</div> : null}
       </div>
       <div className="settings-row-control">{children}</div>
@@ -171,7 +164,10 @@ export function CommandShellRow({
   };
 
   return (
-    <SettingsRow title={t("settings.commandShell")}>
+    <SettingsRow
+      title={t("settings.commandShell")}
+      description={effectiveStatus ?? undefined}
+    >
       <div
         className="settings-command-shell-control"
         aria-busy={saving || (!catalog && !loadError)}
@@ -204,9 +200,6 @@ export function CommandShellRow({
             }))}
           />
         )}
-        {effectiveStatus ? (
-          <span className="settings-command-shell-status">{effectiveStatus}</span>
-        ) : null}
         {saveError ? (
           <span className="settings-command-shell-state error" role="status">
             {t("settings.commandShellSaveError")}

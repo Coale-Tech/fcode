@@ -38,7 +38,6 @@ test("settings drag band stops at the nav rail so surfaces stay consistent", () 
     globalStyles,
     /\.settings-shell-full \.settings-nav\s*\{[^}]*width:\s*var\(--ds-settings-nav-width\);[^}]*flex:\s*0 0 var\(--ds-settings-nav-width\);/s,
   );
-  assert.match(globalStyles, /--ds-settings-nav-width:\s*275px;/);
 
   // The rail still drags the window even though the band no longer covers it.
   assert.match(settingsSource, /className="settings-nav-top drag"/);

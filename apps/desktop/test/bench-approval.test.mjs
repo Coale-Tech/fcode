@@ -42,6 +42,14 @@ test("frappe.utils.now is read-only", () => {
   assert.ok(isReadOnlyBenchMethod("frappe.utils.now"));
 });
 
+test("frappe.utils.today is read-only", () => {
+  assert.ok(isReadOnlyBenchMethod("frappe.utils.today"));
+});
+
+test("frappe.utils.get_url is read-only", () => {
+  assert.ok(isReadOnlyBenchMethod("frappe.utils.get_url"));
+});
+
 test("studio.api.get_app is read-only", () => {
   assert.ok(isReadOnlyBenchMethod("studio.api.get_app"));
 });
@@ -76,4 +84,50 @@ test("empty string is NOT read-only", () => {
 test("expression that starts with an approved prefix is NOT read-only (eval bypass)", () => {
   assert.ok(!isReadOnlyBenchMethod("frappe.utils.now() and __import__('os').system('id')"));
   assert.ok(!isReadOnlyBenchMethod("frappe.client.get\n.x"));
+});
+
+// B5: blanket frappe.utils prefix was removed; dangerous sub-modules must be denied.
+test("frappe.utils.safe_exec.safe_exec is NOT read-only (B5)", () => {
+  assert.ok(!isReadOnlyBenchMethod("frappe.utils.safe_exec.safe_exec"));
+});
+
+test("frappe.utils.background_jobs.enqueue is NOT read-only (B5)", () => {
+  assert.ok(!isReadOnlyBenchMethod("frappe.utils.background_jobs.enqueue"));
+});
+
+test("frappe.utils.install.before_install is NOT read-only (B5)", () => {
+  assert.ok(!isReadOnlyBenchMethod("frappe.utils.install.before_install"));
+});
+
+test("frappe.utils (bare namespace) is NOT read-only (B5)", () => {
+  assert.ok(!isReadOnlyBenchMethod("frappe.utils"));
+});
+
+test("frappe.utils.unknown_method is NOT read-only (B5)", () => {
+  assert.ok(!isReadOnlyBenchMethod("frappe.utils.unknown_method"));
+});
+
+// ── Expression / suffix bypass (bench execute eval()s the method string) ───────
+for (const m of [
+  "frappe.utils.now.__globals__['frappe'].db.set_value('User','Administrator','enabled',0)",
+  "frappe.utils.now.__globals__",
+  "frappe.utils.now.",
+  "frappe.client.get.__globals__",
+  "frappe.client.get_list.__globals__",
+  "frappe.db.count.__self__",
+  "frappe.utils.today ",
+  "frappe.utils.today;1",
+  "studio.api.get_app.__globals__",
+  "studio.api.get_x or __import__('os').system('id')",
+  "builder.api.list_pages()",
+  "studio.api.get.x",
+]) {
+  test(`expression/suffix is NOT read-only: ${m}`, () => {
+    assert.ok(!isReadOnlyBenchMethod(m));
+  });
+}
+
+test("studio.api.get / builder.api.list (bare) stay read-only", () => {
+  assert.ok(isReadOnlyBenchMethod("studio.api.get"));
+  assert.ok(isReadOnlyBenchMethod("builder.api.list"));
 });

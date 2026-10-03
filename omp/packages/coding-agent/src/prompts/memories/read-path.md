@@ -15,3 +15,7 @@ Memory summary:
 Learned lessons (`learn`-captured; durable but may be stale—verify against repo before relying):
 {{learned}}
 {{/if}}
+{{#if user_profile}}
+User profile (context about the user / how they work):
+{{user_profile}}
+{{/if}}

@@ -419,6 +419,7 @@ export const AssistantTurn = memo(function AssistantTurn({
             usage={usage}
             responseDurationMs={responseDurationMs}
             responseOutputTokens={responseOutputTokens}
+            items={turnAllActivityItems}
           />
         ) : null}
         {complete && actionMessage ? (

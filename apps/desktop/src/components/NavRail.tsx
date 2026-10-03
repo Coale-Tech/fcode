@@ -1,9 +1,12 @@
+import { useEffect } from "react";
+import { IPC } from "@pi-desktop/shared";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "../stores/app-store";
 import { memoryHealth } from "../features/settings/MemoryTab";
 import {
   IconChat,
   IconClock,
+  IconKanban,
   IconMonitor,
   IconPlug,
   IconServer,
@@ -30,6 +33,20 @@ export function NavRail() {
   const canNavBack = useAppStore((s) => s.canNavBack);
   const memStatus = useAppStore((s) => s.memoryStatus);
   const mHealth = memoryHealth(memStatus);
+  // Fetch on mount + re-fetch on kanbanChanged; stored in AppState so other
+  // consumers can subscribe without their own fetch.
+  const kanbanEnabled = useAppStore((s) => s.kanbanEnabled);
+  const setKanbanEnabled = useAppStore((s) => s.setKanbanEnabled);
+  useEffect(() => {
+    const fetchEnabled = () =>
+      import("../lib/api").then(({ api }) =>
+        api.kanbanSettingsGet().then((res) => setKanbanEnabled(res.settings.enabled)).catch(() => {})
+      ).catch(() => {});
+    void fetchEnabled();
+    const bridge = window.piDesktop;
+    if (!bridge?.on) return;
+    return bridge.on(IPC.event.kanbanChanged, () => { void fetchEnabled(); });
+  }, [setKanbanEnabled]);
 
   return (
     <nav className="nav-rail sidebar-surface" aria-label="Primary">
@@ -83,6 +100,19 @@ export function NavRail() {
         >
           <IconClock size={16} aria-hidden />
         </TooltipButton>
+        {kanbanEnabled && (
+          <TooltipButton
+            type="button"
+            className={cx("nav-rail-btn", page === "kanban" && "active")}
+            data-nav="kanban"
+            tooltip={t("kanban.title")}
+            ariaLabel={t("kanban.title")}
+            onClick={() => setPage("kanban")}
+            aria-pressed={page === "kanban"}
+          >
+            <IconKanban size={16} aria-hidden />
+          </TooltipButton>
+        )}
         <TooltipButton
           type="button"
           className={cx("nav-rail-btn", page === "plugins" && "active")}

@@ -43,6 +43,7 @@ import { registerOmpSettingsIpc } from "./omp-settings-ipc";
 import { registerExtensionsMgmtIpc } from "./extensions-mgmt-ipc";
 import type { createTraySessions } from "../tray-sessions";
 import type { createTaskbarUnreadBadge } from "../taskbar-unread-badge";
+import { registerKanbanIpc, type KanbanIpcDependencies } from "./kanban-ipc";
 
 export type RegisterIpcDependencies = {
   isQuitting: () => boolean;
@@ -66,6 +67,10 @@ export type RegisterIpcDependencies = {
   disabledBuiltinSubagents: () => Promise<string[]>;
   mcpOAuth?: McpOAuthManager;
   [name: string]: any;
+  /** Optional kanban board deps; absent when kanban runner is not wired yet. */
+  kanban?: Omit<KanbanIpcDependencies, "registrar"> & {
+    bindInvoke: (invoke: (channel: string, args: readonly unknown[]) => Promise<unknown>) => void;
+  };
 };
 
 function wrap<T>(fn: () => Promise<T>): Promise<Result<T>> {
@@ -330,6 +335,14 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
       return handler(...args);
     },
   });
+  if (dependencies.kanban) {
+    dependencies.kanban.bindInvoke(async (channel, args) => {
+      const handler = ipcHandlers.get(channel);
+      if (!handler) throw new Error("kanban prompt handler unavailable");
+      return handler(...args);
+    });
+    registerKanbanIpc({ registrar, ...dependencies.kanban });
+  }
   registerWorkspaceIpc({
     registrar,
     getMainWindow,

@@ -24,7 +24,7 @@
 
 import { spawn, type ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { ErrorCodes, readNdjsonLines, type OmpSettingsValues } from "@pi-desktop/shared";
@@ -179,6 +179,8 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
     "    fcode_bench_execute_read: allow",
     "    # T7: auto-approve read-only canvas inspection calls.",
     "    fcode_canvas_read: allow",
+    "    # Kanban tools only touch the local board; workers must not stall on approval.",
+    ...["show", "complete", "block", "comment", "create", "link", "list", "unblock"].map((n) => `    kanban_${n}: allow`),
     "",
     "skills:",
     `  customDirectories:`,
@@ -566,6 +568,68 @@ const HOST_TOOL_SCHEMAS = [
   },
 ] as const;
 
+/**
+ * Kanban tools, registered only while kanban.enabled is true so they never
+ * cost context when the feature is off. Handlers live in the desktop sidecar
+ * (runtime/sidecar.ts); worker-only tools are guarded there by session→card.
+ */
+const KANBAN_TOOL_SCHEMAS = [
+  { name: "kanban_show", description: "Kanban worker: show your card, its parent results and comments.", parameters: { type: "object", properties: {} } },
+  {
+    name: "kanban_complete",
+    description: "Kanban worker: mark your card done. Call this when the task is finished.",
+    parameters: { type: "object", properties: { summary: { type: "string" }, result: { type: "string" } } },
+  },
+  {
+    name: "kanban_block",
+    description: "Kanban worker: block your card when you cannot proceed.",
+    parameters: {
+      type: "object",
+      properties: {
+        reason: { type: "string" },
+        kind: { type: "string", enum: ["dependency", "needs_input", "capability", "transient", "gave_up"] },
+      },
+      required: ["reason"],
+    },
+  },
+  {
+    name: "kanban_comment",
+    description: "Kanban worker: add a comment to your card.",
+    parameters: { type: "object", properties: { body: { type: "string" } }, required: ["body"] },
+  },
+  {
+    name: "kanban_create",
+    description: "Create a Kanban card (lands in triage for the user to review).",
+    parameters: {
+      type: "object",
+      properties: {
+        title: { type: "string" },
+        body: { type: "string" },
+        projectPath: { type: "string" },
+        modelOverride: { type: "string" },
+        parentIds: { type: "array", items: { type: "string" } },
+      },
+      required: ["title", "projectPath"],
+    },
+  },
+  {
+    name: "kanban_link",
+    description: "Make one Kanban card a dependency of another (parent must finish before child runs).",
+    parameters: {
+      type: "object",
+      properties: { parentId: { type: "string" }, childId: { type: "string" } },
+      required: ["parentId", "childId"],
+    },
+  },
+  { name: "kanban_list", description: "List the user's Kanban cards (chat sessions only).", parameters: { type: "object", properties: {} } },
+  {
+    name: "kanban_unblock",
+    description: "Move a blocked Kanban card back to ready (chat sessions only).",
+    parameters: { type: "object", properties: { taskId: { type: "string" } }, required: ["taskId"] },
+  },
+] as const;
+
+
 export class OmpBridge {
   private config: BridgeConfig | null = null;
   private ompProcess: ChildProcess | null = null;
@@ -579,6 +643,8 @@ export class OmpBridge {
   private pendingUiRequests = new Map<string, { sessionId: string; toolCallId: string; toolName: string; viaSelect: boolean }>();
   /** Per-session most-recent open tool_execution_start */
   private openTools = new Map<string, { toolCallId: string; toolName: string }>();
+  /** Whether the kanban tools are currently registered with omp. */
+  private hostToolsKanban = false;
   /** Tracks in-flight `prompt` calls awaiting their terminal prompt_result frame. */
   private promptResultPending = new Map<string, { sessionId: string; turnId: string }>();
   /** Session/turn of the most recent prompt; omp frames don't carry them. */
@@ -928,11 +994,6 @@ export class OmpBridge {
         this.ompCallAndForward(id, { type: "get_entries", ...(p.since ? { since: p.since } : {}) });
         break;
 
-      case "omp.session.tree":
-        this.ompCallAndForward(id, { type: "get_tree" });
-        break;
-
-
       case "omp.session.branchMessages":
         this.ompCallAndForward(id, { type: "get_branch_messages" });
         break;
@@ -1153,6 +1214,11 @@ export class OmpBridge {
       await this.ompCall({ type: "set_subagent_subscription", level: "progress" }).catch(() => undefined);
     }
 
+    // Toggling kanban.enabled takes effect on the next prompt, no restart.
+    if (this.state.protocolVersion === 2 && this.kanbanEnabled() !== this.hostToolsKanban) {
+      await this.registerHostTools().catch(() => undefined);
+    }
+
     // Send the actual prompt. Its immediate response is only an ack
     // ({agentInvoked}); the real outcome arrives later as a separate
     // prompt_result frame correlated on the same id (see handleOmpFrame).
@@ -1297,30 +1363,37 @@ export class OmpBridge {
     }
 
 
-    // T7: omp calls a registered Fcode host tool.
+    // T7: omp calls a registered Fcode host tool. Wire contract (omp rpc-types
+    // RpcHostToolCallRequest/Result): the call carries `id` + `arguments`; the
+    // reply must echo `id` and carry an AgentToolResult (`content` blocks) with
+    // a top-level `isError`. The frame has no session id; omp runs one session
+    // at a time (see ompPrompt), so the active turn's session is the caller.
     if (frame.type === "host_tool_call") {
-      const toolCallId = String(frame.toolCallId ?? frame.id ?? "");
+      const callId = String(frame.id ?? "");
+      const toolCallId = String(frame.toolCallId ?? callId);
       const toolName = String(frame.toolName ?? "");
-      const args = (frame.args ?? {}) as Record<string, unknown>;
-      // Use the first active session's ID, or fall back to empty string.
+      const args = (frame.arguments ?? frame.args ?? {}) as Record<string, unknown>;
       const sessionId = frame.sessionId != null
         ? String(frame.sessionId)
-        : (this.sessions.keys().next().value ?? "");
+        : (this.activeTurn?.sessionId ?? this.sessions.keys().next().value ?? "");
+      const reply = (text: string, isError: boolean) => {
+        const resp = JSON.stringify({
+          type: "host_tool_result",
+          id: callId,
+          toolCallId,
+          result: { content: [{ type: "text", text }] },
+          isError,
+        }) + "\n";
+        this.tracer?.("out-omp", resp.trimEnd());
+        this.ompProcess?.stdin?.write(resp);
+      };
       this.hostCall(toolName, { sessionId, toolCallId, args })
         .then((result) => {
-          const resp = JSON.stringify({ type: "host_tool_result", toolCallId, result }) + "\n";
-          this.tracer?.("out-omp", resp.trimEnd());
-          this.ompProcess?.stdin?.write(resp);
+          const r = (result ?? {}) as { ok?: boolean; isError?: boolean; content?: unknown };
+          const text = typeof r.content === "string" ? r.content : JSON.stringify(r.content ?? result);
+          reply(text, r.isError === true || r.ok === false);
         })
-        .catch((e: unknown) => {
-          const resp = JSON.stringify({
-            type: "host_tool_result",
-            toolCallId,
-            result: { ok: false, isError: true, content: String((e as Error)?.message ?? e) },
-          }) + "\n";
-          this.tracer?.("out-omp", resp.trimEnd());
-          this.ompProcess?.stdin?.write(resp);
-        });
+        .catch((e: unknown) => reply(String((e as Error)?.message ?? e), true));
       return;
     }
 
@@ -1483,9 +1556,22 @@ export class OmpBridge {
 
   /** Register Fcode host tools with omp so it can invoke them via host_tool_call (T7). */
   private async registerHostTools(): Promise<string[]> {
-    const result = await this.ompCall({ type: "set_host_tools", tools: HOST_TOOL_SCHEMAS });
+    const tools = this.kanbanEnabled() ? [...HOST_TOOL_SCHEMAS, ...KANBAN_TOOL_SCHEMAS] : [...HOST_TOOL_SCHEMAS];
+    const result = await this.ompCall({ type: "set_host_tools", tools });
+    this.hostToolsKanban = tools.length > HOST_TOOL_SCHEMAS.length;
     const data = result as Record<string, unknown> | undefined;
-    return (data?.toolNames as string[] | undefined) ?? HOST_TOOL_SCHEMAS.map((t) => t.name);
+    return (data?.toolNames as string[] | undefined) ?? tools.map((t) => t.name);
+  }
+
+  /** kanban.enabled lives in the desktop's kanban-settings.json (same dataDir). */
+  private kanbanEnabled(): boolean {
+    if (!this.config) return false;
+    try {
+      const raw = readFileSync(join(this.config.dataDir, "kanban-settings.json"), "utf8");
+      return (JSON.parse(raw) as { enabled?: unknown }).enabled === true;
+    } catch {
+      return false;
+    }
   }
 
   /**

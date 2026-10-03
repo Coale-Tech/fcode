@@ -24,3 +24,4 @@ export * from "./types/speech.js";
 export * from "./types/remote-host.js";
 export * from "./types/config-sync.js";
 export * from "./types/omp.js";
+export * from "./types/kanban.js";

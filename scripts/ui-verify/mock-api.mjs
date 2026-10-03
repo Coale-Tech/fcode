@@ -18,7 +18,7 @@ const MOCK_SETTINGS = {
   language: "auto",
   fontScale: 1,
   developerMode: false,
-  networkProxy: { mode: "system" },
+  networkProxy: { mode: "custom", url: "http://proxy.parity-check.local:8080", bypass: "" },
   networkPolicy: {},
   linkOpenTarget: "workpanel",
   contextUsageDisplay: "remaining",
@@ -221,6 +221,33 @@ const MOCK_SESSION_TREE = {
   ],
 };
 
+const MOCK_KANBAN_BOARD = {
+  tasks: [
+    { id: "t1", title: "Design new onboarding flow", body: "", status: "triage", priority: 0, projectPath: "/projects/app", workspaceKind: "dir", workspacePath: "/projects/app", branchName: null, modelOverride: null, createdBy: "user", createdAt: Date.now() - 86400000, startedAt: null, completedAt: null, result: null, blockKind: null, blockRecurrences: 0, consecutiveFailures: 0, maxRuntimeSeconds: 1800, maxRetries: 2, sessionId: null, currentRunId: null, archived: false },
+    { id: "t2", title: "Write unit tests for auth module", body: "Cover all edge cases", status: "todo", priority: 1, projectPath: "/projects/app", workspaceKind: "dir", workspacePath: "/projects/app", branchName: null, modelOverride: null, createdBy: "user", createdAt: Date.now() - 72000000, startedAt: null, completedAt: null, result: null, blockKind: null, blockRecurrences: 0, consecutiveFailures: 0, maxRuntimeSeconds: 1800, maxRetries: 2, sessionId: null, currentRunId: null, archived: false },
+    { id: "t3", title: "Refactor settings API", body: "", status: "ready", priority: 2, projectPath: "/projects/app", workspaceKind: "dir", workspacePath: "/projects/app", branchName: null, modelOverride: null, createdBy: "user", createdAt: Date.now() - 36000000, startedAt: null, completedAt: null, result: null, blockKind: null, blockRecurrences: 0, consecutiveFailures: 0, maxRuntimeSeconds: 1800, maxRetries: 2, sessionId: null, currentRunId: null, archived: false },
+    { id: "t4", title: "Implement dark mode toggle", body: "User story: as a user I want dark mode", status: "running", priority: 1, projectPath: "/projects/app", workspaceKind: "dir", workspacePath: "/projects/app", branchName: null, modelOverride: null, createdBy: "user", createdAt: Date.now() - 7200000, startedAt: Date.now() - 3600000, completedAt: null, result: null, blockKind: null, blockRecurrences: 0, consecutiveFailures: 0, maxRuntimeSeconds: 1800, maxRetries: 2, sessionId: "sess-001", currentRunId: "run-001", archived: false },
+    { id: "t5", title: "Fix login redirect bug", body: "Reproduces on Safari", status: "blocked", priority: 3, projectPath: "/projects/app", workspaceKind: "dir", workspacePath: "/projects/app", branchName: null, modelOverride: null, createdBy: "user", createdAt: Date.now() - 86400000 * 2, startedAt: Date.now() - 86400000, completedAt: null, result: null, blockKind: "needs_input", blockRecurrences: 1, consecutiveFailures: 1, maxRuntimeSeconds: 1800, maxRetries: 2, sessionId: null, currentRunId: null, archived: false },
+    { id: "t6", title: "Update README with setup instructions", body: "", status: "done", priority: 0, projectPath: "/projects/app", workspaceKind: "dir", workspacePath: "/projects/app", branchName: null, modelOverride: null, createdBy: "user", createdAt: Date.now() - 86400000 * 3, startedAt: Date.now() - 86400000 * 3, completedAt: Date.now() - 3600000, result: "README updated with full setup guide", blockKind: null, blockRecurrences: 0, consecutiveFailures: 0, maxRuntimeSeconds: 1800, maxRetries: 2, sessionId: null, currentRunId: null, archived: false },
+  ],
+  links: [],
+  comments: [],
+  runs: [
+    { id: "run-001", taskId: "t4", sessionId: "sess-001", status: "running", outcome: null, summary: null, error: null, startedAt: Date.now() - 3600000, endedAt: null },
+  ],
+  events: [],
+  dailyStats: [],
+};
+
+const MOCK_KANBAN_SETTINGS = {
+  enabled: true,
+  maxInProgress: 2,
+  maxRuntimeSeconds: 1800,
+  maxAgentCardsPerSession: 20,
+  maxDailySpawns: 20,
+};
+
+
 // ── IPC channel → mock response map ─────────────────────────────────────────
 
 function buildMockHandlers(memoryState) {
@@ -353,6 +380,17 @@ function buildMockHandlers(memoryState) {
     "pi-desktop/omp/session/handoff": () => ({ ok: true }),
     "pi-desktop/omp/session/setTodos": () => ({ ok: true }),
     "pi-desktop/bench/bootstrap/memory": () => ({ ok: true }),
+    "pi-desktop/kanban/list": () => ({ board: MOCK_KANBAN_BOARD, paused: false }),
+    "pi-desktop/kanban/create": () => ({ taskId: "t-new" }),
+    "pi-desktop/kanban/move": () => ({ board: MOCK_KANBAN_BOARD }),
+    "pi-desktop/kanban/link": () => ({ board: MOCK_KANBAN_BOARD }),
+    "pi-desktop/kanban/comment": () => ({ board: MOCK_KANBAN_BOARD }),
+    "pi-desktop/kanban/archive": () => ({ board: MOCK_KANBAN_BOARD }),
+    "pi-desktop/kanban/listRuns": () => ({ runs: [] }),
+    "pi-desktop/kanban/settings/get": () => ({ settings: MOCK_KANBAN_SETTINGS }),
+    "pi-desktop/kanban/settings/set": () => ({ settings: MOCK_KANBAN_SETTINGS }),
+    "pi-desktop/kanban/setPaused": () => ({ paused: false }),
+    "pi-desktop/kanban/nudge": () => ({ ok: true }),
   };
 }
 

@@ -446,9 +446,10 @@ describe("OmpBridge.handleOmpFrame — host_tool_call dispatches to host and ret
     // Feed a host_tool_call frame (as omp would send it).
     bridge.handleOmpFrame(JSON.stringify({
       type: "host_tool_call",
+      id: "call-1",
       toolCallId: "tc1",
       toolName: "fcode_bench_execute",
-      args: { method: "frappe.utils.now", kwargs: {} },
+      arguments: { method: "frappe.utils.now", kwargs: {} },
     }));
 
     // The bridge should have written a host.proxy call to stdout.
@@ -456,6 +457,8 @@ describe("OmpBridge.handleOmpFrame — host_tool_call dispatches to host and ret
     expect(hostCall).toBeDefined();
     const hc = hostCall as Record<string, unknown>;
     expect((hc.params as Record<string, unknown>).method).toBe("fcode_bench_execute");
+    // omp sends `arguments`, never `args`; the host must receive them.
+    expect(((hc.params as Record<string, unknown>).params as Record<string, unknown>).args).toEqual({ method: "frappe.utils.now", kwargs: {} });
     const callId = String(hc.id);
 
     // Simulate the host responding (via handleHostFrame).
@@ -472,8 +475,10 @@ describe("OmpBridge.handleOmpFrame — host_tool_call dispatches to host and ret
     const resultFrame = ompStdinWrites.find((f) => (f as Record<string, unknown>).type === "host_tool_result");
     expect(resultFrame).toBeDefined();
     const rf = resultFrame as Record<string, unknown>;
-    expect(rf.toolCallId).toBe("tc1");
-    expect((rf.result as Record<string, unknown>).ok).toBe(true);
+    // omp resolves the pending call by `id` and expects AgentToolResult content blocks.
+    expect(rf.id).toBe("call-1");
+    expect(rf.isError).toBe(false);
+    expect(rf.result).toEqual({ content: [{ type: "text", text: "2025-01-01 00:00:00" }] });
 
     process.stdout.write = origWrite;
   });
@@ -494,9 +499,10 @@ describe("OmpBridge.handleOmpFrame — host_tool_call dispatches to host and ret
 
     bridge.handleOmpFrame(JSON.stringify({
       type: "host_tool_call",
+      id: "call-2",
       toolCallId: "tc2",
       toolName: "fcode_bench_run",
-      args: { command: "migrate" },
+      arguments: { command: "migrate" },
     }));
 
     const hostCall = hostFrames.find((f) => (f as Record<string, unknown>).method === "host.proxy");
@@ -518,9 +524,9 @@ describe("OmpBridge.handleOmpFrame — host_tool_call dispatches to host and ret
     const resultFrame = ompStdinWrites.find((f) => (f as Record<string, unknown>).type === "host_tool_result");
     expect(resultFrame).toBeDefined();
     const rf = resultFrame as Record<string, unknown>;
-    expect(rf.toolCallId).toBe("tc2");
-    expect((rf.result as Record<string, unknown>).isError).toBe(true);
-    expect(String((rf.result as Record<string, unknown>).content)).toContain("no active bench");
+    expect(rf.id).toBe("call-2");
+    expect(rf.isError).toBe(true);
+    expect(JSON.stringify(rf.result)).toContain("no active bench");
 
     process.stdout.write = origWrite;
   });
@@ -955,5 +961,28 @@ describe("OmpBridge — registration failure emits HOST_TOOL_REGISTRATION_FAILED
     } finally {
       process.stdout.write = origStdout;
     }
+  });
+});
+
+describe("OmpBridge — kanban host tools follow kanban.enabled", () => {
+  async function registered(settings: unknown): Promise<string[]> {
+    const { mkdtempSync, writeFileSync } = await import("node:fs");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const dataDir = mkdtempSync(join(tmpdir(), "bridge-kanban-"));
+    if (settings) writeFileSync(join(dataDir, "kanban-settings.json"), JSON.stringify(settings));
+    const b = new OmpBridge() as unknown as Record<string, unknown>;
+    b.config = { dataDir };
+    let sent: Array<{ name: string }> = [];
+    b.ompCall = async (cmd: { tools: Array<{ name: string }> }) => { sent = cmd.tools; return undefined; };
+    await (b.registerHostTools as () => Promise<string[]>).call(b);
+    return sent.map((t) => t.name);
+  }
+
+  it("registers the kanban tools only when enabled", async () => {
+    expect(await registered({ enabled: true })).toContain("kanban_complete");
+    expect(await registered({ enabled: false })).not.toContain("kanban_complete");
+    expect(await registered(null)).not.toContain("kanban_complete");
+    expect(await registered({ enabled: false })).toContain("fcode_bench_execute");
   });
 });

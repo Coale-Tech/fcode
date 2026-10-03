@@ -587,6 +587,10 @@ export const es = {
     "ompTodoPanel": "Lista de tareas pendientes",
     "ompTodoPanelTitle": "Tareas",
     "ompTodoPanelProgress": "{{done}}/{{total}}",
+    "ompTodoMarkDone": "Marcar como completado",
+    "ompTodoMarkPending": "Marcar como pendiente",
+    "ompTodoEditError": "Error al guardar: {{error}}",
+    "ompTodoEditRetry": "Reintentar",
     "ompSessionTreeRefresh": "Actualizar árbol de sesión",
     "ompSessionTreeLoading": "Cargando historial de sesión…",
     "ompSessionTreeEmpty": "No se encontró historial de sesión",
@@ -598,6 +602,11 @@ export const es = {
     "ompSessionBranchMessagesCopied": "{{count}} mensaje(s) copiado(s)",
     "ompSessionBranchMessagesEmpty": "No hay mensajes de rama en la sesión actual",
     "ompSessionBranchConsequence": "forks this session from the selected message",
+    "turnSummaryEdited": "editado {{count}}",
+    "turnSummaryRan": "ejecutado {{count}}",
+    "turnSummaryRead": "leído {{count}}",
+    "turnSummaryFetched": "obtenido {{count}}",
+    "turnSummarySearched": "buscado {{count}}",
   },
   "session": {
     "renameTitle": "Cambiar nombre de tarea",
@@ -805,6 +814,13 @@ export const es = {
     "memoryLocalPipelineMinRolloutIdleHoursDesc": "Min hours a thread must be idle before processing (default: 12)",
     "memoryLocalPipelineSummaryInjectionTokenLimit": "Summary Injection Limit",
     "memoryLocalPipelineSummaryInjectionTokenLimitDesc": "Max tokens of summary memories injected into context (default: 5000)",
+    "memoryUserProfileTitle": "Perfil de usuario",
+    "memoryUserProfileLabel": "Sobre mí",
+    "memoryUserProfileDesc": "Se inyecta en el prompt del sistema de cada proyecto. Sé breve: nombre, rol, preferencias clave (máx. 1 024 caracteres).",
+    "memoryUserProfileCounter": "{{count}} / {{max}}",
+    "memoryUserProfileSave": "Guardar",
+    "memoryUserProfileSaving": "Guardando…",
+    "memoryUserProfileSaved": "Perfil guardado.",
     "power": "Energía",
     "keepAwakeWhileRunning": "Mantener el equipo activo",
     "keepAwakeWhileRunningDesc": "Evita la suspensión por inactividad mientras Fcode esté abierto. La pantalla puede apagarse; la suspensión manual y al cerrar la tapa siguen funcionando.",
@@ -913,7 +929,7 @@ sklm: {
     "theme": "Tema",
     "mode": "Modo predeterminado",
     "groupPreferences": "Preferencias",
-    "groupAgent": "Agente",
+    "groupAi": "IA",
     "groupWorkspace": "Espacio de trabajo",
     "groupSystem": "Sistema",
     "groupExtensions": "Extensiones",
@@ -921,6 +937,10 @@ sklm: {
       "memory": "Memory",
       "general": "General",
       "ai": "AI",
+      "aiDefaults": "Permisos y valores",
+      "aiAgents": "Agentes y tareas",
+      "aiTools": "Herramientas",
+      "aiExtensions": "Extensiones",
       "shortcuts": "Atajos",
       "instructions": "Instrucciones",
       "models": "Modelos",
@@ -932,7 +952,23 @@ sklm: {
       "sync": "Sincronización en la nube",
       "remoteHosts": "Hosts remotos",
       "info": "Información",
-      "voice": "Voz"
+      "voice": "Voz",
+      "kanban": "Kanban"
+    },
+    "navDesc": {
+      "general": "Apariencia, idioma, energía y red.",
+      "ai": "Permisos y valores predeterminados para chats y agentes.",
+      "aiAgents": "Subagentes, colas, colaboración y worktrees.",
+      "aiTools": "Ejecución de código, navegador, LSP, IDA y MCP.",
+      "aiExtensions": "Skills, comandos y extensiones instaladas.",
+      "shortcuts": "Atajos de teclado para acciones comunes.",
+      "agent": "Configura proveedores y modelos de IA.",
+      "instructions": "Instrucciones que se aplican a cada sesión.",
+      "memory": "Cómo recuerda Fcode entre sesiones.",
+      "import": "Importa ajustes de otras herramientas de código.",
+      "projects": "Archiva, restaura y elimina proyectos.",
+      "about": "Versión, registros, comentarios y actualizaciones.",
+      "kanban": "Ejecuta tareas de agentes desde un tablero.",
     },
     "configSync": {
       title: "Cloud sync",
@@ -1557,6 +1593,20 @@ sklm: {
     "ompWorktreesKindTask": "task",
     "ompWorktreesKindEmpty": "empty",
     "ompWorktreesKindStray": "stray",
+    "ompWorktreeClear": "Limpiar",
+    "ompWorktreePrune": "Podar todo",
+    "ompWorktreeAdd": "Añadir espacio de trabajo",
+    "ompWorktreeClearConsequence": "elimina el directorio del espacio de trabajo permanentemente",
+    "ompWorktreePruneConsequence": "elimina todos los espacios de trabajo huérfanos permanentemente",
+    "ompWorktreeDirtyRefuse": "El espacio de trabajo tiene cambios no confirmados. Marque Forzar para eliminar de todas formas.",
+    "ompWorktreeForce": "Forzar (ignorar estado sucio)",
+    "ompWorktreeClearError": "Error al limpiar {{path}}: {{error}}",
+    "ompWorktreePruneError": "Error al podar: {{error}}",
+    "ompWorktreeAddRepoPath": "Ruta del repositorio",
+    "ompWorktreeAddBranch": "Nombre de la rama",
+    "ompWorktreeAddSubmit": "Añadir",
+    "ompWorktreeAddError": "Error al añadir espacio de trabajo: {{error}}",
+    "ompWorktreeRetry": "Reintentar",
     "ompExtGroup": "Extensiones omp",
     "ompExtEmpty": "No hay extensiones omp instaladas. Use el campo de arriba para instalar desde npm o una URL de git.",
     "ompExtInstall": "Instalar",
@@ -2104,7 +2154,18 @@ sklm: {
     "delete": "Eliminar",
     "lastRun": "Última ejecución",
     "never": "Nunca",
-    "tasks": "Tareas"
+    "tasks": "Tareas",
+    "templatePicker": "Usar una plantilla",
+    "templateNone": "Tarea en blanco",
+    "templateDailyDigest": "Resumen diario",
+    "templateWeeklyReview": "Revisión semanal",
+    "templateMorningStandup": "Standup matutino",
+    "templateDependencyCheck": "Verificación de dependencias",
+    "templateTestSweep": "Barrido de pruebas",
+    "templateInboxTriage": "Clasificación de bandeja",
+    "healthStale": "El planificador no responde",
+    "healthError": "Error del planificador: {{error}}",
+    "healthRetry": "Reintentar",
   },
   "permission": {
     "title": "Permiso necesario",
@@ -2183,7 +2244,8 @@ sklm: {
       "subagent": "Subagente",
     "session-tree": "Historial de sesión",
       "tools": "Herramientas",
-      "activity": "Actividad"
+      "activity": "Actividad",
+      "worktree": "Árboles de trabajo"
     },
     "pluginView": {
       "failed": "Esta vista no se pudo cargar. Vuelva a cargar el complemento e inténtelo de nuevo.",
@@ -2887,7 +2949,54 @@ sklm: {
       "computer": "Computadora",
       "ida": "IDA"
     }
+  },
+  "kanban": {
+    "title": "Kanban",
+    "empty": "Aún no hay tarjetas. Crea una para empezar.",
+    "newCard": "Nueva tarjeta",
+    "addCard": "Agregar tarjeta",
+    "columns": {
+      "triage": "Triaje",
+      "todo": "Por hacer",
+      "ready": "Listo",
+      "running": "En ejecución",
+      "blocked": "Bloqueado",
+      "done": "Hecho"
+    },
+    "card": {
+      "comment": "Agregar comentario…",
+      "archive": "Archivar",
+      "unarchive": "Desarchivar",
+      "moveTo": "Mover a…",
+      "showRuns": "Ver ejecuciones",
+      "nudge": "Impulsar",
+      "needsApproval": "Requiere aprobación",
+      "blocked": "Bloqueado",
+      "gaveUp": "Abandonado"
+    },
+    "dispatcher": {
+      "pause": "Pausar despachador",
+      "resume": "Reanudar despachador",
+      "paused": "Despachador pausado"
+    },
+    "settings": {
+      "title": "Configuración de Kanban",
+      "enabled": "Activar tablero Kanban",
+      "maxRuntimeSeconds": "Tiempo máx. de ejecución (segundos)",
+      "maxAgentCardsPerSession": "Máx. tarjetas de agente por sesión",
+      "maxDailySpawns": "Máx. inicios diarios"
+    },
+    "sidebar": {
+      "showWorkers": "Mostrar sesiones de trabajo",
+      "hideWorkers": "Ocultar sesiones de trabajo"
+    },
+    "notify": {
+      "blocked": "Tarea bloqueada: {title}",
+      "done": "Tarea completada: {title}",
+      "dailyCap": "Kanban: límite diario de {count} tareas iniciadas alcanzado"
+    },
   }
+
 } satisfies EnglishCatalog;
 
 export default es;

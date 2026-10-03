@@ -46,6 +46,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Check release dispatch guard
+        # Fail fast before any build cost: workflow_dispatch with sign_macos=false
+        # is only allowed on prerelease tags and branches, never stable tags.
+        env:
+          SIGN_MACOS: ${{ inputs.sign_macos }}
+        run: node scripts/check-release-dispatch.mjs
+
       - uses: pnpm/action-setup@v6
 
       - uses: actions/setup-node@v7

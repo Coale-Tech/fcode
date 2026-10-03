@@ -9,6 +9,8 @@
  *   - retention transcript framing
  */
 
+import { neutralizeInjection, redactMemorySecrets } from "../memory-backend/redact";
+
 export interface HindsightMessage {
 	role: string;
 	content: string;
@@ -67,9 +69,12 @@ export function formatMemories(results: RecallResultLike[]): string {
 	if (results.length === 0) return "";
 	return results
 		.map(r => {
+			// Sanitize per-line before prompt injection: recalled memories may
+			// pre-date write-time neutralization and could carry injection vectors.
+			const safeText = redactMemorySecrets(neutralizeInjection(r.text));
 			const typeStr = r.type ? ` [${r.type}]` : "";
 			const dateStr = r.mentioned_at ? ` (${r.mentioned_at})` : "";
-			return `- ${r.text}${typeStr}${dateStr}`;
+			return `- ${safeText}${typeStr}${dateStr}`;
 		})
 		.join("\n\n");
 }

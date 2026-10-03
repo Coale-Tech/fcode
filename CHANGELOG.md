@@ -10,6 +10,55 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 
+## [0.18.0] — 2026-10-02
+
+### Compatibility
+
+| Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
+|-------|-----------------|-----------|-----------------|--------|
+| 0.18.0 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
+
+### Added
+
+- **Kanban board** (disabled by default; enable in Settings → Kanban): a top-level Kanban page where cards become normal agent sessions. Each card shows its worker tools, a pause switch, and per-session caps; `[kanban]` worker sessions are hidden in the sidebar by default and can be revealed with a toggle.
+- **Per-turn action summary chip** in the message footer: verb counts for each assistant turn ("edited 3 files · ran 2 commands · read 5") computed from tool events.
+- **Schedule templates**: a static catalog of six presets (daily digest, weekly repo review, morning standup, dependency check, test sweep, inbox triage) at the top of the Scheduled task editor; selecting one prefills title, prompt, cadence and schedule for editing.
+- **Scheduler health badge**: shown on the Scheduled page only when the scheduler is stale (> 90 s without a tick) or in error — invisible when healthy.
+- **User profile** (`USER.md`): a text box in Settings → Memory lets you describe yourself; the file is injected into every session's context, capped at 1 KB, and processed through the same neutralize-and-redact path as the memory summary.
+- **`/learn <text>` slash command**: gathers described sources and calls the `learn` tool with a skill payload, guiding the agent through writing a managed skill.
+
+### Changed
+
+- **Settings page restyled** to match Raven's layout: flat rows with separators, a 224 px fixed navigation rail with Raven's `duration-300 ease-in-out` motion and updated controls. macOS keeps the glass/vibrancy rail; the content area is otherwise 1:1 with Raven. The AI settings are a rail group with their own pages (Permissions & defaults, Instructions, Models, Memory, Agents & tasks, Tools, Extensions, Kanban); row descriptions sit inline under each row and each page has a description line.
+- **Memory hardening**: `memory_summary.md` and all injected recall text are neutralized (prompt-injection stripped) and secrets-redacted before reaching the system prompt, matching the treatment already applied to `learned.md`.
+- **Editable to-do list**: `OmpTodoPanel` in chat now lets you edit the full phases list via `omp.session.setTodos`; on error the prior list is restored with an inline notice and retry. Agent `todo_reminder` and `todo_auto_clear` events always overwrite local state.
+- **`/worktree` tab**: add, clear, and prune worktrees from the work panel; clear/prune refuse dirty trees unless an explicit force option is ticked; a failed removal shows the path and OS error with retry.
+- **Motion**: the Search / Command Palette dialog now opens instantly (entrance animation removed). All exit and collapse transitions now use `--motion-ease-out`; the unused `--motion-ease-in` token is deleted.
+- **Release dispatch guard**: `scripts/check-release-dispatch.mjs` (first step of the `verify` job in `release.yml`) fails when a `workflow_dispatch` targets a stable tag with `sign_macos=false`, preventing unsigned stable releases.
+- **Updater signature detection** extracted from `updater.ts` into `update-mode.ts` (no `electron` import); `isMacAppSigned` accepts an injectable runner for testing; `codesign` has a 5 s timeout. The superseded source-text assertion in `auto-update.test.mjs` is replaced by four outcome tests.
+- Subagent topology cards and their process rows now follow the main conversation's responsive width behavior.
+- Resuming a subagent no longer selects another definition's private model binding; on-demand delegation permissions are re-checked on the next parent turn.
+- Trusted extension cancellation now retires SDK commands, tool updates, subprocesses and queued or visible prompts; late hook payload mutations are isolated.
+- Trusted extension startup, shutdown, and notification handlers now have bounded waits; stop cancels pending hook waits before a model request; disposal runs shutdown once.
+- Individual Markdown tables can be copied to the clipboard or downloaded as CSV from the transcript.
+- Hosted web search replay and estimation contract: tool/Task continuation and restart recovery; context rebuilding preserves system-prefix semantics; structured local preparation failures no longer masquerade as retryable provider failures.
+- OpenAI Codex OAuth models can now opt into provider-hosted native web search (off by default; search history is replayed only for the same Codex model).
+- The `get_tree` bridge call, IPC handler, channel, and `api.ompSessionTree` are removed; the only consumer uses only the branch call and i18n keys, which are kept.
+
+### Fixed
+
+- Frappe v16 benches now reach the Running state; Stop is honoured while a bench is still starting.
+- Quitting the app now stops the full bench process tree (honcho, gunicorn, redis-server).
+- Redis port conflicts are named in the supervisor error message.
+- Exact-name read-tier tool approvals now match correctly (the previous prefix-based match allowed over-broad auto-approvals).
+- Bench discovery now requires `site_config.json` to be present; `FCODE_BENCH_ROOTS` can extend the search roots.
+- The migrate confirmation dialog now has a focus trap.
+- ANSI escape codes are stripped from bench log lines.
+- The bench cockpit's Start and Retry actions are disabled while a different bench is already running or starting; a rejected start now surfaces its error in the cockpit.
+- A stored hosted web-search record that cannot be replayed no longer fails later requests in that conversation.
+- The Composer reasoning slider now moves smoothly to clicked or keyboard-selected levels, follows dragging immediately, and respects reduced-motion settings; rapid clicks redirect the animation; failed saves restore the confirmed selection.
+- The reasoning slider's filled track now covers the entire starting dot (left cap no longer leaves an exposed half-dot); hovering a stop highlights its label; only unfilled dots brighten on hover.
+
 ## [0.17.1] — 2026-10-02
 
 ### Compatibility
@@ -80,6 +129,8 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Security: YAML injection via `agentModelOverrides` key fixed (agent key now `JSON.stringify`-quoted in overlay); `validateOmpSettings` rejects keys with non-identifier chars (newlines, colons, spaces); `file:`/`git+file:`/`svn+`/`hg+` URI schemes blocked in `validateInstallSpec`; collab panel only renders `<a>` for http(s) URLs; Hindsight supervisor strips raw process output from IPC state message; port validated 1024–65535 in `hindsightLocalStart`; `benchRun` validates each `args` element against an identifier-safe regex.
 - `inflight-checkpoint.test.mjs` flaky timing fixed (freeze `Date.now()` via `t.mock.timers`); `plugin-mcp.test.mjs` `connectTimeoutMs` 20 → 300.
 
+[0.18.0]: https://github.com/Coale-Tech/fcode/releases/tag/v0.18.0
+[0.17.1]: https://github.com/Coale-Tech/fcode/releases/tag/v0.17.1
 [0.17.0]: https://github.com/Coale-Tech/fcode/releases/tag/v0.17.0
 [0.16.0]: https://github.com/Coale-Tech/fcode/releases/tag/v0.16.0
 [0.15.7-fcode.2]: https://github.com/Coale-Tech/fcode/releases/tag/v0.15.7-fcode.2

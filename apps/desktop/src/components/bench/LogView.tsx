@@ -3,7 +3,7 @@
  *
  * Design decisions (from the design-phase accepted block):
  *  - Virtualised list for smooth 60fps scroll on 5000-line ring buffers.
- *  - No ANSI parsing, no PTY, no input (read-only).
+ *  - ANSI SGR sequences are stripped (B10c) — no colour rendering, no PTY, no input.
  *  - role="log" + aria-live="polite" ONLY while follow-tail is on and focused.
  *  - Log rows never animate (motion fights a stream).
  *  - --font-mono, --text-2xs for log content.
@@ -139,7 +139,7 @@ export function LogView({ lines, followTail = true, onFollowTailChange, classNam
             }}
           >
             <span style={TS_STYLE}>{formatTs(line.ts)}</span>
-            {line.text}
+            {stripAnsi(line.text)}
           </div>
         ))}
       </div>
@@ -170,7 +170,9 @@ const LOG_LINE_STYLE: React.CSSProperties = {
 };
 
 const TS_STYLE: React.CSSProperties = {
-  color: "var(--ds-text-tertiary)",
+  /* B10(e): --ds-text-tertiary (#424242 dark) gives 1.78:1 on island (#171717).
+     --ink-gray-6 gives 6.29:1 dark (#999999 on #171717) / 7.81:1 light (#525252 on #fff). */
+  color: "var(--ink-gray-6)",
   marginRight: 8,
   flexShrink: 0,
   userSelect: "none",
@@ -182,4 +184,13 @@ function formatTs(ts: number): string {
   const m = String(d.getMinutes()).padStart(2, "0");
   const s = String(d.getSeconds()).padStart(2, "0");
   return `${h}:${m}:${s}`;
+}
+
+/**
+ * Strip SGR (colour/style) escape sequences from a log line.
+ * Handles ESC-prefixed form (\x1b[...m) and bare form ([...m) that appears
+ * when the ESC byte is dropped during IPC serialisation (B10c).
+ */
+export function stripAnsi(text: string): string {
+  return text.replace(/(?:\x1b\[|\[)[0-9;]*m/g, "");
 }

@@ -2,7 +2,7 @@ export const PROTOCOL_VERSION = 11 as const;
 export const SCHEMA_VERSION = 16 as const;
 export const APP_ID = "com.coaletech.fcode";
 export const APP_NAME = "Fcode";
-export const APP_VERSION = "0.17.1";
+export const APP_VERSION = "0.18.0";
 
 export const APP_MENU_COMMANDS = [
   "newTask",
@@ -392,6 +392,12 @@ export const IPC = {
     ompHistoricalStats: "pi-desktop/omp/stats/historical",
     /** List agent-managed git worktrees under ~/.omp/wt/. */
     ompWorktreeList: "pi-desktop/omp/worktrees/list",
+    /** Clear a specific agent worktree; refuses dirty tree unless force=true. */
+    ompWorktreeClear: "pi-desktop/omp/worktrees/clear",
+    /** Prune all orphaned worktrees under ~/.omp/wt/; refuses dirty ones unless force=true. */
+    ompWorktreePrune: "pi-desktop/omp/worktrees/prune",
+    /** Add a new git worktree under ~/.omp/wt/. */
+    ompWorktreeAdd: "pi-desktop/omp/worktrees/add",
     /** Reveal an omp skill store directory in the system file manager. */
     ompSkillReveal: "pi-desktop/omp/skills/reveal",
     /** Queue mode controls (session-scoped RPC; mirrors set_steering/follow_up/interrupt_mode). */
@@ -461,8 +467,6 @@ export const IPC = {
     ompSessionSetTodos: "pi-desktop/omp/session/setTodos",
     /** Get the flat history entries for the current omp session. */
     ompSessionEntries: "pi-desktop/omp/session/entries",
-    /** Get the session tree for the current omp session. */
-    ompSessionTree: "pi-desktop/omp/session/tree",
     /** Get preview messages for the current branch. */
     ompSessionBranchMessages: "pi-desktop/omp/session/branchMessages",
     /** Trigger /share slash command and return the snapshot URL. */
@@ -481,6 +485,32 @@ export const IPC = {
     ompAbortBash: "pi-desktop/omp/abort-bash",
     /** Set the omp event filter (null = all events; string[] = allowlist). */
     ompSetEventFilter: "pi-desktop/omp/set-event-filter",
+    /** Kanban board: list all tasks, links, comments, runs. */
+    kanbanList: "pi-desktop/kanban/list",
+    /** Kanban board: create a user card (lands in triage/todo/ready per rules). */
+    kanbanCreate: "pi-desktop/kanban/create",
+    /** Kanban board: move a card to a different status column (user action). */
+    kanbanMove: "pi-desktop/kanban/move",
+    /** Kanban board: add a parent→child link. */
+    kanbanLink: "pi-desktop/kanban/link",
+    /** Kanban board: add a comment to a task. */
+    kanbanComment: "pi-desktop/kanban/comment",
+    /** Kanban board: archive or unarchive a task. */
+    kanbanArchive: "pi-desktop/kanban/archive",
+    /** Kanban board: list runs for a task. */
+    kanbanListRuns: "pi-desktop/kanban/listRuns",
+    /** Kanban board: get + set settings (enabled, caps). */
+    kanbanSettingsGet: "pi-desktop/kanban/settings/get",
+    /** Kanban board: get + set settings. */
+    kanbanSettingsSet: "pi-desktop/kanban/settings/set",
+    /** Kanban board: pause or resume the dispatcher. */
+    kanbanSetPaused: "pi-desktop/kanban/setPaused",
+    /** Kanban board: trigger an immediate dispatcher tick. */
+    kanbanNudge: "pi-desktop/kanban/nudge",
+    /** Read the cross-project user-profile text from ~/.omp/agent/USER.md. */
+    ompUserProfileGet: "pi-desktop/omp/user-profile/get",
+    /** Write the cross-project user-profile text to ~/.omp/agent/USER.md (cap 1024 chars). */
+    ompUserProfileSet: "pi-desktop/omp/user-profile/set",
   },
   event: {
     pluginChanged: "pi-desktop/event/pluginChanged",
@@ -535,6 +565,8 @@ export const IPC = {
     sidecarExtUi: "pi-desktop/sidecar/event/extUi",
     /** Managed local Hindsight server state changed. */
     hindsightLocalStatus: "pi-desktop/hindsight-local/event/status",
+    /** Kanban board changed (tasks/runs/links updated by dispatcher or user). */
+    kanbanChanged: "pi-desktop/kanban/event/changed",
   },
 } as const;
 

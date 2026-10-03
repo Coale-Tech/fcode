@@ -1,8 +1,7 @@
 import { readSettingsSource } from "./helpers/source-contracts.mjs";
 import assert from "node:assert/strict";
-import { access } from "node:fs/promises";
-import { constants } from "node:fs";
-import { readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
+import { readFileSync, constants } from "node:fs";
 import test from "node:test";
 
 const search = await readFile(
@@ -28,5 +27,22 @@ test("settings usage page component is gone", async () => {
         constants.F_OK,
       ),
     { code: "ENOENT" },
+  );
+});
+
+/**
+ * S3/S4 restyle uses numeric --radius-N steps (FD3). The named scale
+ * (--radius-sm/md/lg/xl/2xl) maps to different px values in Fcode vs Raven,
+ * so its use in settings.css would produce incorrect Raven-mismatch radii.
+ */
+test("settings CSS uses only numeric radius tokens, not named-scale aliases", () => {
+  const css = readFileSync(
+    new URL("../src/styles/settings.css", import.meta.url),
+    "utf8",
+  );
+  assert.doesNotMatch(
+    css,
+    /border-radius:\s*var\(--radius-(?:sm|md|lg|xl|2xl)\)/,
+    "settings.css must not use the named radius scale (sm/md/lg/xl/2xl); use --radius-N numeric steps",
   );
 });

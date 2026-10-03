@@ -61,7 +61,7 @@
  * preferred max (D439) and only compresses when the pane itself is narrower.
  */
 .app-shell.sidebar-collapsed .main-pane {
-  --chat-width-transition: var(--motion-duration-fast) var(--motion-ease-in);
+  --chat-width-transition: var(--motion-duration-fast) var(--motion-ease-out);
 }
 
 /* Bench and Build draw their own `.context-sidebar` + `.island`, so the pane is

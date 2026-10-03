@@ -14,6 +14,7 @@ import { useAppStore } from "../../stores/app-store";
 import { Input, SettingsToggle } from "../../components/ui";
 import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect";
 import { SettingsCard, SettingsRow } from "./primitives";
+import { OmpSettingsSections } from "./omp-settings-sections";
 
 export type MemoryHealth = "ok" | "degraded" | "error" | "off" | "unknown";
 
@@ -53,6 +54,14 @@ export function MemoryTab() {
   const [missionResult, setMissionResult] = useState<string | null>(null);
   // ── omp settings state (Advanced sections) ────────────────────────────────
   const [omp, setOmp] = useState<OmpSettingsValues>({});
+  // ── User profile state (I.2) ──────────────────────────────────────────────
+  const [profile, setProfile] = useState("");
+  const [profileDraft, setProfileDraft] = useState("");
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const USER_PROFILE_MAX = 1024;
+
 
 
   useEffect(() => {
@@ -68,6 +77,7 @@ export function MemoryTab() {
       });
     }).finally(() => setConfigLoading(false));
     void api.ompSettingsGet().then(setOmp).catch(() => undefined);
+    void api.ompUserProfileGet().then((r) => { setProfile(r.text); setProfileDraft(r.text); }).catch(() => undefined);
     // Detect launchers so the section renders even before any start/stop
     void api.hindsightLocalDetect().then((r) => setLocalState(r.state));
     // Subscribe to supervisor push events from main process
@@ -122,6 +132,27 @@ export function MemoryTab() {
     },
     [omp],
   );
+
+  const saveProfile = async () => {
+    setProfileSaving(true);
+    setProfileError(null);
+    setProfileSaved(false);
+    try {
+      const result = await api.ompUserProfileSet(profileDraft);
+      if (result.ok) {
+        setProfile(profileDraft);
+        setProfileSaved(true);
+        setTimeout(() => setProfileSaved(false), 3_000);
+      } else {
+        setProfileError(result.error ?? "Save failed");
+      }
+    } catch (e) {
+      setProfileError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
 
   const applyMission = async () => {
     setMissionSaving(true);
@@ -395,6 +426,58 @@ export function MemoryTab() {
           </SettingsRow>
         </SettingsCard>
       )}
+
+      {/* ── User profile card (I.2) ──────────────────────────────────────── */}
+      <SettingsCard title={t("settings.memoryUserProfileTitle")}>
+        <SettingsRow
+          title={t("settings.memoryUserProfileLabel")}
+          description={t("settings.memoryUserProfileDesc")}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px", width: "100%" }}>
+            <div style={{ position: "relative" }}>
+              <textarea
+                data-testid="user-profile-textarea"
+                value={profileDraft}
+                maxLength={USER_PROFILE_MAX}
+                rows={6}
+                style={{ width: "100%", resize: "vertical", boxSizing: "border-box" }}
+                onChange={(e) => {
+                  setProfileDraft(e.target.value.slice(0, USER_PROFILE_MAX));
+                  setProfileSaved(false);
+                }}
+              />
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
+              <span
+                data-testid="user-profile-counter"
+                style={{ fontSize: "0.8em", opacity: 0.6 }}
+              >
+                {t("settings.memoryUserProfileCounter", { count: profileDraft.length, max: USER_PROFILE_MAX })}
+              </span>
+              <button
+                type="button"
+                data-testid="user-profile-save"
+                disabled={profileSaving || profileDraft === profile}
+                onClick={() => void saveProfile()}
+              >
+                {profileSaving
+                  ? t("settings.memoryUserProfileSaving")
+                  : t("settings.memoryUserProfileSave")}
+              </button>
+            </div>
+            {profileSaved && (
+              <div role="status" data-testid="user-profile-saved">
+                {t("settings.memoryUserProfileSaved")}
+              </div>
+            )}
+            {profileError && (
+              <div role="alert" data-testid="user-profile-error">
+                {profileError}
+              </div>
+            )}
+          </div>
+        </SettingsRow>
+      </SettingsCard>
 
       {/* ── Bench bootstrap card ─────────────────────────────────────────── */}
       <SettingsCard title={t("settings.memoryBenchBootstrapTitle")}>
@@ -706,7 +789,7 @@ export function MemoryTab() {
           </details>
         </section>
       )}
-
+      <OmpSettingsSections part="memory" />
     </div>
   );
 }

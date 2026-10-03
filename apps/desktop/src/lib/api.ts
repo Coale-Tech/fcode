@@ -151,15 +151,22 @@ import type {
   OmpSessionHandoffResult,
   OmpSessionSetTodosResult,
   OmpSessionEntriesResult,
-  OmpSessionTreeResult,
   OmpSessionBranchMessagesResult,
   OmpTodoPhase,
   OmpInstalledSkillsListResult,
   OmpHistoricalStatsResult,
   OmpWorktreeListResult,
+  OmpWorktreeClearResult,
+  OmpWorktreePruneResult,
+  OmpWorktreeAddResult,
   OmpExtensionListResult,
   OmpExtensionMutateResult,
   OmpBashResult,
+  OmpUserProfileGetResult,
+  OmpUserProfileSetResult,
+  KanbanBoard,
+  KanbanSettings,
+  KanbanRun,
 } from "@pi-desktop/shared";
 import {
   defaultCommandShellForPlatform,
@@ -868,7 +875,7 @@ export const api = {
   listPullRequests: () =>
     invoke<{ pulls: PullRequestSummary[]; error?: string }>(IPC.invoke.pullsList),
   listScheduled: () =>
-    invoke<{ tasks: ScheduledTask[] }>(IPC.invoke.scheduledList),
+    invoke<{ tasks: ScheduledTask[]; health?: { lastTickAt: number | undefined; lastError: string | undefined; hostAvailable: boolean } }>(IPC.invoke.scheduledList),
   createScheduled: (input: {
     title?: string;
     prompt: string;
@@ -1758,9 +1765,6 @@ export const api = {
   /** Get flat history entries for the current omp session. */
   ompSessionEntries: (params?: { since?: string }) =>
     invoke<OmpSessionEntriesResult>(IPC.invoke.ompSessionEntries, params ?? {}),
-  /** Get the session tree for the current omp session. */
-  ompSessionTree: () =>
-    invoke<OmpSessionTreeResult>(IPC.invoke.ompSessionTree),
   /** Get preview messages for the current branch. */
   ompSessionBranchMessages: () =>
     invoke<OmpSessionBranchMessagesResult>(IPC.invoke.ompSessionBranchMessages),
@@ -1773,6 +1777,15 @@ export const api = {
   /** List agent-managed git worktrees under ~/.omp/wt/. */
   ompWorktreeList: () =>
     invoke<OmpWorktreeListResult>(IPC.invoke.ompWorktreeList),
+  /** Clear a specific agent worktree. force=true skips dirty check. */
+  ompWorktreeClear: (path: string, force = false) =>
+    invoke<OmpWorktreeClearResult>(IPC.invoke.ompWorktreeClear, { path, force }),
+  /** Prune orphaned worktrees under ~/.omp/wt/. force=true skips dirty check. */
+  ompWorktreePrune: (force = false) =>
+    invoke<OmpWorktreePruneResult>(IPC.invoke.ompWorktreePrune, { force }),
+  /** Add a new git worktree under ~/.omp/wt/ for repoPath + branch. */
+  ompWorktreeAdd: (repoPath: string, branch: string) =>
+    invoke<OmpWorktreeAddResult>(IPC.invoke.ompWorktreeAdd, { repoPath, branch }),
   /** Reveal an omp skill store directory in the system file manager. */
   ompSkillReveal: (id: string, version: string) =>
     invoke<{ ok: boolean }>(IPC.invoke.ompSkillReveal, { id, version }),
@@ -1830,4 +1843,43 @@ export const api = {
   /** Set the omp event filter; null = all events, string[] = allowlist. */
   ompSetEventFilter: (events: string[] | null) =>
     invoke<void>(IPC.invoke.ompSetEventFilter, { events }),
+  /** Kanban: list all tasks, links, comments, runs. */
+  kanbanList: () =>
+    invoke<{ board: KanbanBoard; paused: boolean }>(IPC.invoke.kanbanList),
+  /** Kanban: create a new user task card. Returns the new taskId. */
+  kanbanCreate: (input: { title: string; body: string; projectPath: string; priority?: number }) =>
+    invoke<{ taskId: string }>(IPC.invoke.kanbanCreate, input),
+  /** Kanban: move a task to a different status column. */
+  kanbanMove: (taskId: string, status: string) =>
+    invoke<{ board: KanbanBoard }>(IPC.invoke.kanbanMove, { taskId, status }),
+  /** Kanban: add a parent→child link between tasks. */
+  kanbanLink: (parentId: string, childId: string) =>
+    invoke<{ board: KanbanBoard }>(IPC.invoke.kanbanLink, { parentId, childId }),
+  /** Kanban: add a comment to a task. */
+  kanbanComment: (taskId: string, body: string) =>
+    invoke<{ board: KanbanBoard }>(IPC.invoke.kanbanComment, { taskId, body }),
+  /** Kanban: archive or unarchive a task. */
+  kanbanArchive: (taskId: string, archived: boolean) =>
+    invoke<{ board: KanbanBoard }>(IPC.invoke.kanbanArchive, { taskId, archived }),
+  /** Kanban: list runs for a given task. */
+  kanbanListRuns: (taskId: string) =>
+    invoke<{ runs: KanbanRun[] }>(IPC.invoke.kanbanListRuns, { taskId }),
+  /** Kanban: get current settings (enabled, caps). */
+  kanbanSettingsGet: () =>
+    invoke<{ settings: KanbanSettings }>(IPC.invoke.kanbanSettingsGet),
+  /** Kanban: update settings. */
+  kanbanSettingsSet: (settings: Partial<KanbanSettings>) =>
+    invoke<{ settings: KanbanSettings }>(IPC.invoke.kanbanSettingsSet, { settings }),
+  /** Kanban: pause or resume the dispatcher. */
+  kanbanSetPaused: (paused: boolean) =>
+    invoke<{ paused: boolean }>(IPC.invoke.kanbanSetPaused, { paused }),
+  /** Kanban: trigger an immediate dispatcher tick. */
+  kanbanNudge: () =>
+    invoke<void>(IPC.invoke.kanbanNudge),
+  /** Read cross-project user profile from ~/.omp/agent/USER.md. */
+  ompUserProfileGet: () =>
+    invoke<OmpUserProfileGetResult>(IPC.invoke.ompUserProfileGet),
+  /** Write cross-project user profile to ~/.omp/agent/USER.md (server caps at 1024 chars). */
+  ompUserProfileSet: (text: string) =>
+    invoke<OmpUserProfileSetResult>(IPC.invoke.ompUserProfileSet, { text }),
 };

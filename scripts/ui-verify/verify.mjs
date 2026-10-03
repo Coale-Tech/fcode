@@ -520,6 +520,27 @@ async function run() {
     return shot(page, label);
   });
 
+  // ── 23. Kanban board (6 columns, cards) ──────────────────────────────────
+  await capture("kanban-board", async (page, label) => {
+    await page.evaluate(() => {
+      // Enable kanban in app state so the nav button appears and page renders
+      window.__PI_DESKTOP__?.setPage("kanban");
+    });
+    await page.waitForTimeout(800);
+    return shot(page, label);
+  });
+
+  // ── 24. Settings → Kanban ─────────────────────────────────────────────────
+  await capture("settings-kanban", async (page, label) => {
+    await page.evaluate(() => {
+      window.__PI_DESKTOP__?.setPage("settings");
+      window.__PI_DESKTOP__?.setSettingsTab("kanban");
+    });
+    await page.waitForTimeout(600);
+    return shot(page, label);
+  });
+
+
   // ── Cleanup ───────────────────────────────────────────────────────────────
   await browser.close();
   server.close();

@@ -30,6 +30,7 @@ import type {
 	SlashCommandSpec,
 	TuiSlashCommandRuntime,
 } from "./types";
+import { cfgAutolearnEnabled } from "../autolearn/settings";
 
 function formatFreshSessionResult(result: FreshSessionResult): string {
 	const stateLabel = result.closedProviderSessions === 1 ? "provider state" : "provider states";
@@ -163,6 +164,37 @@ async function relocateHeadlessSession(
 	await runtime.notifyConfigChanged?.();
 	await runtime.notifyTitleChanged?.();
 	return undefined;
+}
+
+/** Build the agent prompt for `/learn <request>`. Shared by handle and handleTui. */
+function buildLearnCommandPrompt(req: string): string {
+	const request = req.trim()
+		|| "the workflow we just went through in this conversation — review the steps taken and distill them into a reusable skill";
+	return (
+		`[/learn] The user wants you to author a reusable skill.\n\nTHE REQUEST:\n${request}\n\n` +
+		"Do this:\n" +
+		"1. Gather every source named — use `read`/`grep`/`glob` for local files or directories, " +
+		"`bash` (with curl/wget) or `web_search` for URLs, the current conversation history " +
+		"if the user referred to something just done, and any pasted text as-is. " +
+		"If the request is ambiguous, make a reasonable choice and note it.\n" +
+		"1b. Apply every requirement, focus, and constraint to the skill you author.\n" +
+		"2. Call the `learn` tool with a `skill` payload:\n" +
+		"   - `memory`: one-sentence summary of what the skill captures\n" +
+		"   - `skill.action`: \"create\"\n" +
+		"   - `skill.name`: lowercase-hyphenated, no spaces, ≤64 chars\n" +
+		"   - `skill.description`: ONE sentence, ≤60 characters, ends with a period; " +
+		"state the capability, not the implementation; no marketing words; after writing, " +
+		"count the characters — if over 60, trim before saving\n" +
+		"   - `skill.body`: the SKILL.md body in Markdown with NO frontmatter (the tool generates it). " +
+		"Section order: # <Human Title>, 2-3 sentence intro (what it does, what it does NOT do, key " +
+		"dependencies), ## When to Use (bullet trigger conditions), ## Prerequisites (env vars, " +
+		"install steps), ## How to Run (canonical invocation via omp tools), " +
+		"## Quick Reference (flat list), ## Procedure (numbered steps), " +
+		"## Pitfalls (known limits), ## Verification (one check proving it worked).\n\n" +
+		"Quality: prefer exact commands/paths/APIs seen in the source; never invent flags or " +
+		"endpoints; ~100 lines for a simple skill, ~200 for a complex one.\n\n" +
+		"When done, report the skill name and a one-line summary of what it captured."
+	);
 }
 
 export const BUILTIN_LIFECYCLE_SLASH_COMMANDS: ReadonlyArray<SlashCommandSpec> = [
@@ -643,6 +675,34 @@ export const BUILTIN_LIFECYCLE_SLASH_COMMANDS: ReadonlyArray<SlashCommandSpec> =
 		handleTui: async (command, runtime) => {
 			runtime.ctx.editor.setText("");
 			await runtime.ctx.handleMemoryCommand(command.text);
+		},
+	},
+	{
+		name: "learn",
+		icon: "skill",
+		description: "Author a reusable skill from a description, files, URLs, or 'what we just did'",
+		acpDescription: "Gather sources and author a managed skill via the learn tool",
+		inlineHint: "<description>",
+		allowArgs: true,
+		handle: async (command, runtime) => {
+			if (!cfgAutolearnEnabled.get(runtime.settings)) {
+				await runtime.output(
+					"/learn requires autolearn.enabled=true in settings. Enable it under Settings → Memory → Auto-Learn.",
+				);
+				return commandConsumed();
+			}
+			return { prompt: buildLearnCommandPrompt(command.args) };
+		},
+		handleTui: (command, runtime) => {
+			if (!cfgAutolearnEnabled.get(runtime.ctx.session.settings)) {
+				runtime.ctx.showError(
+					"/learn requires autolearn.enabled=true — enable it under Settings → Memory → Auto-Learn.",
+				);
+				runtime.ctx.editor.setText("");
+				return;
+			}
+			runtime.ctx.editor.setText("");
+			return { prompt: buildLearnCommandPrompt(command.args) };
 		},
 	},
 	{

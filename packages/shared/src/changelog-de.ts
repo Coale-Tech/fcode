@@ -2,6 +2,21 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const deEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.0",
+    "date": "2026-10-02",
+    "highlights": [
+      "Einstellungen wurden nach dem Raven-Layout überarbeitet: flache Zeilen mit Trennlinien, eine 224 px breite Seitenleiste mit Raven-Navigation und aktualisierte Steuerelemente; macOS behält die Glas-Vibrancy-Leiste. Neue Gruppe „KI“ mit eigenen Seiten (Berechtigungen, Agenten, Tools, Erweiterungen, Gedächtnis, Kanban); Beschreibungen stehen jetzt direkt unter den Zeilen.",
+      "Neues Kanban-Board (standardmäßig deaktiviert; aktivieren unter Einstellungen → Kanban): Karten starten Agentensitzungen mit Worker-Tools, einem Pause-Schalter und Sitzungsgrenzen; [kanban]-Sitzungen sind standardmäßig in der Seitenleiste ausgeblendet.",
+      "Speicher-Härtung: Zusammenfassung und Recall-Texte werden neutralisiert und bereinigt, bevor sie den Prompt erreichen; ein neues Benutzerprofil (Einstellungen → Speicher) wird in jedem Projekt eingebettet (max. 1 KB); mit `/learn <Text>` wird eine neue Skill erstellt.",
+      "Chat erhält einen Aktions-Zusammenfassungs-Chip pro Konversationszug, Vorlagen für den Scheduler-Editor und ein Scheduler-Gesundheits-Badge, das nur bei Blockierung erscheint.",
+      "Die To-do-Liste im Chat ist bearbeitbar mit Zurücksetzen bei Fehler; der /worktree-Tab ermöglicht Hinzufügen/Löschen/Bereinigen (Erzwingen bei veränderten Trees); der ungenutzte Sitzungsbaum-Bridge-Aufruf wurde entfernt.",
+      "Bench-Fixes: Frappe v16 erreicht Running, Stop funktioniert während des Starts, Beenden stoppt den gesamten Prozessbaum, Redis-Port-Konflikte werden benannt, exakte Lese-Freigaben funktionieren, Discovery erfordert site_config.json, das Migrate-Dialogfeld hat eine Fokus-Falle, ANSI-Codes werden aus Logs entfernt.",
+      "Motion: Der Suchdialog öffnet sich sofort (keine Einblend-Animation); alle Exit- und Collapse-Übergänge verwenden ease-out.",
+      "Release: Stabile Tags können nicht mehr unsigniert über workflow_dispatch geliefert werden (CI-Guard); die Updater-Signaturerkennung wurde in ein eigenes Modul ausgelagert und getestet.",
+    ],
+  },
+
+  {
     "version": "0.17.1",
     "date": "2026-10-02",
     "highlights": [
