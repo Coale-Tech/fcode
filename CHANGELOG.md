@@ -29,7 +29,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ### Changed
 
-- **Settings page restyled** to match Raven's layout: flat rows with separators, a 224 px fixed navigation rail with Raven's `duration-300 ease-in-out` motion and updated controls. macOS keeps the glass/vibrancy rail; the content area is otherwise 1:1 with Raven.
+- **Settings page restyled** to match Raven's layout: flat rows with separators, a 224 px fixed navigation rail with Raven's `duration-300 ease-in-out` motion and updated controls. macOS keeps the glass/vibrancy rail; the content area is otherwise 1:1 with Raven. The AI settings are a rail group with their own pages (Permissions & defaults, Instructions, Models, Memory, Agents & tasks, Tools, Extensions, Kanban); row descriptions sit inline under each row and each page has a description line.
 - **Memory hardening**: `memory_summary.md` and all injected recall text are neutralized (prompt-injection stripped) and secrets-redacted before reaching the system prompt, matching the treatment already applied to `learned.md`.
 - **Editable to-do list**: `OmpTodoPanel` in chat now lets you edit the full phases list via `omp.session.setTodos`; on error the prior list is restored with an inline notice and retry. Agent `todo_reminder` and `todo_auto_clear` events always overwrite local state.
 - **`/worktree` tab**: add, clear, and prune worktrees from the work panel; clear/prune refuse dirty trees unless an explicit force option is ticked; a failed removal shows the path and OS error with retry.

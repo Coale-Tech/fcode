@@ -5,7 +5,7 @@ export const esEntries: ChangelogEntry[] = [
     "version": "0.18.0",
     "date": "2026-10-02",
     "highlights": [
-      "Ajustes rediseñados según el diseño de Raven: filas planas con separadores, un rail fijo de 224 px con la navegación de Raven y controles actualizados; macOS conserva el rail de vidrio con vibración.",
+      "Ajustes rediseñados según el diseño de Raven: filas planas con separadores, un rail fijo de 224 px con la navegación de Raven y controles actualizados; macOS conserva el rail de vidrio con vibración. Nuevo grupo «IA» con páginas propias (permisos, agentes, herramientas, extensiones, memoria, Kanban); las descripciones ahora aparecen bajo cada fila.",
       "Nuevo tablero Kanban (desactivado por defecto; actívalo en Ajustes → Kanban): las tarjetas inician sesiones de agente con herramientas de trabajador, interruptor de pausa y límites por sesión; las sesiones [kanban] se ocultan en la barra lateral por defecto.",
       "Refuerzo de memoria: el resumen de memoria y todos los textos de recuperación son neutralizados y redactados antes de llegar al prompt; un nuevo perfil de usuario (Ajustes → Memoria) se inyecta en cada proyecto (límite de 1 KB); usa `/learn <texto>` para crear un nuevo skill.",
       "El chat gana un chip de resumen de acciones por turno, plantillas en el editor de tareas programadas y un indicador de salud del planificador que aparece solo cuando se detiene.",

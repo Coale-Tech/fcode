@@ -5,7 +5,7 @@ export const trEntries: ChangelogEntry[] = [
     "version": "0.18.0",
     "date": "2026-10-02",
     "highlights": [
-      "Ayarlar, Raven düzenine uyacak şekilde yeniden tasarlandı: ayırıcılı düz satırlar, Raven gezinme hareketli 224 px sabit ray ve güncellenmiş kontroller; macOS cam titreşim rayını koruyor.",
+      "Ayarlar, Raven düzenine uyacak şekilde yeniden tasarlandı: ayırıcılı düz satırlar, Raven gezinme hareketli 224 px sabit ray ve güncellenmiş kontroller; macOS cam titreşim rayını koruyor. Yeni «Yapay Zeka» grubu kendi sayfalarına ayrıldı (izinler, ajanlar, araçlar, uzantılar, bellek, Kanban); açıklamalar artık her satırın altında.",
       "Yeni Kanban panosu (varsayılan olarak devre dışı; Ayarlar → Kanban'dan etkinleştirin): kartlar ajan oturumları başlatır, worker araçlarını, duraklama anahtarını ve oturum başına sınırları gösterir; [kanban] oturumları varsayılan olarak kenar çubuğunda gizlidir.",
       "Bellek güçlendirme: bellek özeti ve tüm geri çağırma metinleri, prompt'a ulaşmadan önce nötralize edilir ve düzenlenir; yeni bir kullanıcı profili (Ayarlar → Bellek) her projeye enjekte edilir (1 KB sınır); yeni skill oluşturmak için `/learn <metin>` kullanın.",
       "Sohbet, her tur için eylem özeti çipi, planlayıcı editöründe zamanlama şablonları ve yalnızca planlayıcı durduğunda görünen sağlık rozeti kazanıyor.",

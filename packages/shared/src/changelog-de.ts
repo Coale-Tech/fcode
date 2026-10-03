@@ -5,7 +5,7 @@ export const deEntries: ChangelogEntry[] = [
     "version": "0.18.0",
     "date": "2026-10-02",
     "highlights": [
-      "Einstellungen wurden nach dem Raven-Layout überarbeitet: flache Zeilen mit Trennlinien, eine 224 px breite Seitenleiste mit Raven-Navigation und aktualisierte Steuerelemente; macOS behält die Glas-Vibrancy-Leiste.",
+      "Einstellungen wurden nach dem Raven-Layout überarbeitet: flache Zeilen mit Trennlinien, eine 224 px breite Seitenleiste mit Raven-Navigation und aktualisierte Steuerelemente; macOS behält die Glas-Vibrancy-Leiste. Neue Gruppe „KI“ mit eigenen Seiten (Berechtigungen, Agenten, Tools, Erweiterungen, Gedächtnis, Kanban); Beschreibungen stehen jetzt direkt unter den Zeilen.",
       "Neues Kanban-Board (standardmäßig deaktiviert; aktivieren unter Einstellungen → Kanban): Karten starten Agentensitzungen mit Worker-Tools, einem Pause-Schalter und Sitzungsgrenzen; [kanban]-Sitzungen sind standardmäßig in der Seitenleiste ausgeblendet.",
       "Speicher-Härtung: Zusammenfassung und Recall-Texte werden neutralisiert und bereinigt, bevor sie den Prompt erreichen; ein neues Benutzerprofil (Einstellungen → Speicher) wird in jedem Projekt eingebettet (max. 1 KB); mit `/learn <Text>` wird eine neue Skill erstellt.",
       "Chat erhält einen Aktions-Zusammenfassungs-Chip pro Konversationszug, Vorlagen für den Scheduler-Editor und ein Scheduler-Gesundheits-Badge, das nur bei Blockierung erscheint.",

@@ -5,7 +5,7 @@ export const frEntries: ChangelogEntry[] = [
     "version": "0.18.0",
     "date": "2026-10-02",
     "highlights": [
-      "Les Réglages ont été repensés selon la mise en page de Raven : rangées plates avec séparateurs, un rail fixe de 224 px avec la navigation Raven et des contrôles mis à jour ; macOS conserve le rail en verre avec vibrance.",
+      "Les Réglages ont été repensés selon la mise en page de Raven : rangées plates avec séparateurs, un rail fixe de 224 px avec la navigation Raven et des contrôles mis à jour ; macOS conserve le rail en verre avec vibrance. Nouveau groupe « IA » avec ses propres pages (permissions, agents, outils, extensions, mémoire, Kanban) ; les descriptions s'affichent désormais sous chaque rangée.",
       "Nouveau tableau Kanban (désactivé par défaut ; activez-le dans Réglages → Kanban) : les cartes démarrent des sessions d'agent avec les outils worker, un interrupteur pause et des limites par session ; les sessions [kanban] sont masquées par défaut dans la barre latérale.",
       "Renforcement mémoire : le résumé mémoire et tous les textes de rappel sont neutralisés et expurgés avant d'atteindre le prompt ; un nouveau profil utilisateur (Réglages → Mémoire) est injecté dans chaque projet (limite 1 Ko) ; utilisez `/learn <texte>` pour créer un nouveau skill.",
       "Le chat gagne un chip de résumé d'actions par tour, des modèles dans l'éditeur de tâches planifiées et un badge de santé du planificateur qui n'apparaît qu'en cas de blocage.",
