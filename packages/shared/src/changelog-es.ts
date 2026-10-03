@@ -2,11 +2,20 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const esEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.1",
+    "date": "2026-10-03",
+    "highlights": [
+      "Se corrige una fuga de procesos: al cambiar proveedor, backend de memoria, modo de aprobación, ajuste de omp o extensión, ahora se detiene el proceso de agente anterior en lugar de dejarlo (con sus ayudantes) en ejecución tras cerrar la app.",
+    ],
+  },
+
+  {
     "version": "0.18.0",
     "date": "2026-10-02",
     "highlights": [
       "Ajustes rediseñados según el diseño de Raven: filas planas con separadores, un rail fijo de 224 px con la navegación de Raven y controles actualizados; macOS conserva el rail de vidrio con vibración. Nuevo grupo «IA» con páginas propias (permisos, agentes, herramientas, extensiones, memoria, Kanban); las descripciones ahora aparecen bajo cada fila.",
-      "Nuevo tablero Kanban (desactivado por defecto; actívalo en Ajustes → Kanban): las tarjetas inician sesiones de agente con herramientas de trabajador, interruptor de pausa y límites por sesión; las sesiones [kanban] se ocultan en la barra lateral por defecto.",
+      "Nuevo tablero Kanban (desactivado por defecto; actívalo en Ajustes → Kanban) con el diseño de Hermes Agent: subtítulos de columna y botones +, chips en las tarjetas (id, prioridad, proyecto, progreso de subtarjetas, comentarios, vínculos, antigüedad), búsqueda y filtros por proyecto, selección múltiple con acciones en lote y un panel de tarjeta para editar, gestionar dependencias, comentar y revisar eventos e historial de ejecuciones. Las tarjetas inician sesiones de agente con herramientas de trabajador, interruptor de pausa y límites por sesión; las sesiones [kanban] se ocultan en la barra lateral por defecto.",
+      "Las tarjetas Kanban ahora se ejecutan en paralelo, cada una en su propio proceso de agente iniciado en la carpeta de la tarjeta (Ajustes → Kanban → Máx. en curso fija cuántas a la vez); el proceso se libera cuando la tarjeta termina.",
       "Refuerzo de memoria: el resumen de memoria y todos los textos de recuperación son neutralizados y redactados antes de llegar al prompt; un nuevo perfil de usuario (Ajustes → Memoria) se inyecta en cada proyecto (límite de 1 KB); usa `/learn <texto>` para crear un nuevo skill.",
       "El chat gana un chip de resumen de acciones por turno, plantillas en el editor de tareas programadas y un indicador de salud del planificador que aparece solo cuando se detiene.",
       "La lista de tareas en el chat es editable con reversión en caso de error; la pestaña /worktree añade acciones de agregar/borrar/podar (forzar para árboles con cambios); se elimina la llamada de puente del árbol de sesión sin uso.",

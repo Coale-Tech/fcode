@@ -2,11 +2,20 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const frEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.1",
+    "date": "2026-10-03",
+    "highlights": [
+      "Correction d'une fuite de processus : modifier un fournisseur, le backend mémoire, le mode d'approbation, un réglage omp ou une extension arrête désormais le processus d'agent précédent au lieu de le laisser (avec ses assistants) tourner après la fermeture de l'app.",
+    ],
+  },
+
+  {
     "version": "0.18.0",
     "date": "2026-10-02",
     "highlights": [
       "Les Réglages ont été repensés selon la mise en page de Raven : rangées plates avec séparateurs, un rail fixe de 224 px avec la navigation Raven et des contrôles mis à jour ; macOS conserve le rail en verre avec vibrance. Nouveau groupe « IA » avec ses propres pages (permissions, agents, outils, extensions, mémoire, Kanban) ; les descriptions s'affichent désormais sous chaque rangée.",
-      "Nouveau tableau Kanban (désactivé par défaut ; activez-le dans Réglages → Kanban) : les cartes démarrent des sessions d'agent avec les outils worker, un interrupteur pause et des limites par session ; les sessions [kanban] sont masquées par défaut dans la barre latérale.",
+      "Nouveau tableau Kanban (désactivé par défaut ; activez-le dans Réglages → Kanban) avec la mise en page de Hermes Agent : sous-titres de colonne et boutons +, pastilles sur les cartes (id, priorité, projet, progression des sous-cartes, commentaires, liens, ancienneté), recherche et filtres par projet, sélection multiple avec actions groupées et un panneau de carte pour modifier, gérer les dépendances, commenter et consulter événements et historique d'exécutions. Les cartes démarrent des sessions d'agent avec les outils worker, un interrupteur pause et des limites par session ; les sessions [kanban] sont masquées par défaut dans la barre latérale.",
+      "Les cartes Kanban s'exécutent désormais en parallèle, chacune dans son propre processus d'agent lancé dans le dossier de la carte (Réglages → Kanban → Max en cours fixe le nombre simultané) ; le processus est libéré quand la carte se termine.",
       "Renforcement mémoire : le résumé mémoire et tous les textes de rappel sont neutralisés et expurgés avant d'atteindre le prompt ; un nouveau profil utilisateur (Réglages → Mémoire) est injecté dans chaque projet (limite 1 Ko) ; utilisez `/learn <texte>` pour créer un nouveau skill.",
       "Le chat gagne un chip de résumé d'actions par tour, des modèles dans l'éditeur de tâches planifiées et un badge de santé du planificateur qui n'apparaît qu'en cas de blocage.",
       "La liste des tâches dans le chat est modifiable avec retour en arrière en cas d'erreur ; l'onglet /worktree ajoute des actions d'ajout/suppression/élagage (forcer pour les arbres modifiés) ; l'appel au pont d'arbre de session inutilisé est supprimé.",

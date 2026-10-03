@@ -2952,27 +2952,126 @@ sklm: {
   },
   "kanban": {
     "title": "Kanban",
-    "empty": "Aún no hay tarjetas. Crea una para empezar.",
     "newCard": "Nueva tarjeta",
     "addCard": "Agregar tarjeta",
     "columns": {
       "triage": "Triaje",
       "todo": "Por hacer",
       "ready": "Listo",
-      "running": "En ejecución",
+      "running": "En progreso",
       "blocked": "Bloqueado",
       "done": "Hecho"
     },
+    "columnHelp": {
+      "triage": "Ideas en bruto — especificación pendiente",
+      "todo": "Esperando dependencias",
+      "ready": "Dependencias cumplidas — esperando al despachador",
+      "running": "Asignado a un worker — en ejecución",
+      "blocked": "Worker esperando entrada del usuario",
+      "done": "Completado"
+    },
+    "column": {
+      "add": "Crear tarjeta en {{column}}",
+      "count": "{{count}} tarjetas en esta columna",
+      "empty": "— sin tarjetas —",
+      "selectAll": "Seleccionar todo en {{column}}"
+    },
+    "filter": {
+      "search": "Buscar",
+      "searchPlaceholder": "Filtrar tarjetas…",
+      "project": "Proyecto",
+      "allProjects": "Todos los proyectos",
+      "showArchived": "Mostrar archivados",
+      "clear": "Borrar filtros"
+    },
+    "toolbar": {
+      "nudge": "Impulsar despachador",
+      "nudgeHint": "Despertar al despachador para que tome tarjetas listas ahora en lugar de esperar el próximo ciclo",
+      "refresh": "Actualizar"
+    },
+    "bulk": {
+      "label": "Acciones masivas",
+      "selected": "{{count}} seleccionadas",
+      "setPriority": "Establecer prioridad",
+      "priorityPlaceholder": "pri",
+      "selectAllVisible": "Seleccionar todas las visibles",
+      "clear": "Limpiar"
+    },
+    "action": {
+      "toTriage": "→ Triaje",
+      "toTodo": "→ Por hacer",
+      "toReady": "→ Listo",
+      "block": "Bloquear",
+      "unblock": "Desbloquear",
+      "complete": "Completar"
+    },
+    "form": {
+      "title": "Título",
+      "body": "Descripción",
+      "priority": "Prioridad",
+      "parent": "Padre",
+      "noParent": "— ninguno —",
+      "project": "Carpeta del proyecto"
+    },
     "card": {
-      "comment": "Agregar comentario…",
       "archive": "Archivar",
       "unarchive": "Desarchivar",
-      "moveTo": "Mover a…",
-      "showRuns": "Ver ejecuciones",
-      "nudge": "Impulsar",
       "needsApproval": "Requiere aprobación",
-      "blocked": "Bloqueado",
-      "gaveUp": "Abandonado"
+      "gaveUp": "Abandonado",
+      "archived": "Archivado",
+      "select": "Seleccionar tarjeta {{id}}",
+      "priority": "Prioridad {{count}}. Las tarjetas de mayor prioridad se toman primero.",
+      "progress": "{{done}} de {{total}} tarjetas secundarias completadas",
+      "comments": "{{count}} comentarios",
+      "links": "{{parents}} padres, {{children}} hijos. Los hijos esperan hasta que el padre esté listo.",
+      "byUser": "por ti",
+      "byAgent": "por agente"
+    },
+    "drawer": {
+      "close": "Cerrar (Esc)",
+      "status": "Estado",
+      "project": "Proyecto",
+      "priority": "Prioridad",
+      "model": "Modelo",
+      "createdBy": "Creado por",
+      "created": "Creado",
+      "started": "Iniciado",
+      "completed": "Completado",
+      "blockReason": "Motivo de bloqueo",
+      "description": "Descripción",
+      "edit": "Editar",
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "noDescription": "— sin descripción —",
+      "dependencies": "Dependencias",
+      "parents": "Padres",
+      "children": "Hijos",
+      "none": "ninguno",
+      "addParent": "— agregar padre —",
+      "addChild": "— agregar hijo —",
+      "addParentBtn": "+ Padre",
+      "addChildBtn": "+ Hijo",
+      "removeLink": "Eliminar enlace",
+      "result": "Resultado",
+      "comments": "Comentarios ({{count}})",
+      "noComments": "— sin comentarios —",
+      "events": "Eventos ({{count}})",
+      "worker": "Sesión de worker",
+      "openWorker": "Abrir sesión de worker",
+      "noWorker": "— sin sesión de worker aún —",
+      "runs": "Historial de ejecuciones ({{count}})",
+      "earlier": "+{{count}} anteriores",
+      "fewer": "Mostrar menos",
+      "commentPlaceholder": "Agregar comentario… (Enter para enviar)",
+      "commentSubmit": "Comentar"
+    },
+    "run": {
+      "running": "En ejecución",
+      "done": "Hecho",
+      "crashed": "Fallido",
+      "timed_out": "Tiempo agotado",
+      "reclaimed": "Reclamado",
+      "gave_up": "Abandonado"
     },
     "dispatcher": {
       "pause": "Pausar despachador",
@@ -2982,6 +3081,7 @@ sklm: {
     "settings": {
       "title": "Configuración de Kanban",
       "enabled": "Activar tablero Kanban",
+      "maxInProgress": "Máx. en progreso",
       "maxRuntimeSeconds": "Tiempo máx. de ejecución (segundos)",
       "maxAgentCardsPerSession": "Máx. tarjetas de agente por sesión",
       "maxDailySpawns": "Máx. inicios diarios"

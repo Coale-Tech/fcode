@@ -2940,7 +2940,6 @@ sklm: {
   },
   "kanban": {
     "title": "看板",
-    "empty": "尚無卡片，建立一張開始吧。",
     "newCard": "新增卡片",
     "addCard": "加入卡片",
     "columns": {
@@ -2951,16 +2950,116 @@ sklm: {
       "blocked": "阻塞",
       "done": "完成"
     },
+    "columnHelp": {
+      "triage": "原始想法 — 規格尚待撰寫",
+      "todo": "等待相依項目",
+      "ready": "相依已滿足 — 等待調度器",
+      "running": "已被工作者認領 — 處理中",
+      "blocked": "工作者請求人工介入",
+      "done": "已完成"
+    },
+    "column": {
+      "add": "在 {{column}} 建立卡片",
+      "count": "此欄有 {{count}} 張卡片",
+      "empty": "— 目前無卡片 —",
+      "selectAll": "全選 {{column}}"
+    },
+    "filter": {
+      "search": "搜尋",
+      "searchPlaceholder": "篩選卡片…",
+      "project": "專案",
+      "allProjects": "所有專案",
+      "showArchived": "顯示已封存",
+      "clear": "清除篩選"
+    },
+    "toolbar": {
+      "nudge": "催促調度器",
+      "nudgeHint": "立即喚醒調度器認領就緒卡片，而無需等待下一個週期",
+      "refresh": "重新整理"
+    },
+    "bulk": {
+      "label": "批次操作",
+      "selected": "已選 {{count}} 個",
+      "setPriority": "設定優先順序",
+      "priorityPlaceholder": "優先順序",
+      "selectAllVisible": "全選可見項目",
+      "clear": "清除"
+    },
+    "action": {
+      "toTriage": "→ 分類",
+      "toTodo": "→ 待辦",
+      "toReady": "→ 就緒",
+      "block": "阻塞",
+      "unblock": "取消阻塞",
+      "complete": "完成"
+    },
+    "form": {
+      "title": "標題",
+      "body": "描述",
+      "priority": "優先順序",
+      "parent": "父層",
+      "noParent": "— 無 —",
+      "project": "專案資料夾"
+    },
     "card": {
-      "comment": "新增評論…",
       "archive": "封存",
       "unarchive": "取消封存",
-      "moveTo": "移至…",
-      "showRuns": "查看執行記錄",
-      "nudge": "提醒",
       "needsApproval": "需要核准",
-      "blocked": "已阻塞",
-      "gaveUp": "已放棄"
+      "gaveUp": "已放棄",
+      "archived": "已封存",
+      "select": "選取卡片 {{id}}",
+      "priority": "優先順序 {{count}}，優先順序越高越先被認領。",
+      "progress": "{{total}} 個子卡片已完成 {{done}} 個",
+      "comments": "{{count}} 則評論",
+      "links": "{{parents}} 個父層，{{children}} 個子層。子卡片需等待父卡片完成。",
+      "byUser": "由您",
+      "byAgent": "由代理"
+    },
+    "drawer": {
+      "close": "關閉 (Esc)",
+      "status": "狀態",
+      "project": "專案",
+      "priority": "優先順序",
+      "model": "模型",
+      "createdBy": "建立者",
+      "created": "建立時間",
+      "started": "開始時間",
+      "completed": "完成時間",
+      "blockReason": "阻塞原因",
+      "description": "描述",
+      "edit": "編輯",
+      "save": "儲存",
+      "cancel": "取消",
+      "noDescription": "— 尚無描述 —",
+      "dependencies": "相依項目",
+      "parents": "父層",
+      "children": "子層",
+      "none": "無",
+      "addParent": "— 新增父層 —",
+      "addChild": "— 新增子層 —",
+      "addParentBtn": "+ 父層",
+      "addChildBtn": "+ 子層",
+      "removeLink": "移除連結",
+      "result": "結果",
+      "comments": "評論 ({{count}})",
+      "noComments": "— 尚無評論 —",
+      "events": "事件 ({{count}})",
+      "worker": "工作者階段",
+      "openWorker": "開啟工作者階段",
+      "noWorker": "— 尚無工作者階段 —",
+      "runs": "執行記錄 ({{count}})",
+      "earlier": "+{{count}} 筆更早",
+      "fewer": "收合",
+      "commentPlaceholder": "新增評論… (Enter 提交)",
+      "commentSubmit": "評論"
+    },
+    "run": {
+      "running": "執行中",
+      "done": "已完成",
+      "crashed": "當機",
+      "timed_out": "逾時",
+      "reclaimed": "已回收",
+      "gave_up": "已放棄"
     },
     "dispatcher": {
       "pause": "暫停調度器",
@@ -2970,6 +3069,7 @@ sklm: {
     "settings": {
       "title": "看板設定",
       "enabled": "啟用看板",
+      "maxInProgress": "最大進行中數量",
       "maxRuntimeSeconds": "最大執行時長（秒）",
       "maxAgentCardsPerSession": "每會話最大代理卡片數",
       "maxDailySpawns": "每日最大啟動次數"

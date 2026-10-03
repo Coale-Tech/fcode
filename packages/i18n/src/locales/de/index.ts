@@ -2952,27 +2952,126 @@ sklm: {
   },
   "kanban": {
     "title": "Kanban",
-    "empty": "Noch keine Karten. Erstellen Sie eine, um zu beginnen.",
     "newCard": "Neue Karte",
     "addCard": "Karte hinzufügen",
     "columns": {
       "triage": "Triage",
       "todo": "Aufgaben",
       "ready": "Bereit",
-      "running": "Läuft",
+      "running": "In Bearbeitung",
       "blocked": "Blockiert",
       "done": "Erledigt"
     },
+    "columnHelp": {
+      "triage": "Rohe Ideen — Spezifikation noch zu schreiben",
+      "todo": "Wartet auf Abhängigkeiten",
+      "ready": "Abhängigkeiten erfüllt — wartet auf den Dispatcher",
+      "running": "Von einem Worker übernommen — in Bearbeitung",
+      "blocked": "Worker wartet auf Eingabe",
+      "done": "Abgeschlossen"
+    },
+    "column": {
+      "add": "Karte in {{column}} erstellen",
+      "count": "{{count}} Karten in dieser Spalte",
+      "empty": "— keine Karten —",
+      "selectAll": "Alle in {{column}} auswählen"
+    },
+    "filter": {
+      "search": "Suche",
+      "searchPlaceholder": "Karten filtern…",
+      "project": "Projekt",
+      "allProjects": "Alle Projekte",
+      "showArchived": "Archivierte anzeigen",
+      "clear": "Filter zurücksetzen"
+    },
+    "toolbar": {
+      "nudge": "Dispatcher anstoßen",
+      "nudgeHint": "Dispatcher wecken, um sofort verfügbare Karten zu übernehmen statt auf den nächsten Takt zu warten",
+      "refresh": "Aktualisieren"
+    },
+    "bulk": {
+      "label": "Massenaktionen",
+      "selected": "{{count}} ausgewählt",
+      "setPriority": "Priorität setzen",
+      "priorityPlaceholder": "Prio",
+      "selectAllVisible": "Alle sichtbaren auswählen",
+      "clear": "Auswahl aufheben"
+    },
+    "action": {
+      "toTriage": "→ Triage",
+      "toTodo": "→ Aufgaben",
+      "toReady": "→ Bereit",
+      "block": "Blockieren",
+      "unblock": "Freigeben",
+      "complete": "Abschließen"
+    },
+    "form": {
+      "title": "Titel",
+      "body": "Beschreibung",
+      "priority": "Priorität",
+      "parent": "Übergeordnet",
+      "noParent": "— kein übergeordnetes —",
+      "project": "Projektordner"
+    },
     "card": {
-      "comment": "Kommentar hinzufügen…",
       "archive": "Archivieren",
       "unarchive": "Dearchivieren",
-      "moveTo": "Verschieben nach…",
-      "showRuns": "Läufe anzeigen",
-      "nudge": "Anstoßen",
       "needsApproval": "Genehmigung erforderlich",
-      "blocked": "Blockiert",
-      "gaveUp": "Aufgegeben"
+      "gaveUp": "Aufgegeben",
+      "archived": "Archiviert",
+      "select": "Karte {{id}} auswählen",
+      "priority": "Priorität {{count}}. Karten mit höherer Priorität werden zuerst übernommen.",
+      "progress": "{{done}} von {{total}} Unterkarten erledigt",
+      "comments": "{{count}} Kommentare",
+      "links": "{{parents}} übergeordnete, {{children}} untergeordnete. Untergeordnete warten, bis die übergeordnete Karte erledigt ist.",
+      "byUser": "von Ihnen",
+      "byAgent": "von Agent"
+    },
+    "drawer": {
+      "close": "Schließen (Esc)",
+      "status": "Status",
+      "project": "Projekt",
+      "priority": "Priorität",
+      "model": "Modell",
+      "createdBy": "Erstellt von",
+      "created": "Erstellt",
+      "started": "Gestartet",
+      "completed": "Abgeschlossen",
+      "blockReason": "Blockierungsgrund",
+      "description": "Beschreibung",
+      "edit": "Bearbeiten",
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "noDescription": "— keine Beschreibung —",
+      "dependencies": "Abhängigkeiten",
+      "parents": "Übergeordnete",
+      "children": "Untergeordnete",
+      "none": "keine",
+      "addParent": "— übergeordnete hinzufügen —",
+      "addChild": "— untergeordnete hinzufügen —",
+      "addParentBtn": "+ Übergeordnet",
+      "addChildBtn": "+ Untergeordnet",
+      "removeLink": "Verknüpfung entfernen",
+      "result": "Ergebnis",
+      "comments": "Kommentare ({{count}})",
+      "noComments": "— keine Kommentare —",
+      "events": "Ereignisse ({{count}})",
+      "worker": "Worker-Sitzung",
+      "openWorker": "Worker-Sitzung öffnen",
+      "noWorker": "— noch keine Worker-Sitzung —",
+      "runs": "Ausführungsverlauf ({{count}})",
+      "earlier": "+{{count}} frühere",
+      "fewer": "Weniger anzeigen",
+      "commentPlaceholder": "Kommentar hinzufügen… (Enter zum Senden)",
+      "commentSubmit": "Kommentieren"
+    },
+    "run": {
+      "running": "Läuft",
+      "done": "Erledigt",
+      "crashed": "Abgestürzt",
+      "timed_out": "Zeitüberschreitung",
+      "reclaimed": "Zurückgeholt",
+      "gave_up": "Aufgegeben"
     },
     "dispatcher": {
       "pause": "Dispatcher pausieren",
@@ -2982,6 +3081,7 @@ sklm: {
     "settings": {
       "title": "Kanban-Einstellungen",
       "enabled": "Kanban-Board aktivieren",
+      "maxInProgress": "Max. in Bearbeitung",
       "maxRuntimeSeconds": "Max. Laufzeit (Sekunden)",
       "maxAgentCardsPerSession": "Max. Agentenkarten pro Sitzung",
       "maxDailySpawns": "Max. tägliche Starts"

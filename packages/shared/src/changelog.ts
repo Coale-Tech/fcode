@@ -30,11 +30,20 @@ export type ChangelogEntry = {
 
 const enEntries: ChangelogEntry[] = [
   {
+    version: "0.18.1",
+    date: "2026-10-03",
+    highlights: [
+      "Fixed a process leak: changing a provider, memory backend, approval mode, omp setting or extension now stops the previous agent process instead of leaving it (and its helpers) running after you quit.",
+    ],
+  },
+
+  {
     version: "0.18.0",
     date: "2026-10-02",
     highlights: [
       "Settings redesigned to match Raven's layout: flat rows with separators, a 224 px fixed navigation rail with Raven nav motion, and updated controls; macOS keeps the glass vibrancy rail. The AI settings are a rail group with their own pages (Permissions & defaults, Agents & tasks, Tools, Extensions, Memory, Kanban), and descriptions now sit inline under each row.",
-      "New Kanban board (off by default; enable in Settings → Kanban): cards start agent sessions with worker tools, a pause switch, and per-session caps; [kanban] sessions are hidden in the sidebar by default.",
+      "New Kanban board (off by default; enable in Settings → Kanban), laid out like Hermes Agent: column subtitles and + buttons, card chips (id, priority, project, child progress, comments, links, age), search and project filters, multi-select with bulk actions, and a card drawer to edit a card, manage dependencies, comment, and review events and run history. Cards start agent sessions with worker tools, a pause switch, and per-session caps; [kanban] sessions are hidden in the sidebar by default.",
+      "Kanban cards now run concurrently, each in its own agent process started in the card's folder (Settings → Kanban → Max in progress sets how many at once); the process is released when the card finishes.",
       "Memory hardening: the memory summary and all recall text are neutralized and redacted before reaching the prompt; a new user profile (Settings → Memory) is injected in every project (1 KB cap); `/learn <text>` slash command authors a new skill.",
       "Chat gains a per-turn action summary chip, schedule templates in the scheduler editor, and a scheduler health badge that appears only when the scheduler stalls.",
       "Editable to-do list in chat with revert on error; /worktree tab with add/clear/prune (force required for dirty trees); unused session-tree bridge call removed.",
@@ -888,11 +897,20 @@ const enEntries: ChangelogEntry[] = [
 
 const zhCNEntries: ChangelogEntry[] = [
   {
+    version: "0.18.1",
+    date: "2026-10-03",
+    highlights: [
+      "修复进程泄漏：更改提供商、记忆后端、审批模式、omp 设置或扩展时，现在会停止之前的智能体进程，不再在退出应用后遗留该进程及其辅助进程。",
+    ],
+  },
+
+  {
     version: "0.18.0",
     date: "2026-10-02",
     highlights: [
       "设置页面已按照 Raven 布局重新设计：带分隔线的平行行、224 px 固定导航栏配 Raven 导航动画及更新的控件；macOS 保留玻璃毛玻璃效果导航栏。 AI 设置现为导航分组，拆分为独立页面（权限与默认值、代理与任务、工具、扩展、记忆、看板），说明文字显示在每行下方。",
-      "新增看板（默认关闭；在设置 → 看板中启用）：卡片启动代理会话，显示工作线程工具、暂停开关和每会话上限；[kanban] 会话默认在侧边栏中隐藏。",
+      "新增看板（默认关闭；在设置 → 看板中启用），布局与 Hermes Agent 一致：列副标题和 + 按钮、卡片标签（编号、优先级、项目、子任务进度、评论、关联、时长）、搜索与项目筛选、多选批量操作，以及用于编辑卡片、管理依赖、评论并查看事件与运行历史的卡片抽屉。卡片启动代理会话，显示工作线程工具、暂停开关和每会话上限；[kanban] 会话默认在侧边栏中隐藏。",
+      "看板卡片现在可并发运行，每张运行中的卡片拥有各自在卡片文件夹中启动的代理进程（设置 → 看板 → 最大进行中数量 决定同时数量）；卡片结束后进程即被释放。",
       "内存安全加固：内存摘要及所有召回文本在到达提示词前均经过中和与脱敏；新增用户档案（设置 → 内存），注入每个项目（上限 1 KB）；使用 `/learn <文本>` 编写新技能。",
       "聊天新增每轮操作摘要芯片、调度编辑器中的任务模板，以及仅在调度器停滞时显示的调度器健康徽章。",
       "聊天中的待办事项列表可编辑，错误时可回滚；/worktree 标签页新增添加/清除/精简操作（脏工作树需强制）；已删除未使用的会话树桥调用。",
@@ -1745,11 +1763,20 @@ const zhCNEntries: ChangelogEntry[] = [
 
 const zhTWEntries: ChangelogEntry[] = [
   {
+    version: "0.18.1",
+    date: "2026-10-03",
+    highlights: [
+      "修正程序洩漏：變更供應商、記憶後端、核准模式、omp 設定或擴充功能時，現在會停止先前的代理程式程序，不再於結束應用程式後遺留該程序及其輔助程序。",
+    ],
+  },
+
+  {
     version: "0.18.0",
     date: "2026-10-02",
     highlights: [
       "設定頁面已按照 Raven 佈局重新設計：帶分隔線的平行行、224 px 固定導航欄配 Raven 導航動畫及更新的控件；macOS 保留玻璃毛玻璃效果導航欄。 AI 設定現為導覽分組，拆分為獨立頁面（權限與預設值、代理與任務、工具、擴充、記憶、看板），說明文字顯示在每行下方。",
-      "新增看板（預設關閉；在設定 → 看板中啟用）：卡片啟動代理工作階段，顯示工作者工具、暫停開關和每工作階段上限；[kanban] 工作階段預設在側邊欄中隱藏。",
+      "新增看板（預設關閉；在設定 → 看板中啟用），版面與 Hermes Agent 一致：欄位副標題與 + 按鈕、卡片標籤（編號、優先順序、專案、子任務進度、留言、關聯、時長）、搜尋與專案篩選、多選批次操作，以及用於編輯卡片、管理相依性、留言並檢視事件與執行歷史的卡片抽屜。卡片啟動代理工作階段，顯示工作者工具、暫停開關和每工作階段上限；[kanban] 工作階段預設在側邊欄中隱藏。",
+      "看板卡片現在可並行執行，每張執行中的卡片擁有各自在卡片資料夾中啟動的代理程序（設定 → 看板 → 最大進行中數量 決定同時數量）；卡片結束後程序即被釋放。",
       "記憶體安全強化：記憶體摘要及所有回憶文字在到達提示詞前均經過中和與脫敏；新增使用者個人檔案（設定 → 記憶體），注入每個專案（上限 1 KB）；使用 `/learn <文字>` 撰寫新技能。",
       "聊天新增每輪操作摘要晶片、排程編輯器中的任務範本，以及僅在排程器停滯時顯示的排程器健康徽章。",
       "聊天中的待辦事項清單可編輯，錯誤時可回復；/worktree 標籤頁新增新增/清除/修剪操作（髒工作樹需強制）；已移除未使用的工作階段樹橋呼叫。",

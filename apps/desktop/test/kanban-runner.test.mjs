@@ -226,3 +226,47 @@ test("paused=true prevents claim on explicit tick", async () => {
   await state.runner.tick();
   assert.equal(state.sessions.length, 0, "no session claimed while paused");
 });
+
+// ── Worker process release ────────────────────────────────────────────────────
+
+test("a worker is released once its card completes, not before", async () => {
+  const released = [];
+  const state = makeRunner({ releaseWorker: (id) => released.push(id) });
+  addReadyTask(state);
+  await state.runner.tick();
+  const sessionId = state.sessions[0].id;
+  const task = state.board.tasks.find((t) => t.status === "running");
+
+  state.runner.onTurnEnd(sessionId); // still running: nudged, process stays
+  await new Promise((r) => setImmediate(r));
+  assert.deepEqual(released, []);
+
+  state.board = completeTask(state.board, task.id, task.currentRunId, "done");
+  state.runner.onTurnEnd(sessionId);
+  assert.deepEqual(released, [sessionId]);
+});
+
+test("a worker is released when the runner gives up on its card", async () => {
+  const released = [];
+  const state = makeRunner({ releaseWorker: (id) => released.push(id) });
+  addReadyTask(state);
+  await state.runner.tick();
+  const sessionId = state.sessions[0].id;
+  for (let i = 0; i < 3; i++) {
+    state.runner.onTurnEnd(sessionId);
+    await new Promise((r) => setImmediate(r));
+  }
+  assert.deepEqual(released, [sessionId]);
+});
+
+test("a worker is released when its prompt fails", async () => {
+  const released = [];
+  const state = makeRunner({
+    releaseWorker: (id) => released.push(id),
+    prompt: async () => { throw new Error("boom"); },
+    report: () => {},
+  });
+  addReadyTask(state);
+  await state.runner.tick();
+  assert.deepEqual(released, [state.sessions[0].id]);
+});

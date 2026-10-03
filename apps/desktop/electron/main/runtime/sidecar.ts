@@ -1,4 +1,5 @@
 import { writeFileSync } from "node:fs";
+import { setTimeout as delay } from "node:timers/promises";
 import { MEMORY_TOKEN_SECRET_REF, memoryEnv, readMemoryConfig } from "../memory-config";
 import { approvalModeEnv, readApprovalMode } from "../approval-mode-config";
 import { ompSettingsEnv, readOmpSettings } from "../omp-settings-config";
@@ -20,7 +21,7 @@ import { relaxedNetworkPolicyEnabled } from "../endpoint-policy";
 import { OAUTH_AUTH_KIND, type VendorOAuth } from "../oauth";
 import type { AgentExtensionBridge } from "../agent-extensions";
 import { withAgentCanvasOwnership, type BrowserHost } from "../browser-host";
-import type { InflightCheckpointer } from "@pi-desktop/host-runtime";
+import type { InflightCheckpointer, ProcessExitHandler } from "@pi-desktop/host-runtime";
 import { summarizeToolResult, type Logger } from "../logger";
 import type { ModelsDevCatalog } from "../models-dev-catalog";
 import type { PluginRuntime } from "../plugin-runtime";
@@ -122,6 +123,8 @@ export function createSidecarRuntime({
   emitAgentEvent: (envelope: AgentEventEnvelope) => void;
   wireSidecar: (sidecar: AgentSidecar) => void;
   startSidecar: () => Promise<void>;
+  startWorkerSidecar: (sessionId: string, cwd: string) => Promise<void>;
+  releaseWorkerSidecar: (sessionId: string) => Promise<void>;
 } {
 
 // ── Fcode provider injection ─────────────────────────────────────────────────
@@ -255,7 +258,9 @@ async function buildFcodeProvidersConfig(
       );
     }
   };
-  const wireSidecar = (s: AgentSidecar) => {
+  /** Runs a sidecar's loss cleanup for a process we retire ourselves (dispose drops its exit handlers). */
+  const sidecarLoss = new WeakMap<AgentSidecar, ProcessExitHandler>();
+  const wireSidecar = (s: AgentSidecar, workerSessionId?: string) => {
 
   s.onNotification((method, params) => {
     if (method === "native.agent.event") {
@@ -350,13 +355,32 @@ async function buildFcodeProvidersConfig(
     // permissions.request reaches the renderer once, via wireHost; the
     // sidecar no longer relays it (agent-sidecar.setHost filters it out).
   });
-  s.onExit(({ code, signal, intentional, stderrTail }) => {
-    if (runtimeState.sidecar !== s) return;
+  const onLoss = (
+    { code, signal, intentional, stderrTail }: Parameters<ProcessExitHandler>[0],
+    replaced = false,
+  ) => {
+    const owned = workerSessionId
+      ? runtimeState.workerSidecars.get(workerSessionId) === s
+      : runtimeState.sidecar === s;
+    if (!owned) return;
     logger.flushChild("agent");
-    const interruptedToolCalls = [...activeToolCalls.values()];
-    activeToolCalls.clear();
-    runtimeState.sidecar = null;
-    steeringReplies.clear();
+    // A worker process owns one session; the shared one owns all the others.
+    const ownsSession = (sessionId: string) =>
+      workerSessionId
+        ? sessionId === workerSessionId
+        : !runtimeState.workerSidecars.has(sessionId);
+    const interruptedToolCalls = [...activeToolCalls.values()].filter((tool) =>
+      ownsSession(tool.sessionId),
+    );
+    for (const tool of interruptedToolCalls) {
+      activeToolCalls.delete(toolKey(tool.sessionId, tool.toolCallId));
+    }
+    if (workerSessionId) {
+      runtimeState.workerSidecars.delete(workerSessionId);
+    } else {
+      runtimeState.sidecar = null;
+      steeringReplies.clear();
+    }
     if (intentional || isQuitting()) return;
     for (const tool of interruptedToolCalls) {
       logger.app("tool", "error", "tool execution interrupted", {
@@ -369,7 +393,7 @@ async function buildFcodeProvidersConfig(
           toolName: tool.toolName,
           outcome: "interrupted",
           durationMs: Math.max(0, Date.now() - tool.startedAt),
-          reason: "agent_sidecar_exit",
+          reason: replaced ? "agent_sidecar_replaced" : "agent_sidecar_exit",
           exitCode: code,
           signal,
         },
@@ -379,6 +403,7 @@ async function buildFcodeProvidersConfig(
     // sidecar starts. This prevents an old renderer response from waking a
     // dead runtime and records the durable turn as interrupted.
     for (const sessionId of [...activeTurns.keys()]) {
+      if (!ownsSession(sessionId)) continue;
       // Snapshot the turn this cleanup belongs to before the awaits below: the
       // session can start a new turn while this one is still unwinding, and a
       // late cleanup must not settle or abort that newer turn.
@@ -393,25 +418,37 @@ async function buildFcodeProvidersConfig(
         });
       });
     }
-    for (const [executionId] of claimedExecutionSessions) {
-      void finishApprovedExecution(
-        executionId,
-        "interrupted",
-        "PLAN_EXECUTION_INTERRUPTED",
-      );
+    if (!workerSessionId) {
+      for (const [executionId] of claimedExecutionSessions) {
+        void finishApprovedExecution(
+          executionId,
+          "interrupted",
+          "PLAN_EXECUTION_INTERRUPTED",
+        );
+      }
     }
+    // A replaced sidecar was retired on purpose: its turns are settled above,
+    // but there is nothing to report and the caller launches the successor.
+    if (replaced) return;
     logger.app("runtime", "error", "agent sidecar exited unexpectedly", {
-      data: { exitCode: code, signal, stderrTail },
+      data: { exitCode: code, signal, stderrTail, ...(workerSessionId ? { workerSessionId } : {}) },
     });
+    // A worker is not restarted here: the Kanban runner re-prompts its card
+    // (nudge), and the prompt starts a fresh worker process.
+    if (workerSessionId) return;
     sendToRenderer(IPC.event.hostStatus, {
       ok: false,
       component: "sidecar",
       restarting: true,
     });
     void superviseRestart("sidecar");
-  });
   };
-  const startSidecar = async (): Promise<void> => {
+  sidecarLoss.set(s, (info) => onLoss(info, true));
+  s.onExit((info) => onLoss(info));
+  };
+  const launchSidecar = async (
+    opts: { workerSessionId?: string; cwd?: string } = {},
+  ): Promise<AgentSidecar> => {
   // Inject Fcode providers into omp via --models-config. Secrets go into env
   // vars (FCODE_PROVIDER_<ID>_KEY); the config file only stores var names so
   // keys are never written to disk.
@@ -447,13 +484,14 @@ async function buildFcodeProvidersConfig(
   providerEnv = { ...providerEnv, ...approvalModeEnv(readApprovalMode(dataDir)) };
   // omp settings groups (task / eval / browser / collab).
   providerEnv = { ...providerEnv, ...ompSettingsEnv(readOmpSettings(dataDir)) };
-  // Set omp's working directory to the active bench so the bash RPC and session
-  // path context use the correct project root instead of the user home directory.
-  const benchPath = benchSupervisor.activeBenchPath;
+  // Set omp's working directory: a worker's is its card's folder; the shared
+  // sidecar's is the active bench, so the bash RPC and session path context use
+  // the correct project root instead of the user home directory.
+  const benchPath = opts.cwd ?? benchSupervisor.activeBenchPath;
   if (benchPath) providerEnv = { ...providerEnv, FCODE_BENCH_PATH: benchPath };
 
   const s = new AgentSidecar((text) => logger.child("agent", text), providerEnv);
-  wireSidecar(s);
+  wireSidecar(s, opts.workerSessionId);
   s.setProjectInstructionResolver(async ({ projectPath, path }) => {
     // The root is registered by Electron main from the host-owned session
     // record. The sidecar can provide a target path, never an arbitrary root.
@@ -1107,7 +1145,8 @@ async function buildFcodeProvidersConfig(
       return { ok: true, content: "Task unblocked." };
     });
   }
-  runtimeState.sidecar = s;
+  if (opts.workerSessionId) runtimeState.workerSidecars.set(opts.workerSessionId, s);
+  else runtimeState.sidecar = s;
   if (runtimeState.host) s.setHost(runtimeState.host);
   await s.call("sidecar.configure", {
     hostBinary: runtimeState.host?.binaryPath,
@@ -1115,6 +1154,37 @@ async function buildFcodeProvidersConfig(
     networkProxy: currentNetworkProxy(),
   });
   logger.app("runtime", "info", "agent sidecar configured");
+  return s;
   };
-  return { emitAgentEvent, wireSidecar, startSidecar };
+  const startSidecar = async (): Promise<void> => {
+    // A settings-driven restart (provider, memory, approval mode, …) arrives with
+    // the old process alive: kill it, or it outlives the app as an orphan omp.
+    // dispose() drops the exit handlers, so run the crash cleanup by hand to
+    // settle its open turns. After a crash runtimeState.sidecar is already null.
+    const previous = runtimeState.sidecar;
+    if (previous) {
+      await previous.dispose();
+      sidecarLoss.get(previous)?.({ code: null, signal: null, intentional: false });
+    }
+    await launchSidecar();
+  };
+  const startWorkerSidecar = async (sessionId: string, cwd: string): Promise<void> => {
+    if (runtimeState.workerSidecars.has(sessionId)) return;
+    await launchSidecar({ workerSessionId: sessionId, cwd });
+  };
+  const releaseWorkerSidecar = async (sessionId: string): Promise<void> => {
+    const s = runtimeState.workerSidecars.get(sessionId);
+    if (!s) return;
+    // A turn still open here (a timed-out worker) would never finish once its
+    // process is gone: abort it first so the session is not left busy.
+    if (activeTurns.has(sessionId)) {
+      await Promise.race([
+        s.call("agent.abort", { sessionId }).catch(() => undefined),
+        delay(800),
+      ]);
+    }
+    runtimeState.workerSidecars.delete(sessionId);
+    await s.dispose();
+  };
+  return { emitAgentEvent, wireSidecar, startSidecar, startWorkerSidecar, releaseWorkerSidecar };
 }

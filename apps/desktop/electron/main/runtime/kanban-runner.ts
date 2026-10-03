@@ -33,6 +33,8 @@ export type KanbanRunnerDeps = {
   report: (error: unknown) => void;
   /** Called after every board mutation; diff prev vs next for notifications. */
   onBoardMutation?: (prev: KanbanBoard, next: KanbanBoard) => void;
+  /** Called once a worker's card is closed, so its omp process can stop. */
+  releaseWorker?: (sessionId: string) => void;
 };
 
 /** Nudge prompt sent to a worker that ended without kanban_complete/kanban_block. */
@@ -64,6 +66,14 @@ export function createKanbanRunner(deps: KanbanRunnerDeps): KanbanRunner {
   // taskId → startedAt (wall clock for timeout enforcement)
   const runStartedAt = new Map<string, number>();
 
+  // A card leaving "running" frees its worker slot and its omp process. Without
+  // this a closed worker kept counting against `maxInProgress` for good.
+  const freeSlot = (sessionId: string, taskId: string) => {
+    sessionToCardId.delete(sessionId);
+    runStartedAt.delete(taskId);
+    deps.releaseWorker?.(sessionId);
+  };
+
   let paused = false;
   let polling = false;
   let stopped = false;
@@ -93,8 +103,7 @@ export function createKanbanRunner(deps: KanbanRunnerDeps): KanbanRunner {
         const run = board.runs.find((r) => r.id === t.currentRunId);
         if (run) {
           board = timeoutTask(board, taskId, run.id);
-          sessionToCardId.delete(sessionId);
-          runStartedAt.delete(taskId);
+          freeSlot(sessionId, taskId);
         }
       }
     }
@@ -197,8 +206,7 @@ export function createKanbanRunner(deps: KanbanRunnerDeps): KanbanRunner {
           // session created but prompt failed — crash immediately
           const run = board.runs.find((r) => r.id === runId);
           if (run) board = crashTask(board, t.id, runId, "PROMPT_FAILED");
-          sessionToCardId.delete(sessionId);
-          runStartedAt.delete(t.id);
+          freeSlot(sessionId, t.id);
         }
       }
 
@@ -218,7 +226,11 @@ export function createKanbanRunner(deps: KanbanRunnerDeps): KanbanRunner {
 
     let board = getBoard();
     const t = board.tasks.find((t) => t.id === taskId);
-    if (!t || t.status !== "running") return;
+    if (!t || t.status !== "running") {
+      // Closed by kanban_complete / kanban_block (or moved): the worker is done.
+      freeSlot(sessionId, taskId);
+      return;
+    }
 
     // If still running after turn end → nudge
     const { board: next, nudgeCount } = incrementNudge(board, taskId);
@@ -227,8 +239,7 @@ export function createKanbanRunner(deps: KanbanRunnerDeps): KanbanRunner {
     if (nudgeCount > 2) {
       // Block as gave_up
       board = blockTask(board, taskId, "gave_up after 2 nudges", "gave_up");
-      sessionToCardId.delete(sessionId);
-      runStartedAt.delete(taskId);
+      freeSlot(sessionId, taskId);
       updateBoard(board);
       return;
     }

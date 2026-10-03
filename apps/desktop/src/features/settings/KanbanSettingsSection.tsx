@@ -40,6 +40,13 @@ export function KanbanSettingsSection() {
             onChange={() => void save({ enabled: !settings.enabled })}
           />
         </SettingsRow>
+        <SettingsRow title={t("kanban.settings.maxInProgress")}>
+          <Input
+            type="number" min={1} max={10}
+            defaultValue={settings.maxInProgress}
+            onBlur={(e) => void save({ maxInProgress: Number(e.target.value) })}
+          />
+        </SettingsRow>
         <SettingsRow title={t("kanban.settings.maxRuntimeSeconds")}>
           <Input
             type="number" min={60} max={86400}

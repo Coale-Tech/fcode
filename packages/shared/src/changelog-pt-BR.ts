@@ -2,11 +2,20 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const ptBREntries: ChangelogEntry[] = [
   {
+    "version": "0.18.1",
+    "date": "2026-10-03",
+    "highlights": [
+      "Corrigido um vazamento de processos: alterar provedor, backend de memória, modo de aprovação, configuração do omp ou extensão agora encerra o processo de agente anterior em vez de deixá-lo (e seus auxiliares) em execução após fechar o app.",
+    ],
+  },
+
+  {
     "version": "0.18.0",
     "date": "2026-10-02",
     "highlights": [
       "Configurações redesenhadas para corresponder ao layout do Raven: linhas planas com separadores, trilho fixo de 224 px com a navegação do Raven e controles atualizados; macOS mantém o trilho de vidro com vibrância. Novo grupo «IA» com páginas próprias (permissões, agentes, ferramentas, extensões, memória, Kanban); as descrições agora aparecem sob cada linha.",
-      "Novo quadro Kanban (desativado por padrão; ative em Configurações → Kanban): cartões iniciam sessões de agente com ferramentas de worker, botão de pausa e limites por sessão; sessões [kanban] ficam ocultas na barra lateral por padrão.",
+      "Novo quadro Kanban (desativado por padrão; ative em Configurações → Kanban) com o layout do Hermes Agent: subtítulos de coluna e botões +, chips nos cartões (id, prioridade, projeto, progresso dos cartões filhos, comentários, vínculos, idade), busca e filtros por projeto, seleção múltipla com ações em lote e uma gaveta do cartão para editar, gerenciar dependências, comentar e revisar eventos e histórico de execuções. Cartões iniciam sessões de agente com ferramentas de worker, botão de pausa e limites por sessão; sessões [kanban] ficam ocultas na barra lateral por padrão.",
+      "Os cartões Kanban agora rodam em paralelo, cada um em seu próprio processo de agente iniciado na pasta do cartão (Configurações → Kanban → Máx. em andamento define quantos ao mesmo tempo); o processo é liberado quando o cartão termina.",
       "Proteção de memória: o resumo de memória e todos os textos de recuperação são neutralizados e redigidos antes de chegar ao prompt; um novo perfil de usuário (Configurações → Memória) é injetado em cada projeto (limite de 1 KB); use `/learn <texto>` para criar um novo skill.",
       "O chat ganha um chip de resumo de ações por turno, modelos no editor de tarefas agendadas e um indicador de saúde do agendador que aparece apenas quando o agendador trava.",
       "A lista de tarefas no chat é editável com reversão em caso de erro; a aba /worktree adiciona ações de adicionar/limpar/podar (forçar para árvores sujas); a chamada de ponte de árvore de sessão não utilizada é removida.",

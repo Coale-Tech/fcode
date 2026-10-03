@@ -2952,7 +2952,6 @@ sklm: {
   },
   "kanban": {
     "title": "Kanban",
-    "empty": "Aucune carte pour l'instant. Créez-en une pour commencer.",
     "newCard": "Nouvelle carte",
     "addCard": "Ajouter une carte",
     "columns": {
@@ -2963,16 +2962,116 @@ sklm: {
       "blocked": "Bloqué",
       "done": "Terminé"
     },
+    "columnHelp": {
+      "triage": "Idées brutes — spécification à écrire",
+      "todo": "En attente de dépendances",
+      "ready": "Dépendances satisfaites — en attente du répartiteur",
+      "running": "Pris en charge par un worker — en cours",
+      "blocked": "Worker en attente d'une action humaine",
+      "done": "Terminé"
+    },
+    "column": {
+      "add": "Créer une carte dans {{column}}",
+      "count": "{{count}} cartes dans cette colonne",
+      "empty": "— aucune carte —",
+      "selectAll": "Tout sélectionner dans {{column}}"
+    },
+    "filter": {
+      "search": "Rechercher",
+      "searchPlaceholder": "Filtrer les cartes…",
+      "project": "Projet",
+      "allProjects": "Tous les projets",
+      "showArchived": "Afficher les archivés",
+      "clear": "Effacer les filtres"
+    },
+    "toolbar": {
+      "nudge": "Relancer le répartiteur",
+      "nudgeHint": "Réveiller le répartiteur pour qu'il prenne les cartes prêtes maintenant plutôt que d'attendre le prochain cycle",
+      "refresh": "Actualiser"
+    },
+    "bulk": {
+      "label": "Actions groupées",
+      "selected": "{{count}} sélectionnées",
+      "setPriority": "Définir la priorité",
+      "priorityPlaceholder": "pri",
+      "selectAllVisible": "Tout sélectionner",
+      "clear": "Effacer"
+    },
+    "action": {
+      "toTriage": "→ Triage",
+      "toTodo": "→ À faire",
+      "toReady": "→ Prêt",
+      "block": "Bloquer",
+      "unblock": "Débloquer",
+      "complete": "Terminer"
+    },
+    "form": {
+      "title": "Titre",
+      "body": "Description",
+      "priority": "Priorité",
+      "parent": "Parent",
+      "noParent": "— aucun —",
+      "project": "Dossier du projet"
+    },
     "card": {
-      "comment": "Ajouter un commentaire…",
       "archive": "Archiver",
       "unarchive": "Désarchiver",
-      "moveTo": "Déplacer vers…",
-      "showRuns": "Voir les exécutions",
-      "nudge": "Relancer",
       "needsApproval": "Approbation requise",
-      "blocked": "Bloqué",
-      "gaveUp": "Abandonné"
+      "gaveUp": "Abandonné",
+      "archived": "Archivé",
+      "select": "Sélectionner la carte {{id}}",
+      "priority": "Priorité {{count}}. Les cartes à priorité plus élevée sont prises en charge en premier.",
+      "progress": "{{done}} sur {{total}} cartes enfants terminées",
+      "comments": "{{count}} commentaires",
+      "links": "{{parents}} parents, {{children}} enfants. Les enfants attendent que leur parent soit terminé.",
+      "byUser": "par vous",
+      "byAgent": "par l'agent"
+    },
+    "drawer": {
+      "close": "Fermer (Esc)",
+      "status": "Statut",
+      "project": "Projet",
+      "priority": "Priorité",
+      "model": "Modèle",
+      "createdBy": "Créé par",
+      "created": "Créé",
+      "started": "Démarré",
+      "completed": "Terminé",
+      "blockReason": "Raison du blocage",
+      "description": "Description",
+      "edit": "Modifier",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "noDescription": "— aucune description —",
+      "dependencies": "Dépendances",
+      "parents": "Parents",
+      "children": "Enfants",
+      "none": "aucun",
+      "addParent": "— ajouter un parent —",
+      "addChild": "— ajouter un enfant —",
+      "addParentBtn": "+ Parent",
+      "addChildBtn": "+ Enfant",
+      "removeLink": "Supprimer le lien",
+      "result": "Résultat",
+      "comments": "Commentaires ({{count}})",
+      "noComments": "— aucun commentaire —",
+      "events": "Événements ({{count}})",
+      "worker": "Session worker",
+      "openWorker": "Ouvrir la session worker",
+      "noWorker": "— aucune session worker pour l'instant —",
+      "runs": "Historique des exécutions ({{count}})",
+      "earlier": "+{{count}} précédentes",
+      "fewer": "Afficher moins",
+      "commentPlaceholder": "Ajouter un commentaire… (Entrée pour envoyer)",
+      "commentSubmit": "Commenter"
+    },
+    "run": {
+      "running": "En cours",
+      "done": "Terminé",
+      "crashed": "Planté",
+      "timed_out": "Délai dépassé",
+      "reclaimed": "Récupéré",
+      "gave_up": "Abandonné"
     },
     "dispatcher": {
       "pause": "Suspendre le répartiteur",
@@ -2982,6 +3081,7 @@ sklm: {
     "settings": {
       "title": "Paramètres Kanban",
       "enabled": "Activer le tableau Kanban",
+      "maxInProgress": "Max. en cours",
       "maxRuntimeSeconds": "Durée max. d'exécution (secondes)",
       "maxAgentCardsPerSession": "Max. cartes d'agent par session",
       "maxDailySpawns": "Max. lancements quotidiens"

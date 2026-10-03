@@ -56,3 +56,27 @@ test("create then move returns the updated board", async () => {
   const { runs } = await k.call(IPC.invoke.kanbanListRuns, { taskId });
   assert.deepEqual(runs, []);
 });
+
+test("update edits title/body/priority; blank title and negative priority are guarded", async () => {
+  const k = setup();
+  const { taskId } = await k.call(IPC.invoke.kanbanCreate, { title: "old", body: "", projectPath: "/p", priority: 3 });
+  const get = async () => (await k.call(IPC.invoke.kanbanList)).board.tasks.find((t) => t.id === taskId);
+  assert.equal((await get()).priority, 3);
+  await k.call(IPC.invoke.kanbanUpdate, { taskId, title: "new", body: "desc", priority: -5 });
+  const t = await get();
+  assert.deepEqual([t.title, t.body, t.priority], ["new", "desc", 0]);
+  await assert.rejects(k.call(IPC.invoke.kanbanUpdate, { taskId, title: "   " }), /title required/);
+  assert.equal((await get()).title, "new");
+});
+
+test("unlink removes the edge; completing a parent promotes its todo child", async () => {
+  const k = setup();
+  const { taskId: parent } = await k.call(IPC.invoke.kanbanCreate, { title: "p", body: "", projectPath: "/p" });
+  const { taskId: child } = await k.call(IPC.invoke.kanbanCreate, { title: "c", body: "", projectPath: "/p", parentIds: [parent] });
+  const status = async (id) => (await k.call(IPC.invoke.kanbanList)).board.tasks.find((t) => t.id === id).status;
+  assert.equal(await status(child), "todo");
+  await k.call(IPC.invoke.kanbanMove, { taskId: parent, status: "done" });
+  assert.equal(await status(child), "ready");
+  const { board } = await k.call(IPC.invoke.kanbanUnlink, { parentId: parent, childId: child });
+  assert.deepEqual(board.links, []);
+});

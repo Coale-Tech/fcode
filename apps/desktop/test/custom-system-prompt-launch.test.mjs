@@ -28,7 +28,7 @@ const provider = {
 
 function launchRuntime() {
   return createSessionLaunchRuntime({
-    runtimeState: { host: {
+    runtimeState: { workerSidecars: new Map(), host: {
       isAvailable: () => true,
       call: async (method) => {
         if (method === "commandShells.list") return { configuredId: "bash", effective: shell, fallback: false, choices: [shell] };

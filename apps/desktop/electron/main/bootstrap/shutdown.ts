@@ -33,7 +33,8 @@ export type ShutdownDependencies = {
   hasSingleInstanceLock: boolean;
   state: ShutdownState;
   getHost: () => HostProcess | null;
-  getSidecar: () => AgentSidecar | null;
+  getSidecar: (sessionId?: string) => AgentSidecar | null;
+  getAllSidecars: () => AgentSidecar[];
   getMcpControl: () => McpControlServer | null;
   activeTurns: Map<string, string>;
   persistenceOutbox: PersistenceOutbox;
@@ -56,6 +57,7 @@ export function registerShutdownHandlers({
   state,
   getHost,
   getSidecar,
+  getAllSidecars,
   getMcpControl,
   activeTurns,
   persistenceOutbox,
@@ -165,7 +167,7 @@ export function registerShutdownHandlers({
       browserPane.dispose();
       pluginViews.dispose();
       inflightCheckpointer.dispose();
-      const sidecarShutdown = getSidecar()?.dispose();
+      const sidecarShutdown = Promise.allSettled(getAllSidecars().map((s) => s.dispose()));
 
       try {
         await hostShutdown;
@@ -192,7 +194,7 @@ export function registerShutdownHandlers({
 type TurnSettlementDependencies = {
   activeTurns: Map<string, string>;
   getHost: () => HostProcess | null;
-  getSidecar: () => AgentSidecar | null;
+  getSidecar: (sessionId?: string) => AgentSidecar | null;
   inflightCheckpointer: InflightCheckpointer;
   persistenceOutbox: PersistenceOutbox;
   logger: Pick<Logger, "app">;
@@ -215,17 +217,14 @@ async function settleRunningTurnsForQuit({
     await persistenceOutbox.flush(getHost);
     return;
   }
-  const sidecar = getSidecar();
-  if (sidecar) {
-    await Promise.allSettled(
-      sessions.map((sessionId) =>
-        Promise.race([
-          sidecar.call("agent.abort", { sessionId }),
-          new Promise((resolve) => setTimeout(resolve, 800)),
-        ]),
-      ),
-    );
-  }
+  await Promise.allSettled(
+    sessions.map((sessionId) =>
+      Promise.race([
+        getSidecar(sessionId)?.call("agent.abort", { sessionId }),
+        new Promise((resolve) => setTimeout(resolve, 800)),
+      ]),
+    ),
+  );
   // The abort surfaces as message_end + error/agent_end, which finishTurn
   // turns into a settled turn and an outbox append. Wait for that, bounded.
   while (Date.now() < deadline) {

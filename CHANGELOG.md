@@ -10,6 +10,18 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 
+## [0.18.1] — 2026-10-03
+
+### Compatibility
+
+| Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
+|-------|-----------------|-----------|-----------------|--------|
+| 0.18.1 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
+
+### Fixed
+
+- Changing a provider, memory backend, approval mode, omp setting or extension no longer leaves the previous agent process (and its MCP helpers) running as an orphan after the app quits; the old process is stopped and its open turn is settled as interrupted.
+
 ## [0.18.0] — 2026-10-02
 
 ### Compatibility
@@ -20,7 +32,8 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ### Added
 
-- **Kanban board** (disabled by default; enable in Settings → Kanban): a top-level Kanban page where cards become normal agent sessions. Each card shows its worker tools, a pause switch, and per-session caps; `[kanban]` worker sessions are hidden in the sidebar by default and can be revealed with a toggle.
+- **Kanban board** (disabled by default; enable in Settings → Kanban), laid out like Hermes Agent: column subtitles and `+` buttons, card chips (id, priority, project, child progress, comment and link counts, age), search / project / show-archived filters, multi-select (click, shift-click range, ctrl/cmd-click) with a bulk bar (to-do, ready, block, unblock, complete, archive, set priority), a Nudge-dispatcher button, and a card drawer to edit title / description / priority, add or remove parent and child links, comment, and review result, events, worker session and run history. Cards become normal agent sessions with worker tools, a pause switch, and per-session caps; `[kanban]` worker sessions are hidden in the sidebar by default and can be revealed with a toggle. Completing a parent promotes its to-do children to Ready.
+- **Kanban cards run concurrently, each in its own folder**: every running card gets its own agent process started in the card's folder, so several cards work at once (Settings → Kanban → Max in progress sets how many) and a worker cannot start outside its card's folder. The process is released when the card completes, blocks, times out or fails, freeing its slot.
 - **Per-turn action summary chip** in the message footer: verb counts for each assistant turn ("edited 3 files · ran 2 commands · read 5") computed from tool events.
 - **Schedule templates**: a static catalog of six presets (daily digest, weekly repo review, morning standup, dependency check, test sweep, inbox triage) at the top of the Scheduled task editor; selecting one prefills title, prompt, cadence and schedule for editing.
 - **Scheduler health badge**: shown on the Scheduled page only when the scheduler is stale (> 90 s without a tick) or in error — invisible when healthy.
@@ -129,6 +142,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Security: YAML injection via `agentModelOverrides` key fixed (agent key now `JSON.stringify`-quoted in overlay); `validateOmpSettings` rejects keys with non-identifier chars (newlines, colons, spaces); `file:`/`git+file:`/`svn+`/`hg+` URI schemes blocked in `validateInstallSpec`; collab panel only renders `<a>` for http(s) URLs; Hindsight supervisor strips raw process output from IPC state message; port validated 1024–65535 in `hindsightLocalStart`; `benchRun` validates each `args` element against an identifier-safe regex.
 - `inflight-checkpoint.test.mjs` flaky timing fixed (freeze `Date.now()` via `t.mock.timers`); `plugin-mcp.test.mjs` `connectTimeoutMs` 20 → 300.
 
+[0.18.1]: https://github.com/Coale-Tech/fcode/releases/tag/v0.18.1
 [0.18.0]: https://github.com/Coale-Tech/fcode/releases/tag/v0.18.0
 [0.17.1]: https://github.com/Coale-Tech/fcode/releases/tag/v0.17.1
 [0.17.0]: https://github.com/Coale-Tech/fcode/releases/tag/v0.17.0

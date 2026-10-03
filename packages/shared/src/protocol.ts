@@ -2,7 +2,7 @@ export const PROTOCOL_VERSION = 11 as const;
 export const SCHEMA_VERSION = 16 as const;
 export const APP_ID = "com.coaletech.fcode";
 export const APP_NAME = "Fcode";
-export const APP_VERSION = "0.18.0";
+export const APP_VERSION = "0.18.1";
 
 export const APP_MENU_COMMANDS = [
   "newTask",
@@ -493,6 +493,10 @@ export const IPC = {
     kanbanMove: "pi-desktop/kanban/move",
     /** Kanban board: add a parent→child link. */
     kanbanLink: "pi-desktop/kanban/link",
+    /** Kanban board: remove a parent→child link. */
+    kanbanUnlink: "pi-desktop/kanban/unlink",
+    /** Kanban board: edit a task's title, description or priority. */
+    kanbanUpdate: "pi-desktop/kanban/update",
     /** Kanban board: add a comment to a task. */
     kanbanComment: "pi-desktop/kanban/comment",
     /** Kanban board: archive or unarchive a task. */
