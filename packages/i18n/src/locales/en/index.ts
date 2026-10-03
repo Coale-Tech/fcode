@@ -3124,6 +3124,7 @@ importConfirm: "Imported extensions run inside the agent process with the same a
     settings: {
       title: "Kanban settings",
       enabled: "Enable Kanban board",
+      maxInProgress: "Max in progress",
       maxRuntimeSeconds: "Max runtime (seconds)",
       maxAgentCardsPerSession: "Max agent cards per session",
       maxDailySpawns: "Max daily spawns",

@@ -52,7 +52,8 @@ export type RegisterIpcDependencies = {
   getHost: () => HostProcess | null;
   traySessions: ReturnType<typeof createTraySessions>;
   taskbarUnreadBadge: ReturnType<typeof createTaskbarUnreadBadge>;
-  getSidecar: () => AgentSidecar | null;
+  getSidecar: (sessionId?: string) => AgentSidecar | null;
+  getAllSidecars?: () => AgentSidecar[];
   getAgentHostBridge: () => AgentHostBridge | null;
   /**
    * Resolves the remote backend router once it exists. Renderer IPC calls whose
@@ -91,6 +92,7 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     getMainWindow,
     getHost,
     getSidecar,
+    getAllSidecars,
     getAgentHostBridge,
     getBackendRouter,
     getNotificationViewingSessionId,
@@ -429,6 +431,7 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     registrar,
     getHost,
     getSidecar,
+    getAllSidecars,
     getAgentHostBridge,
     cancelSessionTools: (sessionId: string, reason?: string) => {
       plugins.cancelSessionTools(sessionId, reason);

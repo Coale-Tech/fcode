@@ -39,7 +39,7 @@ import type { HostProcess } from "../host-process";
 import type { Logger } from "../logger";
 import type { PluginRuntime } from "../plugin-runtime";
 import type { UserMcpRuntime } from "../user-mcp";
-import type { RuntimeState } from "./context";
+import { sidecarForSession, type RuntimeState } from "./context";
 import type { RuntimeProvider } from "./provider-catalog";
 
 const ErrorCodes = {
@@ -642,7 +642,7 @@ export function createSessionLaunchRuntime({
     // the session's own provider plus any row a pinned subagent resolved to. The
     // sidecar may then ask main for request auth, but only for a row named here,
     // and the set is rewritten on every launch.
-    runtimeState.sidecar?.setVendorAuthBindings(
+    sidecarForSession(runtimeState, sessionId)?.setVendorAuthBindings(
       sessionId,
       [
         provider.id,

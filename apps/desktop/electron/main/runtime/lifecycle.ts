@@ -17,7 +17,7 @@ import {
 } from "../host-boot-diagnostics";
 import type { Logger } from "../logger";
 import type { PluginRuntime } from "../plugin-runtime";
-import type { RuntimeState } from "./context";
+import { allSidecars, type RuntimeState } from "./context";
 import { syncPluginDisplayLocale } from "../plugin-display-locale";
 import { RuntimeSupervisor } from "@pi-desktop/host-runtime";
 
@@ -109,9 +109,8 @@ export function createRuntimeLifecycle({
     start: {
       host: async () => {
         await startHost();
-        const sidecar = runtimeState.sidecar;
         const host = runtimeState.host;
-        if (sidecar && host) sidecar.setHost(host);
+        if (host) for (const sidecar of allSidecars(runtimeState)) sidecar.setHost(host);
         // A fresh host process starts in English, so the app language and
         // the language-dependent rows it draws have to be restored here:
         // nothing else re-applies settings after a crash.

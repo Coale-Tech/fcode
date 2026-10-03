@@ -3081,6 +3081,7 @@ sklm: {
     "settings": {
       "title": "Configuración de Kanban",
       "enabled": "Activar tablero Kanban",
+      "maxInProgress": "Máx. en progreso",
       "maxRuntimeSeconds": "Tiempo máx. de ejecución (segundos)",
       "maxAgentCardsPerSession": "Máx. tarjetas de agente por sesión",
       "maxDailySpawns": "Máx. inicios diarios"

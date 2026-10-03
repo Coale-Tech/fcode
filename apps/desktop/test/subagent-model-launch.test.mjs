@@ -24,7 +24,7 @@ test("launch resolves definition-only pins without granting Task.model selection
   const providers = [provider];
   const shell = { id: "bash", label: "Bash", dialect: "posix", available: true, isDefault: true };
   const runtime = createSessionLaunchRuntime({
-    runtimeState: { host: {
+    runtimeState: { workerSidecars: new Map(), host: {
       isAvailable: () => true,
       call: async (method) => {
         if (method === "commandShells.list") return { configuredId: "bash", effective: shell, fallback: false, choices: [shell] };

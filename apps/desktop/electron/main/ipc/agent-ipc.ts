@@ -17,7 +17,10 @@ import { withPromptEnhancementTimeout } from "../prompt-enhancement-timeout";
 export type AgentIpcDependencies = {
   registrar: IpcRegistrar;
   getHost: () => HostProcess | null;
-  getSidecar: () => AgentSidecar | null;
+  /** The omp process serving `sessionId` (a Kanban worker's own); no id = the shared one. */
+  getSidecar: (sessionId?: string) => AgentSidecar | null;
+  /** Every live omp process; a permission request belongs to whichever raised it. */
+  getAllSidecars?: () => AgentSidecar[];
   getAgentHostBridge: () => AgentHostBridge | null;
   logger: Pick<Logger, "app">;
   vendorOAuth: VendorOAuth;
@@ -61,6 +64,7 @@ export function registerAgentIpc({
   registrar,
   getHost,
   getSidecar,
+  getAllSidecars,
   getAgentHostBridge,
   logger,
   vendorOAuth,
@@ -97,6 +101,8 @@ export function registerAgentIpc({
       return fn(...args);
     });
   };
+  const liveSidecars = (): AgentSidecar[] =>
+    getAllSidecars ? getAllSidecars() : sidecar ? [sidecar] : [];
   handle(IPC.invoke.promptEnhance, async (req: PromptEnhancementRequest) => {
     if (!host) throw new Error("backend unavailable");
     const draft = typeof req?.draft === "string" ? req.draft : "";
@@ -247,6 +253,7 @@ export function registerAgentIpc({
   });
 
   handle(IPC.invoke.agentSteer, async (req: AgentSteerRequest) => {
+    const sidecar = getSidecar(req?.sessionId);
     if (!host || !sidecar) throw new Error("backend unavailable");
     if (
       !req?.sessionId || typeof req.content !== "string" || !req.expectedTurnId ||
@@ -294,6 +301,7 @@ export function registerAgentIpc({
   });
 
   handle(IPC.invoke.agentPrompt, async (req: AgentPromptRequest) => {
+    const sidecar = getSidecar(req.sessionId);
     if (!sidecar) throw new Error("sidecar unavailable");
     if (req.sessionId.startsWith("native-pi:")) {
       if (req.sessionMessageId || req.truncateFromMessageId || req.truncateBefore !== undefined || req.attachments?.length) {
@@ -620,6 +628,7 @@ export function registerAgentIpc({
 
   handle(IPC.invoke.agentCompact, async (req: { sessionId: string }) => {
     rejectNativeAgentOperation(req.sessionId);
+    const sidecar = getSidecar(req.sessionId);
     if (!host || !sidecar) throw new Error("backend unavailable");
     if (activeTurns.has(req.sessionId)) {
       throw Object.assign(new Error("Session already has an active turn"), {
@@ -670,6 +679,7 @@ export function registerAgentIpc({
   });
 
   handle(IPC.invoke.agentAbort, async (req: { sessionId: string; turnId?: string }) => {
+    const sidecar = getSidecar(req.sessionId);
     if (!sidecar) throw new Error("sidecar unavailable");
     const releaseSessionOperation = req.turnId ? await acquireSessionOperation(req.sessionId) : undefined;
     try {
@@ -715,6 +725,7 @@ export function registerAgentIpc({
   });
 
   handle(IPC.invoke.agentStop, async (req: AgentStopRequest) => {
+    const sidecar = getSidecar(req.sessionId);
     if (!sidecar) throw new Error("sidecar unavailable");
     logger.app("session", "info", "prompt graceful stop requested", {
       sessionId: req.sessionId,
@@ -726,6 +737,7 @@ export function registerAgentIpc({
   });
 
   handle(IPC.invoke.agentGetStatus, async (sessionId: string) => {
+    const sidecar = getSidecar(sessionId);
     if (!sidecar) throw new Error("sidecar unavailable");
     return sidecar.call("agent.getStatus", { sessionId });
   });
@@ -790,9 +802,9 @@ export function registerAgentIpc({
       // settleApproval only updates Agent Host's own bookkeeping; it never
       // reaches the omp process. Tell the sidecar directly so the paused
       // tool call inside omp can proceed (or be denied).
-      if (sidecar) {
+      for (const target of liveSidecars()) {
         try {
-          await sidecar.call("tool_permission.resolve", {
+          await target.call("tool_permission.resolve", {
             requestId: resolution.requestId,
             decision: resolution.decision,
           });
@@ -806,12 +818,16 @@ export function registerAgentIpc({
     }
     // Desktop prompts bypass `startTurn`, so omp's own approvals carry no
     // origin; ask the sidecar first — host-core would answer NOT_FOUND.
-    const viaSidecar = await sidecar
-      ?.call<{ handled?: boolean }>("tool_permission.resolve", {
-        requestId: resolution.requestId,
-        decision: resolution.decision,
-      })
-      .catch(() => undefined);
+    let viaSidecar: { handled?: boolean } | undefined;
+    for (const target of liveSidecars()) {
+      viaSidecar = await target
+        .call<{ handled?: boolean }>("tool_permission.resolve", {
+          requestId: resolution.requestId,
+          decision: resolution.decision,
+        })
+        .catch(() => undefined);
+      if (viaSidecar?.handled) break;
+    }
     if (viaSidecar?.handled) {
       agentHostBridge?.settleApproval(resolution.requestId, decisionPatch);
       return { requestId: resolution.requestId, ...decisionPatch };
@@ -823,10 +839,11 @@ export function registerAgentIpc({
   });
 
   handle(IPC.invoke.askToolResolve, async (resolution: AskToolResolution) => {
-    if (!sidecar) throw new Error("sidecar unavailable");
     const sessionId = String(resolution?.sessionId ?? "").trim();
     const requestId = String(resolution?.requestId ?? "").trim();
     if (!sessionId || !requestId) throw new Error("asktool resolution identity required");
+    const sidecar = getSidecar(sessionId);
+    if (!sidecar) throw new Error("sidecar unavailable");
     return sidecar.call("asktool.resolve", {
       ...resolution,
       sessionId,

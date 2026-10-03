@@ -110,7 +110,7 @@ import {
   type WindowLifecycleState,
 } from "./bootstrap/window";
 import { registerApplicationActivation } from "./bootstrap/app-activation";
-import type { RuntimeState } from "./runtime/context";
+import { allSidecars, sidecarForSession, type RuntimeState } from "./runtime/context";
 import { createHostRuntime } from "./runtime/host";
 import { createSidecarRuntime } from "./runtime/sidecar";
 import { createEventPersistence } from "./runtime/event-persistence";
@@ -443,6 +443,7 @@ const runtimeState: RuntimeState = {
   set agentHostBridge(value) {
     agentHostBridge = value;
   },
+  workerSidecars: new Map(),
 };
 
 let applicationLifecycle: ReturnType<typeof createApplicationLifecycle> | null = null;
@@ -1093,7 +1094,7 @@ const eventPersistence = createEventPersistence({
 const { persistAgentEvent } = eventPersistence;
 
 // ── Kanban runner + notifications (see runtime/kanban-wiring.ts) ─────────────
-const { kanbanRunner, emitKanbanMutation, bindInvoke: bindKanbanInvoke } = createKanbanWiring({
+const { kanbanRunner, emitKanbanMutation, bindInvoke: bindKanbanInvoke, bindWorkers: bindKanbanWorkers } = createKanbanWiring({
   dataDir,
   getHost: () => host,
   sendToRenderer,
@@ -1141,6 +1142,10 @@ const sidecarRuntime = createSidecarRuntime({
 });
 emitAgentEvent = sidecarRuntime.emitAgentEvent;
 const { wireSidecar, startSidecar } = sidecarRuntime;
+bindKanbanWorkers({
+  start: sidecarRuntime.startWorkerSidecar,
+  release: sidecarRuntime.releaseWorkerSidecar,
+});
 
 const { wireHost, startHost } = createHostRuntime({
   runtimeState,
@@ -1194,7 +1199,8 @@ function registerIpc() {
     ipcMain,
     getMainWindow: () => mainWindow,
     getHost: () => host,
-    getSidecar: () => sidecar,
+    getSidecar: (sessionId?: string) => sidecarForSession(runtimeState, sessionId),
+    getAllSidecars: () => allSidecars(runtimeState),
     getAgentHostBridge: () => agentHostBridge,
     getBackendRouter: () => startupState.backendRouter,
     getNotificationViewingSessionId: () => notificationViewingSessionId,
@@ -1435,7 +1441,8 @@ registerShutdownHandlers({
   hasSingleInstanceLock,
   state: shutdownState,
   getHost: () => host,
-  getSidecar: () => sidecar,
+  getSidecar: (sessionId?: string) => sidecarForSession(runtimeState, sessionId),
+  getAllSidecars: () => allSidecars(runtimeState),
   getMcpControl: () => mcpControl,
   activeTurns,
   persistenceOutbox,

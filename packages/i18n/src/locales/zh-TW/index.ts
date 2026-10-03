@@ -3069,6 +3069,7 @@ sklm: {
     "settings": {
       "title": "看板設定",
       "enabled": "啟用看板",
+      "maxInProgress": "最大進行中數量",
       "maxRuntimeSeconds": "最大執行時長（秒）",
       "maxAgentCardsPerSession": "每會話最大代理卡片數",
       "maxDailySpawns": "每日最大啟動次數"

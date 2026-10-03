@@ -3081,6 +3081,7 @@ sklm: {
     "settings": {
       "title": "Kanban-Einstellungen",
       "enabled": "Kanban-Board aktivieren",
+      "maxInProgress": "Max. in Bearbeitung",
       "maxRuntimeSeconds": "Max. Laufzeit (Sekunden)",
       "maxAgentCardsPerSession": "Max. Agentenkarten pro Sitzung",
       "maxDailySpawns": "Max. tägliche Starts"

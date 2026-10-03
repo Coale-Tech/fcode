@@ -3110,6 +3110,7 @@ importConfirm: "İçe aktarılan uzantılar ajan sürecinde, ajanın kendi araç
     "settings": {
       "title": "Kanban ayarları",
       "enabled": "Kanban panosunu etkinleştir",
+      "maxInProgress": "Maks. süren görev",
       "maxRuntimeSeconds": "Maks. çalışma süresi (saniye)",
       "maxAgentCardsPerSession": "Oturum başına maks. ajan kartı",
       "maxDailySpawns": "Günlük maks. başlatma",
