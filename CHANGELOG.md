@@ -51,6 +51,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Frappe v16 benches now reach the Running state; Stop is honoured while a bench is still starting.
 - Quitting the app now stops the full bench process tree (honcho, gunicorn, redis-server).
 - Redis port conflicts are named in the supervisor error message.
+- Changing a provider, memory backend, approval mode, omp setting or extension no longer leaves the previous agent process (and its MCP helpers) running as an orphan after the app quits; the old process is stopped and its open turn is settled as interrupted.
 - Exact-name read-tier tool approvals now match correctly (the previous prefix-based match allowed over-broad auto-approvals).
 - Bench discovery now requires `site_config.json` to be present; `FCODE_BENCH_ROOTS` can extend the search roots.
 - The migrate confirmation dialog now has a focus trap.

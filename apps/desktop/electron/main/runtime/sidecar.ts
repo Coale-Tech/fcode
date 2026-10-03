@@ -21,7 +21,7 @@ import { relaxedNetworkPolicyEnabled } from "../endpoint-policy";
 import { OAUTH_AUTH_KIND, type VendorOAuth } from "../oauth";
 import type { AgentExtensionBridge } from "../agent-extensions";
 import { withAgentCanvasOwnership, type BrowserHost } from "../browser-host";
-import type { InflightCheckpointer } from "@pi-desktop/host-runtime";
+import type { InflightCheckpointer, ProcessExitHandler } from "@pi-desktop/host-runtime";
 import { summarizeToolResult, type Logger } from "../logger";
 import type { ModelsDevCatalog } from "../models-dev-catalog";
 import type { PluginRuntime } from "../plugin-runtime";
@@ -258,6 +258,8 @@ async function buildFcodeProvidersConfig(
       );
     }
   };
+  /** Runs a sidecar's loss cleanup for a process we retire ourselves (dispose drops its exit handlers). */
+  const sidecarLoss = new WeakMap<AgentSidecar, ProcessExitHandler>();
   const wireSidecar = (s: AgentSidecar, workerSessionId?: string) => {
 
   s.onNotification((method, params) => {
@@ -353,7 +355,10 @@ async function buildFcodeProvidersConfig(
     // permissions.request reaches the renderer once, via wireHost; the
     // sidecar no longer relays it (agent-sidecar.setHost filters it out).
   });
-  s.onExit(({ code, signal, intentional, stderrTail }) => {
+  const onLoss = (
+    { code, signal, intentional, stderrTail }: Parameters<ProcessExitHandler>[0],
+    replaced = false,
+  ) => {
     const owned = workerSessionId
       ? runtimeState.workerSidecars.get(workerSessionId) === s
       : runtimeState.sidecar === s;
@@ -388,7 +393,7 @@ async function buildFcodeProvidersConfig(
           toolName: tool.toolName,
           outcome: "interrupted",
           durationMs: Math.max(0, Date.now() - tool.startedAt),
-          reason: "agent_sidecar_exit",
+          reason: replaced ? "agent_sidecar_replaced" : "agent_sidecar_exit",
           exitCode: code,
           signal,
         },
@@ -422,6 +427,9 @@ async function buildFcodeProvidersConfig(
         );
       }
     }
+    // A replaced sidecar was retired on purpose: its turns are settled above,
+    // but there is nothing to report and the caller launches the successor.
+    if (replaced) return;
     logger.app("runtime", "error", "agent sidecar exited unexpectedly", {
       data: { exitCode: code, signal, stderrTail, ...(workerSessionId ? { workerSessionId } : {}) },
     });
@@ -434,7 +442,9 @@ async function buildFcodeProvidersConfig(
       restarting: true,
     });
     void superviseRestart("sidecar");
-  });
+  };
+  sidecarLoss.set(s, (info) => onLoss(info, true));
+  s.onExit((info) => onLoss(info));
   };
   const launchSidecar = async (
     opts: { workerSessionId?: string; cwd?: string } = {},
@@ -1147,6 +1157,15 @@ async function buildFcodeProvidersConfig(
   return s;
   };
   const startSidecar = async (): Promise<void> => {
+    // A settings-driven restart (provider, memory, approval mode, …) arrives with
+    // the old process alive: kill it, or it outlives the app as an orphan omp.
+    // dispose() drops the exit handlers, so run the crash cleanup by hand to
+    // settle its open turns. After a crash runtimeState.sidecar is already null.
+    const previous = runtimeState.sidecar;
+    if (previous) {
+      await previous.dispose();
+      sidecarLoss.get(previous)?.({ code: null, signal: null, intentional: false });
+    }
     await launchSidecar();
   };
   const startWorkerSidecar = async (sessionId: string, cwd: string): Promise<void> => {
