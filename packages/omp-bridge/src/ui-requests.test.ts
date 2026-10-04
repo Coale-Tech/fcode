@@ -218,6 +218,17 @@ describe("classifyToolRisk", () => {
     expect(classifyToolRisk("bash", "Command: file -C -m magic")).toBe("medium");
     expect(classifyToolRisk("bash", "Command: git diff HEAD~1")).toBe("low");
     expect(classifyToolRisk("bash", "Command: find . -delete")).toBe("medium");
+    expect(classifyToolRisk("bash", "Command: git status\nmake install")).toBe("medium");
+    expect(classifyToolRisk("bash", "Command: git status\nrm -rf build")).toBe("high");
+  });
+
+  it("badges a multi-line command from the approval prompt by every line", () => {
+    const result = mapExtensionUiRequest(
+      { id: "r12", method: "select", title: "Allow tool: bash\nCommand: git status\nmake install", options: ["Approve", "Deny"] },
+      "s1",
+      openTool,
+    );
+    expect(result).toMatchObject({ type: "tool_permission_request", risk: "medium" });
   });
 
   it("rates tools by name, defaulting to medium", () => {
