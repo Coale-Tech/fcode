@@ -2,6 +2,15 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const koEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.4",
+    "date": "2026-10-04",
+    "highlights": [
+      "FileBird가 이제 Fcode의 일부입니다. 사이드바의 FileBird 버튼을 누르면 SFTP 클라이언트가 전체 너비로 열리며, 로컬·원격 창, 전송, 저장된 연결, 원격 터미널을 제공합니다. 비밀 정보는 OS 키체인에 저장됩니다.",
+      "채팅 아래 통합 터미널: Ctrl+`를 누르거나 작업 공간 막대의 터미널을 클릭하세요. 셸은 세션의 작업 공간에서 탭으로 열리고, 페이지를 전환해도 계속 실행되며, Fcode를 종료하면 중지됩니다.",
+      "여러 줄 셸 명령의 권한 카드는 이제 첫 줄만이 아니라 모든 줄로 위험도를 평가합니다.",
+    ],
+  },
+  {
     "version": "0.18.3",
     "date": "2026-10-04",
     "highlights": [

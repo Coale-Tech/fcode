@@ -2,6 +2,15 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const trEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.4",
+    "date": "2026-10-04",
+    "highlights": [
+      "FileBird artık Fcode'un bir parçası: kenar çubuğundaki FileBird düğmesi SFTP istemcisini tam genişlikte açar; yerel ve uzak bölmeler, aktarımlar, kayıtlı bağlantılar ve uzak terminaller içerir. Gizli bilgiler işletim sisteminin anahtar zincirinde kalır.",
+      "Sohbetin altında tümleşik terminal: Ctrl+` tuşuna basın veya çalışma alanı çubuğundaki Terminal'e tıklayın. Kabuklar oturumun çalışma alanında sekmeler halinde açılır, sayfa değiştirdiğinizde çalışmaya devam eder ve Fcode kapanınca durur.",
+      "Çok satırlı kabuk komutlarının izin kartları artık riski yalnızca ilk satıra göre değil, her satıra göre değerlendirir.",
+    ],
+  },
+  {
     "version": "0.18.3",
     "date": "2026-10-04",
     "highlights": [

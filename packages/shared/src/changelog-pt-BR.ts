@@ -2,6 +2,15 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const ptBREntries: ChangelogEntry[] = [
   {
+    "version": "0.18.4",
+    "date": "2026-10-04",
+    "highlights": [
+      "O FileBird agora faz parte do Fcode: o botão FileBird na barra lateral abre o cliente SFTP em largura total, com painéis local e remoto, transferências, conexões salvas e terminais remotos. Os segredos ficam no chaveiro do sistema.",
+      "Terminal integrado abaixo do chat: pressione Ctrl+` ou clique em Terminal na barra do espaço de trabalho. Os shells abrem em abas no espaço de trabalho da sessão, continuam rodando quando você troca de página e são encerrados quando o Fcode fecha.",
+      "Os cartões de permissão de comandos de shell com várias linhas agora avaliam o risco de cada linha, não só da primeira.",
+    ],
+  },
+  {
     "version": "0.18.3",
     "date": "2026-10-04",
     "highlights": [

@@ -30,6 +30,15 @@ export type ChangelogEntry = {
 
 const enEntries: ChangelogEntry[] = [
   {
+    version: "0.18.4",
+    date: "2026-10-04",
+    highlights: [
+      "FileBird is now part of Fcode: the FileBird button in the sidebar opens the SFTP client full-width, with local and remote panes, transfers, saved connections and remote terminals. Secrets stay in your OS keychain.",
+      "Integrated terminal under chat: press Ctrl+` or click Terminal in the workspace bar. Shells open in tabs in the session's workspace, keep running while you switch pages, and stop when Fcode quits.",
+      "Permission cards for multi-line shell commands now rate risk by every line, not only the first.",
+    ],
+  },
+  {
     version: "0.18.3",
     date: "2026-10-04",
     highlights: [
@@ -903,6 +912,15 @@ const enEntries: ChangelogEntry[] = [
 
 const zhCNEntries: ChangelogEntry[] = [
   {
+    version: "0.18.4",
+    date: "2026-10-04",
+    highlights: [
+      "FileBird 现已成为 Fcode 的一部分：点击侧边栏的 FileBird 按钮，即可全宽打开 SFTP 客户端，包含本地和远程窗格、传输、已保存的连接和远程终端。密钥保存在系统钥匙串中。",
+      "聊天下方的集成终端：按 Ctrl+` 或点击工作区栏中的“终端”。Shell 以标签页形式在会话的工作区中打开，切换页面时继续运行，退出 Fcode 时停止。",
+      "多行 shell 命令的权限卡片现在按每一行评估风险，而不只看第一行。",
+    ],
+  },
+  {
     version: "0.18.3",
     date: "2026-10-04",
     highlights: [
@@ -1774,6 +1792,15 @@ const zhCNEntries: ChangelogEntry[] = [
 ];
 
 const zhTWEntries: ChangelogEntry[] = [
+  {
+    version: "0.18.4",
+    date: "2026-10-04",
+    highlights: [
+      "FileBird 現已成為 Fcode 的一部分：點擊側邊欄的 FileBird 按鈕，即可全寬開啟 SFTP 用戶端，包含本機與遠端窗格、傳輸、已儲存的連線和遠端終端機。密鑰保存在系統鑰匙圈中。",
+      "聊天下方的整合終端機：按 Ctrl+` 或點擊工作區列中的「終端機」。Shell 以分頁形式在工作階段的工作區中開啟，切換頁面時持續執行，結束 Fcode 時停止。",
+      "多行 shell 指令的權限卡片現在依每一行評估風險，而不只看第一行。",
+    ],
+  },
   {
     version: "0.18.3",
     date: "2026-10-04",
