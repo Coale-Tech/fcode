@@ -10,6 +10,27 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 
+## [0.18.3] — 2026-10-04
+
+### Compatibility
+
+| Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
+|-------|-----------------|-----------|-----------------|--------|
+| 0.18.3 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
+
+### Added
+
+- **Read-only shell commands run without a prompt** (Settings → Tools → Approvals, on by default): `git status`, `git log`, `git diff`, `git show`, `git branch`, `ls`, `pwd`, `cat`, `head`, `tail`, `wc`, `grep`, `which` and `stat`. omp still prompts for any command with shell control (`&&`, `|`, `;`, redirects, substitution), for `git … --output`, and for its critical patterns.
+- **Risk levels on permission cards**: cards that still prompt are labelled Low, Medium or High risk instead of always High. The label is advisory; approval rules are unchanged.
+- **Git bar above the composer**: a branch chip with the repository's branches, plus Pull, Push and Create PR. Each action sends a prompt into the current chat; fcode itself only lists branches.
+- **Scheduled insights and import/export**: the Runs tab shows runs, success rate and average duration; tasks export to and import from JSON. Imported tasks arrive paused, keep their schedule and project, and re-importing the same file adds nothing.
+- **Raven chat**: Settings → Raven takes a Frappe site URL; when enabled, a Raven button in the nav rail opens the site's Raven chat full-width in its own browser session, which the agent cannot reach. Sign in with your Frappe credentials; fcode stores none.
+
+### Changed
+
+- Settings files (approval mode, memory, omp settings, Kanban, Raven, plugins) are written atomically, so a crash mid-save no longer resets them to defaults.
+- Electron fuses are set: the app loads only from its ASAR, ignores Node inspect flags, and encrypts cookies at rest. The first launch signs you out of the work-panel browser once.
+
 ## [0.18.2] — 2026-10-04
 
 > Consolidates the unpublished 0.18.0 and 0.18.1 (never tagged or released).

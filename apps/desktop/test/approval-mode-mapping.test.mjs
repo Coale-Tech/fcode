@@ -50,7 +50,9 @@ test("makeOmpOverlay auto-approves read-only bash by default, prompt guard first
   const { bash } = parseYaml(makeOmpOverlay(BASE_OPTS));
   // omp takes the first matching rule, so `git log --output=x` must hit the prompt rule.
   assert.deepEqual(bash.patterns[0], { match: "git *--output*", approval: "prompt" });
-  assert.ok(bash.patterns.some((r) => r.match === "git status*" && r.approval === "allow"));
+  assert.ok(bash.patterns.some((r) => r.match === "git status" && r.approval === "allow"));
+  // Token-bounded, so `git difftool --extcmd=…` cannot ride the `git diff` rule.
+  assert.ok(!bash.patterns.some((r) => r.match === "git diff*"));
   assert.ok(bash.patterns.slice(1).every((r) => r.approval === "allow"));
 });
 

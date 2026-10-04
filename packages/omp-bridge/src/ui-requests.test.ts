@@ -214,6 +214,9 @@ describe("classifyToolRisk", () => {
     expect(classifyToolRisk("bash", "Command: git status && make")).toBe("medium");
     expect(classifyToolRisk("bash", "Command: cat a > b")).toBe("medium");
     expect(classifyToolRisk("bash", "Command: git log --output=/tmp/x")).toBe("medium");
+    expect(classifyToolRisk("bash", "Command: git difftool -y --extcmd='touch /tmp/proof' HEAD")).toBe("medium");
+    expect(classifyToolRisk("bash", "Command: file -C -m magic")).toBe("medium");
+    expect(classifyToolRisk("bash", "Command: git diff HEAD~1")).toBe("low");
     expect(classifyToolRisk("bash", "Command: find . -delete")).toBe("medium");
   });
 
