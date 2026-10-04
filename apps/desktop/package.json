@@ -1,6 +1,6 @@
 {
   "name": "@pi-desktop/desktop",
-  "version": "0.18.2",
+  "version": "0.18.2-rc.1",
   "desktopName": "fcode.desktop",
   "private": true,
   "description": "Fcode desktop IDE for Frappe development",
