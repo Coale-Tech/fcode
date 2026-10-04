@@ -2,16 +2,8 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const deEntries: ChangelogEntry[] = [
   {
-    "version": "0.18.1",
-    "date": "2026-10-03",
-    "highlights": [
-      "Prozesslecks behoben: Beim Ändern von Anbieter, Speicher-Backend, Genehmigungsmodus, omp-Einstellung oder Erweiterung wird der vorherige Agentenprozess jetzt beendet und läuft samt Hilfsprozessen nicht mehr nach dem Beenden der App weiter.",
-    ],
-  },
-
-  {
-    "version": "0.18.0",
-    "date": "2026-10-02",
+    "version": "0.18.2",
+    "date": "2026-10-04",
     "highlights": [
       "Einstellungen wurden nach dem Raven-Layout überarbeitet: flache Zeilen mit Trennlinien, eine 224 px breite Seitenleiste mit Raven-Navigation und aktualisierte Steuerelemente; macOS behält die Glas-Vibrancy-Leiste. Neue Gruppe „KI“ mit eigenen Seiten (Berechtigungen, Agenten, Tools, Erweiterungen, Gedächtnis, Kanban); Beschreibungen stehen jetzt direkt unter den Zeilen.",
       "Neues Kanban-Board (standardmäßig deaktiviert; aktivieren unter Einstellungen → Kanban) im Layout von Hermes Agent: Spaltenuntertitel und +-Schaltflächen, Karten-Chips (ID, Priorität, Projekt, Fortschritt der Unterkarten, Kommentare, Verknüpfungen, Alter), Suche und Projektfilter, Mehrfachauswahl mit Sammelaktionen sowie eine Karten-Seitenleiste zum Bearbeiten, für Abhängigkeiten, Kommentare, Ereignisse und Laufverlauf. Karten starten Agentensitzungen mit Worker-Tools, einem Pause-Schalter und Sitzungsgrenzen; [kanban]-Sitzungen sind standardmäßig in der Seitenleiste ausgeblendet.",
@@ -22,6 +14,7 @@ export const deEntries: ChangelogEntry[] = [
       "Bench-Fixes: Frappe v16 erreicht Running, Stop funktioniert während des Starts, Beenden stoppt den gesamten Prozessbaum, Redis-Port-Konflikte werden benannt, exakte Lese-Freigaben funktionieren, Discovery erfordert site_config.json, das Migrate-Dialogfeld hat eine Fokus-Falle, ANSI-Codes werden aus Logs entfernt.",
       "Motion: Der Suchdialog öffnet sich sofort (keine Einblend-Animation); alle Exit- und Collapse-Übergänge verwenden ease-out.",
       "Release: Stabile Tags können nicht mehr unsigniert über workflow_dispatch geliefert werden (CI-Guard); die Updater-Signaturerkennung wurde in ein eigenes Modul ausgelagert und getestet.",
+      "Prozesslecks behoben: Beim Ändern von Anbieter, Speicher-Backend, Genehmigungsmodus, omp-Einstellung oder Erweiterung wird der vorherige Agentenprozess jetzt beendet und läuft samt Hilfsprozessen nicht mehr nach dem Beenden der App weiter.",
     ],
   },
 

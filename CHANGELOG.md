@@ -10,25 +10,15 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 
-## [0.18.1] — 2026-10-03
+## [0.18.2] — 2026-10-04
+
+> Consolidates the unpublished 0.18.0 and 0.18.1 (never tagged or released).
 
 ### Compatibility
 
 | Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
 |-------|-----------------|-----------|-----------------|--------|
-| 0.18.1 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
-
-### Fixed
-
-- Changing a provider, memory backend, approval mode, omp setting or extension no longer leaves the previous agent process (and its MCP helpers) running as an orphan after the app quits; the old process is stopped and its open turn is settled as interrupted.
-
-## [0.18.0] — 2026-10-02
-
-### Compatibility
-
-| Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
-|-------|-----------------|-----------|-----------------|--------|
-| 0.18.0 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
+| 0.18.2 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
 
 ### Added
 
@@ -71,6 +61,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - A stored hosted web-search record that cannot be replayed no longer fails later requests in that conversation.
 - The Composer reasoning slider now moves smoothly to clicked or keyboard-selected levels, follows dragging immediately, and respects reduced-motion settings; rapid clicks redirect the animation; failed saves restore the confirmed selection.
 - The reasoning slider's filled track now covers the entire starting dot (left cap no longer leaves an exposed half-dot); hovering a stop highlights its label; only unfilled dots brighten on hover.
+- Changing a provider, memory backend, approval mode, omp setting or extension no longer leaves the previous agent process (and its MCP helpers) running as an orphan after the app quits; the old process is stopped and its open turn is settled as interrupted.
 
 ## [0.17.1] — 2026-10-02
 

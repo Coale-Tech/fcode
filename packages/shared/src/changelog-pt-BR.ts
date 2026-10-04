@@ -2,16 +2,8 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const ptBREntries: ChangelogEntry[] = [
   {
-    "version": "0.18.1",
-    "date": "2026-10-03",
-    "highlights": [
-      "Corrigido um vazamento de processos: alterar provedor, backend de memória, modo de aprovação, configuração do omp ou extensão agora encerra o processo de agente anterior em vez de deixá-lo (e seus auxiliares) em execução após fechar o app.",
-    ],
-  },
-
-  {
-    "version": "0.18.0",
-    "date": "2026-10-02",
+    "version": "0.18.2",
+    "date": "2026-10-04",
     "highlights": [
       "Configurações redesenhadas para corresponder ao layout do Raven: linhas planas com separadores, trilho fixo de 224 px com a navegação do Raven e controles atualizados; macOS mantém o trilho de vidro com vibrância. Novo grupo «IA» com páginas próprias (permissões, agentes, ferramentas, extensões, memória, Kanban); as descrições agora aparecem sob cada linha.",
       "Novo quadro Kanban (desativado por padrão; ative em Configurações → Kanban) com o layout do Hermes Agent: subtítulos de coluna e botões +, chips nos cartões (id, prioridade, projeto, progresso dos cartões filhos, comentários, vínculos, idade), busca e filtros por projeto, seleção múltipla com ações em lote e uma gaveta do cartão para editar, gerenciar dependências, comentar e revisar eventos e histórico de execuções. Cartões iniciam sessões de agente com ferramentas de worker, botão de pausa e limites por sessão; sessões [kanban] ficam ocultas na barra lateral por padrão.",
@@ -22,6 +14,7 @@ export const ptBREntries: ChangelogEntry[] = [
       "Correções do banco: Frappe v16 atinge Running, Stop funciona durante a inicialização, sair para o processo completo, conflitos de porta do redis são nomeados, aprovações de leitura por nome exato funcionam, a descoberta requer site_config.json, o diálogo de migração tem armadilha de foco, códigos ANSI são removidos dos logs.",
       "Movimento: o diálogo de pesquisa abre instantaneamente (sem animação de entrada); todas as transições de saída e colapso usam ease-out.",
       "Release: tags estáveis não podem mais ser enviadas sem assinatura via workflow_dispatch (guarda CI); a detecção de assinatura do atualizador é extraída em seu próprio módulo e testada.",
+      "Corrigido um vazamento de processos: alterar provedor, backend de memória, modo de aprovação, configuração do omp ou extensão agora encerra o processo de agente anterior em vez de deixá-lo (e seus auxiliares) em execução após fechar o app.",
     ],
   },
 
