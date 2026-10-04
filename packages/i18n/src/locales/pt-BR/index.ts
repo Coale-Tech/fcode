@@ -3088,7 +3088,7 @@ export const ptBR = {
   "terminal": {
     "title": "Terminal",
     "toggle": "Mostrar/ocultar terminal (Ctrl+`)",
-    "tab": "Terminal {index}",
+    "tab": "Terminal {{index}}",
     "newTab": "Novo terminal",
     "closeTab": "Fechar terminal",
     "hide": "Ocultar painel do terminal"

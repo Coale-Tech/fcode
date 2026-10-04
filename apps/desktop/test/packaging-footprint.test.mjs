@@ -39,13 +39,11 @@ const pluginPanelPreloadSource = await readFile(
 );
 
 test("packaging installs the updater and FileBird's native runtime dependencies", () => {
-  // FileBird (ADR 0309) runs in main: node-pty and the keyring are native,
-  // ssh2 stays external so its optional native crypto binding resolves.
+  // FileBird (ADR 0309) runs in main: node-pty and the keyring are native.
   assert.deepEqual(Object.keys(packageJson.dependencies).sort(), [
     "@napi-rs/keyring",
     "electron-updater",
     "node-pty",
-    "ssh2",
   ]);
 
   for (const dependency of [
@@ -130,7 +128,7 @@ test("main bundles JavaScript dependencies and externalizes only runtime modules
   // enters the main bundle; main itself never loads it (spec 16 §4.2).
   assert.match(
     viteConfigSource,
-    /external:\s*\["electron-updater", "jiti", "jiti\/static", "node-pty", "@napi-rs\/keyring", "ssh2"\]/,
+    /external:\s*\["electron-updater", "jiti", "jiti\/static", "node-pty", "@napi-rs\/keyring"\]/,
   );
 });
 

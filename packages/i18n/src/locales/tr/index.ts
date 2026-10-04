@@ -3163,7 +3163,7 @@ importConfirm: "İçe aktarılan uzantılar ajan sürecinde, ajanın kendi araç
   "terminal": {
     "title": "Terminal",
     "toggle": "Terminali göster/gizle (Ctrl+`)",
-    "tab": "Terminal {index}",
+    "tab": "Terminal {{index}}",
     "newTab": "Yeni terminal",
     "closeTab": "Terminali kapat",
     "hide": "Terminal panelini gizle"

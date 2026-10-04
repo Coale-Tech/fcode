@@ -3177,7 +3177,7 @@ importConfirm: "Imported extensions run inside the agent process with the same a
   terminal: {
     title: "Terminal",
     toggle: "Toggle terminal (Ctrl+`)",
-    tab: "Terminal {index}",
+    tab: "Terminal {{index}}",
     newTab: "New terminal",
     closeTab: "Close terminal",
     hide: "Hide terminal panel",

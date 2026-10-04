@@ -3173,7 +3173,7 @@ importConfirm: "가져온 확장은 에이전트 프로세스 안에서 에이�
   "terminal": {
     "title": "터미널",
     "toggle": "터미널 표시/숨기기 (Ctrl+`)",
-    "tab": "터미널 {index}",
+    "tab": "터미널 {{index}}",
     "newTab": "새 터미널",
     "closeTab": "터미널 닫기",
     "hide": "터미널 패널 숨기기"

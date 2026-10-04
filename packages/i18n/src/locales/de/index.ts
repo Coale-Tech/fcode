@@ -3134,7 +3134,7 @@ sklm: {
   "terminal": {
     "title": "Terminal",
     "toggle": "Terminal ein-/ausblenden (Ctrl+`)",
-    "tab": "Terminal {index}",
+    "tab": "Terminal {{index}}",
     "newTab": "Neues Terminal",
     "closeTab": "Terminal schließen",
     "hide": "Terminalbereich ausblenden"

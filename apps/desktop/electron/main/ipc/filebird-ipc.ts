@@ -75,8 +75,10 @@ export function registerFileBirdIpc({ registrar, dataDir, getMainWindow, sendToR
         },
       });
       // Kill every PTY before Electron tears down (node-pty aborts on a late exit).
+      // will-quit, not before-quit: before-quit also fires for a quit the user then
+      // cancels in Fcode's confirm dialog, which would kill live terminals.
       // ponytail: running transfers are cancelled without FileBird's "stop transfers?" prompt.
-      app.once("before-quit", () => void fileBird?.shutdown());
+      app.once("will-quit", () => void fileBird?.shutdown());
     })
     .catch((error: unknown) => {
       console.error("[filebird] failed to start:", error);

@@ -60,10 +60,11 @@ holds.
 
 ## Consequences
 
-- Desktop packaging carries node-pty, `@napi-rs/keyring` and ssh2 as runtime
+- Desktop packaging carries node-pty and `@napi-rs/keyring` as runtime
   dependencies (native payloads unpacked from the asar) plus FileBird's built
-  preload and renderer as extra resources. ssh2's optional `cpu-features`
-  binding is skipped (`ignoredOptionalDependencies`); ssh2 falls back without it.
+  preload and renderer as extra resources. ssh2 is bundled into main, because
+  Node ESM cannot name-import it. Its optional native bindings (`cpu-features`,
+  `sshcrypto`) are skipped, and ssh2 falls back to JS crypto without them.
 - `pnpm -r build` and `pnpm -r test` include FileBird (452 unit tests).
 - Running transfers are cancelled at quit without FileBird's standalone
   "stop transfers?" prompt.

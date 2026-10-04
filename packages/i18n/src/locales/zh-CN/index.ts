@@ -3124,7 +3124,7 @@ sklm: {
   "terminal": {
     "title": "终端",
     "toggle": "显示/隐藏终端 (Ctrl+`)",
-    "tab": "终端 {index}",
+    "tab": "终端 {{index}}",
     "newTab": "新建终端",
     "closeTab": "关闭终端",
     "hide": "隐藏终端面板"

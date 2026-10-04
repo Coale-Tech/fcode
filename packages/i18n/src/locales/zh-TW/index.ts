@@ -3122,7 +3122,7 @@ sklm: {
   "terminal": {
     "title": "終端機",
     "toggle": "顯示/隱藏終端機 (Ctrl+`)",
-    "tab": "終端機 {index}",
+    "tab": "終端機 {{index}}",
     "newTab": "新增終端機",
     "closeTab": "關閉終端機",
     "hide": "隱藏終端機面板"
