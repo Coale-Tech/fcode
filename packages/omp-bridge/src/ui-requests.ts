@@ -134,8 +134,8 @@ export function classifyToolRisk(toolName: string, argsPreview: string): Risk {
   if (toolName.startsWith("kanban_")) return "low";
   if (Object.hasOwn(TOOL_RISK, toolName)) return TOOL_RISK[toolName]!;
   if (toolName !== "bash") return "medium";
-  // omp's approval body carries the command as `Command: <cmd>` (bash.ts).
-  const command = /^Command: (.*)$/m.exec(argsPreview)?.[1] ?? argsPreview;
+  // omp's approval body ends with `Command: <cmd>` (bash.ts), newlines kept.
+  const command = /^Command: ([\s\S]*)$/m.exec(argsPreview)?.[1] ?? argsPreview;
   if (HIGH_RISK_COMMAND.test(command)) return "high";
   return isReadOnlyCommand(command) ? "low" : "medium";
 }

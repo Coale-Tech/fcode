@@ -47,7 +47,8 @@ function matchesAny(patterns: readonly string[], command: string): boolean {
 
 /** Fcode-side mirror of the rules above; drives the risk badge only. */
 export function isReadOnlyCommand(cmd: string): boolean {
+  if (SHELL_CONTROL.test(cmd)) return false;
   const command = cmd.trim().replace(/\s+/g, " ");
-  if (!command || SHELL_CONTROL.test(command)) return false;
+  if (!command) return false;
   return !matchesAny(PROMPT_BASH_PATTERNS, command) && matchesAny(READ_ONLY_BASH_PATTERNS, command);
 }
