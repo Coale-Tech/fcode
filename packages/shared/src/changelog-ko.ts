@@ -2,6 +2,19 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const koEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.3",
+    "date": "2026-10-04",
+    "highlights": [
+      "읽기 전용 셸 명령(git status, log, diff, show, ls, cat, grep 등)이 이제 권한 확인 없이 실행됩니다. 설정 → 도구 → 승인에서 끌 수 있습니다. &&, 파이프, 리디렉션 또는 git --output이 포함된 명령은 계속 확인을 요청합니다.",
+      "권한 카드에 항상 높음 대신 낮음, 보통, 높음 위험도가 표시됩니다.",
+      "입력창 위에 새 Git 바: 브랜치 선택, Pull, Push 또는 PR 만들기. 각 작업은 현재 대화에 프롬프트를 보냅니다.",
+      "예약 작업: 실행 탭에 실행 횟수, 성공률, 평균 소요 시간이 표시되며 작업을 JSON으로 내보내고 가져올 수 있습니다. 가져온 작업은 일시 중지 상태로 추가됩니다.",
+      "Raven 채팅: 설정 → Raven에서 Frappe 사이트를 추가하면 사이드바에 Raven 버튼이 나타납니다. Raven은 에이전트와 분리된 자체 브라우저 세션에서 전체 너비로 열리며, Frappe 계정으로 로그인합니다.",
+      "보안 강화: 설정 파일이 원자적으로 저장되고 쿠키가 암호화되어 저장됩니다. 작업 패널 브라우저에서 한 번 로그아웃됩니다.",
+    ],
+  },
+
+  {
     version: "0.18.2",
     date: "2026-10-04",
     highlights: [

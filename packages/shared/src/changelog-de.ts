@@ -2,6 +2,19 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const deEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.3",
+    "date": "2026-10-04",
+    "highlights": [
+      "Schreibgeschützte Shell-Befehle (git status, log, diff, show, ls, cat, grep und ähnliche) laufen jetzt ohne Berechtigungsabfrage; abschaltbar unter Einstellungen → Tools → Genehmigungen. Befehle mit &&, Pipes, Umleitungen oder git --output fragen weiterhin nach.",
+      "Berechtigungskarten zeigen jetzt niedriges, mittleres oder hohes Risiko statt immer hoch.",
+      "Neue Git-Leiste über dem Eingabefeld: Branch wählen, Pull, Push oder PR erstellen. Jede Aktion sendet einen Prompt in den aktuellen Chat.",
+      "Geplante Aufgaben: Der Tab „Läufe“ zeigt Anzahl, Erfolgsquote und durchschnittliche Dauer; Aufgaben lassen sich als JSON exportieren und importieren. Importierte Aufgaben kommen pausiert an.",
+      "Raven-Chat: Trage deine Frappe-Site unter Einstellungen → Raven ein, um einen Raven-Button in der Seitenleiste zu erhalten. Raven öffnet sich in voller Breite in einer eigenen, vom Agenten getrennten Browsersitzung; melde dich mit deinem Frappe-Konto an.",
+      "Härtung: Einstellungsdateien werden atomar gespeichert, Cookies werden verschlüsselt abgelegt. Im Browser des Arbeitsbereichs wirst du einmalig abgemeldet.",
+    ],
+  },
+
+  {
     "version": "0.18.2",
     "date": "2026-10-04",
     "highlights": [

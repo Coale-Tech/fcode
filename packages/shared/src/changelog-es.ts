@@ -2,6 +2,19 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const esEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.3",
+    "date": "2026-10-04",
+    "highlights": [
+      "Los comandos de shell de solo lectura (git status, log, diff, show, ls, cat, grep y similares) ahora se ejecutan sin solicitar permiso; desactívalo en Ajustes → Herramientas → Aprobaciones. Los comandos con &&, tuberías, redirecciones o git --output siguen pidiendo confirmación.",
+      "Las tarjetas de permiso ahora muestran riesgo bajo, medio o alto en lugar de siempre alto.",
+      "Nueva barra de git sobre el compositor: elige una rama, Pull, Push o Crear PR. Cada acción envía un prompt al chat actual.",
+      "Tareas programadas: la pestaña Ejecuciones muestra ejecuciones, tasa de éxito y duración media, y las tareas se pueden exportar e importar como JSON. Las tareas importadas llegan en pausa.",
+      "Chat de Raven: añade tu sitio Frappe en Ajustes → Raven para tener un botón de Raven en la barra lateral. Raven se abre a ancho completo en su propia sesión de navegador, separada del agente; inicia sesión con tu cuenta de Frappe.",
+      "Refuerzo: los archivos de ajustes se guardan de forma atómica y las cookies se cifran en reposo. Se cerrará tu sesión del navegador del panel de trabajo una vez.",
+    ],
+  },
+
+  {
     "version": "0.18.2",
     "date": "2026-10-04",
     "highlights": [

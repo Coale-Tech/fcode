@@ -10,14 +10,14 @@
 [![CI](https://github.com/Coale-Tech/fcode/actions/workflows/ci.yml/badge.svg)](https://github.com/Coale-Tech/fcode/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/Coale-Tech/fcode)](LICENSE)
 
-[Download](https://github.com/Coale-Tech/fcode/releases/tag/v0.18.2) ·
+[Download](https://github.com/Coale-Tech/fcode/releases/tag/v0.18.3) ·
 [Releases](https://github.com/Coale-Tech/fcode/releases) ·
 [Issues](https://github.com/Coale-Tech/fcode/issues) ·
 [Developer docs](docs/fcode/README.md)
 
 </div>
 
-> **Early preview.** Fcode 0.18.2 is an unsigned preview for macOS, Windows, and Linux. It ships the omp agent and the Code, Build, and Bench surfaces; it is not yet the completed Frappe IDE described by the project roadmap.
+> **Early preview.** Fcode 0.18.3 is an unsigned preview for macOS, Windows, and Linux. It ships the omp agent and the Code, Build, and Bench surfaces; it is not yet the completed Frappe IDE described by the project roadmap.
 
 ## Current status
 
@@ -28,11 +28,11 @@ The release pipeline builds macOS (arm64 + x64), Linux (x64), and Windows (x64) 
 - **Signed and notarized distribution.** Apple Developer ID signing and notarization run in CI, but the required secrets are not yet configured, so no signed release has shipped.
 - **Bench on Windows.** The Bench tab requires a Frappe bench, which is not supported natively on Windows. The app itself builds and runs on Windows; use WSL2, macOS, or Linux for bench work. PATH is inherited from the parent process on Windows (not sourced from a POSIX login shell).
 
-The current release line is 0.18.x; the latest is [v0.18.2](https://github.com/Coale-Tech/fcode/releases/tag/v0.18.2). Because the builds are unsigned, macOS cannot swap them in place: download 0.18.2 from the Releases page; from then on the update banner links to the download. See [CHANGELOG.md](CHANGELOG.md) for the full history.
+The current release line is 0.18.x; the latest is [v0.18.3](https://github.com/Coale-Tech/fcode/releases/tag/v0.18.3). Because the builds are unsigned, macOS cannot swap them in place: download 0.18.3 from the Releases page; from then on the update banner links to the download. See [CHANGELOG.md](CHANGELOG.md) for the full history.
 
 ## Download and install
 
-Download the asset for your platform from the [Fcode 0.18.2 release](https://github.com/Coale-Tech/fcode/releases/tag/v0.18.2):
+Download the asset for your platform from the [Fcode 0.18.3 release](https://github.com/Coale-Tech/fcode/releases/tag/v0.18.3):
 
 | Platform | Asset |
 | --- | --- |

@@ -2,6 +2,19 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const trEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.3",
+    "date": "2026-10-04",
+    "highlights": [
+      "Salt okunur kabuk komutları (git status, log, diff, show, ls, cat, grep ve benzerleri) artık izin istemeden çalışır; Ayarlar → Araçlar → Onaylar bölümünden kapatılabilir. &&, kanal, yönlendirme veya git --output içeren komutlar yine onay ister.",
+      "İzin kartları artık her zaman yüksek yerine düşük, orta veya yüksek risk gösteriyor.",
+      "Oluşturucunun üstünde yeni Git çubuğu: dal seçin, Pull, Push veya PR oluşturun. Her işlem mevcut sohbete bir istem gönderir.",
+      "Zamanlanmış görevler: Çalıştırmalar sekmesi çalıştırma sayısını, başarı oranını ve ortalama süreyi gösterir; görevler JSON olarak dışa ve içe aktarılabilir. İçe aktarılan görevler duraklatılmış olarak gelir.",
+      "Raven sohbeti: Ayarlar → Raven bölümüne Frappe sitenizi ekleyerek kenar çubuğunda bir Raven düğmesi edinin. Raven, ajandan ayrı kendi tarayıcı oturumunda tam genişlikte açılır; Frappe hesabınızla giriş yapın.",
+      "Sağlamlaştırma: ayar dosyaları atomik olarak kaydedilir ve çerezler artık şifreli saklanır. Çalışma paneli tarayıcısında bir kez oturumunuz kapatılır.",
+    ],
+  },
+
+  {
     "version": "0.18.2",
     "date": "2026-10-04",
     "highlights": [

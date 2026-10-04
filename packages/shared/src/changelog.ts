@@ -30,6 +30,19 @@ export type ChangelogEntry = {
 
 const enEntries: ChangelogEntry[] = [
   {
+    version: "0.18.3",
+    date: "2026-10-04",
+    highlights: [
+      "Read-only shell commands (git status, log, diff, show, ls, cat, grep and similar) now run without a permission prompt; turn this off in Settings → Tools → Approvals. Commands with &&, pipes, redirects or git --output still prompt.",
+      "Permission cards now show Low, Medium or High risk instead of always High.",
+      "New git bar above the composer: pick a branch, Pull, Push or Create PR. Each action sends a prompt into the current chat.",
+      "Scheduled: the Runs tab shows runs, success rate and average duration, and tasks can be exported and imported as JSON. Imported tasks arrive paused.",
+      "Raven chat: add your Frappe site in Settings → Raven to get a Raven button in the sidebar. Raven opens full-width in its own browser session, separate from the agent; sign in with your Frappe account.",
+      "Hardening: settings files are saved atomically, and cookies are now encrypted at rest. You will be signed out of the work-panel browser once.",
+    ],
+  },
+
+  {
     version: "0.18.2",
     date: "2026-10-04",
     highlights: [
@@ -890,6 +903,19 @@ const enEntries: ChangelogEntry[] = [
 
 const zhCNEntries: ChangelogEntry[] = [
   {
+    version: "0.18.3",
+    date: "2026-10-04",
+    highlights: [
+      "只读 shell 命令（git status、log、diff、show、ls、cat、grep 等）现在无需权限确认即可运行；可在设置 → 工具 → 审批中关闭。包含 &&、管道、重定向或 git --output 的命令仍会请求确认。",
+      "权限卡片现在显示低、中或高风险，而不再一律显示高风险。",
+      "输入框上方新增 Git 栏：选择分支、拉取、推送或创建 PR。每个操作都会向当前对话发送一条提示。",
+      "计划任务：运行记录页显示运行次数、成功率和平均耗时，任务可导出和导入为 JSON。导入的任务默认暂停。",
+      "Raven 聊天：在设置 → Raven 中填写 Frappe 站点后，侧边栏会出现 Raven 按钮。Raven 以全宽方式在独立的浏览器会话中打开，与智能体隔离；使用您的 Frappe 账号登录。",
+      "安全加固：设置文件以原子方式保存，Cookie 现已加密存储。工作面板浏览器会退出登录一次。",
+    ],
+  },
+
+  {
     version: "0.18.2",
     date: "2026-10-04",
     highlights: [
@@ -1748,6 +1774,19 @@ const zhCNEntries: ChangelogEntry[] = [
 ];
 
 const zhTWEntries: ChangelogEntry[] = [
+  {
+    version: "0.18.3",
+    date: "2026-10-04",
+    highlights: [
+      "唯讀 shell 指令（git status、log、diff、show、ls、cat、grep 等）現在無需權限確認即可執行；可在設定 → 工具 → 核准中關閉。包含 &&、管線、重新導向或 git --output 的指令仍會要求確認。",
+      "權限卡片現在顯示低、中或高風險，而不再一律顯示高風險。",
+      "輸入框上方新增 Git 列：選擇分支、拉取、推送或建立 PR。每個動作都會向目前的對話傳送一則提示。",
+      "排程任務：執行紀錄頁顯示執行次數、成功率與平均耗時，任務可匯出與匯入為 JSON。匯入的任務預設為暫停。",
+      "Raven 聊天：在設定 → Raven 中填入 Frappe 網站後，側邊欄會出現 Raven 按鈕。Raven 以全寬方式在獨立的瀏覽器工作階段中開啟，與代理程式隔離；請使用您的 Frappe 帳號登入。",
+      "安全強化：設定檔以原子方式儲存，Cookie 現已加密儲存。工作面板瀏覽器會登出一次。",
+    ],
+  },
+
   {
     version: "0.18.2",
     date: "2026-10-04",

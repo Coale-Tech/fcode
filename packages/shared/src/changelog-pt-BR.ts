@@ -2,6 +2,19 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const ptBREntries: ChangelogEntry[] = [
   {
+    "version": "0.18.3",
+    "date": "2026-10-04",
+    "highlights": [
+      "Comandos de shell somente leitura (git status, log, diff, show, ls, cat, grep e similares) agora rodam sem pedir permissão; desative em Configurações → Ferramentas → Aprovações. Comandos com &&, pipes, redirecionamentos ou git --output continuam pedindo confirmação.",
+      "Os cartões de permissão agora mostram risco baixo, médio ou alto em vez de sempre alto.",
+      "Nova barra de git acima do compositor: escolha um branch, Pull, Push ou Criar PR. Cada ação envia um prompt para o chat atual.",
+      "Tarefas agendadas: a aba Execuções mostra execuções, taxa de sucesso e duração média, e as tarefas podem ser exportadas e importadas como JSON. Tarefas importadas chegam pausadas.",
+      "Chat do Raven: adicione seu site Frappe em Configurações → Raven para ter um botão do Raven na barra lateral. O Raven abre em largura total em sua própria sessão de navegador, separada do agente; entre com sua conta Frappe.",
+      "Reforço: os arquivos de configuração são salvos de forma atômica e os cookies são criptografados em repouso. Você será desconectado do navegador do painel de trabalho uma vez.",
+    ],
+  },
+
+  {
     "version": "0.18.2",
     "date": "2026-10-04",
     "highlights": [

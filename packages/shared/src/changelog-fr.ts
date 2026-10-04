@@ -2,6 +2,19 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const frEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.3",
+    "date": "2026-10-04",
+    "highlights": [
+      "Les commandes shell en lecture seule (git status, log, diff, show, ls, cat, grep, etc.) s’exécutent désormais sans demande d’autorisation ; désactivable dans Réglages → Outils → Approbations. Les commandes avec &&, des pipes, des redirections ou git --output demandent toujours confirmation.",
+      "Les cartes d’autorisation indiquent désormais un risque faible, moyen ou élevé au lieu de toujours élevé.",
+      "Nouvelle barre git au-dessus du compositeur : choisir une branche, Pull, Push ou Créer une PR. Chaque action envoie un prompt dans le chat en cours.",
+      "Tâches planifiées : l’onglet Exécutions affiche le nombre d’exécutions, le taux de réussite et la durée moyenne, et les tâches s’exportent et s’importent en JSON. Les tâches importées arrivent en pause.",
+      "Chat Raven : ajoutez votre site Frappe dans Réglages → Raven pour obtenir un bouton Raven dans la barre latérale. Raven s’ouvre en pleine largeur dans sa propre session de navigateur, séparée de l’agent ; connectez-vous avec votre compte Frappe.",
+      "Renforcement : les fichiers de réglages sont enregistrés de façon atomique et les cookies sont chiffrés au repos. Vous serez déconnecté une fois du navigateur du panneau de travail.",
+    ],
+  },
+
+  {
     "version": "0.18.2",
     "date": "2026-10-04",
     "highlights": [
