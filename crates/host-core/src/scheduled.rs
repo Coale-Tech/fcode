@@ -558,7 +558,10 @@ mod tests {
         assert!(created.workspace_path.is_some());
         let exported = serde_json::to_value(list_tasks(&source).unwrap()).unwrap();
         let target = test_db();
-        assert_eq!(import_tasks(&target, exported.as_array().unwrap()).unwrap(), 1);
+        assert_eq!(
+            import_tasks(&target, exported.as_array().unwrap()).unwrap(),
+            1
+        );
         let imported = get_task(&target, &created.id).unwrap().unwrap();
         assert_eq!(
             serde_json::to_value(&imported.schedule).unwrap(),
