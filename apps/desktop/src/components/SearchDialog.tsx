@@ -13,6 +13,7 @@ import type { SessionMeta } from "../lib/sidebar-preferences";
 import {
   IconAt,
   IconClock,
+  IconFileBird,
   IconNewSession,
   IconPullRequest,
   IconRaven,
@@ -27,6 +28,7 @@ const PAGE_ENTRIES = [
   { page: "scheduled", labelKey: "scheduled.title", icon: IconClock },
   { page: "plugins", labelKey: "nav.plugins", icon: IconAt },
   { page: "raven", labelKey: "raven.title", icon: IconRaven },
+  { page: "filebird", labelKey: "fileBird.title", icon: IconFileBird },
 ] as const;
 
 type PageEntry = (typeof PAGE_ENTRIES)[number];

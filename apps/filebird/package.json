@@ -1,0 +1,50 @@
+{
+  "name": "@pi-desktop/filebird",
+  "version": "0.18.3",
+  "description": "FileBird \u2014 a cross-platform desktop SFTP client",
+  "desktopName": "fly.desktop",
+  "main": "./out/main/main.js",
+  "author": "titansoftlimited",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "node scripts/electron-vite.mjs dev",
+    "build": "electron-vite build",
+    "preview": "node scripts/electron-vite.mjs preview",
+    "start": "node scripts/electron-vite.mjs preview",
+    "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
+    "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
+    "typecheck": "pnpm run typecheck:node && pnpm run typecheck:web",
+    "test": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "smoke": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/smoke-test.mjs",
+    "screenshots": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/screenshots.mjs",
+    "test-server": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/test-server.mjs"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "@types/ssh2": "^1.15.6",
+    "@vitejs/plugin-react": "^5.2.0",
+    "electron": "^43.4.1",
+    "electron-vite": "^5.0.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vite": "^7.3.6",
+    "vitest": "^5.0.0"
+  },
+  "dependencies": {
+    "@napi-rs/keyring": "^2.0.0",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
+    "node-pty": "^1.2.0-beta.15",
+    "ssh2": "^1.17.0"
+  }
+}

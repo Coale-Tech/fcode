@@ -12,6 +12,7 @@ import { ProjectCreateDialog } from "../../components/ProjectCreateDialog";
 import { SearchDialog } from "../../components/SearchDialog";
 import { Sidebar } from "../../components/Sidebar";
 import { StartupRecovery } from "../../components/StartupRecovery";
+import { TerminalPanel } from "../../components/TerminalPanel";
 import { ToastHost } from "../../components/Toast";
 import { UpdateBanner } from "../../components/UpdateBanner";
 import { cx, TooltipButton } from "../../components/ui";
@@ -63,6 +64,11 @@ const KanbanPage = lazy(() =>
 const RavenPage = lazy(() =>
   import("../../pages/RavenPage").then((module) => ({
     default: module.RavenPage,
+  })),
+);
+const FileBirdPage = lazy(() =>
+  import("../../pages/FileBirdPage").then((module) => ({
+    default: module.FileBirdPage,
   })),
 );
 
@@ -281,6 +287,10 @@ export function AppShell() {
                     <div className="route-surface route-page">
                       <RavenPage blocked={searchOpen} />
                     </div>
+                  ) : page === "filebird" ? (
+                    <div className="route-surface route-page">
+                      <FileBirdPage blocked={searchOpen} />
+                    </div>
                   ) : page === "scheduled" ? (
                     <div className="route-surface route-page">
                       <ScheduledPage />
@@ -305,6 +315,7 @@ export function AppShell() {
                     <ChatSurface visible={page === "chat"} />
                   )}
                 </Suspense>
+                <TerminalPanel visible={page === "chat"} />
                 <WorkspaceBar />
               </section>
             )}
@@ -335,7 +346,7 @@ export function AppShell() {
               disabled={
                 !presentedWorkPanelOpen &&
                 !workPanelExiting &&
-                (page === "settings" || page === "plugins" || page === "scheduled" || page === "raven")
+                (page === "settings" || page === "plugins" || page === "scheduled" || page === "raven" || page === "filebird")
               }
               onClick={togglePresentedWorkPanel}
             >

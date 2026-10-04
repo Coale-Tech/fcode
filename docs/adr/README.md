@@ -131,7 +131,7 @@ Each ADR includes:
 | 0105 | Ship Files as a bundled plugin; keep Review in the host | Superseded by 0241 |
 | 0106 | Keep only five core builtin commands | Accepted |
 | 0107 | Make current-session task notification suppression atomic | Accepted |
-| 0108 | Remove the built-in interactive terminal | Accepted |
+| 0108 | Remove the built-in interactive terminal | Superseded by ADR 0309 |
 | 0109 | Open Files entries with the OS-associated application | Accepted |
 | 0110 | Version the plugin panel chrome spacing contract | Accepted |
 | 0111 | Reveal Files in the OS File Manager | Accepted |
@@ -338,6 +338,7 @@ Each ADR includes:
 | 0306 | [Brazilian Portuguese (pt-BR) shell locale](0306-portuguese-brazil-shell-locale.md) | Accepted (amends ADR 0160 / 0183 / 0185) |
 | 0307 | [Vendor omp as a pruned snapshot](0307-vendor-omp-snapshot.md) | Implemented |
 | 0308 | [Memory backends: Mnemopi default, Hindsight connect-only, session-model LLM](0308-memory-backends.md) | Accepted for implementation |
+| 0309 | [Embed FileBird and restore an integrated terminal](0309-filebird-and-integrated-terminal.md) | Accepted (supersedes ADR 0108) |
 | turn-process-and-thinking-display | [Turn process and thinking presentation](turn-process-and-thinking-display.md) | Accepted |
 | provider-display-order | [Provider display order](provider-display-order.md) | Accepted |
 | registry-header-variable-spelling | [Remote header variables accept the registry's `{name}` spelling](registry-header-variable-spelling.md) | Proposed |

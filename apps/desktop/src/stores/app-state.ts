@@ -176,13 +176,15 @@ export type AppState = {
   toasts: ToastItem[];
   notifications: AppNotification[];
   unreadNotificationCount: number;
-  page: "chat" | "pulls" | "scheduled" | "plugins" | "settings" | "build" | "bench" | "kanban" | "raven";
+  page: "chat" | "pulls" | "scheduled" | "plugins" | "settings" | "build" | "bench" | "kanban" | "raven" | "filebird";
   /** Whether [kanban] worker sessions are shown in the sidebar. Default false (hidden). */
   showKanbanSessions: boolean;
   /** Whether the kanban feature is enabled (mirrored from KanbanSettings.enabled). */
   kanbanEnabled: boolean;
   /** Whether the Raven destination is enabled (mirrored from RavenSettings.enabled). */
   ravenEnabled: boolean;
+  /** Integrated terminal panel under chat; Ctrl+` and the workspace bar toggle it. */
+  terminalOpen: boolean;
   /** Bench log view follows new output while true; toggleFollowLog (Mod+Shift+B) flips it. */
   benchLogFollowTail: boolean;
   /** Tab ids come from the shared settings index. */
@@ -360,6 +362,7 @@ export type AppState = {
   setShowKanbanSessions: (show: boolean) => void;
   setKanbanEnabled: (enabled: boolean) => void;
   setRavenEnabled: (enabled: boolean) => void;
+  toggleTerminal: () => void;
   navBack: () => void;
   navForward: () => void;
   canNavBack: () => boolean;

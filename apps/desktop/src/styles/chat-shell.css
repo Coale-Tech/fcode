@@ -146,6 +146,77 @@
   color: var(--ink-gray-8);
 }
 
+.workspace-bar-terminal-btn {
+  margin-left: auto;
+}
+
+.workspace-bar-terminal-btn[aria-pressed="true"] {
+  background: var(--surface-gray-3);
+  color: var(--ink-gray-8);
+}
+
+/* Integrated terminal under chat (TerminalPanel.tsx). ponytail: fixed height, add a drag handle when asked. */
+.terminal-panel {
+  display: flex;
+  flex: 0 0 280px;
+  flex-direction: column;
+  min-height: 0;
+  border-top: 1px solid var(--outline-gray-2);
+  background: var(--surface-base);
+}
+
+.terminal-panel[hidden],
+.terminal-panel-screen[hidden] {
+  display: none;
+}
+
+.terminal-panel-tabs {
+  display: flex;
+  flex: 0 0 30px;
+  align-items: center;
+  gap: 2px;
+  padding: 0 6px;
+  color: var(--ink-gray-6);
+  font-size: var(--text-xs);
+}
+
+.terminal-panel-tab {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 2px 0 8px;
+  border-radius: var(--radius-sm);
+}
+
+.terminal-panel-tab button,
+.terminal-panel-action {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 4px;
+  border-radius: var(--radius-sm);
+  color: inherit;
+  cursor: pointer;
+}
+
+.terminal-panel-tab[data-active],
+.terminal-panel-action:hover,
+.terminal-panel-tab button:hover {
+  background: var(--surface-gray-2);
+  color: var(--ink-gray-8);
+}
+
+.terminal-panel-spacer {
+  flex: 1;
+}
+
+.terminal-panel-screen {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 4px 8px;
+}
+
 .chat-surface,
 .route-page {
   position: relative;

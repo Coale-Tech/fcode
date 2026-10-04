@@ -3080,8 +3080,19 @@ export const ptBR = {
       url: "URL do site",
       urlHint: "O site Frappe onde o Raven está instalado, ex. https://erp.example.com. Você faz login no próprio site; o Fcode nunca vê sua senha.",
     },
+  },
+  "fileBird": {
+    "title": "FileBird",
+    "unavailable": "Não foi possível iniciar o FileBird. Verifique os logs e reinicie o Fcode."
+  },
+  "terminal": {
+    "title": "Terminal",
+    "toggle": "Mostrar/ocultar terminal (Ctrl+`)",
+    "tab": "Terminal {{index}}",
+    "newTab": "Novo terminal",
+    "closeTab": "Fechar terminal",
+    "hide": "Ocultar painel do terminal"
   }
-
 } satisfies EnglishCatalog;
 
 export default ptBR;

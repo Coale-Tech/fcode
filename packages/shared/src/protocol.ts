@@ -525,6 +525,19 @@ export const IPC = {
     /** Raven pane: renderer-reported hole rect and visibility (full-width Raven route only). */
     ravenSetBounds: "pi-desktop/raven/setBounds",
     ravenSetVisible: "pi-desktop/raven/setVisible",
+    /** FileBird pane: renderer-reported hole rect and visibility (full-width FileBird route only). */
+    fileBirdSetBounds: "pi-desktop/filebird/setBounds",
+    fileBirdSetVisible: "pi-desktop/filebird/setVisible",
+    /**
+     * Integrated terminal: FileBird's own terminal channels and handlers
+     * (apps/filebird/src/main/ipc/terminal.ipc.ts), which validate every field.
+     * Bytes in, `{ id }` out; `terminalAck` reports drawn chars for flow control.
+     */
+    terminalOpen: "terminal:open",
+    terminalWrite: "terminal:write",
+    terminalResize: "terminal:resize",
+    terminalAck: "terminal:ack",
+    terminalClose: "terminal:close",
   },
   event: {
     pluginChanged: "pi-desktop/event/pluginChanged",
@@ -583,6 +596,9 @@ export const IPC = {
     kanbanChanged: "pi-desktop/kanban/event/changed",
     /** Raven settings changed (nav-rail button visibility, site URL). */
     ravenChanged: "pi-desktop/raven/event/changed",
+    /** Output of every terminal session (`{ id, data }`); listeners filter by id. */
+    terminalData: "terminal:data",
+    terminalExit: "terminal:exit",
   },
 } as const;
 

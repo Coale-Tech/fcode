@@ -175,7 +175,7 @@ ADR 记录那些不应被静默改变的架构选择。中文入口与英文索�
 | 0105 | [将 Files 作为捆绑插件发布；Review 留在宿主](/adr/0105-files-as-a-bundled-plugin) | 已被 ADR 0241 取代 |
 | 0106 | [核心五条内置命令](/adr/0106-core-five-builtin-commands) | 已接受 |
 | 0107 | [让当前会话任务通知抑制原子化](/adr/0107-atomic-viewing-context-for-task-notifications) | 已接受 |
-| 0108 | [移除内置交互式终端](/adr/0108-remove-built-in-interactive-terminal) | 已接受 |
+| 0108 | [移除内置交互式终端](/adr/0108-remove-built-in-interactive-terminal) | 已被 ADR 0309 取代 |
 | 0109 | [用操作系统关联应用打开 Files 条目](/adr/0109-open-files-with-the-os-associated-application) | 已接受 |
 | 0110 | [为插件面板外壳间距契约设定版本](/adr/0110-plugin-panel-chrome-spacing-contract) | 已接受 |
 | 0111 | [在操作系统文件管理器中显示 Files](/adr/0111-reveal-files-in-file-manager) | 已接受 |

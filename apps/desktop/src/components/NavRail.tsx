@@ -6,6 +6,7 @@ import { memoryHealth } from "../features/settings/MemoryTab";
 import {
   IconChat,
   IconClock,
+  IconFileBird,
   IconKanban,
   IconMonitor,
   IconPlug,
@@ -139,6 +140,17 @@ export function NavRail() {
             <IconRaven size={16} aria-hidden />
           </TooltipButton>
         )}
+        <TooltipButton
+          type="button"
+          className={cx("nav-rail-btn", page === "filebird" && "active")}
+          data-nav="filebird"
+          tooltip={t("fileBird.title")}
+          ariaLabel={t("fileBird.title")}
+          onClick={() => setPage("filebird")}
+          aria-pressed={page === "filebird"}
+        >
+          <IconFileBird size={16} aria-hidden />
+        </TooltipButton>
         <TooltipButton
           type="button"
           className={cx("nav-rail-btn", page === "plugins" && "active")}

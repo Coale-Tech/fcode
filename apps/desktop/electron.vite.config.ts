@@ -55,13 +55,18 @@ export default defineConfig({
       "process.env.WS_NO_UTF_8_VALIDATE": "\"1\"",
     },
     build: {
+      // ssh2's optional native bindings are required in try/catch; leave
+      // them as runtime requires so a missing binding falls back to JS.
+      commonjsOptions: { ignore: ["cpu-features", "./crypto/build/Release/sshcrypto.node"] },
       rollupOptions: {
         // Bundle JS workspace packages into Main. Only runtime modules that
         // must resolve from the packaged node_modules stay external.
         // jiti is loaded lazily by the sidecar's trusted-extension loader
         // (D387); Electron main never calls it, and its transpiled dist
-        // breaks the main bundle's esbuild transform.
-        external: ["electron-updater", "jiti", "jiti/static"],
+        // breaks the main bundle's esbuild transform. FileBird's native
+        // modules (node-pty, keyring) load at runtime; ssh2 is bundled
+        // because Node ESM can't name-import it (its binding is optional).
+        external: ["electron-updater", "jiti", "jiti/static", "node-pty", "@napi-rs/keyring"],
         input: {
           index: resolve(__dirname, "electron/main/index.ts"),
           // Forked per plugin by PluginRuntime (ADR 0008); must stay a

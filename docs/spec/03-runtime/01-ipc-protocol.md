@@ -1793,6 +1793,21 @@ Renderer IPC kept for the Plan-safe preview facade and URL fallback:
 - `fs/list` stays workspace-only; traversal outside is rejected
   (`INVALID_ARGUMENT`).
 
+### Integrated terminal and FileBird (ADR 0309)
+
+- `pi-desktop/filebird/setBounds({x, y, width, height})` and
+  `pi-desktop/filebird/setVisible({visible})` → `{ok}` place and show the
+  `persist:filebird` view over the FileBird page's hole (the Raven pattern);
+  `setVisible` answers `ok: false` while FileBird's services are unavailable.
+- `terminal:open({side: "local", cwd?, cols, rows})` → `{id}`,
+  `terminal:write(id, bytes)`, `terminal:resize(id, cols, rows)`,
+  `terminal:ack(id, chars)`, `terminal:close(id)`; events `terminal:data`
+  `{id, data}` and `terminal:exit` `{id, code, signal}`. These are FileBird's
+  own validated handlers (positional arguments, raw results, errors rejected as
+  a JSON `{code, message}` message, at most 8 sessions), shared by the chat
+  window's terminal panel and FileBird's view. The renderer sends bytes only;
+  it never sends a command line.
+
 ## 13b. Desktop Menu and Window APIs
 
 The preload exposes a synchronous, read-only `platform: NodeJS.Platform`

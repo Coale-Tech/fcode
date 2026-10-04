@@ -32,11 +32,14 @@
     "dist:linux": "pnpm run build:deps && pnpm run build:host-release && pnpm run bundle:runtime && electron-vite build && electron-builder --linux --publish never"
   },
   "dependencies": {
-    "electron-updater": "^6.8.9"
+    "@napi-rs/keyring": "^2.0.0",
+    "electron-updater": "^6.8.9",
+    "node-pty": "^1.2.0-beta.15"
   },
   "devDependencies": {
     "@earendil-works/pi-ai": "0.87.1",
     "@pi-desktop/agent-host": "workspace:*",
+    "@pi-desktop/filebird": "workspace:*",
     "@pi-desktop/agent-runtime": "workspace:*",
     "@pi-desktop/host-runtime": "workspace:*",
     "@pi-desktop/i18n": "workspace:*",
@@ -51,6 +54,8 @@
     "@types/react-dom": "^19.2.4",
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^4.6.0",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
     "transcribe-cpp": "0.2.2",
     "dompurify": "^3.4.13",
     "electron": "^43.4.1",
@@ -143,6 +148,14 @@
       {
         "from": "resources/fcode-skills",
         "to": "fcode-skills"
+      },
+      {
+        "from": "../filebird/out/preload",
+        "to": "filebird/preload"
+      },
+      {
+        "from": "../filebird/out/renderer",
+        "to": "filebird/renderer"
       }
     ],
     "mac": {
@@ -311,7 +324,9 @@
       "node_modules/transcribe-cpp/**/*.node",
       "node_modules/transcribe-cpp/**/bin/**",
       "node_modules/@picovoice/pvrecorder-node/**/*.node",
-      "node_modules/@picovoice/pvrecorder-node/**/lib/**"
+      "node_modules/@picovoice/pvrecorder-node/**/lib/**",
+      "node_modules/node-pty/**",
+      "node_modules/@napi-rs/keyring-*/**"
     ],
     "asar": {
       "smartUnpack": false

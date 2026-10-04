@@ -39,6 +39,7 @@ import {
   Folder,
   FolderOpen,
   FolderPlus,
+  FolderSync,
   GripVertical,
   Globe2,
   GitFork,
@@ -253,6 +254,8 @@ export const IconEyeOff = icon(EyeOff);
 export const IconKanban = icon(Columns);
 /** Raven team chat destination (nav rail + settings). */
 export const IconRaven = icon(MessagesSquare);
+/** FileBird SFTP file manager destination (nav rail). */
+export const IconFileBird = icon(FolderSync);
 
 export function IconStop({ size = 16, style, ...props }: IconProps) {
   return (
