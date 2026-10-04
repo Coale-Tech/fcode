@@ -10,10 +10,22 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 
+## [0.18.4] — 2026-10-04
+
+### Compatibility
+
+| Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
+|-------|-----------------|-----------|-----------------|--------|
+| 0.18.4 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
+
 ### Added
 
 - **FileBird inside Fcode**: a FileBird button in the nav rail opens the FileBird SFTP client full-width in the Fcode window: local and remote panes, transfers, saved connections and remote terminals. Its data lives in Fcode's data folder and its secrets in the OS keychain under "Fcode FileBird".
 - **Integrated terminal under chat**: press Ctrl+` or use the Terminal button in the workspace bar. Tabs of real shells start in the session's workspace and keep running while you switch pages; closing a tab ends its shell, and every shell is stopped when Fcode quits. Agent Bash is unchanged and still asks for approval.
+
+### Fixed
+
+- Permission cards for multi-line shell commands rate risk by every line, not only the first, so a harmless first line no longer labels a risky script Low.
 
 ## [0.18.3] — 2026-10-04
 
