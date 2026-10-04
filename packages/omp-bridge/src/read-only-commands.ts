@@ -7,14 +7,20 @@
  *
  * The safety net is omp's: an allow-rule never matches a command containing
  * shell control (`; & | < > $ ( )`, backticks, newlines) and critical patterns
- * still prompt. `find` (-exec, -delete) and `rg` (--pre) are left out because
- * their own flags can run or delete files without any shell control.
+ * still prompt. `find` (-exec, -delete), `rg` (--pre) and `file` (-C writes
+ * magic.mgc) are left out because their own flags write or run without any
+ * shell control. Git subcommands are token-bounded so `git diff*` cannot
+ * match `git difftool --extcmd=…`.
  */
 export const READ_ONLY_BASH_PATTERNS: readonly string[] = [
-  "git status*",
-  "git log*",
-  "git diff*",
-  "git show*",
+  "git status",
+  "git status *",
+  "git log",
+  "git log *",
+  "git diff",
+  "git diff *",
+  "git show",
+  "git show *",
   "git branch",
   "ls",
   "ls *",
@@ -25,7 +31,6 @@ export const READ_ONLY_BASH_PATTERNS: readonly string[] = [
   "wc *",
   "grep *",
   "which *",
-  "file *",
   "stat *",
 ];
 
