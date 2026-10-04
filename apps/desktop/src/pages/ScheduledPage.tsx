@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ProjectRecord, ScheduledTask, ScheduledTaskRun } from "@pi-desktop/shared";
 import { useAppStore } from "../stores/app-store";
@@ -90,6 +90,18 @@ export function ScheduledPage() {
     aborted: "scheduled.statusAborted",
     error: "scheduled.statusError",
   } as const;
+  const insights = useMemo(() => {
+    const completed = runs.filter((run) => run.status === "completed");
+    const durations = completed
+      .filter((run) => run.endedAt)
+      .map((run) => Date.parse(run.endedAt!) - Date.parse(run.startedAt));
+    const avgMs = durations.length ? durations.reduce((sum, ms) => sum + ms, 0) / durations.length : 0;
+    return {
+      total: runs.length,
+      successRate: runs.length ? Math.round((completed.length / runs.length) * 100) : 0,
+      avgSeconds: Math.round(avgMs / 1000),
+    };
+  }, [runs]);
   return (
     <div className="thread-scroll">
       <div className="page-frame">
@@ -98,16 +110,44 @@ export function ScheduledPage() {
             <h1 className="page-title">{t("scheduled.title")}</h1>
             <p className="dest-row-meta">{t("scheduled.description")}</p>
           </div>
-          <Button
-            variant="primary"
-            disabled={busy}
-            onClick={() => {
-              setTab("tasks");
-              setEditor("new");
-            }}
-          >
-            {t("scheduled.create")}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={busy}
+              onClick={() =>
+                void action(async () => {
+                  const result = await api.exportScheduled();
+                  if (result) showToast(t("scheduled.exportDone", { count: result.count }));
+                })
+              }
+            >
+              {t("scheduled.export")}
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={busy}
+              onClick={() =>
+                void action(async () => {
+                  const result = await api.importScheduled();
+                  if (result) showToast(t("scheduled.importDone", { count: result.imported }));
+                })
+              }
+            >
+              {t("scheduled.import")}
+            </Button>
+            <Button
+              variant="primary"
+              disabled={busy}
+              onClick={() => {
+                setTab("tasks");
+                setEditor("new");
+              }}
+            >
+              {t("scheduled.create")}
+            </Button>
+          </div>
         </div>
         <div className="mb-4 flex gap-2" role="group" aria-label={t("scheduled.title")}>
           <Button
@@ -246,6 +286,13 @@ export function ScheduledPage() {
         {tab === "runs" && (
           <>
             <p className="dest-row-meta mb-3">{t("scheduled.historyHint")}</p>
+            {runs.length > 0 && (
+              <Panel className="page-card mb-3 flex gap-2">
+                <Badge>{t("scheduled.insightsRuns")}: {insights.total}</Badge>
+                <Badge tone="success">{t("scheduled.insightsSuccess")}: {insights.successRate}%</Badge>
+                <Badge>{t("scheduled.insightsAvgDuration")}: {insights.avgSeconds}s</Badge>
+              </Panel>
+            )}
             {!runs.length && loaded && (
               <Panel className="page-card page-empty">{t("scheduled.emptyRuns")}</Panel>
             )}

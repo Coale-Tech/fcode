@@ -60,6 +60,11 @@ const KanbanPage = lazy(() =>
     default: module.KanbanPage,
   })),
 );
+const RavenPage = lazy(() =>
+  import("../../pages/RavenPage").then((module) => ({
+    default: module.RavenPage,
+  })),
+);
 
 export function AppShell() {
   const {
@@ -272,6 +277,10 @@ export function AppShell() {
                     <div className="route-surface route-page">
                       <PullRequestsPage />
                     </div>
+                  ) : page === "raven" ? (
+                    <div className="route-surface route-page">
+                      <RavenPage blocked={searchOpen} />
+                    </div>
                   ) : page === "scheduled" ? (
                     <div className="route-surface route-page">
                       <ScheduledPage />
@@ -326,7 +335,7 @@ export function AppShell() {
               disabled={
                 !presentedWorkPanelOpen &&
                 !workPanelExiting &&
-                (page === "settings" || page === "plugins" || page === "scheduled")
+                (page === "settings" || page === "plugins" || page === "scheduled" || page === "raven")
               }
               onClick={togglePresentedWorkPanel}
             >

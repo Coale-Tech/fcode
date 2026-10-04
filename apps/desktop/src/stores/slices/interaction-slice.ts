@@ -41,6 +41,7 @@ export function createInteractionSlice({
   | "toggleBenchLogFollowTail"
   | "setShowKanbanSessions"
   | "setKanbanEnabled"
+  | "setRavenEnabled"
   | "canNavBack"
   | "canNavForward"
   | "navBack"
@@ -98,6 +99,7 @@ export function createInteractionSlice({
       set((state) => ({ benchLogFollowTail: !state.benchLogFollowTail })),
     setShowKanbanSessions: (showKanbanSessions) => set({ showKanbanSessions }),
     setKanbanEnabled: (kanbanEnabled) => set({ kanbanEnabled }),
+    setRavenEnabled: (ravenEnabled) => set({ ravenEnabled }),
     canNavBack: () => get().navIndex > 0,
     canNavForward: () => get().navIndex < get().navStack.length - 1,
 

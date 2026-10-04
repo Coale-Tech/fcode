@@ -181,6 +181,17 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
 
       {part === "tools" && (
         <>
+        {/* ── Approvals ────────────────────────────────────────────── */}
+        <SettingsCard title={t("settings.ompApprovalsGroup")}>
+          <SettingsRow title={t("settings.ompBashAutoApproveReadOnly")} description={t("settings.ompBashAutoApproveReadOnlyDesc")}>
+            <SettingsToggle
+              checked={omp["bash.autoApproveReadOnly"] !== false}
+              label={t("settings.ompBashAutoApproveReadOnly")}
+              onChange={() => void save({ "bash.autoApproveReadOnly": !(omp["bash.autoApproveReadOnly"] !== false) })}
+            />
+          </SettingsRow>
+        </SettingsCard>
+
         {/* ── Eval & Python ────────────────────────────────────────── */}
         <SettingsCard title={t("settings.ompEvalGroup")}>
           <SettingsRow title={t("settings.ompEvalPy")} description={t("settings.ompEvalPyDesc")}>

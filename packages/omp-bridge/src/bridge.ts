@@ -37,6 +37,7 @@ import {
 } from "./ui-requests.js";
 import type { OmpExtensionUiRequest } from "./ui-requests.js";
 import { adaptMessageFrame } from "./messages.js";
+import { PROMPT_BASH_PATTERNS, READ_ONLY_BASH_PATTERNS } from "./read-only-commands.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Binary resolution (T7 / DX6)
@@ -197,6 +198,16 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
     `  relay: ${browserRelay}`,
     ...(s["browser.cdpUrl"]   ? [`  cdpUrl: ${JSON.stringify(s["browser.cdpUrl"])}`]   : []),
     ...(s["browser.relayUrl"] ? [`  relayUrl: ${JSON.stringify(s["browser.relayUrl"])}`] : []),
+    // Ordered rules, first match wins: the prompt guard must precede the allow-rules.
+    ...(s["bash.autoApproveReadOnly"] !== false
+      ? [
+          "",
+          "bash:",
+          "  patterns:",
+          ...PROMPT_BASH_PATTERNS.map((p) => `    - { match: ${JSON.stringify(p)}, approval: prompt }`),
+          ...READ_ONLY_BASH_PATTERNS.map((p) => `    - { match: ${JSON.stringify(p)}, approval: allow }`),
+        ]
+      : []),
     ...(opts.memory
       ? [
           "",

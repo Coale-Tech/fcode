@@ -65,6 +65,7 @@ import { VoiceOverlay } from "../features/voice/VoiceOverlay";
 import "../styles/voice.css";
 import { ComposerStatus } from "../features/chat/composer/ComposerStatus";
 import { ExtWidget } from "../features/chat/composer/ExtWidget";
+import { GitControlBar } from "../features/chat/composer/GitControlBar";
 
 const EMPTY_QUEUED_PROMPTS: QueuedPrompt[] = [];
 
@@ -569,6 +570,7 @@ export function Composer({
           </div>
         ) : null}
         <ExtWidget sessionId={activeSessionId ?? undefined} />
+        <GitControlBar disabled={sendBlocked} />
         <ComposerStatus
           t={t}
           queuedPrompts={queuedPrompts}

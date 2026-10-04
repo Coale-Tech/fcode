@@ -953,7 +953,8 @@ sklm: {
       "remoteHosts": "Hosts remotos",
       "info": "Información",
       "voice": "Voz",
-      "kanban": "Kanban"
+      "kanban": "Kanban",
+      "raven": "Raven"
     },
     "navDesc": {
       "general": "Apariencia, idioma, energía y red.",
@@ -969,6 +970,7 @@ sklm: {
       "projects": "Archiva, restaura y elimina proyectos.",
       "about": "Versión, registros, comentarios y actualizaciones.",
       "kanban": "Ejecuta tareas de agentes desde un tablero.",
+      "raven": "Chatea con tu equipo en Raven.",
     },
     "configSync": {
       title: "Cloud sync",
@@ -1531,6 +1533,9 @@ sklm: {
     "ompTaskMaxConcurrencyDesc": "Maximum number of subagents running concurrently (0 = unlimited).",
     "ompTaskMaxRecursionDepth": "Max Task Recursion",
     "ompTaskMaxRecursionDepthDesc": "How many levels deep subagents can spawn their own subagents (-1 = unlimited).",
+    "ompApprovalsGroup": "Aprobaciones",
+    "ompBashAutoApproveReadOnly": "Aprobar automáticamente comandos de shell de solo lectura",
+    "ompBashAutoApproveReadOnlyDesc": "Ejecutar comandos como git status, ls y grep sin preguntar. Los comandos encadenados (&&, |, ;) seguirán preguntando.",
     "ompEvalGroup": "Eval & Python",
     "ompEvalPy": "Python Eval",
     "ompEvalPyDesc": "Enable the Python eval backend.",
@@ -2102,6 +2107,14 @@ sklm: {
     "open": "Abierto",
     "draft": "Borrador"
   },
+  "git": {
+    "branch": "Rama",
+    "switchBranch": "Cambiar rama",
+    "noBranches": "No se encontraron ramas",
+    "pull": "Obtener",
+    "push": "Publicar",
+    "createPr": "Crear PR"
+  },
   "scheduled": {
     "description": "Ejecuta tareas recurrentes mientras Fcode está abierto.",
     "edit": "Editar tarea",
@@ -2166,6 +2179,13 @@ sklm: {
     "healthStale": "El planificador no responde",
     "healthError": "Error del planificador: {{error}}",
     "healthRetry": "Reintentar",
+    "insightsRuns": "Ejecuciones",
+    "insightsSuccess": "Tasa de éxito",
+    "insightsAvgDuration": "Dur. promedio",
+    "export": "Exportar",
+    "import": "Importar",
+    "exportDone": "{{count}} tareas exportadas",
+    "importDone": "{{count}} tareas importadas",
   },
   "permission": {
     "title": "Permiso necesario",
@@ -3095,6 +3115,17 @@ sklm: {
       "done": "Tarea completada: {title}",
       "dailyCap": "Kanban: límite diario de {count} tareas iniciadas alcanzado"
     },
+  },
+  "raven": {
+    "title": "Raven",
+    "empty": "Agrega la URL de tu sitio Raven en Configuración para empezar a chatear.",
+    "openSettings": "Abrir configuración de Raven",
+    "settings": {
+      "title": "Raven",
+      "enabled": "Mostrar Raven en la barra lateral",
+      "url": "URL del sitio",
+      "urlHint": "El sitio Frappe donde Raven está instalado, p. ej. https://erp.example.com. Inicias sesión en el propio sitio; Fcode nunca ve tu contraseña."
+    }
   }
 
 } satisfies EnglishCatalog;

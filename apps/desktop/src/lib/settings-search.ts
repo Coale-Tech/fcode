@@ -21,6 +21,7 @@ export type SettingsTabId =
   | "aiTools"
   | "aiExtensions"
   | "kanban"
+  | "raven"
   | "about";
 
 export type SettingsNavGroupId =
@@ -306,6 +307,8 @@ export const SETTINGS_NAV: SettingsNavEntry[] = [
     titleKey: "settings.nav.aiTools",
     group: "ai",
     keywordKeys: [
+      "settings.ompApprovalsGroup",
+      "settings.ompBashAutoApproveReadOnly",
       "settings.ompEvalGroup",
       "settings.ompEvalPy",
       "settings.ompEvalJs",
@@ -365,6 +368,13 @@ export const SETTINGS_NAV: SettingsNavEntry[] = [
       "kanban.dispatcher.pause",
       "kanban.dispatcher.resume",
     ],
+  },
+  {
+    id: "raven",
+    labelKey: "settings.nav.raven",
+    titleKey: "raven.settings.title",
+    group: "ai",
+    keywordKeys: ["raven.settings.enabled", "raven.settings.url", "raven.title"],
   },
   {
     id: "about",

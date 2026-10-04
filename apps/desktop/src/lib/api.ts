@@ -167,6 +167,7 @@ import type {
   KanbanBoard,
   KanbanSettings,
   KanbanRun,
+  RavenSettings,
 } from "@pi-desktop/shared";
 import {
   defaultCommandShellForPlatform,
@@ -874,6 +875,9 @@ export const api = {
     invoke<{ workspace: ProjectWorkspace | null }>(IPC.invoke.projectSet, path),
   listPullRequests: () =>
     invoke<{ pulls: PullRequestSummary[]; error?: string }>(IPC.invoke.pullsList),
+  /** Local branches of the current workspace repo; `error` when there is no workspace or git failed. */
+  listGitBranches: () =>
+    invoke<{ branches: string[]; error?: "NO_WORKSPACE" | "GIT_FAILED" }>(IPC.invoke.gitBranchList),
   listScheduled: () =>
     invoke<{ tasks: ScheduledTask[]; health?: { lastTickAt: number | undefined; lastError: string | undefined; hostAvailable: boolean } }>(IPC.invoke.scheduledList),
   createScheduled: (input: {
@@ -900,6 +904,10 @@ export const api = {
   deleteScheduled: (id: string) => invoke(IPC.invoke.scheduledDelete, id),
   executeScheduled: (id: string) => invoke<{ sessionId: string }>(IPC.invoke.scheduledExecute, id),
   listScheduledRuns: () => invoke<{ runs: ScheduledTaskRun[] }>(IPC.invoke.scheduledListRuns),
+  /** Save every scheduled task to a JSON file the user picks; null when the dialog is cancelled. */
+  exportScheduled: () => invoke<{ path: string; count: number } | null>(IPC.invoke.scheduledExport),
+  /** Import scheduled tasks from a JSON file the user picks; null when the dialog is cancelled. */
+  importScheduled: () => invoke<{ imported: number } | null>(IPC.invoke.scheduledImport),
   runScheduled: (id: string) =>
     invoke<{ sessionId: string; prompt: string; task: ScheduledTask }>(
       IPC.invoke.scheduledRun,
@@ -1884,6 +1892,17 @@ export const api = {
   /** Kanban: update settings. */
   kanbanSettingsSet: (settings: Partial<KanbanSettings>) =>
     invoke<{ settings: KanbanSettings }>(IPC.invoke.kanbanSettingsSet, { settings }),
+  /** Raven: get settings (enabled, site URL). */
+  ravenSettingsGet: () =>
+    invoke<{ settings: RavenSettings }>(IPC.invoke.ravenSettingsGet),
+  /** Raven: update settings; the main process validates the URL. */
+  ravenSettingsSet: (settings: Partial<RavenSettings>) =>
+    invoke<{ settings: RavenSettings }>(IPC.invoke.ravenSettingsSet, { settings }),
+  /** Raven pane: place it over the page's hole (window-content coordinates). */
+  ravenSetBounds: (bounds: { x: number; y: number; width: number; height: number }) =>
+    invoke(IPC.invoke.ravenSetBounds, bounds),
+  /** Raven pane: show on the Raven route, hide when leaving it. */
+  ravenSetVisible: (visible: boolean) => invoke(IPC.invoke.ravenSetVisible, { visible }),
   /** Kanban: pause or resume the dispatcher. */
   kanbanSetPaused: (paused: boolean) =>
     invoke<{ paused: boolean }>(IPC.invoke.kanbanSetPaused, { paused }),

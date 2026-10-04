@@ -12,6 +12,7 @@ import type { Stats } from "node:fs";
 import { open as openFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { writeJsonAtomicSync } from "./atomic-json";
 import {
   busTopicAllowed,
   isDeniedFsPath,
@@ -4761,9 +4762,7 @@ export class PluginRuntime {
             ...current,
             [THEME_VARIABLES_SETTINGS_KEY]: { ...stored, [id]: { ...previous, ...patch } },
           };
-          const dir = this.pluginDataDir(pluginId);
-          mkdirSync(dir, { recursive: true });
-          writeFileSync(settingsFile, JSON.stringify(next, null, 2), "utf8");
+          writeJsonAtomicSync(settingsFile, next);
           const registered = this.themes.get(id);
           if (registered) {
             registered.variablesCss = this.themeVariablesCss(loaded, id, declarations);
@@ -4793,7 +4792,7 @@ export class PluginRuntime {
         setSettings: async (partial: Record<string, unknown>) => {
           const current = await this.hostApi(loaded).plugin.getSettings();
           const next = { ...current, ...partial };
-          writeFileSync(join(dataPath(), "settings.json"), JSON.stringify(next, null, 2), "utf8");
+          writeJsonAtomicSync(join(dataPath(), "settings.json"), next);
         },
         getDataPath: async () => dataPath(),
       },

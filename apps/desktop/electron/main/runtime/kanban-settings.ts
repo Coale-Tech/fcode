@@ -1,6 +1,7 @@
 /** Kanban board settings — simple JSON file in dataDir. */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { writeJsonAtomicSync } from "../atomic-json";
 
 export type KanbanSettings = {
   enabled: boolean;
@@ -32,7 +33,7 @@ export function readKanbanSettings(dataDir: string): KanbanSettings {
 }
 
 export function writeKanbanSettings(dataDir: string, settings: KanbanSettings): void {
-  writeFileSync(join(dataDir, SETTINGS_FILE), JSON.stringify(settings, null, 2), "utf8");
+  writeJsonAtomicSync(join(dataDir, SETTINGS_FILE), settings);
 }
 
 export function validateKanbanSettings(input: unknown): KanbanSettings {

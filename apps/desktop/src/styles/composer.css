@@ -64,6 +64,25 @@
   box-shadow: var(--ds-shadow-composer);
 }
 
+/* Git control bar: branch chip + pull / push / PR prompts above the input. */
+.git-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 6px;
+}
+
+.git-bar-menu {
+  width: min(260px, calc(100vw - 24px));
+}
+
+.git-bar-empty {
+  padding: 6px 8px;
+  color: var(--ds-text-tertiary);
+  font-size: var(--text-sm);
+}
+
 .composer-queued-prompts {
   display: flex;
   flex-direction: column;

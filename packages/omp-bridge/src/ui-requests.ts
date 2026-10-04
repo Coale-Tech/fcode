@@ -15,6 +15,9 @@
  * - "set_editor_text" → sidecar.ext_ui editor_text (prefill Composer draft)
  */
 
+import type { Risk } from "@pi-desktop/shared";
+import { isReadOnlyCommand } from "./read-only-commands.js";
+
 export interface OmpExtensionUiRequest {
   id: string;
   method: string;
@@ -45,7 +48,7 @@ export interface MappedToolPermissionRequest {
   toolCallId: string;
   toolName: string;
   argsPreview: string;
-  risk: "high" | "low";
+  risk: Risk;
   reason: string;
 }
 
@@ -113,6 +116,30 @@ export type MappedUiRequest =
   | MappedExtTitle
   | null; // null = cancel
 
+const TOOL_RISK: Record<string, Risk> = {
+  read: "low", grep: "low", glob: "low", ls: "low", lsp: "low", webfetch: "low", web_search: "low",
+  fcode_bench_execute_read: "low", fcode_canvas_read: "low",
+  write: "high", edit: "high", manage_skill: "high", task: "high",
+};
+// Destructive, privileged or network-reaching commands anywhere in the line,
+// so `git status && rm -rf /` is high, not low.
+const HIGH_RISK_COMMAND =
+  /(?:^|[\s;&|(`])(?:sudo|rm|rmdir|dd|mkfs|chmod|chown|kill|pkill|killall|curl|wget|ssh|scp)\s|\bgit\s+(?:push|reset\s+--hard|clean|rebase)\b/;
+
+/**
+ * Advisory risk badge for a permission card. Approval authority stays with
+ * omp; this only picks the card's label and colour.
+ */
+export function classifyToolRisk(toolName: string, argsPreview: string): Risk {
+  if (toolName.startsWith("kanban_")) return "low";
+  if (Object.hasOwn(TOOL_RISK, toolName)) return TOOL_RISK[toolName]!;
+  if (toolName !== "bash") return "medium";
+  // omp's approval body carries the command as `Command: <cmd>` (bash.ts).
+  const command = /^Command: (.*)$/m.exec(argsPreview)?.[1] ?? argsPreview;
+  if (HIGH_RISK_COMMAND.test(command)) return "high";
+  return isReadOnlyCommand(command) ? "low" : "medium";
+}
+
 /**
  * Map one omp extension_ui_request frame to its Fcode equivalent.
  * Returns null for methods that are cleared (cancel) or safely ignored.
@@ -139,7 +166,7 @@ export function mapExtensionUiRequest(
         toolName,
         // argsPreview carries site, method and kwargs for bench tools (design D14)
         argsPreview: req.title ?? "",
-        risk: "high",
+        risk: classifyToolRisk(toolName, req.title ?? ""),
         reason: req.message ?? "",
       };
 
@@ -158,7 +185,7 @@ export function mapExtensionUiRequest(
           toolCallId,
           toolName: openTool?.toolName ?? approval[1],
           argsPreview: approval[2],
-          risk: "high",
+          risk: classifyToolRisk(openTool?.toolName ?? approval[1], approval[2]),
           reason: "",
         };
       }

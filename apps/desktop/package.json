@@ -315,6 +315,11 @@
     ],
     "asar": {
       "smartUnpack": false
+    },
+    "electronFuses": {
+      "onlyLoadAppFromAsar": true,
+      "enableNodeCliInspectArguments": false,
+      "enableCookieEncryption": true
     }
   }
 }

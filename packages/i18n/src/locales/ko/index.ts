@@ -962,6 +962,7 @@ sklm: {
       info: "정보",
       voice: "음성",
       kanban: "Kanban",
+      raven: "Raven",
     },
     navDesc: {
       general: "화면, 언어, 전원 및 네트워크.",
@@ -977,6 +978,7 @@ sklm: {
       projects: "프로젝트를 보관, 복원, 삭제합니다.",
       about: "버전, 로그, 피드백 및 업데이트.",
       kanban: "보드에서 에이전트 작업을 실행합니다.",
+      raven: "Raven에서 팀과 채팅하세요.",
     },
     configSync: {
       title: "Cloud sync",
@@ -1542,6 +1544,9 @@ sklm: {
     ompTaskMaxConcurrencyDesc: "Maximum number of subagents running concurrently (0 = unlimited).",
     ompTaskMaxRecursionDepth: "Max Task Recursion",
     ompTaskMaxRecursionDepthDesc: "How many levels deep subagents can spawn their own subagents (-1 = unlimited).",
+    ompApprovalsGroup: "승인",
+    ompBashAutoApproveReadOnly: "읽기 전용 셸 명령 자동 승인",
+    ompBashAutoApproveReadOnlyDesc: "git status, ls, grep 등의 명령을 묻지 않고 실행합니다. 연결된 명령(&&, |, ;)은 여전히 확인을 요청합니다.",
     ompEvalGroup: "Eval & Python",
     ompEvalPy: "Python Eval",
     ompEvalPyDesc: "Enable the Python eval backend.",
@@ -2118,6 +2123,14 @@ sklm: {
     open: "열기",
     draft: "초안",
   },
+  git: {
+    branch: "브랜치",
+    switchBranch: "브랜치 전환",
+    noBranches: "브랜치를 찾을 수 없음",
+    pull: "풀",
+    push: "푸시",
+    createPr: "PR 생성",
+  },
   scheduled: {
     description: "Fcode이 열려 있는 동안 반복 에이전트 작업을 실행합니다.",
     edit: "작업 편집",
@@ -2182,6 +2195,13 @@ sklm: {
     healthStale: "스케줄러가 응답하지 않음",
     healthError: "스케줄러 오류: {{error}}",
     healthRetry: "재시도",
+    insightsRuns: "실행",
+    insightsSuccess: "성공률",
+    insightsAvgDuration: "평균 소요 시간",
+    export: "내보내기",
+    import: "가져오기",
+    exportDone: "{{count}}개 작업 내보냄",
+    importDone: "{{count}}개 작업 가져옴",
   },
   permission: {
     title: "권한 필요",
@@ -3133,6 +3153,17 @@ importConfirm: "가져온 확장은 에이전트 프로세스 안에서 에이�
       "blocked": "작업 차단됨: {title}",
       "done": "작업 완료: {title}",
       "dailyCap": "칸반: 하루 {count}개 시작 한도에 도달했습니다"
+    },
+  },
+  raven: {
+    title: "Raven",
+    empty: "채팅을 시작하려면 설정에서 Raven 사이트 URL을 추가하세요.",
+    openSettings: "Raven 설정 열기",
+    settings: {
+      title: "Raven",
+      enabled: "사이드바에 Raven 표시",
+      url: "사이트 URL",
+      urlHint: "Raven이 설치된 Frappe 사이트(예: https://erp.example.com). 해당 사이트에서 직접 로그인하며 Fcode는 비밀번호를 볼 수 없습니다.",
     },
   }
 

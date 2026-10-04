@@ -953,7 +953,8 @@ sklm: {
       "remoteHosts": "Remote-Hosts",
       "info": "Informationen",
       "voice": "Sprache",
-      "kanban": "Kanban"
+      "kanban": "Kanban",
+      "raven": "Raven"
     },
     "navDesc": {
       "general": "Darstellung, Sprache, Energie und Netzwerk.",
@@ -969,6 +970,7 @@ sklm: {
       "projects": "Projekte archivieren, wiederherstellen und löschen.",
       "about": "Version, Protokolle, Feedback und Updates.",
       "kanban": "Agentenaufgaben über ein Board ausführen.",
+      "raven": "Chatte mit deinem Team in Raven.",
     },
     "configSync": {
       title: "Cloud sync",
@@ -1531,6 +1533,9 @@ sklm: {
     "ompTaskMaxConcurrencyDesc": "Maximum number of subagents running concurrently (0 = unlimited).",
     "ompTaskMaxRecursionDepth": "Max Task Recursion",
     "ompTaskMaxRecursionDepthDesc": "How many levels deep subagents can spawn their own subagents (-1 = unlimited).",
+    "ompApprovalsGroup": "Genehmigungen",
+    "ompBashAutoApproveReadOnly": "Nur-Lese-Shell-Befehle automatisch genehmigen",
+    "ompBashAutoApproveReadOnlyDesc": "Befehle wie git status, ls und grep ohne Nachfrage ausführen. Verkettete Befehle (&&, |, ;) fragen weiterhin nach.",
     "ompEvalGroup": "Eval & Python",
     "ompEvalPy": "Python Eval",
     "ompEvalPyDesc": "Enable the Python eval backend.",
@@ -2102,6 +2107,14 @@ sklm: {
     "open": "Offen",
     "draft": "Entwurf"
   },
+  "git": {
+    "branch": "Branch",
+    "switchBranch": "Branch wechseln",
+    "noBranches": "Keine Branches gefunden",
+    "pull": "Pullen",
+    "push": "Pushen",
+    "createPr": "PR erstellen"
+  },
   "scheduled": {
     "description": "Wiederkehrende Agent-Aufgaben ausführen, solange Fcode geöffnet ist.",
     "edit": "Aufgabe bearbeiten",
@@ -2166,6 +2179,13 @@ sklm: {
     "healthStale": "Planer reagiert nicht",
     "healthError": "Planer-Fehler: {{error}}",
     "healthRetry": "Wiederholen",
+    "insightsRuns": "Ausführungen",
+    "insightsSuccess": "Erfolgsrate",
+    "insightsAvgDuration": "Durchschn. Dauer",
+    "export": "Exportieren",
+    "import": "Importieren",
+    "exportDone": "{{count}} Aufgaben exportiert",
+    "importDone": "{{count}} Aufgaben importiert",
   },
   "permission": {
     "title": "Berechtigung erforderlich",
@@ -3095,6 +3115,17 @@ sklm: {
       "done": "Aufgabe erledigt: {title}",
       "dailyCap": "Kanban: Tageslimit von {count} Starts erreicht"
     },
+  },
+  "raven": {
+    "title": "Raven",
+    "empty": "Füge deine Raven-Website-URL in den Einstellungen hinzu, um mit dem Chatten zu beginnen.",
+    "openSettings": "Raven-Einstellungen öffnen",
+    "settings": {
+      "title": "Raven",
+      "enabled": "Raven in der Seitenleiste anzeigen",
+      "url": "Website-URL",
+      "urlHint": "Die Frappe-Website, auf der Raven installiert ist, z. B. https://erp.example.com. Du meldest dich auf der Website an; Fcode sieht dein Passwort nie."
+    }
   }
 
 } satisfies EnglishCatalog;

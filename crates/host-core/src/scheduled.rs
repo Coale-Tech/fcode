@@ -121,10 +121,15 @@ fn config_with_mode(mut config: Value, mode: &str) -> String {
     config.to_string()
 }
 
-fn task_config_json(value: &Value) -> String {
+/// Exported tasks carry schedule/workspacePath at top level: apply them like
+/// create does. Input create would reject keeps the legacy config path.
+fn task_config_json(value: &Value, cadence: &str) -> String {
     let mut config = config_value(config_input(value));
-    if automation::validate_execution_input(value).is_ok() {
-        automation::configure_execution(&mut config, value);
+    if automation::configure(&mut config, value, cadence, now_ms()).is_err() {
+        config = config_value(config_input(value));
+        if automation::validate_execution_input(value).is_ok() {
+            automation::configure_execution(&mut config, value);
+        }
     }
     config_with_mode(config, &task_mode(value))
 }
@@ -378,7 +383,7 @@ pub fn import_tasks(db: &Database, tasks: &[Value]) -> Result<usize> {
             .and_then(|v| v.as_str())
             .unwrap_or("Scheduled task");
         let cadence = normalize_cadence(task.get("cadence").and_then(|v| v.as_str()));
-        let config_json = task_config_json(task);
+        let config_json = task_config_json(task, &cadence);
         let enabled = task
             .get("enabled")
             .and_then(|v| v.as_bool())
@@ -535,6 +540,36 @@ mod tests {
 
         assert!(delete_task(&db, &task.id).unwrap());
         assert!(list_runs(&db, Some(&task.id), 10).unwrap().is_empty());
+    }
+
+    #[test]
+    fn exported_task_keeps_schedule_and_project_through_import() {
+        let source = test_db();
+        let created = create_task(
+            &source,
+            &json!({
+                "prompt": "nightly review",
+                "cadence": "daily",
+                "schedule": { "hour": 9, "minute": 30, "weekday": 0 },
+                "workspacePath": std::env::temp_dir().to_str().unwrap(),
+            }),
+        )
+        .unwrap();
+        assert!(created.workspace_path.is_some());
+        let exported = serde_json::to_value(list_tasks(&source).unwrap()).unwrap();
+        let target = test_db();
+        assert_eq!(
+            import_tasks(&target, exported.as_array().unwrap()).unwrap(),
+            1
+        );
+        let imported = get_task(&target, &created.id).unwrap().unwrap();
+        assert_eq!(
+            serde_json::to_value(&imported.schedule).unwrap(),
+            serde_json::to_value(&created.schedule).unwrap()
+        );
+        assert_eq!(imported.workspace_path, created.workspace_path);
+        assert!(imported.next_run_at.is_some());
+        assert!(imported.calendar_configured);
     }
 
     #[test]

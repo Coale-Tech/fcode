@@ -962,6 +962,7 @@ sklm: {
       info: "Bilgi",
       voice: "Ses",
       kanban: "Kanban",
+      raven: "Raven",
     },
     navDesc: {
       general: "Görünüm, dil, güç ve ağ.",
@@ -977,6 +978,7 @@ sklm: {
       projects: "Projeleri arşivleyin, geri yükleyin ve silin.",
       about: "Sürüm, günlükler, geri bildirim ve güncellemeler.",
       kanban: "Ajan görevlerini bir panodan çalıştırın.",
+      raven: "Raven'da takımınızla sohbet edin.",
     },
     configSync: {
       title: "Bulut senkronizasyonu",
@@ -1532,6 +1534,9 @@ sklm: {
     ompTaskMaxConcurrencyDesc: "Maximum number of subagents running concurrently (0 = unlimited).",
     ompTaskMaxRecursionDepth: "Max Task Recursion",
     ompTaskMaxRecursionDepthDesc: "How many levels deep subagents can spawn their own subagents (-1 = unlimited).",
+    ompApprovalsGroup: "Onaylar",
+    ompBashAutoApproveReadOnly: "Salt okunur kabuk komutlarını otomatik onayla",
+    ompBashAutoApproveReadOnlyDesc: "git status, ls ve grep gibi komutları sormadan çalıştırır. Zincirlenmiş komutlar (&&, |, ;) hâlâ onay ister.",
     ompEvalGroup: "Eval & Python",
     ompEvalPy: "Python Eval",
     ompEvalPyDesc: "Enable the Python eval backend.",
@@ -2108,6 +2113,14 @@ sklm: {
     open: "Açık",
     draft: "Taslak",
   },
+  git: {
+    branch: "Dal",
+    switchBranch: "Dal değiştir",
+    noBranches: "Dal bulunamadı",
+    pull: "Çek",
+    push: "İt",
+    createPr: "PR oluştur",
+  },
   scheduled: {
     description: "Fcode açıkken yinelenen ajan görevlerini çalıştırın.",
     edit: "Görevi düzenle",
@@ -2172,6 +2185,13 @@ sklm: {
     healthStale: "Zamanlayıcı yanıt vermiyor",
     healthError: "Zamanlayıcı hatası: {{error}}",
     healthRetry: "Yeniden dene",
+    insightsRuns: "Çalışmalar",
+    insightsSuccess: "Başarı oranı",
+    insightsAvgDuration: "Ort. süre",
+    export: "Dışa aktar",
+    import: "İçe aktar",
+    exportDone: "{{count}} görev dışa aktarıldı",
+    importDone: "{{count}} görev içe aktarıldı",
   },
   permission: {
     title: "İzin gerekiyor",
@@ -3123,6 +3143,17 @@ importConfirm: "İçe aktarılan uzantılar ajan sürecinde, ajanın kendi araç
       "blocked": "Görev engellendi: {title}",
       "done": "Görev tamamlandı: {title}",
       "dailyCap": "Kanban: günlük {count} başlatma sınırına ulaşıldı",
+    },
+  },
+  raven: {
+    title: "Raven",
+    empty: "Sohbete başlamak için Ayarlar'a Raven site URL'sini ekleyin.",
+    openSettings: "Raven ayarlarını aç",
+    settings: {
+      title: "Raven",
+      enabled: "Raven'ı kenar çubuğunda göster",
+      url: "Site URL'si",
+      urlHint: "Raven'ın kurulu olduğu Frappe sitesi, ör. https://erp.example.com. Siteye kendiniz giriş yaparsınız; Fcode şifrenizi hiçbir zaman görmez.",
     },
   }
 

@@ -952,6 +952,7 @@ sklm: {
       info: "資訊",
       voice: "語音",
       kanban: "看板",
+      raven: "Raven",
     },
     navDesc: {
       general: "外觀、語言、電源與網路。",
@@ -967,6 +968,7 @@ sklm: {
       projects: "封存、還原與刪除專案。",
       about: "版本、記錄、回饋與更新。",
       kanban: "透過看板執行智慧體任務。",
+      raven: "在 Raven 中與團隊溝通。",
     },
     configSync: {
       title: "雲端同步",
@@ -1518,6 +1520,9 @@ sklm: {
     ompTaskMaxConcurrencyDesc: "Maximum number of subagents running concurrently (0 = unlimited).",
     ompTaskMaxRecursionDepth: "Max Task Recursion",
     ompTaskMaxRecursionDepthDesc: "How many levels deep subagents can spawn their own subagents (-1 = unlimited).",
+    ompApprovalsGroup: "審批",
+    ompBashAutoApproveReadOnly: "自動核准唯讀 Shell 指令",
+    ompBashAutoApproveReadOnlyDesc: "無需確認即可執行 git status、ls 和 grep 等指令。鏈式指令（&&、|、;）仍需確認。",
     ompEvalGroup: "Eval & Python",
     ompEvalPy: "Python Eval",
     ompEvalPyDesc: "Enable the Python eval backend.",
@@ -2088,6 +2093,14 @@ sklm: {
     open: "開啟",
     draft: "草稿",
   },
+  git: {
+    branch: "分支",
+    switchBranch: "切換分支",
+    noBranches: "找不到分支",
+    pull: "拉取",
+    push: "推送",
+    createPr: "建立 PR",
+  },
   scheduled: {
     description: "應用程式執行時，按排程自動執行 Agent 任務。",
     edit: "編輯任務",
@@ -2152,6 +2165,13 @@ sklm: {
     healthStale: "排程器無回應",
     healthError: "排程器錯誤：{{error}}",
     healthRetry: "重試",
+    insightsRuns: "執行次數",
+    insightsSuccess: "成功率",
+    insightsAvgDuration: "平均時長",
+    export: "匯出",
+    import: "匯入",
+    exportDone: "已匯出 {{count}} 個任務",
+    importDone: "已匯入 {{count}} 個任務",
   },
   permission: {
     title: "需要許可權",
@@ -3082,6 +3102,17 @@ sklm: {
       "blocked": "任務已封鎖：{title}",
       "done": "任務已完成：{title}",
       "dailyCap": "看板：已達到每日 {count} 個任務啟動上限"
+    },
+  },
+  raven: {
+    title: "Raven",
+    empty: "在設定中新增 Raven 網站 URL 以開始聊天。",
+    openSettings: "開啟 Raven 設定",
+    settings: {
+      title: "Raven",
+      enabled: "在側邊欄顯示 Raven",
+      url: "網站 URL",
+      urlHint: "安裝了 Raven 的 Frappe 網站，例如 https://erp.example.com。您在網站上自行登入；Fcode 絕不會看到您的密碼。",
     },
   }
 
