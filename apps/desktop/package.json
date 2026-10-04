@@ -1,6 +1,6 @@
 {
   "name": "@pi-desktop/desktop",
-  "version": "0.18.2",
+  "version": "0.18.3",
   "desktopName": "fcode.desktop",
   "private": true,
   "description": "Fcode desktop IDE for Frappe development",
@@ -319,7 +319,8 @@
     "electronFuses": {
       "onlyLoadAppFromAsar": true,
       "enableNodeCliInspectArguments": false,
-      "enableCookieEncryption": true
+      "enableCookieEncryption": true,
+      "resetAdHocDarwinSignature": true
     }
   }
 }
