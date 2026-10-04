@@ -19,7 +19,6 @@ import { isAllowedHttpUrl, parseAllowedExternalUrl } from "./safe-open-external"
  * watched so edits to the page or its sibling assets refresh the preview.
  */
 
-const PARTITION = "persist:work-browser";
 const LIVE_RELOAD_DEBOUNCE_MS = 250;
 
 export function normalizeUrl(raw: string): string | null {
@@ -94,8 +93,12 @@ export class BrowserPane {
   /** Bumped on every ownership mutation; lets `withAgentCanvasOwnership` detect a handoff that raced its call (E13). */
   private canvasGeneration = 0;
 
-  constructor(onState: (state: BrowserState) => void) {
+  /** Separate partitions keep cookies apart (Raven's `sid` never reaches the agent-driven pane). */
+  private readonly partition: string;
+
+  constructor(onState: (state: BrowserState) => void, partition = "persist:work-browser") {
     this.onState = onState;
+    this.partition = partition;
   }
 
   /**
@@ -379,7 +382,7 @@ export class BrowserPane {
         sandbox: true,
         contextIsolation: true,
         nodeIntegration: false,
-        partition: PARTITION,
+        partition: this.partition,
       },
     });
     const wc = view.webContents;

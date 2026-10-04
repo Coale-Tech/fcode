@@ -2,9 +2,10 @@
  * Fcode-owned tool approval mode. Persisted in `<dataDir>/approval-mode.json`.
  * Controls omp's `--approval-mode` flag on spawn.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ToolApprovalMode } from "@pi-desktop/shared";
+import { writeJsonAtomicSync } from "./atomic-json";
 
 const VALID_MODES: Record<ToolApprovalMode, true> = { "always-ask": true, write: true, yolo: true };
 
@@ -29,7 +30,7 @@ export function validateApprovalMode(value: unknown): ToolApprovalMode {
 }
 
 export function writeApprovalMode(dataDir: string, mode: ToolApprovalMode): void {
-  writeFileSync(join(dataDir, "approval-mode.json"), JSON.stringify(mode), "utf8");
+  writeJsonAtomicSync(join(dataDir, "approval-mode.json"), mode);
 }
 
 /** Env var that the bridge process reads to set omp's approval mode. */

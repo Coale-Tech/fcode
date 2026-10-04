@@ -54,6 +54,7 @@ import {
   Minus,
   MessageSquare,
   MessageSquarePlus,
+  MessagesSquare,
   Monitor,
   Moon,
   MoreHorizontal,
@@ -250,6 +251,8 @@ export const IconTriangleAlert = icon(TriangleAlert);
 export const IconEye = icon(Eye);
 export const IconEyeOff = icon(EyeOff);
 export const IconKanban = icon(Columns);
+/** Raven team chat destination (nav rail + settings). */
+export const IconRaven = icon(MessagesSquare);
 
 export function IconStop({ size = 16, style, ...props }: IconProps) {
   return (

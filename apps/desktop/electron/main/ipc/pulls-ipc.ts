@@ -1,7 +1,10 @@
-import { spawn } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
+import { promisify } from "node:util";
 import { IPC } from "@pi-desktop/shared";
 import type { HostProcess } from "../host-process";
 import type { IpcRegistrar } from "./types";
+
+const execFileP = promisify(execFile);
 
 export type PullsIpcDependencies = {
   registrar: IpcRegistrar;
@@ -12,13 +15,30 @@ export function registerPullsIpc({
   registrar,
   getHost,
 }: PullsIpcDependencies): void {
-  registrar.handle(IPC.invoke.pullsList, async () => {
+  const workspacePath = async () => {
     const host = getHost();
     if (!host) throw new Error("host unavailable");
     const res = (await host.call("workspace.get")) as {
       workspace: { path: string; name: string } | null;
     };
-    const cwd = res.workspace?.path;
+    return res.workspace?.path;
+  };
+
+  registrar.handle(IPC.invoke.gitBranchList, async () => {
+    const dir = await workspacePath();
+    if (!dir) return { branches: [], error: "NO_WORKSPACE" as const };
+    try {
+      const { stdout } = await execFileP("git", ["-C", dir, "branch", "--format=%(refname:short)"], {
+        timeout: 10_000,
+      });
+      return { branches: stdout.split("\n").map((branch) => branch.trim()).filter(Boolean) };
+    } catch {
+      return { branches: [], error: "GIT_FAILED" as const };
+    }
+  });
+
+  registrar.handle(IPC.invoke.pullsList, async () => {
+    const cwd = await workspacePath();
     if (!cwd) {
       return { pulls: [], error: "NO_WORKSPACE" as const };
     }

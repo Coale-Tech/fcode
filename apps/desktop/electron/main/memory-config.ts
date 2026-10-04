@@ -3,9 +3,10 @@
  * `<dataDir>/memory.json`; the Hindsight token lives in the host secret store
  * and only ever reaches omp as the HINDSIGHT_API_TOKEN env var.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { MemoryConfig } from "@pi-desktop/shared";
+import { writeJsonAtomicSync } from "./atomic-json";
 
 export const MEMORY_TOKEN_SECRET_REF = "secret:memory:hindsight-token";
 const BACKENDS = ["mnemopi", "hindsight", "sharpshooter", "local", "off"] as const;
@@ -57,7 +58,7 @@ export function validateMemoryConfig(input: Partial<MemoryConfig>): MemoryConfig
 }
 
 export function writeMemoryConfig(dataDir: string, config: MemoryConfig): void {
-  writeFileSync(join(dataDir, "memory.json"), JSON.stringify(config), "utf8");
+  writeJsonAtomicSync(join(dataDir, "memory.json"), config);
 }
 
 /** Env for the sidecar launch; `token` is the resolved secret or null. */

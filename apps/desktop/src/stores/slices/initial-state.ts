@@ -91,5 +91,6 @@ export function createInitialState(): AppStateData {
     sessionTodoPhases: {},
     showKanbanSessions: false,
     kanbanEnabled: false,
+    ravenEnabled: false,
   };
 }

@@ -235,6 +235,8 @@ export interface OmpSettingsValues {
   "eval.tools.enabled"?: boolean;
   "python.kernelMode"?: "session" | "per-call";
   "python.interpreter"?: string;
+  // Bash: Fcode-owned; emits omp `bash.patterns` allow-rules for read-only commands.
+  "bash.autoApproveReadOnly"?: boolean;
   // Browser
   "browser.enabled"?: boolean;
   "browser.cdpUrl"?: string;

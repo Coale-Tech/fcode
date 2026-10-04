@@ -952,6 +952,7 @@ sklm: {
       info: "信息",
       voice: "语音",
       kanban: "看板",
+      raven: "Raven",
     },
     navDesc: {
       general: "外观、语言、电源和网络。",
@@ -967,6 +968,7 @@ sklm: {
       projects: "归档、恢复和删除项目。",
       about: "版本、日志、反馈和更新。",
       kanban: "通过看板运行智能体任务。",
+      raven: "在 Raven 中与团队沟通。",
     },
     configSync: {
       title: "云同步",
@@ -1518,6 +1520,9 @@ sklm: {
     ompTaskMaxConcurrencyDesc: "Maximum number of subagents running concurrently (0 = unlimited).",
     ompTaskMaxRecursionDepth: "Max Task Recursion",
     ompTaskMaxRecursionDepthDesc: "How many levels deep subagents can spawn their own subagents (-1 = unlimited).",
+    ompApprovalsGroup: "审批",
+    ompBashAutoApproveReadOnly: "自动批准只读 Shell 命令",
+    ompBashAutoApproveReadOnlyDesc: "无需确认即可运行 git status、ls 和 grep 等命令。链式命令（&&、|、;）仍需确认。",
     ompEvalGroup: "Eval & Python",
     ompEvalPy: "Python Eval",
     ompEvalPyDesc: "Enable the Python eval backend.",
@@ -2088,6 +2093,14 @@ sklm: {
     open: "打开",
     draft: "草稿",
   },
+  git: {
+    branch: "分支",
+    switchBranch: "切换分支",
+    noBranches: "未找到分支",
+    pull: "拉取",
+    push: "推送",
+    createPr: "创建 PR",
+  },
   scheduled: {
     description: "应用运行时，按计划自动执行 Agent 任务。",
     edit: "编辑任务",
@@ -2152,6 +2165,13 @@ sklm: {
     healthStale: "调度器无响应",
     healthError: "调度器错误：{{error}}",
     healthRetry: "重试",
+    insightsRuns: "运行次数",
+    insightsSuccess: "成功率",
+    insightsAvgDuration: "平均时长",
+    export: "导出",
+    import: "导入",
+    exportDone: "已导出 {{count}} 个任务",
+    importDone: "已导入 {{count}} 个任务",
   },
   permission: {
     title: "需要权限",
@@ -3084,6 +3104,17 @@ sklm: {
       "blocked": "任务已阻塞：{title}",
       "done": "任务已完成：{title}",
       "dailyCap": "看板：已达到每日 {count} 个任务启动上限"
+    },
+  },
+  raven: {
+    title: "Raven",
+    empty: "在设置中添加 Raven 站点 URL 以开始聊天。",
+    openSettings: "打开 Raven 设置",
+    settings: {
+      title: "Raven",
+      enabled: "在侧边栏显示 Raven",
+      url: "站点 URL",
+      urlHint: "安装了 Raven 的 Frappe 站点，例如 https://erp.example.com。您在站点上自行登录；Fcode 绝不会看到您的密码。",
     },
   }
 

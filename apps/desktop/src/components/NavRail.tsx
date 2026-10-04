@@ -9,6 +9,7 @@ import {
   IconKanban,
   IconMonitor,
   IconPlug,
+  IconRaven,
   IconServer,
   IconSettings,
 } from "./icons";
@@ -47,6 +48,18 @@ export function NavRail() {
     if (!bridge?.on) return;
     return bridge.on(IPC.event.kanbanChanged, () => { void fetchEnabled(); });
   }, [setKanbanEnabled]);
+  const ravenEnabled = useAppStore((s) => s.ravenEnabled);
+  const setRavenEnabled = useAppStore((s) => s.setRavenEnabled);
+  useEffect(() => {
+    const fetchEnabled = () =>
+      import("../lib/api").then(({ api }) =>
+        api.ravenSettingsGet().then((res) => setRavenEnabled(res.settings.enabled)).catch(() => {})
+      ).catch(() => {});
+    void fetchEnabled();
+    const bridge = window.piDesktop;
+    if (!bridge?.on) return;
+    return bridge.on(IPC.event.ravenChanged, () => { void fetchEnabled(); });
+  }, [setRavenEnabled]);
 
   return (
     <nav className="nav-rail sidebar-surface" aria-label="Primary">
@@ -111,6 +124,19 @@ export function NavRail() {
             aria-pressed={page === "kanban"}
           >
             <IconKanban size={16} aria-hidden />
+          </TooltipButton>
+        )}
+        {ravenEnabled && (
+          <TooltipButton
+            type="button"
+            className={cx("nav-rail-btn", page === "raven" && "active")}
+            data-nav="raven"
+            tooltip={t("raven.title")}
+            ariaLabel={t("raven.title")}
+            onClick={() => setPage("raven")}
+            aria-pressed={page === "raven"}
+          >
+            <IconRaven size={16} aria-hidden />
           </TooltipButton>
         )}
         <TooltipButton

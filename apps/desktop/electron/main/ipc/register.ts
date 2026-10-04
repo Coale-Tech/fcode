@@ -6,6 +6,7 @@ import type { AgentSidecar } from "../agent-sidecar";
 import type { HostProcess } from "../host-process";
 import { ROUTE_LOCAL, type BackendRouter } from "../remote/backend-router";
 import { registerAgentExtensionIpc } from "../agent-extensions-ipc";
+import { BrowserPane } from "../browser-view";
 import { readNpmPath, writeNpmPath } from "../npm-preferences";
 import { registerAgentIpc } from "./agent-ipc";
 import { registerAppIpc } from "./app-ipc";
@@ -44,6 +45,7 @@ import { registerExtensionsMgmtIpc } from "./extensions-mgmt-ipc";
 import type { createTraySessions } from "../tray-sessions";
 import type { createTaskbarUnreadBadge } from "../taskbar-unread-badge";
 import { registerKanbanIpc, type KanbanIpcDependencies } from "./kanban-ipc";
+import { registerRavenIpc } from "./raven-ipc";
 
 export type RegisterIpcDependencies = {
   isQuitting: () => boolean;
@@ -331,6 +333,26 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     getHost,
     scheduledRunsBySession,
     isQuitting: dependencies.isQuitting,
+    pickExportPath: async () => {
+      const options = {
+        title: "Export scheduled tasks",
+        defaultPath: `scheduled-tasks-${Date.now()}.json`,
+        filters: [{ name: "JSON", extensions: ["json"] }],
+      };
+      const owner = getMainWindow();
+      const save = owner ? await dialog.showSaveDialog(owner, options) : await dialog.showSaveDialog(options);
+      return save.canceled || !save.filePath ? null : save.filePath;
+    },
+    pickImportPath: async () => {
+      const options = {
+        title: "Import scheduled tasks",
+        properties: ["openFile" as const],
+        filters: [{ name: "JSON", extensions: ["json"] }],
+      };
+      const owner = getMainWindow();
+      const picked = owner ? await dialog.showOpenDialog(owner, options) : await dialog.showOpenDialog(options);
+      return picked.canceled || !picked.filePaths[0] ? null : picked.filePaths[0];
+    },
     invoke: async (channel, args) => {
       const handler = ipcHandlers.get(channel);
       if (!handler) throw new Error("scheduled prompt handler unavailable");
@@ -400,6 +422,14 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     registrar,
     dataDir,
     restartSidecar: async () => dependencies.onProviderMutation?.(),
+  });
+  registerRavenIpc({
+    registrar,
+    dataDir,
+    // Its own partition, never the agent-driven work browser (ADR 0170 clause 6).
+    pane: new BrowserPane(() => undefined, "persist:raven"),
+    getMainWindow,
+    sendChanged: () => sendToRenderer(IPC.event.ravenChanged, {}),
   });
 
 

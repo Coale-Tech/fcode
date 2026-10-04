@@ -2,7 +2,7 @@
  * Tests for extension_ui_request mapping and multi-select serialization (E9, E20).
  */
 import { describe, expect, it } from "vitest";
-import { mapExtensionUiRequest, serializeAskAnswers } from "./ui-requests.js";
+import { classifyToolRisk, mapExtensionUiRequest, serializeAskAnswers } from "./ui-requests.js";
 
 const openTool = { toolCallId: "tc1", toolName: "bash" };
 
@@ -19,7 +19,8 @@ describe("mapExtensionUiRequest", () => {
     expect(result.sessionId).toBe("s1");
     expect(result.toolCallId).toBe("tc1");
     expect(result.toolName).toBe("bash");
-    expect(result.risk).toBe("high");
+    // bench execute through bash is neither read-only nor destructive.
+    expect(result.risk).toBe("medium");
   });
 
   it("maps select → asktool_request", () => {
@@ -53,6 +54,15 @@ describe("mapExtensionUiRequest", () => {
       toolName: "bash",
       argsPreview: "Command: ls /tmp",
     });
+  });
+
+  it("badges an omp bash approval by the command it carries", () => {
+    const result = mapExtensionUiRequest(
+      { id: "r11", method: "select", title: "Allow tool: bash\nCommand: rm -rf build", options: ["Approve", "Deny"] },
+      "s1",
+      openTool,
+    );
+    expect(result).toMatchObject({ type: "tool_permission_request", risk: "high" });
   });
 
   it("keeps an ordinary select with plain-string options as an ask", () => {
@@ -189,6 +199,30 @@ describe("mapExtensionUiRequest", () => {
     expect(result?.type).toBe("tool_permission_request");
     if (result?.type !== "tool_permission_request") return;
     expect(result.toolCallId).toBe("r8");
+  });
+});
+
+describe("classifyToolRisk", () => {
+  it("rates read-only bash low and destructive bash high", () => {
+    expect(classifyToolRisk("bash", "Command: git status")).toBe("low");
+    expect(classifyToolRisk("bash", "Command: rm -rf build")).toBe("high");
+    expect(classifyToolRisk("bash", "Command: git push origin main")).toBe("high");
+  });
+
+  it("never rates a compound or writing command low", () => {
+    expect(classifyToolRisk("bash", "Command: git status && rm -rf /")).toBe("high");
+    expect(classifyToolRisk("bash", "Command: git status && make")).toBe("medium");
+    expect(classifyToolRisk("bash", "Command: cat a > b")).toBe("medium");
+    expect(classifyToolRisk("bash", "Command: git log --output=/tmp/x")).toBe("medium");
+    expect(classifyToolRisk("bash", "Command: find . -delete")).toBe("medium");
+  });
+
+  it("rates tools by name, defaulting to medium", () => {
+    expect(classifyToolRisk("read", "")).toBe("low");
+    expect(classifyToolRisk("kanban_show", "")).toBe("low");
+    expect(classifyToolRisk("edit", "src/a.ts")).toBe("high");
+    expect(classifyToolRisk("some_mcp_tool", "")).toBe("medium");
+    expect(classifyToolRisk("constructor", "")).toBe("medium");
   });
 });
 

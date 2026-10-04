@@ -938,7 +938,8 @@ export const ptBR = {
       remoteHosts: "Hosts remotos",
       info: "Sobre",
       voice: "Voz",
-      kanban: "Kanban"
+      kanban: "Kanban",
+      raven: "Raven"
     },
     navDesc: {
       general: "Aparência, idioma, energia e rede.",
@@ -954,6 +955,7 @@ export const ptBR = {
       projects: "Arquive, restaure e exclua projetos.",
       about: "Versão, logs, feedback e atualizações.",
       kanban: "Execute tarefas de agentes a partir de um quadro.",
+      raven: "Converse com sua equipe no Raven.",
     },
     general: "Geral",
     ai: "IA",
@@ -1496,6 +1498,9 @@ export const ptBR = {
     ompTaskMaxConcurrencyDesc: "Maximum number of subagents running concurrently (0 = unlimited).",
     ompTaskMaxRecursionDepth: "Max Task Recursion",
     ompTaskMaxRecursionDepthDesc: "How many levels deep subagents can spawn their own subagents (-1 = unlimited).",
+    ompApprovalsGroup: "Aprovações",
+    ompBashAutoApproveReadOnly: "Aprovar automaticamente comandos de shell somente leitura",
+    ompBashAutoApproveReadOnlyDesc: "Executar comandos como git status, ls e grep sem perguntar. Comandos encadeados (&&, |, ;) ainda perguntarão.",
     ompEvalGroup: "Eval & Python",
     ompEvalPy: "Python Eval",
     ompEvalPyDesc: "Enable the Python eval backend.",
@@ -2057,6 +2062,14 @@ export const ptBR = {
     open: "Aberto",
     draft: "Rascunho",
   },
+  git: {
+    branch: "Branch",
+    switchBranch: "Trocar branch",
+    noBranches: "Nenhuma branch encontrada",
+    pull: "Puxar",
+    push: "Enviar",
+    createPr: "Criar PR",
+  },
   scheduled: {
     description: "Executa tarefas recorrentes do agente enquanto o Fcode estiver aberto.",
     edit: "Editar tarefa",
@@ -2121,6 +2134,13 @@ export const ptBR = {
     healthStale: "O agendador não está respondendo",
     healthError: "Erro do agendador: {{error}}",
     healthRetry: "Tentar novamente",
+    insightsRuns: "Execuções",
+    insightsSuccess: "Taxa de sucesso",
+    insightsAvgDuration: "Duração méd.",
+    export: "Exportar",
+    import: "Importar",
+    exportDone: "{{count}} tarefas exportadas",
+    importDone: "{{count}} tarefas importadas",
   },
   permission: {
     title: "Permissão necessária",
@@ -3048,6 +3068,17 @@ export const ptBR = {
       "blocked": "Tarefa bloqueada: {title}",
       "done": "Tarefa concluída: {title}",
       "dailyCap": "Kanban: limite diário de {count} inicializações atingido",
+    },
+  },
+  raven: {
+    title: "Raven",
+    empty: "Adicione a URL do seu site Raven nas Configurações para começar a conversar.",
+    openSettings: "Abrir configurações do Raven",
+    settings: {
+      title: "Raven",
+      enabled: "Mostrar Raven na barra lateral",
+      url: "URL do site",
+      urlHint: "O site Frappe onde o Raven está instalado, ex. https://erp.example.com. Você faz login no próprio site; o Fcode nunca vê sua senha.",
     },
   }
 

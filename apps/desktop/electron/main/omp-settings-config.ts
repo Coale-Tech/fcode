@@ -3,9 +3,10 @@
  * Stored in `<dataDir>/omp-settings.json`; injected into the bridge overlay
  * on sidecar restart via the `FCODE_OMP_SETTINGS` env var.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { OmpSettingsValues } from "@pi-desktop/shared";
+import { writeJsonAtomicSync } from "./atomic-json";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Schema — mirrors the omp source settings exactly (enums, min/max).
@@ -45,6 +46,8 @@ const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   "eval.tools.enabled":       { type: "boolean" },
   "python.kernelMode":        { type: "enum", values: PYTHON_KERNEL_MODES },
   "python.interpreter":       { type: "string" },
+  // Bash (Fcode-owned; bridge.ts turns it into omp `bash.patterns` allow-rules)
+  "bash.autoApproveReadOnly": { type: "boolean" },
   // Browser (omp/packages/coding-agent/src/tools/browser/settings.ts)
   "browser.enabled":          { type: "boolean" },
   "browser.cdpUrl":           { type: "string" },
@@ -230,7 +233,7 @@ export function validateOmpSettings(patch: Record<string, unknown>): OmpSettings
 }
 
 export function writeOmpSettings(dataDir: string, settings: OmpSettingsValues): void {
-  writeFileSync(join(dataDir, "omp-settings.json"), JSON.stringify(settings, null, 2), "utf8");
+  writeJsonAtomicSync(join(dataDir, "omp-settings.json"), settings);
 }
 
 /** Env var that the bridge process reads to build the overlay. */

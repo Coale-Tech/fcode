@@ -885,6 +885,10 @@
   background: color-mix(in oklab, var(--ds-error) 7%, transparent);
 }
 
+.permission-card.risk-medium {
+  background: color-mix(in oklab, var(--ds-warning) 7%, transparent);
+}
+
 .permission-card.risk-low {
   background: var(--ds-tile);
 }

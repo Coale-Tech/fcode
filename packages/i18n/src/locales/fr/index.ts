@@ -953,7 +953,8 @@ sklm: {
       "remoteHosts": "Hôtes distants",
       "info": "Informations",
       "voice": "Voix",
-      "kanban": "Kanban"
+      "kanban": "Kanban",
+      "raven": "Raven"
     },
     "navDesc": {
       "general": "Apparence, langue, alimentation et réseau.",
@@ -969,6 +970,7 @@ sklm: {
       "projects": "Archiver, restaurer et supprimer des projets.",
       "about": "Version, journaux, retours et mises à jour.",
       "kanban": "Exécuter des tâches d'agents depuis un tableau.",
+      "raven": "Discutez avec votre équipe dans Raven.",
     },
     "configSync": {
       title: "Cloud sync",
@@ -1531,6 +1533,9 @@ sklm: {
     "ompTaskMaxConcurrencyDesc": "Maximum number of subagents running concurrently (0 = unlimited).",
     "ompTaskMaxRecursionDepth": "Max Task Recursion",
     "ompTaskMaxRecursionDepthDesc": "How many levels deep subagents can spawn their own subagents (-1 = unlimited).",
+    "ompApprovalsGroup": "Approbations",
+    "ompBashAutoApproveReadOnly": "Approuver automatiquement les commandes shell en lecture seule",
+    "ompBashAutoApproveReadOnlyDesc": "Exécuter des commandes comme git status, ls et grep sans demander. Les commandes chaînées (&&, |, ;) demanderont toujours.",
     "ompEvalGroup": "Eval & Python",
     "ompEvalPy": "Python Eval",
     "ompEvalPyDesc": "Enable the Python eval backend.",
@@ -2102,6 +2107,14 @@ sklm: {
     "open": "Ouvrir",
     "draft": "Brouillon"
   },
+  "git": {
+    "branch": "Branche",
+    "switchBranch": "Changer de branche",
+    "noBranches": "Aucune branche trouvée",
+    "pull": "Tirer",
+    "push": "Pousser",
+    "createPr": "Créer une PR"
+  },
   "scheduled": {
     "description": "Exécutez des tâches récurrentes tant que Fcode est ouvert.",
     "edit": "Modifier la tâche",
@@ -2166,6 +2179,13 @@ sklm: {
     "healthStale": "Le planificateur ne répond pas",
     "healthError": "Erreur du planificateur : {{error}}",
     "healthRetry": "Réessayer",
+    "insightsRuns": "Exécutions",
+    "insightsSuccess": "Taux de succès",
+    "insightsAvgDuration": "Durée moy.",
+    "export": "Exporter",
+    "import": "Importer",
+    "exportDone": "{{count}} tâches exportées",
+    "importDone": "{{count}} tâches importées",
   },
   "permission": {
     "title": "Autorisation requise",
@@ -3095,6 +3115,17 @@ sklm: {
       "done": "Tâche terminée: {title}",
       "dailyCap": "Kanban: limite quotidienne de {count} démarrages atteinte"
     },
+  },
+  "raven": {
+    "title": "Raven",
+    "empty": "Ajoutez l'URL de votre site Raven dans les Paramètres pour commencer à discuter.",
+    "openSettings": "Ouvrir les paramètres Raven",
+    "settings": {
+      "title": "Raven",
+      "enabled": "Afficher Raven dans la barre latérale",
+      "url": "URL du site",
+      "urlHint": "Le site Frappe où Raven est installé, ex. https://erp.example.com. Vous vous connectez sur le site lui-même ; Fcode ne voit jamais votre mot de passe."
+    }
   }
 
 } satisfies EnglishCatalog;

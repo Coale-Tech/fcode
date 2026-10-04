@@ -167,6 +167,8 @@ export const IPC = {
     projectClear: "pi-desktop/project/clear",
     projectRemove: "pi-desktop/project/remove",
     pullsList: "pi-desktop/pulls/list",
+    /** Local branch names of the current workspace's repo (read-only `git branch`). */
+    gitBranchList: "pi-desktop/git/branchList",
     scheduledList: "pi-desktop/scheduled/list",
     scheduledCreate: "pi-desktop/scheduled/create",
     scheduledUpdate: "pi-desktop/scheduled/update",
@@ -174,6 +176,8 @@ export const IPC = {
     scheduledRun: "pi-desktop/scheduled/run",
     scheduledExecute: "pi-desktop/scheduled/execute",
     scheduledListRuns: "pi-desktop/scheduled/listRuns",
+    scheduledExport: "pi-desktop/scheduled/export",
+    scheduledImport: "pi-desktop/scheduled/import",
     toolResolvePermission: "pi-desktop/tool/resolvePermission",
     askToolResolve: "pi-desktop/agent/askTool/resolve",
     plansPending: "pi-desktop/plans/pending",
@@ -515,6 +519,12 @@ export const IPC = {
     ompUserProfileGet: "pi-desktop/omp/user-profile/get",
     /** Write the cross-project user-profile text to ~/.omp/agent/USER.md (cap 1024 chars). */
     ompUserProfileSet: "pi-desktop/omp/user-profile/set",
+    /** Raven chat destination: get + set settings (enabled, site URL). */
+    ravenSettingsGet: "pi-desktop/raven/settings/get",
+    ravenSettingsSet: "pi-desktop/raven/settings/set",
+    /** Raven pane: renderer-reported hole rect and visibility (full-width Raven route only). */
+    ravenSetBounds: "pi-desktop/raven/setBounds",
+    ravenSetVisible: "pi-desktop/raven/setVisible",
   },
   event: {
     pluginChanged: "pi-desktop/event/pluginChanged",
@@ -571,6 +581,8 @@ export const IPC = {
     hindsightLocalStatus: "pi-desktop/hindsight-local/event/status",
     /** Kanban board changed (tasks/runs/links updated by dispatcher or user). */
     kanbanChanged: "pi-desktop/kanban/event/changed",
+    /** Raven settings changed (nav-rail button visibility, site URL). */
+    ravenChanged: "pi-desktop/raven/event/changed",
   },
 } as const;
 
