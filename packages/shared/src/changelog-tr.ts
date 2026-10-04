@@ -2,16 +2,8 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const trEntries: ChangelogEntry[] = [
   {
-    "version": "0.18.1",
-    "date": "2026-10-03",
-    "highlights": [
-      "İşlem sızıntısı düzeltildi: sağlayıcı, bellek arka ucu, onay modu, omp ayarı veya uzantı değiştirildiğinde önceki ajan işlemi artık durduruluyor; uygulamadan çıkıldıktan sonra işlem ve yardımcıları çalışmaya devam etmiyor.",
-    ],
-  },
-
-  {
-    "version": "0.18.0",
-    "date": "2026-10-02",
+    "version": "0.18.2",
+    "date": "2026-10-04",
     "highlights": [
       "Ayarlar, Raven düzenine uyacak şekilde yeniden tasarlandı: ayırıcılı düz satırlar, Raven gezinme hareketli 224 px sabit ray ve güncellenmiş kontroller; macOS cam titreşim rayını koruyor. Yeni «Yapay Zeka» grubu kendi sayfalarına ayrıldı (izinler, ajanlar, araçlar, uzantılar, bellek, Kanban); açıklamalar artık her satırın altında.",
       "Yeni Kanban panosu (varsayılan olarak devre dışı; Ayarlar → Kanban'dan etkinleştirin), Hermes Agent düzeninde: sütun alt başlıkları ve + düğmeleri, kart çipleri (kimlik, öncelik, proje, alt kart ilerlemesi, yorumlar, bağlantılar, yaş), arama ve proje filtreleri, toplu işlemli çoklu seçim ve kartı düzenlemek, bağımlılıkları yönetmek, yorum yapmak ile olayları ve çalıştırma geçmişini incelemek için bir kart çekmecesi. Kartlar ajan oturumları başlatır, worker araçlarını, duraklama anahtarını ve oturum başına sınırları gösterir; [kanban] oturumları varsayılan olarak kenar çubuğunda gizlidir.",
@@ -22,6 +14,7 @@ export const trEntries: ChangelogEntry[] = [
       "Bench düzeltmeleri: Frappe v16 Running durumuna ulaşıyor, başlatma sırasında Stop çalışıyor, çıkış tam süreç ağacını durduruyor, redis port çakışmaları adlandırılıyor, tam ad okuma onayları çalışıyor, keşif site_config.json gerektiriyor, taşıma iletişim kutusu odak tuzağına sahip, ANSI kodları loglardan temizleniyor.",
       "Hareket: arama iletişim kutusu anında açılıyor (giriş animasyonu yok); tüm çıkış ve daraltma geçişleri ease-out kullanıyor.",
       "Sürüm koruması: kararlı etiketler artık workflow_dispatch üzerinden imzasız gönderilemez (CI koruması); güncelleyici imza algılama kendi modülüne çıkarıldı ve test edildi.",
+      "İşlem sızıntısı düzeltildi: sağlayıcı, bellek arka ucu, onay modu, omp ayarı veya uzantı değiştirildiğinde önceki ajan işlemi artık durduruluyor; uygulamadan çıkıldıktan sonra işlem ve yardımcıları çalışmaya devam etmiyor.",
     ],
   },
 

@@ -2,16 +2,8 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const frEntries: ChangelogEntry[] = [
   {
-    "version": "0.18.1",
-    "date": "2026-10-03",
-    "highlights": [
-      "Correction d'une fuite de processus : modifier un fournisseur, le backend mémoire, le mode d'approbation, un réglage omp ou une extension arrête désormais le processus d'agent précédent au lieu de le laisser (avec ses assistants) tourner après la fermeture de l'app.",
-    ],
-  },
-
-  {
-    "version": "0.18.0",
-    "date": "2026-10-02",
+    "version": "0.18.2",
+    "date": "2026-10-04",
     "highlights": [
       "Les Réglages ont été repensés selon la mise en page de Raven : rangées plates avec séparateurs, un rail fixe de 224 px avec la navigation Raven et des contrôles mis à jour ; macOS conserve le rail en verre avec vibrance. Nouveau groupe « IA » avec ses propres pages (permissions, agents, outils, extensions, mémoire, Kanban) ; les descriptions s'affichent désormais sous chaque rangée.",
       "Nouveau tableau Kanban (désactivé par défaut ; activez-le dans Réglages → Kanban) avec la mise en page de Hermes Agent : sous-titres de colonne et boutons +, pastilles sur les cartes (id, priorité, projet, progression des sous-cartes, commentaires, liens, ancienneté), recherche et filtres par projet, sélection multiple avec actions groupées et un panneau de carte pour modifier, gérer les dépendances, commenter et consulter événements et historique d'exécutions. Les cartes démarrent des sessions d'agent avec les outils worker, un interrupteur pause et des limites par session ; les sessions [kanban] sont masquées par défaut dans la barre latérale.",
@@ -22,6 +14,7 @@ export const frEntries: ChangelogEntry[] = [
       "Correctifs bench : Frappe v16 atteint Running, Stop fonctionne au démarrage, quitter arrête l'arbre de processus complet, les conflits de port redis sont nommés, les approbations de lecture par nom exact fonctionnent, la découverte nécessite site_config.json, la boîte de dialogue migrate a un piège à focus, les codes ANSI sont supprimés des journaux.",
       "Mouvement : le dialogue de recherche s'ouvre instantanément (sans animation d'entrée) ; toutes les transitions de sortie et de repli utilisent ease-out.",
       "Release : les tags stables ne peuvent plus être distribués sans signature via workflow_dispatch (garde CI) ; la détection de signature du mise à jour est extraite dans son propre module et testée.",
+      "Correction d'une fuite de processus : modifier un fournisseur, le backend mémoire, le mode d'approbation, un réglage omp ou une extension arrête désormais le processus d'agent précédent au lieu de le laisser (avec ses assistants) tourner après la fermeture de l'app.",
     ],
   },
 

@@ -2,16 +2,8 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const esEntries: ChangelogEntry[] = [
   {
-    "version": "0.18.1",
-    "date": "2026-10-03",
-    "highlights": [
-      "Se corrige una fuga de procesos: al cambiar proveedor, backend de memoria, modo de aprobación, ajuste de omp o extensión, ahora se detiene el proceso de agente anterior en lugar de dejarlo (con sus ayudantes) en ejecución tras cerrar la app.",
-    ],
-  },
-
-  {
-    "version": "0.18.0",
-    "date": "2026-10-02",
+    "version": "0.18.2",
+    "date": "2026-10-04",
     "highlights": [
       "Ajustes rediseñados según el diseño de Raven: filas planas con separadores, un rail fijo de 224 px con la navegación de Raven y controles actualizados; macOS conserva el rail de vidrio con vibración. Nuevo grupo «IA» con páginas propias (permisos, agentes, herramientas, extensiones, memoria, Kanban); las descripciones ahora aparecen bajo cada fila.",
       "Nuevo tablero Kanban (desactivado por defecto; actívalo en Ajustes → Kanban) con el diseño de Hermes Agent: subtítulos de columna y botones +, chips en las tarjetas (id, prioridad, proyecto, progreso de subtarjetas, comentarios, vínculos, antigüedad), búsqueda y filtros por proyecto, selección múltiple con acciones en lote y un panel de tarjeta para editar, gestionar dependencias, comentar y revisar eventos e historial de ejecuciones. Las tarjetas inician sesiones de agente con herramientas de trabajador, interruptor de pausa y límites por sesión; las sesiones [kanban] se ocultan en la barra lateral por defecto.",
@@ -22,6 +14,7 @@ export const esEntries: ChangelogEntry[] = [
       "Correcciones del banco: Frappe v16 alcanza Running, Stop funciona al iniciar, salir detiene el árbol de procesos, los conflictos de puerto de redis se nombran, las aprobaciones de lectura con nombre exacto funcionan, la detección requiere site_config.json, el diálogo de migración tiene trampa de foco, los códigos ANSI se eliminan de los registros.",
       "Movimiento: el diálogo de búsqueda se abre instantáneamente (sin animación de entrada); todas las transiciones de salida y colapso usan ease-out.",
       "Release: las etiquetas estables ya no pueden distribuirse sin firma mediante workflow_dispatch (guardia CI); la detección de firma del actualizador se extrae en su propio módulo y se prueba.",
+      "Se corrige una fuga de procesos: al cambiar proveedor, backend de memoria, modo de aprobación, ajuste de omp o extensión, ahora se detiene el proceso de agente anterior en lugar de dejarlo (con sus ayudantes) en ejecución tras cerrar la app.",
     ],
   },
 

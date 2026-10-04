@@ -30,16 +30,8 @@ export type ChangelogEntry = {
 
 const enEntries: ChangelogEntry[] = [
   {
-    version: "0.18.1",
-    date: "2026-10-03",
-    highlights: [
-      "Fixed a process leak: changing a provider, memory backend, approval mode, omp setting or extension now stops the previous agent process instead of leaving it (and its helpers) running after you quit.",
-    ],
-  },
-
-  {
-    version: "0.18.0",
-    date: "2026-10-02",
+    version: "0.18.2",
+    date: "2026-10-04",
     highlights: [
       "Settings redesigned to match Raven's layout: flat rows with separators, a 224 px fixed navigation rail with Raven nav motion, and updated controls; macOS keeps the glass vibrancy rail. The AI settings are a rail group with their own pages (Permissions & defaults, Agents & tasks, Tools, Extensions, Memory, Kanban), and descriptions now sit inline under each row.",
       "New Kanban board (off by default; enable in Settings → Kanban), laid out like Hermes Agent: column subtitles and + buttons, card chips (id, priority, project, child progress, comments, links, age), search and project filters, multi-select with bulk actions, and a card drawer to edit a card, manage dependencies, comment, and review events and run history. Cards start agent sessions with worker tools, a pause switch, and per-session caps; [kanban] sessions are hidden in the sidebar by default.",
@@ -50,6 +42,7 @@ const enEntries: ChangelogEntry[] = [
       "Bench fixes: Frappe v16 reaches Running, Stop works while starting, quit stops the full process tree, redis port conflicts are named, exact-name read approvals work, discovery requires site_config.json, migrate dialog has a focus trap, ANSI codes stripped from logs.",
       "Motion: the search dialog opens instantly (no entrance animation); all exit and collapse transitions now use ease-out.",
       "Release guard: stable tags can no longer ship unsigned via workflow_dispatch (CI check); updater signature detection extracted and tested.",
+      "Fixed a process leak: changing a provider, memory backend, approval mode, omp setting or extension now stops the previous agent process instead of leaving it (and its helpers) running after you quit.",
     ],
   },
 
@@ -897,16 +890,8 @@ const enEntries: ChangelogEntry[] = [
 
 const zhCNEntries: ChangelogEntry[] = [
   {
-    version: "0.18.1",
-    date: "2026-10-03",
-    highlights: [
-      "修复进程泄漏：更改提供商、记忆后端、审批模式、omp 设置或扩展时，现在会停止之前的智能体进程，不再在退出应用后遗留该进程及其辅助进程。",
-    ],
-  },
-
-  {
-    version: "0.18.0",
-    date: "2026-10-02",
+    version: "0.18.2",
+    date: "2026-10-04",
     highlights: [
       "设置页面已按照 Raven 布局重新设计：带分隔线的平行行、224 px 固定导航栏配 Raven 导航动画及更新的控件；macOS 保留玻璃毛玻璃效果导航栏。 AI 设置现为导航分组，拆分为独立页面（权限与默认值、代理与任务、工具、扩展、记忆、看板），说明文字显示在每行下方。",
       "新增看板（默认关闭；在设置 → 看板中启用），布局与 Hermes Agent 一致：列副标题和 + 按钮、卡片标签（编号、优先级、项目、子任务进度、评论、关联、时长）、搜索与项目筛选、多选批量操作，以及用于编辑卡片、管理依赖、评论并查看事件与运行历史的卡片抽屉。卡片启动代理会话，显示工作线程工具、暂停开关和每会话上限；[kanban] 会话默认在侧边栏中隐藏。",
@@ -917,6 +902,7 @@ const zhCNEntries: ChangelogEntry[] = [
       "Bench 修复：Frappe v16 可正常进入运行状态，启动时可停止，退出时停止完整进程树，redis 端口冲突命名，精确名称读取审批正常，发现功能需要 site_config.json，迁移对话框添加焦点陷阱，日志中的 ANSI 代码被清除。",
       "动效：搜索对话框现在即时打开（无进入动画）；所有退出和折叠过渡使用 ease-out。",
       "发布保护：稳定标签不再能通过 workflow_dispatch 以未签名方式发布（CI 保护）；更新器签名检测已提取到独立模块并测试。",
+      "修复进程泄漏：更改提供商、记忆后端、审批模式、omp 设置或扩展时，现在会停止之前的智能体进程，不再在退出应用后遗留该进程及其辅助进程。",
     ],
   },
 
@@ -1763,16 +1749,8 @@ const zhCNEntries: ChangelogEntry[] = [
 
 const zhTWEntries: ChangelogEntry[] = [
   {
-    version: "0.18.1",
-    date: "2026-10-03",
-    highlights: [
-      "修正程序洩漏：變更供應商、記憶後端、核准模式、omp 設定或擴充功能時，現在會停止先前的代理程式程序，不再於結束應用程式後遺留該程序及其輔助程序。",
-    ],
-  },
-
-  {
-    version: "0.18.0",
-    date: "2026-10-02",
+    version: "0.18.2",
+    date: "2026-10-04",
     highlights: [
       "設定頁面已按照 Raven 佈局重新設計：帶分隔線的平行行、224 px 固定導航欄配 Raven 導航動畫及更新的控件；macOS 保留玻璃毛玻璃效果導航欄。 AI 設定現為導覽分組，拆分為獨立頁面（權限與預設值、代理與任務、工具、擴充、記憶、看板），說明文字顯示在每行下方。",
       "新增看板（預設關閉；在設定 → 看板中啟用），版面與 Hermes Agent 一致：欄位副標題與 + 按鈕、卡片標籤（編號、優先順序、專案、子任務進度、留言、關聯、時長）、搜尋與專案篩選、多選批次操作，以及用於編輯卡片、管理相依性、留言並檢視事件與執行歷史的卡片抽屜。卡片啟動代理工作階段，顯示工作者工具、暫停開關和每工作階段上限；[kanban] 工作階段預設在側邊欄中隱藏。",
@@ -1783,6 +1761,7 @@ const zhTWEntries: ChangelogEntry[] = [
       "Bench 修復：Frappe v16 可正常進入執行狀態，啟動時可停止，退出時停止完整程序樹，redis 連接埠衝突命名，精確名稱讀取審批正常，探索功能需要 site_config.json，遷移對話框新增焦點陷阱，日誌中的 ANSI 碼已清除。",
       "動效：搜尋對話框現在即時開啟（無進入動畫）；所有退出和折疊過渡使用 ease-out。",
       "發布保護：穩定標籤不再能透過 workflow_dispatch 以未簽名方式發布（CI 保護）；更新器簽名偵測已提取到獨立模組並進行測試。",
+      "修正程序洩漏：變更供應商、記憶後端、核准模式、omp 設定或擴充功能時，現在會停止先前的代理程式程序，不再於結束應用程式後遺留該程序及其輔助程序。",
     ],
   },
 
