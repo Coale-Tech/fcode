@@ -42,6 +42,7 @@ export function createInteractionSlice({
   | "setShowKanbanSessions"
   | "setKanbanEnabled"
   | "setRavenEnabled"
+  | "toggleTerminal"
   | "canNavBack"
   | "canNavForward"
   | "navBack"
@@ -100,6 +101,7 @@ export function createInteractionSlice({
     setShowKanbanSessions: (showKanbanSessions) => set({ showKanbanSessions }),
     setKanbanEnabled: (kanbanEnabled) => set({ kanbanEnabled }),
     setRavenEnabled: (ravenEnabled) => set({ ravenEnabled }),
+    toggleTerminal: () => set((state) => ({ terminalOpen: !state.terminalOpen })),
     canNavBack: () => get().navIndex > 0,
     canNavForward: () => get().navIndex < get().navStack.length - 1,
 

@@ -45,6 +45,7 @@ import { registerExtensionsMgmtIpc } from "./extensions-mgmt-ipc";
 import type { createTraySessions } from "../tray-sessions";
 import type { createTaskbarUnreadBadge } from "../taskbar-unread-badge";
 import { registerKanbanIpc, type KanbanIpcDependencies } from "./kanban-ipc";
+import { registerFileBirdIpc } from "./filebird-ipc";
 import { registerRavenIpc } from "./raven-ipc";
 
 export type RegisterIpcDependencies = {
@@ -431,6 +432,7 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     getMainWindow,
     sendChanged: () => sendToRenderer(IPC.event.ravenChanged, {}),
   });
+  registerFileBirdIpc({ registrar, dataDir, getMainWindow, sendToRenderer });
 
 
   registerAgentExtensionIpc({

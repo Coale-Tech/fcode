@@ -367,6 +367,12 @@ async function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
   return result.data;
 }
 
+/** A channel whose main handler returns raw values instead of the `{ok}` envelope. */
+function rawInvoke<T = void>(channel: string, ...args: unknown[]): Promise<T> {
+  if (!window.piDesktop?.invoke) return Promise.reject(new Error("piDesktop preload bridge unavailable"));
+  return window.piDesktop.invoke(channel, ...args) as unknown as Promise<T>;
+}
+
 function normalizeSession(session: SessionSummary): SessionSummary {
   return {
     ...session,
@@ -1903,6 +1909,24 @@ export const api = {
     invoke(IPC.invoke.ravenSetBounds, bounds),
   /** Raven pane: show on the Raven route, hide when leaving it. */
   ravenSetVisible: (visible: boolean) => invoke(IPC.invoke.ravenSetVisible, { visible }),
+  /** FileBird pane: place it over the page's hole (window-content coordinates). */
+  fileBirdSetBounds: (bounds: { x: number; y: number; width: number; height: number }) =>
+    invoke(IPC.invoke.fileBirdSetBounds, bounds),
+  /** FileBird pane: show on the FileBird route; `ok: false` while its services are unavailable. */
+  fileBirdSetVisible: (visible: boolean) =>
+    invoke<{ ok: boolean }>(IPC.invoke.fileBirdSetVisible, { visible }),
+  /**
+   * Integrated terminal, served by FileBird's TerminalService. Its handlers
+   * return raw values and reject with a JSON `{code, message}` error, so these
+   * skip the `{ok}` envelope.
+   */
+  terminalOpen: (input: { side: "local"; cwd?: string; cols: number; rows: number }) =>
+    rawInvoke<{ id: string }>(IPC.invoke.terminalOpen, input),
+  terminalWrite: (id: string, data: Uint8Array) => rawInvoke(IPC.invoke.terminalWrite, id, data),
+  terminalResize: (id: string, cols: number, rows: number) =>
+    rawInvoke(IPC.invoke.terminalResize, id, cols, rows),
+  terminalAck: (id: string, chars: number) => rawInvoke(IPC.invoke.terminalAck, id, chars),
+  terminalClose: (id: string) => rawInvoke(IPC.invoke.terminalClose, id),
   /** Kanban: pause or resume the dispatcher. */
   kanbanSetPaused: (paused: boolean) =>
     invoke<{ paused: boolean }>(IPC.invoke.kanbanSetPaused, { paused }),

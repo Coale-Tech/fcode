@@ -1,6 +1,7 @@
 # ADR 0108: Remove the built-in interactive terminal
 
-- Status: Accepted
+- Status: Superseded by [ADR 0309](0309-filebird-and-integrated-terminal.md)
+  (an integrated terminal under chat, served by embedded FileBird)
 - Date: 2026-08-19
 - Deciders: PI-Desktop maintainers
 - Related: [ADR 0019](0019-work-panel-subsystems.md) ·

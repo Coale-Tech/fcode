@@ -3680,33 +3680,27 @@ identify the platform validation still needed.
 - **Milestone**: M5
 - **Status**: Unit-covered (`chat-review-entry.test.mjs`); full UI scenario Draft
 
-#### E2E-058: Built-in interactive terminal is absent
+#### E2E-058: Integrated terminal under chat and embedded FileBird
 
-- **Preconditions**: A workspace is open and the Agent has completed a Bash
-  tool call.
-- **Steps**: 1) Open the work panel with Cmd/Ctrl+J and inspect the empty
-  state and context menu. 2) Confirm there is no Terminal tab, launcher row,
-  terminal-specific panel copy, or terminal IPC surface. 3) Confirm the
-  completed Bash row still shows its command, output, status, and copy action,
-  and that its `IconTerminal` presentation remains available. 4) Verify an
-  interactive shell is opened in the user's external terminal instead of the
-  work panel. 5) Build/package the desktop app and inspect the dependency and
-  unpacked-resource lists.
-- **Expected**: The work panel offers the Review launcher row plus Browser and
-  in-scope plugin views; Review opens on explicit user action and file resources
-  are transcript-opened; no PTY is created and no terminal tab can be opened.
-  Agent Bash remains non-interactive and fully visible in the transcript.
-  Interactive shell work is performed by the external terminal. Desktop
-  packaging has no PTY/xterm dependency, terminal-specific
-  IPC, or native terminal payload, while generic lifecycle `terminal` values
-  continue to work.
-- **Specs linked**: `02-architecture/02-tech-stack.md`,
-  `03-runtime/01-ipc-protocol.md` §13a, `04-ux/08-component-spec.md` §5,
-  ADR 0108
+- **Preconditions**: A project-bound session is active and the Agent has
+  completed a Bash tool call.
+- **Steps**: 1) Press Ctrl+` (or the workspace bar's Terminal button) on the
+  chat page. 2) Run `echo $TERM_PROGRAM && pwd`, resize the window, open a
+  second tab with +, then switch to another page and back. 3) Close a tab, then
+  close the last one. 4) Open FileBird from the nav rail; open search and
+  Settings over it. 5) Quit Fcode and list processes for the shells' PIDs.
+- **Expected**: The panel opens under chat with one shell started in the
+  session's workspace; output reflows on resize; shells survive navigation and
+  toggling. Closing a tab ends its shell; closing the last one hides the panel.
+  FileBird's local pane renders full-width without its own title bar and hides
+  under overlays. Agent Bash stays non-interactive, approval-gated and fully
+  visible in the transcript; the agent cannot write to the user's terminal. No
+  shell process remains after quit.
+- **Specs linked**: `03-runtime/01-ipc-protocol.md` §13a, ADR 0309
 - **Acceptance**: D (workspace), Quality
 - **Milestone**: M5
-- **Status**: Unit-covered (`work-panel.test.mjs`, `packaging-footprint.test.mjs`);
-  full UI scenario Draft
+- **Status**: Unit-covered (`packaging-footprint.test.mjs`, FileBird's terminal
+  service tests); full UI scenario Draft
 
 #### E2E-059: Embedded browser preview isolation and overlays
 

@@ -1,4 +1,4 @@
-import { app, shell, session, type BrowserWindow } from 'electron'
+import { app, shell, session, type BrowserWindow, type Session } from 'electron'
 import { URL } from 'node:url'
 import { createLogger } from './logger'
 import { isAllowedNavigation, type NavigationAllowance } from './navigation'
@@ -25,10 +25,10 @@ const PRODUCTION_CSP = [
   "form-action 'none'"
 ].join('; ')
 
-export function applyContentSecurityPolicy(): void {
+export function applyContentSecurityPolicy(target: Session = session.defaultSession): void {
   if (!app.isPackaged) return
 
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+  target.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
@@ -45,7 +45,7 @@ export function applyContentSecurityPolicy(): void {
  * `target="_blank"` or `window.open` is handed to the user's real browser
  * instead of opening an Electron window with our preload attached.
  */
-export function guardNavigation(window: BrowserWindow, allowance: NavigationAllowance): void {
+export function guardNavigation(window: Pick<BrowserWindow, 'webContents'>, allowance: NavigationAllowance): void {
   window.webContents.setWindowOpenHandler(({ url }) => {
     if (isSafeExternalUrl(url)) void shell.openExternal(url)
     else log.warn('Blocked window.open', { url })

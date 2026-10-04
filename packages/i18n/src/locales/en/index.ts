@@ -3170,6 +3170,18 @@ importConfirm: "Imported extensions run inside the agent process with the same a
       urlHint: "The Frappe site where Raven is installed, e.g. https://erp.example.com. You sign in on the site itself; Fcode never sees your password.",
     },
   },
+  fileBird: {
+    title: "FileBird",
+    unavailable: "FileBird couldn't start. Check the logs, then restart Fcode.",
+  },
+  terminal: {
+    title: "Terminal",
+    toggle: "Toggle terminal (Ctrl+`)",
+    tab: "Terminal {index}",
+    newTab: "New terminal",
+    closeTab: "Close terminal",
+    hide: "Hide terminal panel",
+  },
 } as const;
 
 type DeepStringify<T> = {

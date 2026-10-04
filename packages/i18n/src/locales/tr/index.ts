@@ -3155,8 +3155,19 @@ importConfirm: "İçe aktarılan uzantılar ajan sürecinde, ajanın kendi araç
       url: "Site URL'si",
       urlHint: "Raven'ın kurulu olduğu Frappe sitesi, ör. https://erp.example.com. Siteye kendiniz giriş yaparsınız; Fcode şifrenizi hiçbir zaman görmez.",
     },
+  },
+  "fileBird": {
+    "title": "FileBird",
+    "unavailable": "FileBird başlatılamadı. Günlükleri kontrol edin ve Fcode'u yeniden başlatın."
+  },
+  "terminal": {
+    "title": "Terminal",
+    "toggle": "Terminali göster/gizle (Ctrl+`)",
+    "tab": "Terminal {index}",
+    "newTab": "Yeni terminal",
+    "closeTab": "Terminali kapat",
+    "hide": "Terminal panelini gizle"
   }
-
 } satisfies EnglishCatalog;
 
 export default tr;

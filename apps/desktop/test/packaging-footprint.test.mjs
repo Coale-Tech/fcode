@@ -38,9 +38,14 @@ const pluginPanelPreloadSource = await readFile(
   "utf8",
 );
 
-test("packaging installs only the updater runtime dependency", () => {
+test("packaging installs the updater and FileBird's native runtime dependencies", () => {
+  // FileBird (ADR 0309) runs in main: node-pty and the keyring are native,
+  // ssh2 stays external so its optional native crypto binding resolves.
   assert.deepEqual(Object.keys(packageJson.dependencies).sort(), [
+    "@napi-rs/keyring",
     "electron-updater",
+    "node-pty",
+    "ssh2",
   ]);
 
   for (const dependency of [
@@ -123,9 +128,10 @@ test("main bundles JavaScript dependencies and externalizes only runtime modules
   assert.doesNotMatch(viteConfigSource, /externalizeDepsPlugin\s*\(/);
   // jiti is listed so the trusted-extension loader's lazy import never
   // enters the main bundle; main itself never loads it (spec 16 §4.2).
-  assert.match(viteConfigSource, /external:\s*\["electron-updater", "jiti", "jiti\/static"\]/);
-  assert.doesNotMatch(viteConfigSource, /node-pty/);
-  assert.doesNotMatch(JSON.stringify(packageJson.dependencies), /node-pty/);
+  assert.match(
+    viteConfigSource,
+    /external:\s*\["electron-updater", "jiti", "jiti\/static", "node-pty", "@napi-rs\/keyring", "ssh2"\]/,
+  );
 });
 
 test("sandbox preload entries use standalone shared subpath bundles", () => {
@@ -226,8 +232,16 @@ test("packaging keeps only shipped locales and excludes non-runtime artifacts", 
       from: "resources/fcode-skills",
       to: "fcode-skills",
     },
+    // FileBird's own preload and renderer load as file:// pages in its view (ADR 0309).
+    {
+      from: "../filebird/out/preload",
+      to: "filebird/preload",
+    },
+    {
+      from: "../filebird/out/renderer",
+      to: "filebird/renderer",
+    },
   ]);
-  assert.doesNotMatch(JSON.stringify(packageJson.build), /node-pty/);
 });
 
 test("macOS targets follow the native architecture selected by the runner", () => {
@@ -289,14 +303,14 @@ test("macOS DMG is a two-icon install; ZIP keeps the unsigned helper", () => {
   assert.doesNotMatch(macOpenScript, /xattr -cr/);
 });
 
-test("packaging keeps voice native payloads unpacked and excludes removed PTY payloads", () => {
+test("packaging keeps voice, PTY and keyring native payloads unpacked", () => {
   assert.deepEqual(packageJson.build.asar, { smartUnpack: false });
   assert.deepEqual(packageJson.build.asarUnpack, [
     "node_modules/transcribe-cpp/**/*.node",
     "node_modules/transcribe-cpp/**/bin/**",
     "node_modules/@picovoice/pvrecorder-node/**/*.node",
     "node_modules/@picovoice/pvrecorder-node/**/lib/**",
+    "node_modules/node-pty/**",
+    "node_modules/@napi-rs/keyring-*/**",
   ]);
-  assert.doesNotMatch(JSON.stringify(packageJson.build.files), /node-pty/);
-  assert.doesNotMatch(JSON.stringify(packageJson.build.extraResources), /node-pty/);
 });

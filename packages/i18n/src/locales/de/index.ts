@@ -3126,8 +3126,19 @@ sklm: {
       "url": "Website-URL",
       "urlHint": "Die Frappe-Website, auf der Raven installiert ist, z. B. https://erp.example.com. Du meldest dich auf der Website an; Fcode sieht dein Passwort nie."
     }
+  },
+  "fileBird": {
+    "title": "FileBird",
+    "unavailable": "FileBird konnte nicht starten. Prüfe die Protokolle und starte Fcode neu."
+  },
+  "terminal": {
+    "title": "Terminal",
+    "toggle": "Terminal ein-/ausblenden (Ctrl+`)",
+    "tab": "Terminal {index}",
+    "newTab": "Neues Terminal",
+    "closeTab": "Terminal schließen",
+    "hide": "Terminalbereich ausblenden"
   }
-
 } satisfies EnglishCatalog;
 
 export default de;

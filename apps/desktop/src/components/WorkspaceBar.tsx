@@ -14,6 +14,9 @@ export function WorkspaceBar() {
   const { t } = useTranslation();
   const isRunning = useAppStore((s) => s.isRunning);
   const setPage = useAppStore((s) => s.setPage);
+  const page = useAppStore((s) => s.page);
+  const terminalOpen = useAppStore((s) => s.terminalOpen);
+  const toggleTerminal = useAppStore((s) => s.toggleTerminal);
   const bench = useBenchContext();
 
   return (
@@ -65,6 +68,18 @@ export function WorkspaceBar() {
             ◐ agent working
           </span>
         </>
+      )}
+
+      {page === "chat" && (
+        <button
+          type="button"
+          className="workspace-bar-choose-btn workspace-bar-terminal-btn no-drag"
+          aria-pressed={terminalOpen}
+          title={t("terminal.toggle")}
+          onClick={toggleTerminal}
+        >
+          {t("terminal.title")}
+        </button>
       )}
     </div>
   );

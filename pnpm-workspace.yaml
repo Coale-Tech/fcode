@@ -9,6 +9,10 @@ allowBuilds:
   esbuild: true
   node-pty: true
   protobufjs: true
+# ssh2 (FileBird) only uses cpu-features to order ciphers and falls back without
+# it; skipping it keeps `electron-builder install-app-deps` off a gyp build.
+ignoredOptionalDependencies:
+  - cpu-features
 # Drop this list once the pinned @earendil-works packages are older than
 # pnpm's supply-chain age gate (packages published within the last day).
 minimumReleaseAgeExclude:

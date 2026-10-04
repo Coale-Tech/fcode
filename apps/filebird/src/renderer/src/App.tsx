@@ -4,6 +4,9 @@ import { MainPage } from '@renderer/pages/MainPage'
 import { useRemoteConnection } from '@renderer/hooks/useRemoteConnection'
 import { useSystemInfo } from '@renderer/hooks/useSystemInfo'
 
+/** Inside a host app's page there are no traffic lights to clear (embed.ts). */
+const embedded = new URLSearchParams(location.search).has('embedded')
+
 export default function App(): JSX.Element {
   const { versions } = useSystemInfo()
   const remote = useRemoteConnection()
@@ -20,7 +23,7 @@ export default function App(): JSX.Element {
 
   return (
     <div className="flex h-full flex-col">
-      <TitleBar isMac={isMac} status={status} />
+      <TitleBar isMac={isMac && !embedded} status={status} />
       <MainPage
         remote={remote}
         platform={versions?.platform ?? (isMac ? 'darwin' : 'linux')}

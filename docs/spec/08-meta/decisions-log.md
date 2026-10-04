@@ -7067,3 +7067,16 @@ must keep splitting are covered by `markdown-blocks.test.mjs`.
   `--composer-dock-height`. There is no scroll state, protocol, persistence,
   theme schema, or permission change. See `04-ux/08-component-spec.md` and
   E2E-CHAT-opaque-floating-decision-and-retry-surfaces.
+
+## 2026-10-04 — FileBird is embedded and the integrated terminal returns (D625)
+
+- Decision D625 supersedes D251 (ADR 0108). FileBird, vendored at
+  `apps/filebird`, runs its services in Electron Main and its UI in a
+  `persist:filebird` view behind a full-width nav-rail page.
+- An integrated terminal sits under chat (Ctrl+`, workspace bar button). It
+  reuses FileBird's terminal service and channel names rather than adding a
+  second PTY manager; shells start in the active session's workspace and are
+  killed on quit.
+- Agent Bash stays non-interactive and approval-gated, and there is still no
+  plugin PTY permission. See ADR 0309, `03-runtime/01-ipc-protocol.md` §13a,
+  and E2E-058.

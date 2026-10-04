@@ -60,8 +60,9 @@ export default defineConfig({
         // must resolve from the packaged node_modules stay external.
         // jiti is loaded lazily by the sidecar's trusted-extension loader
         // (D387); Electron main never calls it, and its transpiled dist
-        // breaks the main bundle's esbuild transform.
-        external: ["electron-updater", "jiti", "jiti/static"],
+        // breaks the main bundle's esbuild transform. FileBird's native
+        // modules (node-pty, keyring, ssh2's optional bindings) load at runtime.
+        external: ["electron-updater", "jiti", "jiti/static", "node-pty", "@napi-rs/keyring", "ssh2"],
         input: {
           index: resolve(__dirname, "electron/main/index.ts"),
           // Forked per plugin by PluginRuntime (ADR 0008); must stay a

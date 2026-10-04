@@ -3116,8 +3116,19 @@ sklm: {
       url: "站点 URL",
       urlHint: "安装了 Raven 的 Frappe 站点，例如 https://erp.example.com。您在站点上自行登录；Fcode 绝不会看到您的密码。",
     },
+  },
+  "fileBird": {
+    "title": "FileBird",
+    "unavailable": "FileBird 无法启动。请查看日志，然后重启 Fcode。"
+  },
+  "terminal": {
+    "title": "终端",
+    "toggle": "显示/隐藏终端 (Ctrl+`)",
+    "tab": "终端 {index}",
+    "newTab": "新建终端",
+    "closeTab": "关闭终端",
+    "hide": "隐藏终端面板"
   }
-
 } satisfies EnglishCatalog;
 
 export default zhCN;

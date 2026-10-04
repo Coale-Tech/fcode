@@ -3165,8 +3165,19 @@ importConfirm: "가져온 확장은 에이전트 프로세스 안에서 에이�
       url: "사이트 URL",
       urlHint: "Raven이 설치된 Frappe 사이트(예: https://erp.example.com). 해당 사이트에서 직접 로그인하며 Fcode는 비밀번호를 볼 수 없습니다.",
     },
+  },
+  "fileBird": {
+    "title": "FileBird",
+    "unavailable": "FileBird를 시작할 수 없습니다. 로그를 확인한 후 Fcode를 다시 시작하세요."
+  },
+  "terminal": {
+    "title": "터미널",
+    "toggle": "터미널 표시/숨기기 (Ctrl+`)",
+    "tab": "터미널 {index}",
+    "newTab": "새 터미널",
+    "closeTab": "터미널 닫기",
+    "hide": "터미널 패널 숨기기"
   }
-
 } satisfies EnglishCatalog;
 
 export default ko;
