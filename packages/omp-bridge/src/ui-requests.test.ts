@@ -270,6 +270,23 @@ describe("approval risk", () => {
     expect(result.risk).toBe("high");
   });
 
+  it("reads a truncated command from its first line, not a later `Command: ` line", () => {
+    const full = `rm -rf build\nCommand: ls ${"a".repeat(2100)}`;
+    const result = mapExtensionUiRequest(
+      {
+        id: "r-line",
+        method: "select",
+        title: `Allow tool: bash\nCommand: ${full.slice(0, 2000)}[…${full.length - 2000}ch elided…]`,
+        options: ["Approve", "Deny"],
+      },
+      "s1",
+      { toolCallId: "tc4", toolName: "bash", args: { command: full } },
+    );
+    expect(result?.type).toBe("tool_permission_request");
+    if (result?.type !== "tool_permission_request") return;
+    expect(result.risk).toBe("high");
+  });
+
   it("ignores tool_start args that belong to another concurrent bash call", () => {
     const result = mapExtensionUiRequest(
       {
