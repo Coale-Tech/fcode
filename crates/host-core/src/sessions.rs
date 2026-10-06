@@ -6885,15 +6885,28 @@ mod tests {
         // A reply cut off by a sidecar crash is promoted under its local id.
         let third = create_session(&db, None, None, None, None, None).unwrap();
         let turn = begin_turn(&db, &third.id, None, None).unwrap();
-        append_message(&db, &third.id, &streaming_assistant("msg-2", ""), Some(&turn)).unwrap();
+        append_message(
+            &db,
+            &third.id,
+            &streaming_assistant("msg-2", ""),
+            Some(&turn),
+        )
+        .unwrap();
         assert!(save_inflight_message(&db, &third.id, Some(&turn), &partial).unwrap());
-        let recovered = recover_inflight_message(&db, &third.id, true).unwrap().unwrap();
+        let recovered = recover_inflight_message(&db, &third.id, true)
+            .unwrap()
+            .unwrap();
         assert_eq!(recovered.id, local_id(&third.id));
         assert_eq!(recovered.status.as_deref(), Some("aborted"));
         let messages = get_session(&db, &third.id).unwrap().unwrap().messages;
         assert_eq!(messages.len(), 1);
         assert_eq!(messages[0].content, "partial");
-        assert_eq!(transcripts::read_transcript(db.data_dir(), &third.id).unwrap().len(), 1);
+        assert_eq!(
+            transcripts::read_transcript(db.data_dir(), &third.id)
+                .unwrap()
+                .len(),
+            1
+        );
     }
 
     #[test]
