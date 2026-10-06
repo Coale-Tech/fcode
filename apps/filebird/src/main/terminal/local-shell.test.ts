@@ -12,6 +12,11 @@ describe('shellEnvironment', () => {
       NODE_OPTIONS: '--require=/x.js',
       FLY_DEV_HOME: '/tmp/fixture',
       FLY_DEV_TRASH_DIR: '/tmp/trash',
+      // Set by the terminal Fly was launched from: Apple's zsh setup would give
+      // every Fly shell that terminal tab's saved session and history.
+      TERM_PROGRAM: 'Apple_Terminal',
+      TERM_PROGRAM_VERSION: '455',
+      TERM_SESSION_ID: 'C6E4B5D2-0000-4000-8000-000000000000',
       EMPTY: undefined
     })
     expect(env).toEqual({ PATH: '/usr/bin', HOME: '/home/me', TERM: TERM_NAME })

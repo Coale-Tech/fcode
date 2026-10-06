@@ -32,6 +32,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Replies after an agent restart are no longer dropped or written twice: message ids are unique per omp process, and checkpoints follow ids that were renamed to avoid another chat's rows (previously "UNIQUE constraint failed" left the turn stuck).
 - Quitting no longer hangs with FileBird idle, and a termination signal (`kill`, logout, a script) now quits instead of waiting at the "Quit Fcode?" dialog. Running FileBird transfers are cancelled and their temporary files removed before exit.
 - Cancelling the "Quit Fcode?" dialog no longer stops voice input or scheduled tasks.
+- Terminals in Fcode and FileBird no longer inherit the identity of the terminal app Fcode was started from. When Fcode was launched from Terminal.app, every shell restored and overwrote that Terminal tab's saved zsh session and history.
 
 ## [0.18.3] — 2026-10-04
 
