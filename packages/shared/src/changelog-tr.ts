@@ -8,6 +8,7 @@ export const trEntries: ChangelogEntry[] = [
       "FileBird artık Fcode'un bir parçası: kenar çubuğundaki FileBird düğmesi SFTP istemcisini tam genişlikte açar; yerel ve uzak bölmeler, aktarımlar, kayıtlı bağlantılar ve uzak terminaller içerir. Gizli bilgiler işletim sisteminin anahtar zincirinde kalır.",
       "Sohbetin altında tümleşik terminal: Ctrl+` tuşuna basın veya çalışma alanı çubuğundaki Terminal'e tıklayın. Kabuklar oturumun çalışma alanında sekmeler halinde açılır, sayfa değiştirdiğinizde çalışmaya devam eder ve Fcode kapanınca durur.",
       "Çok satırlı kabuk komutlarının izin kartları artık riski yalnızca ilk satıra göre değil, her satıra göre değerlendirir.",
+      "Güvenilirlik: her sohbet kendi ajan geçmişini ve proje klasörünü korur, çöken ajan yeniden başlar ve takılan turu bitirir, ajan yeniden başladıktan sonraki yanıtlar artık kaybolmaz veya yinelenmez ve çıkış artık takılmaz.",
     ],
   },
   {

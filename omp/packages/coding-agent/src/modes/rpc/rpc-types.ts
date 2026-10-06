@@ -33,7 +33,7 @@ export type RpcCommand =
 	| { id?: string; type: "abort" }
 	| { id?: string; type: "abort_and_prompt"; message: string; images?: ImageContent[] }
 	| { id?: string; type: "new_session"; parentSession?: string }
-	| { id?: string; type: "open_session"; sessionDir: string }
+	| { id?: string; type: "open_session"; sessionDir: string; cwd?: string }
 
 	// State
 	| { id?: string; type: "get_state" }

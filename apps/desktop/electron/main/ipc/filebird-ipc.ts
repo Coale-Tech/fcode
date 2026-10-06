@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { setTimeout as sleep } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
 import { app, dialog, shell, WebContentsView, type BrowserWindow } from "electron";
 import { IPC } from "@pi-desktop/shared";
@@ -77,8 +78,17 @@ export function registerFileBirdIpc({ registrar, dataDir, getMainWindow, sendToR
       // Kill every PTY before Electron tears down (node-pty aborts on a late exit).
       // will-quit, not before-quit: before-quit also fires for a quit the user then
       // cancels in Fcode's confirm dialog, which would kill live terminals.
+      // Electron exits once will-quit handlers return, so hold the quit until
+      // cancelled transfers have removed their temp files and connections closed;
+      // the second app.quit() passes because Fcode's before-quit is already done.
+      // It must run after this dispatch returns: an idle FileBird settles within
+      // the same microtask drain, where Electron is still quitting and drops it.
       // ponytail: running transfers are cancelled without FileBird's "stop transfers?" prompt.
-      app.once("will-quit", () => void fileBird?.shutdown());
+      app.once("will-quit", (event) => {
+        if (!fileBird) return;
+        event.preventDefault();
+        void Promise.race([fileBird.shutdown(), sleep(10_000)]).finally(() => setImmediate(() => app.quit()));
+      });
     })
     .catch((error: unknown) => {
       console.error("[filebird] failed to start:", error);

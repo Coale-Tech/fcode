@@ -296,7 +296,9 @@ export function registerApplicationStartup(deps: StartupDependencies): void {
       report: (error) => logger.app("runtime", "warn", "scheduled task dispatch failed", { data: String(error) }),
     });
     scheduledRunner.start();
-    app.once("before-quit", () => scheduledRunner.stop());
+    // will-quit: before-quit also fires for a quit cancelled in the confirm
+    // dialog, and a stopped runner never restarts.
+    app.once("will-quit", () => scheduledRunner.stop());
     if (!bootError && state.agentHostBridge) {
       // Restore the persisted turn queue now that host-core answers. Restored
       // entries stay held until a controller attaches (D375).

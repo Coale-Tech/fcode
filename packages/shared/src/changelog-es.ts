@@ -8,6 +8,7 @@ export const esEntries: ChangelogEntry[] = [
       "FileBird ahora forma parte de Fcode: el botón FileBird de la barra lateral abre el cliente SFTP a ancho completo, con paneles local y remoto, transferencias, conexiones guardadas y terminales remotas. Los secretos se quedan en el llavero del sistema.",
       "Terminal integrada bajo el chat: pulsa Ctrl+` o haz clic en Terminal en la barra del espacio de trabajo. Las shells se abren en pestañas en el espacio de trabajo de la sesión, siguen funcionando al cambiar de página y se detienen al salir de Fcode.",
       "Las tarjetas de permisos de comandos de shell de varias líneas ahora evalúan el riesgo de cada línea, no solo de la primera.",
+      "Fiabilidad: cada chat conserva su propio historial del agente y su carpeta de proyecto, un agente que falla se reinicia y termina el turno bloqueado, las respuestas tras reiniciar el agente ya no se pierden ni se duplican, y salir ya no se queda colgado.",
     ],
   },
   {

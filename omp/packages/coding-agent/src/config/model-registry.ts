@@ -1519,7 +1519,7 @@ export class ModelRegistry {
 				error,
 				found: true,
 			};
-		} else if (status === "not-found") {
+		} else if (status === "not-found" && !this.#extraModelsConfigFile) {
 			return {
 				models: [],
 				overrides: new Map(),
@@ -1530,13 +1530,15 @@ export class ModelRegistry {
 				found: false,
 			};
 		}
+		// --models-config providers (Fcode's) must load on a machine with no models.yml.
+		const config: ModelsConfig = status === "ok" ? value : {};
 
 		const overrides = new Map<string, ProviderOverride>();
 		const allModelOverrides = new Map<string, Map<string, ModelOverride>>();
 		const keylessProviders = new Set<string>();
 		const discoverableProviders: DiscoveryProviderConfig[] = [];
-		const providerEntries = Object.entries(value.providers ?? {});
-		const configuredProviders = new Set(Object.keys(value.providers ?? {}));
+		const providerEntries = Object.entries(config.providers ?? {});
+		const configuredProviders = new Set(Object.keys(config.providers ?? {}));
 		for (const [providerName, providerConfig] of providerEntries) {
 			const commandConfigs = new Set<string>();
 			this.#collectCommandConfigValues(commandConfigs, providerConfig.apiKey, providerConfig.headers);
@@ -1682,13 +1684,13 @@ export class ModelRegistry {
 			}
 		}
 		return {
-			models: [...this.#parseModels(value), ...extraModelOverlays],
+			models: [...this.#parseModels(config), ...extraModelOverlays],
 			overrides,
 			modelOverrides: allModelOverrides,
 			keylessProviders,
 			discoverableProviders,
 			configuredProviders,
-			found: true,
+			found: status === "ok",
 		};
 	}
 

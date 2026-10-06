@@ -8,6 +8,7 @@ export const deEntries: ChangelogEntry[] = [
       "FileBird ist jetzt Teil von Fcode: Der FileBird-Button in der Seitenleiste öffnet den SFTP-Client in voller Breite, mit lokalem und entferntem Bereich, Übertragungen, gespeicherten Verbindungen und Remote-Terminals. Geheimnisse bleiben im Schlüsselbund deines Systems.",
       "Integriertes Terminal unter dem Chat: Drücke Ctrl+` oder klicke in der Arbeitsbereichsleiste auf „Terminal“. Shells öffnen sich als Tabs im Arbeitsbereich der Sitzung, laufen beim Seitenwechsel weiter und werden beim Beenden von Fcode gestoppt.",
       "Berechtigungskarten für mehrzeilige Shell-Befehle bewerten das Risiko jetzt anhand jeder Zeile, nicht nur der ersten.",
+      "Zuverlässigkeit: Jeder Chat behält seinen eigenen Agentenverlauf und Projektordner, ein abgestürzter Agent startet neu und beendet den hängenden Durchlauf, Antworten nach einem Neustart des Agenten gehen nicht mehr verloren oder doppeln sich, und das Beenden hängt nicht mehr.",
     ],
   },
   {

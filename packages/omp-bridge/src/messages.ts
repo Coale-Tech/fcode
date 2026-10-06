@@ -8,7 +8,13 @@
  * `tool_*` events, and omp-internal roles (`custom`, `toolResult`) have no PI row.
  */
 
+import { randomUUID } from "node:crypto";
 import type { AgentEvent, MessageUsage, UiMessage } from "@pi-desktop/shared";
+
+// omp numbers messages from msg-1 again in every process, while the host
+// keeps ids for good and skips a final row whose id the session already has.
+// Without a per-process prefix, replies after an omp restart are lost.
+const PROCESS_ID = randomUUID();
 
 type Frame = Record<string, any>;
 
@@ -39,7 +45,7 @@ function toUiMessage(frame: Frame, final: boolean): UiMessage | null {
   const thinking = blockText(m.content, "thinking", "thinking");
   const usage = final ? usageOf(m.usage) : undefined;
   return {
-    id: String(frame.messageId),
+    id: `${PROCESS_ID}:${String(frame.messageId)}`,
     role: "assistant",
     // Streaming rows start empty: text arrives as deltas, message_end carries the full text.
     content: final ? blockText(m.content, "text", "text") : "",
