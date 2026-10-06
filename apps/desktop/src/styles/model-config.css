@@ -1195,7 +1195,7 @@
 .provider-thinking-chip.selected {
   background: var(--ds-accent);
   box-shadow: var(--ds-raised-shadow);
-  color: var(--ds-bg-primary);
+  color: var(--ds-accent-foreground);
 }
 
 .provider-thinking-chip:focus-visible {

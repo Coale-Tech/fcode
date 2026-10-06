@@ -14,11 +14,15 @@
  *
  * A branch dispatch with sign_macos=false is the debug lane and passes.
  * A prerelease tag (vX.Y.Z-rc.N) passes — unsigned RC artifacts are fine.
+ * ALLOW_UNSIGNED_STABLE="true" (workflow input allow_unsigned_stable) is the
+ * deliberate opt-in for an unsigned stable release while no Apple signing
+ * secrets exist; it passes with a warning annotation.
  *
  * Usage in CI (release.yml verify job):
  *   - name: Check release dispatch guard
  *     env:
  *       SIGN_MACOS: ${{ inputs.sign_macos }}
+ *       ALLOW_UNSIGNED_STABLE: ${{ inputs.allow_unsigned_stable }}
  *     run: node scripts/check-release-dispatch.mjs
  *
  * Usage for local smoke testing:
@@ -38,10 +42,15 @@ const isStableTag =
   ref.startsWith("refs/tags/v") && !refName.includes("-");
 
 if (isDispatch && isUnsigned && isStableTag) {
-  process.stderr.write(
-    `::error::sign_macos=false is not allowed on stable tag ${refName}. Use a prerelease tag (vX.Y.Z-rc.N) to build unsigned macOS artifacts.\n`,
+  if (process.env.ALLOW_UNSIGNED_STABLE !== "true") {
+    process.stderr.write(
+      `::error::sign_macos=false is not allowed on stable tag ${refName}. Use a prerelease tag (vX.Y.Z-rc.N) to build unsigned macOS artifacts, or set allow_unsigned_stable=true to publish an unsigned stable release deliberately.\n`,
+    );
+    process.exit(1);
+  }
+  console.log(
+    `::warning::Publishing ${refName} as an unsigned stable release (allow_unsigned_stable=true).`,
   );
-  process.exit(1);
 }
 
 console.log("Release dispatch check passed.");

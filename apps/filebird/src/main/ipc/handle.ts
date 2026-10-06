@@ -5,6 +5,13 @@ import { createLogger } from '../logger'
 
 const log = createLogger('ipc')
 
+let isTrustedSender: (sender: WebContents) => boolean = () => true
+
+/** Limits every FileBird channel to the pages the host trusts; until called, every sender is allowed. */
+export function trustSenders(check: (sender: WebContents) => boolean): void {
+  isTrustedSender = check
+}
+
 /**
  * Wrapper around ipcMain.handle that guarantees the error contract.
  *
@@ -26,6 +33,7 @@ export function handleWithSender<TResult>(
 ): void {
   ipcMain.handle(channel, async (event, ...args: unknown[]) => {
     try {
+      if (!isTrustedSender(event.sender)) throw new AppError('PERMISSION_DENIED', 'Unauthorized sender.')
       return await handler(event.sender, ...args)
     } catch (error) {
       if (error instanceof AppError) {

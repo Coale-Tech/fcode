@@ -195,7 +195,7 @@ export function TerminalView({ side, connectionId, cwd, visible }: TerminalViewP
   }, [visible])
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col bg-[#0b0d12]" data-testid={`terminal-${side}`} data-ended={ended || undefined}>
+    <div className="relative flex min-h-0 flex-1 flex-col bg-fb-base" data-testid={`terminal-${side}`} data-ended={ended || undefined}>
       <div ref={holder} className="min-h-0 flex-1 overflow-hidden px-2 py-1" />
       {error !== null && (
         <div role="alert" className="border-t border-red-500/15 bg-red-500/[0.07] px-3 py-2 text-[12px] text-red-300">

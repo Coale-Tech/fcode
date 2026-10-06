@@ -60,7 +60,7 @@ export function TransferPanel(props: TransferPanelProps): JSX.Element | null {
   if (jobs.length === 0 && !preparing && notice === null && refusal === null) return null
 
   return (
-    <section aria-label="Transfers" data-testid="transfer-panel" className="shrink-0 border-t border-white/[0.06] bg-[#0e1117] text-[12px]">
+    <section aria-label="Transfers" data-testid="transfer-panel" className="shrink-0 border-t border-white/[0.06] bg-fb-panel text-[12px]">
       {refusal !== null && (
         <MessageRow testId="transfer-refusal" tone="error" message={refusal.message} onDismiss={props.onDismissRefusal} />
       )}

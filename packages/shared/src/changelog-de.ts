@@ -2,6 +2,17 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const deEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.5",
+    "date": "2026-10-06",
+    "highlights": [
+      "Beenden: Ein erneutes ⌘Q, während der Dialog „Fcode beenden?“ offen ist, beendet Fcode nicht mehr ohne deine Antwort, und geplante Aufgaben starten nicht mehr, während Fcode beendet wird.",
+      "Agentenabstürze: Ein Werkzeug, das beim Absturz lief, endet jetzt als „Unterbrochen“, auch nach einem Neuladen, und das Feld „Agent gestoppt“ verschwindet, sobald der Agent wieder läuft. Berechtigungskarten zeigen den Grund, den omp nennt, und bewerten lange Befehle anhand des vollständigen Befehls.",
+      "FileBird: Die Liste gespeicherter Verbindungen fragt nicht mehr für jede Verbindung nach Schlüsselbundzugriff, nur die FileBird-Ansicht und das Fcode-Fenster können FileBird aufrufen, und das integrierte Terminal erhält nach einem Dialog den Tastaturfokus zurück.",
+      "Aussehen und Modelle: Fcode nutzt jetzt das Blau von FileBird für Schaltflächen, Schalter und Auswahl, und FileBird folgt dem hellen oder dunklen Design von Fcode. Neue Chats laufen mit dem Modell, das ihr Chip anzeigt, das Modellmenü zeigt die Namen Ihrer Anbieter, und ein Agent-Neustart nach einer Einstellungsänderung wird als solcher gemeldet statt als Absturz.",
+      "Benches: Liegen Ihre Benches nicht in ~/ERPNext, wählen Sie ihren Ordner auf der Bench-Seite; Fcode merkt sich die Wahl. Fehlt ~/ERPNext, erscheint jetzt die Einrichtungsanleitung statt eines Fehlers.",
+    ],
+  },
+  {
     "version": "0.18.4",
     "date": "2026-10-04",
     "highlights": [

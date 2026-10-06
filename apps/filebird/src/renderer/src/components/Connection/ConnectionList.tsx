@@ -68,7 +68,7 @@ export function ConnectionList(props: ConnectionListProps): JSX.Element {
           <button type="button" onClick={props.onImport} className={SMALL_BUTTON}>
             Import from SSH config
           </button>
-          <button type="button" onClick={props.onNew} className="rounded bg-sky-600 px-2.5 py-1 text-[11px] font-medium text-white transition hover:bg-sky-500">
+          <button type="button" onClick={props.onNew} className="rounded bg-sky-600 px-2.5 py-1 text-[11px] font-medium text-on-accent transition hover:bg-sky-500">
             New connection
           </button>
         </div>

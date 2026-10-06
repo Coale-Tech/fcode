@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import * as crypto from "node:crypto";
 import * as fs from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
+import { setTimeout as sleep } from "node:timers/promises";
 import test from "node:test";
 import ts from "typescript";
 import { ErrorCodes } from "../../../packages/shared/src/errors.ts";
@@ -199,4 +201,28 @@ test("adding a summary read does not expose arbitrary preload channels", async (
   const { bridge } = rendererApi(async () => { calls += 1; });
   await assert.rejects(bridge.invoke("session.collaboration.status", { sessionId: summary.sessionId }), /IPC channel not allowed/);
   assert.equal(calls, 0);
+});
+
+test("session delete removes only that session's omp thread dir", async (t) => {
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "fcode-session-delete-"));
+  t.after(() => fs.rmSync(dataDir, { recursive: true, force: true }));
+  const threads = path.join(dataDir, "omp-threads");
+  for (const id of ["s1", "s2"]) fs.mkdirSync(path.join(threads, id), { recursive: true });
+  const handlers = new Map();
+  registerSessionIpc({
+    registrar: { handle: (channel, handler) => handlers.set(channel, handler) },
+    getHost: () => ({ call: async (_method, { id }) => ({ ok: id === "s1" }) }),
+    getSidecar: () => null,
+    dataDir,
+    persistenceOutbox: { dropSession: async () => {} },
+    logger: { app: () => {} },
+    activeTurns: new Map(),
+    sessionProjects: new Map(),
+  });
+  const remove = handlers.get(IPC.invoke.sessionDelete);
+  for (const id of ["..", ".", "", "s1"]) await remove(id);
+  for (let i = 0; i < 200 && fs.existsSync(path.join(threads, "s1")); i++) await sleep(10);
+  assert.equal(fs.existsSync(path.join(threads, "s1")), false, "the deleted session's thread dir is removed");
+  await sleep(50); // let a stray recursive rm finish
+  assert.ok(fs.existsSync(path.join(threads, "s2")), "other sessions' thread dirs survive");
 });

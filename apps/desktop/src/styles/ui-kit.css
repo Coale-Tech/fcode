@@ -153,7 +153,7 @@
 
 .btn-primary {
   background: var(--ds-accent);
-  color: var(--ds-bg-primary);
+  color: var(--ds-accent-foreground);
 }
 .btn-primary:hover:not(:disabled) {
   background: var(--ds-accent-hover);
@@ -368,7 +368,7 @@
   left: 5px;
   width: 4px;
   height: 8px;
-  border: solid var(--ds-bg, #000);
+  border: solid var(--ds-accent-foreground);
   border-width: 0 1.5px 1.5px 0;
   transform: rotate(45deg);
 }

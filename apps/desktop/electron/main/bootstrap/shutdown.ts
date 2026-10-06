@@ -23,6 +23,8 @@ export type ShutdownState = {
   shutdownPromise: Promise<void> | null;
   quitting: boolean;
   quitConfirmed: boolean;
+  /** The confirm-quit sheet is open; further quit gestures are dropped. */
+  quitDialogPending: boolean;
   closeBehavior: CloseBehavior;
   tray: Tray | null;
   pluginLauncherAccelerator: string | null;
@@ -44,6 +46,7 @@ export type ShutdownDependencies = {
   userMcp: Pick<UserMcpRuntime, "disposeAll">;
   mcpOAuth?: Pick<McpOAuthManager, "disposeAll">;
   browserPane: Pick<BrowserPane, "dispose">;
+  ravenPane: Pick<BrowserPane, "dispose">;
   pluginViews: Pick<PluginViewHost, "dispose">;
   updater: Pick<AppUpdaterController, "dispose" | "isInstallingUpdate">;
   logger: Pick<Logger, "app">;
@@ -67,6 +70,7 @@ export function registerShutdownHandlers({
   userMcp,
   mcpOAuth,
   browserPane,
+  ravenPane,
   pluginViews,
   updater,
   logger,
@@ -86,8 +90,9 @@ export function registerShutdownHandlers({
 
   // A signal (kill, launchd, a script) has no one to answer the quit dialog,
   // which would keep the app alive forever: run the normal shutdown unasked.
-  // Electron installs its own SIGTERM/SIGINT handler (straight to before-quit)
-  // during startup, replacing any listener added earlier, so wait for ready.
+  // Wait for ready: Node arms one libuv signal wrap per signal on its first
+  // listener, and Chromium's ShutdownDetector replaces that sigaction during
+  // startup, so listeners added earlier (here or by a dependency) never fire.
   void app.whenReady().then(() => {
     for (const signal of ["SIGTERM", "SIGINT"] as const) {
       process.once(signal, () => {
@@ -121,13 +126,18 @@ export function registerShutdownHandlers({
     // user chose "restart to update" to get here.
     const isUpdateRestart = updater.isInstallingUpdate();
     if (!state.quitConfirmed && !isAutomatedMode && !isUpdateRestart) {
-      state.quitConfirmed = true;
+      // The sheet is already open: drop the repeated gesture. A signal or an
+      // update restart still quits.
+      if (state.quitDialogPending) return;
+      state.quitDialogPending = true;
       void confirmQuitDialog().then((confirmed) => {
         if (confirmed) {
+          state.quitDialogPending = false;
+          state.quitConfirmed = true;
           app.quit();
         } else {
           // User cancelled: allow future quit requests to prompt again.
-          state.quitConfirmed = false;
+          state.quitDialogPending = false;
         }
       });
       return;
@@ -178,6 +188,7 @@ export function registerShutdownHandlers({
       userMcp.disposeAll();
       mcpOAuth?.disposeAll();
       browserPane.dispose();
+      ravenPane.dispose();
       pluginViews.dispose();
       inflightCheckpointer.dispose();
       const sidecarShutdown = Promise.allSettled(getAllSidecars().map((s) => s.dispose()));

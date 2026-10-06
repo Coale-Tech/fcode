@@ -63,6 +63,9 @@ export function registerFileBirdIpc({ registrar, dataDir, getMainWindow, sendToR
         send,
         // FileBird's menu shortcuts are not installed in Fcode, so there is nothing to suppress.
         setTerminalFocus: () => undefined,
+        // Its view, plus Fcode's own window for the integrated terminal's `terminal:*` calls;
+        // never the Raven, work-browser or plugin pages that share ipcMain.
+        isTrustedSender: (sender) => sender === view?.webContents || sender === getMainWindow()?.webContents,
         pickPrivateKey: async () => {
           const options = {
             title: "Choose a private key",

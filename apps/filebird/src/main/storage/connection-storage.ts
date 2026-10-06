@@ -43,6 +43,10 @@ export function toStoredProfile(value: unknown): ConnectionProfile | null {
   if (importedFrom?.['kind'] === 'ssh-config' && isString(importedFrom['alias'])) {
     profile.importedFrom = { kind: 'ssh-config', alias: importedFrom['alias'] }
   }
+  const secretKind = raw['savedSecretKind']
+  if (secretKind === 'password' || secretKind === 'passphrase' || secretKind === null) {
+    profile.savedSecretKind = secretKind
+  }
   return profile
 }
 
@@ -91,6 +95,16 @@ export class ConnectionStorage {
     await this.document.update((store) => ({
       ...store,
       connections: store.connections.filter((profile) => profile.id !== id)
+    }))
+  }
+
+  /** Updates only the savedSecretKind field; no-op when the profile is not found, or with `ifUnknown` once it is set. */
+  async setSecretKind(id: string, kind: 'password' | 'passphrase' | null, ifUnknown = false): Promise<void> {
+    await this.document.update((store) => ({
+      ...store,
+      connections: store.connections.map((p) =>
+        p.id === id && !(ifUnknown && p.savedSecretKind !== undefined) ? { ...p, savedSecretKind: kind } : p
+      )
     }))
   }
 }

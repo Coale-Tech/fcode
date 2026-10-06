@@ -12,7 +12,7 @@
 
 ## 视觉基线（与 Codex 一致）
 
-桌面外壳的目标是与本地 Codex 桌面客户端 (ChatGPT.app electro-dark) 进行 1:1 视觉匹配：木炭表面 (`#181818`)、中性灰度（不是蓝石板）、~275px 侧边栏、46px 工具栏节奏和浮动药丸编辑器。语义标记名称保持稳定；值遵循 Codex 灰色系统，带有**中性灰色强调**（无蓝色品牌强调）。
+桌面外壳的目标是与本地 Codex 桌面客户端 (ChatGPT.app electro-dark) 进行 1:1 视觉匹配：木炭表面 (`#181818`)、中性灰度（不是蓝石板）、~275px 侧边栏、46px 工具栏节奏和浮动药丸编辑器。语义标记名称保持稳定；值遵循 Codex 灰色系统，强调色采用 **FileBird 的天蓝色**（D626）。
 
 ## 2. 非目标
 
@@ -157,9 +157,9 @@ PI-Desktop 的行为类似于桌面应用程序 shell，因此意外拖动
 | `--color-text-muted` | `#5d5d5d` | 法典 `gray-500` | 已禁用，提示 |
 | `--color-border-default` | `rgba(255,255,255,0.08)` | 法典边框 | 默认边框 |
 | `--color-border-subtle` | `rgba(255,255,255,0.05)` | 法典边框微妙 | 微妙的分隔符 |
-| `--color-accent` | `#FFFFFF`（深色）/`#1a1c1f`（浅色） | 反转灰色墨水 | 主要口音，CTA |
-| `--color-accent-hover` | `#EDEDED`（深色）/`#303030`（浅色） | 灰色-100 / 灰色-700 | 重音悬停 |
-| `--color-accent-soft` | `#AFAFAF`（深色）/`#5d5d5d`（浅色） | 灰色-300 / 灰色-500 | 软口音、链接 |
+| `--color-accent` | `#0284c7`（两种主题） | sky-600（D626） | 主要强调色，CTA |
+| `--color-accent-hover` | `#0ea5e9`（两种主题） | sky-500 | 强调色悬停 |
+| `--color-accent-soft` | `#38bdf8`（两种主题） | sky-400 | 柔和强调色、链接 |
 | `--color-success` | `#22C55E` | `text-green-500` | 成功，运行完成 |
 | `--color-warning` | `#F59E0B` | `text-amber-500` | 警告、小心 |
 | `--color-error` | `#EF4444` | `text-red-500` | 错误，被拒绝 |
@@ -181,13 +181,13 @@ PI-Desktop 的行为类似于桌面应用程序 shell，因此意外拖动
 | `--color-text-faint` | `#afafaf`（灰色-300） | 占位符 |
 | `--color-border-default` | `color-mix(#1a1c1f 8%, transparent)` | 默认边框 |
 | `--color-border-subtle` | `color-mix(#1a1c1f 5%, transparent)` | 侧边栏边缘/分隔线 |
-| `--color-accent` | `#1a1c1f` | 主要强调、CTA、页脚徽章（中性墨水） |
+| `--color-accent` | `#0284c7` | 主要强调、CTA、页脚徽章（sky-600，D626） |
 | `--color-success`/警告/错误 | 绿色-500 / 橙色-500 / 红色-500 | 状态 |
 
 **不变：**切勿在 `data-theme="light"` 下使用原始 `gray-0` (`#fff`) 绘制镀铬文本。使用 `--ds-text-primary` / `--ds-text-secondary`。
 
 共享按钮的表面和墨迹必须使用语义主题标记：
-主要操作将 `--ds-accent` 与 `--ds-bg-primary` 配对，而次要操作
+主要操作将 `--ds-accent` 与 `--ds-accent-foreground`（白色）配对，而次要操作
 放在 `--ds-tile` 填充上，使用主要文本且不带描边（D297）。
 悬停状态使用相应的 accent/tile-hover
 令牌而不是仅不透明度的更改，因此操作在黑暗中仍然清晰可见
@@ -256,8 +256,8 @@ PI-Desktop 的行为类似于桌面应用程序 shell，因此意外拖动
   --color-text-muted:       #5d5d5d;
   --color-border-default:   #282828;
   --color-border-subtle:    #212121;
-  --color-accent:           #FFFFFF;
-  --color-accent-hover:     #EDEDED;
+  --color-accent:           #0284c7;
+  --color-accent-hover:     #0ea5e9;
   --color-success:          #22C55E;
   --color-warning:          #F59E0B;
   --color-error:            #EF4444;
@@ -275,8 +275,8 @@ PI-Desktop 的行为类似于桌面应用程序 shell，因此意外拖动
   --color-text-muted:       #94A3B8;
   --color-border-default:   #E2E8F0;
   --color-border-subtle:    #F1F5F9;
-  --color-accent:           #1a1c1f;
-  --color-accent-hover:     #303030;
+  --color-accent:           #0284c7;
+  --color-accent-hover:     #0ea5e9;
   --color-success:          #16A34A;
   --color-warning:          #D97706;
   --color-error:            #DC2626;

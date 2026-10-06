@@ -178,7 +178,8 @@ export function useComposerModelMenu({
       return isFcode(a) ? -1 : 1;
     });
     for (const [pid, { name, models }] of sorted) {
-      const displayName = isFcode(pid) ? `Fcode · ${name}` : name;
+      const fcodeName = providers.find((entry) => `fcode-${entry.id}` === pid)?.name;
+      const displayName = isFcode(pid) ? `Fcode · ${fcodeName ?? name}` : name;
       groups.push({
         // Cast to satisfy ComposerModelList's ProviderPublic slot; only .id is read.
         provider: { id: pid, name, models: [], enabled: true, authKind: "none", hasSecret: false } as unknown as ProviderPublic,
@@ -194,7 +195,7 @@ export function useComposerModelMenu({
       });
     }
     return groups;
-  }, [ompSession, ompModelList]);
+  }, [ompSession, ompModelList, providers]);
 
   const modelGroups = useMemo(
     () =>
@@ -377,21 +378,27 @@ export function useComposerModelMenu({
           : rawProv && typeof rawProv === "object" && "id" in rawProv ? String(rawProv.id)
           : null,
         );
-      } else {
+      }
+      // An Fcode model is also the chat's own setting: the chip shows it and the
+      // omp bridge applies it on the chat's next turn. omp's own models stay omp-only.
+      const chatProvider = ompSession
+        ? providers.find((entry) => `fcode-${entry.id}` === candidate.id)
+        : candidate;
+      if (chatProvider) {
         if (isImageGenerationModel(
           imageGenerationBindings(
             useAppStore.getState().settings?.imageGenerationModels,
             useAppStore.getState().settings?.imageGeneration,
           ),
-          candidate.id,
+          chatProvider.id,
           nextModelId,
         )) return;
         const nextModelProvider = thinkingProviderForModel(
-          candidate,
+          chatProvider,
           nextModelId,
-          providerModels[candidate.id],
+          providerModels[chatProvider.id],
         );
-        const nextBinding = candidate.models.find((entry) =>
+        const nextBinding = chatProvider.models.find((entry) =>
           sameComposerModelId(entry.id, nextModelId),
         );
         const nextThinkingLevel = activeSessionId
@@ -402,7 +409,7 @@ export function useComposerModelMenu({
             );
         await configureActiveSession({
           mode,
-          providerId: candidate.id,
+          providerId: chatProvider.id,
           modelId: nextModelId,
           thinkingLevel: nextThinkingLevel,
         });

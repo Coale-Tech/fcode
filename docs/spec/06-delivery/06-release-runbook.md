@@ -216,8 +216,11 @@ changing the package scripts or release artifacts.
 **Default macOS release policy:** GitHub tag releases Developer ID-sign,
 notarize, staple, and Gatekeeper-verify macOS DMG/ZIP before upload (D450 /
 ADR 0289). Missing signing or notarization secrets fail the job. A
-`workflow_dispatch` run may set `sign_macos: false` only to produce unsigned
-debug artifacts; that path must not be used for a GitHub Release tag. Local
+`workflow_dispatch` run may set `sign_macos: false` to produce unsigned
+artifacts on a branch or a prerelease tag (`vX.Y.Z-rc.N`). On a stable tag
+`scripts/check-release-dispatch.mjs` rejects it unless the run also sets
+`allow_unsigned_stable: true`, the deliberate opt-in for an unsigned stable
+release while signing secrets are not configured. Local
 `scripts/release-macos.sh` remains the explicit signed local lane; `pnpm dist:mac`
 stays unsigned without a configured certificate (D078).
 

@@ -23,9 +23,14 @@ on:
   workflow_dispatch:
     inputs:
       sign_macos:
-        description: 'Sign and notarize macOS artifacts (default true; set false only for unsigned debug artifacts)'
+        description: 'Sign and notarize macOS artifacts (default true; false for unsigned prereleases, or a stable tag with allow_unsigned_stable)'
         required: false
         default: true
+        type: boolean
+      allow_unsigned_stable:
+        description: 'Allow sign_macos=false on a stable tag (deliberate unsigned stable release; default false)'
+        required: false
+        default: false
         type: boolean
 
 # Least privilege by default; only the publish job needs to write the release.
@@ -48,9 +53,11 @@ jobs:
 
       - name: Check release dispatch guard
         # Fail fast before any build cost: workflow_dispatch with sign_macos=false
-        # is only allowed on prerelease tags and branches, never stable tags.
+        # is only allowed on prerelease tags and branches, or on a stable tag
+        # with the explicit allow_unsigned_stable opt-in.
         env:
           SIGN_MACOS: ${{ inputs.sign_macos }}
+          ALLOW_UNSIGNED_STABLE: ${{ inputs.allow_unsigned_stable }}
         run: node scripts/check-release-dispatch.mjs
 
       - uses: pnpm/action-setup@v6
@@ -271,7 +278,7 @@ jobs:
       - name: Package unsigned macOS installer
         if: matrix.platform == 'macos' && env.MACOS_SIGN_RELEASE != 'true'
         env:
-          # Debug-only lane: workflow_dispatch with sign_macos=false.
+          # Unsigned lane: workflow_dispatch with sign_macos=false.
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
         run: |
           set -euo pipefail

@@ -2,6 +2,17 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const ptBREntries: ChangelogEntry[] = [
   {
+    "version": "0.18.5",
+    "date": "2026-10-06",
+    "highlights": [
+      "Sair: pressionar ⌘Q de novo com a caixa “Sair do Fcode?” aberta não fecha mais o app sem a sua resposta, e tarefas agendadas não começam mais enquanto o Fcode está fechando.",
+      "Falhas do agente: uma ferramenta que estava em execução agora termina como “Interrompida”, também após recarregar, e o painel “Agente parado” some quando o agente volta. Os cartões de permissão mostram o motivo informado pelo omp e avaliam comandos longos pelo comando completo.",
+      "FileBird: a lista de conexões salvas não pede mais acesso ao chaveiro para cada conexão, só a visualização do FileBird e a janela do Fcode podem chamar o FileBird, e o terminal integrado recupera o foco do teclado depois de uma caixa de diálogo.",
+      "Aparência e modelos: o Fcode agora usa o azul do FileBird em botões, chaves e seleção, e o FileBird segue o tema claro ou escuro do Fcode. Novos chats usam o modelo mostrado no chip, o menu de modelos mostra os nomes dos seus provedores e uma reinicialização do agente após mudar uma configuração agora é informada como tal, e não como falha.",
+      "Benches: se seus benches não estão em ~/ERPNext, escolha a pasta deles na página Bench; o Fcode lembra a escolha. Se ~/ERPNext não existir, agora aparece o guia de configuração em vez de um erro.",
+    ],
+  },
+  {
     "version": "0.18.4",
     "date": "2026-10-04",
     "highlights": [

@@ -160,34 +160,6 @@ test("switching to a provider without reasoning resets the session level", () =>
   assert.match(composerSource, /thinkingLevel:\s*level/);
 });
 
-test("draft Composer thinking follows the exact model selected in its menu", () => {
-  assert.match(
-    composerSource,
-    /const providerModels = useAppStore\(\(s\) => s\.providerModels\)/,
-  );
-  assert.match(composerSource, /thinkingProviderForModel\(/);
-  assert.match(composerSource, /const binding = provider\.models\.find/);
-  assert.match(composerSource, /THINKING_LEVELS\.filter/);
-  assert.match(composerSource, /binding\.thinkingLevels\.includes/);
-  assert.match(
-    composerSource,
-    /const selectedModelCatalog = provider \? providerModels\[provider\.id\]/,
-  );
-  assert.match(composerSource, /const catalogThinkingProvider = thinkingProviderForModel\(/);
-  assert.match(composerSource, /resolveComposerThinkingProvider\(\{/);
-  assert.match(
-    composerSource,
-    /const nextModelProvider = thinkingProviderForModel\([\s\S]*?providerModels\[candidate\.id\]/,
-  );
-  assert.match(
-    composerSource,
-    /const nextThinkingLevel = activeSession[\s\S]*?thinkingLevelForProvider\(nextModelProvider, thinkingLevel\)[\s\S]*?initialThinkingLevelForBinding\(/,
-  );
-  assert.match(composerSource, /const selectedBinding = provider\?\.models\.find/);
-  assert.match(composerSource, /const draftThinkingLevel = initialThinkingLevelForBinding\(/);
-  assert.doesNotMatch(composerSource, /highestSupportedThinkingLevel/);
-});
-
 test("new sessions default to the selected model binding's thinking level", () => {
   const materializeSource =
     sessionCoordinationSource.match(

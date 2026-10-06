@@ -53,12 +53,13 @@ export const DEFAULT_ROOTS = [join(homedir(), "ERPNext")];
 /**
  * Returns the effective discovery roots, evaluated at call time.
  * When FCODE_BENCH_ROOTS is set and non-empty, it is split on the OS path
- * delimiter (`:` on POSIX, `;` on Windows); otherwise falls back to DEFAULT_ROOTS.
+ * delimiter (`:` on POSIX, `;` on Windows); otherwise the folder the user
+ * picked on the Bench page (`saved`), otherwise DEFAULT_ROOTS.
  */
-export function defaultRoots(): string[] {
+export function defaultRoots(saved: string[] = []): string[] {
   const env = process.env.FCODE_BENCH_ROOTS;
   if (env && env.trim()) return env.split(delimiter).filter(Boolean);
-  return DEFAULT_ROOTS;
+  return saved.length > 0 ? saved : DEFAULT_ROOTS;
 }
 
 /** Maximum number of sub-roots to scan in parallel (E11). */
@@ -203,7 +204,8 @@ export async function discoverBenches(options: {
 
 /**
  * Scan a single root directory for bench subdirectories.
- * Only direct children are checked (depth cap, E11).
+ * Only direct children are checked (depth cap, E11); a root that is itself a
+ * bench (someone picked the bench folder instead of its parent) is listed too.
  *
  * Returns `{ benches, failed }` — `failed` is non-null when the root itself
  * could not be read (Gap 4 / T6: surface per-root errors to the UI).
@@ -219,14 +221,17 @@ async function scanRoot(
   try {
     entries = readdirSync(root);
   } catch (err) {
-    // root missing or unreadable — report it (E11 / T6 Gap 4)
+    // A missing root just holds no benches, so the page shows its zero-bench
+    // guide; only a root that exists but can't be read is a failure (T6 Gap 4).
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return { benches: [], failed: null };
     const reason = err instanceof Error ? err.message : String(err);
     return { benches: [], failed: { root, reason } };
   }
 
-  for (const name of entries) {
+  // ".": the root itself, so a picked bench folder is found.
+  for (const name of [".", ...entries]) {
     if (signal?.aborted) break;
-    const fullPath = join(root, name);
+    const fullPath = name === "." ? root : join(root, name);
     if (!isBench(fullPath)) continue;
 
     const version = parseFrappeVersion(fullPath);

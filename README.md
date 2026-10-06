@@ -17,7 +17,7 @@
 
 </div>
 
-> **Early preview.** Fcode 0.18.4 is on `main`; the newest published build is the unsigned [v0.18.4-rc.3](https://github.com/Coale-Tech/fcode/releases/tag/v0.18.4-rc.3) preview for macOS, Windows, and Linux. It ships the omp agent and the Code, Build, and Bench surfaces; it is not yet the completed Frappe IDE described by the project roadmap.
+> **Early preview.** The newest release is the unsigned [v0.18.5](https://github.com/Coale-Tech/fcode/releases/tag/v0.18.5) for macOS, Windows, and Linux. It ships the omp agent and the Code, Build, and Bench surfaces; it is not yet the completed Frappe IDE described by the project roadmap.
 
 ## Current status
 
@@ -28,7 +28,7 @@ The release pipeline builds macOS (arm64 + x64), Linux (x64), and Windows (x64) 
 - **Signed and notarized distribution.** Apple Developer ID signing and notarization run in CI, but the required secrets are not yet configured, so no signed release has shipped.
 - **Bench on Windows.** The Bench tab requires a Frappe bench, which is not supported natively on Windows. The app itself builds and runs on Windows; use WSL2, macOS, or Linux for bench work. PATH is inherited from the parent process on Windows (not sourced from a POSIX login shell).
 
-The current release line is 0.18.x. Version 0.18.4 is on `main` and builds locally (see [Build from source](#build-from-source)); its newest download is the unsigned prerelease [v0.18.4-rc.3](https://github.com/Coale-Tech/fcode/releases/tag/v0.18.4-rc.3), and no signed 0.18.4 release is published yet. Because the builds are unsigned, macOS cannot swap them in place: download a new build from the Releases page; from then on the update banner links to the download. See [CHANGELOG.md](CHANGELOG.md) for the full history.
+The current release line is 0.18.x. The newest release is the unsigned [v0.18.5](https://github.com/Coale-Tech/fcode/releases/tag/v0.18.5), the first stable build since 0.17.1; it includes everything from the 0.18.4-rc.3 prerelease. The Windows installer and Linux AppImage update in place. macOS cannot swap an unsigned build in place: download a new build from the Releases page; from then on the update banner links to the download. See [CHANGELOG.md](CHANGELOG.md) for the full history.
 
 ## Download and install
 

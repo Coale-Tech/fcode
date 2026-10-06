@@ -30,6 +30,17 @@ export type ChangelogEntry = {
 
 const enEntries: ChangelogEntry[] = [
   {
+    version: "0.18.5",
+    date: "2026-10-06",
+    highlights: [
+      "Quitting: pressing ⌘Q again while the \"Quit Fcode?\" dialog is open no longer quits without your answer, and scheduled tasks no longer start while Fcode is quitting.",
+      "Agent crashes: a tool that was running now ends as Interrupted, also after a reload, and the \"agent stopped\" panel clears once the agent is back. Permission cards show omp's reason for asking and rate long commands by the full command.",
+      "FileBird: the saved-connections list no longer asks for keychain access for every connection, only the FileBird view and the Fcode window can call FileBird, and the integrated terminal gets keyboard focus back after a dialog.",
+      "Look and models: Fcode now uses FileBird's blue for buttons, toggles and selection, and FileBird follows Fcode's light or dark theme. New chats run on the model their chip shows, the model menu lists your provider names, and an agent restart after a settings change now says so instead of reporting a crash.",
+      "Benches: if your benches aren't in ~/ERPNext, choose their folder on the Bench page; Fcode remembers it. A missing ~/ERPNext now shows the setup guide instead of an error.",
+    ],
+  },
+  {
     version: "0.18.4",
     date: "2026-10-04",
     highlights: [
@@ -913,6 +924,17 @@ const enEntries: ChangelogEntry[] = [
 
 const zhCNEntries: ChangelogEntry[] = [
   {
+    version: "0.18.5",
+    date: "2026-10-06",
+    highlights: [
+      "退出：“退出 Fcode？”对话框打开时再次按 ⌘Q，不再不等确认就直接退出；Fcode 退出期间也不再启动计划任务。",
+      "Agent 崩溃：崩溃时正在运行的工具现在会显示为“已中断”（重新加载后仍保留），Agent 恢复后“Agent 已停止”面板会自动消失。权限卡片会显示 omp 请求授权的原因，并按完整命令评估长命令的风险。",
+      "FileBird：已保存连接列表不再为每个连接请求钥匙串访问；只有 FileBird 视图和 Fcode 窗口可以调用 FileBird；对话框关闭后集成终端会重新获得键盘焦点。",
+      "外观与模型：Fcode 的按钮、开关和选中状态现在使用 FileBird 的蓝色，FileBird 也会跟随 Fcode 的浅色或深色主题。新聊天会使用模型标签上显示的模型，模型菜单显示你的服务商名称；因更改设置而重启 Agent 时会如实说明，不再报告为崩溃。",
+      "Bench：如果你的 Bench 不在 ~/ERPNext 中，可在 Bench 页面选择它们所在的文件夹，Fcode 会记住这个选择。~/ERPNext 不存在时，现在显示设置指南，而不是报错。",
+    ],
+  },
+  {
     version: "0.18.4",
     date: "2026-10-04",
     highlights: [
@@ -1794,6 +1816,17 @@ const zhCNEntries: ChangelogEntry[] = [
 ];
 
 const zhTWEntries: ChangelogEntry[] = [
+  {
+    version: "0.18.5",
+    date: "2026-10-06",
+    highlights: [
+      "結束：「結束 Fcode？」對話框開啟時再次按 ⌘Q，不再未經確認就直接結束；Fcode 結束期間也不再啟動排程任務。",
+      "Agent 當機：當機時正在執行的工具現在會顯示為「已中斷」（重新載入後仍保留），Agent 恢復後「Agent 已停止」面板會自動消失。權限卡片會顯示 omp 請求授權的原因，並依完整命令評估長命令的風險。",
+      "FileBird：已儲存連線清單不再為每個連線要求鑰匙圈存取；只有 FileBird 檢視和 Fcode 視窗可以呼叫 FileBird；對話框關閉後整合終端機會重新取得鍵盤焦點。",
+      "外觀與模型：Fcode 的按鈕、開關和選取狀態現在使用 FileBird 的藍色，FileBird 也會跟隨 Fcode 的淺色或深色主題。新聊天會使用模型標籤上顯示的模型，模型選單顯示你的服務商名稱；因變更設定而重新啟動 Agent 時會如實說明，不再回報為當機。",
+      "Bench：如果你的 Bench 不在 ~/ERPNext 中，可在 Bench 頁面選擇它們所在的資料夾，Fcode 會記住這個選擇。~/ERPNext 不存在時，現在會顯示設定指南，而不是錯誤。",
+    ],
+  },
   {
     version: "0.18.4",
     date: "2026-10-04",

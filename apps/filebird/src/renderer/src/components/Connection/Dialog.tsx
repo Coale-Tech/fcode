@@ -40,7 +40,7 @@ export function Dialog({ title, tone = 'default', onDismiss, children, actions }
             onDismiss()
           }
         }}
-        className={`w-full max-w-md rounded-lg border bg-[#11141b] p-5 shadow-2xl ${
+        className={`w-full max-w-md rounded-lg border bg-fb-raised p-5 shadow-2xl ${
           tone === 'danger' ? 'border-red-500/40' : 'border-white/10'
         }`}
       >
@@ -58,10 +58,10 @@ export const SECONDARY_BUTTON =
   'rounded-md border border-white/10 px-3 py-1.5 text-[12px] text-zinc-300 transition hover:border-white/20 hover:text-zinc-100 focus:border-sky-500/60 focus:outline-none'
 
 export const PRIMARY_BUTTON =
-  'rounded-md bg-sky-600 px-3 py-1.5 text-[12px] font-medium text-white transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-400/50'
+  'rounded-md bg-sky-600 px-3 py-1.5 text-[12px] font-medium text-on-accent transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-400/50'
 
 export const DANGER_BUTTON =
-  'rounded-md bg-red-600/90 px-3 py-1.5 text-[12px] font-medium text-white transition hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-400/50'
+  'rounded-md bg-red-600/90 px-3 py-1.5 text-[12px] font-medium text-on-accent transition hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-400/50'
 
 export function Fingerprint({ label, algorithm, fingerprint, testId }: { label: string; algorithm: string; fingerprint: string; testId: string }): JSX.Element {
   return (

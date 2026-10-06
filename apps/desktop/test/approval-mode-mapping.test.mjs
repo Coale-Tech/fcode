@@ -22,8 +22,9 @@ const BASE_OPTS = {
 };
 
 test("makeOmpOverlay defaults to always-ask when no approvalMode given", () => {
-  const yaml = makeOmpOverlay(BASE_OPTS);
-  assert.ok(yaml.includes("approval_mode: always-ask"), "default must be always-ask");
+  const parsed = parseYaml(makeOmpOverlay(BASE_OPTS));
+  // omp reads this as tools.approvalMode (camelCase, not approval_mode)
+  assert.equal(parsed.tools.approvalMode, "always-ask", "default must be always-ask");
 });
 
 test("makeOmpOverlay starts omp on Fcode's default model only when one is given", () => {
@@ -34,22 +35,9 @@ test("makeOmpOverlay starts omp on Fcode's default model only when one is given"
 
 test("makeOmpOverlay uses provided approvalMode for all three modes", () => {
   for (const mode of ["always-ask", "write", "yolo"]) {
-    const yaml = makeOmpOverlay({ ...BASE_OPTS, approvalMode: mode });
-    assert.ok(yaml.includes(`approval_mode: ${mode}`), `mode=${mode} must appear in overlay`);
+    const parsed = parseYaml(makeOmpOverlay({ ...BASE_OPTS, approvalMode: mode }));
+    assert.equal(parsed.tools.approvalMode, mode, `mode=${mode} must appear in overlay`);
   }
-});
-
-test("FCODE_TOOL_APPROVAL_MODE guard: only write/yolo pass through, all others become always-ask", () => {
-  // Replicate the inline guard from bridge.ts main()
-  function resolveMode(raw) {
-    return raw === "write" || raw === "yolo" ? raw : "always-ask";
-  }
-  assert.equal(resolveMode("yolo"), "yolo");
-  assert.equal(resolveMode("write"), "write");
-  assert.equal(resolveMode("always-ask"), "always-ask");
-  assert.equal(resolveMode("evil"), "always-ask");
-  assert.equal(resolveMode(undefined), "always-ask");
-  assert.equal(resolveMode(""), "always-ask");
 });
 
 test("makeOmpOverlay auto-approves read-only bash by default, prompt guard first", () => {

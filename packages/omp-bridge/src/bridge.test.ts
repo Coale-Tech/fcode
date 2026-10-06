@@ -57,7 +57,6 @@ describe("makeOmpOverlay (DX3 / DX6 / DX7 / DX10)", () => {
       screenshotsDir: join(dir, "screenshots"),
     });
     expect(overlay).toContain("always-ask");
-    expect(overlay).toContain("approval_mode");
   });
 
   it("auto-approves fcode_bench_execute reads only (DX7)", () => {
@@ -611,10 +610,10 @@ function promptBridge() {
     try { hostWrites.push(JSON.parse(String(data).trim())); } catch { /* ignore */ }
     return true;
   }) as typeof process.stdout.write;
-  const prompt = (id: string, sessionId: string, projectPath: string) =>
+  const prompt = (id: string, sessionId: string, projectPath: string, extra: Record<string, unknown> = {}) =>
     bridge.handleHostFrame({
       jsonrpc: "2.0", id, method: "agent.prompt",
-      params: { sessionId, turnId: `turn-${id}`, content: "hello", projectPath },
+      params: { sessionId, turnId: `turn-${id}`, content: "hello", projectPath, ...extra },
     });
   const respondOmp = (type: string, data: unknown) => {
     const call = ompStdinWrites.findLast((f) => f.type === type);
@@ -623,21 +622,21 @@ function promptBridge() {
       JSON.stringify({ id: call.id, type: "response", command: type, success: true, data }),
     );
   };
+  /** Let the ompPrompt chain reach its next omp call (pure microtasks, no clock). */
+  const tick = async () => { for (let i = 0; i < 10; i += 1) await Promise.resolve(); };
   /** Answer the ompPrompt chain: open_session → set_subagent_subscription → prompt. */
   const drive = async (opts: { alreadySubscribed?: boolean } = {}) => {
     respondOmp("open_session", { cancelled: false });
-    await Promise.resolve();
+    await tick();
     if (!opts.alreadySubscribed) {
       respondOmp("set_subagent_subscription", { level: "progress" });
-      // .catch() wrapper on ompCall needs an extra microtask tick to propagate
-      await Promise.resolve();
-      await Promise.resolve();
+      await tick();
     }
     respondOmp("prompt", { agentInvoked: true });
-    await Promise.resolve();
+    await tick();
   };
   const restore = () => { process.stdout.write = origWrite; };
-  return { ompStdinWrites, hostWrites, prompt, respondOmp, drive, restore };
+  return { bridge, ompStdinWrites, hostWrites, prompt, respondOmp, drive, tick, restore };
 }
 
 describe("OmpBridge — set_subagent_subscription sent once on session open (§9)", () => {
@@ -708,6 +707,58 @@ describe("OmpBridge — one omp session per Fcode session", () => {
     } finally {
       restore();
     }
+  });
+});
+
+describe("OmpBridge — runs each chat on its Fcode model", () => {
+  const tick = async () => { for (let i = 0; i < 10; i += 1) await Promise.resolve(); };
+  /** Drive one turn whose omp thread opens on `model`; return the set_model writes. */
+  const turn = async (resumed: boolean, model: { provider: string; id: string }, pick?: string) => {
+    const h = promptBridge();
+    try {
+      if (pick) {
+        void h.bridge.handleHostFrame({
+          jsonrpc: "2.0", id: "m", method: "omp.models.set", params: { provider: pick, modelId: model.id },
+        });
+        h.respondOmp("set_model", {});
+        await tick();
+      }
+      const before = h.ompStdinWrites.length;
+      void h.prompt("h1", "s1", "/p", { provider: { id: "p1", modelId: "m1" } });
+      h.respondOmp("open_session", { cancelled: false, resumed });
+      await tick();
+      h.respondOmp("get_state", { model });
+      await tick();
+      const sets = h.ompStdinWrites.slice(before).filter((f) => f.type === "set_model");
+      if (sets.length > 0) h.respondOmp("set_model", {});
+      await tick();
+      h.respondOmp("set_subagent_subscription", {});
+      await tick();
+      h.respondOmp("prompt", { agentInvoked: true });
+      await tick();
+      return sets;
+    } finally {
+      h.restore();
+    }
+  };
+
+  it("moves a new chat off the model the previous chat used", async () => {
+    expect(await turn(false, { provider: "ollama", id: "qwen" })).toMatchObject([
+      { provider: "fcode-p1", modelId: "m1" },
+    ]);
+  });
+
+  it("moves a resumed chat back from another Fcode model", async () => {
+    expect(await turn(true, { provider: "fcode-p2", id: "m2" })).toHaveLength(1);
+  });
+
+  it("keeps a chat on a model picked from omp's own providers", async () => {
+    expect(await turn(true, { provider: "ollama", id: "qwen" })).toHaveLength(0);
+    expect(await turn(false, { provider: "ollama", id: "qwen" }, "ollama")).toHaveLength(0);
+  });
+
+  it("leaves a chat already on its model alone", async () => {
+    expect(await turn(false, { provider: "fcode-p1", id: "m1" })).toHaveLength(0);
   });
 });
 
@@ -968,5 +1019,25 @@ describe("OmpBridge — kanban host tools follow kanban.enabled", () => {
     expect(await registered({ enabled: false })).not.toContain("kanban_complete");
     expect(await registered(null)).not.toContain("kanban_complete");
     expect(await registered({ enabled: false })).toContain("fcode_bench_execute");
+  });
+});
+
+describe("OmpBridge — system lines need a session", () => {
+  it("drops notices, todo and subagent frames until a session exists (host rejects empty sessionId)", () => {
+    const bridge = new OmpBridge();
+    const b = bridge as unknown as Record<string, unknown>;
+    const notifications: unknown[] = [];
+    b.notify = (_channel: string, payload: unknown) => { notifications.push(payload); };
+
+    for (const frame of [
+      { type: "notice", message: "early" },
+      { type: "todo_reminder" },
+      { type: "subagent_event", payload: { id: "a1", event: { type: "message_start" } } },
+    ]) bridge.handleOmpFrame(JSON.stringify(frame));
+    expect(notifications).toHaveLength(0);
+
+    (b.sessions as Map<string, unknown>).set("s1", { projectPath: "/", inputModalities: [] });
+    bridge.handleOmpFrame(JSON.stringify({ type: "notice", message: "later" }));
+    expect(notifications).toMatchObject([{ sessionId: "s1" }]);
   });
 });

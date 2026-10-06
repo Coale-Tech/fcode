@@ -4,9 +4,10 @@
  * `list` delegates to `bench/discovery.ts` (owner: agent P, lane
  * feat/omp-bridge, DX10). All other channels drive `bench/supervisor.ts`.
  */
-import { resolve } from "node:path";
+import { readFileSync, writeFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { ErrorCodes, IPC } from "@pi-desktop/shared";
-import { discoverBenches } from "../bench/discovery";
+import { defaultRoots, discoverBenches } from "../bench/discovery";
 import { benchSupervisor, shouldAutoApproveVerb } from "../bench/supervisor";
 import type { IpcRegistrar } from "./types";
 import type { BrowserWindow } from "electron";
@@ -16,9 +17,30 @@ export type BenchIpcDependencies = {
   mainWindow: () => BrowserWindow | null;
   /** Override bench discovery; defaults to discoverBenches (injectable for tests). */
   discover?: typeof discoverBenches;
+  /** Holds `bench-roots.json`, the folder picked on the Bench page. */
+  dataDir?: string;
+  /** Native folder picker; resolves null when cancelled. */
+  pickDirectory?: () => Promise<string | null>;
 };
 
-export function registerBenchIpc({ registrar, mainWindow, discover = discoverBenches }: BenchIpcDependencies): void {
+/** The picked folder(s); empty when none was picked or the file is unreadable. */
+function readSavedRoots(dataDir: string | undefined): string[] {
+  if (!dataDir) return [];
+  try {
+    const { roots } = JSON.parse(readFileSync(join(dataDir, "bench-roots.json"), "utf8")) as { roots?: unknown };
+    return Array.isArray(roots) ? roots.filter((r): r is string => typeof r === "string" && r.length > 0) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function registerBenchIpc({
+  registrar,
+  mainWindow,
+  discover = (options = {}) => discoverBenches({ roots: defaultRoots(readSavedRoots(dataDir)), ...options }),
+  dataDir,
+  pickDirectory,
+}: BenchIpcDependencies): void {
   const { handle } = registrar;
 
   // Forward supervisor events to the renderer
@@ -43,9 +65,18 @@ export function registerBenchIpc({ registrar, mainWindow, discover = discoverBen
     mainWindow()?.webContents.send(IPC.event.benchWarning, payload);
   });
 
-  handle(IPC.invoke.benchList, async () => {
-    // Gap 4 / T6: return failedRoots so the renderer can show PARTIAL/ERROR state
-    return discover();
+  // Gap 4 / T6: failedRoots lets the renderer show PARTIAL/ERROR state; roots
+  // names the folders scanned, for the empty state.
+  const list = async () => ({ ...(await discover()), roots: defaultRoots(readSavedRoots(dataDir)) });
+  handle(IPC.invoke.benchList, list);
+
+  // A new install has no ~/ERPNext: let the user point Fcode at their benches.
+  handle(IPC.invoke.benchPickRoot, async () => {
+    const picked = await pickDirectory?.();
+    if (!picked) return { canceled: true };
+    if (!dataDir) throw new Error("bench folder can't be saved: no data directory");
+    writeFileSync(join(dataDir, "bench-roots.json"), JSON.stringify({ roots: [resolve(picked)] }));
+    return { canceled: false, ...(await list()) };
   });
 
   handle(IPC.invoke.benchStatus, async () => {

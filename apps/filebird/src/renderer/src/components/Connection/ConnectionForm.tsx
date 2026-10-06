@@ -189,7 +189,7 @@ export function ConnectionForm(props: ConnectionFormProps): JSX.Element {
         <button type="button" onClick={() => props.onSave(input())} disabled={!canSave} className={SECONDARY}>
           Save
         </button>
-        <button type="submit" disabled={!canSave} className="rounded-md bg-sky-600 px-3 py-1.5 text-[12px] font-medium text-white transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-40">
+        <button type="submit" disabled={!canSave} className="rounded-md bg-sky-600 px-3 py-1.5 text-[12px] font-medium text-on-accent transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-40">
           {busy ? 'Connecting…' : 'Save & connect'}
         </button>
       </div>
