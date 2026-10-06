@@ -28,7 +28,8 @@ const partial = (text: string) => ({
 describe("adaptMessageFrame", () => {
   it("streams assistant text as deltas that rebuild the final text", () => {
     const start = adaptMessageFrame({ type: "message_start", messageId: "msg-5", message: partial("Done: ") });
-    expect(start).toMatchObject({ type: "message_start", message: { id: "msg-5", role: "assistant", content: "", status: "streaming" } });
+    // Prefixed per omp process: omp restarts its counter at msg-1 each launch.
+    expect(start).toMatchObject({ type: "message_start", message: { id: expect.stringMatching(/^[0-9a-f-]{36}:msg-5$/), role: "assistant", content: "", status: "streaming" } });
 
     let row = rowOf(start);
     for (const delta of ["Done: ", "check passed."]) {
@@ -62,7 +63,7 @@ describe("adaptMessageFrame", () => {
     expect(end).toMatchObject({
       type: "message_end",
       message: {
-        id: "msg-3",
+        id: expect.stringMatching(/:msg-3$/),
         content: "Running now",
         thinking: "hmm",
         status: "complete",

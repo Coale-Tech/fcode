@@ -26,6 +26,12 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 ### Fixed
 
 - Permission cards for multi-line shell commands rate risk by every line, not only the first, so a harmless first line no longer labels a risky script Low.
+- Custom providers load their models from Fcode's provider list even when there is no `models.yml`, providers with no authentication are passed to omp as `auth: none`, and the default model chosen in Fcode is the one omp starts with.
+- omp runs in the conversation's project folder instead of a temporary directory, and each chat has its own omp session, so history no longer leaks between chats and a chat opened after its project moved stops with an error instead of running elsewhere. Chats from earlier versions start a fresh agent context.
+- A crashed agent no longer hangs every turn on "Working...": the bridge exits with omp, Fcode restarts it, and the interrupted turn ends with "The agent stopped unexpectedly and was restarted."
+- Replies after an agent restart are no longer dropped or written twice: message ids are unique per omp process, and checkpoints follow ids that were renamed to avoid another chat's rows (previously "UNIQUE constraint failed" left the turn stuck).
+- Quitting no longer hangs with FileBird idle, and a termination signal (`kill`, logout, a script) now quits instead of waiting at the "Quit Fcode?" dialog. Running FileBird transfers are cancelled and their temporary files removed before exit.
+- Cancelling the "Quit Fcode?" dialog no longer stops voice input or scheduled tasks.
 
 ## [0.18.3] — 2026-10-04
 

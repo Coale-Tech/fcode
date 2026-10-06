@@ -933,7 +933,11 @@ export const BUILTIN_LIFECYCLE_SLASH_COMMANDS: ReadonlyArray<SlashCommandSpec> =
 		},
 	},
 ];
-async function rescopeHeadlessToCwd(runtime: SlashCommandRuntime, cwd: string): Promise<void> {
+/** Re-point the process and its cwd-derived state (settings, memory, plugins, skills) at `cwd`. */
+export async function rescopeHeadlessToCwd(
+	runtime: Pick<SlashCommandRuntime, "session" | "settings" | "refreshCommands" | "reloadPlugins">,
+	cwd: string,
+): Promise<void> {
 	setProjectDir(cwd);
 	await runtime.settings.reloadForCwd(cwd);
 	await rebindMemoryBackendForCwd(runtime.session);

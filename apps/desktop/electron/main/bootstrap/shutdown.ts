@@ -84,6 +84,19 @@ export function registerShutdownHandlers({
     app.quit();
   });
 
+  // A signal (kill, launchd, a script) has no one to answer the quit dialog,
+  // which would keep the app alive forever: run the normal shutdown unasked.
+  // Electron installs its own SIGTERM/SIGINT handler (straight to before-quit)
+  // during startup, replacing any listener added earlier, so wait for ready.
+  void app.whenReady().then(() => {
+    for (const signal of ["SIGTERM", "SIGINT"] as const) {
+      process.once(signal, () => {
+        state.quitConfirmed = true;
+        app.quit();
+      });
+    }
+  });
+
   app.on("before-quit", (event) => {
     // A duplicate launch has no host, sidecar, panel, or outbox of its own, and
     // the shutdown sequence below would write into the running instance's data

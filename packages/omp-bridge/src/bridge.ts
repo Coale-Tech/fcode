@@ -17,7 +17,8 @@
  *         setStatus/setWidget/setTitle forward as sidecar.ext_ui notifications).
  * E10  — The outer NDJSON line is capped at NDJSON_LINE_CAP before reaching
  *         the main process.
- * E14  — open_session failure falls back to a new session; corrupt map = empty.
+ * E14  — Each Fcode session owns one omp session directory and is opened
+ *         there in its project directory (open_session resumes or starts fresh).
  * E19  — supportsVision derived from model input modalities; projectPath carried.
  * E20  — Multi-select answers serialized with NUL delimiter.
  */
@@ -25,11 +26,10 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { homedir, tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { ErrorCodes, readNdjsonLines, type OmpSettingsValues } from "@pi-desktop/shared";
 import { capNdjsonLine, reassembleChunk } from "./chunks.js";
-import { SessionStore } from "./sessions.js";
 import { createBridgeState } from "./state.js";
 import {
   mapExtensionUiRequest,
@@ -85,6 +85,8 @@ interface OverlayOptions {
   approvalMode?: "always-ask" | "write" | "yolo";
   /** User-configured omp settings groups; absent keys use omp's own defaults. */
   ompSettings?: OmpSettingsValues;
+  /** Fcode's default model as omp "provider/modelId"; omp otherwise picks the first model it discovers. */
+  defaultModel?: string;
 }
 
 /**
@@ -238,6 +240,7 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
         ]
       : []),
     ...(hindsightLines.length > 0 ? ["", "hindsight:", ...hindsightLines] : []),
+    ...(opts.defaultModel ? ["", "modelRoles:", `  default: ${JSON.stringify(opts.defaultModel)}`] : []),
     // Task / isolation / eval / collab / LSP / IDA / MCP / commands settings
     ...ompSettingsYaml(s),
   ].join("\n");
@@ -486,7 +489,6 @@ interface BridgeConfig {
 
 /** Fcode → omp session map key. */
 interface SessionBinding {
-  ompSessionDir?: string;
   projectPath: string;
   inputModalities: string[];
 }
@@ -648,7 +650,6 @@ export class OmpBridge {
   /** Pending host.proxy calls the bridge made to the PI host (keyed by request id). */
   private hostPending = new Map<string, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();
   private sessions = new Map<string, SessionBinding>();
-  private sessionStore: SessionStore | null = null;
   private state = createBridgeState(homedir());
   /** Map of omp request id → PI pending request info */
   private pendingUiRequests = new Map<string, { sessionId: string; toolCallId: string; toolName: string; viaSelect: boolean }>();
@@ -787,7 +788,6 @@ export class OmpBridge {
           resourcesPath: String(p.resourcesPath ?? ""),
           networkProxy: p.networkProxy ? String(p.networkProxy) : undefined,
         };
-        this.sessionStore = new SessionStore(this.config.dataDir);
         this.respond(id, { ok: true });
         break;
 
@@ -1155,69 +1155,24 @@ export class OmpBridge {
     params: Record<string, unknown>;
   }): Promise<{ accepted: boolean; turnId: string }> {
     const { sessionId, turnId, content, projectPath } = opts;
-
+    if (!this.config) throw new Error("sidecar.configure must precede agent.prompt");
     const existing = this.sessions.get(sessionId);
-    const store = this.sessionStore;
 
-    let sessionType: "new_session" | "open_session" = "new_session";
-    let sessionDir: string | undefined;
-
-    if (existing?.ompSessionDir) {
-      sessionDir = existing.ompSessionDir;
-      sessionType = "open_session";
-    } else if (store) {
-      const stored = store.get(sessionId);
-      if (stored) {
-        sessionDir = stored.sessionDir;
-        sessionType = "open_session";
-      }
-    }
-
-    // omp has no per-session cwd/project field on new_session or open_session:
-    // cwd is fixed once at process spawn (start(), below) from FCODE_BENCH_PATH,
-    // which sidecar.ts sets to benchSupervisor.activeBenchPath on each launch.
-    // A single shared ompProcess also means open_session's
-    // "most recent session in this directory" resume can race if two
-    // Fcode sessions ever share a project.
-    const sessionCmd: Record<string, unknown> = sessionType === "open_session" && sessionDir
-      ? { type: "open_session", sessionDir }
-      : { type: "new_session" };
-
-    // Try to open existing session; fall back to new if omp GC'd it (E14).
-    if (sessionType === "open_session") {
-      try {
-        await this.ompCall(sessionCmd);
-      } catch {
-        // GC'd: fall back to new session and rewrite the store (E14).
-        sessionType = "new_session";
-        sessionDir = undefined;
-        if (store) store.delete(sessionId);
-        await this.ompCall({ type: "new_session" });
-      }
-    } else {
-      await this.ompCall(sessionCmd);
-    }
-
-    // new_session/open_session responses carry no session identifier; learn it
-    // from get_state so the *next* prompt for this sessionId can resume this
-    // same omp session instead of starting over (E14, E19).
-    if (sessionType === "new_session") {
-      const state = (await this.ompCall({ type: "get_state" })) as { sessionFile?: string };
-      if (state?.sessionFile) sessionDir = dirname(state.sessionFile);
-    }
+    // open_session resumes the newest session in a directory, so each Fcode
+    // session owns one: a shared directory would hand one chat another chat's
+    // history. `cwd` moves omp, and the conversation, into the chat's current
+    // project, so a chat moved to another project follows it.
+    const opened = (await this.ompCall({
+      type: "open_session",
+      sessionDir: join(this.config.dataDir, "omp-threads", encodeURIComponent(sessionId)),
+      cwd: projectPath,
+    })) as { cancelled?: boolean } | undefined;
+    if (opened?.cancelled) throw new Error(`Cannot open this conversation in ${projectPath}`);
 
     this.sessions.set(sessionId, {
-      ompSessionDir: sessionDir,
       projectPath,
       inputModalities: existing?.inputModalities ?? [],
     });
-    if (store && sessionDir) {
-      store.set(sessionId, {
-        sessionDir,
-        projectPath,
-        inputModalities: existing?.inputModalities ?? [],
-      });
-    }
 
     // Subscribe to subagent progress once per omp process; idempotent, harmless to retry (§9).
     if (!this.subagentSubscribed) {
@@ -1663,7 +1618,6 @@ export class OmpBridge {
    * Throws (DX3) if the overlay cannot be written.
    */
   async start(opts: {
-    dataDir: string;
     resourcesPath: string;
     ompBinary: string;
     overlayPath: string;
@@ -1674,7 +1628,6 @@ export class OmpBridge {
   }): Promise<void> {
     process.stderr.write(`[omp-bridge] starting: binary=${opts.ompBinary}\n`);
     this.state.cwd = opts.cwd;
-    this.sessionStore = new SessionStore(opts.dataDir);
 
     const ompArgs = ["--mode", "rpc", "--approval-mode", opts.approvalMode ?? "always-ask", "--config", opts.overlayPath];
     if (opts.modelsConfigPath) ompArgs.push("--models-config", opts.modelsConfigPath);
@@ -1713,6 +1666,14 @@ export class OmpBridge {
         paths: ompBinaryCandidates(opts.resourcesPath),
         detail: String(err),
       });
+    });
+
+    // Without omp every turn would hang. Exit so the desktop supervisor
+    // settles in-flight turns and restarts the sidecar. A failed spawn emits
+    // "error" without "exit" and keeps the bridge up for the fatal panel.
+    child.on("exit", (code, signal) => {
+      process.stderr.write(`[omp-bridge] omp exited: code=${String(code)} signal=${String(signal)}\n`);
+      process.exit(1);
     });
 
     // Wire omp stdout → bridge frame handler (incoming trace applied inside handleOmpFrame).
@@ -1761,6 +1722,7 @@ async function main(): Promise<void> {
       screenshotsDir,
       approvalMode,
       ompSettings: parseOmpSettings(process.env.FCODE_OMP_SETTINGS),
+      defaultModel: process.env.FCODE_DEFAULT_MODEL || undefined,
       memory:
         backend === "mnemopi" || backend === "hindsight" || backend === "sharpshooter" || backend === "local" || backend === "off"
           ? {
@@ -1815,9 +1777,10 @@ async function main(): Promise<void> {
     await bridge.handleHostFrame(frame);
   });
 
-  const cwd = process.env.FCODE_BENCH_PATH ?? homedir();
+  // A chat without a project or bench runs in the temp directory: omp refuses
+  // to work in the home directory and would move there itself.
+  const cwd = process.env.FCODE_BENCH_PATH ?? tmpdir();
   await bridge.start({
-    dataDir,
     resourcesPath,
     ompBinary,
     overlayPath,

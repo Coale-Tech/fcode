@@ -159,20 +159,23 @@ async function buildFcodeProvidersConfig(
   const lines = ["# Fcode-injected providers — generated on each launch, do not edit.", "providers:"];
   let any = false;
   for (const p of providers) {
-    if (p.authKind === "none" || p.hasOauth) continue;
+    if (p.hasOauth) continue;
+    const keyless = p.authKind === "none";
     const envKey = `FCODE_PROVIDER_${p.id.toUpperCase().replace(/[^A-Z0-9]/g, "_")}_KEY`;
-    let secret: string | undefined;
-    try {
-      const r = await host.call<{ value?: string }>("providers.getSecret", { id: p.id });
-      secret = r.value;
-    } catch { continue; }
-    if (!secret) continue;
-    providerEnv[envKey] = secret;
+    if (!keyless) {
+      let secret: string | undefined;
+      try {
+        const r = await host.call<{ value?: string }>("providers.getSecret", { id: p.id });
+        secret = r.value;
+      } catch { continue; }
+      if (!secret) continue;
+      providerEnv[envKey] = secret;
+    }
     lines.push(`  fcode-${p.id}:`);
     if (p.baseUrl) lines.push(`    baseUrl: "${p.baseUrl}"`);
     const api = FCODE_API_STYLE_MAP[p.apiStyle ?? "chat_completions"] ?? "openai-completions";
     lines.push(`    api: ${api}`);
-    lines.push(`    apiKey: ${envKey}`);
+    lines.push(keyless ? "    auth: none" : `    apiKey: ${envKey}`);
     const models = p.models ?? [];
     if (models.length) {
       lines.push(`    models:`);
@@ -246,6 +249,22 @@ async function buildFcodeProvidersConfig(
       return;
     }
     inflightCheckpointer.settle(sessionId);
+    // A dead sidecar never sends its terminal event, and the renderer and
+    // Agent Host clear the running turn only on one. Emit it while the turn
+    // still owns the session, or it is dropped as stale.
+    emitAgentEvent({
+      sessionId,
+      turnId: crashedTurnId,
+      ts: Date.now(),
+      event: {
+        type: "error",
+        error: {
+          code: "PLAN_APPROVAL_INTERRUPTED",
+          message: "The agent stopped unexpectedly and was restarted.",
+          retriable: true,
+        },
+      },
+    });
     await finishTurn(sessionId, "aborted", "PLAN_APPROVAL_INTERRUPTED", {
       recoverInflight: true,
       turnId: crashedTurnId,
@@ -461,6 +480,12 @@ async function buildFcodeProvidersConfig(
         const configPath = join(dataDir, "fcode-providers.yml");
         writeFileSync(configPath, injected.yaml, "utf8");
         providerEnv = { ...injected.providerEnv, FCODE_MODELS_CONFIG: configPath };
+        // Start omp on Fcode's default model, not whichever model omp discovers first.
+        const settings = await runtimeState.host.call<{ defaultProviderId?: string; defaultModelId?: string }>("settings.get");
+        const { defaultProviderId: id, defaultModelId: model } = settings ?? {};
+        if (id && model && injected.yaml.includes(`\n  fcode-${id}:\n`)) {
+          providerEnv.FCODE_DEFAULT_MODEL = `fcode-${id}/${model}`;
+        }
       }
     } catch {
       // Non-fatal — omp starts without Fcode provider injection.

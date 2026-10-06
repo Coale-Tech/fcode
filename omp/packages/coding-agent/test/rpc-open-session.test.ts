@@ -12,6 +12,7 @@ import { makeAssistantMessage } from "./session-manager/helpers";
 function sessionOver(manager: SessionManager): { session: RpcOpenSessionSession; transitions: string[] } {
 	const transitions: string[] = [];
 	const session: RpcOpenSessionSession = {
+		sessionManager: manager,
 		get sessionFile() {
 			return manager.getSessionFile();
 		},
@@ -26,9 +27,11 @@ function sessionOver(manager: SessionManager): { session: RpcOpenSessionSession;
 			await manager.newSession(options);
 			return true;
 		},
-		async switchSession(sessionPath) {
+		async switchSession(sessionPath, options) {
 			transitions.push("switch");
+			const previousCwd = manager.getCwd();
 			await manager.setSessionFile(sessionPath);
+			if (options?.preserveLocalCwd) manager.setCwdWithoutRelocation(previousCwd);
 			return true;
 		},
 	};
@@ -92,6 +95,88 @@ describe("openRpcSession", () => {
 
 			await openRpcSession(session, threadDir);
 			expect(transitions).toEqual(["switch"]);
+		} finally {
+			await manager.close();
+		}
+	});
+
+	it("starts a fresh session in the conversation's project directory", async () => {
+		const project = path.join(root, "other-project");
+		await fs.mkdir(project);
+		const manager = SessionManager.create(cwd);
+		const { session, transitions } = sessionOver(manager);
+		const moves: string[] = [];
+		try {
+			const opened = await openRpcSession(session, threadDir, undefined, {
+				path: project,
+				rescope: async dir => {
+					moves.push(dir);
+					return true;
+				},
+			});
+			expect(opened).toMatchObject({ cancelled: false, resumed: false });
+			expect(moves).toEqual([project]);
+			expect(manager.getRecordedCwd()).toBe(project);
+			expect(path.dirname(opened.sessionFile ?? "")).toBe(threadDir);
+			expect(transitions).toEqual(["new"]);
+		} finally {
+			await manager.close();
+		}
+	});
+
+	it("resumes a conversation in its project directory, following a project move", async () => {
+		const previous = SessionManager.create(cwd, threadDir);
+		previous.appendMessage({ role: "user", content: "remember the codeword", timestamp: 1 });
+		previous.appendMessage(makeAssistantMessage());
+		await previous.flush();
+		const previousFile = previous.getSessionFile();
+		await previous.close();
+		const elsewhere = path.join(root, "elsewhere");
+		const moved = path.join(root, "moved-project");
+		await fs.mkdir(elsewhere);
+		await fs.mkdir(moved);
+
+		const manager = SessionManager.create(elsewhere);
+		const { session, transitions } = sessionOver(manager);
+		const moves: string[] = [];
+		const open = (project: string) =>
+			openRpcSession(session, threadDir, undefined, {
+				path: project,
+				rescope: async dir => {
+					moves.push(dir);
+					return true;
+				},
+			});
+		try {
+			expect(await open(cwd)).toMatchObject({ cancelled: false, resumed: true, sessionFile: previousFile });
+			expect(manager.getCwd()).toBe(cwd);
+
+			expect(await open(moved)).toMatchObject({ cancelled: false, sessionFile: previousFile });
+			expect(manager.getCwd()).toBe(moved);
+			expect(manager.getRecordedCwd()).toBe(moved);
+
+			await open(moved);
+			expect(moves).toEqual([cwd, moved]);
+			expect(transitions).toEqual(["switch", "switch"]);
+		} finally {
+			await manager.close();
+		}
+	});
+
+	it("starts nothing when the project directory cannot be entered", async () => {
+		const manager = SessionManager.create(cwd);
+		const startCwd = manager.getCwd();
+		const startFile = manager.getSessionFile();
+		const { session, transitions } = sessionOver(manager);
+		try {
+			const opened = await openRpcSession(session, threadDir, undefined, {
+				path: path.join(root, "missing-project"),
+				rescope: async () => false,
+			});
+			expect(opened.cancelled).toBe(true);
+			expect(transitions).toEqual([]);
+			expect(manager.getCwd()).toBe(startCwd);
+			expect(manager.getSessionFile()).toBe(startFile);
 		} finally {
 			await manager.close();
 		}

@@ -365,7 +365,7 @@ Row counts: **surfaced 107** · **partial 31** · **missing 86** · **total 224*
 | Capability | omp source | Fcode surface | Status | Note |
 |---|---|---|---|---|
 | Memory backend selector | `memory-backend/settings.ts:12` | `MemoryTab.tsx:32`; `bridge.ts:183–190` | surfaced | Off / Mnemopi / Hindsight with live health card |
-| Session persistence | `bridge.ts:661` `SessionStore` | `packages/omp-bridge/src/sessions.ts` | surfaced | Session dir stored per Fcode session ID; survives restart |
+| Session persistence | `rpc-types.ts:36` `open_session` | `bridge.ts` `ompPrompt` → `<dataDir>/omp-threads/<sessionId>` | surfaced | One omp session dir per Fcode session ID, opened in its project; survives restart |
 | Session branching | `rpc-types.ts:82` | `api.ts:1648` `ompSessionBranch` | surfaced | Exposed in API; wired to fork gesture |
 | Session rename | `rpc-types.ts:85` | `api.ts:1651` `ompSessionRename` | surfaced | |
 | Context compaction (manual) | `rpc-types.ts:67` | `commands.ts:17` | surfaced | Via compact command or context ring |

@@ -1949,6 +1949,15 @@ fn namespaced_message_id(session_id: &str, message_id: &str) -> String {
     format!("{session_id}:{message_id}")
 }
 
+/// The id `message_id` has in `session_id`'s index: append namespaces an id
+/// that another session already owns (D444).
+fn session_message_id(db: &Database, session_id: &str, message_id: &str) -> Result<String> {
+    Ok(match message_owner(db, message_id)? {
+        Some(owner) if owner != session_id => namespaced_message_id(session_id, message_id),
+        _ => message_id.to_owned(),
+    })
+}
+
 fn transcript_contains_id(db: &Database, session_id: &str, message_id: &str) -> Result<bool> {
     Ok(transcripts::read_transcript(db.data_dir(), session_id)?
         .iter()
@@ -2151,13 +2160,16 @@ pub fn save_inflight_message(
     if !has_text {
         return Ok(false);
     }
-    if message_indexed(db, session_id, &message.id)?
-        && !streaming_assistant_indexed(db, session_id, &message.id)?
+    // Checkpoint under the id the row is indexed with, so the final row
+    // supersedes it and a crash promotes it without a duplicate.
+    let (mut record, _) = ui_to_record(message);
+    record.id = session_message_id(db, session_id, &record.id)?;
+    if message_indexed(db, session_id, &record.id)?
+        && !streaming_assistant_indexed(db, session_id, &record.id)?
     {
         transcripts::remove_inflight(db.data_dir(), session_id)?;
         return Ok(false);
     }
-    let (record, _) = ui_to_record(message);
     transcripts::write_inflight(
         db.data_dir(),
         session_id,
@@ -2183,7 +2195,7 @@ pub fn recover_inflight_message(
     session_id: &str,
     include_completed: bool,
 ) -> Result<Option<UiMessage>> {
-    let Some(inflight) = transcripts::read_inflight(db.data_dir(), session_id)? else {
+    let Some(mut inflight) = transcripts::read_inflight(db.data_dir(), session_id)? else {
         return Ok(None);
     };
     let session_created = match session_created_at(db, session_id) {
@@ -2194,6 +2206,8 @@ pub fn recover_inflight_message(
             return Ok(None);
         }
     };
+    // Older hosts checkpointed the raw id of a namespaced row.
+    inflight.message.id = session_message_id(db, session_id, &inflight.message.id)?;
     let indexed = message_indexed(db, session_id, &inflight.message.id)?;
     if indexed && !streaming_assistant_indexed(db, session_id, &inflight.message.id)? {
         transcripts::remove_inflight(db.data_dir(), session_id)?;
@@ -6842,6 +6856,57 @@ mod tests {
         assert_eq!(messages.len(), 1);
         assert_eq!(messages[0].content, "partial and complete");
         assert_eq!(messages[0].status.as_deref(), Some("complete"));
+    }
+
+    #[test]
+    fn checkpoints_follow_message_ids_remapped_from_another_session() {
+        // omp numbers each session's messages from msg-1, so a second session's
+        // reply id is already owned by the first and indexed namespaced (D444).
+        let db = test_db();
+        let first = create_session(&db, None, None, None, None, None).unwrap();
+        let mut owned = streaming_assistant("msg-2", "first reply");
+        owned.status = Some("complete".into());
+        append_message(&db, &first.id, &owned, None).unwrap();
+        let local_id = |session: &str| format!("{session}:msg-2");
+
+        // A finished reply settles its checkpoint: restarting appends nothing.
+        let second = create_session(&db, None, None, None, None, None).unwrap();
+        let turn = begin_turn(&db, &second.id, None, None).unwrap();
+        let partial = streaming_assistant("msg-2", "partial");
+        assert!(save_inflight_message(&db, &second.id, Some(&turn), &partial).unwrap());
+        let mut done = streaming_assistant("msg-2", "partial and complete");
+        done.status = Some("complete".into());
+        append_message(&db, &second.id, &done, Some(&turn)).unwrap();
+        assert!(recover_inflight_messages(&db, true).unwrap().is_empty());
+        let messages = get_session(&db, &second.id).unwrap().unwrap().messages;
+        assert_eq!(messages.len(), 1);
+        assert_eq!(messages[0].id, local_id(&second.id));
+
+        // A reply cut off by a sidecar crash is promoted under its local id.
+        let third = create_session(&db, None, None, None, None, None).unwrap();
+        let turn = begin_turn(&db, &third.id, None, None).unwrap();
+        append_message(
+            &db,
+            &third.id,
+            &streaming_assistant("msg-2", ""),
+            Some(&turn),
+        )
+        .unwrap();
+        assert!(save_inflight_message(&db, &third.id, Some(&turn), &partial).unwrap());
+        let recovered = recover_inflight_message(&db, &third.id, true)
+            .unwrap()
+            .unwrap();
+        assert_eq!(recovered.id, local_id(&third.id));
+        assert_eq!(recovered.status.as_deref(), Some("aborted"));
+        let messages = get_session(&db, &third.id).unwrap().unwrap().messages;
+        assert_eq!(messages.len(), 1);
+        assert_eq!(messages[0].content, "partial");
+        assert_eq!(
+            transcripts::read_transcript(db.data_dir(), &third.id)
+                .unwrap()
+                .len(),
+            1
+        );
     }
 
     #[test]

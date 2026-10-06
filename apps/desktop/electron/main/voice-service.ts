@@ -177,6 +177,7 @@ export function createVoiceService(
   getWindow: () => BrowserWindow | null,
 ): VoiceService {
   const service = new VoiceService(modelCacheDir, getWindow);
-  app.once("before-quit", () => service.dispose());
+  // will-quit: before-quit also fires for a quit cancelled in the confirm dialog.
+  app.once("will-quit", () => service.dispose());
   return service;
 }

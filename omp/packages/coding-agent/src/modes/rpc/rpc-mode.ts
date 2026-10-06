@@ -15,7 +15,7 @@ import * as path from "node:path";
 import { ThinkingLevel } from "@oh-my-pi/pi-agent-core";
 import { getOAuthProviders } from "@oh-my-pi/pi-ai/oauth";
 import { toolWireSchema } from "@oh-my-pi/pi-ai/utils/schema";
-import { $env, getAgentDir, isRecord, logger, Snowflake } from "@oh-my-pi/pi-utils";
+import { $env, getAgentDir, getProjectDir, isRecord, logger, Snowflake } from "@oh-my-pi/pi-utils";
 import { createSessionMemoryRuntimeContext } from "../../memory-backend/runtime";
 import { clearPluginRootsAndCaches, resolveActiveProjectRegistryPath } from "../../discovery/helpers";
 import {
@@ -38,6 +38,7 @@ import { findMostRecentNonEmptySession } from "../../session/session-listing";
 import { SKILL_PROMPT_MESSAGE_TYPE, USER_INTERRUPT_LABEL } from "../../session/messages";
 import { executeAcpBuiltinSlashCommand } from "../../slash-commands/acp-builtins";
 import { buildAvailableSlashCommands } from "../../slash-commands/available-commands";
+import { rescopeHeadlessToCwd } from "../../slash-commands/builtin-lifecycle";
 import { defaultLoadModeForToolName } from "../../tools/essential-tools";
 import type { EventBus } from "../../utils/event-bus";
 import { selectRpcEntries } from "./rpc-compat";
@@ -476,14 +477,24 @@ export async function handleRpcSessionChange(
 
 export type RpcOpenSessionSession = Pick<
 	AgentSession,
-	"newSession" | "switchSession" | "sessionFile" | "sessionId" | "messages"
+	"newSession" | "switchSession" | "sessionFile" | "sessionId" | "messages" | "sessionManager"
 >;
+
+/** Where a conversation runs, and how to move the process there. */
+export interface RpcOpenSessionCwd {
+	/** The conversation's project directory; the process and the opened session move there. */
+	path: string;
+	/** Re-scope the process to a directory; false when it could not (nothing changed). */
+	rescope: (cwd: string) => Promise<boolean>;
+}
 
 /**
  * Continue the newest non-empty session in `sessionDir`, or start a fresh one
  * there — the runtime equivalent of `--session-dir <dir> --continue`, so a host
  * can bind a pre-spawned process to a conversation it keys by directory.
  * Reopening the session that is already active is a no-op and does not abort a run.
+ * With `cwd`, the process follows each conversation's project directory, so one
+ * process can serve conversations from several projects.
  *
  * @throws Error when the process runs without session persistence (`--no-session`).
  */
@@ -491,17 +502,26 @@ export async function openRpcSession(
 	session: RpcOpenSessionSession,
 	sessionDir: string,
 	subagentRegistry?: RpcSubagentResetRegistry,
+	cwd?: RpcOpenSessionCwd,
 ): Promise<RpcOpenSessionResult> {
 	if (!session.sessionFile) throw new Error("open_session requires session persistence (omit --no-session)");
 	const dir = path.resolve(sessionDir);
 	const latest = await findMostRecentNonEmptySession(dir);
 	const current = path.resolve(session.sessionFile);
-	const alreadyOpen = latest
-		? current === path.resolve(latest)
-		: path.dirname(current) === dir && session.messages.length === 0;
+	const target = cwd && path.resolve(cwd.path);
+	const alreadyOpen =
+		(latest ? current === path.resolve(latest) : path.dirname(current) === dir && session.messages.length === 0) &&
+		(!target || target === path.resolve(session.sessionManager.getCwd()));
 	let cancelled = false;
 	if (!alreadyOpen) {
-		cancelled = latest ? !(await session.switchSession(latest)) : !(await session.newSession({ sessionDir: dir }));
+		if (cwd && !(await enterSessionCwd(session, cwd))) {
+			cancelled = true;
+		} else if (latest) {
+			cancelled = !(await session.switchSession(latest, target ? { preserveLocalCwd: true } : undefined));
+			if (!cancelled && target) await anchorSessionCwd(session.sessionManager, target, dir);
+		} else {
+			cancelled = !(await session.newSession({ sessionDir: dir }));
+		}
 		if (!cancelled) subagentRegistry?.clear();
 	}
 	return {
@@ -510,6 +530,23 @@ export async function openRpcSession(
 		sessionId: session.sessionId,
 		sessionFile: session.sessionFile,
 	};
+}
+
+/** Move the process to the conversation's project directory before its session is opened there. */
+async function enterSessionCwd(session: RpcOpenSessionSession, cwd: RpcOpenSessionCwd): Promise<boolean> {
+	const previous = session.sessionManager.getCwd();
+	const target = path.resolve(cwd.path);
+	if (target === path.resolve(previous)) return true;
+	session.sessionManager.setCwdWithoutRelocation(target);
+	if (await cwd.rescope(target)) return true;
+	session.sessionManager.setCwdWithoutRelocation(previous);
+	return false;
+}
+
+/** Record `target` as a resumed session's directory, keeping its file in `dir` (a moved project rewrites the header once). */
+async function anchorSessionCwd(manager: RpcOpenSessionSession["sessionManager"], target: string, dir: string) {
+	if (path.resolve(manager.getRecordedCwd() ?? "") === target) manager.adoptRecordedCwd();
+	else await manager.moveTo(target, dir);
 }
 
 function normalizeHostToolDefinitions(tools: RpcHostToolDefinition[]): RpcHostToolDefinition[] {
@@ -1109,6 +1146,25 @@ export async function runRpcMode(session: AgentSession, options: RpcModeOptions 
 	const emitAvailableCommandsUpdate = async () => {
 		output({ type: "available_commands_update", commands: await getAvailableCommands() });
 	};
+	// open_session `cwd`: move the process to a conversation's project directory,
+	// back to the previous one if any step fails.
+	const rescopeProcess = async (cwd: string): Promise<boolean> => {
+		const runtime = {
+			session,
+			settings: session.settings,
+			refreshCommands: emitAvailableCommandsUpdate,
+			reloadPlugins: reloadPluginState,
+		};
+		const previous = getProjectDir();
+		try {
+			await rescopeHeadlessToCwd(runtime, cwd);
+			return true;
+		} catch (error) {
+			logger.warn("open_session: cannot move to the project directory", { cwd, error: String(error) });
+			await rescopeHeadlessToCwd(runtime, previous).catch(() => undefined);
+			return false;
+		}
+	};
 	session.subscribeCommandMetadataChanged(() => {
 		void emitAvailableCommandsUpdate();
 	});
@@ -1258,7 +1314,8 @@ export async function runRpcMode(session: AgentSession, options: RpcModeOptions 
 			}
 
 			case "open_session": {
-				const result = await openRpcSession(session, command.sessionDir, subagentRegistry);
+				const cwd = command.cwd ? { path: command.cwd, rescope: rescopeProcess } : undefined;
+				const result = await openRpcSession(session, command.sessionDir, subagentRegistry, cwd);
 				if (!result.cancelled) {
 					promptResults.abortOpen();
 					void settleWatcher.check();

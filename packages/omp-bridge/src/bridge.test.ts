@@ -592,138 +592,122 @@ describe("OmpBridge — registerHostTools sends set_host_tools after v2 negotiat
 // §9 — set_subagent_subscription + subagent frame mapping
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Drive the ompPrompt async chain: new_session → get_state → set_subagent_subscription → prompt. */
-async function driveNewSessionPrompt(
-  bridge: OmpBridge,
-  ompStdinWrites: unknown[],
-  opts: { sessionId: string; turnId: string; alreadySubscribed?: boolean },
-): Promise<void> {
-  const findCall = (type: string) =>
-    ompStdinWrites.findLast((f) => (f as Record<string, unknown>).type === type) as
-      | Record<string, unknown>
-      | undefined;
-
+/** A configured bridge whose omp stdin and host stdout writes are captured. */
+function promptBridge() {
+  const bridge = new OmpBridge();
+  const b = bridge as unknown as Record<string, unknown>;
+  const ompStdinWrites: Array<Record<string, unknown>> = [];
+  const hostWrites: Array<Record<string, unknown>> = [];
+  b.config = { dataDir: "/d", resourcesPath: "" };
+  b.ompProcess = {
+    stdin: {
+      write: vi.fn((data: string) => {
+        try { ompStdinWrites.push(JSON.parse(data.trim())); } catch { /* ignore */ }
+      }),
+    },
+  };
+  const origWrite = process.stdout.write.bind(process.stdout);
+  process.stdout.write = ((data: string) => {
+    try { hostWrites.push(JSON.parse(String(data).trim())); } catch { /* ignore */ }
+    return true;
+  }) as typeof process.stdout.write;
+  const prompt = (id: string, sessionId: string, projectPath: string) =>
+    bridge.handleHostFrame({
+      jsonrpc: "2.0", id, method: "agent.prompt",
+      params: { sessionId, turnId: `turn-${id}`, content: "hello", projectPath },
+    });
   const respondOmp = (type: string, data: unknown) => {
-    const call = findCall(type);
-    if (!call) throw new Error(`driveNewSessionPrompt: no ${type} call found`);
+    const call = ompStdinWrites.findLast((f) => f.type === type);
+    if (!call) throw new Error(`no ${type} call found`);
     bridge.handleOmpFrame(
       JSON.stringify({ id: call.id, type: "response", command: type, success: true, data }),
     );
   };
-
-  // Respond to new_session then get_state (only for new sessions).
-  respondOmp("new_session", { cancelled: false });
-  await Promise.resolve();
-  respondOmp("get_state", { sessionFile: "/data/sessions/s.json" });
-  await Promise.resolve();
-
-  if (!opts.alreadySubscribed) {
-    respondOmp("set_subagent_subscription", { level: "progress" });
-    // .catch() wrapper on ompCall needs an extra microtask tick to propagate
+  /** Answer the ompPrompt chain: open_session → set_subagent_subscription → prompt. */
+  const drive = async (opts: { alreadySubscribed?: boolean } = {}) => {
+    respondOmp("open_session", { cancelled: false });
     await Promise.resolve();
+    if (!opts.alreadySubscribed) {
+      respondOmp("set_subagent_subscription", { level: "progress" });
+      // .catch() wrapper on ompCall needs an extra microtask tick to propagate
+      await Promise.resolve();
+      await Promise.resolve();
+    }
+    respondOmp("prompt", { agentInvoked: true });
     await Promise.resolve();
-  }
-
-  respondOmp("prompt", { agentInvoked: true });
-  await Promise.resolve();
+  };
+  const restore = () => { process.stdout.write = origWrite; };
+  return { ompStdinWrites, hostWrites, prompt, respondOmp, drive, restore };
 }
 
 describe("OmpBridge — set_subagent_subscription sent once on session open (§9)", () => {
   it("sends set_subagent_subscription{level:progress} before the first prompt", async () => {
-    const bridge = new OmpBridge();
-    const b = bridge as unknown as Record<string, unknown>;
-    const ompStdinWrites: unknown[] = [];
-    b.ompProcess = {
-      stdin: {
-        write: vi.fn((data: string) => {
-          try { ompStdinWrites.push(JSON.parse(data.trim())); } catch { /* ignore */ }
-        }),
-      },
-    };
-    const origWrite = process.stdout.write.bind(process.stdout);
-    process.stdout.write = () => true;
+    const { ompStdinWrites, prompt, drive, restore } = promptBridge();
+    try {
+      void prompt("h1", "s1", "/p");
+      await drive();
 
-    bridge.handleHostFrame({
-      jsonrpc: "2.0", id: "h1", method: "agent.prompt",
-      params: { sessionId: "s1", turnId: "t1", content: "hello", projectPath: "/p" },
-    });
-
-    await driveNewSessionPrompt(bridge, ompStdinWrites, { sessionId: "s1", turnId: "t1" });
-
-    const subCall = ompStdinWrites.find(
-      (f) => (f as Record<string, unknown>).type === "set_subagent_subscription",
-    ) as Record<string, unknown> | undefined;
-    expect(subCall).toBeDefined();
-    expect(subCall?.level).toBe("progress");
-
-    // Subscription must precede the prompt.
-    const subIdx = ompStdinWrites.findIndex(
-      (f) => (f as Record<string, unknown>).type === "set_subagent_subscription",
-    );
-    const promptIdx = ompStdinWrites.findIndex(
-      (f) => (f as Record<string, unknown>).type === "prompt",
-    );
-    expect(subIdx).toBeGreaterThanOrEqual(0);
-    expect(promptIdx).toBeGreaterThan(subIdx);
-
-    process.stdout.write = origWrite;
+      const subIdx = ompStdinWrites.findIndex((f) => f.type === "set_subagent_subscription");
+      const promptIdx = ompStdinWrites.findIndex((f) => f.type === "prompt");
+      expect(ompStdinWrites[subIdx]?.level).toBe("progress");
+      expect(subIdx).toBeGreaterThanOrEqual(0);
+      expect(promptIdx).toBeGreaterThan(subIdx);
+    } finally {
+      restore();
+    }
   });
 
   it("does not send set_subagent_subscription a second time for a subsequent prompt", async () => {
-    const bridge = new OmpBridge();
-    const b = bridge as unknown as Record<string, unknown>;
-    const ompStdinWrites: unknown[] = [];
-    b.ompProcess = {
-      stdin: {
-        write: vi.fn((data: string) => {
-          try { ompStdinWrites.push(JSON.parse(data.trim())); } catch { /* ignore */ }
-        }),
-      },
-    };
-    const origWrite = process.stdout.write.bind(process.stdout);
-    process.stdout.write = () => true;
+    const { ompStdinWrites, prompt, drive, restore } = promptBridge();
+    try {
+      void prompt("h1", "s1", "/p");
+      await drive();
+      void prompt("h2", "s1", "/p");
+      await drive({ alreadySubscribed: true });
 
-    // First prompt (new session).
-    bridge.handleHostFrame({
-      jsonrpc: "2.0", id: "h1", method: "agent.prompt",
-      params: { sessionId: "s1", turnId: "t1", content: "first", projectPath: "/p" },
-    });
-    await driveNewSessionPrompt(bridge, ompStdinWrites, { sessionId: "s1", turnId: "t1" });
+      expect(ompStdinWrites.filter((f) => f.type === "set_subagent_subscription")).toHaveLength(1);
+      expect(ompStdinWrites.filter((f) => f.type === "prompt")).toHaveLength(2);
+    } finally {
+      restore();
+    }
+  });
+});
 
-    const countBefore = ompStdinWrites.filter(
-      (f) => (f as Record<string, unknown>).type === "set_subagent_subscription",
-    ).length;
-    expect(countBefore).toBe(1);
+describe("OmpBridge — one omp session per Fcode session", () => {
+  it("opens each Fcode session in its own omp session directory and project", async () => {
+    const { ompStdinWrites, prompt, drive, restore } = promptBridge();
+    try {
+      void prompt("h1", "s1", "/p1");
+      await drive();
+      void prompt("h2", "s2", "/p2");
+      await drive({ alreadySubscribed: true });
+      void prompt("h3", "s1", "/p1");
+      await drive({ alreadySubscribed: true });
 
-    // Second prompt (open existing session — bridge already knows ompSessionDir).
-    bridge.handleHostFrame({
-      jsonrpc: "2.0", id: "h2", method: "agent.prompt",
-      params: { sessionId: "s1", turnId: "t2", content: "second", projectPath: "/p" },
-    });
+      expect(ompStdinWrites.filter((f) => f.type === "open_session")).toMatchObject([
+        { sessionDir: join("/d", "omp-threads", "s1"), cwd: "/p1" },
+        { sessionDir: join("/d", "omp-threads", "s2"), cwd: "/p2" },
+        { sessionDir: join("/d", "omp-threads", "s1"), cwd: "/p1" },
+      ]);
+    } finally {
+      restore();
+    }
+  });
 
-    // open_session + prompt only (no new_session/get_state/subscribe).
-    const findCall = (type: string) =>
-      ompStdinWrites.findLast((f) => (f as Record<string, unknown>).type === type) as
-        | Record<string, unknown>
-        | undefined;
-    const respondOmp = (type: string, data: unknown) => {
-      const call = findCall(type);
-      if (!call) throw new Error(`no ${type} call`);
-      bridge.handleOmpFrame(
-        JSON.stringify({ id: call.id, type: "response", command: type, success: true, data }),
-      );
-    };
-    respondOmp("open_session", { resumed: true });
-    await Promise.resolve();
-    respondOmp("prompt", { agentInvoked: true });
-    await Promise.resolve();
+  it("fails the turn without prompting when omp cannot open the conversation", async () => {
+    const { ompStdinWrites, hostWrites, prompt, respondOmp, restore } = promptBridge();
+    try {
+      const done = prompt("h1", "s1", "/deleted-project");
+      respondOmp("open_session", { cancelled: true });
+      await done;
 
-    const countAfter = ompStdinWrites.filter(
-      (f) => (f as Record<string, unknown>).type === "set_subagent_subscription",
-    ).length;
-    expect(countAfter).toBe(1); // still only once
-
-    process.stdout.write = origWrite;
+      expect(ompStdinWrites.some((f) => f.type === "prompt")).toBe(false);
+      expect(hostWrites.find((f) => f.id === "h1")?.error).toMatchObject({
+        message: expect.stringContaining("/deleted-project"),
+      });
+    } finally {
+      restore();
+    }
   });
 });
 

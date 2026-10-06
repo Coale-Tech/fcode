@@ -121,7 +121,7 @@ Important edge behavior from runtime:
 - `{ id?, type: "abort" }`
 - `{ id?, type: "abort_and_prompt", message: string, images?: ImageContent[] }`
 - `{ id?, type: "new_session", parentSession?: string }`
-- `{ id?, type: "open_session", sessionDir: string }`
+- `{ id?, type: "open_session", sessionDir: string, cwd?: string }`
 
 ### Protocol
 
@@ -270,6 +270,8 @@ Wait on `prompt_result` to present a turn's answer; wait on `session_settled` (o
 ```
 
 `resumed` is `false` when a fresh session was started. The command fails when the process runs without persistence (`--no-session`).
+
+With `cwd`, the process follows the conversation's project directory, so one process can serve several projects: the session, fresh or resumed, runs in `cwd`, and a resumed session recorded elsewhere (the project moved) records `cwd` from then on while its file stays in `sessionDir`. The process is re-scoped (working directory, project settings, memory, plugins, skills) as with `/move`. `cancelled` is `true`, and nothing changes, when `cwd` cannot be entered.
 
 ### `get_state` payload
 
