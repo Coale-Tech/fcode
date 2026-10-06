@@ -34,8 +34,6 @@
 
 .settings-segment-item.import-segment-btn {
   padding: 5px 12px;
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-medium);
   white-space: nowrap;
 }
 
@@ -102,17 +100,6 @@
   margin-left: auto;
 }
 
-/*
-  The shared `.btn` runs a step larger than the selects beside it, so give it
-  toolbar geometry here rather than resizing every other page. `min-height`
-  instead of `height` so a wrapped label grows the button instead of spilling
-  out of it.
-*/
-.import-toolbar-actions > .btn {
-  min-height: 28px;
-  padding: 4px 11px;
-  font-size: var(--text-sm);
-}
 
 .import-option {
   display: inline-flex;

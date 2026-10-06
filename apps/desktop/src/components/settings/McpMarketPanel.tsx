@@ -29,7 +29,7 @@ import {
   IconTerminal,
   IconX,
 } from "../icons";
-import { Field, Input, TooltipButton, cx } from "../ui";
+import { Button, Field, Input, TooltipButton, cx } from "../ui";
 
 const CATEGORIES: readonly McpCatalogCategory[] = [
   "devtools",
@@ -366,22 +366,24 @@ export function McpMarketPanel({
         <div className="ext-sheet-actions">
           <span className="ext-sheet-note">{t("settings.mcpMarket.sheetNote")}</span>
           <div className="ext-sheet-actions-end">
-            <button
+            <Button
               type="button"
-              className="mcpm-install is-ghost"
+              variant="ghost"
+              size="sm"
               onClick={() => setInstallFor(null)}
               disabled={saving}
             >
               {t("common.cancel")}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
-              className="mcpm-install"
+              variant="primary"
+              size="sm"
               onClick={() => void install()}
               disabled={saving}
             >
               {saving ? t("common.saving") : t("settings.mcpMarket.install")}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -479,13 +481,14 @@ export function McpMarketPanel({
                     : t("settings.mcpMarket.kindCatalog")}
                 </span>
                 {source.builtin ? null : (
-                  <button
+                  <Button
                     type="button"
-                    className="mcpm-install is-ghost"
+                    variant="ghost"
+                    size="sm"
                     onClick={() => removeSource(source.id)}
                   >
                     {t("extensions.mcp.remove")}
-                  </button>
+                  </Button>
                 )}
               </li>
             ))}
@@ -520,22 +523,23 @@ export function McpMarketPanel({
                 </button>
               ))}
             </div>
-            <button type="button" className="mcpm-install" onClick={addSource}>
+            <Button type="button" variant="primary" size="sm" onClick={addSource}>
               {t("settings.mcpMarket.addSource")}
-            </button>
+            </Button>
           </div>
         </div>
 
         <div className="ext-sheet-actions">
           <span className="ext-sheet-note">{t("settings.mcpMarket.sheetNote")}</span>
           <div className="ext-sheet-actions-end">
-            <button
+            <Button
               type="button"
-              className="mcpm-install is-ghost"
+              variant="ghost"
+              size="sm"
               onClick={() => setSourcesOpen(false)}
             >
               {t("common.close")}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -546,17 +550,17 @@ export function McpMarketPanel({
     <div className="mcpm">
       <div className="mcpm-head">
         <div className="mcpm-head-copy">
-          <button type="button" className="mcpm-back" onClick={onBack}>
+          <Button type="button" variant="ghost" size="sm" onClick={onBack}>
             <IconChevronLeft size={14} />
             {t("settings.mcpMarket.back")}
-          </button>
+          </Button>
           <h3 className="mcpm-title">{t("settings.mcpMarket.title")}</h3>
           <p className="mcpm-subtitle">{t("settings.mcpMarket.subtitle")}</p>
         </div>
         <div className="mcpm-head-actions">
-          <button type="button" className="mcpm-back" onClick={() => setSourcesOpen(true)}>
+          <Button type="button" variant="ghost" size="sm" onClick={() => setSourcesOpen(true)}>
             {t("settings.mcpMarket.manageSources")} · {sources.length}
-          </button>
+          </Button>
         </div>
         <div className="mcpm-search">
           <Input
@@ -650,9 +654,10 @@ export function McpMarketPanel({
                   <p className="mcpm-desc">{entry.description || entry.notes || ""}</p>
                 </div>
                 <div className="mcpm-card-actions">
-                  <button
+                  <Button
                     type="button"
-                    className={cx("mcpm-install", installed && "is-installed")}
+                    variant={installed ? "secondary" : "primary"}
+                    size="sm"
                     disabled={installed}
                     title={entry.homepage}
                     onClick={() => openInstall(entry)}
@@ -660,7 +665,7 @@ export function McpMarketPanel({
                     {installed
                       ? t("settings.mcpMarket.installed")
                       : t("settings.mcpMarket.install")}
-                  </button>
+                  </Button>
                 </div>
               </article>
             );
@@ -669,9 +674,9 @@ export function McpMarketPanel({
       </div>
 
       {remote.status === "ready" && !remote.exhausted ? (
-        <button type="button" className="mcpm-install is-ghost" disabled={remote.loadingMore} onClick={() => void loadMore()}>
+        <Button type="button" variant="ghost" size="sm" disabled={remote.loadingMore} onClick={() => void loadMore()}>
           {remote.loadingMore ? t("common.loading") : t("settings.mcpMarket.loadMore")}
-        </button>
+        </Button>
       ) : null}
 
       {totalPages > 1 ? (
@@ -705,14 +710,15 @@ export function McpMarketPanel({
                   …
                 </span>
               ) : (
-                <button
+                <Button
                   key={item}
                   type="button"
-                  className={cx("mcpm-page-btn", item === currentPage && "is-active")}
+                  variant={item === currentPage ? "primary" : "secondary"}
+                  size="sm"
                   onClick={() => setPage(item)}
                 >
                   {item}
-                </button>
+                </Button>
               ),
             );
           })()}

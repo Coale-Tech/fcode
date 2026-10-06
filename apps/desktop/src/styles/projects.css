@@ -36,16 +36,6 @@
   margin-left: auto;
 }
 
-/*
-  The shared `.btn` runs a step larger than this toolbar's controls, so state
-  the toolbar geometry here rather than resizing the shared button everywhere.
-*/
-.projects-toolbar-actions > .btn {
-  min-height: var(--projects-control-height);
-  padding: 5px 11px;
-  font-size: var(--text-sm);
-}
-
 .projects-result-count {
   flex: 0 0 auto;
   color: var(--ds-text-muted);
@@ -74,8 +64,6 @@
   align-items: center;
   gap: 6px;
   padding: 0 11px;
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-medium);
   line-height: var(--leading-none);
   white-space: nowrap;
 }

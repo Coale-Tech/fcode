@@ -149,6 +149,20 @@
   --ds-settings-nav-width:         224px;  /* FD2: Raven w-56 = 224px (was 275px) */
   --ds-toolbar-height:             46px;
   --ds-control-size:               28px;
+  /* Buttons follow Espresso's frappe-ui Button: md = its default `sm`
+     (h-7 text-base px-2 rounded-4), sm = its `xs` (h-6 text-xs px-1.5
+     rounded-3). Every labelled action (Button / .btn) uses these. */
+  --ds-btn-height:                 28px;
+  --ds-btn-height-sm:              24px;
+  --ds-btn-pad-x:                  8px;
+  --ds-btn-pad-x-sm:               6px;
+  --ds-btn-font-size:              var(--text-base);
+  --ds-btn-font-size-sm:           var(--text-xs);
+  --ds-btn-font-weight:            var(--text-base--font-weight);
+  --ds-btn-tracking:               var(--text-base--letter-spacing);
+  --ds-btn-leading:                var(--text-base--line-height);
+  --ds-btn-radius:                 var(--radius-4);
+  --ds-btn-radius-sm:              var(--radius-3);
   --ds-field-height:               calc(18px + var(--text-base) * var(--leading-body));
   --ds-work-panel-toggle-size:     28px;
   --ds-work-panel-toggle-inset:    12px;
@@ -173,6 +187,14 @@
 
   /* Font scale multiplier for Fcode-specific text tokens (Espresso text-* are fixed) */
   --font-scale: 1;
+}
+
+/* Focus = accent in both themes, as in FileBird. Overrides Espresso's grey
+   --focus-*-default (read by its global :focus-visible ring); same specificity
+   as Espresso's theme blocks, later in the cascade. */
+:root[data-theme] {
+  --focus-default: 0 0 0 2px var(--ds-accent);
+  --focus-outline-default: 2px solid var(--ds-accent);
 }
 
 /* ─── Dark-theme specifics ─── */

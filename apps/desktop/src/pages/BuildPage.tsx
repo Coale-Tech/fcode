@@ -34,6 +34,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { IPC, type Result } from "@pi-desktop/shared";
 import { buildChecks, checksFor, failing } from "../lib/build-checks";
 import { useAppStore } from "../stores/app-store";
+import { Button } from "../components/ui";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -447,23 +448,23 @@ export function BuildPage() {
           </span>
           <span className="wb-spacer" />
           {benchDown ? (
-            <button type="button" className="wb-btn wb-btn-solid wb-btn-sm" onClick={goBench}>
+            <Button variant="primary" size="sm" onClick={goBench}>
               Start bench
-            </button>
+            </Button>
           ) : problems.length > 0 ? (
-            <button type="button" className="wb-btn wb-btn-solid wb-btn-sm" onClick={() => setDismissed([])}>
+            <Button variant="primary" size="sm" onClick={() => setDismissed([])}>
               Fix {problems.length} issue{problems.length === 1 ? "" : "s"}
-            </button>
+            </Button>
           ) : canvas === "builder" ? (
-            <button
-              type="button"
-              className="wb-btn wb-btn-solid wb-btn-sm"
+            <Button
+              variant="primary"
+              size="sm"
               disabled={syncStatus === "loading" || !builderInstalled || benchStatus !== "running"}
               onClick={() => void doSync()}
               aria-label="Sync Builder files to site database"
             >
               {syncStatus === "loading" ? "Syncing…" : "Sync files → site"}
-            </button>
+            </Button>
           ) : null}
         </div>
 
@@ -521,15 +522,15 @@ export function BuildPage() {
             <span className="wb-note wb-muted" aria-live="polite" aria-busy="true">Loading…</span>
           )}
 
-          <button
-            type="button"
-            className="wb-btn wb-btn-ghost wb-btn-sm"
+          <Button
+            variant="ghost"
+            size="sm"
             disabled={benchStatus !== "running"}
             onClick={handleReload}
             aria-label="Reload canvas"
           >
             ⟳ Reload
-          </button>
+          </Button>
         </div>
 
         {/* Problem banner: the first failing check, with its fix */}
@@ -537,12 +538,12 @@ export function BuildPage() {
           <div className={`build-banner ${firstProblem.key === "bench" ? "is-red" : "is-amber"}`} role="alert">
             <strong>{firstProblem.problem}</strong>
             <code className="build-banner-cmd">{firstProblem.remedy}</code>
-            <button type="button" className="wb-btn wb-btn-ghost wb-btn-sm" onClick={() => void copyRemedy(firstProblem.remedy)}>
+            <Button variant="ghost" size="sm" onClick={() => void copyRemedy(firstProblem.remedy)}>
               {copied ? "Copied" : "Copy"}
-            </button>
-            <button type="button" className="wb-btn wb-btn-ghost wb-btn-sm" onClick={() => setDismissed((d) => [...d, firstProblem.key])}>
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setDismissed((d) => [...d, firstProblem.key])}>
               Dismiss
-            </button>
+            </Button>
           </div>
         )}
 
@@ -683,9 +684,9 @@ function CanvasOverlay({
       <div className="wb-overlay">
         <p className="wb-text-red">Could not read installed apps.</p>
         {listAppsError && <pre className="wb-pre">{listAppsError}</pre>}
-        <button type="button" className="wb-btn wb-btn-solid" onClick={onRetryApps}>
+        <Button variant="primary" onClick={onRetryApps}>
           Retry
-        </button>
+        </Button>
       </div>
     );
   }

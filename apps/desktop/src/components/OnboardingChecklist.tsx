@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../lib/api";
 import { useAppStore } from "../stores/app-store";
 import { IconCheck } from "./icons";
+import { Button } from "./ui";
 
 /** Host step ids (app.getOnboarding) mapped to locale keys under `onboarding.`. */
 const STEP_LOCALE_KEY: Record<string, string> = {
@@ -122,9 +123,9 @@ export function OnboardingChecklist() {
         <span className="wb-onboarding-title">{t("onboarding.title")}</span>
         <span className="wb-muted">{doneCount}/{steps.length}</span>
         <span className="wb-spacer" />
-        <button type="button" className="wb-btn wb-btn-ghost wb-btn-sm" onClick={dismiss}>
+        <Button variant="ghost" size="sm" onClick={dismiss}>
           {t("onboarding.dismiss")}
-        </button>
+        </Button>
       </div>
       <div className="wb-progress" aria-hidden>
         {steps.map((step) => (

@@ -16,7 +16,7 @@ import {
   type ShortcutPlatform,
 } from "@pi-desktop/shared";
 import { IconPower, IconSnapshot } from "../icons";
-import { TooltipButton } from "../ui";
+import { Button, TooltipButton } from "../ui";
 
 type Props = {
   settings: AppSettings;
@@ -158,8 +158,10 @@ export function KeyboardShortcutsSection({ settings, platform, saveSettings }: P
         <div>
           <h3 className="settings-card-heading">{t("settings.keyboard")}</h3>
         </div>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           className="settings-text-action"
           disabled={!hasOverrides || savingId !== null}
           onClick={() => {
@@ -170,7 +172,7 @@ export function KeyboardShortcutsSection({ settings, platform, saveSettings }: P
         >
           <IconSnapshot size={13} />
           <span>{t("settings.shortcutResetAll")}</span>
-        </button>
+        </Button>
       </div>
       <div className="settings-panel shortcut-map">
         {groups.map(({ group, shortcuts }) => (

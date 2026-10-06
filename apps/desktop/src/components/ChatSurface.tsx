@@ -8,7 +8,7 @@ import { Composer } from "./Composer";
 import { HomeMascotLogo } from "./HomeMascotLogo";
 import { HomeProjectSwitcher } from "./HomeProjectSwitcher";
 import { IconX } from "./icons";
-import { TooltipButton } from "./ui";
+import { Button, TooltipButton } from "./ui";
 import { OnboardingChecklist } from "./OnboardingChecklist";
 import { SessionPane } from "./SessionPane";
 import { ConversationWidthHandles } from "./ConversationWidthHandles";
@@ -192,9 +192,10 @@ export const ChatSurface = memo(function ChatSurface({
             {sidecarFatal.detail ? (
               <p className="chat-sidecar-fatal-detail">{sidecarFatal.detail}</p>
             ) : null}
-            <button
+            <Button
               type="button"
-              className="chat-error-action"
+              variant="secondary"
+              size="sm"
               onClick={() => {
                 // TODO: open a file picker to choose the omp binary path.
                 // For now dismiss so the user can set OMP_BIN env and relaunch.
@@ -202,7 +203,7 @@ export const ChatSurface = memo(function ChatSurface({
               }}
             >
               {t("errors.sidecarFatal.action", "Choose binary…")}
-            </button>
+            </Button>
           </div>
         </div>
       ) : null}
@@ -283,9 +284,10 @@ export const ChatSurface = memo(function ChatSurface({
             {(noticeCode === "MODEL_NOT_CONFIGURED" ||
               noticeCode === "PROVIDER_SECRET_MISSING" ||
               noticeCode === "PROVIDER_UNAUTHORIZED") && (
-              <button
+              <Button
                 type="button"
-                className="chat-error-action"
+                variant="secondary"
+                size="sm"
                 onClick={() => {
                   const store = useAppStore.getState();
                   store.setSettingsTab("agent");
@@ -293,18 +295,19 @@ export const ChatSurface = memo(function ChatSurface({
                 }}
               >
                 {t("errors.action.openSettings")}
-              </button>
+              </Button>
             )}
             {errorRetriable && !isRunning ? (
-              <button
+              <Button
                 type="button"
-                className="chat-error-action"
+                variant="secondary"
+                size="sm"
                 onClick={() =>
                   void useAppStore.getState().retryLastPrompt()
                 }
               >
                 {t("errors.action.retry")}
-              </button>
+              </Button>
             ) : null}
             <TooltipButton
               type="button"

@@ -5,6 +5,7 @@ import { pluginViewIcon } from "../../lib/plugin-view-icons";
 import { FILE_MANAGER_PLUGIN_TAB, fileWorkPanelTab } from "../../lib/work-panel-tabs";
 import { useAppStore } from "../../stores/app-store";
 import { IconPlug } from "../icons";
+import { Button } from "../ui";
 import { WorkTabEmpty } from "./WorkTabEmpty";
 
 /**
@@ -112,9 +113,8 @@ export function PluginViewTab({
           {(location ||
             (pluginId === FILE_MANAGER_PLUGIN_TAB.pluginId &&
               viewId === FILE_MANAGER_PLUGIN_TAB.viewId)) && (
-            <button
-              type="button"
-              className="work-tab-empty-action"
+            <Button
+              variant="secondary"
               onClick={() =>
                 // No location: an empty-resource file tab is the host's
                 // read-only browser at the workspace root.
@@ -122,7 +122,7 @@ export function PluginViewTab({
               }
             >
               {t("panel.pluginView.viewReadOnly")}
-            </button>
+            </Button>
           )}
         </WorkTabEmpty>
       </div>

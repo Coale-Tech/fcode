@@ -15,6 +15,7 @@
 import { memo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import type { OmpTodoPhase } from "@pi-desktop/shared";
+import { Button } from "../../components/ui";
 import { useAppStore } from "../../stores/app-store";
 import { headPermission } from "../../lib/pending-permissions";
 import { buildActivityTimeline } from "../../lib/activity-summary";
@@ -72,13 +73,14 @@ export const OmpActivityTab = memo(function OmpActivityTab() {
           <div className="activity-decision-tool">
             {pendingPermission.toolName}
           </div>
-          <button
+          <Button
             type="button"
-            className="activity-decision-review-btn"
+            variant="secondary"
+            size="sm"
             onClick={handleReviewRequest}
           >
             {t("panel.activity.reviewRequest")}
-          </button>
+          </Button>
         </section>
       )}
 
@@ -140,13 +142,14 @@ export const OmpActivityTab = memo(function OmpActivityTab() {
         <section>
           <div className="activity-section-label">
             {t("panel.activity.changes")}
-            <button
+            <Button
               type="button"
-              className="activity-open-review-btn"
+              variant="ghost"
+              size="sm"
               onClick={handleOpenReview}
             >
               {t("panel.activity.openReview")}
-            </button>
+            </Button>
           </div>
           {changes.map((entry) => {
             const s = entry.change.status;

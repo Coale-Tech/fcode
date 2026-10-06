@@ -34,7 +34,7 @@ import { pluginViewIcon, pluginViewInitial } from "../../lib/plugin-view-icons";
 import { useAppStore } from "../../stores/app-store";
 import type { WorkPanelTab } from "../../stores/app-store";
 import { cx } from "../ui";
-import { TooltipButton } from "../ui";
+import { Button, TooltipButton } from "../ui";
 import type { IconProps } from "../icons";
 import {
   IconActivity,
@@ -1057,13 +1057,12 @@ export function WorkPanel({
                 title={t("panel.noSession.title")}
                 body={t("panel.noSession.body")}
               >
-                <button
-                  type="button"
-                  className="work-tab-empty-action"
+                <Button
+                  variant="secondary"
                   onClick={() => void useAppStore.getState().newSession()}
                 >
                   {t("panel.noSession.action")}
-                </button>
+                </Button>
               </WorkTabEmpty>
             </div>
           )}

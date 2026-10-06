@@ -215,10 +215,14 @@
   font-size: var(--text-sm);
 }
 
-.kanban-card:hover,
-.kanban-card:focus-visible {
+.kanban-card:hover {
   border-color: var(--outline-gray-4);
-  outline: none;
+}
+
+.kanban-card:focus-visible {
+  border-color: color-mix(in oklab, var(--ds-accent) 35%, transparent);
+  outline: 2px solid var(--ds-accent);
+  outline-offset: 0;
 }
 
 .kanban-card:active {
@@ -234,7 +238,7 @@
 }
 
 .kanban-card-selected {
-  border-color: var(--ink-blue-8);
+  border-color: var(--ds-accent);
 }
 
 .kanban-card-row {

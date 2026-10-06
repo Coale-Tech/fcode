@@ -1169,8 +1169,8 @@
 }
 
 .omp-subagents-count--running {
-  background: color-mix(in oklab, var(--ds-accent-blue, #2563eb) 12%, transparent);
-  color: var(--ds-accent-blue, #2563eb);
+  background: color-mix(in oklab, var(--ds-accent) 12%, transparent);
+  color: var(--ds-accent);
 }
 
 .omp-subagents-count--done {
@@ -1217,7 +1217,7 @@
 }
 
 .omp-subagent-status--running {
-  background: var(--ds-accent-blue, #2563eb);
+  background: var(--ds-accent);
   animation: omp-pulse 1.2s ease-in-out infinite;
 }
 
@@ -1247,7 +1247,7 @@
 }
 
 .omp-subagent-row--running .omp-subagent-badge {
-  color: var(--ds-accent-blue, #2563eb);
+  color: var(--ds-accent);
 }
 
 .omp-subagent-row--failed .omp-subagent-badge,
@@ -1341,7 +1341,7 @@
 }
 
 .omp-subagents-message--user .omp-subagents-message-role {
-  color: var(--ds-accent-blue, #2563eb);
+  color: var(--ds-accent);
 }
 
 .omp-subagents-message--assistant .omp-subagents-message-role {
@@ -1396,23 +1396,6 @@
   flex: 1;
 }
 
-.omp-collab-btn {
-  font-size: var(--text-xs, 11px);
-  padding: 2px 8px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--ds-border-default, rgba(0,0,0,.15));
-  background: var(--ds-bg-primary, #fff);
-  color: var(--ds-text-primary, #111);
-  cursor: pointer;
-  line-height: var(--leading-normal);
-}
-.omp-collab-btn:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-.omp-collab-btn--copy {
-  flex-shrink: 0;
-}
 
 .omp-collab-url-row {
   display: flex;
@@ -1423,7 +1406,7 @@
 
 .omp-collab-url {
   font-size: var(--text-xs, 11px);
-  color: var(--ds-accent-blue, #2563eb);
+  color: var(--ds-accent);
   text-decoration: none;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1488,8 +1471,8 @@
   font-size: var(--text-xs, 11px);
   padding: 1px 6px;
   border-radius: var(--radius-full);
-  background: color-mix(in oklab, var(--ds-accent-blue, #2563eb) 12%, transparent);
-  color: var(--ds-accent-blue, #2563eb);
+  background: color-mix(in oklab, var(--ds-accent) 12%, transparent);
+  color: var(--ds-accent);
 }
 
 .dap-sessions {
@@ -1516,7 +1499,7 @@
   background: var(--ds-text-tertiary, #999);
 }
 
-.dap-dot--running   { background: var(--ds-accent-blue, #2563eb); animation: dap-pulse 1.2s ease-in-out infinite; }
+.dap-dot--running   { background: var(--ds-accent); animation: dap-pulse 1.2s ease-in-out infinite; }
 .dap-dot--stopped   { background: var(--ds-accent-orange, #ea580c); }
 .dap-dot--launching,
 .dap-dot--configuring { background: var(--ds-text-tertiary, #999); animation: dap-pulse 1.2s ease-in-out infinite; }
@@ -1548,7 +1531,7 @@
 }
 
 .dap-session--stopped .dap-status-label { color: var(--ds-accent-orange, #ea580c); }
-.dap-session--running .dap-status-label { color: var(--ds-accent-blue, #2563eb); }
+.dap-session--running .dap-status-label { color: var(--ds-accent); }
 .dap-session--terminated .dap-status-label { opacity: 0.5; }
 
 .dap-bp-count {
@@ -1606,7 +1589,7 @@
   font-family: var(--font-mono);
 }
 
-.dap-var-name  { color: var(--ds-accent-blue, #2563eb); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dap-var-name  { color: var(--ds-accent); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dap-var-type  { color: var(--ds-text-tertiary, #999); flex-shrink: 0; }
 .dap-var-value { color: var(--ds-text-primary, #111); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -1618,23 +1601,6 @@
   margin-top: 6px;
 }
 
-.dap-btn {
-  flex-shrink: 0;
-  padding: 2px 7px;
-  border: 1px solid var(--ds-border-subtle, rgba(0,0,0,.12));
-  border-radius: var(--radius-sm, 4px);
-  background: var(--ds-bg-primary, #fff);
-  color: var(--ds-text-primary, #111);
-  font-size: var(--text-xs, 11px);
-  cursor: pointer;
-  line-height: var(--leading-normal);
-}
-.dap-btn:hover:not(:disabled) {
-  background: color-mix(in oklab, var(--ds-accent-blue, #2563eb) 8%, var(--ds-bg-primary, #fff));
-}
-.dap-btn:disabled { opacity: 0.38; cursor: default; }
-.dap-btn--danger  { color: var(--ds-accent-red, #dc2626); }
-.dap-btn--add     { padding: 2px 10px; font-weight: var(--font-weight-semibold); }
 
 /* ── dap breakpoints ───────────────────────────────────────────────────── */
 .dap-breakpoints { margin-top: 6px; }
@@ -1710,4 +1676,4 @@
 }
 .dap-bp-input--line { flex: 0 0 54px; }
 .dap-bp-input::placeholder { color: var(--ds-text-tertiary, #999); }
-.dap-bp-input:focus { outline: 2px solid color-mix(in oklab, var(--ds-accent-blue, #2563eb) 50%, transparent); outline-offset: -1px; }
+.dap-bp-input:focus { outline: 2px solid color-mix(in oklab, var(--ds-accent) 60%, transparent); outline-offset: -1px; }

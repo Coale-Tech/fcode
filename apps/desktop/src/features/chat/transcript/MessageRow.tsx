@@ -18,7 +18,7 @@ import {
   IconPencil,
   IconTrash,
 } from "../../../components/icons";
-import { TooltipButton } from "../../../components/ui";
+import { Button, TooltipButton } from "../../../components/ui";
 import { userMessageMenuItems } from "./menu-items";
 import { SessionMessageOrigin } from "./SessionMessageOrigin";
 import {
@@ -196,21 +196,25 @@ export const MessageRow = memo(function MessageRow({
                   }}
                 />
                 <div className="message-edit-actions">
-                  <button
+                  <Button
                     type="button"
-                    className="icon-btn message-edit-cancel"
+                    variant="ghost"
+                    size="sm"
+                    className="message-edit-cancel"
                     disabled={retryingEdit}
                     onClick={cancelEdit}
                   >
                     {t("chat.cancelEdit")}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="submit"
-                    className="send-btn message-edit-submit"
+                    variant="primary"
+                    size="sm"
+                    className="message-edit-submit"
                     disabled={retryingEdit || (!editValue.trim() && !message.attachments?.length)}
                   >
                     {retryingEdit ? t("chat.retryingEdit") : t("chat.retryEdit")}
-                  </button>
+                  </Button>
                 </div>
               </form>
             ) : isUser ? (

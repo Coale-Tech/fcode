@@ -200,6 +200,7 @@ export function EnhancementModelCard() {
                 ref={ref}
                 className="settings-text-action model-default-trigger"
                 variant="ghost"
+                size="sm"
                 disabled={groups.length === 0 && !orphanPin}
                 onClick={() => {
                   setQuery("");

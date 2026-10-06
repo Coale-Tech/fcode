@@ -14,6 +14,7 @@
  */
 
 import { useEffect, useRef } from "react";
+import { Button } from "./ui";
 import { portalToBody } from "../lib/portal-visibility";
 
 export interface DestructiveActionDialogProps {
@@ -119,22 +120,22 @@ export function DestructiveActionDialog({
         </p>
 
         <div className="dd-actions">
-          <button
+          <Button
             ref={cancelRef}
             type="button"
-            className="btn btn-secondary"
+            variant="secondary"
             onClick={onCancel}
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="btn dd-confirm"
+            variant="danger"
             onClick={onConfirm}
             aria-label={`Run ${command} on ${site}`}
           >
             Run {command}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

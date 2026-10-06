@@ -542,18 +542,15 @@ export function CapabilityButton({
   busy?: boolean;
   title?: string;
 }) {
-  // No `size="sm"`: its utilities live in Tailwind's `utilities` layer while the
-  // style partials are unlayered, so `.btn` wins regardless. Toolbar buttons get
-  // their compact geometry from `.agent-capability-toolbar-actions > .btn`.
-  const className = cx(
-    "btn",
-    variant === "primary" ? "btn-primary" : "btn-secondary",
-  );
   if (title) {
     return (
       <TooltipButton
         tooltip={title}
-        className={className}
+        className={cx(
+          "btn",
+          variant === "primary" ? "btn-primary" : "btn-secondary",
+          "btn-sm",
+        )}
         disabled={disabled || busy}
         aria-busy={busy || undefined}
         onClick={onClick}
@@ -565,6 +562,7 @@ export function CapabilityButton({
   return (
     <Button
       variant={variant}
+      size="sm"
       disabled={disabled || busy}
       aria-busy={busy || undefined}
       onClick={onClick}

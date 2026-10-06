@@ -89,21 +89,6 @@
   transition: width 100ms ease-out;
 }
 
-.voice-cancel-btn {
-  padding: 2px 8px;
-  border-radius: var(--radius-3xs);
-  font-size: var(--text-sm);
-  background: transparent;
-  color: var(--ds-text-secondary);
-  border: 1px solid var(--outline-gray-2);
-  cursor: pointer;
-  transition: background 150ms;
-}
-
-.voice-cancel-btn:hover {
-  background: var(--ds-bg-hover);
-}
-
 .voice-error {
   color: var(--ds-error);
 }

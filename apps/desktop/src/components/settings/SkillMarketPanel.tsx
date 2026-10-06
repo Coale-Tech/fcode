@@ -26,7 +26,7 @@ import {
   IconListChecks,
   IconX,
 } from "../icons";
-import { Field, Input, TooltipButton, cx } from "../ui";
+import { Button, Field, Input, TooltipButton, cx } from "../ui";
 import { LatestWinsGate } from "../../lib/latest-wins";
 import {
   classifySkillMarketFailure,
@@ -460,13 +460,14 @@ export function SkillMarketPanel({
                   <span className="sklm-name">{source.name}</span>
                   <code className="sklm-cmd">{source.url}</code>
                 </div>
-                <button
+                <Button
                   type="button"
-                  className="sklm-install is-ghost"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => removeSource(source.id)}
                 >
                   {t("extensions.mcp.remove")}
-                </button>
+                </Button>
               </li>
             ))}
           </ul>
@@ -486,22 +487,23 @@ export function SkillMarketPanel({
                 setDraftSource((current) => ({ ...current, url: event.target.value }))
               }
             />
-            <button type="button" className="sklm-install" onClick={addSource}>
+            <Button type="button" variant="primary" size="sm" onClick={addSource}>
               {t("settings.sklm.addSource")}
-            </button>
+            </Button>
           </div>
         </div>
 
         <div className="ext-sheet-actions">
           <span className="ext-sheet-note">{t("settings.sklm.sheetNote")}</span>
           <div className="ext-sheet-actions-end">
-            <button
+            <Button
               type="button"
-              className="sklm-install is-ghost"
+              variant="ghost"
+              size="sm"
               onClick={() => setSourcesOpen(false)}
             >
               {t("common.close")}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -582,14 +584,15 @@ export function SkillMarketPanel({
               </p>
             ) : null}
             {previewFailure ? (
-              <button
+              <Button
                 type="button"
-                className="sklm-install is-ghost"
+                variant="ghost"
+                size="sm"
                 onClick={retryPreview}
                 disabled={installing}
               >
                 {t("settings.sklm.retryPreview")}
-              </button>
+              </Button>
             ) : null}
             {documentTooLarge ? <p className="sklm-note">{t("settings.sklm.documentTooLarge")}</p> : null}
           </div>
@@ -605,22 +608,24 @@ export function SkillMarketPanel({
         <div className="ext-sheet-actions">
           <span className="ext-sheet-note">{t("settings.sklm.sheetNote")}</span>
           <div className="ext-sheet-actions-end">
-            <button
+            <Button
               type="button"
-              className="sklm-install is-ghost"
+              variant="ghost"
+              size="sm"
               onClick={() => setInstallFor(null)}
               disabled={installing}
             >
               {t("common.cancel")}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
-              className="sklm-install"
+              variant="primary"
+              size="sm"
               onClick={() => void install()}
               disabled={installing || documentBody === null || documentTooLarge}
             >
               {installing ? t("common.saving") : t("settings.sklm.install")}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -631,18 +636,18 @@ export function SkillMarketPanel({
     <div className="sklm">
       <div className="sklm-head">
         <div className="sklm-head-copy">
-          <button type="button" className="sklm-back" onClick={onBack}>
+          <Button type="button" variant="ghost" size="sm" className="sklm-back" onClick={onBack}>
             <IconChevronLeft size={14} />
             {t("settings.sklm.back")}
-          </button>
+          </Button>
           <h3 className="sklm-title">{t("settings.sklm.title")}</h3>
           <p className="sklm-subtitle">{t("settings.sklm.subtitle")}</p>
         </div>
         <div className="sklm-head-actions">
-          <button type="button" className="sklm-back" onClick={() => setSourcesOpen(true)}>
+          <Button type="button" variant="ghost" size="sm" className="sklm-back" onClick={() => setSourcesOpen(true)}>
             {t("settings.sklm.manageSources")} ·{" "}
             {[...DEFAULT_SKILL_SOURCES, ...sources].length}
-          </button>
+          </Button>
         </div>
         <div className="sklm-search">
           <Input
@@ -767,9 +772,10 @@ export function SkillMarketPanel({
                   <p className="sklm-desc">{entry.description || ""}</p>
                 </div>
                 <div className="sklm-card-actions">
-                  <button
+                  <Button
                     type="button"
-                    className={cx("sklm-install", installed && "is-installed")}
+                    variant={installed ? "secondary" : "primary"}
+                    size="sm"
                     disabled={installed}
                     title={entry.homepage}
                     onClick={() => openInstall(entry)}
@@ -777,7 +783,7 @@ export function SkillMarketPanel({
                     {installed
                       ? t("settings.sklm.installed")
                       : t("settings.sklm.install")}
-                  </button>
+                  </Button>
                 </div>
               </article>
             );
@@ -816,14 +822,15 @@ export function SkillMarketPanel({
                   …
                 </span>
               ) : (
-                <button
+                <Button
                   key={item}
                   type="button"
-                  className={cx("sklm-page-btn", item === currentPage && "is-active")}
+                  variant={item === currentPage ? "primary" : "secondary"}
+                  size="sm"
                   onClick={() => setPage(item)}
                 >
                   {item}
-                </button>
+                </Button>
               ),
             );
           })()}

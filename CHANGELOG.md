@@ -10,6 +10,12 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 
+### Changed
+
+- Buttons across Fcode use one style, sized like the Espresso (frappe-ui) Button: 28px tall with 14px text by default, 24px with 12px text in dense spots. Primary, secondary, ghost and red "danger" are the only kinds. Segmented controls use Espresso's 13px tab text.
+- Keyboard focus, focused panels, and selected chips and cards are outlined in Fcode's blue instead of grey.
+- Buttons in Settings → Memory were unstyled; they now match the rest of the app.
+
 ### Fixed
 
 - A shell command longer than 2,000 characters with a later line starting `Command: ` could get a "Low risk" badge even though an earlier line was destructive.
