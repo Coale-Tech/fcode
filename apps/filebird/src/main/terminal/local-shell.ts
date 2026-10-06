@@ -11,10 +11,12 @@ export const TERM_NAME = 'xterm-256color'
  * Variables that must not reach a shell the user types in.
  *
  * Electron's own switches would make a child Electron behave strangely (the
- * ELECTRON_RUN_AS_NODE trap), and the app's development overrides describe
- * Fly's test setup, not the user's computer.
+ * ELECTRON_RUN_AS_NODE trap), the app's development overrides describe Fly's
+ * test setup, not the user's computer, and TERM_PROGRAM / TERM_SESSION_ID
+ * describe the terminal the app was launched from: with them, macOS's zsh setup
+ * hands every shell that terminal tab's saved session and history.
  */
-const DROPPED_ENV = /^(ELECTRON_|NODE_OPTIONS$|FLY_DEV_)/
+const DROPPED_ENV = /^(ELECTRON_|NODE_OPTIONS$|FLY_DEV_|TERM_PROGRAM|TERM_SESSION_ID$)/
 
 export function shellEnvironment(base: NodeJS.ProcessEnv): Record<string, string> {
   const env: Record<string, string> = {}
