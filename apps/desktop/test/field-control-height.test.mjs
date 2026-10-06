@@ -143,6 +143,4 @@ test("the import toolbar's dropdown keeps the toolbar's own metric", () => {
   // metric would leave the dropdown taller than the controls beside it.
   const select = declarations(sessionsCss, ".import-option-select .settings-menu-select-trigger");
   assert.equal(heightValue(select, "height"), "28px");
-  const button = declarations(sessionsCss, ".import-toolbar-actions > .btn");
-  assert.equal(heightValue(button, "min-height"), "28px");
 });

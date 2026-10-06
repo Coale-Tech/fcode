@@ -447,9 +447,7 @@
 .provider-setup-header-copy {
   flex: none;
   max-width: 100%;
-  padding: 4px 8px;
   overflow: hidden;
-  font-size: var(--text-2xs);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

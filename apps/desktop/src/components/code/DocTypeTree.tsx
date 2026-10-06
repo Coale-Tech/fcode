@@ -16,7 +16,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { IPC, type Result } from "@pi-desktop/shared";
 import { api } from "../../lib/api";
-import { cx } from "../ui";
+import { Button, cx } from "../ui";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -97,15 +97,15 @@ function MigrateCard({
         {dirtyCount} DocType{dirtyCount !== 1 ? "s" : ""} modified in working tree —
         heuristic only, may not require migration.
       </span>
-      <button
-        type="button"
-        className="doctype-migrate-btn"
+      <Button
+        variant="primary"
+        size="sm"
         onClick={(e) => onMigrate?.(e.currentTarget)}
         disabled={!onMigrate}
         title={onMigrate ? "Run migrate via bench command panel" : "Select a site in the bench panel first"}
       >
         {onMigrate ? "Run migrate" : "Select a site to migrate"}
-      </button>
+      </Button>
     </div>
   );
 }

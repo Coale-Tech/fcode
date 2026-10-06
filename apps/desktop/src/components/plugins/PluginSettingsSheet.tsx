@@ -238,9 +238,9 @@ export function PluginSettingsSheet({ plugin, platform, onClose, onSaved }: Prop
                       {recordingKey === setting.key ? t("plugins.settingsShortcutRecording") : shortcutLabel(value, platform)}
                     </button>
                   )}
-                  <button type="button" className="plugins-setting-reset" onClick={() => resetValue(setting)}>
+                  <Button type="button" variant="ghost" size="sm" className="plugins-setting-reset" onClick={() => resetValue(setting)}>
                     {t("plugins.settingsReset")}
-                  </button>
+                  </Button>
                 </div>
               </div>
             );

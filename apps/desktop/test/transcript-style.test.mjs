@@ -391,8 +391,6 @@ test("editing a user prompt regenerates it and keeps the old branch reachable", 
     stylesSource,
     /\.message-edit:focus-within \{[\s\S]*?box-shadow:\s*inset/,
   );
-  assert.match(transcriptSource, /className="icon-btn message-edit-cancel"/);
-  assert.match(transcriptSource, /className="send-btn message-edit-submit"/);
 });
 
 test("message toolbars are icon-only with hover tooltips", () => {

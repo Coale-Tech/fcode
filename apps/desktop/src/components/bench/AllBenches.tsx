@@ -5,6 +5,7 @@
  * is single-bench and would reject it with CONFLICT.
  */
 import { useMemo, useState } from "react";
+import { Button } from "../ui";
 import {
   baseName,
   matchesChip,
@@ -74,9 +75,9 @@ export function AllBenches({
             aria-label="Filter benches"
           />
         </label>
-        <button type="button" className="wb-btn wb-btn-subtle wb-btn-sm" onClick={onPickRoot} title={`Scanning ${roots.join(", ")}`}>
+        <Button variant="secondary" size="sm" onClick={onPickRoot} title={`Scanning ${roots.join(", ")}`}>
           Bench folder…
-        </button>
+        </Button>
       </div>
       <div className="wb-chips" role="group" aria-label="Filter by state or version">
         {chips.map((c) => (
@@ -143,20 +144,20 @@ export function AllBenches({
                     </td>
                     <td className="wb-table-action">
                       {active ? (
-                        <button
-                          type="button"
-                          className="wb-btn wb-btn-subtle wb-btn-sm"
+                        <Button
+                          variant="secondary"
+                          size="sm"
                           onClick={() => onStop(bench)}
                           disabled={status === "starting"}
                           aria-label={`Stop ${name}`}
                         >
                           <IconSquare size={12} aria-hidden="true" />
                           Stop
-                        </button>
+                        </Button>
                       ) : (
-                        <button
-                          type="button"
-                          className="wb-btn wb-btn-subtle wb-btn-sm"
+                        <Button
+                          variant="secondary"
+                          size="sm"
                           onClick={() => onStart(bench)}
                           disabled={blocked}
                           title={cue}
@@ -164,7 +165,7 @@ export function AllBenches({
                         >
                           <IconPlay size={12} aria-hidden="true" />
                           Start
-                        </button>
+                        </Button>
                       )}
                     </td>
                   </tr>

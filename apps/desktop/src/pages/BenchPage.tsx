@@ -30,6 +30,7 @@ import { StatusBadge, StatusDot } from "../components/bench/BenchBadges";
 import { BenchSwitcher } from "../components/bench/BenchSwitcher";
 import { DestructiveActionDialog } from "../components/DestructiveActionDialog";
 import { IconClose, IconPlay, IconSquare } from "../components/icons";
+import { Button } from "../components/ui";
 import { api } from "../lib/api";
 import {
   baseName,
@@ -662,9 +663,9 @@ export function BenchPage() {
                       : "All discovery roots unreadable — fix permissions and refresh."}
                   </p>
                   {benches.length === 0 && (
-                    <button type="button" className="wb-btn wb-btn-subtle wb-btn-sm" onClick={() => void pickRoot()}>
+                    <Button variant="secondary" size="sm" onClick={() => void pickRoot()}>
                       Choose bench folder…
-                    </button>
+                    </Button>
                   )}
                   {failedRoots.map((fr) => (
                     <div key={fr.root} className="wb-row is-static" title={fr.root}>
@@ -758,26 +759,24 @@ function BenchDetail({
         <span className="wb-path wb-truncate" title={bench.path}>{bench.path}</span>
         {canStart && blocker && <span className="wb-muted wb-cue">{startBlockedCue(blocker)}</span>}
         {canStart ? (
-          <button
-            type="button"
-            className="wb-btn wb-btn-solid"
+          <Button
+            variant="primary"
             onClick={onStart}
             disabled={blocker !== null}
             title={blocker ? startBlockedCue(blocker) : undefined}
           >
             <IconPlay size={14} aria-hidden="true" />
             Start bench
-          </button>
+          </Button>
         ) : (
-          <button
-            type="button"
-            className="wb-btn wb-btn-subtle"
+          <Button
+            variant="secondary"
             onClick={onStop}
             disabled={status === "starting"}
           >
             <IconSquare size={14} aria-hidden="true" />
             Stop
-          </button>
+          </Button>
         )}
       </header>
 
@@ -823,15 +822,14 @@ function BenchDetail({
             const vs = oneshotState.get(oneshotKey(bench.path, verb));
             return (
               <div key={verb} className="wb-cmd">
-                <button
-                  type="button"
-                  className="wb-btn wb-btn-subtle"
+                <Button
+                  variant="secondary"
                   onClick={(e) => onRun(verb, e.currentTarget)}
                   disabled={status !== "running" || vs?.status === "running" || (verb === "migrate" && !migrateSite)}
                   title={verb}
                 >
                   {vs?.status === "running" ? `${verb} …` : vs?.status === "ok" ? `✓ ${verb}` : vs?.status === "error" ? `✗ ${verb}` : verb}
-                </button>
+                </Button>
                 {vs?.status === "ok" && vs.elapsed && (
                   <span className="wb-cmd-ok">{vs.elapsed} · exit 0</span>
                 )}
@@ -840,14 +838,14 @@ function BenchDetail({
                     <div className="wb-error-output-hd">
                       <span>exit {vs.elapsed}</span>
                       {vs.output && (
-                        <button
-                          type="button"
-                          className="wb-btn wb-btn-ghost wb-btn-sm"
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => navigator.clipboard.writeText(vs.output ?? "")}
                           title="Copy error output"
                         >
                           Copy
-                        </button>
+                        </Button>
                       )}
                     </div>
                     {vs.output && <pre className="wb-pre">{vs.output}</pre>}
@@ -869,13 +867,13 @@ function BenchDetail({
         <div className="wb-log">
           <div className="wb-island-hd">
             <span className="wb-log-title">Log</span>
-            <button
-              type="button"
-              className="wb-btn wb-btn-ghost wb-btn-sm"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => onFollowTailChange(!followTail)}
             >
               {followTail ? "⇊ following" : "⇊ follow"}
-            </button>
+            </Button>
           </div>
           <LogView
             lines={logLines}
@@ -974,23 +972,23 @@ export function ProcessPanel({
             </a>
           )}
           <div className="wb-actions">
-            <button
-              type="button"
-              className="wb-btn wb-btn-solid wb-btn-sm"
+            <Button
+              variant="primary"
+              size="sm"
               onClick={onStart}
               disabled={blocker !== null}
               title={blocker ? startBlockedCue(blocker) : undefined}
             >
               Retry
-            </button>
+            </Button>
             {startFailure.logTail && (
-              <button
-                type="button"
-                className="wb-btn wb-btn-subtle wb-btn-sm"
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => navigator.clipboard.writeText(startFailure.logTail ?? "")}
               >
                 Copy log
-              </button>
+              </Button>
             )}
           </div>
           {startFailure.logTail && (
@@ -1042,9 +1040,9 @@ function ZeroBenchState({ roots, onPickRoot }: { roots: string[]; onPickRoot: ()
         </p>
 
         <p className="wb-empty-step">Benches somewhere else?</p>
-        <button type="button" className="wb-btn wb-btn-solid wb-btn-sm" onClick={onPickRoot}>
+        <Button variant="primary" size="sm" onClick={onPickRoot}>
           Choose bench folder…
-        </button>
+        </Button>
 
         <p className="wb-empty-step">Or create a bench:</p>
         <CopyCmd
@@ -1091,14 +1089,14 @@ function CopyCmd({
   return (
     <div className="wb-copy-cmd">
       <code className="wb-mono">{text}</code>
-      <button
-        type="button"
-        className="wb-btn wb-btn-subtle wb-btn-sm"
+      <Button
+        variant="secondary"
+        size="sm"
         onClick={() => onCopy(text, label)}
         aria-label={`Copy ${label} command`}
       >
         {copied === label ? "Copied!" : "Copy"}
-      </button>
+      </Button>
     </div>
   );
 }

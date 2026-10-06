@@ -38,31 +38,6 @@
   from { opacity: 0; }
 }
 
-/* ── Buttons (primary = solid gray; hue never on actions) ───────────────── */
-.wb-btn {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 14px;
-  border: none;
-  border-radius: var(--radius-4);
-  font: inherit;
-  font-size: var(--text-base);
-  font-weight: var(--font-weight-medium);
-  white-space: nowrap;
-  cursor: pointer;
-}
-.wb-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.wb-btn-sm { height: 28px; padding: 0 10px; font-size: var(--text-sm); }
-.wb-btn-solid { background: var(--surface-gray-10); color: var(--ink-base); }
-.wb-btn-solid:hover:not(:disabled) { background: var(--surface-gray-9); }
-.wb-btn-subtle { background: var(--surface-gray-2); color: var(--ink-gray-8); }
-.wb-btn-subtle:hover:not(:disabled) { background: var(--surface-gray-3); }
-.wb-btn-ghost { background: transparent; color: var(--ink-gray-5); }
-.wb-btn-ghost:hover:not(:disabled) { background: var(--surface-gray-2); color: var(--ink-gray-8); }
 
 .wb-link, .wb-link-btn {
   padding: 0;
@@ -133,8 +108,8 @@
   cursor: pointer;
 }
 .wb-row:hover { background: var(--surface-gray-3); }
-.wb-row:focus-visible { outline: 2px solid var(--outline-gray-4); outline-offset: -2px; }
-.wb-row.is-active { background: var(--surface-elevation-3); box-shadow: var(--shadow-sm); }
+.wb-row:focus-visible { outline: 2px solid var(--ds-accent); outline-offset: -2px; }
+.wb-row.is-active { background: color-mix(in oklab, var(--ds-accent) 12%, transparent); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ds-accent) 35%, transparent); }
 .wb-row.is-static { cursor: default; }
 .wb-row.is-static:hover { background: none; }
 .wb-row-top { display: flex; align-items: center; gap: 6px; min-width: 0; }
@@ -337,7 +312,7 @@
   bottom: 0;
   left: 2px;
   height: 2px;
-  background: var(--ink-gray-7);
+  background: var(--ds-accent);
   content: "";
 }
 .wb-tab.is-dimmed { opacity: 0.5; }
@@ -369,7 +344,7 @@
 }
 .wb-btab-wrap .wb-btab { padding-right: 4px; }
 .wb-btab:hover { color: var(--ink-gray-9); }
-.wb-btab:focus-visible, .wb-btab-close:focus-visible { outline: 2px solid var(--outline-gray-4); outline-offset: -2px; }
+.wb-btab:focus-visible, .wb-btab-close:focus-visible { outline: 2px solid var(--ds-accent); outline-offset: -2px; }
 .wb-btab.is-active, .wb-btab-wrap.is-active .wb-btab { color: var(--ink-gray-9); font-weight: var(--font-weight-medium); }
 .wb-btab.is-active::after, .wb-btab-wrap.is-active::after {
   position: absolute;
@@ -377,7 +352,7 @@
   bottom: 0;
   left: 2px;
   height: 2px;
-  background: var(--ink-gray-7);
+  background: var(--ds-accent);
   content: "";
 }
 .wb-btab-close {
@@ -412,7 +387,7 @@
   background: var(--surface-elevation-1);
   color: var(--ink-gray-5);
 }
-.wb-search:focus-within { border-color: var(--outline-gray-4); }
+.wb-search:focus-within { border-color: color-mix(in oklab, var(--ds-accent) 60%, transparent); }
 .wb-search input {
   flex: 1;
   min-width: 0;
@@ -441,7 +416,7 @@
   cursor: pointer;
 }
 .wb-chip:hover { background: var(--surface-gray-2); }
-.wb-chip.is-active { border-color: var(--surface-gray-10); background: var(--surface-gray-10); color: var(--ink-base); }
+.wb-chip.is-active { border-color: var(--ds-accent); background: color-mix(in oklab, var(--ds-accent) 12%, transparent); color: var(--ds-accent); }
 .wb-all-note { margin: 0 16px 8px; color: var(--ink-gray-6); }
 .wb-all-scroll { flex: 1; min-height: 0; overflow-y: auto; }
 .wb-all-empty { padding: 16px; }
@@ -483,7 +458,7 @@
   cursor: pointer;
 }
 .wb-switcher-btn:hover { background: var(--surface-gray-2); }
-.wb-switcher-btn:focus-visible { outline: 2px solid var(--outline-gray-4); }
+.wb-switcher-btn:focus-visible { outline: 2px solid var(--ds-accent); }
 .wb-menu {
   position: absolute;
   top: calc(100% + 4px);
@@ -668,8 +643,8 @@
   cursor: pointer;
 }
 .wb-step.is-current {
-  border-color: var(--outline-gray-3);
-  background: var(--surface-base);
+  border-color: var(--ds-accent);
+  background: color-mix(in oklab, var(--ds-accent) 12%, transparent);
   box-shadow: var(--shadow-sm);
   color: var(--ink-gray-8);
   font-weight: var(--font-weight-semibold);
@@ -690,14 +665,14 @@
 .wb-step-check.is-done { background: var(--surface-green-2); color: var(--ink-green-7); }
 .wb-step-check.is-current {
   background: transparent;
-  border: 2px solid var(--ink-gray-7);
+  border: 2px solid var(--ds-accent);
 }
 .wb-step-check.is-current::after {
   content: "";
   width: 6px;
   height: 6px;
   border-radius: var(--radius-full);
-  background: var(--ink-gray-7);
+  background: var(--ds-accent);
 }
 .wb-step-check.is-pending { border: 1.5px solid var(--outline-gray-3); background: var(--surface-gray-2); color: transparent; }
 
@@ -825,24 +800,6 @@
   color: var(--ink-amber-7, var(--ink-gray-7));
 }
 
-.doctype-migrate-btn {
-  padding: 5px 10px;
-  border-radius: var(--radius-4);
-  background: var(--surface-gray-8, var(--ink-gray-9));
-  color: var(--ink-gray-1);
-  font-size: var(--text-xs);
-  font-weight: var(--font-weight-medium);
-  transition: background var(--motion-duration-fast) var(--motion-ease-out);
-}
-
-.doctype-migrate-btn:hover:not(:disabled) {
-  background: var(--surface-gray-7, var(--ink-gray-8));
-}
-
-.doctype-migrate-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
 
 .doctype-app-group {
   margin-bottom: 2px;
@@ -950,21 +907,3 @@
   color: var(--ink-gray-9);
 }
 
-/* ── Work-panel empty/error action button ────────────────────────────────────── */
-.work-tab-empty-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  border-radius: var(--radius-4);
-  background: var(--surface-gray-2);
-  color: var(--ink-gray-8);
-  font-size: var(--text-sm);
-  font-weight: var(--font-weight-medium);
-  transition: background var(--motion-duration-fast) var(--motion-ease-out);
-}
-
-.work-tab-empty-action:hover {
-  background: var(--surface-gray-3);
-  color: var(--ink-gray-9);
-}

@@ -8,6 +8,7 @@
 import { memo, useCallback, useReducer, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../../../lib/api";
+import { Button } from "../../../components/ui";
 import {
   OMP_COLLAB_INITIAL,
   ompCollabReducer,
@@ -64,9 +65,10 @@ export const OmpCollabPanel = memo(function OmpCollabPanel({
       <div className="omp-collab-section">
         <div className="omp-collab-row omp-collab-row--header">
           <span className="omp-collab-label">{t("settings.ompCollabPanelShare")}</span>
-          <button
+          <Button
             type="button"
-            className="omp-collab-btn"
+            variant="secondary"
+            size="sm"
             disabled={state.phase === "loading"}
             onClick={() => void handleShare()}
             aria-busy={state.phase === "loading"}
@@ -74,7 +76,7 @@ export const OmpCollabPanel = memo(function OmpCollabPanel({
             {state.phase === "loading"
               ? t("settings.ompCollabPanelShareLoading")
               : t("settings.ompCollabPanelShareBtn")}
-          </button>
+          </Button>
         </div>
 
         {state.phase === "url" && state.url && (() => {
@@ -95,14 +97,15 @@ export const OmpCollabPanel = memo(function OmpCollabPanel({
               ) : (
                 <span className="omp-collab-url" title={state.url}>{state.url}</span>
               )}
-              <button
+              <Button
                 type="button"
-                className="omp-collab-btn omp-collab-btn--copy"
+                variant="secondary"
+                size="sm"
                 onClick={handleCopy}
                 aria-label={t("settings.ompCollabPanelShareCopy")}
               >
                 {copied ? "✓" : t("settings.ompCollabPanelShareCopy")}
-              </button>
+              </Button>
             </div>
           );
         })()}

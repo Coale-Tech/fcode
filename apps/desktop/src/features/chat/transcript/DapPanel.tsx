@@ -20,6 +20,7 @@ import {
   type DapBreakpoint,
   type DapSessionStatus,
 } from "../../../lib/dap-panel";
+import { Button } from "../../../components/ui";
 import { api } from "../../../lib/api";
 
 // ─── constants ────────────────────────────────────────────────────────────────
@@ -229,48 +230,54 @@ export const DapPanel = memo(function DapPanel({
       {/* run controls — prompt-path; only active when session is live */}
       {activeSessions.length > 0 ? (
         <div className="dap-run-controls" aria-label={t("chat.dapControls")}>
-          <button
-            className="dap-btn"
+          <Button
+            variant="secondary"
+            size="sm"
             title={t("chat.dapContinue")}
             disabled={!isStopped || sending}
             onClick={() => void sendDebugAction("continue")}
             type="button"
-          >▶</button>
-          <button
-            className="dap-btn"
+          >▶</Button>
+          <Button
+            variant="secondary"
+            size="sm"
             title={t("chat.dapStepOver")}
             disabled={!isStopped || sending}
             onClick={() => void sendDebugAction("step_over")}
             type="button"
-          >↷</button>
-          <button
-            className="dap-btn"
+          >↷</Button>
+          <Button
+            variant="secondary"
+            size="sm"
             title={t("chat.dapStepIn")}
             disabled={!isStopped || sending}
             onClick={() => void sendDebugAction("step_in")}
             type="button"
-          >↓</button>
-          <button
-            className="dap-btn"
+          >↓</Button>
+          <Button
+            variant="secondary"
+            size="sm"
             title={t("chat.dapStepOut")}
             disabled={!isStopped || sending}
             onClick={() => void sendDebugAction("step_out")}
             type="button"
-          >↑</button>
-          <button
-            className="dap-btn"
+          >↑</Button>
+          <Button
+            variant="secondary"
+            size="sm"
             title={t("chat.dapPause")}
             disabled={isStopped || sending}
             onClick={() => void sendDebugAction("pause")}
             type="button"
-          >⏸</button>
-          <button
-            className="dap-btn dap-btn--danger"
+          >⏸</Button>
+          <Button
+            variant="danger"
+            size="sm"
             title={t("chat.dapTerminateAction")}
             disabled={sending}
             onClick={() => void sendDebugAction("terminate")}
             type="button"
-          >■</button>
+          >■</Button>
         </div>
       ) : null}
 
@@ -346,12 +353,13 @@ export const DapPanel = memo(function DapPanel({
             autoComplete="off"
             spellCheck={false}
           />
-          <button
-            className="dap-btn dap-btn--add"
+          <Button
+            variant="primary"
+            size="sm"
             type="submit"
             disabled={!bpFile.trim() || !bpLine.trim() || sending}
             title={t("chat.dapAddBp")}
-          >+</button>
+          >+</Button>
         </form>
       </div>
 

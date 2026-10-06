@@ -99,7 +99,6 @@ test("the toolbar is one dense row: counts left, options and actions right", () 
   assert.match(page, /className="import-count"/);
   assert.match(page, /import-count-selected/);
   assert.match(cssRule(".import-toolbar-actions"), /margin-left:\s*auto/);
-  assert.match(cssRule(".import-toolbar-actions > .btn"), /min-height:\s*28px/);
   assert.match(cssRule(".import-option-select .settings-menu-select-trigger"), /height:\s*28px/);
   // The kind options stay real menu selects, never platform-drawn selectors.
   assert.match(page, /<SettingsMenuSelect/);

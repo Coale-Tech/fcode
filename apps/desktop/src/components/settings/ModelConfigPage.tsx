@@ -493,6 +493,7 @@ export function ModelConfigPage() {
                   ref={ref}
                   className="settings-text-action model-default-trigger"
                   variant="ghost"
+                  size="sm"
                   disabled={readyProviders.length === 0}
                   onClick={() => {
                     setDefaultModelQuery("");

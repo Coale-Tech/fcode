@@ -81,12 +81,6 @@
   app-region: no-drag;
 }
 
-.plugins-header-actions > .btn {
-  min-height: 30px;
-  border-radius: var(--radius-2xs);
-  padding: 5px 10px;
-  font-size: var(--text-xs-plus);
-}
 
 .plugins-header-menu {
   width: 30px;
@@ -172,7 +166,6 @@
   border-radius: var(--radius-full);
   color: var(--ds-text-muted);
   font-size: var(--text-sm);
-  font-weight: var(--font-weight-medium);
   white-space: nowrap;
   transition:
     background var(--motion-duration-fast) var(--motion-ease-out),
@@ -187,6 +180,7 @@
   background: var(--plugins-raised);
   color: var(--ds-text-primary);
   box-shadow: var(--plugins-raised-shadow);
+  font-weight: var(--font-weight-medium);
 }
 
 .plugins-segment-count {

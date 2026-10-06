@@ -257,10 +257,6 @@
   margin-top: 12px;
 }
 
-.asktool-card-actions .btn {
-  padding: 4px 10px;
-  font-size: var(--text-sm);
-}
 
 @media (max-width: 560px) {
   .asktool-card-header {
@@ -1189,7 +1185,7 @@
 }
 
 .context-inspector-trigger:focus-visible {
-  outline: 2px solid color-mix(in oklab, currentColor 54%, transparent);
+  outline: 2px solid var(--ds-accent);
   outline-offset: 2px;
 }
 

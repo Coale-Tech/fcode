@@ -56,7 +56,6 @@ test("plugins page styles use design tokens in both themes", () => {
 
   assert.match(section, /\.plugins-title-icon\s*\{[\s\S]*?width:\s*24px[\s\S]*?height:\s*24px/);
   assert.match(section, /\.plugins-title-copy \.page-title\s*\{[\s\S]*?font-size:\s*var\(--text-lg\)[\s\S]*?font-weight:\s*var\(--font-weight-medium-plus\)/);
-  assert.match(section, /\.plugins-header-actions > \.btn\s*\{[\s\S]*?min-height:\s*30px[\s\S]*?padding:\s*5px 10px/);
   assert.match(section, /\.plugins-header-menu:focus-visible\s*\{[\s\S]*?box-shadow:/);
 
   assert.match(

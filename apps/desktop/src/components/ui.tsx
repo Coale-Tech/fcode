@@ -531,20 +531,22 @@ export function Button({
   ref,
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "secondary" | "ghost";
+  variant?: "primary" | "secondary" | "ghost" | "danger";
   size?: "sm" | "md";
   /* React 19 passes ref as a plain prop; an anchored menu needs the element. */
   ref?: Ref<HTMLButtonElement>;
 }) {
   return (
     <button
+      type="button"
       ref={ref}
       className={cx(
         "btn",
         variant === "primary" && "btn-primary",
         variant === "secondary" && "btn-secondary",
         variant === "ghost" && "btn-ghost",
-        size === "sm" && "px-2.5 py-1 text-xs",
+        variant === "danger" && "btn-danger",
+        size === "sm" && "btn-sm",
         className,
       )}
       {...props}

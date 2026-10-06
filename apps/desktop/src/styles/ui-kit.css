@@ -132,19 +132,41 @@
   color: var(--ds-text-primary);
 }
 
+/* Every labelled action uses this geometry (tokens.css --ds-btn-*); page CSS
+   must not resize or re-round it. */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  border-radius: var(--radius-sm);
-  padding: 7px 12px;
-  font-size: var(--text-md);
+  gap: 8px;
+  height: var(--ds-btn-height);
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 0 var(--ds-btn-pad-x);
+  border: 0;
+  border-radius: var(--ds-btn-radius);
+  font-family: inherit;
+  font-size: var(--ds-btn-font-size);
+  font-weight: var(--ds-btn-font-weight);
+  letter-spacing: var(--ds-btn-tracking);
+  line-height: var(--ds-btn-leading);
   transition:
     background var(--motion-duration-fast) var(--motion-ease-out),
     color var(--motion-duration-fast) var(--motion-ease-out),
     opacity var(--motion-duration-fast) var(--motion-ease-out),
     transform var(--motion-duration-fast) var(--motion-ease-out);
+}
+
+.btn-sm {
+  height: var(--ds-btn-height-sm);
+  padding: 0 var(--ds-btn-pad-x-sm);
+  border-radius: var(--ds-btn-radius-sm);
+  font-size: var(--ds-btn-font-size-sm);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn:active:not(:disabled) {
@@ -174,6 +196,14 @@
 .btn-ghost:hover:not(:disabled) {
   background: var(--ds-bg-hover);
   color: var(--ds-text-primary);
+}
+
+.btn-danger {
+  background: var(--ds-error);
+  color: var(--white);
+}
+.btn-danger:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--ds-error) 85%, var(--black));
 }
 
 /* Icon-only control geometry. `.icon-btn` (styles/composer.css) is shared with

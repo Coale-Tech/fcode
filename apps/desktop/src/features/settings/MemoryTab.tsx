@@ -11,7 +11,7 @@ import type {
 } from "@pi-desktop/shared";
 import { api } from "../../lib/api";
 import { useAppStore } from "../../stores/app-store";
-import { Input, SettingsToggle } from "../../components/ui";
+import { Button, Input, SettingsToggle } from "../../components/ui";
 import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect";
 import { SettingsCard, SettingsRow } from "./primitives";
 import { OmpSettingsSections } from "./omp-settings-sections";
@@ -319,8 +319,9 @@ export function MemoryTab() {
               title={t("settings.memoryHindsightApplyMission")}
               description={t("settings.memoryHindsightApplyMissionNote")}
             >
-              <button
+              <Button
                 type="button"
+                variant="secondary"
                 disabled={missionSaving}
                 onClick={() => void applyMission()}
                 data-testid="apply-mission-btn"
@@ -328,7 +329,7 @@ export function MemoryTab() {
                 {missionSaving
                   ? t("settings.memoryHindsightApplyMissionSaving")
                   : t("settings.memoryHindsightApplyMission")}
-              </button>
+              </Button>
             </SettingsRow>
             {missionResult && (
               <div role="status" data-testid="mission-result">
@@ -348,24 +349,26 @@ export function MemoryTab() {
               {localState.launchers.length > 0 && (
                 <>
                   {(localState.state === "stopped" || localState.state === "failed" || localState.state === "unavailable") && (
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
                       disabled={localBusy}
                       data-testid="hindsight-local-start"
                       onClick={() => void startLocal()}
                     >
                       {t("settings.memoryLocalStart")}
-                    </button>
+                    </Button>
                   )}
                   {(localState.state === "starting" || localState.state === "running") && (
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
                       disabled={localBusy || localState.state === "starting"}
                       data-testid="hindsight-local-stop"
                       onClick={() => void stopLocal()}
                     >
                       {t("settings.memoryLocalStop")}
-                    </button>
+                    </Button>
                   )}
                 </>
               )}
@@ -376,9 +379,9 @@ export function MemoryTab() {
           </>
         )}
         <SettingsRow title={t("settings.memorySave")} description={t("settings.memorySaveNote")}>
-          <button type="button" disabled={saving} onClick={() => void save()}>
+          <Button type="button" variant="primary" disabled={saving} onClick={() => void save()}>
             {t("settings.memorySave")}
-          </button>
+          </Button>
         </SettingsRow>
         {error && <div role="alert">{error}</div>}
           </>
@@ -399,8 +402,9 @@ export function MemoryTab() {
                 <li key={m.id} data-testid="mental-model-row">
                   <span>{m.name}</span>
                   {m.updatedAt && <span>{t("settings.memoryMentalModelUpdated", { date: m.updatedAt })}</span>}
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
                     disabled={refreshingId === m.id}
                     onClick={() => void refreshModel(m.id)}
                     data-testid={`refresh-model-${m.id}`}
@@ -408,13 +412,13 @@ export function MemoryTab() {
                     {refreshingId === m.id
                       ? t("settings.memoryMentalModelRefreshing")
                       : t("settings.memoryMentalModelRefresh")}
-                  </button>
+                  </Button>
                 </li>
               ))}
             </ul>
           )}
           <SettingsRow title={t("settings.memoryMentalModelsReload")}>
-            <button type="button" onClick={() => {
+            <Button type="button" variant="secondary" onClick={() => {
               setModelsLoading(true);
               void api.hindsightListMentalModels()
                 .then((r) => setModels(r.models))
@@ -422,7 +426,7 @@ export function MemoryTab() {
                 .finally(() => setModelsLoading(false));
             }}>
               {t("settings.memoryMentalModelsReload")}
-            </button>
+            </Button>
           </SettingsRow>
         </SettingsCard>
       )}
@@ -454,8 +458,9 @@ export function MemoryTab() {
               >
                 {t("settings.memoryUserProfileCounter", { count: profileDraft.length, max: USER_PROFILE_MAX })}
               </span>
-              <button
+              <Button
                 type="button"
+                variant="primary"
                 data-testid="user-profile-save"
                 disabled={profileSaving || profileDraft === profile}
                 onClick={() => void saveProfile()}
@@ -463,7 +468,7 @@ export function MemoryTab() {
                 {profileSaving
                   ? t("settings.memoryUserProfileSaving")
                   : t("settings.memoryUserProfileSave")}
-              </button>
+              </Button>
             </div>
             {profileSaved && (
               <div role="status" data-testid="user-profile-saved">
@@ -485,14 +490,15 @@ export function MemoryTab() {
           title={t("settings.memoryBenchBootstrap")}
           description={t("settings.memoryBenchBootstrapNote")}
         >
-          <button
+          <Button
             type="button"
+            variant="primary"
             disabled={bootstrapping}
             onClick={() => void runBootstrap()}
             data-testid="bench-bootstrap-btn"
           >
             {bootstrapping ? t("settings.memoryBenchBootstrapping") : t("settings.memoryBenchBootstrap")}
-          </button>
+          </Button>
         </SettingsRow>
         {bootstrapResult && (
           <div role="status" data-testid="bootstrap-result">

@@ -762,33 +762,21 @@
   overflow-wrap: anywhere;
 }
 
-.chat-error-action,
 .chat-error-dismiss {
+  display: inline-flex;
+  width: 26px;
+  height: 26px;
   flex: none;
+  align-items: center;
+  justify-content: center;
   border-radius: var(--radius-sm);
-  color: var(--ds-text-primary);
+  color: var(--ds-text-secondary);
   transition:
     background var(--motion-duration-fast) var(--motion-ease-out),
     color var(--motion-duration-fast) var(--motion-ease-out),
     transform var(--motion-duration-fast) var(--motion-ease-out);
 }
 
-.chat-error-action {
-  padding: 4px 8px;
-  background: var(--ds-tile-deep);
-  font-size: var(--text-sm-plus);
-}
-
-.chat-error-dismiss {
-  display: inline-flex;
-  width: 26px;
-  height: 26px;
-  align-items: center;
-  justify-content: center;
-  color: var(--ds-text-secondary);
-}
-
-.chat-error-action:hover,
 .chat-error-dismiss:hover {
   background: var(--ds-bg-hover);
   color: var(--ds-text-primary);

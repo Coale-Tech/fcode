@@ -1,8 +1,8 @@
 /**
  * Lightweight overlay shown above the Composer during voice input.
  */
-
 import type { TFunction } from "i18next";
+import { Button } from "../../components/ui";
 import type { VoiceState } from "./useVoiceInput";
 
 interface VoiceOverlayProps {
@@ -50,13 +50,14 @@ export function VoiceOverlay({ t, state, onCancel }: VoiceOverlayProps) {
             <VolumeBar level={state.volumeLevel} />
           )}
           {(state.phase === "listening" || state.phase === "starting") && (
-            <button
+            <Button
               type="button"
-              className="voice-cancel-btn"
+              variant="ghost"
+              size="sm"
               onClick={onCancel}
             >
               {t("settings.voiceCancel")}
-            </button>
+            </Button>
           )}
         </div>
       </div>

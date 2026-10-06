@@ -11,7 +11,7 @@ import { useEffect, useReducer, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { OmpWorktreeEntry } from "@pi-desktop/shared";
 import { api } from "../../lib/api";
-import { Badge } from "../ui";
+import { Badge, Button } from "../ui";
 import { SettingsCard } from "../../features/settings/primitives";
 import { DestructiveActionDialog } from "../DestructiveActionDialog";
 
@@ -142,21 +142,21 @@ export function OmpWorktreeSection() {
     <SettingsCard title={t("settings.ompWorktreesGroup")}>
       {/* Actions bar */}
       <div className="omp-worktree-actions">
-        <button
+        <Button
           type="button"
-          className="btn btn-sm"
+          size="sm"
           onClick={() => setShowAdd((v) => !v)}
         >
           {t("settings.ompWorktreeAdd")}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className="btn btn-sm"
+          size="sm"
           onClick={() => { setPendingPrune(true); setPruneForce(false); setPruneError(null); }}
           disabled={state.worktrees.length === 0}
         >
           {t("settings.ompWorktreePrune")}
-        </button>
+        </Button>
       </div>
 
       {/* Add form */}
@@ -176,14 +176,15 @@ export function OmpWorktreeSection() {
             value={addBranch}
             onChange={(e) => setAddBranch(e.target.value)}
           />
-          <button
+          <Button
             type="button"
-            className="btn btn-sm btn-primary"
+            size="sm"
+            variant="primary"
             onClick={handleAdd}
             disabled={addBusy || !addRepoPath.trim() || !addBranch.trim()}
           >
             {t("settings.ompWorktreeAddSubmit")}
-          </button>
+          </Button>
           {addError && <p className="settings-row-desc text-warning">{addError}</p>}
         </div>
       )}
@@ -200,13 +201,13 @@ export function OmpWorktreeSection() {
             />
             {" "}{t("settings.ompWorktreeForce")}
           </label>
-          <button
+          <Button
             type="button"
-            className="btn btn-sm"
+            size="sm"
             onClick={() => { setPendingPrune(true); }}
           >
             {t("settings.ompWorktreeRetry")}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -249,13 +250,14 @@ export function OmpWorktreeSection() {
                   {t("settings.ompWorktreesOrphan")}: {wt.orphanReason}
                 </div>
               )}
-              <button
+              <Button
                 type="button"
-                className="btn btn-sm btn-destructive omp-worktree-clear-btn"
+                size="sm"
+                variant="danger"
                 onClick={() => { setPendingClear(wt); setClearForce(false); setClearError(null); }}
               >
                 {t("settings.ompWorktreeClear")}
-              </button>
+              </Button>
             </li>
           ))}
         </ul>
