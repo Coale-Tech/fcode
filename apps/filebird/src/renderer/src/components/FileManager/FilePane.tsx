@@ -498,7 +498,7 @@ export function FilePane({
         aria-label={`${title} files`}
         data-active={active}
         data-drop-active={dropDestination !== null || undefined}
-        className={`relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border bg-[#11141b] outline-none transition-colors ${
+        className={`relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border bg-fb-raised outline-none transition-colors ${
           dropDestination !== null ? 'border-sky-400 ring-2 ring-sky-400/40' : active ? 'border-sky-500/35' : 'border-white/[0.07]'
         }`}
       >
@@ -625,7 +625,7 @@ export function FilePane({
         {dropDestination !== null && (
           <div
             data-testid="drop-label"
-            className="pointer-events-none absolute inset-x-3 bottom-8 truncate rounded-md bg-sky-600 px-3 py-1.5 text-center text-[12px] font-medium text-white shadow-lg"
+            className="pointer-events-none absolute inset-x-3 bottom-8 truncate rounded-md bg-sky-600 px-3 py-1.5 text-center text-[12px] font-medium text-on-accent shadow-lg"
           >
             {dropMoves ? 'Move' : side === 'remote' ? 'Upload' : 'Download'} to {dropDestination}
           </div>

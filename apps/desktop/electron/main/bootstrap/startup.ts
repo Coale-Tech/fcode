@@ -112,6 +112,8 @@ export type StartupDependencies = {
   getSidecar?: () => unknown;
   invokeSessionCollaboration?: (input: McpControlInvokeInput) => Promise<unknown>;
   onSessionQueueChange?: () => void;
+  /** True once shutdown is committed; the scheduler stops dispatching then. */
+  isQuitting: () => boolean;
 };
 
 /**
@@ -170,6 +172,7 @@ export function registerApplicationStartup(deps: StartupDependencies): void {
       ensureWindow,
       bootHostStatus,
       flushPendingApplicationMenuCommands,
+      isQuitting,
     } = deps;
 
     // A launch that lost the single-instance lock is already quitting. Never
@@ -291,7 +294,7 @@ export function registerApplicationStartup(deps: StartupDependencies): void {
     }
     if (!bootError) planUiProbe.install();
     const scheduledRunner = createScheduledRunner({
-      getHost,
+      getHost: () => (isQuitting() ? null : getHost()),
       execute: (id) => invokeIpc(IPC.invoke.scheduledExecute, [id, true]),
       report: (error) => logger.app("runtime", "warn", "scheduled task dispatch failed", { data: String(error) }),
     });

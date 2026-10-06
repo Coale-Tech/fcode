@@ -174,9 +174,9 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
   // ponytail: YAML by hand — avoids a yaml dep for a ~20-line config file.
   return [
     "# omp overlay for Fcode — generated on each launch, do not edit.",
-    `# DX3: approval_mode ${mode} — controlled by Fcode Settings > AI > Tool approval mode.`,
+    `# DX3: approvalMode ${mode} — controlled by Fcode Settings > AI > Tool approval mode.`,
     "tools:",
-    `  approval_mode: ${mode}`,
+    `  approvalMode: ${mode}`,
     "  approval:",
     "    # DX7: auto-approve read-only fcode_bench_execute calls.",
     "    fcode_bench_execute_read: allow",
@@ -653,8 +653,8 @@ export class OmpBridge {
   private state = createBridgeState(homedir());
   /** Map of omp request id → PI pending request info */
   private pendingUiRequests = new Map<string, { sessionId: string; toolCallId: string; toolName: string; viaSelect: boolean }>();
-  /** Per-session most-recent open tool_execution_start */
-  private openTools = new Map<string, { toolCallId: string; toolName: string }>();
+  /** Per-session most-recent open tool_execution_start (args kept for risk classification) */
+  private openTools = new Map<string, { toolCallId: string; toolName: string; args?: unknown }>();
   /** Whether the kanban tools are currently registered with omp. */
   private hostToolsKanban = false;
   /** Tracks in-flight `prompt` calls awaiting their terminal prompt_result frame. */
@@ -667,6 +667,8 @@ export class OmpBridge {
   private tracer: ((dir: string, line: string) => void) | null = null;
   /** Whether set_subagent_subscription{progress} has been sent for this omp process (§9). */
   private subagentSubscribed = false;
+  /** A model from omp's own (non-Fcode) providers was picked since the last turn. */
+  private ompModelPicked = false;
   /**
    * One-shot resolvers for `command_output` frames — consumed in FIFO order.
    * Used by `omp.share` to capture the text that `/share` emits before its ack.
@@ -732,6 +734,9 @@ export class OmpBridge {
 
   /** Emit a system message as an agent.event notification. */
   private emitSystemMessage(sessionId: string, text: string): void {
+    // No active session — a message_start with an empty sessionId triggers
+    // RacpError("sessionId is required for session-scoped events") on the host.
+    if (!sessionId) return;
     this.notify("agent.event", {
       sessionId,
       ts: Date.now(),
@@ -936,6 +941,9 @@ export class OmpBridge {
         this.ompCallAndForward(id, { type: "get_available_models" });
         break;
       case "omp.models.set":
+        // ponytail: a pick made in chat A also carries into a new chat opened
+        // before A's next turn; track picks per chat if that matters.
+        this.ompModelPicked = typeof p.provider === "string" && !p.provider.startsWith("fcode-");
         this.ompCallAndForward(id, { type: "set_model", ...p });
         break;
       case "omp.thinking.levels":
@@ -1166,8 +1174,9 @@ export class OmpBridge {
       type: "open_session",
       sessionDir: join(this.config.dataDir, "omp-threads", encodeURIComponent(sessionId)),
       cwd: projectPath,
-    })) as { cancelled?: boolean } | undefined;
+    })) as { cancelled?: boolean; resumed?: boolean } | undefined;
     if (opened?.cancelled) throw new Error(`Cannot open this conversation in ${projectPath}`);
+    await this.syncOmpModel(opened?.resumed === true, opts.params.provider);
 
     this.sessions.set(sessionId, {
       projectPath,
@@ -1200,6 +1209,28 @@ export class OmpBridge {
     }
 
     return { accepted: true, turnId };
+  }
+
+  /**
+   * Run the chat on its Fcode model. A new omp thread inherits whichever model
+   * the process used last, and a menu pick made while another chat was open
+   * moved that chat's thread. A model from omp's own providers is a deliberate
+   * pick: a resumed thread keeps it, and so does a new chat picked onto it.
+   */
+  private async syncOmpModel(resumed: boolean, provider: unknown): Promise<void> {
+    const picked = this.ompModelPicked;
+    this.ompModelPicked = false;
+    const p = provider as { id?: unknown; modelId?: unknown } | undefined;
+    if (typeof p?.id !== "string" || typeof p.modelId !== "string") return;
+    const want = { provider: `fcode-${p.id}`, modelId: p.modelId };
+    const state = (await this.ompCall({ type: "get_state" }).catch(() => undefined)) as
+      | { model?: { provider?: unknown; id?: unknown } }
+      | undefined;
+    const current = state?.model;
+    if (current?.provider === want.provider && current.id === want.modelId) return;
+    const onFcodeModel = typeof current?.provider === "string" && current.provider.startsWith("fcode-");
+    if (!onFcodeModel && (resumed || picked)) return;
+    await this.ompCall({ type: "set_model", ...want }).catch(() => undefined);
   }
 
   /** Handle an NDJSON frame from omp's stdout. */
@@ -1389,8 +1420,8 @@ export class OmpBridge {
 
     // todo_reminder / todo_auto_clear: forward as agent.event for the todo panel.
     if (frame.type === "todo_reminder" || frame.type === "todo_auto_clear") {
-      const sessionId = this.sessions.keys().next().value ?? "";
-      this.notify("agent.event", { sessionId, ts: Date.now(), event: frame });
+      const sessionId = this.sessions.keys().next().value;
+      if (sessionId) this.notify("agent.event", { sessionId, ts: Date.now(), event: frame });
       return;
     }
 
@@ -1399,7 +1430,8 @@ export class OmpBridge {
     if (frame.type === "subagent_event") {
       const payload = (frame.payload ?? {}) as Record<string, unknown>;
       const subagentId = String(payload.id ?? "");
-      const sessionId = this.sessions.keys().next().value ?? "";
+      const sessionId = this.sessions.keys().next().value;
+      if (!sessionId) return;
       this.notify("agent.event", {
         sessionId,
         ts: Date.now(),
@@ -1448,6 +1480,7 @@ export class OmpBridge {
         this.openTools.set(sessionId, {
           toolCallId: String(frame.toolCallId ?? frame.id ?? ""),
           toolName: String(frame.toolName ?? ""),
+          args: frame.args,
         });
       }
       if (eventType === "tool_end") this.openTools.delete(sessionId);

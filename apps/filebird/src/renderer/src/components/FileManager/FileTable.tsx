@@ -52,7 +52,7 @@ export function FileTable({
     <div role="grid" aria-label="Files" aria-multiselectable="true" className="@container min-w-0">
       <div
         role="row"
-        className={`${COLUMNS} sticky top-0 z-10 h-7 border-b border-white/[0.06] bg-[#11141b] text-[10px] font-medium tracking-wide text-zinc-500 uppercase`}
+        className={`${COLUMNS} sticky top-0 z-10 h-7 border-b border-white/[0.06] bg-fb-raised text-[10px] font-medium tracking-wide text-zinc-500 uppercase`}
       >
         <span role="columnheader">Name</span>
         <span role="columnheader" className="hidden @2xl:block">

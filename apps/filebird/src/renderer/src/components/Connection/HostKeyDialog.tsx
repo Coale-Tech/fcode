@@ -48,7 +48,7 @@ export function HostKeyDialog({ prompt, onTrust, onCancel }: HostKeyDialogProps)
       />
       <p className="text-[11px] text-zinc-500">
         On the server, <span className="font-mono">ssh-keygen -lf {hostKeyFileFor(prompt.hostKey.algorithm)}</span>{' '}
-        prints it.
+        prints it.{' '}
         {APP_NAME} will remember this key and warn you if it ever changes.
       </p>
     </Dialog>

@@ -1094,12 +1094,12 @@
 
 .copy-btn.primary {
   background: var(--ds-accent);
-  color: var(--ds-bg-primary);
+  color: var(--ds-accent-foreground);
 }
 
 .copy-btn.primary:hover {
   background: var(--ds-accent-hover);
-  color: var(--ds-bg-primary);
+  color: var(--ds-accent-foreground);
 }
 
 .copy-btn.danger:hover {

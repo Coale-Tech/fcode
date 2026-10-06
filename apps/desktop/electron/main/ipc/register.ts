@@ -6,7 +6,7 @@ import type { AgentSidecar } from "../agent-sidecar";
 import type { HostProcess } from "../host-process";
 import { ROUTE_LOCAL, type BackendRouter } from "../remote/backend-router";
 import { registerAgentExtensionIpc } from "../agent-extensions-ipc";
-import { BrowserPane } from "../browser-view";
+import type { BrowserPane } from "../browser-view";
 import { readNpmPath, writeNpmPath } from "../npm-preferences";
 import { registerAgentIpc } from "./agent-ipc";
 import { registerAppIpc } from "./app-ipc";
@@ -75,6 +75,8 @@ export type RegisterIpcDependencies = {
   kanban?: Omit<KanbanIpcDependencies, "registrar"> & {
     bindInvoke: (invoke: (channel: string, args: readonly unknown[]) => Promise<unknown>) => void;
   };
+  /** Owned by index.ts so shutdown can dispose it. */
+  ravenPane: BrowserPane;
 };
 
 function wrap<T>(fn: () => Promise<T>): Promise<Result<T>> {
@@ -385,7 +387,17 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     withGitBranch,
     stripWinLongPrefix,
   });
-  registerBenchIpc({ registrar, mainWindow: getMainWindow });
+  registerBenchIpc({
+    registrar,
+    mainWindow: getMainWindow,
+    dataDir,
+    pickDirectory: async () => {
+      const options = { title: "Choose the folder that holds your benches", properties: ["openDirectory" as const, "createDirectory" as const] };
+      const window = getMainWindow();
+      const result = window ? await dialog.showOpenDialog(window, options) : await dialog.showOpenDialog(options);
+      return result.canceled ? null : (result.filePaths[0] ?? null);
+    },
+  });
   registerBuildIpc({ registrar, mainWindow: getMainWindow, browserPane: dependencies.browserPane });
   registerOmpIpc({
     registrar,
@@ -427,8 +439,7 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
   registerRavenIpc({
     registrar,
     dataDir,
-    // Its own partition, never the agent-driven work browser (ADR 0170 clause 6).
-    pane: new BrowserPane(() => undefined, "persist:raven"),
+    pane: dependencies.ravenPane,
     getMainWindow,
     sendChanged: () => sendToRenderer(IPC.event.ravenChanged, {}),
   });

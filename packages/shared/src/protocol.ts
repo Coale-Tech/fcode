@@ -2,7 +2,7 @@ export const PROTOCOL_VERSION = 11 as const;
 export const SCHEMA_VERSION = 16 as const;
 export const APP_ID = "com.coaletech.fcode";
 export const APP_NAME = "Fcode";
-export const APP_VERSION = "0.18.4";
+export const APP_VERSION = "0.18.5";
 
 export const APP_MENU_COMMANDS = [
   "newTask",
@@ -421,6 +421,8 @@ export const IPC = {
     ompCycleThinkingLevel: "pi-desktop/omp/thinking/cycle",
     /** Bench subsystem (Approach step 6): discovery, supervision, agent access. */
     benchList: "pi-desktop/bench/list",
+    /** Folder picker for the folder that holds the benches; saved, then rediscovered. */
+    benchPickRoot: "pi-desktop/bench/pickRoot",
     benchStart: "pi-desktop/bench/start",
     benchStop: "pi-desktop/bench/stop",
     benchStatus: "pi-desktop/bench/status",

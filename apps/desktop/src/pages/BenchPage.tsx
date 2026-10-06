@@ -107,6 +107,7 @@ export function BenchPage() {
   const [openIds, setOpenIds] = useState<string[]>([]);
   // Gap 4 / T6: failed roots surfaced by discovery
   const [failedRoots, setFailedRoots] = useState<Array<{ root: string; reason: string }>>([]);
+  const [roots, setRoots] = useState<string[]>([]);
 
   // Supervisor state
   const [status, setStatus] = useState<BenchStatus>("stopped");
@@ -150,26 +151,38 @@ export function BenchPage() {
 
   // ── Load bench list ───────────────────────────────────────────────────────
 
+  type BenchListResult = { benches: BenchSummary[]; failedRoots: Array<{ root: string; reason: string }>; roots?: string[] };
+  const applyBenchList = useCallback(({ benches: discovered, failedRoots: failed, roots: scanned }: BenchListResult) => {
+    setBenches(discovered);
+    // Gap 4 / T6: roots that could not be read
+    setFailedRoots(failed ?? []);
+    setRoots(scanned ?? []);
+    // Drop tabs for benches that no longer exist.
+    const ids = discovered.map((b) => b.id);
+    setOpenIds((prev) => prev.filter((id) => ids.includes(id)));
+    setTab((prev) => (prev === "all" || ids.includes(prev) ? prev : "all"));
+  }, []);
+
   const loadBenches = useCallback(async () => {
     setLoading(true);
     try {
-      // Gap 4 / T6: discoverBenches now returns { benches, failedRoots }
-      const { benches: discovered, failedRoots: failed } = await invoke<{
-        benches: BenchSummary[];
-        failedRoots: Array<{ root: string; reason: string }>;
-      }>(IPC.invoke.benchList);
-      setBenches(discovered);
-      setFailedRoots(failed ?? []);
-      // Drop tabs for benches that no longer exist.
-      const ids = discovered.map((b) => b.id);
-      setOpenIds((prev) => prev.filter((id) => ids.includes(id)));
-      setTab((prev) => (prev === "all" || ids.includes(prev) ? prev : "all"));
+      applyBenchList(await invoke<BenchListResult>(IPC.invoke.benchList));
     } catch {
       // discovery error: show empty state
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [applyBenchList]);
+
+  /** Native folder picker; the choice is saved and the benches rediscovered. */
+  const pickRoot = useCallback(async () => {
+    try {
+      const result = await invoke<{ canceled: true } | ({ canceled: false } & BenchListResult)>(IPC.invoke.benchPickRoot);
+      if (!result.canceled) applyBenchList(result);
+    } catch {
+      // picker or save failed: keep the current list
+    }
+  }, [applyBenchList]);
 
   useEffect(() => {
     loadBenches();
@@ -625,7 +638,7 @@ export function BenchPage() {
           ) : loading ? (
             <BenchListSkeleton />
           ) : benches.length === 0 && failedRoots.length === 0 ? (
-            <ZeroBenchState />
+            <ZeroBenchState roots={roots} onPickRoot={() => void pickRoot()} />
           ) : (
             <>
               {benches.length > 0 && (
@@ -636,6 +649,8 @@ export function BenchPage() {
                   onOpen={(b) => openBench(b.id)}
                   onStart={(b) => void handleStart(b)}
                   onStop={(b) => void handleStop(b)}
+                  roots={roots}
+                  onPickRoot={() => void pickRoot()}
                 />
               )}
               {/* Gap 4 / T6: discovery roots that could not be read, as failed entries */}
@@ -646,6 +661,11 @@ export function BenchPage() {
                       ? `${failedRoots.length} root${failedRoots.length > 1 ? "s" : ""} unreadable — fix permissions and refresh.`
                       : "All discovery roots unreadable — fix permissions and refresh."}
                   </p>
+                  {benches.length === 0 && (
+                    <button type="button" className="wb-btn wb-btn-subtle wb-btn-sm" onClick={() => void pickRoot()}>
+                      Choose bench folder…
+                    </button>
+                  )}
                   {failedRoots.map((fr) => (
                     <div key={fr.root} className="wb-row is-static" title={fr.root}>
                       <div className="wb-row-top">
@@ -1002,7 +1022,7 @@ function BenchListSkeleton() {
  * when discovery finds zero benches show copy-paste commands and a docs link
  * rather than a blank page.
  */
-function ZeroBenchState() {
+function ZeroBenchState({ roots, onPickRoot }: { roots: string[]; onPickRoot: () => void }) {
   const [copied, setCopied] = useState<string | null>(null);
 
   const copy = (text: string, label: string) => {
@@ -1017,11 +1037,16 @@ function ZeroBenchState() {
       <div className="wb-empty-inner">
         <p className="wb-empty-title">No Frappe benches found</p>
         <p className="wb-muted">
-          Fcode scans <code className="wb-code">~/ERPNext</code> on startup.
+          Fcode looks for benches in <code className="wb-code">{roots.join(", ") || "~/ERPNext"}</code>.
           Frappe installation is outside this app's control.
         </p>
 
-        <p className="wb-empty-step">Create a bench:</p>
+        <p className="wb-empty-step">Benches somewhere else?</p>
+        <button type="button" className="wb-btn wb-btn-solid wb-btn-sm" onClick={onPickRoot}>
+          Choose bench folder…
+        </button>
+
+        <p className="wb-empty-step">Or create a bench:</p>
         <CopyCmd
           label="bench init"
           text="bench init frappe-bench --frappe-branch version-16"

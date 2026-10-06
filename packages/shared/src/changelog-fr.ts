@@ -2,6 +2,17 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const frEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.5",
+    "date": "2026-10-06",
+    "highlights": [
+      "Quitter : appuyer de nouveau sur ⌘Q pendant que la boîte de dialogue « Quitter Fcode ? » est ouverte ne quitte plus sans attendre votre réponse, et les tâches planifiées ne démarrent plus pendant la fermeture de Fcode.",
+      "Plantages de l’agent : un outil en cours d’exécution se termine désormais comme « Interrompu », y compris après un rechargement, et le panneau « Agent arrêté » disparaît dès que l’agent est de retour. Les cartes d’autorisation affichent la raison donnée par omp et évaluent les longues commandes sur la commande complète.",
+      "FileBird : la liste des connexions enregistrées ne demande plus l’accès au trousseau pour chaque connexion, seules la vue FileBird et la fenêtre Fcode peuvent appeler FileBird, et le terminal intégré retrouve le focus clavier après une boîte de dialogue.",
+      "Apparence et modèles : Fcode utilise désormais le bleu de FileBird pour les boutons, les interrupteurs et la sélection, et FileBird suit le thème clair ou sombre de Fcode. Les nouveaux chats utilisent le modèle affiché sur leur puce, le menu des modèles affiche le nom de vos fournisseurs, et un redémarrage de l'agent après un changement de réglage est signalé comme tel au lieu d'un plantage.",
+      "Benches : si vos benches ne sont pas dans ~/ERPNext, choisissez leur dossier sur la page Bench ; Fcode s’en souvient. Si ~/ERPNext n’existe pas, le guide d’installation s’affiche désormais au lieu d’une erreur.",
+    ],
+  },
+  {
     "version": "0.18.4",
     "date": "2026-10-04",
     "highlights": [

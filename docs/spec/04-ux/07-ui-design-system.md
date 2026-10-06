@@ -9,7 +9,7 @@
 
 ## Visual baseline (Codex-aligned)
 
-The desktop shell targets a 1:1 visual match with the local Codex desktop client (ChatGPT.app electron-dark): charcoal surfaces (`#181818`), neutral gray scale (not blue-slate), ~275px sidebar, 46px toolbar rhythm, and a floating pill composer. Semantic token names remain stable; values follow the Codex gray system with a **neutral gray accent** (no blue brand accent).
+The desktop shell targets a 1:1 visual match with the local Codex desktop client (ChatGPT.app electron-dark): charcoal surfaces (`#181818`), neutral gray scale (not blue-slate), ~275px sidebar, 46px toolbar rhythm, and a floating pill composer. Semantic token names remain stable; values follow the Codex gray system with **FileBird's sky-blue accent** (D626).
 
 ## 2. Non-goals
 
@@ -185,9 +185,9 @@ All color references in components use **semantic token names**, never raw hex v
 | `--color-text-muted` | `#5d5d5d` | Codex `gray-500` | Disabled, hints |
 | `--color-border-default` | `rgba(255,255,255,0.08)` | Codex border | Default borders |
 | `--color-border-subtle` | `rgba(255,255,255,0.05)` | Codex border subtle | Subtle separators |
-| `--color-accent` | `#FFFFFF` (dark) / `#1a1c1f` (light) | inverted gray ink | Primary accent, CTA |
-| `--color-accent-hover` | `#EDEDED` (dark) / `#303030` (light) | gray-100 / gray-700 | Accent hover |
-| `--color-accent-soft` | `#AFAFAF` (dark) / `#5d5d5d` (light) | gray-300 / gray-500 | Soft accent, links |
+| `--color-accent` | `#0284c7` (both themes) | sky-600 (D626) | Primary accent, CTA |
+| `--color-accent-hover` | `#0ea5e9` (both themes) | sky-500 | Accent hover |
+| `--color-accent-soft` | `#38bdf8` (both themes) | sky-400 | Soft accent, links |
 | `--color-success` | `#22C55E` | `text-green-500` | Success, run complete |
 | `--color-warning` | `#F59E0B` | `text-amber-500` | Warning, caution |
 | `--color-error` | `#EF4444` | `text-red-500` | Error, denied |
@@ -209,13 +209,13 @@ Neutral gray scale only — no blue-slate surfaces. Chrome components must consu
 | `--color-text-faint` | `#afafaf` (gray-300) | Placeholder |
 | `--color-border-default` | `color-mix(#1a1c1f 8%, transparent)` | Default borders |
 | `--color-border-subtle` | `color-mix(#1a1c1f 5%, transparent)` | Sidebar edge / dividers |
-| `--color-accent` | `#1a1c1f` | Primary accent, CTA, footer badge (neutral ink) |
+| `--color-accent` | `#0284c7` | Primary accent, CTA, footer badge (sky-600, D626) |
 | `--color-success` / warning / error | green-500 / orange-500 / red-500 | Status |
 
 **Invariant:** never paint chrome text with raw `gray-0` (`#fff`) under `data-theme="light"`. Use `--ds-text-primary` / `--ds-text-secondary`.
 
 Shared buttons must use semantic theme tokens for both their surface and ink:
-primary actions pair `--ds-accent` with `--ds-bg-primary`, while secondary
+primary actions pair `--ds-accent` with `--ds-accent-foreground` (white), while secondary
 actions sit on the `--ds-tile` fill with primary text and no stroke (D297).
 Hover states use the corresponding accent/tile-hover tokens rather than
 opacity-only changes, so actions remain legible in dark and light themes.
@@ -225,7 +225,7 @@ Light-surface polish (D148):
 - Docked work panel uses quiet inset paper (`#fafafa`) with a white header band and a combined create trigger in the header so the tool column stays on content without any divider (D297 removed the remaining edge rules).
 - The work-panel header spends one control gap (`--ds-work-panel-control-gap`, 4px) on the whole row: the tab strip to the action group, `+` to maximize, and — through the tokenized 44px safe lane the panel header reserves for the viewport-fixed panel toggle — the action group to that toggle. The three buttons read as one group with no divider between the maximize control and the collapse toggle. Because maximize sits between them, the `+` trigger still keeps more than 24px of visual separation from the toggle hit target on supported window sizes. All three are the shared chrome icon control — 28px square on a transparent seat, hover wash on pointer, dimmed when disabled — so `+`, maximize, and the collapse toggle stay quiet icons instead of filled or raised squares. The toggle's `aria-pressed` state changes glyph and ink only.
 - Shared form fields, browser URL, settings segment tracks, and shortcut keycaps use `--ds-tile` fills with no stroke (D297); focus lifts to white with an accent-tinted ring. An Unbound shortcut uses a localized text state instead of an empty keycap and keeps its recorder and restore controls keyboard-focusable.
-- Settings toggles keep a near-black on-track and force a white knob in light mode.
+- Settings toggles use the sky accent on-track and a white knob in both themes.
   Off/on track and knob colours come from the `--ds-switch-*` theme tokens; a
   per-theme `:root[data-theme="…"] .settings-toggle` background override
   out-specifies `.settings-toggle.on` and strands the on-state on the off fill.
@@ -252,7 +252,7 @@ token rather than introducing a decorative palette:
 
 | State | Semantic color | Shape / motion | Meaning |
 |---|---|---|---|
-| Selected | neutral accent | static outlined ring | current conversation |
+| Selected | accent (sky) | static outlined ring | current conversation |
 | In progress | warning orange | filled dot with a restrained breathing pulse | agent is producing or executing |
 | Completed | success green | check mark | latest unread task turn completed |
 | Failed | error red | circled alert mark | latest unread task turn failed |
@@ -288,8 +288,8 @@ The following CSS custom properties stub is the canonical bridge between spec to
   --color-text-muted:       #5d5d5d;
   --color-border-default:   #282828;
   --color-border-subtle:    #212121;
-  --color-accent:           #FFFFFF;
-  --color-accent-hover:     #EDEDED;
+  --color-accent:           #0284c7;
+  --color-accent-hover:     #0ea5e9;
   --color-success:          #22C55E;
   --color-warning:          #F59E0B;
   --color-error:            #EF4444;
@@ -307,8 +307,8 @@ The following CSS custom properties stub is the canonical bridge between spec to
   --color-text-muted:       #94A3B8;
   --color-border-default:   #E2E8F0;
   --color-border-subtle:    #F1F5F9;
-  --color-accent:           #1a1c1f;
-  --color-accent-hover:     #303030;
+  --color-accent:           #0284c7;
+  --color-accent-hover:     #0ea5e9;
   --color-success:          #16A34A;
   --color-warning:          #D97706;
   --color-error:            #DC2626;
@@ -1222,7 +1222,7 @@ Implementation: `components/ui.tsx → SettingsToggle`.
 | CSS class | `.settings-toggle` / `.settings-toggle.on` |
 | Role | `role="switch"` with `aria-checked` |
 | Variants | default, `busy` (`.is-busy`, `aria-busy`, disabled) |
-| Background | neutral accent when on (not green); theme-specific override in `theme-overrides.css` |
+| Background | accent (sky) when on, white knob in both themes (D626) |
 
 Every boolean on/off control in Settings and editor sheets **must** use
 `SettingsToggle`. Inline `<button role="switch">` with manual class

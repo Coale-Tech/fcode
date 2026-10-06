@@ -81,6 +81,15 @@ export const ChatSurface = memo(function ChatSurface({
       setSidecarFatal(params as { code: string; paths: string[]; detail: string });
     });
   }, []);
+  // A healthy sidecar again (crash recovery or restart) clears the panel.
+  useEffect(() => {
+    const bridge = window.piDesktop;
+    if (!bridge) return;
+    return bridge.on(IPC.event.hostStatus, (params) => {
+      const status = params as { ok: boolean; component?: string };
+      if (status.ok && status.component === "sidecar") setSidecarFatal(null);
+    });
+  }, []);
   const providers = useAppStore((state) => state.providers);
   const activeSession = useAppStore((state) =>
     state.activeSessionId

@@ -1,6 +1,6 @@
 import { shell } from "electron";
-import { isAbsolute, join, relative, resolve } from "node:path";
-import { mkdirSync } from "node:fs";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
+import { mkdirSync, rm } from "node:fs";
 import {
   ErrorCodes,
   IPC,
@@ -354,6 +354,11 @@ export function registerSessionIpc({
     }
     sessionProjects.delete(id);
     logger.app("session", "info", "session deleted", { sessionId: id });
+    // Drop omp's thread dir too. encodeURIComponent keeps "", "." and "..",
+    // which resolve to omp-threads or the data dir: remove a direct child only.
+    const threads = join(dataDir, "omp-threads");
+    const threadDir = join(threads, encodeURIComponent(id));
+    if (dirname(threadDir) === threads) rm(threadDir, { recursive: true, force: true }, () => undefined);
     return res;
   });
   handle(IPC.invoke.sessionRename, async (id: string, title: string) => {

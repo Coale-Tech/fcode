@@ -9,7 +9,7 @@ interface TitleBarProps {
 export function TitleBar({ isMac, status }: TitleBarProps): JSX.Element {
   return (
     <header
-      className={`drag-region flex h-14 shrink-0 items-center justify-between border-b border-white/[0.06] bg-[#11141b] pr-5 ${
+      className={`drag-region flex h-14 shrink-0 items-center justify-between border-b border-white/[0.06] bg-fb-raised pr-5 ${
         isMac ? 'pl-24' : 'pl-5'
       }`}
     >

@@ -23,7 +23,7 @@ export function EntryIcon({ entry }: { entry: FileEntry }): JSX.Element {
       {entry.isSymlink && (
         <svg
           viewBox="0 0 10 10"
-          className="absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-sm bg-[#0b0d12] fill-none stroke-zinc-200 stroke-[1.4]"
+          className="absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-sm bg-fb-base fill-none stroke-zinc-200 stroke-[1.4]"
         >
           <path d="M3 7l4-4M4 3h3v3" />
         </svg>

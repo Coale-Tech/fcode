@@ -426,7 +426,8 @@
 }
 
 .wb-all { display: flex; flex: 1; flex-direction: column; min-height: 0; }
-.wb-all-bar { padding: 12px 16px 8px; }
+.wb-all-bar { display: flex; gap: 8px; padding: 12px 16px 8px; }
+.wb-all-bar .wb-search { flex: 1; }
 .wb-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 8px; }
 .wb-chip {
   height: 24px;

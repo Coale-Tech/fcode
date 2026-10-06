@@ -1,6 +1,8 @@
 import { hostname, userInfo } from 'node:os'
 import { join } from 'node:path'
+import type { WebContents } from 'electron'
 import { IPC_EVENTS } from '../shared/constants/channels'
+import { trustSenders } from './ipc/handle'
 import { registerConnectionsIpc } from './ipc/connections.ipc'
 import { registerContextMenuIpc } from './ipc/context-menu.ipc'
 import { registerFilesIpc } from './ipc/files.ipc'
@@ -33,6 +35,8 @@ export interface FileBirdHost {
   send: (channel: string, payload: unknown) => void
   setTerminalFocus: (focused: boolean) => void
   pickPrivateKey: () => Promise<string | null>
+  /** Pages allowed to call FileBird's IPC. An embedding host shares ipcMain with other pages; the standalone app omits it. */
+  isTrustedSender?: (sender: WebContents) => boolean
 }
 
 export interface FileBird {
@@ -49,6 +53,7 @@ export interface FileBird {
  * Registers ipcMain handlers, so call it once, after app.whenReady().
  */
 export function installFileBird(host: FileBirdHost): FileBird {
+  if (host.isTrustedSender) trustSenders(host.isTrustedSender)
   registerSystemIpc()
   registerContextMenuIpc()
   registerLocalFilesIpc(host.home, host.downloads)

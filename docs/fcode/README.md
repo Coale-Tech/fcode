@@ -185,7 +185,7 @@ If `negotiate_protocol` does not return `{protocolVersion:2}`, the bridge emits 
 
 ### Bench not found
 
-Discovery scans `~/ERPNext` (and any configured additional roots) at launch. A bench is a directory containing both `apps/` and `sites/`. Known failure conditions:
+Discovery scans `~/ERPNext` at launch. If your benches live elsewhere, click **Choose bench folder…** on the Bench page (or **Bench folder…** above the bench table); the choice is saved in `bench-roots.json` in Fcode's data folder and replaces `~/ERPNext`. You can pick the folder that holds your benches or a single bench folder. `FCODE_BENCH_ROOTS` (paths separated by `:`, or `;` on Windows) overrides both. A bench is a directory containing both `apps/` and `sites/`. Known failure conditions:
 
 | Condition | Problem | Fix |
 | --- | --- | --- |
@@ -305,6 +305,7 @@ Validated settings are serialised as JSON and passed to the bridge process as `F
 | 0.18.2 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | not tested | not tested | not tested |
 | 0.18.3 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | not tested | not tested | not tested |
 | 0.18.4 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | not tested | not tested | not tested |
+| 0.18.5 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | not tested | not tested | not tested |
 
 The protocol smoke test (`apps/desktop/test/omp-protocol-smoke.test.mjs`) asserts that the pinned omp binary negotiates exactly protocol version 2. A pinned commit that stops offering v2 fails the release gate automatically.
 

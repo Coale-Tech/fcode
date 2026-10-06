@@ -151,10 +151,19 @@ export function classifyToolRisk(toolName: string, argsPreview: string): Risk {
 export function mapExtensionUiRequest(
   req: OmpExtensionUiRequest,
   sessionId: string,
-  openTool: { toolCallId: string; toolName: string } | undefined,
+  openTool: { toolCallId: string; toolName: string; args?: unknown } | undefined,
 ): MappedUiRequest {
   const toolCallId = openTool?.toolCallId ?? req.id;
   const toolName = openTool?.toolName ?? (req.title ?? "tool");
+  // omp cuts the prompt's command at 2000 chars; the open tool_start args hold
+  // the full one. Use them only when they match the shown prefix: bash calls
+  // run concurrently, and openTool is the latest call in the session.
+  const command = (openTool?.args as { command?: unknown } | undefined)?.command;
+  const risk = (name: string, body: string) => {
+    const cut = /^Command: ([\s\S]*?)\[…\d+ch elided…\]/m.exec(body)?.[1];
+    const full = cut !== undefined && typeof command === "string" && command.startsWith(cut);
+    return classifyToolRisk(name, full ? command : body);
+  };
 
   switch (req.method) {
     case "confirm":
@@ -166,7 +175,7 @@ export function mapExtensionUiRequest(
         toolName,
         // argsPreview carries site, method and kwargs for bench tools (design D14)
         argsPreview: req.title ?? "",
-        risk: classifyToolRisk(toolName, req.title ?? ""),
+        risk: risk(toolName, req.title ?? ""),
         reason: req.message ?? "",
       };
 
@@ -185,8 +194,9 @@ export function mapExtensionUiRequest(
           toolCallId,
           toolName: openTool?.toolName ?? approval[1],
           argsPreview: approval[2],
-          risk: classifyToolRisk(openTool?.toolName ?? approval[1], approval[2]),
-          reason: "",
+          risk: risk(openTool?.toolName ?? approval[1], approval[2]),
+          // omp's order: Allow tool, Origin?, Reason?, details; a command line can't spoof it.
+          reason: /^(?:Origin: [^\n]*\n)?Reason: ([^\n]+)/.exec(approval[2])?.[1]?.trim() ?? "",
         };
       }
       return {

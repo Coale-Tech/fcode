@@ -15,6 +15,8 @@ export interface ConnectionProfile {
   importedFrom?: { kind: 'ssh-config'; alias: string }
   createdAt: string
   updatedAt: string
+  /** Kind of secret in the keychain (null: none), so listing never reads it. Absent on legacy profiles until first listed. */
+  savedSecretKind?: 'password' | 'passphrase' | null
 }
 
 /** What the renderer sends to create, update or connect without saving. */

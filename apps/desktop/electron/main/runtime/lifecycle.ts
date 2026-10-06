@@ -62,7 +62,7 @@ export function createRuntimeLifecycle({
   isQuitting,
   getDisplayLocale,
 }: RuntimeLifecycleDependencies): {
-  superviseRestart: (kind: RestartKind) => Promise<void>;
+  superviseRestart: (kind: RestartKind, reason?: "settings") => Promise<void>;
   bootHostStatus: (bootError: unknown) => HostStatusEvent;
   runtimeArch: () => ReturnType<typeof detectRuntimeArch>;
   bootBackends: () => Promise<void>;
@@ -144,7 +144,12 @@ export function createRuntimeLifecycle({
           return;
         }
         case "restarted": {
-          logger.app("runtime", "warn", kind + " restarted after crash");
+          const intentional = runs[event.kind]?.settings === true;
+          logger.app(
+            "runtime",
+            intentional ? "info" : "warn",
+            intentional ? kind + " restarted" : kind + " restarted after crash",
+          );
           sendToRenderer(IPC.event.hostStatus, {
             ok: true,
             component: kind,
@@ -166,8 +171,21 @@ export function createRuntimeLifecycle({
     },
   });
 
-  const superviseRestart = (kind: RestartKind): Promise<void> =>
-    supervisor.superviseRestart(kind);
+  // The running restart per kind and whether a settings change started it.
+  // Calls join a running loop, so a settings call must not relabel a crash.
+  const runs: Record<RestartKind, { run: Promise<void>; settings: boolean } | null> = {
+    host: null,
+    sidecar: null,
+  };
+  const superviseRestart = (kind: RestartKind, reason?: "settings"): Promise<void> => {
+    const run = supervisor.superviseRestart(kind);
+    if (runs[kind]?.run === run) return run;
+    const entry = { run, settings: reason === "settings" };
+    runs[kind] = entry;
+    return run.finally(() => {
+      if (runs[kind] === entry) runs[kind] = null;
+    });
+  };
 
   /**
    * Boot outcome pushed once the renderer has mounted. Known unrecoverable

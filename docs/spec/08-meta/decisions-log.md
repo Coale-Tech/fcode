@@ -7080,3 +7080,19 @@ must keep splitting are covered by `markdown-blocks.test.mjs`.
 - Agent Bash stays non-interactive and approval-gated, and there is still no
   plugin PTY permission. See ADR 0309, `03-runtime/01-ipc-protocol.md` §13a,
   and E2E-058.
+
+## 2026-10-06 — The accent is FileBird's sky blue (D626)
+
+- Decision D626 supersedes the neutral gray accent. `--ds-accent`,
+  `-hover` and `-soft` are Tailwind sky-600/500/400 (`#0284c7`,
+  `#0ea5e9`, `#38bdf8`) in both themes, matching FileBird's buttons, so
+  the embedded FileBird page and the shell share one brand colour.
+- Text and marks on an accent fill use `--ds-accent-foreground` (white)
+  in both themes, never `--ds-bg-primary`. White on sky-600 is ~4.1:1:
+  it meets the 3:1 bar for controls and large text, not 4.5:1 body text,
+  so accent fills carry short labels only.
+- The send button and the on-state switch track take the accent; the
+  switch knob is white in both themes. `--ds-accent-blue` aliases the
+  accent so subagent, debugger and work-panel highlights match.
+- FileBird follows Fcode's theme through `nativeTheme.themeSource`; its
+  renderer flips surfaces and pale inks under `prefers-color-scheme: light`.

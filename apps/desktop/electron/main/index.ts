@@ -145,6 +145,7 @@ import {
 import { createWorkPanelRuntime } from "./bootstrap/work-panel";
 import { createCloseBehaviorRuntime } from "./bootstrap/close-behavior";
 import { registerShutdownHandlers, type ShutdownState } from "./bootstrap/shutdown";
+import { BrowserPane } from "./browser-view";
 import { registerDiagnosticsIpc } from "./ipc/diagnostics-ipc";
 import { registerMarketIpc } from "./ipc/market-ipc";
 import { registerMcpIpc } from "./ipc/mcp-ipc";
@@ -672,6 +673,8 @@ const {
   announceTurnEnded,
   speech,
 } = pluginServices;
+// Raven's own partition keeps the Frappe `sid` away from the work browser.
+const ravenPane = new BrowserPane(() => undefined, "persist:raven");
 const { rememberPluginScopes, pluginActiveInProject, broadcastPluginPanelEvent, setCurrentWorkspacePath } =
   createWorkspaceScopeRuntime({
     pluginScopes,
@@ -1005,11 +1008,11 @@ async function withGitBranch<T extends { path?: string; name?: string } | null |
  * minimize-to-tray still needs it to bring the window back.
  */
 let runtimeLifecycle: ReturnType<typeof createRuntimeLifecycle> | null = null;
-const superviseRestart = (kind: "host" | "sidecar"): Promise<void> => {
+const superviseRestart = (kind: "host" | "sidecar", reason?: "settings"): Promise<void> => {
   if (!runtimeLifecycle) {
     return Promise.reject(new Error("runtime lifecycle is not initialized"));
   }
-  return runtimeLifecycle.superviseRestart(kind);
+  return runtimeLifecycle.superviseRestart(kind, reason);
 };
 
 const planUiProbe = createPlanUiProbe({
@@ -1259,6 +1262,7 @@ function registerIpc() {
     isDevelopmentBuild,
     browserHost,
     browserPane,
+    ravenPane,
     clipboardHistory,
     recordPastedClipboardFiles,
     currentWorkspacePath,
@@ -1289,7 +1293,7 @@ function registerIpc() {
     isDeveloperMode: () => developerMode,
     sendToRenderer,
     voiceService,
-    onProviderMutation: () => { void superviseRestart("sidecar"); },
+    onProviderMutation: () => { void superviseRestart("sidecar", "settings"); },
     kanban: {
       getBoard: () => loadBoard(dataDir),
       saveBoard: (board) => { void saveBoard(dataDir, board); },
@@ -1379,6 +1383,7 @@ registerApplicationStartup({
   bootHostStatus,
   flushPendingApplicationMenuCommands,
   invokeSessionCollaboration: sessionCollaboration.invoke,
+  isQuitting: () => quitting,
   onSessionQueueChange: () => {
     void sessionCollaboration.drain().catch((error: unknown) => {
       logger.app("runtime", "warn", "session callback drain failed", { data: String(error) });
@@ -1411,6 +1416,7 @@ const shutdownState: ShutdownState = {
   set quitConfirmed(value) {
     quitConfirmed = value;
   },
+  quitDialogPending: false,
   get closeBehavior() {
     return closeBehavior;
   },
@@ -1452,6 +1458,7 @@ registerShutdownHandlers({
   userMcp,
   mcpOAuth,
   browserPane,
+  ravenPane,
   pluginViews,
   updater,
   logger,

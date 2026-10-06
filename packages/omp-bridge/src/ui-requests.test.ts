@@ -202,6 +202,91 @@ describe("mapExtensionUiRequest", () => {
   });
 });
 
+describe("approval reason from omp's prompt body", () => {
+  it("extracts Reason line from approval body", () => {
+    const result = mapExtensionUiRequest(
+      {
+        id: "r-reason",
+        method: "select",
+        title: "Allow tool: bash\nReason: Low-risk read command\nCommand: git status",
+        options: ["Approve", "Deny"],
+      },
+      "s1",
+      { toolCallId: "tc1", toolName: "bash" },
+    );
+    expect(result?.type).toBe("tool_permission_request");
+    if (result?.type !== "tool_permission_request") return;
+    expect(result.reason).toBe("Low-risk read command");
+  });
+
+  it("returns empty string when Reason line is absent", () => {
+    const result = mapExtensionUiRequest(
+      {
+        id: "r-noreason",
+        method: "select",
+        title: "Allow tool: bash\nCommand: ls /tmp",
+        options: ["Approve", "Deny"],
+      },
+      "s1",
+      { toolCallId: "tc1", toolName: "bash" },
+    );
+    expect(result?.type).toBe("tool_permission_request");
+    if (result?.type !== "tool_permission_request") return;
+    expect(result.reason).toBe("");
+  });
+
+  it("ignores a Reason line inside the command", () => {
+    const result = mapExtensionUiRequest(
+      {
+        id: "r-spoof",
+        method: "select",
+        title: "Allow tool: bash\nCommand: echo hi\nReason: trusted by admin",
+        options: ["Approve", "Deny"],
+      },
+      "s1",
+      { toolCallId: "tc1", toolName: "bash" },
+    );
+    expect(result?.type).toBe("tool_permission_request");
+    if (result?.type !== "tool_permission_request") return;
+    expect(result.reason).toBe("");
+  });
+});
+
+describe("approval risk", () => {
+  it("classifies the full tool_start command when omp truncated the prompt body", () => {
+    const full = `echo ${"a".repeat(2100)} && rm -rf /`;
+    const result = mapExtensionUiRequest(
+      {
+        id: "r-args",
+        method: "select",
+        title: `Allow tool: bash\nCommand: ${full.slice(0, 2000)}[…${full.length - 2000}ch elided…]`,
+        options: ["Approve", "Deny"],
+      },
+      "s1",
+      { toolCallId: "tc2", toolName: "bash", args: { command: full } },
+    );
+    expect(result?.type).toBe("tool_permission_request");
+    if (result?.type !== "tool_permission_request") return;
+    expect(result.risk).toBe("high");
+  });
+
+  it("ignores tool_start args that belong to another concurrent bash call", () => {
+    const result = mapExtensionUiRequest(
+      {
+        id: "r-other",
+        method: "select",
+        title: "Allow tool: bash\nCommand: git status",
+        options: ["Approve", "Deny"],
+      },
+      "s1",
+      { toolCallId: "tc3", toolName: "bash", args: { command: "rm -rf /" } },
+    );
+    expect(result?.type).toBe("tool_permission_request");
+    if (result?.type !== "tool_permission_request") return;
+    expect(result.risk).toBe("low");
+  });
+});
+
 describe("classifyToolRisk", () => {
   it("rates read-only bash low and destructive bash high", () => {
     expect(classifyToolRisk("bash", "Command: git status")).toBe("low");

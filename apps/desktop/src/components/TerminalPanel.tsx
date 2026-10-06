@@ -124,6 +124,18 @@ function TerminalInstance({ cwd, visible }: { cwd?: string; visible: boolean }) 
     const observer = new ResizeObserver(fitToBox);
     observer.observe(container);
 
+    // A native dialog blurs the window; when it closes, give the keys back to
+    // the terminal if it had them, or they land on <body>.
+    let terminalWasActive = false;
+    const onWindowBlur = () => {
+      terminalWasActive = id !== null && container.contains(document.activeElement);
+    };
+    const onWindowFocus = () => {
+      if (terminalWasActive) terminal.focus();
+    };
+    window.addEventListener("blur", onWindowBlur);
+    window.addEventListener("focus", onWindowFocus);
+
     void api
       .terminalOpen({ side: "local", ...(cwd ? { cwd } : {}), cols: terminal.cols, rows: terminal.rows })
       .then((opened) => {
@@ -138,6 +150,8 @@ function TerminalInstance({ cwd, visible }: { cwd?: string; visible: boolean }) 
 
     return () => {
       disposed = true;
+      window.removeEventListener("blur", onWindowBlur);
+      window.removeEventListener("focus", onWindowFocus);
       observer.disconnect();
       stopData();
       stopExit();

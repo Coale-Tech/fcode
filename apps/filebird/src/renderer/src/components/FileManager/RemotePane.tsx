@@ -159,7 +159,7 @@ export function RemotePane({ remote, active, onActivate, onSwitchPane, ref, onDo
               onSwitchPane()
             }
           }}
-          className={`flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border bg-[#11141b] outline-none transition-colors ${
+          className={`flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border bg-fb-raised outline-none transition-colors ${
             active ? 'border-sky-500/35' : 'border-white/[0.07]'
           }`}
         >

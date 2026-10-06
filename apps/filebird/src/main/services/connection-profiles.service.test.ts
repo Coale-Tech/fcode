@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises'
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
@@ -13,7 +13,9 @@ import { ConnectionProfilesService, type Connector } from './connection-profiles
 class MemorySecrets implements SecretStore {
   readonly items = new Map<string, string>()
   failWrites = false
+  getCalls = 0
   async get(account: string): Promise<string | null> {
+    this.getCalls++
     return this.items.get(account) ?? null
   }
   async set(account: string, secret: string): Promise<void> {
@@ -205,6 +207,66 @@ describe('ConnectionProfilesService', () => {
       expect(listed.map((p) => p.name)).toEqual(['alpha', 'Server2', 'server10'])
       expect(JSON.stringify(listed)).not.toContain('right-password')
       expect(await readFile(join(dir, 'connections.json'), 'utf8')).not.toContain('right-password')
+    })
+  })
+
+  describe('savedSecretKind caching (no keychain on repeated list)', () => {
+    it('does not read the keychain on list() once savedSecretKind is set', async () => {
+      const { id } = await service.create(PASSWORD_INPUT)
+      await service.connect(id, { value: 'right-password', remember: true })
+      secrets.getCalls = 0
+
+      await service.list()
+      expect(secrets.getCalls).toBe(0)
+      expect((await service.list())[0]?.savedSecret).toBe('password')
+    })
+
+    it('clears savedSecretKind when the secret is forgotten', async () => {
+      const { id } = await service.create(PASSWORD_INPUT)
+      await service.connect(id, { value: 'right-password', remember: true })
+      await service.forgetSecret(id)
+      secrets.getCalls = 0
+
+      const listed = await service.list()
+      expect(listed[0]?.savedSecret).toBeNull()
+      expect(secrets.getCalls).toBe(0)
+    })
+
+    it('clears savedSecretKind when connecting with remember=false', async () => {
+      const { id } = await service.create(PASSWORD_INPUT)
+      await service.connect(id, { value: 'right-password', remember: true })
+      await service.connect(id, { value: 'right-password', remember: false })
+      secrets.getCalls = 0
+
+      const listed = await service.list()
+      expect(listed[0]?.savedSecret).toBeNull()
+      expect(secrets.getCalls).toBe(0)
+    })
+
+    it('migrates a legacy profile (no savedSecretKind) by reading the keychain once, then caches', async () => {
+      // Simulate a legacy profile: create it, then strip savedSecretKind from the JSON.
+      const { id } = await service.create(PASSWORD_INPUT)
+      // Write the secret directly so the legacy path can find it.
+      secrets.items.set(secretAccount(id, 'password'), 'right-password')
+      // Remove savedSecretKind by patching the JSON file to simulate an old profile.
+      // Strip savedSecretKind from the JSON to simulate a legacy profile without that field.
+      const json: unknown = JSON.parse(await readFile(join(dir, 'connections.json'), 'utf8'))
+      if (json !== null && typeof json === 'object' && 'connections' in json && Array.isArray(json.connections)) {
+        for (const c of json.connections) {
+          if (c !== null && typeof c === 'object') Reflect.deleteProperty(c, 'savedSecretKind')
+        }
+      }
+      await writeFile(join(dir, 'connections.json'), JSON.stringify(json))
+
+      secrets.getCalls = 0
+      const first = await service.list()
+      expect(first[0]?.savedSecret).toBe('password')
+      expect(secrets.getCalls).toBe(1) // one migration read
+
+      secrets.getCalls = 0
+      const second = await service.list()
+      expect(second[0]?.savedSecret).toBe('password')
+      expect(secrets.getCalls).toBe(0) // cached: no further reads
     })
   })
 

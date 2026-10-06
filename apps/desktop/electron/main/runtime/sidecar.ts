@@ -194,6 +194,20 @@ async function buildFcodeProvidersConfig(
     runtimeState.agentHostBridge?.ingest(envelope);
     sendToRenderer(IPC.event.agentMessage, envelope);
   };
+  const emitAndPersist = (envelope: AgentEventEnvelope) => {
+    emitAgentEvent(envelope);
+    const persistedMessage = persistAgentEvent(envelope);
+    if (persistedMessage) {
+      // The renderer may have reloaded while a long-running tool was open.
+      // Replay the completed row through the existing message_end contract so
+      // it can append the row when the original tool_start is no longer in
+      // the in-memory transcript.
+      emitAgentEvent({
+        ...envelope,
+        event: { type: "message_end", message: persistedMessage },
+      } satisfies AgentEventEnvelope);
+    }
+  };
   const activeToolCalls = new Map<
     string,
     {
@@ -226,6 +240,7 @@ async function buildFcodeProvidersConfig(
   const settleCrashedSession = async (
     sessionId: string,
     crashedTurnId: string,
+    replaced: boolean,
   ): Promise<void> => {
     const executionId = approvedExecutionIdsBySession.get(sessionId);
     if (runtimeState.host) {
@@ -260,7 +275,9 @@ async function buildFcodeProvidersConfig(
         type: "error",
         error: {
           code: "PLAN_APPROVAL_INTERRUPTED",
-          message: "The agent stopped unexpectedly and was restarted.",
+          message: replaced
+            ? "The agent restarted to apply a settings change."
+            : "The agent stopped unexpectedly and was restarted.",
           retriable: true,
         },
       },
@@ -334,18 +351,7 @@ async function buildFcodeProvidersConfig(
           },
         );
       }
-      emitAgentEvent(envelope);
-      const persistedMessage = persistAgentEvent(envelope);
-      if (persistedMessage) {
-        // The renderer may have reloaded while a long-running tool was open.
-        // Replay the completed row through the existing message_end contract so
-        // it can append the row when the original tool_start is no longer in
-        // the in-memory transcript.
-        emitAgentEvent({
-          ...envelope,
-          event: { type: "message_end", message: persistedMessage },
-        } satisfies AgentEventEnvelope);
-      }
+      emitAndPersist(envelope);
     }
     // omp-bridge fatal: forward to renderer so ChatSurface can render the
     // blocking "omp binary not found" panel (IPC.event.sidecarFatal).
@@ -417,6 +423,27 @@ async function buildFcodeProvidersConfig(
           signal,
         },
       });
+      // Rows are archived on tool_end: end the call as an error before
+      // settleCrashedSession closes the turn, so it survives a reload.
+      const envelope: AgentEventEnvelope = {
+        sessionId: tool.sessionId,
+        ts: Date.now(),
+        ...(tool.turnId ? { turnId: tool.turnId } : {}),
+        ...(tool.parentToolCallId ? { parentToolCallId: tool.parentToolCallId } : {}),
+        ...(tool.agentName ? { agentName: tool.agentName } : {}),
+        event: {
+          type: "tool_end",
+          toolCallId: tool.toolCallId,
+          result: [{
+            type: "text",
+            text: replaced
+              ? "Interrupted: the agent restarted to apply a settings change."
+              : "Interrupted: the agent stopped unexpectedly.",
+          }],
+          isError: true,
+        },
+      };
+      emitAndPersist(envelope);
     }
     // A sidecar crash closes live approval waiters before the replacement
     // sidecar starts. This prevents an old renderer response from waking a
@@ -428,7 +455,7 @@ async function buildFcodeProvidersConfig(
       // late cleanup must not settle or abort that newer turn.
       const crashedTurnId = activeTurns.get(sessionId);
       if (!crashedTurnId) continue;
-      void settleCrashedSession(sessionId, crashedTurnId).catch((error: unknown) => {
+      void settleCrashedSession(sessionId, crashedTurnId, replaced).catch((error: unknown) => {
         // The crash handler cannot await this and the sidecar is already gone:
         // log the failure instead of leaving the rejection unhandled.
         logger.app("runtime", "warn", "crashed-turn settlement failed", {

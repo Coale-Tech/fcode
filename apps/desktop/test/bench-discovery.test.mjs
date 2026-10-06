@@ -3,7 +3,7 @@
  * Tasks: DX1 — real discovery; E11 — lazy/cancellable; E12 — field-filtered site_config.
  */
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { chmodSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { join, delimiter } from "node:path";
 import { tmpdir } from "node:os";
 import test from "node:test";
@@ -150,22 +150,30 @@ test("discoverBenches aborts when AbortSignal is signalled (E11)", async (t) => 
 });
 
 // Gap 4 / T6: unreadable root appears in failedRoots, readable roots still work
-test("discoverBenches returns failedRoots for unreadable directories (T6 Gap4)", async (t) => {
+test("discoverBenches returns failedRoots for unreadable directories (T6 Gap4)", { skip: process.getuid?.() === 0 }, async (t) => {
   const goodRoot = mkdtempSync(join(tmpdir(), "bench-disc-good-"));
-  t.after(() => rmSync(goodRoot, { recursive: true, force: true }));
+  const badRoot = mkdtempSync(join(tmpdir(), "bench-disc-bad-"));
+  chmodSync(badRoot, 0o000);
+  t.after(() => {
+    chmodSync(badRoot, 0o700);
+    rmSync(badRoot, { recursive: true, force: true });
+    rmSync(goodRoot, { recursive: true, force: true });
+  });
   makeBench(goodRoot, { name: "okbench", version: "16.0.0" });
 
-  const badRoot = "/nonexistent/bench/root/t6test";
-
   const { benches, failedRoots } = await discoverBenches({ roots: [goodRoot, badRoot] });
-  // The good root bench is found
   assert.equal(benches.length, 1);
   assert.equal(benches[0].version, 16);
-  // The bad root is surfaced in failedRoots
-  assert.ok(failedRoots.length >= 1, "failedRoots must include the unreadable path");
   const failed = failedRoots.find((f) => f.root === badRoot);
   assert.ok(failed, "badRoot must appear in failedRoots");
   assert.ok(typeof failed.reason === "string" && failed.reason.length > 0, "reason must be non-empty");
+});
+
+// A fresh machine has no ~/ERPNext: that is the zero-bench state, not a failure.
+test("discoverBenches treats a missing root as empty, not failed", async () => {
+  const { benches, failedRoots } = await discoverBenches({ roots: ["/nonexistent/bench/root/t6test"] });
+  assert.deepEqual(benches, []);
+  assert.deepEqual(failedRoots, []);
 });
 
 // B10(a): dirs without site_config.json must not appear as sites
@@ -244,4 +252,28 @@ test("defaultRoots() splits multiple paths in FCODE_BENCH_ROOTS (B10b)", (t) => 
   });
 
   assert.deepEqual(defaultRoots(), paths);
+});
+
+// A picked folder replaces ~/ERPNext; FCODE_BENCH_ROOTS still wins over it.
+test("defaultRoots() prefers the picked folder over ~/ERPNext, env over both", (t) => {
+  const saved = process.env.FCODE_BENCH_ROOTS;
+  t.after(() => {
+    if (saved !== undefined) process.env.FCODE_BENCH_ROOTS = saved;
+    else delete process.env.FCODE_BENCH_ROOTS;
+  });
+  delete process.env.FCODE_BENCH_ROOTS;
+  assert.deepEqual(defaultRoots(["/picked"]), ["/picked"]);
+  assert.deepEqual(defaultRoots([]), DEFAULT_ROOTS);
+  process.env.FCODE_BENCH_ROOTS = "/env";
+  assert.deepEqual(defaultRoots(["/picked"]), ["/env"]);
+});
+
+// Picking the bench folder itself, not its parent, still finds the bench.
+test("discoverBenches lists a root that is itself a bench", async (t) => {
+  const root = mkdtempSync(join(tmpdir(), "bench-disc-self-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  makeBench(root, { name: "only", version: "16.0.0" });
+
+  const { benches } = await discoverBenches({ roots: [join(root, "only")] });
+  assert.deepEqual(benches.map((b) => b.path), [join(root, "only")]);
 });

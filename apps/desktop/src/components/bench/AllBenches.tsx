@@ -26,6 +26,8 @@ export function AllBenches({
   onOpen,
   onStart,
   onStop,
+  roots,
+  onPickRoot,
 }: {
   benches: BenchSummary[];
   statusOf: (bench: BenchSummary) => BenchStatus;
@@ -34,6 +36,9 @@ export function AllBenches({
   onOpen: (bench: BenchSummary) => void;
   onStart: (bench: BenchSummary) => void;
   onStop: (bench: BenchSummary) => void;
+  /** Folders scanned for benches. */
+  roots: string[];
+  onPickRoot: () => void;
 }) {
   const [query, setQuery] = useState("");
   const [chip, setChip] = useState<BenchChip>("all");
@@ -69,6 +74,9 @@ export function AllBenches({
             aria-label="Filter benches"
           />
         </label>
+        <button type="button" className="wb-btn wb-btn-subtle wb-btn-sm" onClick={onPickRoot} title={`Scanning ${roots.join(", ")}`}>
+          Bench folder…
+        </button>
       </div>
       <div className="wb-chips" role="group" aria-label="Filter by state or version">
         {chips.map((c) => (

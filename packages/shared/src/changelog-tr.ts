@@ -2,6 +2,17 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const trEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.5",
+    "date": "2026-10-06",
+    "highlights": [
+      "Çıkış: “Fcode'dan çıkılsın mı?” penceresi açıkken ⌘Q'ya yeniden basmak artık yanıtınızı beklemeden çıkmıyor ve Fcode kapanırken zamanlanmış görevler başlamıyor.",
+      "Ajan çökmeleri: Çökme sırasında çalışan bir araç artık “Kesildi” olarak bitiyor ve bu yeniden yüklemeden sonra da korunuyor; ajan geri geldiğinde “Ajan durdu” paneli kayboluyor. İzin kartları omp'nin belirttiği nedeni gösteriyor ve uzun komutların riskini komutun tamamına göre değerlendiriyor.",
+      "FileBird: Kayıtlı bağlantı listesi artık her bağlantı için anahtar zinciri erişimi istemiyor, FileBird'ü yalnızca FileBird görünümü ve Fcode penceresi çağırabiliyor ve tümleşik terminal bir iletişim kutusundan sonra klavye odağını geri alıyor.",
+      "Görünüm ve modeller: Fcode artık düğmeler, anahtarlar ve seçim için FileBird'ün mavisini kullanıyor; FileBird de Fcode'un açık veya koyu temasını izliyor. Yeni sohbetler çipinde gösterilen modelle çalışıyor, model menüsü sağlayıcı adlarınızı listeliyor ve ayar değişikliği sonrası ajan yeniden başlatması artık çökme olarak değil, olduğu gibi bildiriliyor.",
+      "Bench'ler: Bench'leriniz ~/ERPNext içinde değilse klasörlerini Bench sayfasından seçin; Fcode bu seçimi hatırlar. ~/ERPNext yoksa artık hata yerine kurulum kılavuzu gösteriliyor.",
+    ],
+  },
+  {
     "version": "0.18.4",
     "date": "2026-10-04",
     "highlights": [

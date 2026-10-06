@@ -59,6 +59,19 @@ test("-rc prerelease tag + sign_macos=false passes (unsigned RC artifacts are fi
   assert.equal(result.code, 0, "prerelease tags must pass");
 });
 
+test("stable tag + sign_macos=false passes only with allow_unsigned_stable=true", () => {
+  const env = {
+    GITHUB_EVENT_NAME: "workflow_dispatch",
+    SIGN_MACOS: "false",
+    GITHUB_REF: "refs/tags/v1.2.3",
+    GITHUB_REF_NAME: "v1.2.3",
+  };
+  const allowed = runCheck({ ...env, ALLOW_UNSIGNED_STABLE: "true" });
+  assert.equal(allowed.code, 0, "explicit opt-in must pass");
+  assert.match(allowed.stdout, /::warning::Publishing v1\.2\.3 as an unsigned stable release/);
+  assert.equal(runCheck({ ...env, ALLOW_UNSIGNED_STABLE: "false" }).code, 1);
+});
+
 test("branch dispatch + sign_macos=false passes (debug lane)", () => {
   const result = runCheck({
     GITHUB_EVENT_NAME: "workflow_dispatch",

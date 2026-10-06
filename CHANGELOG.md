@@ -10,6 +10,35 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 
+## [0.18.5] — 2026-10-06
+
+> First stable release since 0.17.1. It ships everything in 0.18.2, 0.18.3 and 0.18.4 (published only as the prereleases 0.18.2-rc.1 and 0.18.4-rc.1 to rc.3) plus the fixes below. The builds are unsigned: the Windows installer and Linux AppImage update in place; on macOS download the new build from the Releases page.
+
+### Compatibility
+
+| Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
+|-------|-----------------|-----------|-----------------|--------|
+| 0.18.5 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
+
+### Fixed
+
+- Pressing ⌘Q again while the "Quit Fcode?" dialog is open no longer quits without waiting for your answer. Scheduled tasks no longer start while Fcode is quitting, and Raven's browser view is closed on quit.
+- A tool that was running when the agent crashed, or restarted to apply a settings change, now ends as "Interrupted" instead of staying in progress, also after a reload, and the "agent stopped" panel clears once the agent is back. Agent restarts caused by provider changes are logged as restarts, not as crashes.
+- Permission cards show the reason omp gives for asking, and rate a long shell command by the full command instead of omp's 2,000-character preview.
+- omp notices that arrive before any chat is open are dropped instead of failing on the host with "sessionId is required".
+- Deleting a chat also deletes its omp history folder.
+- FileBird: listing saved connections no longer reads the keychain once per connection (unsigned builds asked for keychain access each time); only the FileBird view and the Fcode window can call FileBird, not the Raven or work-panel browser views; the host-key dialog no longer runs two sentences together; the integrated terminal gets keyboard focus back after a dialog closes.
+- A new chat runs on the model its chip shows. omp kept the model of the previous chat (or of omp's own settings), so a new chat could answer from a different model than the one displayed. Picking an Fcode model in the omp menu now also updates the chat's chip, and the menu groups show your provider names instead of internal ids.
+- An agent restart caused by a settings change now shows "The agent restarted to apply a settings change." instead of the crash message.
+- Bench page: when `~/ERPNext` doesn't exist, the page shows the "No Frappe benches found" setup guide instead of a red "Failed" row asking you to fix permissions. A folder that exists but can't be read is still reported.
+
+### Changed
+
+- Release workflow: a stable tag can be published without macOS signing only through the explicit `allow_unsigned_stable` input. Without it, an unsigned stable dispatch still fails.
+- The accent colour is now FileBird's sky blue in both themes: primary buttons, the send button, toggles, selected chips and progress bars. Text on blue is white.
+- Bench page: **Choose bench folder…** (on the empty page) and **Bench folder…** (above the bench table) let you pick where your benches are instead of `~/ERPNext`. The choice is kept across restarts; picking a single bench folder works too.
+- FileBird follows Fcode's light or dark theme.
+
 ## [0.18.4] — 2026-10-04
 
 ### Compatibility

@@ -63,7 +63,7 @@
   --ds-raised:        var(--surface-elevation-2);
   --ds-raised-shadow: var(--shadow-sm);
 
-  /* Focus ring (tied to accent so themes stay monochrome) */
+  /* Focus ring (tied to accent) */
   --ds-focus: var(--ds-accent);
 
   /* Settings / fields */
@@ -118,16 +118,17 @@
   --ds-bg:               var(--surface-base);
   --ds-border:           var(--ds-border-default);
   --ds-danger:           var(--ds-error);
-  --ds-accent-foreground:var(--ink-base);
+  --ds-accent-foreground:var(--white);
   /* Status inks: Espresso steps that pass WCAG 4.5:1 on --surface-base in both themes
      (light ≥4.97:1, dark ≥6.88:1); guarded by t13-status-token-contrast.test.mjs. */
   --ds-success:          var(--ink-green-8);
   --ds-warning:          var(--ink-amber-9);
   --ds-error:            var(--ink-red-8);
-  /* Accent = Espresso solid gray button; the ramp flips per theme. */
-  --ds-accent:           var(--surface-gray-10);
-  --ds-accent-hover:     var(--surface-gray-9);
-  --ds-accent-soft:      var(--surface-gray-8);
+  /* Accent = FileBird's sky blue (Tailwind sky-600/500/400), same in both themes. */
+  --ds-accent:           #0284c7;
+  --ds-accent-hover:     #0ea5e9;
+  --ds-accent-soft:      #38bdf8;
+  --ds-accent-blue:      var(--ds-accent);
   --ds-text-tertiary:    var(--ink-gray-3);
   --ds-main-pane-min-width: 450px;
 
@@ -195,7 +196,7 @@
   --ds-switch-track-off:       var(--surface-alpha-gray-2);
   --ds-switch-track-off-hover: var(--surface-alpha-gray-3);
   --ds-switch-knob-off:        var(--ink-gray-6);
-  --ds-switch-knob-on:         var(--surface-base);
+  --ds-switch-knob-on:         var(--white);
 
   /* Mermaid diagram canvas */
   --ds-mermaid-canvas: var(--surface-base);
