@@ -1,6 +1,6 @@
 {
   "name": "@pi-desktop/racp",
-  "version": "0.18.4",
+  "version": "0.18.4-rc.3",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
