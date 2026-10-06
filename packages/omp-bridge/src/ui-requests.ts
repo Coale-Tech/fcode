@@ -162,7 +162,9 @@ export function mapExtensionUiRequest(
   const risk = (name: string, body: string) => {
     const cut = /^Command: ([\s\S]*?)\[…\d+ch elided…\]/m.exec(body)?.[1];
     const full = cut !== undefined && typeof command === "string" && command.startsWith(cut);
-    return classifyToolRisk(name, full ? command : body);
+    // Prefixed so the classifier's `^Command: ` capture starts at index 0, not
+    // at a later line of the command that happens to begin with `Command: `.
+    return classifyToolRisk(name, full ? `Command: ${command}` : body);
   };
 
   switch (req.method) {

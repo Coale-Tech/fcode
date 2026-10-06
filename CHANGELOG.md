@@ -10,6 +10,10 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 
+### Fixed
+
+- A shell command longer than 2,000 characters with a later line starting `Command: ` could get a "Low risk" badge even though an earlier line was destructive.
+
 ## [0.18.5] — 2026-10-06
 
 > First stable release since 0.17.1. It ships everything in 0.18.2, 0.18.3 and 0.18.4 (published only as the prereleases 0.18.2-rc.1 and 0.18.4-rc.1 to rc.3) plus the fixes below. The builds are unsigned: the Windows installer and Linux AppImage update in place; on macOS download the new build from the Releases page.
