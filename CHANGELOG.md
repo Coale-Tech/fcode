@@ -10,6 +10,14 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 
+## [0.18.6] — 2026-10-07
+
+### Compatibility
+
+| Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
+|-------|-----------------|-----------|-----------------|--------|
+| 0.18.6 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
+
 ### Changed
 
 - Buttons across Fcode use one style, sized like the Espresso (frappe-ui) Button: 28px tall with 14px text by default, 24px with 12px text in dense spots. Primary, secondary, ghost and red "danger" are the only kinds. Segmented controls use Espresso's 13px tab text.

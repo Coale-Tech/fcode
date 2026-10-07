@@ -30,6 +30,14 @@ export type ChangelogEntry = {
 
 const enEntries: ChangelogEntry[] = [
   {
+    version: "0.18.6",
+    date: "2026-10-07",
+    highlights: [
+      "Buttons across Fcode now share one style sized like the Espresso button; keyboard focus and selected chips and cards are outlined in Fcode's blue, and the buttons in Settings → Memory now match the rest of the app.",
+      "A long shell command with a later line starting \"Command: \" can no longer get a Low risk badge when an earlier line is destructive.",
+    ],
+  },
+  {
     version: "0.18.5",
     date: "2026-10-06",
     highlights: [
@@ -924,6 +932,14 @@ const enEntries: ChangelogEntry[] = [
 
 const zhCNEntries: ChangelogEntry[] = [
   {
+    version: "0.18.6",
+    date: "2026-10-07",
+    highlights: [
+      "Fcode 中的按钮现在统一为一种样式，尺寸与 Espresso 按钮一致；键盘焦点以及选中的标签和卡片改用 Fcode 的蓝色描边，“设置 → 记忆”中的按钮也与应用其余部分一致。",
+      "当较长的 shell 命令中后面某行以“Command: ”开头时，即使前面有破坏性操作，也不会再被标为“低风险”。",
+    ],
+  },
+  {
     version: "0.18.5",
     date: "2026-10-06",
     highlights: [
@@ -1816,6 +1832,14 @@ const zhCNEntries: ChangelogEntry[] = [
 ];
 
 const zhTWEntries: ChangelogEntry[] = [
+  {
+    version: "0.18.6",
+    date: "2026-10-07",
+    highlights: [
+      "Fcode 中的按鈕現在統一為一種樣式，尺寸與 Espresso 按鈕一致；鍵盤焦點以及選取的標籤和卡片改用 Fcode 的藍色外框，「設定 → 記憶」中的按鈕也與應用程式其餘部分一致。",
+      "當較長的 shell 命令中後面某行以「Command: 」開頭時，即使前面有破壞性操作，也不會再被標為「低風險」。",
+    ],
+  },
   {
     version: "0.18.5",
     date: "2026-10-06",

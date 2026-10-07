@@ -2,6 +2,14 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const trEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.6",
+    "date": "2026-10-07",
+    "highlights": [
+      "Fcode'daki düğmeler artık Espresso düğmesi boyutunda tek bir stili paylaşıyor; klavye odağı ile seçili çipler ve kartlar Fcode'un mavisiyle çerçeveleniyor ve Ayarlar → Bellek'teki düğmeler uygulamanın geri kalanıyla uyumlu hale geldi.",
+      "Sonraki bir satırı “Command: ” ile başlayan uzun bir kabuk komutu, önceki bir satır yıkıcı olduğunda artık “Düşük risk” rozeti almıyor.",
+    ],
+  },
+  {
     "version": "0.18.5",
     "date": "2026-10-06",
     "highlights": [
