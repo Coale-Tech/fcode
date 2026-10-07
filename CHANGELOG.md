@@ -17,7 +17,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Settings > Skills > **Self-improving Frappe skills**: lists the commits and files the agent added to the local frappeskills clone. **Open PR** pushes `fcode/self-improve` and opens the PR with `gh`, and **Discard changes** returns the clone to upstream.
 - The skill packs re-sync every 6 hours while the app stays open, not only at launch.
 - Skill curator (Hermes-style): records which skills the agent loads, marks agent-created skills `stale` after 14 unused days and moves them to `<dataDir>/skills/.curator/archive` after 30. It never deletes, keeps an audit ledger, and runs only when the app has been idle 2 hours and 7 days have passed. Settings > Skills lists usage with Pin and Restore. Configure with `skills.curator.*`.
-- Background skill review (off by default, `skills.review.enabled`): every N turns (default 10) a tool-less `omp -p` run on a model of your choice reads the recent conversation and commits reusable lessons to `fcode/self-improve`. Token-capped, never pushes.
+- Background skill review (off by default, `skills.review.enabled`): every N turns (default 10) a tool-less, memory-less `omp -p` run on omp's cheap `@smol` model (or one you choose) reads the recent conversation and commits reusable lessons to `fcode/self-improve`. Token-capped, never pushes.
 - Skill lint: secrets, prompt-injection phrases, invisible Unicode and invalid frontmatter block **Open PR** and review commits; incident-log shape and oversized bodies show as warnings.
 - Bounded always-on memory: `memory.injectMaxChars` (default 6000, 0 = unlimited) caps the memory block built at session start, and Settings > Memory shows how full it is.
 

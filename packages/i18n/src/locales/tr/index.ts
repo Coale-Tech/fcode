@@ -1720,7 +1720,7 @@ sklm: {
     skillReviewInterval: "Review every N turns",
     skillReviewIntervalDesc: "Number of completed agent turns between review passes (1–100).",
     skillReviewModel: "Review model",
-    skillReviewModelDesc: "Model for the background review (empty = omp default/cheap model).",
+    skillReviewModelDesc: "Model for the background review (empty = omp's small, cheap model).",
     skillReviewModelPlaceholder: "e.g. anthropic/claude-haiku-3-5",
     skillReviewMaxInputTokens: "Max input tokens",
     skillReviewMaxInputTokensDesc: "Token cap on the transcript sent for review (1000–32000).",
