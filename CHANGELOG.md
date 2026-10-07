@@ -14,6 +14,8 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Frappe skill packs: [frappe/skills](https://github.com/frappe/skills) (official) and [Coale-Tech/frappeskills](https://github.com/Coale-Tech/frappeskills) ship with Fcode and are cloned into `<dataDir>/skills/` on every launch, then fast-forwarded. The bundled snapshot is used offline until the first clone lands.
 - Self-improving skills: the Coale-Tech clone sits on a local `fcode/self-improve` branch. The new `fcode-skill-improve` skill tells the agent to commit verified lessons there. Updates rebase those commits onto upstream and never overwrite them. A PR to Coale-Tech/frappeskills is opened only when you approve.
 - Settings > Skills > **Load ~/.claude/skills** toggle.
+- Settings > Skills > **Self-improving Frappe skills**: lists the commits and files the agent added to the local frappeskills clone. **Open PR** pushes `fcode/self-improve` and opens the PR with `gh`, and **Discard changes** returns the clone to upstream.
+- The skill packs re-sync every 6 hours while the app stays open, not only at launch.
 
 ### Changed
 - `~/.claude/skills` is no longer loaded by default. Every personal skill was added to the prompt on every turn; turn it back on in Settings > Skills.

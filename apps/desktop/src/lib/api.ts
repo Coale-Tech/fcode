@@ -154,6 +154,8 @@ import type {
   OmpSessionBranchMessagesResult,
   OmpTodoPhase,
   OmpInstalledSkillsListResult,
+  OmpSkillPackOpenPrResult,
+  OmpSkillPackStatus,
   OmpHistoricalStatsResult,
   OmpWorktreeListResult,
   OmpWorktreeClearResult,
@@ -1785,6 +1787,12 @@ export const api = {
   /** List omp skillshare packages installed in ~/.omp/agent/ (reads JSON files directly). */
   ompInstalledSkillsList: () =>
     invoke<OmpInstalledSkillsListResult>(IPC.invoke.ompInstalledSkillsList),
+  /** Local changes of the self-improving frappeskills clone. */
+  ompSkillPackStatus: () => invoke<OmpSkillPackStatus>(IPC.invoke.ompSkillPackStatus),
+  /** Push `fcode/self-improve` and open a PR on Coale-Tech/frappeskills. */
+  ompSkillPackOpenPr: () => invoke<OmpSkillPackOpenPrResult>(IPC.invoke.ompSkillPackOpenPr),
+  /** Drop the local self-improvements. */
+  ompSkillPackDiscard: () => invoke<OmpSkillPackStatus>(IPC.invoke.ompSkillPackDiscard),
   /** Historical AI usage stats from `omp stats --json`. */
   ompHistoricalStats: () =>
     invoke<OmpHistoricalStatsResult>(IPC.invoke.ompHistoricalStats),

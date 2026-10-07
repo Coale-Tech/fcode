@@ -48,6 +48,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { shell } from "electron";
 import type { AgentSidecar } from "../agent-sidecar";
+import { skillPackDiscard, skillPackOpenPr, skillPackStatus } from "../skill-packs";
 import type { IpcRegistrar } from "./types";
 
 const execFileP = promisify(execFile);
@@ -385,6 +386,15 @@ export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpc
     }));
     return { skills };
   });
+
+  // ── self-improving skill pack (local git clone, see ../skill-packs.ts) ─────
+  handle(IPC.invoke.ompSkillPackStatus, () => skillPackStatus());
+  handle(IPC.invoke.ompSkillPackOpenPr, async () => {
+    const pr = await skillPackOpenPr();
+    if (pr.url.startsWith("https://github.com/")) void shell.openExternal(pr.url);
+    return pr;
+  });
+  handle(IPC.invoke.ompSkillPackDiscard, () => skillPackDiscard());
 
   // ── omp.stats.historical ───────────────────────────────────────────────────
   // Shells out to `omp stats --json` and returns a compact subset.
