@@ -392,6 +392,12 @@ export const IPC = {
     ompSubagentMessages: "pi-desktop/omp/subagent/messages",
     /** List omp skillshare packages installed in ~/.omp/agent/ (user-global). */
     ompInstalledSkillsList: "pi-desktop/omp/skills/installed/list",
+    /** Local changes of the self-improving Coale-Tech/frappeskills clone. */
+    ompSkillPackStatus: "pi-desktop/omp/skills/pack/status",
+    /** Push the self-improve branch and open a PR on Coale-Tech/frappeskills. */
+    ompSkillPackOpenPr: "pi-desktop/omp/skills/pack/open-pr",
+    /** Throw away the local self-improvements and return to upstream. */
+    ompSkillPackDiscard: "pi-desktop/omp/skills/pack/discard",
     /** Historical AI usage stats from omp stats --json (subset of DashboardStats). */
     ompHistoricalStats: "pi-desktop/omp/stats/historical",
     /** List agent-managed git worktrees under ~/.omp/wt/. */

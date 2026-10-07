@@ -532,3 +532,27 @@ export interface OmpUserProfileSetResult {
   ok: boolean;
   error?: string;
 }
+
+/** One local commit on the self-improvement branch of a skill pack clone. */
+export interface OmpSkillPackCommit {
+  sha: string;
+  subject: string;
+}
+
+/** State of the self-improving skill pack (`<dataDir>/skills/frappeskills`). */
+export interface OmpSkillPackStatus {
+  /** False until the first background clone has landed (bundled snapshot in use). */
+  cloned: boolean;
+  branch: string;
+  /** Commits on the branch that upstream does not have yet. */
+  commits: OmpSkillPackCommit[];
+  /** Files changed against upstream, committed or not. */
+  files: string[];
+  /** True when the working tree has edits that are not committed. */
+  dirty: boolean;
+}
+
+/** Result of `ompSkillPackOpenPr`. */
+export interface OmpSkillPackOpenPrResult {
+  url: string;
+}

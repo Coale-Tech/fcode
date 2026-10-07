@@ -94,10 +94,16 @@ export async function prepareSelfImprovement(dataDir: string): Promise<void> {
   }
 }
 
-/** Fire-and-forget: sync every pack, then ready the self-improvement branch. */
-export function syncSkillPacksInBackground(dataDir: string, log: (line: string) => void): void {
-  void (async () => {
-    for (const pack of SKILL_PACKS) log(`skill-pack ${pack.name}: ${await syncSkillPack(dataDir, pack)}`);
-    await prepareSelfImprovement(dataDir);
-  })().catch((e) => log(`skill-pack sync error: ${String(e)}`));
+/** Re-sync while the app stays open; launch alone would let a week-long session go stale. */
+export const SKILL_PACK_SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000;
+
+/** Fire-and-forget: sync every pack now and every few hours, then ready the self-improvement branch. */
+export function syncSkillPacksInBackground(dataDir: string, log: (line: string) => void): NodeJS.Timeout {
+  const pass = () =>
+    (async () => {
+      for (const pack of SKILL_PACKS) log(`skill-pack ${pack.name}: ${await syncSkillPack(dataDir, pack)}`);
+      await prepareSelfImprovement(dataDir);
+    })().catch((e) => log(`skill-pack sync error: ${String(e)}`));
+  void pass();
+  return setInterval(() => void pass(), SKILL_PACK_SYNC_INTERVAL_MS).unref();
 }

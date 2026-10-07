@@ -2,8 +2,11 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { resolveSkillPackDirs, SELF_IMPROVE_BRANCH, syncSkillPack, prepareSelfImprovement } from "./skill-packs.js";
+
+// Real git subprocesses; the default 5s is too tight on a loaded CI box.
+vi.setConfig({ testTimeout: 30_000, hookTimeout: 30_000 });
 
 const sh = (cwd: string, ...args: string[]) => execFileSync("git", args, { cwd, encoding: "utf8" }).trim();
 
