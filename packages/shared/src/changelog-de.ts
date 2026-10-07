@@ -2,6 +2,14 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const deEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.6",
+    "date": "2026-10-07",
+    "highlights": [
+      "Schaltflächen in Fcode haben jetzt einen einheitlichen Stil in der Größe der Espresso-Schaltfläche; Tastaturfokus sowie ausgewählte Chips und Karten sind in Fcodes Blau umrandet, und die Schaltflächen unter Einstellungen → Gedächtnis passen jetzt zum Rest der App.",
+      "Ein langer Shell-Befehl mit einer späteren Zeile, die mit „Command: “ beginnt, erhält nicht mehr das Etikett „Geringes Risiko“, wenn eine frühere Zeile destruktiv ist.",
+    ],
+  },
+  {
     "version": "0.18.5",
     "date": "2026-10-06",
     "highlights": [

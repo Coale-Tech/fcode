@@ -2,6 +2,14 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const esEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.6",
+    "date": "2026-10-07",
+    "highlights": [
+      "Los botones de Fcode comparten ahora un único estilo con el tamaño del botón Espresso; el foco del teclado y los chips y tarjetas seleccionados se resaltan con el azul de Fcode, y los botones de Ajustes → Memoria ya coinciden con el resto de la app.",
+      "Un comando de shell largo con una línea posterior que empieza por «Command: » ya no recibe la etiqueta de riesgo bajo cuando una línea anterior es destructiva.",
+    ],
+  },
+  {
     "version": "0.18.5",
     "date": "2026-10-06",
     "highlights": [

@@ -2,6 +2,14 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const koEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.6",
+    "date": "2026-10-07",
+    "highlights": [
+      "Fcode의 모든 버튼이 Espresso 버튼 크기의 단일 스타일을 사용하며, 키보드 포커스와 선택된 칩·카드는 Fcode의 파란색 윤곽선으로 표시되고, 설정 → 메모리의 버튼도 앱의 나머지 부분과 같아졌습니다.",
+      "긴 셸 명령의 뒷줄이 'Command: '로 시작하더라도, 앞줄에 파괴적인 명령이 있으면 더 이상 '낮은 위험' 배지를 받지 않습니다.",
+    ],
+  },
+  {
     "version": "0.18.5",
     "date": "2026-10-06",
     "highlights": [

@@ -2,6 +2,14 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const frEntries: ChangelogEntry[] = [
   {
+    "version": "0.18.6",
+    "date": "2026-10-07",
+    "highlights": [
+      "Les boutons de Fcode partagent désormais un seul style, à la taille du bouton Espresso ; le focus clavier ainsi que les puces et cartes sélectionnées sont cernés du bleu de Fcode, et les boutons de Réglages → Mémoire s’alignent sur le reste de l’application.",
+      "Une longue commande shell dont une ligne ultérieure commence par « Command : » ne reçoit plus le badge de risque faible lorsqu’une ligne précédente est destructrice.",
+    ],
+  },
+  {
     "version": "0.18.5",
     "date": "2026-10-06",
     "highlights": [
