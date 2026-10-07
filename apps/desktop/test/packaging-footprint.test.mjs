@@ -230,6 +230,12 @@ test("packaging keeps only shipped locales and excludes non-runtime artifacts", 
       from: "resources/fcode-skills",
       to: "fcode-skills",
     },
+    // Offline snapshot of the two Frappe skill packs; live clones in the data
+    // dir replace it once the first sync lands (omp-bridge/src/skill-packs.ts).
+    {
+      from: "resources/skill-packs",
+      to: "skill-packs",
+    },
     // FileBird's own preload and renderer load as file:// pages in its view (ADR 0309).
     {
       from: "../filebird/out/preload",

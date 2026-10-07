@@ -1,0 +1,180 @@
+<!--
+  List page template — targets frappe-ui 1.0.0-beta.29 (v1).
+  Replace {{ placeholder }} tokens: page_title, page_description, route_base,
+  doctype, app_name, plural_snake.
+  0.1.x (crm/node_modules/frappe-ui 0.1.261) differences:
+    - No `useList` composable — use `createResource({ url, params, auto })` or
+      the legacy `list.js`/`createListResource` pattern instead.
+    - `FeatherIcon` is the only icon component; there is no `lucide-*` class
+      convention.
+  See frappe-ui-list-and-editor.md for full ListView / frappe-ui/list APIs,
+  and frappe-ui-data-fetching.md for useList's full option/return shape.
+-->
+<template>
+  <div class="p-4 space-y-4">
+    <PageHeader>
+      <div>
+        <h1 class="text-xl font-bold text-ink-gray-9">{{ page_title }}</h1>
+        <p class="text-sm text-ink-gray-6">{{ page_description }}</p>
+      </div>
+      <div class="flex gap-2">
+        <Button variant="solid" @click="$router.push('/{{ route_base }}/new')">
+          <template #prefix><span class="lucide-plus size-4" /></template>
+          New {{ doctype }}
+        </Button>
+        <Button variant="outline" :loading="list.loading" @click="list.reload()">
+          <template #prefix><span class="lucide-refresh-cw size-4" /></template>
+          Refresh
+        </Button>
+      </div>
+    </PageHeader>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <NumberChart v-for="stat in stats" :key="stat.key" :config="stat.config" />
+    </div>
+
+    <div class="bg-surface-white rounded-lg shadow-sm">
+      <!-- Tabs -->
+      <Tabs v-model="activeTabIndex" :tabs="tabs">
+        <template #tab-panel />
+      </Tabs>
+
+      <!-- Search & filter -->
+      <div class="p-3 border-b border-outline-gray-2 flex gap-4 items-center flex-wrap">
+        <FormControl
+          v-model="filters.search"
+          placeholder="Search..."
+          class="flex-1 min-w-[200px]"
+        />
+        <FormControl v-model="filters.status" type="select" :options="statusOptions" />
+        <Button variant="outline" @click="clearFilters">Clear</Button>
+      </div>
+
+      <!-- Error -->
+      <div v-if="list.error" class="p-4 border-b border-outline-gray-2">
+        <div class="flex items-center gap-2 text-ink-red-3">
+          <span class="lucide-alert-triangle size-5" />
+          <span class="font-medium">Error loading data</span>
+        </div>
+        <p class="text-sm text-ink-red-3 mt-1">
+          {{ list.error.messages?.[0] ?? list.error.message }}
+        </p>
+        <Button variant="outline" theme="red" size="sm" class="mt-2" @click="list.reload()">
+          Try Again
+        </Button>
+      </div>
+
+      <!-- List -->
+      <ListView
+        v-else
+        class="min-h-[400px]"
+        :columns="columns"
+        :rows="list.data ?? []"
+        :options="listOptions"
+      />
+
+      <!-- Pagination -->
+      <div
+        v-if="list.data?.length"
+        class="flex items-center justify-between border-t border-outline-gray-2 px-4 py-3"
+      >
+        <span class="text-sm text-ink-gray-6">Page {{ page }}</span>
+        <div class="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            :disabled="!list.hasPreviousPage"
+            @click="list.previous(); page--"
+          >
+            <span class="lucide-chevron-left size-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            :disabled="!list.hasNextPage"
+            @click="list.next(); page++"
+          >
+            <span class="lucide-chevron-right size-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { computed, ref } from 'vue'
+import { useList } from 'frappe-ui'
+
+// Config — replace at scaffold time
+const page_title = '{{ page_title }}'
+const page_description = '{{ page_description }}'
+const route_base = '{{ route_base }}'
+const doctype = '{{ doctype }}'
+
+const activeTabIndex = ref(0)
+const page = ref(1)
+const filters = ref({ search: '', status: '' })
+
+const tabs = [
+  { label: 'All' },
+  { label: 'Active' },
+  { label: 'Draft' },
+  { label: 'Inactive' },
+]
+const statusOptions = ['', 'Active', 'Draft', 'Inactive']
+
+const list = useList({
+  doctype,
+  fields: ['name', 'status', 'modified'],
+  filters: computed(() => ({
+    status:
+      filters.value.status ||
+      (activeTabIndex.value > 0 ? tabs[activeTabIndex.value].label : undefined),
+    name: filters.value.search ? ['like', filters.value.search] : undefined,
+  })),
+  orderBy: 'modified desc',
+  limit: 25,
+})
+
+const columns = [
+  { label: 'Name', key: 'name' },
+  { label: 'Status', key: 'status' },
+  { label: 'Modified', key: 'modified', getLabel: ({ row }) => formatDate(row.modified) },
+]
+
+const listOptions = computed(() => ({
+  selectable: true,
+  showTooltip: true,
+  emptyState: {
+    title: 'No items found',
+    description: filters.value.search
+      ? `No items match "${filters.value.search}"`
+      : 'Create your first item to get started.',
+  },
+  getRowRoute: (row) => `/${route_base}/${row.name}`,
+}))
+
+const stats = computed(() => {
+  const items = list.data ?? []
+  const count = (status) => items.filter((i) => i.status === status).length
+  return [
+    { key: 'total', config: { title: `Total ${doctype}`, value: items.length } },
+    { key: 'active', config: { title: 'Active', value: count('Active') } },
+    { key: 'draft', config: { title: 'Draft', value: count('Draft') } },
+    { key: 'inactive', config: { title: 'Inactive', value: count('Inactive') } },
+  ]
+})
+
+function clearFilters() {
+  filters.value = { search: '', status: '' }
+  activeTabIndex.value = 0
+  page.value = 1
+}
+
+function formatDate(dateString) {
+  if (!dateString) return '-'
+  return new Date(dateString).toLocaleDateString()
+}
+</script>

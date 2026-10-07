@@ -80,14 +80,10 @@ describe("makeOmpOverlay (DX3 / DX6 / DX7 / DX10)", () => {
     expect(overlay).toContain("fcode-skills");
   });
 
-  it("sets enableClaudeUser: true", () => {
-    const overlay = makeOmpOverlay({
-      dataDir: dir,
-      resourcesPath: "/app/resources",
-      screenshotsDir: join(dir, "screenshots"),
-    });
-    expect(overlay).toContain("enableClaudeUser");
-    expect(overlay).toContain("true");
+  it("keeps ~/.claude/skills opt-in", () => {
+    const base = { dataDir: dir, resourcesPath: "/app/resources", screenshotsDir: join(dir, "screenshots") };
+    expect(makeOmpOverlay(base)).toContain("enableClaudeUser: false");
+    expect(makeOmpOverlay({ ...base, ompSettings: { "skills.enableClaudeUser": true } })).toContain("enableClaudeUser: true");
   });
 
   it("includes browser config (headless, screenshotDir)", () => {

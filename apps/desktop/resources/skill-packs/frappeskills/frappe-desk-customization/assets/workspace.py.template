@@ -1,0 +1,179 @@
+"""
+v16 Workspace Setup for {{ app_name }}
+
+This module creates a v16 Workspace document (dashboard) with shortcuts,
+links, and number cards, and lays them out via the `content` block schema
+documented in workspace-patterns.md. Every child-table fieldname below is
+verified against apps/frappe/frappe/desk/doctype/workspace_*/*.json.
+"""
+
+import json
+
+import frappe
+
+
+def setup_workspace():
+    """
+    Create a v16 workspace for the module.
+
+    Workspace.autoname is "field:label", so `label` (not just `title`) must
+    be set before insert — both are mandatory fields on the Workspace
+    DocType. `content` is a separate Long Text field that lays out the
+    dashboard grid; child-table rows alone do not render without it.
+    """
+    workspace_name = "{{ module_title }}"
+
+    # Check if workspace already exists
+    if frappe.db.exists("Workspace", workspace_name):
+        return
+
+    workspace = frappe.new_doc("Workspace")
+    workspace.label = workspace_name  # autoname source ("field:label") and the docname
+    workspace.title = workspace_name
+    workspace.module = "{{ module }}"
+    workspace.public = 1
+    workspace.icon = "{{ workspace_icon|default('layers') }}"
+    workspace.indicator_color = "{{ workspace_color|default('blue') }}"
+
+    content = []
+
+    # Add shortcuts
+    for shortcut in get_workspace_shortcuts():
+        workspace.append("shortcuts", shortcut)
+        content.append(_content_block("shortcut", "shortcut_name", shortcut["label"]))
+
+    # Add links (sidebar card sections)
+    for link in get_workspace_links():
+        workspace.append("links", link)
+        if link["type"] == "Card Break":
+            content.append(_content_block("card", "card_name", link["label"]))
+
+    # Add number cards (optional stats)
+    for card in get_number_cards():
+        workspace.append("number_cards", card)
+        content.append(_content_block("number_card", "number_card_name", card["number_card_name"]))
+
+    # Add quick lists (optional filtered list preview)
+    for quick_list in get_quick_list():
+        workspace.append("quick_lists", quick_list)
+        content.append(_content_block("quick_list", "quick_list_name", quick_list["label"]))
+
+    # Add charts (optional; requires an existing Dashboard Chart)
+    for chart in get_charts():
+        workspace.append("charts", chart)
+        content.append(_content_block("chart", "chart_name", chart["chart_name"]))
+
+    workspace.content = json.dumps(content)
+    workspace.save()
+
+
+def _content_block(block_type, name_field, name_value, col=12):
+    """
+    Build one `content` block. `id` is any unique string (EditorJS normally
+    generates it); `name_field`/`name_value` must match the row you just
+    appended to the corresponding child table (see the block-type table in
+    workspace-patterns.md).
+    """
+    return {
+        "id": frappe.generate_hash(length=10),
+        "type": block_type,
+        "data": {name_field: name_value, "col": col},
+    }
+
+
+def get_workspace_shortcuts():
+    """
+    Define shortcuts for workspace.
+
+    Shortcuts appear as cards at the top of the workspace. Fields verified
+    against the Workspace Shortcut DocType — there is no `description` field
+    on this child table (that field only exists on Workspace Link, and only
+    for "Card Break" rows).
+    """
+    return [
+        {
+            "type": "DocType",
+            "link_to": "{{ doctype }}",
+            "label": "New {{ doctype }}",
+            "icon": "{{ icon_add|default('plus') }}",
+            "color": "green",
+            "format": "{}",
+            "doc_view": "New",
+        },
+        {
+            "type": "DocType",
+            "link_to": "{{ doctype }}",
+            "label": "All {{ plural_doctype }}",
+            "icon": "{{ icon_list|default('list') }}",
+            "color": "blue",
+            "doc_view": "List",
+        },
+        ]
+
+
+def get_workspace_links():
+    """
+    Define sidebar links for workspace.
+
+    Links appear in the sidebar of the workspace, grouped under a "Card
+    Break" header row. Workspace Link's `type` Select only accepts
+    "Link"/"Card Break" (not a target doctype name) — the target kind goes
+    in the separate `link_type` field, and `icon`/`description` only apply
+    to "Card Break" rows.
+    """
+    return [
+        {
+            "type": "Card Break",
+            "label": "{{ doctype }}",
+        },
+        {
+            "type": "Link",
+            "link_type": "DocType",
+            "link_to": "{{ doctype }}",
+            "label": "{{ doctype }}",
+        },
+    ]
+
+
+def get_number_cards():
+    """
+    Define number cards for workspace.
+
+    Rows of the "Workspace Number Card" child table only link an existing
+    Number Card document (ship it as a fixture) and give it a label.
+    """
+    return [
+        {
+            "number_card_name": "Total {{ plural_doctype }}",
+            "label": "Total {{ plural_doctype }}",
+        },
+    ]
+
+
+def get_quick_list():
+    """
+    Define quick lists for workspace.
+
+    Quick lists show a filtered list preview. Fields verified against the
+    Workspace Quick List DocType: `document_type` (Link -> DocType, reqd),
+    `label` (reqd), `quick_list_filter` (Code, options "JSON" — a JSON
+    *string*, not a dict).
+    """
+    return [
+        {
+            "document_type": "{{ doctype }}",
+            "label": "Recent {{ plural_doctype }}",
+            "quick_list_filter": json.dumps({"status": ["in", ["Active", "Draft"]]}),
+        },
+    ]
+
+
+def get_charts():
+    """
+    Define charts for workspace (optional).
+
+    Rows of the "Workspace Chart" child table link an existing Dashboard
+    Chart document via `chart_name` (Link -> Dashboard Chart, reqd); `label`
+    is optional. Returns [] here since no chart is shipped by default.
+    """
+    return []

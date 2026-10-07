@@ -1,0 +1,125 @@
+<!--
+  Detail page template — targets frappe-ui 1.0.0-beta.29 (v1).
+  Replace {{ placeholder }} tokens: doctype, app_name, snake_doctype.
+  0.1.x (crm/node_modules/frappe-ui 0.1.261) differences:
+    - No `useDoc` composable — use `createResource({ type: 'document', doctype, name })`
+      (the legacy document resource) instead; it exposes `.doc`, `.save`, `.delete`.
+    - `PageHeaderBackButton` does not exist — use a plain Button with a
+      `FeatherIcon name="arrow-left"`.
+  For a doctype-specific whitelisted action (e.g. a workflow "submit"
+  method), pass it through `useDoc`'s `methods` option rather than adding an
+  ad-hoc resource.
+-->
+<template>
+  <div class="flex flex-col h-full">
+    <PageHeader>
+      <div class="flex items-center gap-3">
+        <PageHeaderBackButton />
+        <div>
+          <h1 class="text-lg font-semibold text-ink-gray-9">{{ doc.doc?.name }}</h1>
+          <p class="text-sm text-ink-gray-6">{{ doctype }}</p>
+        </div>
+        <Badge v-if="doc.doc" :label="doc.doc.status" :theme="getStatusTheme(doc.doc.status)" />
+      </div>
+      <div class="flex items-center gap-2">
+        <Button v-if="doc.doc?.status === 'Draft'" variant="solid" theme="green" @click="submit">
+          Submit
+        </Button>
+        <Button variant="outline" @click="$router.push(`${$route.path}/edit`)">Edit</Button>
+        <Dropdown :options="moreOptions">
+          <Button variant="outline" icon="lucide-more-vertical" />
+        </Dropdown>
+      </div>
+    </PageHeader>
+
+    <div v-if="doc.loading" class="p-6 space-y-3">
+      <Skeleton v-for="i in 4" :key="i" class="h-6 w-full" />
+    </div>
+
+    <div v-else-if="doc.error" class="p-6">
+      <p class="text-ink-red-3 text-sm">{{ doc.error.messages?.[0] ?? doc.error.message }}</p>
+      <Button variant="outline" theme="red" size="sm" @click="doc.reload()">Retry</Button>
+    </div>
+
+    <template v-else-if="doc.doc">
+      <Tabs v-model="activeTabIndex" :tabs="[{ label: 'Details' }, { label: 'Activity' }]">
+        <template #tab-panel="{ tab }">
+          <div v-if="tab.label === 'Details'" class="grid grid-cols-2 gap-6 p-6">
+            <div>
+              <h3 class="text-sm font-medium text-ink-gray-6 mb-1">Name</h3>
+              <p class="text-ink-gray-9">{{ doc.doc.name }}</p>
+            </div>
+            <div>
+              <h3 class="text-sm font-medium text-ink-gray-6 mb-1">Status</h3>
+              <Badge :label="doc.doc.status" :theme="getStatusTheme(doc.doc.status)" />
+            </div>
+            <div v-if="doc.doc.description" class="col-span-2">
+              <h3 class="text-sm font-medium text-ink-gray-6 mb-1">Description</h3>
+              <p class="text-ink-gray-9">{{ doc.doc.description }}</p>
+            </div>
+          </div>
+          <div v-else class="text-center py-8 text-ink-gray-6">
+            <p>Activity history coming soon</p>
+          </div>
+        </template>
+      </Tabs>
+    </template>
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useDoc, dialog, toast } from 'frappe-ui'
+
+const router = useRouter()
+const route = useRoute()
+
+const doctype = '{{ doctype }}'
+const activeTabIndex = ref(0)
+
+const doc = useDoc({
+  doctype,
+  name: route.params.name,
+  // methods: { submit: 'whitelisted_submit_method_name' },
+})
+
+function submit() {
+  dialog.confirm({
+    title: `Submit ${doctype}?`,
+    message: 'This will move the document out of Draft.',
+    onConfirm: async () => {
+      try {
+        // Wire to a whitelisted `submit` method via the `methods` option
+        // above, then: await doc.submit.submit()
+        toast.success('Submitted')
+      } catch (err) {
+        toast.error(err.messages?.[0] ?? 'Failed to submit')
+      }
+    },
+  })
+}
+
+const moreOptions = [
+  {
+    label: 'Delete',
+    icon: 'lucide-trash-2',
+    theme: 'red',
+    onClick: () =>
+      dialog.danger({
+        title: `Delete ${doctype}?`,
+        message: 'This action cannot be undone.',
+        onConfirm: async () => {
+          await doc.delete.submit()
+          toast.success('Deleted')
+          router.push(route.path.replace(/\/[^/]+$/, ''))
+        },
+      }),
+  },
+]
+
+function getStatusTheme(status) {
+  const themes = { Draft: 'gray', Active: 'green', Inactive: 'red' }
+  return themes[status] || 'gray'
+}
+</script>

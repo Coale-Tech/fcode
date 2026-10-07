@@ -10,6 +10,17 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 
+### Added
+- Frappe skill packs: [frappe/skills](https://github.com/frappe/skills) (official) and [Coale-Tech/frappeskills](https://github.com/Coale-Tech/frappeskills) ship with Fcode and are cloned into `<dataDir>/skills/` on every launch, then fast-forwarded. The bundled snapshot is used offline until the first clone lands.
+- Self-improving skills: the Coale-Tech clone sits on a local `fcode/self-improve` branch. The new `fcode-skill-improve` skill tells the agent to commit verified lessons there. Updates rebase those commits onto upstream and never overwrite them. A PR to Coale-Tech/frappeskills is opened only when you approve.
+- Settings > Skills > **Load ~/.claude/skills** toggle.
+
+### Changed
+- `~/.claude/skills` is no longer loaded by default. Every personal skill was added to the prompt on every turn; turn it back on in Settings > Skills.
+
+### Removed
+- The generic `fcode-api-development`, `fcode-app-hooks`, `fcode-bench-operations`, `fcode-doctype-development`, `fcode-frappe-ui` and `fcode-frappe-router` skills. The `frappe-*` skill pack replaces them; `frappe-router` is the entry point.
+
 ## [0.18.6] — 2026-10-07
 
 ### Compatibility

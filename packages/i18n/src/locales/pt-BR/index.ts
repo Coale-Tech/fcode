@@ -1649,6 +1649,8 @@ export const ptBR = {
     ompExtensibilityGroup: "Skills & Commands",
     ompSkillsEnabled: "Skills Enabled",
     ompSkillsEnabledDesc: "Enable skill discovery and invocation.",
+    ompSkillsClaudeUser: "Load ~/.claude/skills",
+    ompSkillsClaudeUserDesc: "Also load every skill from your personal Claude folder. Off by default: each skill adds to the prompt on every turn.",
     ompSkillsRegistryUrl: "Skill Registry URL",
     ompSkillsRegistryUrlDesc: "Skillshare registry used by omp skill to install and search skills.",
     ompSkillsRegistryUrlPlaceholder: "https://skillshare.example.com",

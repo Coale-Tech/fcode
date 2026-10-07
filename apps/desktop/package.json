@@ -150,6 +150,10 @@
         "to": "fcode-skills"
       },
       {
+        "from": "resources/skill-packs",
+        "to": "skill-packs"
+      },
+      {
         "from": "../filebird/out/preload",
         "to": "filebird/preload"
       },

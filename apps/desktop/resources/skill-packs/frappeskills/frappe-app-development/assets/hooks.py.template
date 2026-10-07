@@ -1,0 +1,112 @@
+# hooks.py - Generated from the frappe-app-development skill template
+
+# ==========================================================================
+# APP INCLUDES
+# ==========================================================================
+
+# JavaScript includes for the app
+app_include_js = [
+    "{{ app_name }}/bundle.js",
+]
+
+# CSS includes
+app_include_css = [
+    "{{ app_name }}/assets/css/{{ app_name }}.css",
+]
+
+# ==========================================================================
+# DOCUMENT EVENTS
+# ==========================================================================
+
+doc_events = {
+    "{{ doctype }}": {
+        "validate": "{{ app_name }}.{{ module }}.controllers.{{ snake_doctype }}.validate",
+        "on_submit": "{{ app_name }}.{{ module }}.controllers.{{ snake_doctype }}.on_submit",
+        "on_cancel": "{{ app_name }}.{{ module }}.controllers.{{ snake_doctype }}.on_cancel",
+        "on_update_after_submit": "{{ app_name }}.{{ module }}.controllers.{{ snake_doctype }}.on_update_after_submit",
+    }
+}
+
+# ==========================================================================
+# PERMISSIONS
+# ==========================================================================
+
+permission_query_conditions = {
+    "{{ doctype }}": "{{ app_name }}.{{ module }}.utils.get_permission_conditions",
+}
+
+has_permission = {
+    "{{ doctype }}": "{{ app_name }}.{{ module }}.utils.has_custom_permission",
+}
+
+# ==========================================================================
+# WEBSITE ROUTES
+# ==========================================================================
+
+website_route_rules = [
+    {
+        "from_route": "/{{ route_base }}/<path>",
+        "to_route": "{{ app_name }}.{{ route_base }}",
+    }
+]
+
+# ==========================================================================
+# HOOKS
+# ==========================================================================
+
+# App installation hooks
+after_install = [
+    "{{ app_name }}.install.setup_custom_fields",
+    "{{ app_name }}.install.setup_workspace",
+]
+
+before_uninstall = [
+    "{{ app_name }}.install.remove_custom_fields",
+]
+
+# ==========================================================================
+# FIXTURES
+# ==========================================================================
+
+# Ship already-created Custom Field / Property Setter records with the app. Create the
+# records first (create_custom_fields() in after_install); `fixtures` only controls what
+# `bench export-fixtures` dumps to `{{ app_name }}/fixtures/*.json` for re-import on migrate.
+# There is no "dn"/"condition" key — entries are a doctype name or a dict of
+# dt/doctype + filters/or_filters/prefix (frappe/utils/fixtures.py::export_fixtures).
+fixtures = [
+    {
+        "dt": "Custom Field",
+        "filters": [["module", "=", "{{ module }}"]],
+    },
+]
+
+# ==========================================================================
+# OVERRIDES
+# ==========================================================================
+
+# Override standard methods
+override_whitelisted_methods = {
+    "frappe.client.get_value": "{{ app_name }}.overrides.client_get_value",
+}
+
+# ==========================================================================
+# SCHEDULED TASKS
+# ==========================================================================
+
+# scheduler_events = {
+#     "cron": {
+#         "0 0 * * *": "{{ app_name }}.tasks.daily_task"
+#     },
+#     "hourly": [
+#         "{{ app_name }}.tasks.hourly_task"
+#     ],
+#     "daily": [
+#         "{{ app_name }}.tasks.end_of_day"
+#     ],
+#     "weekly": [
+#         "{{ app_name }}.tasks.weekly_report"
+#     ],
+#     "monthly": [
+#         "{{ app_name }}.tasks.monthly_report"
+#     ]
+# }
