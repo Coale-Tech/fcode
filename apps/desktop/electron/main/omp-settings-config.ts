@@ -80,6 +80,7 @@ const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   // Skills & Commands (omp/packages/coding-agent/src/extensibility/settings.ts)
   "skills.enabled":           { type: "boolean" },
   "skills.registryUrl":       { type: "string" },
+  "skills.enableClaudeUser":  { type: "boolean" },
   "skills.customDirectories": { type: "array" },
   "commands.enableClaudeUser":  { type: "boolean" },
   "commands.enableClaudeProject": { type: "boolean" },

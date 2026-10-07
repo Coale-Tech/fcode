@@ -1,0 +1,89 @@
+"""
+Custom Field Fixtures for {{ app_name }}
+
+Defines custom fields added to standard DocTypes and creates/removes them through
+the framework's own idempotent helpers (frappe/custom/doctype/custom_field/custom_field.py),
+the same mechanism ERPNext and HRMS use for their own custom fields.
+"""
+
+import frappe
+from frappe.custom.doctype.custom_field.custom_field import create_custom_fields, delete_custom_fields
+
+
+def get_custom_fields():
+    """
+    Return custom fields to be created.
+
+    Returns:
+        dict: DocType (or tuple of DocTypes) -> list of field definitions.
+    """
+    return {
+        # Add custom fields to standard DocTypes
+        "Customer": [
+            {
+                "fieldname": "custom_region",
+                "fieldtype": "Link",
+                "label": "Region",
+                "options": "Region",
+                "insert_after": "territory",
+            },
+            {
+                "fieldname": "custom_customer_type",
+                "fieldtype": "Select",
+                "label": "Customer Type",
+                "options": "Retail\nWholesale\nDistributor",
+                "insert_after": "customer_type",
+            },
+        ],
+        "Supplier": [
+            {
+                "fieldname": "custom_vendor_code",
+                "fieldtype": "Data",
+                "label": "Vendor Code",
+                "insert_after": "supplier_name",
+            },
+        ],
+        # A tuple key applies the same fields to every listed DocType.
+        ("Sales Order", "Sales Invoice"): [
+            {
+                "fieldname": "custom_delivery_notes",
+                "fieldtype": "Small Text",
+                "label": "Delivery Notes",
+                "insert_after": "terms",
+            },
+        ],
+        # Add to your own custom DocTypes as needed
+        "{{ doctype }}": [
+            {
+                "fieldname": "custom_field_1",
+                "fieldtype": "Data",
+                "label": "Custom Field 1",
+                "insert_after": "name",
+            }
+        ],
+    }
+
+
+def setup_custom_fields():
+    """
+    Create/update custom fields. Call from `after_install` and `after_migrate` — it is
+    idempotent (`update=True`): existing fields are synced in place, missing ones created.
+    """
+    fields_by_doctype = {
+        doctype: fields
+        for doctype, fields in get_custom_fields().items()
+        if all(frappe.db.exists("DocType", dt) for dt in ((doctype,) if isinstance(doctype, str) else doctype))
+    }
+    create_custom_fields(fields_by_doctype, update=True)
+
+
+def remove_custom_fields():
+    """Remove custom fields defined in `get_custom_fields()`. Call from `before_uninstall`."""
+    fieldnames_by_doctype = {}
+    for doctype, fields in get_custom_fields().items():
+        doctypes = (doctype,) if isinstance(doctype, str) else doctype
+        fieldnames = [f["fieldname"] for f in fields]
+        for dt in doctypes:
+            fieldnames_by_doctype.setdefault(dt, []).extend(fieldnames)
+
+    delete_custom_fields(fieldnames_by_doctype)

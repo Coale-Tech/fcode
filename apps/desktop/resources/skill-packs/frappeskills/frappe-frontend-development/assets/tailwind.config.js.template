@@ -1,0 +1,37 @@
+/**
+ * Tailwind CSS config for {{ app_name }}'s frappe-ui frontend.
+ *
+ * Verified against frappe-ui's tailwind/preset.js and the exports map in
+ * package.json — see references/frappe-ui-setup.md §4 for the full
+ * breakdown. Do NOT hand-roll a color palette or spacing scale here: the
+ * preset already ships the Espresso design tokens (see
+ * ../../frappe-design-tokens/references/design-tokens.md) via a plugin, a
+ * dark-mode selector strategy, and an integer spacing scale filled 1–64 at
+ * the 0.25rem step. Only `frappe-ui/tailwind` resolves — the legacy
+ * `frappe-ui/src/utils/tailwindConfig` path some older snippets reference is
+ * not in the package's `exports` map and will fail to import.
+ */
+
+import frappeUIPreset from 'frappe-ui/tailwind'
+
+/** @type {import('tailwindcss').Config} */
+export default {
+  presets: [frappeUIPreset],
+  content: [
+    './index.html',
+    './src/**/*.{vue,js,ts,jsx,tsx}',
+    // Tailwind v3 does not merge `content` globs from presets (only `theme`
+    // merges — frappe-ui's own preset.js documents this) — list frappe-ui's
+    // own source here too, or component-internal classes (Dialog, FormControl,
+    // etc.) get purged from the production build.
+    './node_modules/frappe-ui/src/**/*.{vue,js,ts,jsx,tsx}',
+    './node_modules/frappe-ui/frappe/**/*.{vue,js,ts,jsx,tsx}',
+  ],
+  theme: {
+    extend: {
+      // App-specific additions only — anything the Espresso tokens already
+      // cover (color, spacing, radius, shadow) belongs in the design-token
+      // layer, not here.
+    },
+  },
+}

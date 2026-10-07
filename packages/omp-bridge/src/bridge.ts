@@ -30,6 +30,7 @@ import { homedir, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { ErrorCodes, readNdjsonLines, type OmpSettingsValues } from "@pi-desktop/shared";
 import { capNdjsonLine, reassembleChunk } from "./chunks.js";
+import { resolveSkillPackDirs, syncSkillPacksInBackground } from "./skill-packs.js";
 import { createBridgeState } from "./state.js";
 import {
   mapExtensionUiRequest,
@@ -142,7 +143,7 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
   const browserHeadless = s["browser.headless"] ?? true;
   const browserRelay    = s["browser.relay"]    ?? false;
 
-  // Skills: fcode-skills dir always first; user dirs appended.
+  // Skills: fcode-skills dir first (host tools), then the Frappe packs, then user dirs.
   const userSkillDirs = s["skills.customDirectories"] ?? [];
 
   // Hindsight: collect all lines so we emit exactly one hindsight: block.
@@ -188,8 +189,10 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
     "skills:",
     `  customDirectories:`,
     `    - "${skillsDir}"`,
+    ...resolveSkillPackDirs(opts.dataDir, opts.resourcesPath).map((d) => `    - ${JSON.stringify(d)}`),
     ...userSkillDirs.map((d) => `    - ${JSON.stringify(d)}`),
-    "  enableClaudeUser: true",
+    // ~/.claude/skills is opt-in: loading every personal skill costs tokens on every turn.
+    `  enableClaudeUser: ${s["skills.enableClaudeUser"] === true}`,
     ...(s["skills.enabled"] !== undefined ? [`  enabled: ${s["skills.enabled"]}`] : []),
     ...(s["skills.registryUrl"] ? [`  registryUrl: ${JSON.stringify(s["skills.registryUrl"])}`] : []),
     "",
@@ -1765,6 +1768,7 @@ async function main(): Promise<void> {
             }
           : undefined,
     });
+    syncSkillPacksInBackground(dataDir, (line) => console.error(`[omp-bridge] ${line}`));
   } catch (e) {
     // DX3: overlay write failure is fatal — settle with a system message.
     process.stdout.write(

@@ -93,8 +93,12 @@ Written by the bridge before spawning omp. Writing it is fatal to the spawn — 
 
 ```yaml
 skills:
-  customDirectories: ["<resourcesPath>/fcode-skills"]
-  enableClaudeUser: true
+  customDirectories:
+    - "<resourcesPath>/fcode-skills"          # Fcode host-tool skills (bench, studio, builder, skill-improve)
+    - "<dataDir>/skills/frappe-skills/skills" # frappe/skills, fast-forwarded on every launch
+    - "<dataDir>/skills/frappeskills"         # Coale-Tech/frappeskills, branch fcode/self-improve
+    # ...then Settings > Skills custom directories
+  enableClaudeUser: false   # Settings > Skills > Load ~/.claude/skills
 browser:
   enabled: true
   headless: true

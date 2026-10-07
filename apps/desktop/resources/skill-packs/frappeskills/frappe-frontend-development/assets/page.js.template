@@ -1,0 +1,66 @@
+// Embed a Vue 3 / frappe-ui component inside a Frappe Desk custom Page.
+//
+// This is NOT the frontend/ SPA build (see frappe-ui-setup.md) — it is the
+// app's own bundled page JS, built by Frappe's own esbuild pipeline
+// (apps/frappe/esbuild/esbuild.js), not by the frappe-ui vite plugin.
+// Verified against Frappe core's own Vue-3 desk pages: workflow_builder,
+// form_builder, file_uploader, user_onboarding all follow this exact split.
+//
+// esbuild only resolves `import` statements inside files matched by the glob
+// `**/*.bundle.{js,ts,...}` under an app's public/ dir (apps/frappe/esbuild/
+// esbuild.js:257-259) — a plain `page.js` next to a Page's .json is loaded
+// unbundled and CANNOT `import` from "vue". So this pattern uses two files:
+//
+// 1) apps/<app>/<app>/page/{{ route_base }}/{{ route_base }}.js — loaded
+//    immediately when Desk opens the page; registers the page chrome and
+//    lazily requires the bundle so the Vue/frappe-ui payload isn't part of
+//    Desk's initial load:
+//
+//   frappe.pages['{{ route_base }}'].on_page_load = function (wrapper) {
+//     frappe.ui.make_app_page({
+//       parent: wrapper,
+//       title: __('{{ page_title }}'),
+//       single_column: true,
+//     })
+//   }
+//
+//   frappe.pages['{{ route_base }}'].on_page_show = function (wrapper) {
+//     frappe.require('{{ route_base }}.bundle.js').then(() => {
+//       frappe.{{ page_name }} = new {{ component_name }}Controller({
+//         wrapper: $(wrapper).find('.layout-main-section'),
+//         page: wrapper.page,
+//       })
+//     })
+//   }
+//
+// 2) apps/<app>/<app>/public/js/{{ route_base }}.bundle.js — the actual Vue
+//    mount, below. `createApp` must be imported here; `SetVueGlobals` is a
+//    real global set by Frappe core's libs.bundle.js (loaded on every Desk
+//    page) and does not need an import.
+
+import { createApp } from 'vue'
+import {{ component_name }} from './{{ component_name }}.vue'
+
+class {{ component_name }}Controller {
+	constructor({ wrapper, page }) {
+		this.$wrapper = $(wrapper)
+		this.page = page
+		this.setup_page_actions()
+		this.setup_app()
+	}
+
+	setup_page_actions() {
+		this.page.set_primary_action(__('New {{ doctype }}'), () => {
+			frappe.set_route('/{{ route_base }}/new')
+		})
+	}
+
+	setup_app() {
+		let app = createApp({{ component_name }})
+		SetVueGlobals(app)
+		this.$app = app.mount(this.$wrapper.get(0))
+	}
+}
+
+frappe.provide('frappe.ui')
+frappe.ui.{{ component_name }}Controller = {{ component_name }}Controller

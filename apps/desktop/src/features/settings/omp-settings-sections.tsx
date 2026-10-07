@@ -521,6 +521,13 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
               onChange={() => void save({ "skills.enabled": !(omp["skills.enabled"] !== false) })}
             />
           </SettingsRow>
+          <SettingsRow title={t("settings.ompSkillsClaudeUser")} description={t("settings.ompSkillsClaudeUserDesc")}>
+            <SettingsToggle
+              checked={omp["skills.enableClaudeUser"] === true}
+              label={t("settings.ompSkillsClaudeUser")}
+              onChange={() => void save({ "skills.enableClaudeUser": omp["skills.enableClaudeUser"] !== true })}
+            />
+          </SettingsRow>
           <SettingsRow title={t("settings.ompSkillsRegistryUrl")} description={t("settings.ompSkillsRegistryUrlDesc")}>
             <Input
               type="text"

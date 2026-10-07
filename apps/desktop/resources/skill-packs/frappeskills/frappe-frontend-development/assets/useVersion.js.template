@@ -1,0 +1,45 @@
+// composables/useVersion.js
+//
+// Frappe major-version detection, for apps that need to branch behavior
+// between v15/v16 (or any two major versions) at the frontend layer.
+//
+// `frappe.version.get_version` does NOT exist — there is no whitelisted
+// method by that name in frappe/frappe. The real endpoint is
+// `frappe.utils.change_log.get_versions` (frappe/utils/change_log.py),
+// which takes no arguments and returns EVERY installed app keyed by name,
+// not a single version string:
+//
+//   { frappe: { title, description, branch, color, logo, version }, ... }
+//
+// so the frappe framework's own version is `versions.frappe.version`
+// (e.g. "16.0.0-dev"), not the response itself.
+
+import { computed } from 'vue'
+import { useCall } from 'frappe-ui'
+
+export function useVersion() {
+  const versions = useCall({
+    url: '/api/v2/method/frappe.utils.change_log.get_versions',
+    method: 'GET',
+    immediate: true,
+    cacheKey: 'frappe-versions',
+  })
+
+  const versionString = computed(() => versions.data?.frappe?.version || null)
+
+  const majorVersion = computed(() => {
+    if (!versionString.value) return null
+    return parseInt(versionString.value.split('.')[0], 10)
+  })
+
+  const isV16 = computed(() => majorVersion.value !== null && majorVersion.value >= 16)
+  const isV15 = computed(() => majorVersion.value === 15)
+
+  return {
+    versions,          // full useCall resource — versions.data, versions.loading, versions.error
+    versionString,
+    majorVersion,
+    isV16,
+    isV15,
+  }
+}

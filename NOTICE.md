@@ -99,3 +99,17 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+### Frappe skill packs
+
+`apps/desktop/resources/skill-packs/` holds offline snapshots of two skill repositories.
+At runtime Fcode clones the live repositories into `<dataDir>/skills/` and keeps them updated;
+the snapshots are used only until the first clone succeeds.
+
+- `frappe-skills/` — [frappe/skills](https://github.com/frappe/skills), the Frappe team's official
+  agent skills, at commit `0bef982e933705c30706efc1db3bc3bc5e7aca62`. The repository publishes no
+  licence file; copyright remains with Frappe Technologies and its contributors.
+- `frappeskills/` — [Coale-Tech/frappeskills](https://github.com/Coale-Tech/frappeskills) at commit
+  `11ff8758a412a8906859e6215c674dc9c1358115`. Its own `NOTICE` credits frappe/skills and
+  [lubusIN/frappe-skills](https://github.com/lubusIN/frappe-skills), the latter under the MIT License
+  (full text in `frappeskills/LICENSES/frappe-skills-lubusIN-MIT.txt`).

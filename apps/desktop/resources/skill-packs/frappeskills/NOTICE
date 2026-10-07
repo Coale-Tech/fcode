@@ -1,0 +1,41 @@
+frappeskills
+Copyright (c) 2026 Coale Tech
+
+This repository contains 19 task-scoped Agent Skills (`frappe-*`), with
+`frappe-router` as the entry point.
+
+Portions of the routing guidance and the terse backend/frontend reference
+material are derived from the upstream Frappe skills published by Frappe
+Technologies at https://github.com/frappe/skills — specifically its
+`frappe-app-dev` skill (global rules, flow selection, and the initial
+references for doctypes, controllers, api, database, caching, realtime,
+background-jobs, hooks, permissions, testing, frontend and bench operations).
+That material has since been extended by source-verified references written
+against installed Frappe v16, ERPNext v16 and HRMS v16 source.
+
+Portions are adopted from the Frappe Skills published by LUBUS at
+https://github.com/lubusIN/frappe-skills, licensed MIT (full text in
+LICENSES/frappe-skills-lubusIN-MIT.txt). Adopted 2026-09-23 at upstream commit
+afd9ea1: the whole of its 14 skills — api-development, app-development,
+desk-customization, doctype-development, enterprise-patterns, frappe-manager,
+frontend-development, printing-templates, project-triage, reports, router,
+testing, ui-patterns, web-forms. On 2026-09-23 this repository also adopted its
+structure: the router + task-skill layout, per-skill `references/`, and the
+nine-section SKILL.md format (When to use, Inputs required, Procedure,
+Verification, Failure modes / debugging, Escalation, References, Guardrails,
+Common Mistakes). Skill names carry a `frappe-` prefix here because they install
+into a shared skill root. Blocks taken from it carry an inline
+`Adopted from lubusIN/frappe-skills` provenance note naming the source file.
+
+The frappe-ui references (frontend development, UI patterns, design tokens) are
+verified against frappe-ui 1.0.0-beta.29 source (https://github.com/frappe/frappe-ui,
+MIT) with 0.1.x differences noted. Parts are adapted from that repository's
+`skills/frappe-ui/` agent skill, `PHILOSOPHY.md`, `CONTEXT.md` and `spec/`
+documents; files that do so say so in their first lines.
+
+Code examples cite Frappe Framework, ERPNext, HRMS, Frappe CRM and Frappe
+Insights source, all published by Frappe Technologies under the GNU General
+Public License v3 / MIT depending on the project. Those citations are
+references for verification, not redistribution of those works.
+
+This repository is private and not published under an open-source license.

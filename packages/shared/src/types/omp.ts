@@ -269,6 +269,7 @@ export interface OmpSettingsValues {
   // Skills & Commands (omp/packages/coding-agent/src/extensibility/settings.ts)
   "skills.enabled"?: boolean;
   "skills.registryUrl"?: string;
+  "skills.enableClaudeUser"?: boolean;
   "skills.customDirectories"?: string[];
   "commands.enableClaudeUser"?: boolean;
   "commands.enableClaudeProject"?: boolean;
