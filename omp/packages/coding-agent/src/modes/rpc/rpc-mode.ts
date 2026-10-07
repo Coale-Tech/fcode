@@ -17,6 +17,8 @@ import { getOAuthProviders } from "@oh-my-pi/pi-ai/oauth";
 import { toolWireSchema } from "@oh-my-pi/pi-ai/utils/schema";
 import { $env, getAgentDir, getProjectDir, isRecord, logger, Snowflake } from "@oh-my-pi/pi-utils";
 import { createSessionMemoryRuntimeContext } from "../../memory-backend/runtime";
+import { getLastInjectedChars } from "../../memory-backend/injection-tracker";
+import { cfgMemoryInjectMaxChars } from "../../memory-backend/settings";
 import { clearPluginRootsAndCaches, resolveActiveProjectRegistryPath } from "../../discovery/helpers";
 import {
 	type ExtensionUIContext,
@@ -1383,6 +1385,12 @@ export async function runRpcMode(session: AgentSession, options: RpcModeOptions 
 					});
 				}
 			}
+
+			case "get_memory_budget":
+				return success(id, "get_memory_budget", {
+					usedChars: getLastInjectedChars(session),
+					capChars: cfgMemoryInjectMaxChars.get(session.settings),
+				});
 
 			case "set_fast_mode": {
 				const supported = session.setFastMode(command.enabled);

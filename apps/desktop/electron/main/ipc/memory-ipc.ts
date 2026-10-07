@@ -14,6 +14,7 @@ import type {
   MemoryConfig,
   MemoryConfigView,
   OmpMemoryStatusResult,
+  OmpMemoryBudgetResult,
 } from "@pi-desktop/shared";
 import type { HostProcess } from "../host-process";
 import type { AgentSidecar } from "../agent-sidecar";
@@ -75,6 +76,12 @@ export function registerMemoryIpc({ registrar, dataDir, getHost, getSidecar, res
     const sidecar = getSidecar();
     if (!sidecar) throw Object.assign(new Error("omp sidecar unavailable"), { errorCode: "AGENT_UNAVAILABLE" });
     return sidecar.call<OmpMemoryStatusResult>("omp.memory.status");
+  });
+
+  handle(IPC.invoke.ompMemoryBudget, async () => {
+    const sidecar = getSidecar();
+    if (!sidecar) throw Object.assign(new Error("omp sidecar unavailable"), { errorCode: "AGENT_UNAVAILABLE" });
+    return sidecar.call<OmpMemoryBudgetResult>("omp.memory.budget");
   });
 
   // ── Hindsight mental-model list ──────────────────────────────────────────

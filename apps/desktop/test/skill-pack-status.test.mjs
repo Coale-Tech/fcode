@@ -26,7 +26,7 @@ test("skill pack status lists local improvements and discard returns to upstream
     process.env.PI_DESKTOP_DATA_DIR = root;
     const { skillPackStatus, skillPackDiscard } = await import("../electron/main/skill-packs.ts");
 
-    assert.deepEqual(await skillPackStatus(), { cloned: true, branch: "fcode/self-improve", commits: [], files: [], dirty: false });
+    assert.deepEqual(await skillPackStatus(), { cloned: true, branch: "fcode/self-improve", commits: [], files: [], dirty: false, lint: [] });
 
     writeFileSync(join(clone, "b.md"), "lesson");
     sh(clone, "add", "-A");
@@ -40,7 +40,7 @@ test("skill pack status lists local improvements and discard returns to upstream
     assert.equal(s.dirty, true);
 
     const after = await skillPackDiscard();
-    assert.deepEqual(after, { cloned: true, branch: "fcode/self-improve", commits: [], files: [], dirty: false });
+    assert.deepEqual(after, { cloned: true, branch: "fcode/self-improve", commits: [], files: [], dirty: false, lint: [] });
   } finally {
     delete process.env.PI_DESKTOP_DATA_DIR;
     rmSync(root, { recursive: true, force: true });

@@ -14,6 +14,8 @@ import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect
 import { SettingsCard, SettingsRow } from "./primitives";
 import { OmpSkillsSection } from "../../components/settings/OmpSkillsSection";
 import { SkillPackSection } from "../../components/settings/SkillPackSection";
+import { SkillCuratorSection } from "../../components/settings/SkillCuratorSection";
+import { SkillReviewSection } from "../../components/settings/SkillReviewSection";
 import { OmpUsageSection } from "../../components/settings/OmpUsageSection";
 import { OmpWorktreeSection } from "../../components/settings/OmpWorktreeSection";
 import { OmpExtensionsSection } from "../../components/settings/OmpExtensionsSection";
@@ -667,6 +669,8 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
         {/* ── Installed omp Skills ─────────────────────────────────── */}
         <OmpSkillsSection />
         <SkillPackSection />
+        <SkillCuratorSection />
+        <SkillReviewSection />
         </>
       )}
 

@@ -40,6 +40,7 @@ import type {
   OmpUserProfileGetResult,
   OmpUserProfileSetResult,
 } from "@pi-desktop/shared";
+import type { OmpSkillCuratorStatusResult, OmpSkillCuratorMutateResult } from "@pi-desktop/shared";
 import { existsSync } from "node:fs";
 import { readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
@@ -48,7 +49,9 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { shell } from "electron";
 import type { AgentSidecar } from "../agent-sidecar";
+import { desktopDataDir } from "../data-paths.ts";
 import { skillPackDiscard, skillPackOpenPr, skillPackStatus } from "../skill-packs";
+import { curatorPin, curatorRestore, curatorStatus } from "../skill-curator.ts";
 import type { IpcRegistrar } from "./types";
 
 const execFileP = promisify(execFile);
@@ -395,6 +398,17 @@ export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpc
     return pr;
   });
   handle(IPC.invoke.ompSkillPackDiscard, () => skillPackDiscard());
+
+  // ── skill curator (usage tracking, archive, restore, pin) ──────────────────
+  handle(IPC.invoke.ompSkillCuratorStatus, async () => curatorStatus(desktopDataDir()));
+  handle(IPC.invoke.ompSkillCuratorRestore, async (input: { name?: unknown } = {}) => {
+    if (typeof input?.name !== "string") invalid("name required");
+    return curatorRestore(desktopDataDir(), input.name);
+  });
+  handle(IPC.invoke.ompSkillCuratorPin, async (input: { name?: unknown; pinned?: unknown } = {}) => {
+    if (typeof input?.name !== "string") invalid("name required");
+    return curatorPin(desktopDataDir(), input.name, input.pinned === true);
+  });
 
   // ── omp.stats.historical ───────────────────────────────────────────────────
   // Shells out to `omp stats --json` and returns a compact subset.
