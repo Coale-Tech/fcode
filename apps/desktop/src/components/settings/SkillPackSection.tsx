@@ -38,6 +38,7 @@ export function SkillPackSection() {
   };
 
   const changed = status ? status.commits.length > 0 || status.dirty : false;
+  const hasLintErrors = status?.lint.some((r) => r.errors.length > 0) ?? false;
 
   return (
     <SettingsCard title={t("settings.skillPackTitle")}>
@@ -65,8 +66,33 @@ export function SkillPackSection() {
             )}
           </ul>
           <p className="settings-row-desc font-mono">{status.files.join(", ")}</p>
+          {status.lint.length > 0 && (
+            <ul className="model-provider-list">
+              {status.lint.map((r) => (
+                <li key={r.skill} className="model-provider-row" style={{ flexDirection: "column", alignItems: "flex-start" }}>
+                  <span className="font-mono text-sm">{r.skill}</span>
+                  {r.errors.length > 0 && (
+                    <details open style={{ marginTop: "2px" }}>
+                      <summary style={{ fontSize: "0.75rem", color: "var(--red-500, #ef4444)", cursor: "pointer" }}>{t("settings.skillLintErrors")}</summary>
+                      <ul style={{ margin: "2px 0 0 1em", listStyle: "disc", color: "var(--red-500, #ef4444)" }}>
+                        {r.errors.map((e, i) => <li key={i} style={{ fontSize: "0.75rem" }}>{e}</li>)}
+                      </ul>
+                    </details>
+                  )}
+                  {r.warnings.length > 0 && (
+                    <details style={{ marginTop: "2px" }}>
+                      <summary style={{ fontSize: "0.75rem", color: "var(--yellow-600, #d97706)", cursor: "pointer" }}>{t("settings.skillLintWarnings")}</summary>
+                      <ul style={{ margin: "2px 0 0 1em", listStyle: "disc", color: "var(--yellow-600, #d97706)" }}>
+                        {r.warnings.map((w, i) => <li key={i} style={{ fontSize: "0.75rem" }}>{w}</li>)}
+                      </ul>
+                    </details>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
           <div className="model-provider-actions">
-            <Button size="sm" disabled={busy} onClick={() => void act(() => api.ompSkillPackOpenPr())}>
+            <Button size="sm" disabled={busy || hasLintErrors} onClick={() => void act(() => api.ompSkillPackOpenPr())}>
               {t("settings.skillPackOpenPr")}
             </Button>
             <Button

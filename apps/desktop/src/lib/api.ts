@@ -129,6 +129,7 @@ import type {
   OmpCommandsListResult,
   OmpStateResult,
   OmpMemoryStatusResult,
+  OmpMemoryBudgetResult,
   MemoryConfig,
   MemoryConfigView,
   OmpLoginProvidersResult,
@@ -170,6 +171,8 @@ import type {
   KanbanSettings,
   KanbanRun,
   RavenSettings,
+  OmpSkillCuratorStatusResult,
+  OmpSkillCuratorMutateResult,
 } from "@pi-desktop/shared";
 import {
   defaultCommandShellForPlatform,
@@ -1695,6 +1698,9 @@ export const api = {
   /** Memory backend health from the running omp session. */
   ompMemoryStatus: () =>
     invoke<OmpMemoryStatusResult>(IPC.invoke.ompMemoryStatus),
+  /** Memory injection budget (chars used / cap) from the running omp session. */
+  ompMemoryBudget: () =>
+    invoke<OmpMemoryBudgetResult>(IPC.invoke.ompMemoryBudget),
   memoryGetConfig: () => invoke<MemoryConfigView>(IPC.invoke.memoryGetConfig),
   /** Persist config; `token` is write-only. Restarts the agent sidecar. */
   memorySetConfig: (input: MemoryConfig & { token?: string }) =>
@@ -1793,6 +1799,15 @@ export const api = {
   ompSkillPackOpenPr: () => invoke<OmpSkillPackOpenPrResult>(IPC.invoke.ompSkillPackOpenPr),
   /** Drop the local self-improvements. */
   ompSkillPackDiscard: () => invoke<OmpSkillPackStatus>(IPC.invoke.ompSkillPackDiscard),
+  /** Usage tracking for agent-created skills. */
+  ompSkillCuratorStatus: () =>
+    invoke<OmpSkillCuratorStatusResult>(IPC.invoke.ompSkillCuratorStatus),
+  /** Restore an archived skill back to its original location. */
+  ompSkillCuratorRestore: (name: string) =>
+    invoke<OmpSkillCuratorMutateResult>(IPC.invoke.ompSkillCuratorRestore, { name }),
+  /** Pin or unpin a skill (pinned skills are never archived). */
+  ompSkillCuratorPin: (name: string, pinned: boolean) =>
+    invoke<OmpSkillCuratorMutateResult>(IPC.invoke.ompSkillCuratorPin, { name, pinned }),
   /** Historical AI usage stats from `omp stats --json`. */
   ompHistoricalStats: () =>
     invoke<OmpHistoricalStatsResult>(IPC.invoke.ompHistoricalStats),

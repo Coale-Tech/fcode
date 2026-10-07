@@ -38,3 +38,10 @@ export const cfgMemoryBackend = register({
 		],
 	},
 });
+
+/** Cross-backend char cap for memory injected at session start. 0 = unlimited. */
+export const cfgMemoryInjectMaxChars = register({
+	id: "memory.injectMaxChars",
+	type: "number",
+	default: 6000,
+});

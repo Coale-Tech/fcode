@@ -111,6 +111,18 @@ tools:
     fcode_canvas_read: allow          # snapshot/console/screenshot — read-only
 ```
 
+### Self-improving skills and memory
+
+All of it is local; nothing leaves the machine until you click **Open PR**.
+
+| Piece | Where | Defaults |
+|---|---|---|
+| Skill packs | `<dataDir>/skills/{frappe-skills,frappeskills}`, re-synced at launch and every 6 h | on |
+| Curator | `packages/omp-bridge/src/skill-curator.ts`; state, usage, ledger, archive under `<dataDir>/skills/.curator/` | `skills.curator.enabled` true, stale 14 d, archive 30 d, runs after 2 h idle and 7 d since last run. Archives, never deletes |
+| Background review | `skill-review.ts`; spawns `omp -p --no-tools --no-session` and commits to `fcode/self-improve` | `skills.review.enabled` false, every 10 turns, 8000 input tokens, `skills.review.model` empty = omp default |
+| Lint | `packages/shared/src/skill-lint.ts`; errors (secrets, injection text, bad frontmatter) block Open PR and review commits | always on |
+| Memory budget | `memory.injectMaxChars` caps the memory block built at session start (`omp/.../memory-backend/injection-tracker.ts`); the bar in Settings > Memory reads it over the `get_memory_budget` RPC | 6000 chars, 0 = unlimited |
+
 ### Host tools registered by the bridge
 
 All host tools default to `exec` tier in omp's approval model (`ExtensionToolWrapper`, `wrapper.ts:285-296`). `fcode_canvas_read` and the read-only method prefixes of `fcode_bench_execute` are pinned to `allow` in the overlay above; everything else prompts under `--approval-mode always-ask`.

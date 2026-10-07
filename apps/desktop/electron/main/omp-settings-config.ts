@@ -84,6 +84,15 @@ const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   "skills.customDirectories": { type: "array" },
   "commands.enableClaudeUser":  { type: "boolean" },
   "commands.enableClaudeProject": { type: "boolean" },
+  // Skill curator (Fcode-owned; controls the background archive pass in the bridge)
+  "skills.curator.enabled":    { type: "boolean" },
+  "skills.curator.staleDays":  { type: "number", min: 1, max: 365 },
+  "skills.curator.archiveDays":{ type: "number", min: 1, max: 365 },
+  // Skill review (Fcode-owned; background LLM pass to extract skills from conversation)
+  "skills.review.enabled":         { type: "boolean" },
+  "skills.review.intervalTurns":   { type: "number", min: 1, max: 100 },
+  "skills.review.model":           { type: "string" },
+  "skills.review.maxInputTokens":  { type: "number", min: 1000, max: 32000 },
   // Extensions (omp/packages/coding-agent/src/extensibility/settings.ts)
   extensions:                   { type: "array" },
   disabledExtensions:           { type: "array" },
@@ -93,6 +102,8 @@ const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   "hindsight.retainMode":          { type: "enum", values: HINDSIGHT_RETAIN_MODES },
   "hindsight.mentalModelsEnabled": { type: "boolean" },
   "hindsight.mentalModelAutoSeed": { type: "boolean" },
+  // Memory cross-backend (omp/packages/coding-agent/src/memory-backend/settings.ts)
+  "memory.injectMaxChars":         { type: "number", min: 0, max: 200000 },
   // Mnemopi advanced (omp/packages/coding-agent/src/mnemopi/settings.ts)
   // mnemopi.llmMode forced to "session" by overlay; mnemopi.embeddingApiKey/llmApiKey are secrets.
   "mnemopi.scoping":               { type: "enum", values: MNEMOPI_SCOPING_MODES },

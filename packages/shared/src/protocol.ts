@@ -364,6 +364,8 @@ export const IPC = {
     ompCommandsList: "pi-desktop/omp/commands/list",
     ompState: "pi-desktop/omp/state",
     ompMemoryStatus: "pi-desktop/omp/memory/status",
+    /** Chars used/cap for the memory injected at session start. */
+    ompMemoryBudget: "pi-desktop/omp/memory/budget",
     ompAutoCompactionSet: "pi-desktop/omp/auto-compaction/set",
     memoryGetConfig: "pi-desktop/memory/getConfig",
     memorySetConfig: "pi-desktop/memory/setConfig",
@@ -398,6 +400,12 @@ export const IPC = {
     ompSkillPackOpenPr: "pi-desktop/omp/skills/pack/open-pr",
     /** Throw away the local self-improvements and return to upstream. */
     ompSkillPackDiscard: "pi-desktop/omp/skills/pack/discard",
+    /** Usage status of agent-created skills tracked by the skill curator. */
+    ompSkillCuratorStatus: "pi-desktop/omp/skills/curator/status",
+    /** Restore an archived skill back to its original location. */
+    ompSkillCuratorRestore: "pi-desktop/omp/skills/curator/restore",
+    /** Pin or unpin a skill so the curator ignores it. */
+    ompSkillCuratorPin: "pi-desktop/omp/skills/curator/pin",
     /** Historical AI usage stats from omp stats --json (subset of DashboardStats). */
     ompHistoricalStats: "pi-desktop/omp/stats/historical",
     /** List agent-managed git worktrees under ~/.omp/wt/. */

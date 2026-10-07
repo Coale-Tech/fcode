@@ -12,6 +12,8 @@
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
+import type { CuratorConfig } from "./skill-curator.js";
+import { DEFAULT_CURATOR_CONFIG, readCuratorState, runCurator, shouldRunCurator, writeCuratorState } from "./skill-curator.js";
 
 export const SELF_IMPROVE_BRANCH = "fcode/self-improve";
 
@@ -40,7 +42,7 @@ export function resolveSkillPackDirs(dataDir: string, resourcesPath: string): st
   return dirs;
 }
 
-function git(cwd: string, args: string[], timeoutMs = 120_000): Promise<{ ok: boolean; out: string }> {
+export function git(cwd: string, args: string[], timeoutMs = 120_000): Promise<{ ok: boolean; out: string }> {
   const { promise, resolve: done } = Promise.withResolvers<{ ok: boolean; out: string }>();
   const child = spawn("git", args, { cwd, windowsHide: true, env: { ...process.env, GIT_TERMINAL_PROMPT: "0" } });
   let out = "";
@@ -97,12 +99,39 @@ export async function prepareSelfImprovement(dataDir: string): Promise<void> {
 /** Re-sync while the app stays open; launch alone would let a week-long session go stale. */
 export const SKILL_PACK_SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
+
+export interface SkillPackSyncOpts {
+  /** Returns the timestamp (ms) of the last user activity for idle gating. */
+  getLastActivity?: () => number;
+  /** Curator config; uses defaults when absent. */
+  curatorCfg?: CuratorConfig;
+}
+
 /** Fire-and-forget: sync every pack now and every few hours, then ready the self-improvement branch. */
-export function syncSkillPacksInBackground(dataDir: string, log: (line: string) => void): NodeJS.Timeout {
+export function syncSkillPacksInBackground(
+  dataDir: string,
+  log: (line: string) => void,
+  opts?: SkillPackSyncOpts,
+): NodeJS.Timeout {
+  const cfg = opts?.curatorCfg ?? DEFAULT_CURATOR_CONFIG;
   const pass = () =>
     (async () => {
       for (const pack of SKILL_PACKS) log(`skill-pack ${pack.name}: ${await syncSkillPack(dataDir, pack)}`);
       await prepareSelfImprovement(dataDir);
+
+      // Skill curator pass — only when enabled and gating conditions are met.
+      if (cfg.enabled) {
+        let state = readCuratorState(dataDir);
+        const now = Date.now();
+        if (!state.firstSeen) {
+          writeCuratorState(dataDir, { firstSeen: new Date().toISOString() });
+        } else if (shouldRunCurator(state, now, opts?.getLastActivity?.() ?? 0, cfg)) {
+          await runCurator(dataDir, cfg);
+          state = readCuratorState(dataDir);
+          writeCuratorState(dataDir, { ...state, lastRun: new Date().toISOString() });
+          log("skill-curator: pass complete");
+        }
+      }
     })().catch((e) => log(`skill-pack sync error: ${String(e)}`));
   void pass();
   return setInterval(() => void pass(), SKILL_PACK_SYNC_INTERVAL_MS).unref();
