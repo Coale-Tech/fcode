@@ -187,33 +187,37 @@ function buildReviewPrompt(
   ].join("\n");
 }
 
-/** Spawn `omp -p` (tool-less, sessionless) with the prompt on stdin and return its stdout. */
+/** CLI args for the review run: tool-less, sessionless, no memory, cheap model unless one is set. */
+export function reviewArgs(model: string, overlayPath: string): string[] {
+  return [
+    "-p",
+    "--no-session",
+    "--no-tools",
+    "--no-skills",
+    "--no-rules",
+    "--no-extensions",
+    "--no-title",
+    "--no-lsp",
+    "--config",
+    overlayPath,
+    "--model",
+    model || "@smol",
+  ];
+}
+
+/** Spawn `omp -p` with the prompt on stdin and return its stdout. */
 function runOmpCompletion(
   ompBinary: string,
-  model: string,
+  args: string[],
   prompt: string,
   timeoutMs: number,
 ): Promise<string> {
   const { promise, resolve, reject } = Promise.withResolvers<string>();
-  const child = spawn(
-    ompBinary,
-    [
-      "-p",
-      "--no-session",
-      "--no-tools",
-      "--no-skills",
-      "--no-rules",
-      "--no-extensions",
-      "--no-title",
-      "--no-lsp",
-      ...(model ? ["--model", model] : []),
-    ],
-    {
-      env: { ...process.env } as NodeJS.ProcessEnv,
-      stdio: ["pipe", "pipe", "pipe"],
-      shell: false,
-    },
-  );
+  const child = spawn(ompBinary, args, {
+    env: { ...process.env } as NodeJS.ProcessEnv,
+    stdio: ["pipe", "pipe", "pipe"],
+    shell: false,
+  });
 
   let stdout = "";
   child.stdout?.on("data", (d: Buffer) => {
@@ -296,7 +300,10 @@ async function runReview(config: SkillReviewConfig, snapshot: TranscriptEntry[])
   const existing = readExistingSkills(config.dataDir);
   const prompt = buildReviewPrompt(transcript, existing);
 
-  const stdout = await runOmpCompletion(config.ompBinary, config.model, prompt, REVIEW_TIMEOUT_MS);
+  // No memory backend: the review sees only the transcript, and skips the memory injection tokens.
+  const overlay = join(config.dataDir, "skill-review-overlay.yml");
+  writeFileSync(overlay, "memory:\n  backend: off\n", "utf8");
+  const stdout = await runOmpCompletion(config.ompBinary, reviewArgs(config.model, overlay), prompt, REVIEW_TIMEOUT_MS);
   const jsonText = extractJson(stdout);
   if (!jsonText) {
     config.log("skill-review: no JSON found in model response");

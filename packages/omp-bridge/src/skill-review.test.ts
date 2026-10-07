@@ -16,6 +16,7 @@ import {
   writeAndCommitSkill,
   type SkillReviewConfig,
   type TranscriptEntry,
+  reviewArgs,
 } from "./skill-review.js";
 
 // Stub skill-lint to avoid dependency on not-yet-compiled skill-lint.ts.
@@ -292,3 +293,15 @@ function cfg(intervalTurns: number, onReview?: () => void | Promise<void>): Skil
     ...(onReview ? { _runReview: () => Promise.resolve(onReview()) } : {}),
   };
 }
+
+describe("reviewArgs", () => {
+  it("defaults to the cheap @smol model, with no tools, sessions or memory overlay", () => {
+    const args = reviewArgs("", "/tmp/o.yml");
+    expect(args.slice(args.indexOf("--model"))).toEqual(["--model", "@smol"]);
+    expect(args).toEqual(expect.arrayContaining(["-p", "--no-tools", "--no-session", "--config", "/tmp/o.yml"]));
+  });
+
+  it("uses the configured model when set", () => {
+    expect(reviewArgs("anthropic/x", "/o").at(-1)).toBe("anthropic/x");
+  });
+});
