@@ -130,7 +130,7 @@ All host tools default to `exec` tier in omp's approval model (`ExtensionToolWra
 | Tool | Purpose |
 | --- | --- |
 | `fcode_bench_execute {site?, method, kwargs?}` | `bench --site <site> execute <method> --kwargs <json>`. Auto-approved only for read-only prefixes: `frappe.client.get`, `frappe.client.get_list`, `frappe.db.get_value`, `frappe.db.count`, `frappe.utils.*`, and `get_*`/`list_*` members of `studio.api.*` and `builder.api.*`. All other methods prompt. |
-| `fcode_bench_run {site?, command, args?}` | Runs one allow-listed verb through the supervisor: `migrate`, `clear-cache`, `build`, `build-studio-app`, `list-apps`, `install-app`. Always prompts. **Not a security boundary** — omp's own `bash` tool can run `bench` regardless. |
+| `fcode_bench_run {site?, command, args?}` | Runs one allow-listed verb through the supervisor: `migrate`, `clear-cache`, `build`, `build-studio-app`, `list-apps`, `install-app`, `run-tests`. Always prompts. `run-tests` takes `app`, `module`, `doctype`, `test`, `failfast`, `skip_before_tests`, `test_category` (validated in `bench/run-tests.ts`, no free-form args) and returns a JSON summary (`status`, counts, `durationMs`, `failures[]`, raw `tail`); the site needs `allow_tests`. **Not a security boundary** — omp's own `bash` tool can run `bench` regardless. |
 | `fcode_canvas {action, …}` | Drives the Build tab's `WebContentsView` via `BrowserHost`: `navigate`, `reload`, `click`, `fill`, `evaluate`. Always prompts. |
 | `fcode_canvas_read {action, …}` | Read-only canvas actions: `snapshot`, `console`, `screenshot`. Auto-approved. |
 

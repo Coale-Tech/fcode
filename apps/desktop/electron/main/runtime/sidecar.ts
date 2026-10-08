@@ -31,6 +31,7 @@ import type { FinishTurn } from "./plans";
 import { benchSupervisor, ALLOWED_BENCH_VERBS, benchFailureText } from "../bench/supervisor";
 import { isReadOnlyBenchMethod } from "../bench/approval";
 import { studioExpression } from "../bench/studio-actions";
+import { buildRunTestsArgs, runTestsReport, SITE_RE } from "../bench/run-tests";
 import { pythonLiteral } from "../bench/python-literal";
 import { shell } from "electron";
 import { parseAllowedExternalUrl } from "../safe-open-external";
@@ -926,16 +927,29 @@ async function buildFcodeProvidersConfig(
     if (!command) {
       return { ok: false, isError: true, content: "fcode_bench_run: command is required" };
     }
-    if (!ALLOWED_BENCH_VERBS.has(command)) {
+    if (command !== "run-tests" && !ALLOWED_BENCH_VERBS.has(command)) {
       return {
         ok: false,
         isError: true,
-        content: `fcode_bench_run: '${command}' is not allowed. Allowed verbs: ${[...ALLOWED_BENCH_VERBS].join(", ")}`,
+        content: `fcode_bench_run: '${command}' is not allowed. Allowed verbs: ${[...ALLOWED_BENCH_VERBS, "run-tests"].join(", ")}`,
       };
     }
     const benchPath = benchSupervisor.activeBenchPath;
     if (!benchPath) {
       return { ok: false, isError: true, content: "fcode_bench_run: no active bench" };
+    }
+    if (command === "run-tests") {
+      // Structured options only (no free-form args); the transcript is reduced to a summary.
+      const site = "site" in args && args.site != null ? String(args.site) : benchSupervisor.activeSite;
+      if (!site || !SITE_RE.test(site)) {
+        return { ok: false, isError: true, content: `fcode_bench_run: run-tests needs a valid site (got ${JSON.stringify(site ?? null)})` };
+      }
+      const built = buildRunTestsArgs(args as Record<string, unknown>);
+      if (!built.ok) return { ok: false, isError: true, content: `fcode_bench_run: ${built.error}` };
+      const result = await benchSupervisor.runOneShot({ benchPath, site, verb: "run-tests", args: built.args });
+      const { summary, content } = runTestsReport(result.output, result.exitCode);
+      const clean = summary.status === "passed" || summary.status === "no_tests";
+      return { ok: clean, isError: !clean, content };
     }
     const site = "site" in args && args.site != null ? String(args.site) : benchSupervisor.activeSite;
     const extraArgs = "args" in args && Array.isArray(args.args) ? args.args.map(String) : [];
