@@ -29,6 +29,9 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 ### Removed
 - The generic `fcode-api-development`, `fcode-app-hooks`, `fcode-bench-operations`, `fcode-doctype-development`, `fcode-frappe-ui` and `fcode-frappe-router` skills. The `frappe-*` skill pack replaces them; `frappe-router` is the entry point.
 
+### Fixed
+- `PI-Desktop-worktrees/` added to `.gitignore` and negated in `biome.json` `files.includes` so `pnpm lint:biome` is not broken when agent worktrees exist at repo root.
+
 ## [0.18.6] — 2026-10-07
 
 ### Compatibility
