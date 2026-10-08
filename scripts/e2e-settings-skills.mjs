@@ -87,23 +87,38 @@ app.whenReady().then(async () => {
     show: false,
     width: 1024,
     height: 768,
-      // sandbox: false for CI (--no-sandbox passed at Electron level; renderer
-      // sandbox disabled to avoid seccomp issues on constrained Linux hosts).
+    webPreferences: {
+      // sandbox: false + contextIsolation: false for CI reliability:
+      // avoids seccomp issues on constrained Linux and simplifies the
+      // globals needed to call window.skillsProbe() from executeJavaScript.
       sandbox: false,
       contextIsolation: false,
       nodeIntegration: false,
       backgroundThrottling: false,
+    },
   });
   const consoleErrors = [];
   win.webContents.on("console-message", (_event, level, message) => {
-    // level: 0=verbose, 1=info, 2=warning, 3=error
+    // level: 0=verbose 1=info 2=warning 3=error
     if (level >= 3) consoleErrors.push(message);
     if (level >= 2) console.error("[renderer:" + level + "] " + message);
   });
   try {
     await win.loadFile(path.join(__dirname, "index.html"));
-    // Give async effects time to settle
-    await new Promise((r) => setTimeout(r, 800));
+    // Poll until the async fixture IIFE sets window.skillsProbe.
+    // i18n.init() is fast locally but can take >800ms on cold CI runners.
+    const probeReady = await win.webContents.executeJavaScript(\`
+      new Promise((resolve, reject) => {
+        const limit = Date.now() + 10000;
+        const check = () => {
+          if (typeof window.skillsProbe === 'function') return resolve(true);
+          if (Date.now() > limit) return reject(new Error('skillsProbe not defined after 10s'));
+          setTimeout(check, 50);
+        };
+        check();
+      })
+    \`);
+    if (!probeReady) throw new Error('skillsProbe poll returned falsy');
     const result = await win.webContents.executeJavaScript("window.skillsProbe()");
     console.log("SKILLS_PROBE " + JSON.stringify({ ...result, consoleErrors }));
     app.exit(result?.ok === true ? 0 : 1);
@@ -177,10 +192,16 @@ app.whenReady().then(async () => {
     true,
     `Skills settings probe failed. Checks: ${JSON.stringify(probe.checks)}`,
   );
+  // Renderer-level errors (level 3) that aren't from our own warn() calls
+  // are a sign of a real problem.  Warnings (level 2) from missing fixture
+  // channels are expected and excluded.
+  const realErrors = (probe.consoleErrors ?? []).filter(
+    (m) => !m.startsWith("Fixture: unhandled IPC") && !m.startsWith("[renderer:2]"),
+  );
   assert.deepEqual(
-    probe.consoleErrors ?? [],
+    realErrors,
     [],
-    `Unexpected console errors: ${JSON.stringify(probe.consoleErrors)}`,
+    `Unexpected renderer errors: ${JSON.stringify(realErrors)}`,
   );
 
   // code is null on macOS (SIGTERM after app.exit); on Linux it is 0

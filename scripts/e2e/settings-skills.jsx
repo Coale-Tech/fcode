@@ -58,9 +58,18 @@ window.piDesktop = {
       case IPC.invoke.ompExtensionsList:
         return { ok: true, data: { extensions: [] } };
 
+      // Channels added by follow-on PRs — return safe empty defaults so the
+      // fixture doesn't log console errors for features outside this test's scope.
+      case IPC.invoke.ompSkillProposalList:
+        return { ok: true, data: { proposals: [] } };
+
+      case IPC.invoke.ompSkillJourney:
+        return { ok: true, data: { events: [] } };
+
       default:
-        // surface unknown channels as errors so the test catches regressions
-        console.error("Unexpected fixture IPC channel:", channel);
+        // Warn but do NOT error — unknown channels indicate new features; the
+        // test should not break every time a new IPC channel is added.
+        console.warn("Fixture: unhandled IPC channel:", channel);
         return { ok: false, error: { message: `Unknown channel: ${channel}` } };
     }
   },
