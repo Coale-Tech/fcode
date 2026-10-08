@@ -2,6 +2,18 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const ptBREntries: ChangelogEntry[] = [
   {
+    "version": "0.19.0",
+    "date": "2026-10-08",
+    "highlights": [
+      "Os pacotes de habilidades Frappe (`frappe/skills` e `Coale-Tech/frappeskills`) sincronizam a cada inicialização e a cada 6 horas. O fluxo de auto-melhoria agora inclui um revisor em segundo plano, um portão de aprovação de escrita em Configurações > Habilidades (propostas como diffs; aprovar ou rejeitar cada uma) e uma linha do tempo Skill Journey combinando eventos do curador, commits de revisão e decisões de aprovação.",
+      "O curador de habilidades arquiva habilidades não usadas por 30 dias (nunca deleta; mantém um registro de auditoria) após 2 horas de inatividade. O lint de habilidades verifica segredos, frases de injeção de prompt, Unicode invisível e frontmatter inválido antes de qualquer PR ou commit.",
+      "A memória de início de sessão agora é congelada e estável para cache de prefixo: `<cwd>/.omp/MEMORY.md` e `USER.md` são injetados uma vez por sessão (2.000 chars cada; edite com a nova ferramenta `memory_note`). A injeção de memória é limitada a 6.000 chars (Configurações > Memória mostra o orçamento). As habilidades são listadas de forma compacta no prompt (limite de 6 KB, texto completo para habilidades fixadas/recentes; ative o modo completo em Configurações > Habilidades).",
+      "O anel de uso de contexto agora tem uma linha de Sessão: tokens de entrada, saída e leitura de cache, taxa de acerto de cache acumulada e os tokens cobrados no último turno (+N). Sem novas chamadas de rede — agrega os dados existentes do `omp.session.stats`.",
+      "`fcode_bench_run` agora pode executar `run-tests` com opções estruturadas (app, module, doctype, test, failfast, skip_before_tests, test_category) e retorna contagens estruturadas de aprovado/falho/erro/ignorado com duração e mensagens de falha em vez de uma transcrição bruta.",
+      "`pnpm e2e` executa dois testes de renderizador determinísticos (settings-skills, copy-tex) no GitHub Actions (Linux + xvfb, verificação não obrigatória). O novo script `e2e-settings-skills` verifica que os painéis de configurações de Habilidades são renderizados e que alternar o switch de revisão dispara o IPC. Corrigido o caminho do Chrome fixo no harness de verificação de UI."
+    ],
+  },
+  {
     "version": "0.18.6",
     "date": "2026-10-07",
     "highlights": [

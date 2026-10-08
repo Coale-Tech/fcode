@@ -30,6 +30,18 @@ export type ChangelogEntry = {
 
 const enEntries: ChangelogEntry[] = [
   {
+    version: "0.19.0",
+    date: "2026-10-08",
+    highlights: [
+      "Frappe skill packs (`frappe/skills` and `Coale-Tech/frappeskills`) sync on every launch and every 6 hours. The self-improving workflow now has a background reviewer, a write-approval gate in Settings > Skills (proposals staged as diffs; approve or reject each one before it commits), and a Skill Journey timeline combining curator events, review commits, and approval decisions.",
+      "Skill curator archives skills unused for 30 days (never deletes; keeps an audit ledger) after 2 idle hours. Skill lint checks every skill for secrets, prompt-injection phrases, invisible Unicode, and bad frontmatter before any PR or commit.",
+      "Session-start memory is frozen and prefix-cache stable: `<cwd>/.omp/MEMORY.md` and `USER.md` are injected once per session (2 000 chars each; edit with the new `memory_note` tool). Memory injection is capped at 6 000 chars (Settings > Memory shows the budget). Skills are listed compactly in the prompt (6 KB cap, full text for pinned/recently-used; toggle full mode in Settings > Skills).",
+      "The context-usage ring has a new Session row: input, output, and cache-read tokens, cumulative cache hit rate, and the tokens charged in the last turn (+N). No new network calls — aggregates the existing `omp.session.stats` data.",
+      "`fcode_bench_run` can now run `run-tests` with structured options (app, module, doctype, test, failfast, skip_before_tests, test_category) and returns structured pass/fail/error/skip counts with duration and per-failure messages instead of a raw transcript.",
+      "`pnpm e2e` runs two deterministic renderer tests (settings-skills, copy-tex) under GitHub Actions (Linux + xvfb, non-required check). The new `e2e-settings-skills` script verifies the Skills settings panels render and that toggling the review switch fires the IPC. Fixed hardcoded Chrome path in the UI-verify harness.",
+    ],
+  },
+  {
     version: "0.18.6",
     date: "2026-10-07",
     highlights: [
@@ -932,6 +944,18 @@ const enEntries: ChangelogEntry[] = [
 
 const zhCNEntries: ChangelogEntry[] = [
   {
+    version: "0.19.0",
+    date: "2026-10-08",
+    highlights: [
+      "Frappe 技能包（`frappe/skills` 和 `Coale-Tech/frappeskills`）在每次启动和每 6 小时同步一次。自我改进工作流现在包含一个后台审阅器、设置 > 技能中的写入审批门（提案以 diff 形式暂存，逐一审批或拒绝），以及融合了策展人事件、审阅提交和审批决策的技能旅程时间轴。",
+      "技能策展人在空闲 2 小时后归档 30 天未使用的技能（永不删除，保留审计日志）。技能 lint 在任何 PR 或提交前检查每项技能中的密钥、提示注入语句、不可见 Unicode 字符和无效 frontmatter。",
+      "会话启动内存现已冻结并具备前缀缓存稳定性：`<cwd>/.omp/MEMORY.md` 和 `USER.md` 每个会话注入一次（各 2000 字符；使用新的 `memory_note` 工具编辑）。内存注入上限为 6000 字符（设置 > 内存显示预算）。技能在提示词中以紧凑形式列出（6 KB 上限，固定/最近使用的技能保留完整文本；在设置 > 技能中切换完整模式）。",
+      "上下文使用环新增会话行：输入、输出和缓存读取令牌数、累计缓存命中率以及上一轮收取的令牌数（+N）。无新增网络调用——聚合现有的 `omp.session.stats` 数据。",
+      "`fcode_bench_run` 现在可以使用结构化选项（app、module、doctype、test、failfast、skip_before_tests、test_category）运行 `run-tests`，并返回结构化的通过/失败/错误/跳过计数及耗时和失败消息，而不是原始文本记录。",
+      "`pnpm e2e` 在 GitHub Actions（Linux + xvfb，非必须检查）下运行两个确定性渲染器测试（settings-skills、copy-tex）。新的 `e2e-settings-skills` 脚本验证技能设置面板正常渲染，以及切换审阅开关会触发 IPC。修复了 UI 验证工具中硬编码的 Chrome 路径。",
+    ],
+  },
+  {
     version: "0.18.6",
     date: "2026-10-07",
     highlights: [
@@ -1832,6 +1856,18 @@ const zhCNEntries: ChangelogEntry[] = [
 ];
 
 const zhTWEntries: ChangelogEntry[] = [
+  {
+    version: "0.19.0",
+    date: "2026-10-08",
+    highlights: [
+      "Frappe 技能套件（`frappe/skills` 和 `Coale-Tech/frappeskills`）在每次啟動和每 6 小時同步一次。自我改進工作流程現在包含一個背景審閱器、設定 > 技能中的寫入核准閘門（提案以 diff 形式暫存，逐一核准或拒絕），以及融合策展人事件、審閱提交與核准決策的技能旅程時間軸。",
+      "技能策展人在閒置 2 小時後封存 30 天未使用的技能（永不刪除，保留稽核日誌）。技能 lint 在任何 PR 或提交前檢查每項技能中的金鑰、提示注入語句、不可見 Unicode 字元和無效 frontmatter。",
+      "工作階段啟動記憶體現已凍結且具備前綴快取穩定性：`<cwd>/.omp/MEMORY.md` 和 `USER.md` 每個工作階段注入一次（各 2000 字元；使用新的 `memory_note` 工具編輯）。記憶體注入上限為 6000 字元（設定 > 記憶體顯示預算）。技能在提示詞中以緊湊形式列出（6 KB 上限，已釘選/最近使用的技能保留完整文字；在設定 > 技能中切換完整模式）。",
+      "情境使用環新增工作階段列：輸入、輸出和快取讀取權杖數、累計快取命中率以及上一輪收取的權杖數（+N）。無新增網路呼叫——彙總現有的 `omp.session.stats` 資料。",
+      "`fcode_bench_run` 現在可以使用結構化選項（app、module、doctype、test、failfast、skip_before_tests、test_category）執行 `run-tests`，並傳回結構化的通過/失敗/錯誤/略過計數及耗時與失敗訊息，而非原始文字記錄。",
+      "`pnpm e2e` 在 GitHub Actions（Linux + xvfb，非必要檢查）下執行兩個確定性渲染器測試（settings-skills、copy-tex）。新的 `e2e-settings-skills` 腳本驗證技能設定面板正常渲染，以及切換審閱開關會觸發 IPC。修正了 UI 驗證工具中硬編碼的 Chrome 路徑。",
+    ],
+  },
   {
     version: "0.18.6",
     date: "2026-10-07",

@@ -1,6 +1,6 @@
 {
   "name": "@pi-desktop/filebird",
-  "version": "0.18.6",
+  "version": "0.19.0",
   "description": "FileBird — a cross-platform desktop SFTP client",
   "desktopName": "fly.desktop",
   "main": "./out/main/main.js",

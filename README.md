@@ -17,7 +17,7 @@
 
 </div>
 
-> **Early preview.** The newest release is the unsigned [v0.18.6](https://github.com/Coale-Tech/fcode/releases/tag/v0.18.6) for macOS, Windows, and Linux. It ships the omp agent and the Code, Build, and Bench surfaces; it is not yet the completed Frappe IDE described by the project roadmap.
+> **Early preview.** The newest release is the unsigned [v0.19.0](https://github.com/Coale-Tech/fcode/releases/tag/v0.19.0) for macOS, Windows, and Linux. It ships the omp agent and the Code, Build, and Bench surfaces; it is not yet the completed Frappe IDE described by the project roadmap.
 
 ## Contents
 
@@ -202,7 +202,7 @@ Application identity: product name `Fcode`, bundle identifier `com.coaletech.fco
 
 ## Current status and limitations
 
-The current release line is 0.18.x. The newest release is the unsigned [v0.18.6](https://github.com/Coale-Tech/fcode/releases/tag/v0.18.6), which includes everything in 0.18.5, the first stable build since 0.17.1. See [CHANGELOG.md](CHANGELOG.md) for the full history.
+The current release line is 0.19.x. The newest release is the unsigned [v0.19.0](https://github.com/Coale-Tech/fcode/releases/tag/v0.19.0), which ships Frappe skill packs, self-improving skills with an approval gate and journey, skill curator and lint, frozen memory, a token/cost meter, bench run-tests, and the Electron e2e CI suite. See [CHANGELOG.md](CHANGELOG.md) for the full history.
 
 The release pipeline builds macOS (arm64 and x64), Linux (x64) and Windows (x64). Known gaps:
 
@@ -213,7 +213,7 @@ The release pipeline builds macOS (arm64 and x64), Linux (x64) and Windows (x64)
 
 | Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
 | --- | --- | --- | --- | --- |
-| 0.18.6 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
+| 0.19.0 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
 
 ## Build from source
 

@@ -2,6 +2,18 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const esEntries: ChangelogEntry[] = [
   {
+    "version": "0.19.0",
+    "date": "2026-10-08",
+    "highlights": [
+      "Los paquetes de habilidades de Frappe (`frappe/skills` y `Coale-Tech/frappeskills`) se sincronizan en cada inicio y cada 6 horas. El flujo de mejora automática ahora incluye un revisor en segundo plano, una puerta de aprobación de escritura en Ajustes > Habilidades (propuestas como diffs; aprueba o rechaza cada una) y una línea de tiempo Skill Journey que combina eventos del curador, commits de revisión y decisiones de aprobación.",
+      "El curador de habilidades archiva las habilidades no usadas en 30 días (sin borrar; mantiene un registro de auditoría) tras 2 horas de inactividad. El lint de habilidades verifica secretos, frases de inyección de prompts, Unicode invisible y frontmatter inválido antes de cualquier PR o commit.",
+      "La memoria de inicio de sesión ahora está congelada y es estable en caché de prefijo: `<cwd>/.omp/MEMORY.md` y `USER.md` se inyectan una vez por sesión (2.000 chars cada uno; edita con la nueva herramienta `memory_note`). La inyección de memoria está limitada a 6.000 chars (Ajustes > Memoria muestra el presupuesto). Las habilidades se listan de forma compacta en el prompt (límite de 6 KB, texto completo para habilidades fijadas/recientes; activa el modo completo en Ajustes > Habilidades).",
+      "El anillo de uso de contexto ahora tiene una fila de Sesión: tokens de entrada, salida y lectura de caché, tasa de aciertos de caché acumulada y los tokens cobrados en el último turno (+N). Sin nuevas llamadas de red — agrega los datos existentes de `omp.session.stats`.",
+      "`fcode_bench_run` ahora puede ejecutar `run-tests` con opciones estructuradas (app, module, doctype, test, failfast, skip_before_tests, test_category) y devuelve conteos estructurados de aprobado/fallido/error/omitido con duración y mensajes de fallo en lugar de una transcripción sin procesar.",
+      "`pnpm e2e` ejecuta dos pruebas de renderizador deterministas (settings-skills, copy-tex) en GitHub Actions (Linux + xvfb, verificación no requerida). El nuevo script `e2e-settings-skills` verifica que los paneles de configuración de Habilidades se renderizan y que alternar el interruptor de revisión dispara el IPC. Se corrigió la ruta de Chrome codificada en el arnés de verificación de UI."
+    ],
+  },
+  {
     "version": "0.18.6",
     "date": "2026-10-07",
     "highlights": [

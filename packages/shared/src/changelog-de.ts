@@ -2,6 +2,18 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const deEntries: ChangelogEntry[] = [
   {
+    "version": "0.19.0",
+    "date": "2026-10-08",
+    "highlights": [
+      "Frappe Skill-Pakete (`frappe/skills` und `Coale-Tech/frappeskills`) werden bei jedem Start und alle 6 Stunden synchronisiert. Der selbstverbessernde Workflow enthält jetzt einen Hintergrund-Reviewer, ein Schreib-Genehmigungstor in Einstellungen > Skills (Vorschläge als Diffs; genehmigen oder ablehnen) und eine Skill-Journey-Timeline, die Kurator-Ereignisse, Review-Commits und Genehmigungsentscheidungen vereint.",
+      "Skill-Kurator archiviert Skills, die 30 Tage nicht genutzt wurden (nie löschen; Audit-Protokoll bleibt). Skill-Lint prüft jeden Skill auf Geheimnisse, Prompt-Injection-Phrasen, unsichtbare Unicode-Zeichen und fehlerhaftes Frontmatter vor jedem PR oder Commit.",
+      "Der Sitzungsstart-Speicher ist jetzt eingefroren und präfix-cache-stabil: `<cwd>/.omp/MEMORY.md` und `USER.md` werden einmal pro Sitzung eingebettet (je 2.000 Zeichen; bearbeiten mit dem neuen `memory_note`-Tool). Speicher-Einbettung ist auf 6.000 Zeichen begrenzt (Einstellungen > Gedächtnis zeigt das Budget). Skills werden kompakt im Prompt gelistet (6-KB-Limit, vollständiger Text für angeheftete/kürzlich genutzte Skills; vollständigen Modus in Einstellungen > Skills umschalten).",
+      "Der Kontext-Nutzungsring hat jetzt eine Sitzungszeile: Eingabe-, Ausgabe- und Cache-Read-Tokens, kumulative Cache-Trefferquote und die im letzten Durchlauf abgerechneten Tokens (+N). Keine neuen Netzwerkanrufe — aggregiert vorhandene `omp.session.stats`-Daten.",
+      "`fcode_bench_run` kann jetzt `run-tests` mit strukturierten Optionen ausführen (app, module, doctype, test, failfast, skip_before_tests, test_category) und gibt strukturierte Bestanden/Fehlgeschlagen/Fehler/Übersprungen-Zähler mit Dauer und Fehlermeldungen zurück, anstatt ein rohes Transkript.",
+      "`pnpm e2e` führt zwei deterministische Renderer-Tests (settings-skills, copy-tex) unter GitHub Actions (Linux + xvfb, nicht erforderliche Prüfung) aus. Das neue `e2e-settings-skills`-Skript prüft, dass die Skills-Einstellungsbereiche gerendert werden und das Umschalten des Review-Schalters IPC auslöst. Fest codierter Chrome-Pfad im UI-Verify-Harness behoben."
+    ],
+  },
+  {
     "version": "0.18.6",
     "date": "2026-10-07",
     "highlights": [
