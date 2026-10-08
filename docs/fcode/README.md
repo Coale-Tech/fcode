@@ -179,20 +179,25 @@ Launch the verified build through the window manager (`open apps/desktop/release
 
 ### Electron e2e suite (`pnpm e2e`)
 
-`scripts/run-e2e-suite.mjs` runs 6 deterministic Electron integration tests (no host-core binary or omp sidecar needed):
+`scripts/run-e2e-suite.mjs` runs a deterministic Electron integration test suite (no host-core binary or omp sidecar needed).
 
-| Script | What it proves | Needs renderer build |
-| --- | --- | --- |
-| `e2e-settings-skills.mjs` | Skills settings panels render; `skills.review.enabled` toggle fires `ompSettingsSet` IPC; `MemoryBudgetBar` displays fill | no |
-| `e2e-work-panel-reorder.mjs` | Work-panel drag-reorder persists the new order | no |
-| `e2e-transcript-disclosure-anchor.mjs` | Toggling a disclosure does not displace the reader's scroll position | no |
-| `e2e-copy-tex.mjs` | TeX/KaTeX copy produces the correct inline formula | no |
-| `e2e-settings-scroll.mjs` | Settings page navigation retains per-tab scroll; anchor search from a plugin | yes |
-| `e2e-transcript-render.mjs` | Completed activity groups stabilise without layout thrash | yes |
+**CI suite** (`pnpm e2e`, required to pass):
 
-"Needs renderer build" tests require `pnpm build:js` (runs `electron-vite build` inside `apps/desktop`). The CI job builds this first; locally, skip with `SKIP_RENDERER_TESTS=1` if you have not run the full build.
+| Script | What it proves |
+| --- | --- |
+| `e2e-settings-skills.mjs` | `SkillPackSection`, `SkillCuratorSection`, `SkillReviewSection` and `MemoryBudgetBar` render; `skills.review.enabled` toggle fires `ompSettingsSet` |
+| `e2e-copy-tex.mjs` | TeX/KaTeX copy produces the correct inline formula |
 
-The remaining ~50 `scripts/e2e-*.mjs` scripts are available for local manual verification only (`pnpm test:e2e:*`). Most require the Rust host-core binary (`target/debug/pi-desktop-host-core`) and are not in the CI suite.
+**Extended local suite** (`pnpm e2e --all`; not required in CI):
+
+| Script | Needs renderer |
+| --- | --- |
+| `e2e-work-panel-reorder.mjs` | no |
+| `e2e-transcript-disclosure-anchor.mjs` | no |
+| `e2e-settings-scroll.mjs` | yes |
+| `e2e-transcript-render.mjs` | yes |
+
+The extended scripts pass locally but require per-test `--no-sandbox` fixes before stable CI inclusion (open follow-up). The remaining ~50 `scripts/e2e-*.mjs` scripts are available individually via `pnpm test:e2e:*`; most require the Rust host-core binary.
 
 ---
 

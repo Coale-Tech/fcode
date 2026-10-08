@@ -2,15 +2,18 @@
 /**
  * run-e2e-suite.mjs — runs the deterministic Electron e2e suite.
  *
- * Chosen tests:
- *   e2e-settings-skills          Skills settings panels + toggle IPC wiring (no renderer)
- *   e2e-work-panel-reorder       Work panel drag reorder (no renderer)
- *   e2e-transcript-disclosure    Transcript scroll-anchor regression (no renderer)
- *   e2e-copy-tex                 TeX copy/paste rendering (no renderer)
- *   e2e-settings-scroll          Settings navigation + scroll retention (needs renderer)
- *   e2e-transcript-render        Transcript activity-group stability (needs renderer)
+ * CI suite (required to pass):
+ *   e2e-settings-skills     Skills settings panels + toggle IPC wiring; new test with
+ *                           explicit --no-sandbox and sandbox:false for CI reliability.
+ *   e2e-copy-tex            TeX copy/paste rendering; self-contained, no renderer needed.
  *
- * Prereqs: pnpm build:js (workspace packages + desktop renderer for last two)
+ * Extended local suite (run with --all; not required in CI):
+ *   e2e-work-panel-reorder        Work panel drag reorder
+ *   e2e-transcript-disclosure     Transcript scroll-anchor regression
+ *   e2e-settings-scroll           Settings navigation (needs renderer build)
+ *   e2e-transcript-render         Transcript stability (needs renderer build)
+ *
+ * Prereqs: pnpm build:js (workspace packages; renderer only needed for extended suite)
  * Platform: Linux with xvfb-run (CI), macOS dev (probe passes; exit may be SIGTERM).
  */
 import { spawnSync } from "node:child_process";
@@ -20,6 +23,7 @@ import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const node = process.execPath;
+const runAll = process.argv.includes("--all");
 
 // Tests that need the renderer CSS build (pnpm build:js → apps/desktop electron-vite build)
 const NEEDS_RENDERER = new Set(["e2e-settings-scroll", "e2e-transcript-render"]);
@@ -28,18 +32,24 @@ const rendererBuilt = existsSync(
   join(root, "apps/desktop/out/renderer/index.html"),
 );
 
-/** @type {Array<{name: string, script: string}>} */
-const SUITE = [
+/** @type {Array<{name: string, script: string, ciOnly?: boolean}>} */
+const CI_SUITE = [
   { name: "e2e-settings-skills", script: "scripts/e2e-settings-skills.mjs" },
+  { name: "e2e-copy-tex", script: "scripts/e2e-copy-tex.mjs" },
+];
+
+/** Extended tests — run locally with pnpm e2e --all or manually. */
+const EXTENDED = [
   { name: "e2e-work-panel-reorder", script: "scripts/e2e-work-panel-reorder.mjs" },
   {
     name: "e2e-transcript-disclosure",
     script: "scripts/e2e-transcript-disclosure-anchor.mjs",
   },
-  { name: "e2e-copy-tex", script: "scripts/e2e-copy-tex.mjs" },
   { name: "e2e-settings-scroll", script: "scripts/e2e-settings-scroll.mjs" },
   { name: "e2e-transcript-render", script: "scripts/e2e-transcript-render.mjs" },
 ];
+
+const SUITE = runAll ? [...CI_SUITE, ...EXTENDED] : CI_SUITE;
 
 const results = [];
 let anyFailed = false;

@@ -87,12 +87,12 @@ app.whenReady().then(async () => {
     show: false,
     width: 1024,
     height: 768,
-    webPreferences: {
-      sandbox: true,
-      contextIsolation: true,
+      // sandbox: false for CI (--no-sandbox passed at Electron level; renderer
+      // sandbox disabled to avoid seccomp issues on constrained Linux hosts).
+      sandbox: false,
+      contextIsolation: false,
       nodeIntegration: false,
       backgroundThrottling: false,
-    },
   });
   const consoleErrors = [];
   win.webContents.on("console-message", (_event, level, message) => {
