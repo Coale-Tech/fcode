@@ -175,8 +175,29 @@ Launch the verified build through the window manager (`open apps/desktop/release
 | Desktop typecheck | `pnpm --filter @pi-desktop/desktop typecheck` | yes (`ci.yml`) |
 | Architecture budget | `node scripts/check-architecture.mjs` | yes |
 | Identity keeplist | `node scripts/check-legal.mjs` | yes (release verify job) |
+| **Electron e2e suite** | **`pnpm e2e`** | **yes (`e2e.yml`, non-required, Linux + xvfb)** |
 
-The 52 `scripts/e2e-*.mjs` Electron integration tests do **not** run in any CI workflow (`ci.yml` and `release.yml` both omit `pnpm test:e2e`). Run them locally for manual verification only.
+### Electron e2e suite (`pnpm e2e`)
+
+`scripts/run-e2e-suite.mjs` runs a deterministic Electron integration test suite (no host-core binary or omp sidecar needed).
+
+**CI suite** (`pnpm e2e`, required to pass):
+
+| Script | What it proves |
+| --- | --- |
+| `e2e-settings-skills.mjs` | `SkillPackSection`, `SkillCuratorSection`, `SkillReviewSection` and `MemoryBudgetBar` render; `skills.review.enabled` toggle fires `ompSettingsSet` |
+| `e2e-copy-tex.mjs` | TeX/KaTeX copy produces the correct inline formula |
+
+**Extended local suite** (`pnpm e2e --all`; not required in CI):
+
+| Script | Needs renderer |
+| --- | --- |
+| `e2e-work-panel-reorder.mjs` | no |
+| `e2e-transcript-disclosure-anchor.mjs` | no |
+| `e2e-settings-scroll.mjs` | yes |
+| `e2e-transcript-render.mjs` | yes |
+
+The extended scripts pass locally but require per-test `--no-sandbox` fixes before stable CI inclusion (open follow-up). The remaining ~50 `scripts/e2e-*.mjs` scripts are available individually via `pnpm test:e2e:*`; most require the Rust host-core binary.
 
 ---
 
