@@ -44,6 +44,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Ensure Electron binary is downloaded
+        # pnpm --frozen-lockfile may restore packages from cache without running
+        # the postinstall download script.  Run it explicitly so the binary exists.
+        run: |
+          node apps/desktop/node_modules/electron/install.js
+          echo "Electron binary: $(cat apps/desktop/node_modules/electron/path.txt)"
+          ls "apps/desktop/node_modules/electron/dist/$(cat apps/desktop/node_modules/electron/path.txt)"
+
       - name: Build workspace packages (renderer needed for settings-scroll + transcript-render)
         run: pnpm build:js
 
@@ -58,8 +66,10 @@ jobs:
             libpango-1.0-0 libpangocairo-1.0-0
 
       - name: Run e2e suite
-        run: xvfb-run -a pnpm e2e
+        # xvfb-run -a picks a free display number automatically.
+        # ELECTRON_NO_SANDBOX=1 disables Electron's sandbox so it works in CI
+        # without user-namespace support (equivalent to --no-sandbox).
+        run: xvfb-run --auto-servernum node scripts/run-e2e-suite.mjs
         env:
-          DISPLAY: ':99'
-          # Electron sandbox needs user namespaces on Linux; disable for CI.
+          ELECTRON_NO_SANDBOX: 1
           ELECTRON_DISABLE_SANDBOX: 1

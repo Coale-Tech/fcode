@@ -118,7 +118,13 @@ app.whenReady().then(async () => {
 
   const env = { ...process.env };
   delete env.ELECTRON_RUN_AS_NODE;
-  const child = spawn(electronBinary, [join(temp, "main.cjs")], {
+  // On Linux CI, Electron needs --no-sandbox because user namespaces are
+  // typically unavailable.  On macOS and Windows this flag is a no-op.
+  const electronArgs =
+    process.platform === "linux"
+      ? ["--no-sandbox", join(temp, "main.cjs")]
+      : [join(temp, "main.cjs")];
+  const child = spawn(electronBinary, electronArgs, {
     env,
     stdio: ["ignore", "pipe", "pipe"],
   });

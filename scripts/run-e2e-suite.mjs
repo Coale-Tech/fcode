@@ -61,10 +61,14 @@ for (const { name, script } of SUITE) {
 
   process.stdout.write(`  ${name}: `);
   const start = Date.now();
+  const childEnv =
+    process.platform === "linux"
+      ? { ...process.env, ELECTRON_NO_SANDBOX: "1" }
+      : process.env;
   const result = spawnSync(node, [scriptPath], {
     stdio: "inherit",
     timeout: 90_000,
-    env: process.env,
+    env: childEnv,
   });
   const ms = Date.now() - start;
 
