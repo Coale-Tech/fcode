@@ -62,12 +62,13 @@ Fcode supports Frappe **v15 and v16** benches.
   | Tool | What it does | Approval |
   | --- | --- | --- |
   | `fcode_bench_execute` | `bench --site <site> execute <method>` | Read-only methods (`frappe.client.get`, `get_list`, `get_value`, `frappe.db.count`, …) run without a prompt; everything else asks |
-  | `fcode_bench_run` | `migrate`, `clear-cache`, `build`, `build-studio-app`, `list-apps`, `install-app` | Always asks |
+  | `fcode_bench_run` | `migrate`, `clear-cache`, `build`, `build-studio-app`, `list-apps`, `install-app`, `run-tests` (validated options, parsed pass/fail result) | Always asks |
   | `fcode_canvas` | Navigate, click, fill and evaluate in the Build canvas | Always asks |
   | `fcode_canvas_read` | Snapshot, console and screenshot of the canvas | No prompt |
   | `fcode_studio` | Publish/unpublish Studio apps and pages, revert drafts, toggle app export | Always asks |
 
 - **Bundled Frappe skills** that teach the agent Frappe's conventions: DocType development, API development, app hooks, bench operations, Studio, Builder and frappe-ui (`apps/desktop/resources/fcode-skills/`).
+- **Self-improving skills** (Settings → Skills): the Frappe skill packs sync in the background; a curator archives stale skills (never deletes), an optional background review proposes new skills from your sessions for you to approve, skills are linted and secret-scanned, and a timeline shows what changed. Nothing is pushed without your click.
 
 ### Workspace tools
 
@@ -90,6 +91,8 @@ The agent can remember facts across sessions (**Settings → Memory**):
 | Off | No memory |
 
 A health card shows whether memory is working. You can also write a short user profile (`USER.md`) that is added to every session. Recalled text is stripped of prompt-injection patterns and secrets before it reaches the model.
+
+Fcode also keeps a small frozen block (project `.omp/MEMORY.md` and `USER.md`, 2,000 characters each by default) that is loaded once per session so the prompt prefix stays cacheable, and a memory budget bar and token meter show what each session costs.
 
 ### Interface
 
