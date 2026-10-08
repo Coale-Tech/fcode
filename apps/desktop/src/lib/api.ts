@@ -173,6 +173,9 @@ import type {
   RavenSettings,
   OmpSkillCuratorStatusResult,
   OmpSkillCuratorMutateResult,
+  OmpSkillProposalListResult,
+  OmpSkillProposalActResult,
+  OmpSkillJourneyResult,
 } from "@pi-desktop/shared";
 import {
   defaultCommandShellForPlatform,
@@ -1808,6 +1811,18 @@ export const api = {
   /** Pin or unpin a skill (pinned skills are never archived). */
   ompSkillCuratorPin: (name: string, pinned: boolean) =>
     invoke<OmpSkillCuratorMutateResult>(IPC.invoke.ompSkillCuratorPin, { name, pinned }),
+  /** List pending skill proposals awaiting approval. */
+  ompSkillProposalList: () =>
+    invoke<OmpSkillProposalListResult>(IPC.invoke.ompSkillProposalList),
+  /** Approve a pending proposal: lint, commit on fcode/self-improve, record. */
+  ompSkillProposalApprove: (id: string) =>
+    invoke<OmpSkillProposalActResult>(IPC.invoke.ompSkillProposalApprove, { id }),
+  /** Reject (discard) a pending proposal. */
+  ompSkillProposalReject: (id: string) =>
+    invoke<OmpSkillProposalActResult>(IPC.invoke.ompSkillProposalReject, { id }),
+  /** Read-only journey timeline combining curator + review commits + decisions. */
+  ompSkillJourney: () =>
+    invoke<OmpSkillJourneyResult>(IPC.invoke.ompSkillJourney),
   /** Historical AI usage stats from `omp stats --json`. */
   ompHistoricalStats: () =>
     invoke<OmpHistoricalStatsResult>(IPC.invoke.ompHistoricalStats),
