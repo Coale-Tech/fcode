@@ -225,6 +225,10 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
           "",
           "memory:",
           `  backend: ${opts.memory.backend}`,
+          // Frozen per-session memory files ON by default in Fcode (2000 chars each).
+          // User can override via Settings; 0 disables the feature.
+          `  frozen:`,
+          `    maxChars: ${s["memory.frozen.maxChars"] ?? 2000}`,
           "mnemopi:",
           "  llmMode: session",
           ...(s["mnemopi.scoping"]           !== undefined ? [`  scoping: ${s["mnemopi.scoping"]}`]                                 : []),

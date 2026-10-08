@@ -107,6 +107,7 @@ const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   "hindsight.mentalModelAutoSeed": { type: "boolean" },
   // Memory cross-backend (omp/packages/coding-agent/src/memory-backend/settings.ts)
   "memory.injectMaxChars":         { type: "number", min: 0, max: 200000 },
+  "memory.frozen.maxChars":        { type: "number", min: 0, max: 200000 },
   // Mnemopi advanced (omp/packages/coding-agent/src/mnemopi/settings.ts)
   // mnemopi.llmMode forced to "session" by overlay; mnemopi.embeddingApiKey/llmApiKey are secrets.
   "mnemopi.scoping":               { type: "enum", values: MNEMOPI_SCOPING_MODES },

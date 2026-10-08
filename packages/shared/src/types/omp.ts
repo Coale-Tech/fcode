@@ -294,6 +294,8 @@ export interface OmpSettingsValues {
   "hindsight.mentalModelAutoSeed"?: boolean;
   // Memory cross-backend (omp/packages/coding-agent/src/memory-backend/settings.ts)
   "memory.injectMaxChars"?: number;
+  /** Char budget for each frozen memory file (USER.md / .omp/MEMORY.md). 0 = disabled. Fcode default: 2000. */
+  "memory.frozen.maxChars"?: number;
   // Mnemopi advanced (omp/packages/coding-agent/src/mnemopi/settings.ts)
   // mnemopi.llmMode is forced to "session" by the bridge overlay; excluded.
   // mnemopi.embeddingApiKey and mnemopi.llmApiKey are credentials; use secret store; excluded.
