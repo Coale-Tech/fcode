@@ -529,13 +529,21 @@ const HOST_TOOL_SCHEMAS = [
   },
   {
     name: "fcode_bench_run",
-    description: "Run an allow-listed bench command (migrate, clear-cache, build, build-studio-app, list-apps, install-app) on the active bench.",
+    description:
+      "Run an allow-listed bench command (migrate, clear-cache, build, build-studio-app, list-apps, install-app, run-tests) on the active bench. run-tests takes structured options (app, module, doctype, test, failfast, skip_before_tests, test_category) instead of args, and returns a JSON summary {status, passed, failed, errors, skipped, durationMs, failures[{kind,test,message}], tail}.",
     parameters: {
       type: "object",
       properties: {
-        command: { type: "string", enum: ["migrate", "clear-cache", "build", "build-studio-app", "list-apps", "install-app"] },
+        command: { type: "string", enum: ["migrate", "clear-cache", "build", "build-studio-app", "list-apps", "install-app", "run-tests"] },
         site: { type: "string" },
         args: { type: "array", items: { type: "string" } },
+        app: { type: "string", description: "run-tests: Frappe app, e.g. my_app" },
+        module: { type: "string", description: "run-tests: dotted test module, e.g. my_app.tests.test_x (not with doctype)" },
+        doctype: { type: "string", description: "run-tests: DocType name (not with module)" },
+        test: { type: "string", description: "run-tests: a single test method name" },
+        failfast: { type: "boolean", description: "run-tests: stop at the first failure" },
+        skip_before_tests: { type: "boolean", description: "run-tests: skip the before_tests hooks" },
+        test_category: { type: "string", enum: ["unit", "integration"], description: "run-tests: only this category" },
       },
       required: ["command"],
     },

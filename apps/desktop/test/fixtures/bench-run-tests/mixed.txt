@@ -1,0 +1,39 @@
+Starting test run with parameters: site=coale, module=fcode_sample_tests, verbose=False, tests=(), force=False, profile=False, failfast=False, skip_before_tests=False, debug=False, selected_categories=[]
+View detailed logs (using --verbose): /home/dev/frappe-bench/logs/frappe.testing.log
+
+Running 5 unspecified-category tests for fcode_sample_tests
+
+fcode_sample_tests.TestOther
+   [32m ✔ [0m test_also_ok
+
+fcode_sample_tests.TestSample
+   [31m ✖ [0m test_error
+   [31m ✖ [0m test_fail
+   [32m ✔ [0m test_ok
+   [37m = [0m test_skipped
+
+
+======================================================================
+ ERROR  test_error (fcode_sample_tests.TestSample.test_error)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fcode-sample/fcode_sample_tests.py", line 12, in test_error
+    {}["missing"]
+    ~~^^^^^^^^^^^
+    self = <fcode_sample_tests.TestSample testMethod=test_error>
+KeyError: 'missing'
+
+======================================================================
+ FAIL  test_fail (fcode_sample_tests.TestSample.test_fail)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fcode-sample/fcode_sample_tests.py", line 9, in test_fail
+    self.assertEqual(1 + 1, 3, "math is broken")
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    self = <fcode_sample_tests.TestSample testMethod=test_fail>
+AssertionError: 2 != 3 : math is broken
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.021s
+
+FAILED (failures=1, errors=1, skipped=1)

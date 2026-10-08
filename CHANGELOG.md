@@ -20,6 +20,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Background skill review (off by default, `skills.review.enabled`): every N turns (default 10) a tool-less, memory-less `omp -p` run on omp's cheap `@smol` model (or one you choose) reads the recent conversation and commits reusable lessons to `fcode/self-improve`. Token-capped, never pushes.
 - Skill lint: secrets, prompt-injection phrases, invisible Unicode and invalid frontmatter block **Open PR** and review commits; incident-log shape and oversized bodies show as warnings.
 - Bounded always-on memory: `memory.injectMaxChars` (default 6000, 0 = unlimited) caps the memory block built at session start, and Settings > Memory shows how full it is.
+- `fcode_bench_run` can run `run-tests`: structured options (`app`, `module`, `doctype`, `test`, `failfast`, `skip_before_tests`, `test_category`; no free-form flags) and a JSON result with pass/fail/error/skip counts, duration and per-failure messages instead of the raw transcript. Still asks for approval.
 
 ### Changed
 - `~/.claude/skills` is no longer loaded by default. Every personal skill was added to the prompt on every turn; turn it back on in Settings > Skills.
