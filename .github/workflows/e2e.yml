@@ -1,0 +1,65 @@
+name: E2E
+
+# Non-required check: runs headless Electron e2e tests on Linux with xvfb.
+# Does not gate merges — add to branch protection only when the suite is stable.
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: Electron e2e suite (headless)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Non-required: failures are visible but do not block PRs.
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          # Match the Node that Electron 43 bundles so type-checks and tests
+          # run against the same runtime the app ships.
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspace packages (renderer needed for settings-scroll + transcript-render)
+        run: pnpm build:js
+
+      - name: Install xvfb + Electron system deps
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            xvfb \
+            libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
+            libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 \
+            libxfixes3 libxrandr2 libgbm1 libasound2t64 \
+            libpango-1.0-0 libpangocairo-1.0-0
+
+      - name: Run e2e suite
+        run: xvfb-run -a pnpm e2e
+        env:
+          DISPLAY: ':99'
+          # Electron sandbox needs user namespaces on Linux; disable for CI.
+          ELECTRON_DISABLE_SANDBOX: 1

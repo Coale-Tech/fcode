@@ -76,7 +76,9 @@
     "test:protocol-smoke": "node --test apps/desktop/test/omp-protocol-smoke.test.mjs",
     "test:typecheck": "pnpm --filter @pi-desktop/desktop typecheck",
     "test:bench-fixture": "node --test apps/desktop/test/bench-discovery.test.mjs",
-    "test:package-smoke": "pnpm -r --if-present test"
+    "test:package-smoke": "pnpm -r --if-present test",
+    "e2e": "node scripts/run-e2e-suite.mjs",
+    "test:e2e:settings-skills": "node scripts/e2e-settings-skills.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.13",

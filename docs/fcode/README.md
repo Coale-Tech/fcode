@@ -175,8 +175,24 @@ Launch the verified build through the window manager (`open apps/desktop/release
 | Desktop typecheck | `pnpm --filter @pi-desktop/desktop typecheck` | yes (`ci.yml`) |
 | Architecture budget | `node scripts/check-architecture.mjs` | yes |
 | Identity keeplist | `node scripts/check-legal.mjs` | yes (release verify job) |
+| **Electron e2e suite** | **`pnpm e2e`** | **yes (`e2e.yml`, non-required, Linux + xvfb)** |
 
-The 52 `scripts/e2e-*.mjs` Electron integration tests do **not** run in any CI workflow (`ci.yml` and `release.yml` both omit `pnpm test:e2e`). Run them locally for manual verification only.
+### Electron e2e suite (`pnpm e2e`)
+
+`scripts/run-e2e-suite.mjs` runs 6 deterministic Electron integration tests (no host-core binary or omp sidecar needed):
+
+| Script | What it proves | Needs renderer build |
+| --- | --- | --- |
+| `e2e-settings-skills.mjs` | Skills settings panels render; `skills.review.enabled` toggle fires `ompSettingsSet` IPC; `MemoryBudgetBar` displays fill | no |
+| `e2e-work-panel-reorder.mjs` | Work-panel drag-reorder persists the new order | no |
+| `e2e-transcript-disclosure-anchor.mjs` | Toggling a disclosure does not displace the reader's scroll position | no |
+| `e2e-copy-tex.mjs` | TeX/KaTeX copy produces the correct inline formula | no |
+| `e2e-settings-scroll.mjs` | Settings page navigation retains per-tab scroll; anchor search from a plugin | yes |
+| `e2e-transcript-render.mjs` | Completed activity groups stabilise without layout thrash | yes |
+
+"Needs renderer build" tests require `pnpm build:js` (runs `electron-vite build` inside `apps/desktop`). The CI job builds this first; locally, skip with `SKIP_RENDERER_TESTS=1` if you have not run the full build.
+
+The remaining ~50 `scripts/e2e-*.mjs` scripts are available for local manual verification only (`pnpm test:e2e:*`). Most require the Rust host-core binary (`target/debug/pi-desktop-host-core`) and are not in the CI suite.
 
 ---
 

@@ -27,9 +27,26 @@ const SHOTS_DIR = process.env.UI_VERIFY_SHOTS ?? "/tmp/audit/shots";
 const REPORT_PATH = process.env.UI_VERIFY_REPORT ?? "/tmp/audit/ui-verify.md";
 const MOCK_API_PATH = join(__dirname, "mock-api.mjs");
 
-// Chrome for Testing bundled with playwright-core
-const CHROME_EXEC =
-  "/Users/mac/Library/Caches/ms-playwright/chromium-1208/chrome-mac-x64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing";
+// Resolve Chrome via playwright-core (respects PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+// and the local playwright browser cache); falls back to CHROME_EXEC env var for
+// custom installs.  The hardcoded Mac path has been removed.
+let CHROME_EXEC = process.env.CHROME_EXEC ?? "";
+if (!CHROME_EXEC) {
+  try {
+    // playwright-core >= 1.32 exposes a sync resolveExecutablePath helper
+    const { resolveExecutablePath } = await import("playwright-core/lib/utils");
+    CHROME_EXEC = resolveExecutablePath("chromium") ?? "";
+  } catch {
+    // fall through — user must supply CHROME_EXEC or install playwright browsers
+  }
+}
+if (!CHROME_EXEC || !existsSync(CHROME_EXEC)) {
+  console.error(
+    "ui-verify: Chrome not found. Install playwright browsers (`npx playwright install chromium`)" +
+      " or set CHROME_EXEC to the Chrome for Testing binary.",
+  );
+  process.exit(1);
+}
 
 mkdirSync(SHOTS_DIR, { recursive: true });
 
