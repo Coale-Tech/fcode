@@ -129,6 +129,7 @@ import type {
   OmpCommandsListResult,
   OmpStateResult,
   OmpMemoryStatusResult,
+  OmpMemoryBudgetResult,
   MemoryConfig,
   MemoryConfigView,
   OmpLoginProvidersResult,
@@ -154,6 +155,8 @@ import type {
   OmpSessionBranchMessagesResult,
   OmpTodoPhase,
   OmpInstalledSkillsListResult,
+  OmpSkillPackOpenPrResult,
+  OmpSkillPackStatus,
   OmpHistoricalStatsResult,
   OmpWorktreeListResult,
   OmpWorktreeClearResult,
@@ -168,6 +171,11 @@ import type {
   KanbanSettings,
   KanbanRun,
   RavenSettings,
+  OmpSkillCuratorStatusResult,
+  OmpSkillCuratorMutateResult,
+  OmpSkillProposalListResult,
+  OmpSkillProposalActResult,
+  OmpSkillJourneyResult,
 } from "@pi-desktop/shared";
 import {
   defaultCommandShellForPlatform,
@@ -1693,6 +1701,9 @@ export const api = {
   /** Memory backend health from the running omp session. */
   ompMemoryStatus: () =>
     invoke<OmpMemoryStatusResult>(IPC.invoke.ompMemoryStatus),
+  /** Memory injection budget (chars used / cap) from the running omp session. */
+  ompMemoryBudget: () =>
+    invoke<OmpMemoryBudgetResult>(IPC.invoke.ompMemoryBudget),
   memoryGetConfig: () => invoke<MemoryConfigView>(IPC.invoke.memoryGetConfig),
   /** Persist config; `token` is write-only. Restarts the agent sidecar. */
   memorySetConfig: (input: MemoryConfig & { token?: string }) =>
@@ -1785,6 +1796,33 @@ export const api = {
   /** List omp skillshare packages installed in ~/.omp/agent/ (reads JSON files directly). */
   ompInstalledSkillsList: () =>
     invoke<OmpInstalledSkillsListResult>(IPC.invoke.ompInstalledSkillsList),
+  /** Local changes of the self-improving frappeskills clone. */
+  ompSkillPackStatus: () => invoke<OmpSkillPackStatus>(IPC.invoke.ompSkillPackStatus),
+  /** Push `fcode/self-improve` and open a PR on Coale-Tech/frappeskills. */
+  ompSkillPackOpenPr: () => invoke<OmpSkillPackOpenPrResult>(IPC.invoke.ompSkillPackOpenPr),
+  /** Drop the local self-improvements. */
+  ompSkillPackDiscard: () => invoke<OmpSkillPackStatus>(IPC.invoke.ompSkillPackDiscard),
+  /** Usage tracking for agent-created skills. */
+  ompSkillCuratorStatus: () =>
+    invoke<OmpSkillCuratorStatusResult>(IPC.invoke.ompSkillCuratorStatus),
+  /** Restore an archived skill back to its original location. */
+  ompSkillCuratorRestore: (name: string) =>
+    invoke<OmpSkillCuratorMutateResult>(IPC.invoke.ompSkillCuratorRestore, { name }),
+  /** Pin or unpin a skill (pinned skills are never archived). */
+  ompSkillCuratorPin: (name: string, pinned: boolean) =>
+    invoke<OmpSkillCuratorMutateResult>(IPC.invoke.ompSkillCuratorPin, { name, pinned }),
+  /** List pending skill proposals awaiting approval. */
+  ompSkillProposalList: () =>
+    invoke<OmpSkillProposalListResult>(IPC.invoke.ompSkillProposalList),
+  /** Approve a pending proposal: lint, commit on fcode/self-improve, record. */
+  ompSkillProposalApprove: (id: string) =>
+    invoke<OmpSkillProposalActResult>(IPC.invoke.ompSkillProposalApprove, { id }),
+  /** Reject (discard) a pending proposal. */
+  ompSkillProposalReject: (id: string) =>
+    invoke<OmpSkillProposalActResult>(IPC.invoke.ompSkillProposalReject, { id }),
+  /** Read-only journey timeline combining curator + review commits + decisions. */
+  ompSkillJourney: () =>
+    invoke<OmpSkillJourneyResult>(IPC.invoke.ompSkillJourney),
   /** Historical AI usage stats from `omp stats --json`. */
   ompHistoricalStats: () =>
     invoke<OmpHistoricalStatsResult>(IPC.invoke.ompHistoricalStats),

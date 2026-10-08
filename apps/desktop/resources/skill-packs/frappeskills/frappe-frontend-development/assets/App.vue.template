@@ -1,0 +1,19 @@
+<!--
+  Root component for a frappe-ui SPA. Verified against
+  src/components/Provider/FrappeUIProvider.vue and the `main.js`/`App.vue`
+  pattern in references/frappe-ui-setup.md (§5).
+
+  FrappeUIProvider renders <slot/> then <Dialogs/> and <ToastProvider/> —
+  without it, dialog.confirm(...)/toast(...) calls render nothing. It does
+  NOT provide a sidebar, nav, or layout chrome; add app-specific shell
+  components (sidebar, top bar) inside the slot as your own components.
+-->
+<template>
+  <FrappeUIProvider>
+    <router-view />
+  </FrappeUIProvider>
+</template>
+
+<script setup>
+import { FrappeUIProvider } from 'frappe-ui'
+</script>

@@ -13,6 +13,10 @@ import { Button, Input, SettingsToggle } from "../../components/ui";
 import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect";
 import { SettingsCard, SettingsRow } from "./primitives";
 import { OmpSkillsSection } from "../../components/settings/OmpSkillsSection";
+import { SkillPackSection } from "../../components/settings/SkillPackSection";
+import { SkillCuratorSection } from "../../components/settings/SkillCuratorSection";
+import { SkillReviewSection } from "../../components/settings/SkillReviewSection";
+import { SkillJourneySection } from "../../components/settings/SkillJourneySection";
 import { OmpUsageSection } from "../../components/settings/OmpUsageSection";
 import { OmpWorktreeSection } from "../../components/settings/OmpWorktreeSection";
 import { OmpExtensionsSection } from "../../components/settings/OmpExtensionsSection";
@@ -521,6 +525,20 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
               onChange={() => void save({ "skills.enabled": !(omp["skills.enabled"] !== false) })}
             />
           </SettingsRow>
+          <SettingsRow title={t("settings.ompSkillsClaudeUser")} description={t("settings.ompSkillsClaudeUserDesc")}>
+            <SettingsToggle
+              checked={omp["skills.enableClaudeUser"] === true}
+              label={t("settings.ompSkillsClaudeUser")}
+              onChange={() => void save({ "skills.enableClaudeUser": omp["skills.enableClaudeUser"] !== true })}
+            />
+          </SettingsRow>
+          <SettingsRow title={t("settings.ompSkillsCompactList")} description={t("settings.ompSkillsCompactListDesc")}>
+            <SettingsToggle
+              checked={omp["skills.listMode"] !== "full"}
+              label={t("settings.ompSkillsCompactList")}
+              onChange={() => void save({ "skills.listMode": omp["skills.listMode"] === "full" ? "compact" : "full" })}
+            />
+          </SettingsRow>
           <SettingsRow title={t("settings.ompSkillsRegistryUrl")} description={t("settings.ompSkillsRegistryUrlDesc")}>
             <Input
               type="text"
@@ -658,6 +676,10 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
         <>
         {/* ── Installed omp Skills ─────────────────────────────────── */}
         <OmpSkillsSection />
+        <SkillPackSection />
+        <SkillCuratorSection />
+        <SkillReviewSection />
+        <SkillJourneySection />
         </>
       )}
 

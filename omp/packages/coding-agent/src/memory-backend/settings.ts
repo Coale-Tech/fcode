@@ -38,3 +38,23 @@ export const cfgMemoryBackend = register({
 		],
 	},
 });
+
+/** Cross-backend char cap for memory injected at session start. 0 = unlimited. */
+export const cfgMemoryInjectMaxChars = register({
+	id: "memory.injectMaxChars",
+	type: "number",
+	default: 6000,
+});
+
+/**
+ * Char budget for each frozen memory file (USER.md and .omp/MEMORY.md).
+ * 0 = disabled (feature is off; upstream-compatible default).
+ * Fcode overlay sets this to 2000 to enable the feature.
+ * Each file is individually capped; both counts against memory.injectMaxChars.
+ */
+export const cfgMemoryFrozenMaxChars = register({
+	id: "memory.frozen.maxChars",
+	protocolDefault: ["rpc", "acp"],
+	type: "number",
+	default: 0,
+});

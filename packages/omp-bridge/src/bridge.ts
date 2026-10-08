@@ -30,6 +30,7 @@ import { homedir, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { ErrorCodes, readNdjsonLines, type OmpSettingsValues } from "@pi-desktop/shared";
 import { capNdjsonLine, reassembleChunk } from "./chunks.js";
+import { resolveSkillPackDirs, syncSkillPacksInBackground } from "./skill-packs.js";
 import { createBridgeState } from "./state.js";
 import {
   mapExtensionUiRequest,
@@ -38,6 +39,9 @@ import {
 import type { OmpExtensionUiRequest } from "./ui-requests.js";
 import { adaptMessageFrame } from "./messages.js";
 import { PROMPT_BASH_PATTERNS, READ_ONLY_BASH_PATTERNS } from "./read-only-commands.js";
+import type { CuratorConfig } from "./skill-curator.js";
+import { DEFAULT_CURATOR_CONFIG, extractSkillName, promptPinnedSkills, recordSkillUse } from "./skill-curator.js";
+import { SkillReviewTrigger } from "./skill-review.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Binary resolution (T7 / DX6)
@@ -142,8 +146,10 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
   const browserHeadless = s["browser.headless"] ?? true;
   const browserRelay    = s["browser.relay"]    ?? false;
 
-  // Skills: fcode-skills dir always first; user dirs appended.
+  // Skills: fcode-skills dir first (host tools), then the Frappe packs, then user dirs.
   const userSkillDirs = s["skills.customDirectories"] ?? [];
+  // Compact skill list by default; pinned/recently used skills keep their full description.
+  const pinnedSkills = promptPinnedSkills(opts.dataDir, s["skills.curator.staleDays"] ?? DEFAULT_CURATOR_CONFIG.staleDays);
 
   // Hindsight: collect all lines so we emit exactly one hindsight: block.
   const hindsightLines: string[] = [];
@@ -188,10 +194,14 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
     "skills:",
     `  customDirectories:`,
     `    - "${skillsDir}"`,
+    ...resolveSkillPackDirs(opts.dataDir, opts.resourcesPath).map((d) => `    - ${JSON.stringify(d)}`),
     ...userSkillDirs.map((d) => `    - ${JSON.stringify(d)}`),
-    "  enableClaudeUser: true",
+    // ~/.claude/skills is opt-in: loading every personal skill costs tokens on every turn.
+    `  enableClaudeUser: ${s["skills.enableClaudeUser"] === true}`,
     ...(s["skills.enabled"] !== undefined ? [`  enabled: ${s["skills.enabled"]}`] : []),
     ...(s["skills.registryUrl"] ? [`  registryUrl: ${JSON.stringify(s["skills.registryUrl"])}`] : []),
+    `  listMode: ${s["skills.listMode"] ?? "compact"}`,
+    ...(pinnedSkills.length > 0 ? ["  pinned:", ...pinnedSkills.map((n) => `    - ${JSON.stringify(n)}`)] : []),
     "",
     "browser:",
     `  enabled: ${browserEnabled}`,
@@ -215,6 +225,10 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
           "",
           "memory:",
           `  backend: ${opts.memory.backend}`,
+          // Frozen per-session memory files ON by default in Fcode (2000 chars each).
+          // User can override via Settings; 0 disables the feature.
+          `  frozen:`,
+          `    maxChars: ${s["memory.frozen.maxChars"] ?? 2000}`,
           "mnemopi:",
           "  llmMode: session",
           ...(s["mnemopi.scoping"]           !== undefined ? [`  scoping: ${s["mnemopi.scoping"]}`]                                 : []),
@@ -523,13 +537,21 @@ const HOST_TOOL_SCHEMAS = [
   },
   {
     name: "fcode_bench_run",
-    description: "Run an allow-listed bench command (migrate, clear-cache, build, build-studio-app, list-apps, install-app) on the active bench.",
+    description:
+      "Run an allow-listed bench command (migrate, clear-cache, build, build-studio-app, list-apps, install-app, run-tests) on the active bench. run-tests takes structured options (app, module, doctype, test, failfast, skip_before_tests, test_category) instead of args, and returns a JSON summary {status, passed, failed, errors, skipped, durationMs, failures[{kind,test,message}], tail}.",
     parameters: {
       type: "object",
       properties: {
-        command: { type: "string", enum: ["migrate", "clear-cache", "build", "build-studio-app", "list-apps", "install-app"] },
+        command: { type: "string", enum: ["migrate", "clear-cache", "build", "build-studio-app", "list-apps", "install-app", "run-tests"] },
         site: { type: "string" },
         args: { type: "array", items: { type: "string" } },
+        app: { type: "string", description: "run-tests: Frappe app, e.g. my_app" },
+        module: { type: "string", description: "run-tests: dotted test module, e.g. my_app.tests.test_x (not with doctype)" },
+        doctype: { type: "string", description: "run-tests: DocType name (not with module)" },
+        test: { type: "string", description: "run-tests: a single test method name" },
+        failfast: { type: "boolean", description: "run-tests: stop at the first failure" },
+        skip_before_tests: { type: "boolean", description: "run-tests: skip the before_tests hooks" },
+        test_category: { type: "string", enum: ["unit", "integration"], description: "run-tests: only this category" },
       },
       required: ["command"],
     },
@@ -674,10 +696,16 @@ export class OmpBridge {
    * Used by `omp.share` to capture the text that `/share` emits before its ack.
    */
   private pendingCommandOutput: Array<(text: string) => void> = [];
+  /** Background skill review trigger; undefined when feature is disabled. */
+  private skillReviewTrigger?: SkillReviewTrigger;
 
   /** Enable raw-frame tracing to a file (FCODE_BRIDGE_TRACE=1). */
   setTracer(fn: (dir: string, line: string) => void): void {
     this.tracer = fn;
+  }
+  /** Enable background skill review (skills.review.enabled). */
+  setSkillReviewTrigger(trigger: SkillReviewTrigger | undefined): void {
+    this.skillReviewTrigger = trigger;
   }
   /** Write a JSON-RPC response to the PI host on stdout. */
   private respond(id: string, result: unknown): void {
@@ -888,6 +916,7 @@ export class OmpBridge {
         }
         this.openTools.delete(sessionId);
         this.sessions.delete(sessionId);
+        this.skillReviewTrigger?.disposeSession(sessionId);
         this.respond(id, {});
         break;
       }
@@ -957,6 +986,9 @@ export class OmpBridge {
         break;
       case "omp.memory.status":
         this.ompCallAndForward(id, { type: "get_memory_status" });
+        break;
+      case "omp.memory.budget":
+        this.ompCallAndForward(id, { type: "get_memory_budget" });
         break;
       case "omp.state":
         this.ompCallAndForward(id, { type: "get_state", ...p });
@@ -1197,6 +1229,8 @@ export class OmpBridge {
     // Send the actual prompt. Its immediate response is only an ack
     // ({agentInvoked}); the real outcome arrives later as a separate
     // prompt_result frame correlated on the same id (see handleOmpFrame).
+    // Record user message in the review transcript buffer.
+    this.skillReviewTrigger?.appendTurn(sessionId, "user", content);
     const promptId = randomUUID();
     this.promptResultPending.set(promptId, { sessionId, turnId });
     this.activeTurn = { sessionId, turnId };
@@ -1483,7 +1517,29 @@ export class OmpBridge {
           args: frame.args,
         });
       }
+      // Record skill reads for the curator usage tracker.
+      if (eventType === "tool_start" && this.config) {
+        const args = (frame.args ?? frame.input) as Record<string, unknown> | undefined;
+        const toolPath = typeof args?.path === "string" ? args.path : "";
+        const skillName = extractSkillName(toolPath);
+        if (skillName) recordSkillUse(this.config.dataDir, skillName);
+      }
       if (eventType === "tool_end") this.openTools.delete(sessionId);
+      // skill-review: capture assistant text and count agent turns.
+      if (this.skillReviewTrigger && sessionId) {
+        if (eventType === "message_end") {
+          const m = (frame as Record<string, any>).message;
+          if (m?.role === "assistant") {
+            const c = m.content as unknown;
+            const text = Array.isArray(c)
+              ? (c as Array<Record<string, unknown>>).filter((b) => b?.type === "text").map((b) => String(b.text ?? "")).join("")
+              : String(c ?? "");
+            if (text.trim()) this.skillReviewTrigger.appendTurn(sessionId, "assistant", text.trim());
+          }
+        } else if (eventType === "agent_end") {
+          this.skillReviewTrigger.onAgentEnd(sessionId);
+        }
+      }
 
       const event = eventType.startsWith("message_") ? adaptMessageFrame(frame) : frame;
       if (!event) return;
@@ -1736,6 +1792,7 @@ function parseOmpSettings(raw: string | undefined): OmpSettingsValues {
 
 /** Main entry point for the sidecar process. */
 async function main(): Promise<void> {
+  let lastActivityMs = Date.now();
   const bridge = new OmpBridge();
   const resourcesPath = process.env.FCODE_RESOURCES_PATH ?? process.env.RESOURCES_PATH ?? "";
   const dataDir = process.env.FCODE_DATA_DIR ?? join(homedir(), ".fcode-dev");
@@ -1749,12 +1806,19 @@ async function main(): Promise<void> {
     const screenshotsDir = join(dataDir, "screenshots");
     mkdirSync(screenshotsDir, { recursive: true });
     const backend = process.env.FCODE_MEMORY_BACKEND;
+    const s = parseOmpSettings(process.env.FCODE_OMP_SETTINGS);
+    const curatorCfg: CuratorConfig = {
+      ...DEFAULT_CURATOR_CONFIG,
+      enabled: s["skills.curator.enabled"] !== false,
+      staleDays: s["skills.curator.staleDays"] ?? DEFAULT_CURATOR_CONFIG.staleDays,
+      archiveDays: s["skills.curator.archiveDays"] ?? DEFAULT_CURATOR_CONFIG.archiveDays,
+    };
     overlayPath = writeOmpOverlay({
       dataDir,
       resourcesPath,
       screenshotsDir,
       approvalMode,
-      ompSettings: parseOmpSettings(process.env.FCODE_OMP_SETTINGS),
+      ompSettings: s,
       defaultModel: process.env.FCODE_DEFAULT_MODEL || undefined,
       memory:
         backend === "mnemopi" || backend === "hindsight" || backend === "sharpshooter" || backend === "local" || backend === "off"
@@ -1765,6 +1829,21 @@ async function main(): Promise<void> {
             }
           : undefined,
     });
+    syncSkillPacksInBackground(dataDir, (line) => console.error(`[omp-bridge] ${line}`), {
+      getLastActivity: () => lastActivityMs,
+      curatorCfg,
+    });
+    if (s["skills.review.enabled"] === true) {
+      bridge.setSkillReviewTrigger(new SkillReviewTrigger({
+        ompBinary,
+        dataDir,
+        intervalTurns: s["skills.review.intervalTurns"] ?? 10,
+        maxInputTokens: s["skills.review.maxInputTokens"] ?? 8000,
+        model: s["skills.review.model"] ?? "",
+        requireApproval: s["skills.review.requireApproval"] !== false,
+        log: (line) => console.error(`[omp-bridge] ${line}`),
+      }));
+    }
   } catch (e) {
     // DX3: overlay write failure is fatal — settle with a system message.
     process.stdout.write(
@@ -1798,7 +1877,7 @@ async function main(): Promise<void> {
     hostTracer = traceFrame;
   }
 
-  // Wire stdin → bridge frame handler.
+  // Wire stdin → bridge frame handler. Update lastActivityMs on each prompt.
   readNdjsonLines(process.stdin, async (line) => {
     hostTracer?.("in-host", line);
     let frame: unknown;
@@ -1807,6 +1886,7 @@ async function main(): Promise<void> {
     } catch {
       return;
     }
+    if ((frame as Record<string, unknown> | null)?.method === "agent.prompt") lastActivityMs = Date.now();
     await bridge.handleHostFrame(frame);
   });
 

@@ -93,8 +93,12 @@ Written by the bridge before spawning omp. Writing it is fatal to the spawn — 
 
 ```yaml
 skills:
-  customDirectories: ["<resourcesPath>/fcode-skills"]
-  enableClaudeUser: true
+  customDirectories:
+    - "<resourcesPath>/fcode-skills"          # Fcode host-tool skills (bench, studio, builder, skill-improve)
+    - "<dataDir>/skills/frappe-skills/skills" # frappe/skills, fast-forwarded on every launch
+    - "<dataDir>/skills/frappeskills"         # Coale-Tech/frappeskills, branch fcode/self-improve
+    # ...then Settings > Skills custom directories
+  enableClaudeUser: false   # Settings > Skills > Load ~/.claude/skills
 browser:
   enabled: true
   headless: true
@@ -107,6 +111,18 @@ tools:
     fcode_canvas_read: allow          # snapshot/console/screenshot — read-only
 ```
 
+### Self-improving skills and memory
+
+All of it is local; nothing leaves the machine until you click **Open PR**.
+
+| Piece | Where | Defaults |
+|---|---|---|
+| Skill packs | `<dataDir>/skills/{frappe-skills,frappeskills}`, re-synced at launch and every 6 h | on |
+| Curator | `packages/omp-bridge/src/skill-curator.ts`; state, usage, ledger, archive under `<dataDir>/skills/.curator/` | `skills.curator.enabled` true, stale 14 d, archive 30 d, runs after 2 h idle and 7 d since last run. Archives, never deletes |
+| Background review | `skill-review.ts`; spawns `omp -p --no-tools --no-session` and commits to `fcode/self-improve` | `skills.review.enabled` false, every 10 turns, 8000 input tokens, `skills.review.model` empty = omp's `@smol` (cheap) model; memory backend off for the run |
+| Lint | `packages/shared/src/skill-lint.ts`; errors (secrets, injection text, bad frontmatter) block Open PR and review commits | always on |
+| Memory budget | `memory.injectMaxChars` caps the memory block built at session start (`omp/.../memory-backend/injection-tracker.ts`); the bar in Settings > Memory reads it over the `get_memory_budget` RPC | 6000 chars, 0 = unlimited |
+
 ### Host tools registered by the bridge
 
 All host tools default to `exec` tier in omp's approval model (`ExtensionToolWrapper`, `wrapper.ts:285-296`). `fcode_canvas_read` and the read-only method prefixes of `fcode_bench_execute` are pinned to `allow` in the overlay above; everything else prompts under `--approval-mode always-ask`.
@@ -114,7 +130,7 @@ All host tools default to `exec` tier in omp's approval model (`ExtensionToolWra
 | Tool | Purpose |
 | --- | --- |
 | `fcode_bench_execute {site?, method, kwargs?}` | `bench --site <site> execute <method> --kwargs <json>`. Auto-approved only for read-only prefixes: `frappe.client.get`, `frappe.client.get_list`, `frappe.db.get_value`, `frappe.db.count`, `frappe.utils.*`, and `get_*`/`list_*` members of `studio.api.*` and `builder.api.*`. All other methods prompt. |
-| `fcode_bench_run {site?, command, args?}` | Runs one allow-listed verb through the supervisor: `migrate`, `clear-cache`, `build`, `build-studio-app`, `list-apps`, `install-app`. Always prompts. **Not a security boundary** — omp's own `bash` tool can run `bench` regardless. |
+| `fcode_bench_run {site?, command, args?}` | Runs one allow-listed verb through the supervisor: `migrate`, `clear-cache`, `build`, `build-studio-app`, `list-apps`, `install-app`, `run-tests`. Always prompts. `run-tests` takes `app`, `module`, `doctype`, `test`, `failfast`, `skip_before_tests`, `test_category` (validated in `bench/run-tests.ts`, no free-form args) and returns a JSON summary (`status`, counts, `durationMs`, `failures[]`, raw `tail`); the site needs `allow_tests`. **Not a security boundary** — omp's own `bash` tool can run `bench` regardless. |
 | `fcode_canvas {action, …}` | Drives the Build tab's `WebContentsView` via `BrowserHost`: `navigate`, `reload`, `click`, `fill`, `evaluate`. Always prompts. |
 | `fcode_canvas_read {action, …}` | Read-only canvas actions: `snapshot`, `console`, `screenshot`. Auto-approved. |
 
@@ -159,8 +175,29 @@ Launch the verified build through the window manager (`open apps/desktop/release
 | Desktop typecheck | `pnpm --filter @pi-desktop/desktop typecheck` | yes (`ci.yml`) |
 | Architecture budget | `node scripts/check-architecture.mjs` | yes |
 | Identity keeplist | `node scripts/check-legal.mjs` | yes (release verify job) |
+| **Electron e2e suite** | **`pnpm e2e`** | **yes (`e2e.yml`, non-required, Linux + xvfb)** |
 
-The 52 `scripts/e2e-*.mjs` Electron integration tests do **not** run in any CI workflow (`ci.yml` and `release.yml` both omit `pnpm test:e2e`). Run them locally for manual verification only.
+### Electron e2e suite (`pnpm e2e`)
+
+`scripts/run-e2e-suite.mjs` runs a deterministic Electron integration test suite (no host-core binary or omp sidecar needed).
+
+**CI suite** (`pnpm e2e`, required to pass):
+
+| Script | What it proves |
+| --- | --- |
+| `e2e-settings-skills.mjs` | `SkillPackSection`, `SkillCuratorSection`, `SkillReviewSection` and `MemoryBudgetBar` render; `skills.review.enabled` toggle fires `ompSettingsSet` |
+| `e2e-copy-tex.mjs` | TeX/KaTeX copy produces the correct inline formula |
+
+**Extended local suite** (`pnpm e2e --all`; not required in CI):
+
+| Script | Needs renderer |
+| --- | --- |
+| `e2e-work-panel-reorder.mjs` | no |
+| `e2e-transcript-disclosure-anchor.mjs` | no |
+| `e2e-settings-scroll.mjs` | yes |
+| `e2e-transcript-render.mjs` | yes |
+
+The extended scripts pass locally but require per-test `--no-sandbox` fixes before stable CI inclusion (open follow-up). The remaining ~50 `scripts/e2e-*.mjs` scripts are available individually via `pnpm test:e2e:*`; most require the Rust host-core binary.
 
 ---
 

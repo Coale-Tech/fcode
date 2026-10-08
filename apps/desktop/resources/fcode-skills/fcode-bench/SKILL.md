@@ -46,13 +46,44 @@ kwargs in the approval card.
 
 **Always prompts.** Runs a bench CLI command through the supervisor. Allow-list
 of verbs: `migrate`, `clear-cache`, `build`, `build-studio-app`, `list-apps`,
-`install-app`.
+`install-app`, `run-tests`.
 
 ```json
 { "command": "migrate" }
 { "command": "build-studio-app", "args": ["<studio_app_name>"] }
 { "command": "list-apps", "args": ["-f", "json"] }
 ```
+
+### run-tests
+
+Runs `bench --site <site> run-tests` with structured options only. Free-form
+`args`, unknown keys, `--site` overrides and shell characters are rejected.
+
+```json
+{ "command": "run-tests", "app": "my_app" }
+{ "command": "run-tests", "module": "my_app.tests.test_orders", "failfast": true }
+{ "command": "run-tests", "doctype": "Sales Order", "test_category": "unit" }
+{ "command": "run-tests", "module": "my_app.tests.test_orders", "test": "test_total" }
+```
+
+Options: `app`, `module` (dotted), `doctype` (not with `module`), `test` (one
+method name), `failfast`, `skip_before_tests`, `test_category` (`unit` or
+`integration`). Narrow with `module` or `test` first; a whole-app run is slow.
+
+Result is JSON, not the transcript:
+
+```json
+{ "status": "failed", "passed": 2, "failed": 1, "errors": 1, "skipped": 1, "durationMs": 21,
+  "failures": [{ "kind": "FAIL", "test": "test_fail (m.T.test_fail)", "message": "AssertionError: 2 != 3" }],
+  "omitted": 0, "tail": "<last 2000 chars of raw output>" }
+```
+
+`status` is `passed`, `failed`, `no_tests`, `disabled` or `crashed`. Read
+`failures[].message` first; use `tail` only when it is not enough. `disabled`
+means the site lacks `allow_tests` (exit code is still 0) — tell the user to run
+`bench --site <site> set-config allow_tests true`; do not try to set it
+yourself. `crashed` carries `error` (import or discovery failure). Tests write
+records to the site database and roll back per class, so prefer a dev site.
 
 `start`, `console`, `serve`, `execute`, `watch-studio`, and every other verb
 are rejected — they are either long-running (managed by the Bench tab) or have

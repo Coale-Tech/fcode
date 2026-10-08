@@ -7,8 +7,10 @@ export type {
 	MnemopiSessionStateOptions,
 } from "../mnemopi/state";
 export * from "./local-backend";
+export * from "./injection-tracker";
 export * from "./messages";
 export * from "./off-backend";
 export * from "./resolve";
 export * from "./runtime";
+export * from "./frozen";
 export * from "./types";

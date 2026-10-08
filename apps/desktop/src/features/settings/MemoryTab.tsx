@@ -6,6 +6,7 @@ import type {
   HindsightMentalModelSummary,
   MemoryConfig,
   MemoryConfigView,
+  OmpMemoryBudgetResult,
   OmpMemoryStatusResult,
   OmpSettingsValues,
 } from "@pi-desktop/shared";
@@ -13,6 +14,7 @@ import { api } from "../../lib/api";
 import { useAppStore } from "../../stores/app-store";
 import { Button, Input, SettingsToggle } from "../../components/ui";
 import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect";
+import { MemoryBudgetBar } from "../../components/settings/MemoryBudgetBar";
 import { SettingsCard, SettingsRow } from "./primitives";
 import { OmpSettingsSections } from "./omp-settings-sections";
 
@@ -54,6 +56,8 @@ export function MemoryTab() {
   const [missionResult, setMissionResult] = useState<string | null>(null);
   // ── omp settings state (Advanced sections) ────────────────────────────────
   const [omp, setOmp] = useState<OmpSettingsValues>({});
+  // ── Memory budget state ───────────────────────────────────────────────────
+  const [budget, setBudget] = useState<OmpMemoryBudgetResult | null>(null);
   // ── User profile state (I.2) ──────────────────────────────────────────────
   const [profile, setProfile] = useState("");
   const [profileDraft, setProfileDraft] = useState("");
@@ -77,6 +81,7 @@ export function MemoryTab() {
       });
     }).finally(() => setConfigLoading(false));
     void api.ompSettingsGet().then(setOmp).catch(() => undefined);
+    void api.ompMemoryBudget().then(setBudget).catch(() => undefined);
     void api.ompUserProfileGet().then((r) => { setProfile(r.text); setProfileDraft(r.text); }).catch(() => undefined);
     // Detect launchers so the section renders even before any start/stop
     void api.hindsightLocalDetect().then((r) => setLocalState(r.state));
@@ -255,6 +260,32 @@ export function MemoryTab() {
           <span data-testid="memory-health" data-health={health} />
         </SettingsRow>
       </SettingsCard>
+
+      {/* ── Memory budget card ───────────────────────────────────────────── */}
+      <SettingsCard title={t("settings.memoryBudgetTitle")}>
+        <SettingsRow title={t("settings.memoryBudgetFillLabel")}>
+          {budget !== null ? (
+            <MemoryBudgetBar usedChars={budget.usedChars} capChars={budget.capChars} />
+          ) : (
+            <span style={{ fontSize: "0.85em", opacity: 0.6 }}>—</span>
+          )}
+        </SettingsRow>
+        <SettingsRow
+          title={t("settings.memoryBudgetCapLabel")}
+          description={t("settings.memoryBudgetCapDesc")}
+        >
+          <Input
+            type="number"
+            min={0}
+            max={200000}
+            value={String(omp["memory.injectMaxChars"] ?? 6000)}
+            onChange={(e) => setOmp((prev) => ({ ...prev, "memory.injectMaxChars": Number(e.target.value) }))}
+            onBlur={(e) => void saveOmp({ "memory.injectMaxChars": Number(e.target.value) })}
+            onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+          />
+        </SettingsRow>
+      </SettingsCard>
+
 
       {/* ── Config card ──────────────────────────────────────────────────── */}
       <SettingsCard>

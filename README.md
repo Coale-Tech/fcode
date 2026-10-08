@@ -21,20 +21,7 @@
 
 ## Contents
 
-- [What Fcode is](#what-fcode-is)
-- [Features](#features)
-- [Download and install](#download-and-install)
-- [First run](#first-run)
-- [Keyboard shortcuts](#keyboard-shortcuts)
-- [Where Fcode keeps your data](#where-fcode-keeps-your-data)
-- [Current status and limitations](#current-status-and-limitations)
-- [Build from source](#build-from-source)
-- [Architecture](#architecture)
-- [Documentation](#documentation)
-- [Release policy](#release-policy)
-- [Security and privacy](#security-and-privacy)
-- [Contributing](#contributing)
-- [Upstream and license](#upstream-and-license)
+Fcode has replaced the legacy Pi agent runtime with **omp** ([oh-my-pi](https://github.com/can1357/oh-my-pi)) and added the Build (Studio/Builder canvas) and Bench (Frappe bench cockpit) surfaces, an in-app Files editor in Chat's work panel, Frappe bench discovery and supervision, and Frappe skills (the official [frappe/skills](https://github.com/frappe/skills) plus the self-improving [Coale-Tech/frappeskills](https://github.com/Coale-Tech/frappeskills), both kept up to date automatically) and bench tools — on top of the inherited shell (isolated Fcode data directories, project opening, persistent sessions, model-provider configuration, permissions, plugins).
 
 ## What Fcode is
 

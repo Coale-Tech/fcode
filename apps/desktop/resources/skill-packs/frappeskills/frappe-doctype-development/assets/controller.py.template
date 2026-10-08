@@ -1,0 +1,51 @@
+import frappe
+from frappe import _
+from frappe.model.document import Document
+
+
+class {{ Doctype }}(Document):
+    def validate(self):
+        """Validation before save. Runs on every insert and update."""
+        self.validate_status()
+        self.validate_duplicate()
+
+    def before_save(self):
+        """Final normalization after validate(), before the DB write."""
+        pass
+
+    def before_submit(self):
+        """Final checks before docstatus becomes 1."""
+        pass
+
+    def on_submit(self):
+        """After submit — create downstream documents, update ledgers."""
+        pass
+
+    def before_cancel(self):
+        """Guard cancellation, e.g. block if linked documents exist."""
+        pass
+
+    def on_cancel(self):
+        """After cancel — reverse downstream effects."""
+        pass
+
+    def before_update_after_submit(self):
+        """Validate changes to allow_on_submit fields on a submitted doc."""
+        pass
+
+    def on_update_after_submit(self):
+        """React to an allowed post-submit field change."""
+        pass
+
+    def on_trash(self):
+        """Clean up related records before deletion."""
+        pass
+
+    def validate_status(self):
+        """Validate status field."""
+        if self.status == "Active" and not self.effective_date:
+            frappe.throw(_("Effective Date is required for Active records"))
+
+    def validate_duplicate(self):
+        """Check for duplicates based on business rules."""
+        pass

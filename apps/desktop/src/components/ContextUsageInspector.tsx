@@ -9,6 +9,7 @@ import {
 import { portalToBody } from "../lib/portal-visibility";
 import { useTranslation } from "react-i18next";
 import {
+  computeTokenMeterView,
   formatCompactTokenCount,
   type MessageUsage,
   type OmpSessionStatsResult,
@@ -49,6 +50,7 @@ export function ContextUsageInspector({
   autoRetryEnabled,
   onToggleAutoRetry,
   sessionStats = null,
+  prevSessionStats = null,
 }: {
   usage: MessageUsage;
   turnUsage: MessageUsage;
@@ -66,6 +68,8 @@ export function ContextUsageInspector({
   autoRetryEnabled?: boolean;
   onToggleAutoRetry?: (enabled: boolean) => void;
   sessionStats?: OmpSessionStatsResult | null;
+  /** Snapshot captured at the start of the last turn; enables the turn-delta display. */
+  prevSessionStats?: OmpSessionStatsResult | null;
 }) {
   const { t } = useTranslation();
   const panelId = useId();
@@ -106,6 +110,9 @@ export function ContextUsageInspector({
     0,
   );
   const sessionCost = sessionStats ? formatSessionCost(sessionStats.cost) : null;
+  const tokenMeterView = sessionStats
+    ? computeTokenMeterView(sessionStats, prevSessionStats)
+    : null;
   const level =
     context.remainingPercent <= 10
       ? "critical"
@@ -412,18 +419,24 @@ export function ContextUsageInspector({
           </label>
         </div>
       ) : null}
-      {sessionStats ? (
+      {tokenMeterView ? (
         <div className="context-inspector-summary">
           <div className="context-inspector-summary-row">
             <strong>{t("chat.usageSessionLabel")}</strong>
             <span className="context-inspector-summary-values">
-              <span>{t("chat.usageInput")} {formatCompactTokenCount(sessionStats.tokens.input)}</span>
-              <span>{t("chat.usageOutput")} {formatCompactTokenCount(sessionStats.tokens.output)}</span>
-              {sessionStats.tokens.cacheRead > 0 ? (
-                <span>{t("chat.usageCacheRead")} {formatCompactTokenCount(sessionStats.tokens.cacheRead)}</span>
+              <span>{t("chat.usageInput")} {formatCompactTokenCount(tokenMeterView.session.input)}</span>
+              <span>{t("chat.usageOutput")} {formatCompactTokenCount(tokenMeterView.session.output)}</span>
+              {tokenMeterView.session.cacheRead > 0 ? (
+                <span>{t("chat.usageCacheRead")} {formatCompactTokenCount(tokenMeterView.session.cacheRead)}</span>
+              ) : null}
+              {tokenMeterView.cacheHitRate !== null ? (
+                <span>{t("chat.usageCacheRate")} {tokenMeterView.cacheHitRate}%</span>
               ) : null}
               {sessionCost !== null ? (
                 <span>{t("chat.usageSessionCost", { amount: sessionCost })}</span>
+              ) : null}
+              {tokenMeterView.turnDelta !== null ? (
+                <span>{t("chat.usageSessionTurnDelta", { total: formatCompactTokenCount(tokenMeterView.turnDelta.total) })}</span>
               ) : null}
             </span>
           </div>

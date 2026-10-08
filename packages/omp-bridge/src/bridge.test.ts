@@ -1,7 +1,7 @@
 /**
  * Tests for omp-bridge core functions (DX3, DX6, DX7, DX10, E9, T7).
  */
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -80,14 +80,29 @@ describe("makeOmpOverlay (DX3 / DX6 / DX7 / DX10)", () => {
     expect(overlay).toContain("fcode-skills");
   });
 
-  it("sets enableClaudeUser: true", () => {
-    const overlay = makeOmpOverlay({
-      dataDir: dir,
-      resourcesPath: "/app/resources",
-      screenshotsDir: join(dir, "screenshots"),
-    });
-    expect(overlay).toContain("enableClaudeUser");
-    expect(overlay).toContain("true");
+  it("keeps ~/.claude/skills opt-in", () => {
+    const base = { dataDir: dir, resourcesPath: "/app/resources", screenshotsDir: join(dir, "screenshots") };
+    expect(makeOmpOverlay(base)).toContain("enableClaudeUser: false");
+    expect(makeOmpOverlay({ ...base, ompSettings: { "skills.enableClaudeUser": true } })).toContain("enableClaudeUser: true");
+  });
+
+  it("defaults to the compact skill list, pinning pinned + recently used skills only", () => {
+    const base = { dataDir: dir, resourcesPath: "/app/resources", screenshotsDir: join(dir, "screenshots") };
+    mkdirSync(join(dir, "skills", ".curator"), { recursive: true });
+    const recent = new Date().toISOString();
+    const old = new Date(Date.now() - 60 * 86_400_000).toISOString();
+    writeFileSync(join(dir, "skills", ".curator", "usage.json"), JSON.stringify({
+      "frappe-reports": { uses: 3, lastUsed: recent, createdAt: old, status: "active" },
+      "frappe-old": { uses: 9, lastUsed: old, createdAt: old, status: "active" },
+      "frappe-pin": { uses: 0, lastUsed: old, createdAt: old, status: "pinned" },
+      "frappe-gone": { uses: 5, lastUsed: recent, createdAt: old, status: "archived" },
+    }));
+    const overlay = makeOmpOverlay(base);
+    expect(overlay).toContain("listMode: compact");
+    expect(overlay).toContain('  pinned:\n    - "frappe-reports"\n    - "frappe-pin"\n');
+    expect(overlay).not.toContain("frappe-old");
+    expect(overlay).not.toContain("frappe-gone");
+    expect(makeOmpOverlay({ ...base, ompSettings: { "skills.listMode": "full" } })).toContain("listMode: full");
   });
 
   it("includes browser config (headless, screenshotDir)", () => {

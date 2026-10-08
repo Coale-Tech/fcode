@@ -143,7 +143,8 @@ import {
 import { parseMCPToolName } from "@oh-my-pi/pi-tui/tools/mcp";
 import { MCP_CONNECTION_STATUS_EVENT_CHANNEL, type McpConnectionStatusEvent } from "./mcp/startup-events";
 import { resolveMCPToolAlias } from "./mcp/tool-bridge";
-import { createSessionMemoryRuntimeContext, resolveMemoryBackend } from "./memory-backend";
+import { createSessionMemoryRuntimeContext, resolveMemoryBackend, applyMemoryCharCap, setLastInjectedChars, loadFrozenMemory } from "./memory-backend";
+import { cfgMemoryInjectMaxChars, cfgMemoryFrozenMaxChars } from "./memory-backend/settings";
 import { MEMORY_BACKEND_TOOL_NAMES } from "./memory-backend/tool-names";
 import type { MnemopiSessionState } from "./mnemopi/state";
 import mcpXdevGuidanceTemplate from "./prompts/system/mcp-xdev-guidance.md" with { type: "text" };
@@ -3494,6 +3495,9 @@ async function createAgentSessionScoped(options: CreateAgentSessionOptions): Pro
 		// constructed) and refreshed on every later rebuild via
 		// `setAdvisorMemoryPrompt`.
 		let advisorMemoryPrompt: string | undefined;
+		// Frozen memory block: loaded once on the first rebuildSystemPrompt call and
+		// never updated mid-session (prefix-cache stability). undefined = not yet loaded.
+		let frozenMemoryBlock: string | undefined | null = null; // null = unloaded sentinel
 		const skillDescriptions = new SkillDescriptionCatalog({
 			dbPath: path.join(agentDir, "skill-descriptions.db"),
 			compress: createSkillDescriptionCompressor(modelRegistry, settings),
@@ -3548,10 +3552,22 @@ async function createAgentSessionScoped(options: CreateAgentSessionOptions): Pro
 					setActiveRules(nextActiveRules);
 				}
 			}
+			// Load frozen memory on the FIRST rebuild only (never re-read mid-session).
+			if (frozenMemoryBlock === null && !restrictToolNames) {
+				frozenMemoryBlock = await loadFrozenMemory(
+					agentDir,
+					sessionManager.getCwd(),
+					cfgMemoryFrozenMaxChars.get(settings),
+				);
+			}
 			const memoryBackend = restrictToolNames ? undefined : await resolveMemoryBackend(settings);
-			const memoryInstructions = memoryBackend
+			const rawMemoryInstructions = memoryBackend
 				? await memoryBackend.buildDeveloperInstructions(agentDir, settings, session)
 				: undefined;
+			const memoryInstructions = rawMemoryInstructions !== undefined
+				? applyMemoryCharCap(rawMemoryInstructions, cfgMemoryInjectMaxChars.get(settings))
+				: undefined;
+			if (session) setLastInjectedChars(session, (memoryInstructions?.length ?? 0) + (frozenMemoryBlock?.length ?? 0));
 			// Advisors get the same memory block (sharpshooter decisions, mnemopi/
 			// hindsight instructions) wrapped as shared background knowledge; the
 			// tool-availability caveat lives in the wrapper template.
@@ -3587,6 +3603,8 @@ async function createAgentSessionScoped(options: CreateAgentSessionOptions): Pro
 						learn: hasSession ? session.hasBuiltInTool("learn") : builtInRegistryToolNames.has("learn"),
 					});
 			const appendParts: string[] = [];
+			// Frozen block first — stable position for prefix caching.
+			if (frozenMemoryBlock) appendParts.push(frozenMemoryBlock);
 			if (memoryInstructions) appendParts.push(memoryInstructions);
 			if (autoLearnInstructions) appendParts.push(autoLearnInstructions);
 			// List each mounted MCP tool once. A routed tool that the xd:// catalog

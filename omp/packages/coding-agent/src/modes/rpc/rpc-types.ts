@@ -38,6 +38,7 @@ export type RpcCommand =
 	// State
 	| { id?: string; type: "get_state" }
 	| { id?: string; type: "get_memory_status" }
+	| { id?: string; type: "get_memory_budget" }
 	| { id?: string; type: "set_fast_mode"; enabled: boolean }
 	| { id?: string; type: "get_available_commands" }
 	| { id?: string; type: "get_entries"; since?: string }
@@ -274,6 +275,13 @@ export type RpcResponse =
 			command: "get_memory_status";
 			success: true;
 			data: MemoryBackendStatus & { latencyMs: number };
+	  }
+	| {
+			id?: string;
+			type: "response";
+			command: "get_memory_budget";
+			success: true;
+			data: { usedChars: number; capChars: number };
 	  }
 	| {
 			id?: string;

@@ -12,6 +12,9 @@ import { Semaphore } from "../task/parallel";
 import type { Skill } from "./skills";
 
 const MAX_PREVIEW_CHARS = 100;
+const COMPACT_LINE_CHARS = 80;
+const COMPACT_MAX_CHARS = 6_000;
+const COMPACT_NOTE_NAME = "…";
 const MAX_COMPRESSED_CHARS = 160;
 const MAX_COMPRESSED_WORDS = 12;
 const inFlight = new Map<string, Promise<void>>();
@@ -79,10 +82,10 @@ function keyFor(skill: Pick<Skill, "name" | "description">): string {
 }
 
 /** A deterministic, bounded routing hint while model compression is pending. */
-export function previewSkillDescription(description: string): string {
+export function previewSkillDescription(description: string, maxChars = MAX_PREVIEW_CHARS): string {
 	const text = description.replace(/\s+/g, " ").trim();
-	if (text.length <= MAX_PREVIEW_CHARS) return text;
-	const boundary = text.slice(0, MAX_PREVIEW_CHARS - 1);
+	if (text.length <= maxChars) return text;
+	const boundary = text.slice(0, maxChars - 1);
 	const sentence = boundary.match(/^.*?[.!?](?=\s|$)/)?.[0];
 	if (sentence && sentence.length >= 40) return sentence;
 	const word = boundary.slice(0, boundary.lastIndexOf(" ")).trimEnd();
@@ -165,6 +168,52 @@ export class SkillDescriptionCatalog {
 		} finally {
 			db?.close();
 		}
+	}
+
+	/**
+	 * `skills.listMode: compact`: pinned skills (listed first) keep their full description, the rest get one
+	 * short line, and the rendered list stays within `maxChars`. Skills that do not fit are named in a
+	 * trailing note; every skill stays loadable via `skill://<name>` because resolution never reads this list.
+	 */
+	renderCompact(
+		skills: readonly Skill[],
+		{ pinned = [], maxChars = COMPACT_MAX_CHARS }: { pinned?: readonly string[]; maxChars?: number } = {},
+	): Array<Skill & { description: string }> {
+		const pinnedNames: Record<string, true> = {};
+		for (const n of pinned) pinnedNames[n] = true;
+		const ordered = [...skills.filter(s => s.name in pinnedNames), ...skills.filter(s => !(s.name in pinnedNames))];
+		const lines = this.render(ordered).map((skill, i) => ({
+			...skill,
+			description: skill.name in pinnedNames
+				? ordered[i]!.description.replace(/\s+/g, " ").trim()
+				: previewSkillDescription(skill.description, COMPACT_LINE_CHARS),
+		}));
+		// `- name: desc\n` per line; track total characters and stop when the budget is full.
+		const cost = (name: string, desc: string) => name.length + desc.length + 5;
+		let used = 0;
+		let kept = 0;
+		while (kept < lines.length && used + cost(lines[kept]!.name, lines[kept]!.description) <= maxChars) {
+			used += cost(lines[kept]!.name, lines[kept]!.description);
+			kept++;
+		}
+		if (kept === lines.length) return lines;
+		// Build the shortest possible note for skills that didn't fit.
+		const noteFor = (k: number) => {
+			const rest = lines.slice(k);
+			const names = rest.map(s => s.name).join(", ");
+			const countNote = `${rest.length} more — load any via skill://<name>`;
+			// Include names when they fit; otherwise the count-only note is enough (skill:// uses the registry).
+			const desc = cost(COMPACT_NOTE_NAME, `${countNote}: ${names}`) <= maxChars - used
+				? `${countNote}: ${names}`
+				: countNote;
+			return { ...rest[0]!, name: COMPACT_NOTE_NAME, description: desc };
+		};
+		// If the note for the current kept doesn't fit, step back one line at a time.
+		while (kept > 0 && used + cost(COMPACT_NOTE_NAME, noteFor(kept).description) > maxChars) {
+			used -= cost(lines[kept - 1]!.name, lines[kept - 1]!.description);
+			kept--;
+		}
+		return [...lines.slice(0, kept), noteFor(kept)];
 	}
 
 	/** Await background writes already scheduled by this catalog (for shutdown or tests). */

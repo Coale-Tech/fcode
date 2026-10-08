@@ -31,6 +31,7 @@ const MNEMOPI_SCOPING_MODES = ["global", "per-project", "per-project-tagged"] as
 const HINDSIGHT_SCOPING_MODES = ["global", "per-project", "per-project-tagged"] as const;
 const MNEMOPI_EMBEDDING_VARIANTS = ["en", "multilingual"] as const;
 const HINDSIGHT_RECALL_BUDGETS = ["low", "mid", "high"] as const;
+const SKILL_LIST_MODES = ["full", "compact"] as const;
 
 const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   // Task / isolation (omp/packages/coding-agent/src/task/settings.ts)
@@ -80,9 +81,21 @@ const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   // Skills & Commands (omp/packages/coding-agent/src/extensibility/settings.ts)
   "skills.enabled":           { type: "boolean" },
   "skills.registryUrl":       { type: "string" },
+  "skills.enableClaudeUser":  { type: "boolean" },
+  "skills.listMode":          { type: "enum", values: SKILL_LIST_MODES },
   "skills.customDirectories": { type: "array" },
   "commands.enableClaudeUser":  { type: "boolean" },
   "commands.enableClaudeProject": { type: "boolean" },
+  // Skill curator (Fcode-owned; controls the background archive pass in the bridge)
+  "skills.curator.enabled":    { type: "boolean" },
+  "skills.curator.staleDays":  { type: "number", min: 1, max: 365 },
+  "skills.curator.archiveDays":{ type: "number", min: 1, max: 365 },
+  // Skill review (Fcode-owned; background LLM pass to extract skills from conversation)
+  "skills.review.enabled":         { type: "boolean" },
+  "skills.review.intervalTurns":   { type: "number", min: 1, max: 100 },
+  "skills.review.model":           { type: "string" },
+  "skills.review.maxInputTokens":  { type: "number", min: 1000, max: 32000 },
+  "skills.review.requireApproval": { type: "boolean" },
   // Extensions (omp/packages/coding-agent/src/extensibility/settings.ts)
   extensions:                   { type: "array" },
   disabledExtensions:           { type: "array" },
@@ -92,6 +105,9 @@ const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   "hindsight.retainMode":          { type: "enum", values: HINDSIGHT_RETAIN_MODES },
   "hindsight.mentalModelsEnabled": { type: "boolean" },
   "hindsight.mentalModelAutoSeed": { type: "boolean" },
+  // Memory cross-backend (omp/packages/coding-agent/src/memory-backend/settings.ts)
+  "memory.injectMaxChars":         { type: "number", min: 0, max: 200000 },
+  "memory.frozen.maxChars":        { type: "number", min: 0, max: 200000 },
   // Mnemopi advanced (omp/packages/coding-agent/src/mnemopi/settings.ts)
   // mnemopi.llmMode forced to "session" by overlay; mnemopi.embeddingApiKey/llmApiKey are secrets.
   "mnemopi.scoping":               { type: "enum", values: MNEMOPI_SCOPING_MODES },

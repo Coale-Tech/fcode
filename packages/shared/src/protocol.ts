@@ -364,6 +364,8 @@ export const IPC = {
     ompCommandsList: "pi-desktop/omp/commands/list",
     ompState: "pi-desktop/omp/state",
     ompMemoryStatus: "pi-desktop/omp/memory/status",
+    /** Chars used/cap for the memory injected at session start. */
+    ompMemoryBudget: "pi-desktop/omp/memory/budget",
     ompAutoCompactionSet: "pi-desktop/omp/auto-compaction/set",
     memoryGetConfig: "pi-desktop/memory/getConfig",
     memorySetConfig: "pi-desktop/memory/setConfig",
@@ -392,6 +394,26 @@ export const IPC = {
     ompSubagentMessages: "pi-desktop/omp/subagent/messages",
     /** List omp skillshare packages installed in ~/.omp/agent/ (user-global). */
     ompInstalledSkillsList: "pi-desktop/omp/skills/installed/list",
+    /** Local changes of the self-improving Coale-Tech/frappeskills clone. */
+    ompSkillPackStatus: "pi-desktop/omp/skills/pack/status",
+    /** Push the self-improve branch and open a PR on Coale-Tech/frappeskills. */
+    ompSkillPackOpenPr: "pi-desktop/omp/skills/pack/open-pr",
+    /** Throw away the local self-improvements and return to upstream. */
+    ompSkillPackDiscard: "pi-desktop/omp/skills/pack/discard",
+    /** Usage status of agent-created skills tracked by the skill curator. */
+    ompSkillCuratorStatus: "pi-desktop/omp/skills/curator/status",
+    /** Restore an archived skill back to its original location. */
+    ompSkillCuratorRestore: "pi-desktop/omp/skills/curator/restore",
+    /** Pin or unpin a skill so the curator ignores it. */
+    ompSkillCuratorPin: "pi-desktop/omp/skills/curator/pin",
+    /** List pending skill proposals awaiting user approval. */
+    ompSkillProposalList: "pi-desktop/omp/skills/proposals/list",
+    /** Approve a pending proposal: commit it to fcode/self-improve. */
+    ompSkillProposalApprove: "pi-desktop/omp/skills/proposals/approve",
+    /** Reject (discard) a pending proposal. */
+    ompSkillProposalReject: "pi-desktop/omp/skills/proposals/reject",
+    /** Read-only journey timeline: curator events + review commits + proposal decisions. */
+    ompSkillJourney: "pi-desktop/omp/skills/journey",
     /** Historical AI usage stats from omp stats --json (subset of DashboardStats). */
     ompHistoricalStats: "pi-desktop/omp/stats/historical",
     /** List agent-managed git worktrees under ~/.omp/wt/. */

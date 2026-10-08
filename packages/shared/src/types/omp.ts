@@ -104,6 +104,14 @@ export interface OmpMemoryStatusResult {
   latencyMs: number;
 }
 
+/** Result of `omp.memory.budget` (omp `get_memory_budget`). */
+export interface OmpMemoryBudgetResult {
+  /** Chars of memory instructions injected at the last session-start prompt build. */
+  usedChars: number;
+  /** Cap in chars; 0 = unlimited. Mirrors `memory.injectMaxChars` setting. */
+  capChars: number;
+}
+
 /** Launcher available for a managed local Hindsight server. */
 export type HindsightLocalLauncher = "binary" | "uvx" | "docker";
 
@@ -269,6 +277,9 @@ export interface OmpSettingsValues {
   // Skills & Commands (omp/packages/coding-agent/src/extensibility/settings.ts)
   "skills.enabled"?: boolean;
   "skills.registryUrl"?: string;
+  "skills.enableClaudeUser"?: boolean;
+  /** Fcode defaults to "compact" (pinned/used skills keep full text, others one short line). */
+  "skills.listMode"?: "full" | "compact";
   "skills.customDirectories"?: string[];
   "commands.enableClaudeUser"?: boolean;
   "commands.enableClaudeProject"?: boolean;
@@ -281,6 +292,10 @@ export interface OmpSettingsValues {
   "hindsight.retainMode"?: "full-session" | "last-turn";
   "hindsight.mentalModelsEnabled"?: boolean;
   "hindsight.mentalModelAutoSeed"?: boolean;
+  // Memory cross-backend (omp/packages/coding-agent/src/memory-backend/settings.ts)
+  "memory.injectMaxChars"?: number;
+  /** Char budget for each frozen memory file (USER.md / .omp/MEMORY.md). 0 = disabled. Fcode default: 2000. */
+  "memory.frozen.maxChars"?: number;
   // Mnemopi advanced (omp/packages/coding-agent/src/mnemopi/settings.ts)
   // mnemopi.llmMode is forced to "session" by the bridge overlay; excluded.
   // mnemopi.embeddingApiKey and mnemopi.llmApiKey are credentials; use secret store; excluded.
@@ -335,6 +350,49 @@ export interface OmpSettingsValues {
   // Appearance — HTML export themes (omp/packages/coding-agent/src/modes/settings.ts)
   "theme.dark"?: string;
   "theme.light"?: string;
+  // Skill curator (Fcode-owned; controls the background skill archive pass in the bridge)
+  "skills.curator.enabled"?: boolean;
+  "skills.curator.staleDays"?: number;
+  "skills.curator.archiveDays"?: number;
+  // Skill review (Fcode-owned; background LLM pass to save lessons as skills)
+  "skills.review.enabled"?: boolean;
+  "skills.review.intervalTurns"?: number;
+  "skills.review.model"?: string;
+  "skills.review.maxInputTokens"?: number;
+  /** When true (default), validated skills are staged as proposals awaiting approval. */
+  "skills.review.requireApproval"?: boolean;
+}
+
+// ── Skill approval / journey ──────────────────────────────────────────────────
+
+/** A pending skill proposal waiting for user approval. */
+export interface OmpSkillProposal {
+  id: string;
+  name: string;
+  description: string;
+  body: string;
+  stagedAt: string;
+}
+
+/** Result of `ompSkillProposalList`. */
+export interface OmpSkillProposalListResult {
+  proposals: OmpSkillProposal[];
+}
+
+/** Result of `ompSkillProposalApprove` / `ompSkillProposalReject`. */
+export interface OmpSkillProposalActResult {
+  ok: boolean;
+}
+
+/** One event in the skill journey timeline. */
+export type OmpJourneyEvent =
+  | { type: "curator"; ts: string; actor: string; action: string; skill: string }
+  | { type: "git-commit"; ts: string; hash: string; skill: string; message: string }
+  | { type: "proposal-approved" | "proposal-rejected"; ts: string; skill: string; id: string };
+
+/** Result of `ompSkillJourney`. */
+export interface OmpSkillJourneyResult {
+  events: OmpJourneyEvent[];
 }
 
 // ─── Session-data additions (feat/session-data) ──────────────────────────────
@@ -530,4 +588,54 @@ export interface OmpUserProfileGetResult {
 export interface OmpUserProfileSetResult {
   ok: boolean;
   error?: string;
+}
+
+/** One local commit on the self-improvement branch of a skill pack clone. */
+export interface OmpSkillPackCommit {
+  sha: string;
+  subject: string;
+}
+/** Lint result for one skill file in the self-improve branch. */
+export interface OmpSkillLintResult {
+  skill: string;
+  errors: string[];
+  warnings: string[];
+}
+
+/** State of the self-improving skill pack (`<dataDir>/skills/frappeskills`). */
+export interface OmpSkillPackStatus {
+  /** False until the first background clone has landed (bundled snapshot in use). */
+  cloned: boolean;
+  branch: string;
+  /** Commits on the branch that upstream does not have yet. */
+  commits: OmpSkillPackCommit[];
+  /** Files changed against upstream, committed or not. */
+  files: string[];
+  /** True when the working tree has edits that are not committed. */
+  dirty: boolean;
+  /** Lint results for each changed .md file (empty array when nothing to lint). */
+  lint: OmpSkillLintResult[];
+}
+
+/** Result of `ompSkillPackOpenPr`. */
+export interface OmpSkillPackOpenPrResult {
+  url: string;
+}
+
+/** One entry returned by `ompSkillCuratorStatus`. */
+export interface OmpSkillCuratorEntry {
+  name: string;
+  uses: number;
+  lastUsed: string | null;
+  status: "active" | "stale" | "archived" | "pinned";
+}
+
+/** Result of `ompSkillCuratorStatus`. */
+export interface OmpSkillCuratorStatusResult {
+  skills: OmpSkillCuratorEntry[];
+}
+
+/** Result of `ompSkillCuratorRestore` / `ompSkillCuratorPin`. */
+export interface OmpSkillCuratorMutateResult {
+  ok: boolean;
 }

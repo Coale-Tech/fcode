@@ -98,13 +98,19 @@ export function PermissionCard({
     const field = (key: string) => (fields[key] != null ? String(fields[key]) : "");
     const rawCommand =
       permission.toolName === "fcode_bench_run"
-        ? (field("command") || permission.toolName)
+        ? (field("command") === "run-tests"
+            ? `run-tests ${field("module") || field("doctype") || field("app")}`.trim()
+            : (field("command") || permission.toolName))
         : permission.toolName === "fcode_studio"
           ? `${field("action")} ${field("app") || field("page")}`.trim()
           : (field("method") || permission.toolName);
     const consequence =
       permission.toolName === "fcode_bench_run"
-        ? (rawCommand === "migrate" ? "alters the database schema" : "alters bench state")
+        ? (rawCommand === "migrate"
+            ? "alters the database schema"
+            : field("command") === "run-tests"
+              ? "runs the test suite, which writes test records to the site database"
+              : "alters bench state")
         : permission.toolName === "fcode_studio"
           ? "changes Studio's published pages or where its source of truth lives"
           : "modifies the database";

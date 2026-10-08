@@ -10,6 +10,34 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 
+### Added
+- Frappe skill packs: [frappe/skills](https://github.com/frappe/skills) (official) and [Coale-Tech/frappeskills](https://github.com/Coale-Tech/frappeskills) ship with Fcode and are cloned into `<dataDir>/skills/` on every launch, then fast-forwarded. The bundled snapshot is used offline until the first clone lands.
+- Self-improving skills: the Coale-Tech clone sits on a local `fcode/self-improve` branch. The new `fcode-skill-improve` skill tells the agent to commit verified lessons there. Updates rebase those commits onto upstream and never overwrite them. A PR to Coale-Tech/frappeskills is opened only when you approve.
+- Settings > Skills > **Load ~/.claude/skills** toggle.
+- Settings > Skills > **Self-improving Frappe skills**: lists the commits and files the agent added to the local frappeskills clone. **Open PR** pushes `fcode/self-improve` and opens the PR with `gh`, and **Discard changes** returns the clone to upstream.
+- The skill packs re-sync every 6 hours while the app stays open, not only at launch.
+- Skill curator (Hermes-style): records which skills the agent loads, marks agent-created skills `stale` after 14 unused days and moves them to `<dataDir>/skills/.curator/archive` after 30. It never deletes, keeps an audit ledger, and runs only when the app has been idle 2 hours and 7 days have passed. Settings > Skills lists usage with Pin and Restore. Configure with `skills.curator.*`.
+- Background skill review (off by default, `skills.review.enabled`): every N turns (default 10) a tool-less, memory-less `omp -p` run on omp's cheap `@smol` model (or one you choose) reads the recent conversation and commits reusable lessons to `fcode/self-improve`. Token-capped, never pushes.
+- Skill review **write-approval gate** (`skills.review.requireApproval`, default on): validated skill candidates are staged as pending proposals under `<dataDir>/skills/.review/pending/` rather than committed directly. Settings > Skills > Background Skill Review lists proposals with a diff preview and **Approve** / **Reject** buttons. Approved proposals are committed to `fcode/self-improve`; rejected ones are discarded and recorded in the review ledger. Set `requireApproval` to off to restore direct-commit behaviour.
+- **Skill journey** timeline (Settings > Skills): read-only newest-first view combining curator events (archive/restore/pin), review commits on `fcode/self-improve`, and approved/rejected proposal decisions — a single log of everything the agent learned and changed.
+- Skill lint: secrets, prompt-injection phrases, invisible Unicode and invalid frontmatter block **Open PR** and review commits; incident-log shape and oversized bodies show as warnings.
+- Bounded always-on memory: `memory.injectMaxChars` (default 6000, 0 = unlimited) caps the memory block built at session start, and Settings > Memory shows how full it is.
+- `fcode_bench_run` can run `run-tests`: structured options (`app`, `module`, `doctype`, `test`, `failfast`, `skip_before_tests`, `test_category`; no free-form flags) and a JSON result with pass/fail/error/skip counts, duration and per-failure messages instead of the raw transcript. Still asks for approval.
+- **Per-session token/cost meter** in the context-usage inspector (the ring button in the composer): the Session row now shows input, output, and cache-read tokens plus the cumulative cache hit rate and the tokens charged in the last turn (+N). Data comes from the existing `omp.session.stats` / `get_session_stats` RPC — no new bridge call. Pure aggregation logic (`computeTokenMeterView`) lives in `packages/shared` and is fully unit-tested.
+- **Compact skill list** (`skills.listMode`): the system prompt now lists skills in a short single-line form, capped at 6 KB total, instead of injecting every full description. Pinned or recently-used skills always keep their full text; the rest get a ≤80-char preview. A trailing note tells the agent how many more skills exist and that any can be read via `skill://<name>`. Skill invocation is unchanged — the omp registry always has the full content. Set `skills.listMode: full` in Settings > Skills to restore the original behaviour. Driven by curator usage (`<dataDir>/skills/.curator/usage.json`): skills used in the last `skills.curator.staleDays` days or pinned are always shown in full.
+- Frozen session-start memory: `<cwd>/.omp/MEMORY.md` (per-project) and `<agentDir>/USER.md` (global user profile) are loaded once at session start and injected as a stable system-prompt block that never changes mid-session (prefix-cache stable). Each file is capped at 2000 chars (`memory.frozen.maxChars`; 0 = disabled). The new `memory_note` tool adds, replaces, or removes named entries in either file; writes take effect next session. Both char counts accumulate against `memory.injectMaxChars`.
+
+- Electron e2e CI suite: `pnpm e2e` runs 2 deterministic renderer tests (`e2e-settings-skills`, `e2e-copy-tex`) via `scripts/run-e2e-suite.mjs` under GitHub Actions (`e2e.yml`, Linux + xvfb, non-required check); `pnpm e2e --all` runs 4 additional local-only scripts. New `e2e-settings-skills.mjs` verifies `SkillPackSection`, `SkillCuratorSection`, `SkillReviewSection` and `MemoryBudgetBar` render and that toggling `skills.review.enabled` fires `ompSettingsSet`. Fixed hardcoded Chrome path in `scripts/ui-verify/verify.mjs` (now resolved via `playwright-core` or `CHROME_EXEC` env).
+
+### Changed
+- `~/.claude/skills` is no longer loaded by default. Every personal skill was added to the prompt on every turn; turn it back on in Settings > Skills.
+
+### Removed
+- The generic `fcode-api-development`, `fcode-app-hooks`, `fcode-bench-operations`, `fcode-doctype-development`, `fcode-frappe-ui` and `fcode-frappe-router` skills. The `frappe-*` skill pack replaces them; `frappe-router` is the entry point.
+
+### Fixed
+- `PI-Desktop-worktrees/` added to `.gitignore` and negated in `biome.json` `files.includes` so `pnpm lint:biome` is not broken when agent worktrees exist at repo root.
+
 ## [0.18.6] — 2026-10-07
 
 ### Compatibility

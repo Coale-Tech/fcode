@@ -40,6 +40,7 @@ import type {
   OmpUserProfileGetResult,
   OmpUserProfileSetResult,
 } from "@pi-desktop/shared";
+import type { OmpSkillCuratorStatusResult, OmpSkillCuratorMutateResult, OmpSkillProposalListResult, OmpSkillProposalActResult, OmpSkillJourneyResult } from "@pi-desktop/shared";
 import { existsSync } from "node:fs";
 import { readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
@@ -48,6 +49,10 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { shell } from "electron";
 import type { AgentSidecar } from "../agent-sidecar";
+import { desktopDataDir } from "../data-paths.ts";
+import { skillPackDiscard, skillPackOpenPr, skillPackStatus } from "../skill-packs";
+import { curatorPin, curatorRestore, curatorStatus } from "../skill-curator.ts";
+import { approveProposal, getJourneyEvents, listPendingProposals, rejectProposal } from "../skill-review.ts";
 import type { IpcRegistrar } from "./types";
 
 const execFileP = promisify(execFile);
@@ -384,6 +389,46 @@ export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpc
       stored: lock[id] !== undefined,
     }));
     return { skills };
+  });
+
+  // ── self-improving skill pack (local git clone, see ../skill-packs.ts) ─────
+  handle(IPC.invoke.ompSkillPackStatus, () => skillPackStatus());
+  handle(IPC.invoke.ompSkillPackOpenPr, async () => {
+    const pr = await skillPackOpenPr();
+    if (pr.url.startsWith("https://github.com/")) void shell.openExternal(pr.url);
+    return pr;
+  });
+  handle(IPC.invoke.ompSkillPackDiscard, () => skillPackDiscard());
+
+  // ── skill curator (usage tracking, archive, restore, pin) ──────────────────
+  handle(IPC.invoke.ompSkillCuratorStatus, async () => curatorStatus(desktopDataDir()));
+  handle(IPC.invoke.ompSkillCuratorRestore, async (input: { name?: unknown } = {}) => {
+    if (typeof input?.name !== "string") invalid("name required");
+    return curatorRestore(desktopDataDir(), input.name);
+  });
+  handle(IPC.invoke.ompSkillCuratorPin, async (input: { name?: unknown; pinned?: unknown } = {}) => {
+    if (typeof input?.name !== "string") invalid("name required");
+    return curatorPin(desktopDataDir(), input.name, input.pinned === true);
+  });
+
+  // ── skill approval gate (pending proposals: list / approve / reject) ────────
+  handle(IPC.invoke.ompSkillProposalList, async (): Promise<OmpSkillProposalListResult> => {
+    return { proposals: listPendingProposals(desktopDataDir()) };
+  });
+  handle(IPC.invoke.ompSkillProposalApprove, async (input: { id?: unknown } = {}): Promise<OmpSkillProposalActResult> => {
+    if (typeof input?.id !== "string" || !input.id) invalid("id (string) required");
+    await approveProposal(desktopDataDir(), input.id as string);
+    return { ok: true };
+  });
+  handle(IPC.invoke.ompSkillProposalReject, async (input: { id?: unknown } = {}): Promise<OmpSkillProposalActResult> => {
+    if (typeof input?.id !== "string" || !input.id) invalid("id (string) required");
+    rejectProposal(desktopDataDir(), input.id as string);
+    return { ok: true };
+  });
+
+  // ── skill journey timeline ──────────────────────────────────────────────────
+  handle(IPC.invoke.ompSkillJourney, async (): Promise<OmpSkillJourneyResult> => {
+    return { events: await getJourneyEvents(desktopDataDir()) };
   });
 
   // ── omp.stats.historical ───────────────────────────────────────────────────
