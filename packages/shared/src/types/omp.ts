@@ -355,6 +355,40 @@ export interface OmpSettingsValues {
   "skills.review.intervalTurns"?: number;
   "skills.review.model"?: string;
   "skills.review.maxInputTokens"?: number;
+  /** When true (default), validated skills are staged as proposals awaiting approval. */
+  "skills.review.requireApproval"?: boolean;
+}
+
+// ── Skill approval / journey ──────────────────────────────────────────────────
+
+/** A pending skill proposal waiting for user approval. */
+export interface OmpSkillProposal {
+  id: string;
+  name: string;
+  description: string;
+  body: string;
+  stagedAt: string;
+}
+
+/** Result of `ompSkillProposalList`. */
+export interface OmpSkillProposalListResult {
+  proposals: OmpSkillProposal[];
+}
+
+/** Result of `ompSkillProposalApprove` / `ompSkillProposalReject`. */
+export interface OmpSkillProposalActResult {
+  ok: boolean;
+}
+
+/** One event in the skill journey timeline. */
+export type OmpJourneyEvent =
+  | { type: "curator"; ts: string; actor: string; action: string; skill: string }
+  | { type: "git-commit"; ts: string; hash: string; skill: string; message: string }
+  | { type: "proposal-approved" | "proposal-rejected"; ts: string; skill: string; id: string };
+
+/** Result of `ompSkillJourney`. */
+export interface OmpSkillJourneyResult {
+  events: OmpJourneyEvent[];
 }
 
 // ─── Session-data additions (feat/session-data) ──────────────────────────────

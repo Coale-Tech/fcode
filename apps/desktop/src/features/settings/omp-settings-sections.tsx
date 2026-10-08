@@ -16,6 +16,7 @@ import { OmpSkillsSection } from "../../components/settings/OmpSkillsSection";
 import { SkillPackSection } from "../../components/settings/SkillPackSection";
 import { SkillCuratorSection } from "../../components/settings/SkillCuratorSection";
 import { SkillReviewSection } from "../../components/settings/SkillReviewSection";
+import { SkillJourneySection } from "../../components/settings/SkillJourneySection";
 import { OmpUsageSection } from "../../components/settings/OmpUsageSection";
 import { OmpWorktreeSection } from "../../components/settings/OmpWorktreeSection";
 import { OmpExtensionsSection } from "../../components/settings/OmpExtensionsSection";
@@ -671,6 +672,7 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
         <SkillPackSection />
         <SkillCuratorSection />
         <SkillReviewSection />
+        <SkillJourneySection />
         </>
       )}
 

@@ -93,6 +93,7 @@ const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   "skills.review.intervalTurns":   { type: "number", min: 1, max: 100 },
   "skills.review.model":           { type: "string" },
   "skills.review.maxInputTokens":  { type: "number", min: 1000, max: 32000 },
+  "skills.review.requireApproval": { type: "boolean" },
   // Extensions (omp/packages/coding-agent/src/extensibility/settings.ts)
   extensions:                   { type: "array" },
   disabledExtensions:           { type: "array" },

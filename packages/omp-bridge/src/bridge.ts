@@ -1832,6 +1832,7 @@ async function main(): Promise<void> {
         intervalTurns: s["skills.review.intervalTurns"] ?? 10,
         maxInputTokens: s["skills.review.maxInputTokens"] ?? 8000,
         model: s["skills.review.model"] ?? "",
+        requireApproval: s["skills.review.requireApproval"] !== false,
         log: (line) => console.error(`[omp-bridge] ${line}`),
       }));
     }

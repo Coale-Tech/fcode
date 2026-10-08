@@ -4,19 +4,25 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  approveProposal,
   buildTranscriptText,
   extractJson,
+  listPendingProposals,
   parseSkillsJson,
+  PENDING_REVIEW_SUBPATH,
+  rejectProposal,
+  reviewArgs,
   SkillReviewTrigger,
+  stageProposal,
   writeAndCommitSkill,
+  type PendingProposal,
   type SkillReviewConfig,
   type TranscriptEntry,
-  reviewArgs,
 } from "./skill-review.js";
 
 // Stub skill-lint to avoid dependency on not-yet-compiled skill-lint.ts.
@@ -303,5 +309,111 @@ describe("reviewArgs", () => {
 
   it("uses the configured model when set", () => {
     expect(reviewArgs("anthropic/x", "/o").at(-1)).toBe("anthropic/x");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Approval gate: stageProposal, listPendingProposals, approveProposal, rejectProposal
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("stageProposal / listPendingProposals", () => {
+  let root: string;
+
+  beforeEach(() => { root = mkdtempSync(join(tmpdir(), "skill-stage-")); });
+  afterEach(() => rmSync(root, { recursive: true, force: true }));
+
+  it("writes a JSON file and returns a PendingProposal", () => {
+    const skill = { name: "test-skill", description: "A test skill", body: "# Test\nContent." };
+    const proposal = stageProposal(root, skill, () => undefined);
+    expect(proposal.name).toBe("test-skill");
+    expect(proposal.id).toMatch(/^\d+-test-skill$/);
+    expect(proposal.stagedAt).toBeTruthy();
+    const pendingDir = join(root, PENDING_REVIEW_SUBPATH);
+    expect(existsSync(pendingDir)).toBe(true);
+    const file = join(pendingDir, `${proposal.id}.json`);
+    expect(existsSync(file)).toBe(true);
+    const parsed = JSON.parse(readFileSync(file, "utf8")) as PendingProposal;
+    expect(parsed.body).toBe(skill.body);
+  });
+
+  it("listPendingProposals returns empty array when directory absent", () => {
+    expect(listPendingProposals(root)).toEqual([]);
+  });
+
+  it("listPendingProposals returns staged proposals newest first", () => {
+    stageProposal(root, { name: "skill-a", description: "a", body: "# a" }, () => undefined);
+    // small delay ensured by unique id prefix (Date.now changes in practice;
+    // manually tweak stagedAt via the file)
+    const pendingDir = join(root, PENDING_REVIEW_SUBPATH);
+    const files = readdirSync(pendingDir) as string[];
+    expect(files.length).toBe(1);
+    stageProposal(root, { name: "skill-b", description: "b", body: "# b" }, () => undefined);
+    const proposals = listPendingProposals(root);
+    expect(proposals).toHaveLength(2);
+    // Both present; ordering by stagedAt desc.
+    expect(proposals.map((p) => p.name)).toContain("skill-a");
+    expect(proposals.map((p) => p.name)).toContain("skill-b");
+  });
+});
+
+describe("approveProposal / rejectProposal (integration with git)", () => {
+  let root: string;
+  let clone: string;
+
+  beforeEach(() => {
+    root = mkdtempSync(join(tmpdir(), "skill-approval-"));
+    clone = join(root, "skills", "frappeskills");
+    const origin = join(root, "origin.git");
+    sh(root, "init", "-q", "--bare", "-b", "main", origin);
+    sh(root, "clone", "-q", `file://${origin}`, clone);
+    writeFileSync(join(clone, "README.md"), "frappeskills\n");
+    sh(clone, "add", "-A");
+    sh(clone, "-c", "user.email=a@b", "-c", "user.name=a", "commit", "-qm", "init");
+    sh(clone, "push", "-q", "origin", "HEAD:main");
+    sh(clone, "checkout", "-b", "fcode/self-improve");
+    sh(clone, "config", "user.email", "fcode@localhost");
+    sh(clone, "config", "user.name", "Fcode");
+  });
+
+  afterEach(() => rmSync(root, { recursive: true, force: true }));
+
+  it("approveProposal commits the skill and removes the pending file", async () => {
+    const proposal = stageProposal(
+      root,
+      { name: "approved-skill", description: "desc", body: "# Approved\nContent." },
+      () => undefined,
+    );
+    const pendingFile = join(root, PENDING_REVIEW_SUBPATH, `${proposal.id}.json`);
+    expect(existsSync(pendingFile)).toBe(true);
+    await approveProposal(root, proposal.id, () => undefined);
+    expect(existsSync(pendingFile)).toBe(false);
+    expect(existsSync(join(clone, "approved-skill", "SKILL.md"))).toBe(true);
+    const log = sh(clone, "log", "--oneline");
+    expect(log).toContain("approved-skill");
+  });
+
+  it("rejectProposal removes the pending file without committing", () => {
+    const proposal = stageProposal(
+      root,
+      { name: "rejected-skill", description: "desc", body: "# Rejected\nContent." },
+      () => undefined,
+    );
+    const pendingFile = join(root, PENDING_REVIEW_SUBPATH, `${proposal.id}.json`);
+    rejectProposal(root, proposal.id);
+    expect(existsSync(pendingFile)).toBe(false);
+    // No new commits — the skill should not appear in the repo.
+    expect(existsSync(join(clone, "rejected-skill", "SKILL.md"))).toBe(false);
+  });
+
+  it("approveProposal throws for unknown id", async () => {
+    await expect(approveProposal(root, "nonexistent-id", () => undefined)).rejects.toThrow();
+  });
+
+  it("listPendingProposals returns empty after all approved", async () => {
+    const p1 = stageProposal(root, { name: "s1", description: "d1", body: "# s1" }, () => undefined);
+    const p2 = stageProposal(root, { name: "s2", description: "d2", body: "# s2" }, () => undefined);
+    await approveProposal(root, p1.id, () => undefined);
+    rejectProposal(root, p2.id);
+    expect(listPendingProposals(root)).toHaveLength(0);
   });
 });

@@ -13,10 +13,12 @@
 
 import { spawn } from "node:child_process";
 import {
+  appendFileSync,
   existsSync,
   mkdirSync,
   readdirSync,
   readFileSync,
+  unlinkSync,
   writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
@@ -50,6 +52,12 @@ export interface SkillReviewConfig {
   maxInputTokens: number;
   /** Model id for the review subprocess; empty = omp's own default. */
   model: string;
+  /**
+   * When true (default), validated skills are staged as pending proposals
+   * under `<dataDir>/skills/.review/pending/` rather than committed directly.
+   * Set to false to restore the original direct-commit behaviour.
+   */
+  requireApproval?: boolean;
   /** Logging sink. */
   log: (msg: string) => void;
   /**
@@ -58,6 +66,25 @@ export interface SkillReviewConfig {
    */
   _runReview?: () => Promise<void>;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Pending proposal types + path constants (exported for desktop-main and tests)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** A validated skill candidate waiting for user approval. */
+export interface PendingProposal {
+  /** Unique id: `"${Date.now()}-${name}"`. */
+  id: string;
+  name: string;
+  description: string;
+  body: string;
+  stagedAt: string;
+}
+
+/** Sub-directory holding pending proposal JSON files. Path: `<dataDir>/skills/.review/pending`. */
+export const PENDING_REVIEW_SUBPATH = join("skills", ".review", "pending");
+/** Sub-path for the approve/reject event ledger. Path: `<dataDir>/skills/.review/ledger.jsonl`. */
+export const REVIEW_LEDGER_SUBPATH = join("skills", ".review", "ledger.jsonl");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal types
@@ -293,6 +320,97 @@ export async function writeAndCommitSkill(
   log(`skill-review: committed skill "${skill.name}" on ${SELF_IMPROVE_BRANCH}`);
 }
 
+/**
+ * Stage a validated skill as a pending proposal (approval-gate path).
+ * Writes `<dataDir>/skills/.review/pending/<id>.json`.
+ * Exported for tests and the desktop-side approve handler.
+ */
+export function stageProposal(
+  dataDir: string,
+  skill: { name: string; description: string; body: string },
+  log: (msg: string) => void,
+): PendingProposal {
+  const id = `${Date.now()}-${skill.name}`;
+  const proposal: PendingProposal = {
+    id,
+    name: skill.name,
+    description: skill.description,
+    body: skill.body,
+    stagedAt: new Date().toISOString(),
+  };
+  const dir = join(dataDir, PENDING_REVIEW_SUBPATH);
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, `${id}.json`), JSON.stringify(proposal), "utf8");
+  log(`skill-review: staged proposal "${skill.name}" (id=${id})`);
+  return proposal;
+}
+
+/**
+ * List all pending proposals from `<dataDir>/skills/.review/pending/`.
+ * Returns newest first (by stagedAt). Silently skips unreadable files.
+ */
+export function listPendingProposals(dataDir: string): PendingProposal[] {
+  const dir = join(dataDir, PENDING_REVIEW_SUBPATH);
+  if (!existsSync(dir)) return [];
+  const proposals: PendingProposal[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
+    try {
+      const p = JSON.parse(readFileSync(join(dir, entry.name), "utf8")) as PendingProposal;
+      if (p.id && p.name && p.body) proposals.push(p);
+    } catch { /* skip corrupt files */ }
+  }
+  return proposals.sort((a, b) => b.stagedAt.localeCompare(a.stagedAt));
+}
+
+/** Append an entry to the review ledger. Never throws. */
+function appendReviewLedger(
+  dataDir: string,
+  entry: { ts: string; action: "approved" | "rejected"; id: string; skill: string },
+): void {
+  try {
+    mkdirSync(join(dataDir, "skills", ".review"), { recursive: true });
+    appendFileSync(join(dataDir, REVIEW_LEDGER_SUBPATH), JSON.stringify(entry) + "\n");
+  } catch { /* never throw */ }
+}
+
+/**
+ * Approve a pending proposal: write SKILL.md, git-commit on fcode/self-improve,
+ * delete the pending file, and append to the review ledger.
+ * Exported for desktop-main IPC handler.
+ */
+export async function approveProposal(
+  dataDir: string,
+  id: string,
+  log: (msg: string) => void,
+): Promise<void> {
+  const pendingFile = join(dataDir, PENDING_REVIEW_SUBPATH, `${id}.json`);
+  if (!existsSync(pendingFile)) throw new Error(`Proposal "${id}" not found`);
+  const proposal = JSON.parse(readFileSync(pendingFile, "utf8")) as PendingProposal;
+  await writeAndCommitSkill(dataDir, proposal, log);
+  try { unlinkSync(pendingFile); } catch { /* ignore */ }
+  appendReviewLedger(dataDir, {
+    ts: new Date().toISOString(), action: "approved", id, skill: proposal.name,
+  });
+}
+
+/**
+ * Reject a pending proposal: delete the pending file and append to the review ledger.
+ * Exported for desktop-main IPC handler.
+ */
+export function rejectProposal(dataDir: string, id: string): void {
+  const pendingFile = join(dataDir, PENDING_REVIEW_SUBPATH, `${id}.json`);
+  let name = id;
+  try {
+    const p = JSON.parse(readFileSync(pendingFile, "utf8")) as PendingProposal;
+    name = p.name;
+  } catch { /* name unknown, use id */ }
+  try { unlinkSync(pendingFile); } catch { /* already gone */ }
+  appendReviewLedger(dataDir, {
+    ts: new Date().toISOString(), action: "rejected", id, skill: name,
+  });
+}
+
 /** Run one full review pass (background). */
 async function runReview(config: SkillReviewConfig, snapshot: TranscriptEntry[]): Promise<void> {
   const maxChars = Math.max(config.maxInputTokens, 1) * 4;
@@ -315,7 +433,12 @@ async function runReview(config: SkillReviewConfig, snapshot: TranscriptEntry[])
     return;
   }
   for (const skill of skills) {
-    await writeAndCommitSkill(config.dataDir, skill, config.log);
+    // requireApproval defaults to true; only commit directly when explicitly false.
+    if (config.requireApproval === false) {
+      await writeAndCommitSkill(config.dataDir, skill, config.log);
+    } else {
+      stageProposal(config.dataDir, skill, config.log);
+    }
   }
 }
 
