@@ -80,6 +80,29 @@ export const cfgSkillsIncludeSkills = register({
 	default: EMPTY_STRING_ARRAY,
 });
 
+export const cfgSkillsListMode = register({
+	id: "skills.listMode",
+	type: "enum",
+	values: ["full", "compact"] as const,
+	default: "full",
+	ui: {
+		tab: "interaction",
+		group: "Skills",
+		label: "Skill List Mode",
+		description: "How the system prompt lists skills; every skill stays loadable via skill://<name>",
+		options: [
+			{ value: "full", label: "Full", description: "One description per skill (default)" },
+			{ value: "compact", label: "Compact", description: "Pinned skills keep full text, others one short line, capped size" },
+		],
+	},
+});
+
+/** Skills whose full description survives `skills.listMode: compact` (e.g. pinned or recently used). */
+export const cfgSkillsPinned = register({ id: "skills.pinned", type: "array", default: EMPTY_STRING_ARRAY });
+
+/** Hard cap on the compact skill list, in characters; unset = `SkillDescriptionCatalog.renderCompact` default (6000). */
+export const cfgSkillsCompactMaxChars = register({ id: "skills.compactMaxChars", type: "number", default: undefined });
+
 /** Skill discovery options (`skills.*` except the `omp skill` registry URL). */
 export const cfgSkills = combine({
 	enabled: cfgSkillsEnabled,
@@ -94,6 +117,9 @@ export const cfgSkills = combine({
 	customDirectories: cfgSkillsCustomDirectories,
 	ignoredSkills: cfgSkillsIgnoredSkills,
 	includeSkills: cfgSkillsIncludeSkills,
+	listMode: cfgSkillsListMode,
+	pinned: cfgSkillsPinned,
+	compactMaxChars: cfgSkillsCompactMaxChars,
 });
 
 /** Skill discovery options ({@link cfgSkills}); omitted fields fall back to the setting defaults. */

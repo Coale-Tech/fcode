@@ -532,6 +532,13 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
               onChange={() => void save({ "skills.enableClaudeUser": omp["skills.enableClaudeUser"] !== true })}
             />
           </SettingsRow>
+          <SettingsRow title={t("settings.ompSkillsCompactList")} description={t("settings.ompSkillsCompactListDesc")}>
+            <SettingsToggle
+              checked={omp["skills.listMode"] !== "full"}
+              label={t("settings.ompSkillsCompactList")}
+              onChange={() => void save({ "skills.listMode": omp["skills.listMode"] === "full" ? "compact" : "full" })}
+            />
+          </SettingsRow>
           <SettingsRow title={t("settings.ompSkillsRegistryUrl")} description={t("settings.ompSkillsRegistryUrlDesc")}>
             <Input
               type="text"

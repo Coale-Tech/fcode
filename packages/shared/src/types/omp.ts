@@ -278,6 +278,8 @@ export interface OmpSettingsValues {
   "skills.enabled"?: boolean;
   "skills.registryUrl"?: string;
   "skills.enableClaudeUser"?: boolean;
+  /** Fcode defaults to "compact" (pinned/used skills keep full text, others one short line). */
+  "skills.listMode"?: "full" | "compact";
   "skills.customDirectories"?: string[];
   "commands.enableClaudeUser"?: boolean;
   "commands.enableClaudeProject"?: boolean;

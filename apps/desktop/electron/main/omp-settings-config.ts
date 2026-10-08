@@ -31,6 +31,7 @@ const MNEMOPI_SCOPING_MODES = ["global", "per-project", "per-project-tagged"] as
 const HINDSIGHT_SCOPING_MODES = ["global", "per-project", "per-project-tagged"] as const;
 const MNEMOPI_EMBEDDING_VARIANTS = ["en", "multilingual"] as const;
 const HINDSIGHT_RECALL_BUDGETS = ["low", "mid", "high"] as const;
+const SKILL_LIST_MODES = ["full", "compact"] as const;
 
 const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   // Task / isolation (omp/packages/coding-agent/src/task/settings.ts)
@@ -81,6 +82,7 @@ const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   "skills.enabled":           { type: "boolean" },
   "skills.registryUrl":       { type: "string" },
   "skills.enableClaudeUser":  { type: "boolean" },
+  "skills.listMode":          { type: "enum", values: SKILL_LIST_MODES },
   "skills.customDirectories": { type: "array" },
   "commands.enableClaudeUser":  { type: "boolean" },
   "commands.enableClaudeProject": { type: "boolean" },

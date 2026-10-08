@@ -941,9 +941,15 @@ export async function buildSystemPrompt(options: BuildSystemPromptOptions = {}):
 		securityEnabled,
 		settingsApproval,
 	};
-	const filteredSkills = (options.skillDescriptions ?? new SkillDescriptionCatalog()).render(
-		hasSkillReader ? skills.filter(skill => skill.hide !== true) : [],
-	);
+	const skillCatalog = options.skillDescriptions ?? new SkillDescriptionCatalog();
+	const listedSkills = hasSkillReader ? skills.filter(skill => skill.hide !== true) : [];
+	const filteredSkills =
+		skillsSettings?.listMode === "compact"
+			? skillCatalog.renderCompact(listedSkills, {
+					pinned: skillsSettings.pinned,
+					maxChars: skillsSettings.compactMaxChars,
+				})
+			: skillCatalog.render(listedSkills);
 
 	const effectiveSystemPromptCustomization = dedupePromptSource(systemPromptCustomization, [
 		resolvedCustomPrompt,
