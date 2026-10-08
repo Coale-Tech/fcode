@@ -57,3 +57,6 @@ coverage/
 electron.vite.config.*.mjs
 
 omp/packages/natives/native/*.node
+
+# Worktree staging area for concurrent agent branches (untracked, not for CI)
+PI-Desktop-worktrees/
