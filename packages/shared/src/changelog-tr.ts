@@ -2,6 +2,18 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const trEntries: ChangelogEntry[] = [
   {
+    "version": "0.19.0",
+    "date": "2026-10-08",
+    "highlights": [
+      "Frappe beceri paketleri (`frappe/skills` ve `Coale-Tech/frappeskills`) her başlatmada ve 6 saatte bir senkronize edilir. Kendi kendini iyileştirme iş akışı artık bir arka plan gözlemcisi, Ayarlar > Beceriler'de yazma onay kapısı (diff olarak hazırlanan öneriler; her birini onayla veya reddet) ve küratör olaylarını, inceleme commit'lerini ve onay kararlarını birleştiren bir Beceri Yolculuğu zaman çizelgesi içeriyor.",
+      "Beceri küratörü, 2 saat boşta kaldıktan sonra 30 gün kullanılmayan becerileri arşivler (asla silmez; denetim günlüğü tutar). Beceri lint, herhangi bir PR veya commit öncesinde sırlar, komut enjeksiyonu ifadeleri, görünmez Unicode karakterler ve geçersiz frontmatter için her beceriyi kontrol eder.",
+      "Oturum başlangıç belleği artık dondurulmuş ve ön ek önbelleği kararlıdır: `<cwd>/.omp/MEMORY.md` ve `USER.md` oturum başına bir kez enjekte edilir (her biri 2.000 karakter; yeni `memory_note` aracıyla düzenleyin). Bellek enjeksiyonu 6.000 karakterle sınırlıdır (Ayarlar > Bellek bütçeyi gösterir). Beceriler komut istemine özlü biçimde listelenir (6 KB sınırı, sabitlenen/son kullanılan beceriler için tam metin; Ayarlar > Beceriler'de tam modu değiştirin).",
+      "Bağlam kullanım halkası artık bir Oturum satırına sahip: giriş, çıkış ve önbellek okuma token'ları, kümülatif önbellek isabet oranı ve son turda ücretlendirilen token'lar (+N). Yeni ağ çağrısı yok — mevcut `omp.session.stats` verilerini toplar.",
+      "`fcode_bench_run` artık yapılandırılmış seçeneklerle (app, module, doctype, test, failfast, skip_before_tests, test_category) `run-tests` çalıştırabilir ve ham transkript yerine süre ve başarısızlık mesajlarıyla birlikte yapılandırılmış geçti/başarısız/hata/atlandı sayıları döndürür.",
+      "`pnpm e2e`, GitHub Actions'ta (Linux + xvfb, gerekli olmayan kontrol) iki deterministik renderer testi (settings-skills, copy-tex) çalıştırır. Yeni `e2e-settings-skills` betiği, Beceriler ayarlar panellerinin oluşturulduğunu ve inceleme anahtarının değiştirilmesinin IPC'yi tetiklediğini doğrular. UI doğrulama koşumundaki sabit kodlu Chrome yolu düzeltildi."
+    ],
+  },
+  {
     "version": "0.18.6",
     "date": "2026-10-07",
     "highlights": [

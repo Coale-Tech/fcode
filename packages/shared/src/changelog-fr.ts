@@ -2,6 +2,18 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const frEntries: ChangelogEntry[] = [
   {
+    "version": "0.19.0",
+    "date": "2026-10-08",
+    "highlights": [
+      "Les packs de compétences Frappe (`frappe/skills` et `Coale-Tech/frappeskills`) se synchronisent à chaque démarrage et toutes les 6 heures. Le flux d'amélioration automatique comprend désormais un réviseur en arrière-plan, une porte d'approbation d'écriture dans Paramètres > Compétences (propositions sous forme de diffs ; approuver ou rejeter chacune) et une timeline Skill Journey combinant événements du conservateur, commits de révision et décisions d'approbation.",
+      "Le conservateur de compétences archive les compétences inutilisées pendant 30 jours (sans jamais supprimer ; conserve un journal d'audit) après 2 heures d'inactivité. Le lint de compétences vérifie les secrets, les phrases d'injection de prompt, les caractères Unicode invisibles et le frontmatter invalide avant tout PR ou commit.",
+      "La mémoire de démarrage de session est maintenant figée et stable pour le cache de préfixe : `<cwd>/.omp/MEMORY.md` et `USER.md` sont injectés une fois par session (2 000 chars chacun ; modifiez avec le nouvel outil `memory_note`). L'injection de mémoire est plafonnée à 6 000 chars (Paramètres > Mémoire affiche le budget). Les compétences sont listées de façon compacte dans le prompt (limite 6 Ko, texte complet pour les compétences épinglées/récentes ; activez le mode complet dans Paramètres > Compétences).",
+      "L'anneau d'utilisation du contexte a maintenant une ligne Session : tokens d'entrée, de sortie et de lecture du cache, taux de réussite cumulatif du cache et les tokens facturés au dernier tour (+N). Aucun nouvel appel réseau — agrège les données `omp.session.stats` existantes.",
+      "`fcode_bench_run` peut maintenant exécuter `run-tests` avec des options structurées (app, module, doctype, test, failfast, skip_before_tests, test_category) et renvoie des comptes structurés réussi/échoué/erreur/ignoré avec durée et messages d'échec au lieu d'une transcription brute.",
+      "`pnpm e2e` exécute deux tests de rendu déterministes (settings-skills, copy-tex) sous GitHub Actions (Linux + xvfb, vérification non requise). Le nouveau script `e2e-settings-skills` vérifie que les panneaux des paramètres de Compétences s'affichent et que le basculement de l'interrupteur de révision déclenche l'IPC. Correction du chemin Chrome codé en dur dans le harnais de vérification UI."
+    ],
+  },
+  {
     "version": "0.18.6",
     "date": "2026-10-07",
     "highlights": [

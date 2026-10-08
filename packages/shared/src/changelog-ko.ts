@@ -2,6 +2,18 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const koEntries: ChangelogEntry[] = [
   {
+    "version": "0.19.0",
+    "date": "2026-10-08",
+    "highlights": [
+      "Frappe 스킬 팩(`frappe/skills` 및 `Coale-Tech/frappeskills`)이 매 실행 시 및 6시간마다 동기화됩니다. 자기 개선 워크플로에 백그라운드 리뷰어, 설정 > 스킬의 쓰기 승인 게이트(제안이 diff로 스테이징되어 각각 승인 또는 거부 가능), 큐레이터 이벤트·리뷰 커밋·승인 결정을 통합한 스킬 저니 타임라인이 추가되었습니다.",
+      "스킬 큐레이터가 2시간 유휴 후 30일간 사용되지 않은 스킬을 보관합니다(삭제하지 않고 감사 로그 유지). 스킬 린트는 PR이나 커밋 전에 비밀 정보, 프롬프트 주입 문구, 보이지 않는 유니코드 문자, 잘못된 frontmatter를 검사합니다.",
+      "세션 시작 메모리가 이제 고정되고 프리픽스 캐시 안정적입니다: `<cwd>/.omp/MEMORY.md`와 `USER.md`가 세션당 한 번 주입됩니다(각 2,000자; 새 `memory_note` 도구로 편집). 메모리 주입은 6,000자로 제한됩니다(설정 > 메모리에서 예산 확인). 스킬은 프롬프트에 간결하게 나열됩니다(6KB 한도, 고정/최근 사용 스킬은 전체 텍스트; 설정 > 스킬에서 전체 모드 전환 가능).",
+      "컨텍스트 사용 링에 이제 세션 행이 있습니다: 입력, 출력, 캐시 읽기 토큰, 누적 캐시 적중률, 마지막 턴에서 청구된 토큰(+N). 새로운 네트워크 호출 없음 — 기존 `omp.session.stats` 데이터를 집계합니다.",
+      "`fcode_bench_run`이 이제 구조화된 옵션(app, module, doctype, test, failfast, skip_before_tests, test_category)으로 `run-tests`를 실행할 수 있으며, 원시 트랜스크립트 대신 구조화된 통과/실패/오류/건너뜀 수, 기간 및 실패 메시지를 반환합니다.",
+      "`pnpm e2e`가 GitHub Actions(Linux + xvfb, 비필수 검사)에서 두 가지 결정적 렌더러 테스트(settings-skills, copy-tex)를 실행합니다. 새 `e2e-settings-skills` 스크립트는 스킬 설정 패널이 렌더링되고 리뷰 스위치 토글이 IPC를 발생시키는지 확인합니다. UI 검증 하네스의 하드코딩된 Chrome 경로가 수정되었습니다."
+    ],
+  },
+  {
     "version": "0.18.6",
     "date": "2026-10-07",
     "highlights": [

@@ -10,6 +10,14 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 
+## [0.19.0] — 2026-10-08
+
+### Compatibility
+
+| Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
+|-------|-----------------|-----------|-----------------|--------|
+| 0.19.0 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
+
 ### Added
 - Frappe skill packs: [frappe/skills](https://github.com/frappe/skills) (official) and [Coale-Tech/frappeskills](https://github.com/Coale-Tech/frappeskills) ship with Fcode and are cloned into `<dataDir>/skills/` on every launch, then fast-forwarded. The bundled snapshot is used offline until the first clone lands.
 - Self-improving skills: the Coale-Tech clone sits on a local `fcode/self-improve` branch. The new `fcode-skill-improve` skill tells the agent to commit verified lessons there. Updates rebase those commits onto upstream and never overwrite them. A PR to Coale-Tech/frappeskills is opened only when you approve.
@@ -253,6 +261,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Security: YAML injection via `agentModelOverrides` key fixed (agent key now `JSON.stringify`-quoted in overlay); `validateOmpSettings` rejects keys with non-identifier chars (newlines, colons, spaces); `file:`/`git+file:`/`svn+`/`hg+` URI schemes blocked in `validateInstallSpec`; collab panel only renders `<a>` for http(s) URLs; Hindsight supervisor strips raw process output from IPC state message; port validated 1024–65535 in `hindsightLocalStart`; `benchRun` validates each `args` element against an identifier-safe regex.
 - `inflight-checkpoint.test.mjs` flaky timing fixed (freeze `Date.now()` via `t.mock.timers`); `plugin-mcp.test.mjs` `connectTimeoutMs` 20 → 300.
 
+[0.19.0]: https://github.com/Coale-Tech/fcode/releases/tag/v0.19.0
 [0.18.1]: https://github.com/Coale-Tech/fcode/releases/tag/v0.18.1
 [0.18.0]: https://github.com/Coale-Tech/fcode/releases/tag/v0.18.0
 [0.17.1]: https://github.com/Coale-Tech/fcode/releases/tag/v0.17.1
