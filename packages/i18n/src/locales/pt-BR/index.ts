@@ -1658,6 +1658,8 @@ export const ptBR = {
     ompSkillsEnabledDesc: "Enable skill discovery and invocation.",
     ompSkillsClaudeUser: "Load ~/.claude/skills",
     ompSkillsClaudeUserDesc: "Also load every skill from your personal Claude folder. Off by default: each skill adds to the prompt on every turn.",
+    ompSkillsCompactList: "Compact skill list",
+    ompSkillsCompactListDesc: "List skills in one short line each so the prompt stays small. Pinned and recently used skills keep their full description; every skill can still be loaded.",
     skillPackTitle: "Self-improving Frappe skills",
     skillPackDesc: "Lessons the agent saved to the local Coale-Tech/frappeskills clone. Nothing is pushed until you open a PR.",
     skillPackNotCloned: "The skill pack has not been cloned yet. It is fetched in the background on launch.",

@@ -40,7 +40,7 @@ import type { OmpExtensionUiRequest } from "./ui-requests.js";
 import { adaptMessageFrame } from "./messages.js";
 import { PROMPT_BASH_PATTERNS, READ_ONLY_BASH_PATTERNS } from "./read-only-commands.js";
 import type { CuratorConfig } from "./skill-curator.js";
-import { DEFAULT_CURATOR_CONFIG, extractSkillName, recordSkillUse } from "./skill-curator.js";
+import { DEFAULT_CURATOR_CONFIG, extractSkillName, promptPinnedSkills, recordSkillUse } from "./skill-curator.js";
 import { SkillReviewTrigger } from "./skill-review.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -148,6 +148,8 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
 
   // Skills: fcode-skills dir first (host tools), then the Frappe packs, then user dirs.
   const userSkillDirs = s["skills.customDirectories"] ?? [];
+  // Compact skill list by default; pinned/recently used skills keep their full description.
+  const pinnedSkills = promptPinnedSkills(opts.dataDir, s["skills.curator.staleDays"] ?? DEFAULT_CURATOR_CONFIG.staleDays);
 
   // Hindsight: collect all lines so we emit exactly one hindsight: block.
   const hindsightLines: string[] = [];
@@ -198,6 +200,8 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
     `  enableClaudeUser: ${s["skills.enableClaudeUser"] === true}`,
     ...(s["skills.enabled"] !== undefined ? [`  enabled: ${s["skills.enabled"]}`] : []),
     ...(s["skills.registryUrl"] ? [`  registryUrl: ${JSON.stringify(s["skills.registryUrl"])}`] : []),
+    `  listMode: ${s["skills.listMode"] ?? "compact"}`,
+    ...(pinnedSkills.length > 0 ? ["  pinned:", ...pinnedSkills.map((n) => `    - ${JSON.stringify(n)}`)] : []),
     "",
     "browser:",
     `  enabled: ${browserEnabled}`,

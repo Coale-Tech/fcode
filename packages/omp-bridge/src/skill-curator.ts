@@ -118,6 +118,15 @@ export function recordSkillUse(dataDir: string, skillName: string): void {
   _pendingFlushes.set(dataDir, { timer, usage });
 }
 
+/** Skills that keep their full description in omp's compact skill list: pinned, or used within `withinDays`. */
+export function promptPinnedSkills(dataDir: string, withinDays: number, now = Date.now()): string[] {
+  const usage = readJson<UsageMap>(usagePath(dataDir), {});
+  return Object.entries(usage)
+    .filter(([, e]) => e.status === "pinned"
+      || (e.status !== "archived" && e.uses > 0 && now - Date.parse(e.lastUsed) < withinDays * 86_400_000))
+    .map(([name]) => name);
+}
+
 // ── Curated skill discovery ───────────────────────────────────────────────────
 
 function gitLines(cwd: string, args: string[]): string[] {
