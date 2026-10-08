@@ -384,6 +384,7 @@ export const tr = {
     compactionRowSummaryFailed: "özet oluşturulamadı · son bağlam korundu",
     usageSessionLabel: "Oturum",
     usageSessionCost: "Maliyet {{amount}}",
+    usageSessionTurnDelta: "Last turn +{{total}}",
     scrollToBottom: "En sona atla",
     minimap: "Sohbet özeti",
     resultNeedsAttention: "Bu görevin ilgiye ihtiyacı var",

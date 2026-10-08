@@ -375,6 +375,7 @@ export const fr = {
     "compactionRowSummaryFailed": "échec de la génération du résumé · contexte récent conservé",
     "usageSessionLabel": "Session",
     "usageSessionCost": "Coût {{amount}}",
+    usageSessionTurnDelta: "Last turn +{{total}}",
     "scrollToBottom": "Passer au dernier",
     "minimap": "Aperçu de la conversation",
     "resultNeedsAttention": "Cette tâche nécessite une attention particulière",

@@ -143,10 +143,16 @@ export function Composer({
   }, []);
 
   const [ompSessionStats, setOmpSessionStats] = useState<OmpSessionStatsResult | null>(null);
+  // Capture stats at the start of each turn so we can show a per-turn delta.
+  const prevStatsRef = useRef<OmpSessionStatsResult | null>(null);
   useEffect(() => {
-    if (isRunning) return;
+    if (isRunning) {
+      // Turn just started: snapshot current stats as the "before" baseline.
+      prevStatsRef.current = ompSessionStats;
+      return;
+    }
     void api.ompSessionStats().then(setOmpSessionStats).catch(() => {});
-  }, [isRunning]);
+  }, [isRunning]); // eslint-disable-line react-hooks/exhaustive-deps
   const composerContextUsage = useMemo(
     () =>
       latestTurnContextInspector(
@@ -657,6 +663,8 @@ export function Composer({
             onToggleFastMode={handleToggleFastMode}
             autoRetryEnabled={ompAutoRetryEnabled}
             onToggleAutoRetry={handleToggleAutoRetry}
+            sessionStats={ompSessionStats}
+            prevSessionStats={prevStatsRef.current}
             enhancementDraft={enhancementDraft}
             value={value}
             modelReady={modelReady}

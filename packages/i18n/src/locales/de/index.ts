@@ -375,6 +375,7 @@ export const de = {
     "compactionRowSummaryFailed": "Zusammenfassung fehlgeschlagen · aktueller Kontext beibehalten",
     "usageSessionLabel": "Sitzung",
     "usageSessionCost": "Kosten {{amount}}",
+    usageSessionTurnDelta: "Last turn +{{total}}",
     "scrollToBottom": "Zum Neuesten springen",
     "minimap": "Gesprächsübersicht",
     "resultNeedsAttention": "Diese Aufgabe erfordert Aufmerksamkeit",

@@ -382,6 +382,7 @@ export const en = {
     compactionRowSummaryFailed: "summary generation failed · recent context retained",
     usageSessionLabel: "Session",
     usageSessionCost: "Cost {{amount}}",
+    usageSessionTurnDelta: "Last turn +{{total}}",
     scrollToBottom: "Jump to latest",
     minimap: "Conversation outline",
     resultNeedsAttention: "This task needs attention",
