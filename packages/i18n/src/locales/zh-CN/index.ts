@@ -376,6 +376,7 @@ export const zhCN = {
     compactionRowSummaryFailed: "摘要生成失败 · 已保留近期上下文",
     usageSessionLabel: "会话",
     usageSessionCost: "费用 {{amount}}",
+    usageSessionTurnDelta: "Last turn +{{total}}",
     scrollToBottom: "回到最新",
     minimap: "对话大纲",
     resultNeedsAttention: "这次任务需要处理一下",

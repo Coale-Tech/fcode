@@ -373,6 +373,7 @@ export const ptBR = {
     compactionRowSummaryFailed: "Falha ao gerar o resumo · contexto recente mantido",
     usageSessionLabel: "Sessão",
     usageSessionCost: "Custo {{amount}}",
+    usageSessionTurnDelta: "Last turn +{{total}}",
     scrollToBottom: "Ir para a mensagem mais recente",
     minimap: "Visão geral da conversa",
     resultNeedsAttention: "Esta tarefa requer atenção",

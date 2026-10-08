@@ -375,6 +375,7 @@ export const es = {
     "compactionRowSummaryFailed": "falló la generación del resumen · se conservó el contexto reciente",
     "usageSessionLabel": "Sesión",
     "usageSessionCost": "Costo {{amount}}",
+    usageSessionTurnDelta: "Last turn +{{total}}",
     "scrollToBottom": "Saltar a la última",
     "minimap": "Esquema de la conversación",
     "resultNeedsAttention": "Esta tarea necesita atención",
