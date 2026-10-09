@@ -32,19 +32,23 @@ import { fileURLToPath } from "node:url";
 // ─── configuration ───────────────────────────────────────────────────────────
 
 /**
- * Full contract set.  Every sibling PR appends their two names here.
- * The set-equality test below fails until all 9 are present on disk.
+ * Contract set — agents that MUST be present on disk.
+ * Sibling PRs each append their two names here when they rebase onto main.
+ * Growth order:
+ *   INFRA (this PR)        → frappe-dev, frappe-reviewer, frappe-scout
+ *   AgentsBenchBuilder PR  → + frappe-bench-ops, frappe-builder
+ *   AgentsDataCurator PR   → + frappe-data-importer, skill-curator
+ *   AgentsTesterUi PR      → + frappe-tester, frappe-ui-verifier
+ * When all 9 are present the set-equality test passes and CI is green.
  */
 const EXPECTED_AGENTS = new Set([
-  "frappe-bench-ops",
-  "frappe-builder",
-  "frappe-data-importer",
+  // INFRA PR — 3 agents (this commit)
   "frappe-dev",
   "frappe-reviewer",
   "frappe-scout",
-  "frappe-tester",
-  "frappe-ui-verifier",
-  "skill-curator",
+  // AgentsBenchBuilder PR — append "frappe-bench-ops", "frappe-builder"
+  // AgentsDataCurator PR  — append "frappe-data-importer", "skill-curator"
+  // AgentsTesterUi PR     — append "frappe-tester", "frappe-ui-verifier"
 ]);
 
 /** Valid omp built-in tool names (from omp/packages/coding-agent/src/tools/builtin-names.ts). */
