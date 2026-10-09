@@ -56,6 +56,27 @@ pnpm fcode:dev      # runs the full dev setup in sequence
 
 ---
 
+## Bundled agents
+
+Fcode ships nine Frappe/ERPNext specialised omp subagents in `apps/desktop/resources/fcode-agents/agents/`. They are wired into omp discovery via an `extensions:` entry the bridge writes into `omp-overlay.yml` on every launch — no user configuration needed. User- and project-level agents with the same name take precedence (omp rule: project > user > extension).
+
+| Agent | Role |
+|---|---|
+| `frappe-scout` | Read-only Frappe/ERPNext codebase investigator: hooks, APIs, permissions, DocType schemas, cross-app call paths |
+| `frappe-dev` | Full implementation agent — all `frappe-*` skills preloaded; DocTypes, controllers, APIs, jobs, reports, tests, Desk UI, frappe-ui |
+| `frappe-reviewer` | Read-only code reviewer enforcing `frappe-app-standards`, security rules, and v16 correctness; reports by severity with `file:line`, never edits |
+| `frappe-tester` | Writes and runs bench tests via `fcode_bench_run run-tests` (structured JSON result); diagnoses failures; never marks done without a passing run |
+| `frappe-ui-verifier` | Verifies features in a real browser via omp `browser` and the Build canvas (`fcode_canvas`/`fcode_canvas_read`); reports with screenshot evidence, writes no code |
+| `frappe-bench-ops` | Migrate, clear-cache, build, list-apps, install-app via `fcode_bench_run`; every mutating call goes through approval; recovery checklist |
+| `frappe-builder` | Studio/Builder work via `fcode_studio`, `fcode_canvas`, and `fcode_canvas_read` |
+| `frappe-data-importer` | Bulk spreadsheet import/update via `frappe-data-import` skill and `fcode_bench_execute`; dry-run first, row-count reconciliation |
+| `skill-curator` | On-demand review of session/skills dir: proposes new skills or merges using `fcode-skill-improve`, honouring skill lint rules; read-only, never pushes |
+
+Each agent file is validated by `apps/desktop/test/fcode-agents.test.mjs` (part of `pnpm -r --if-present test`). Sibling PRs each add their two agent files and extend the `EXPECTED_AGENTS` set in that test.
+
+---
+
+
 ## Bridge architecture
 
 ```

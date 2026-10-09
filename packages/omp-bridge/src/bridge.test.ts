@@ -116,6 +116,48 @@ describe("makeOmpOverlay (DX3 / DX6 / DX7 / DX10)", () => {
   });
 });
 
+describe("makeOmpOverlay — extensions (bundled agents + user merge)", () => {
+  it("includes fcode-agents dir in extensions", () => {
+    const overlay = makeOmpOverlay({
+      dataDir: dir,
+      resourcesPath: "/app/resources",
+      screenshotsDir: join(dir, "screenshots"),
+    });
+    expect(overlay).toContain("extensions:");
+    expect(overlay).toContain("fcode-agents");
+  });
+
+  it("preserves user-configured extensions alongside the bundled one", () => {
+    const overlay = makeOmpOverlay({
+      dataDir: dir,
+      resourcesPath: "/app/resources",
+      screenshotsDir: join(dir, "screenshots"),
+      ompSettings: { extensions: ["/my/custom/ext"] },
+    });
+    // bundled fcode-agents comes first
+    const extIdx = overlay.indexOf("fcode-agents");
+    const userIdx = overlay.indexOf("/my/custom/ext");
+    expect(extIdx).toBeGreaterThan(-1);
+    expect(userIdx).toBeGreaterThan(-1);
+    expect(extIdx).toBeLessThan(userIdx);
+  });
+
+  it("overlay extensions section survives YAML round-trip", () => {
+    const overlay = makeOmpOverlay({
+      dataDir: dir,
+      resourcesPath: "/app/resources",
+      screenshotsDir: join(dir, "screenshots"),
+      ompSettings: { extensions: ["/user/ext-a"] },
+    });
+    const parsed = parseYaml(overlay) as Record<string, unknown>;
+    const exts = parsed.extensions as string[];
+    expect(Array.isArray(exts)).toBe(true);
+    expect(exts.some((e) => e.endsWith("fcode-agents"))).toBe(true);
+    expect(exts).toContain("/user/ext-a");
+    // user/project agents still override bundled ones (omp precedence, not tested here)
+  });
+});
+
 describe("makeOmpOverlay memory section", () => {
   const base = { dataDir: "/d", resourcesPath: "/r", screenshotsDir: "/s" };
   it("omits memory when unset", () => {

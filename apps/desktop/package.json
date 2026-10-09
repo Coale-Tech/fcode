@@ -150,6 +150,10 @@
         "to": "fcode-skills"
       },
       {
+        "from": "resources/fcode-agents",
+        "to": "fcode-agents"
+      },
+      {
         "from": "resources/skill-packs",
         "to": "skill-packs"
       },

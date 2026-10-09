@@ -10,6 +10,18 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 
+### Added
+- **Bundled Frappe agents** (`apps/desktop/resources/fcode-agents/`): nine specialised omp subagents ship with Fcode and are discovered automatically via an `extensions:` entry in the generated omp overlay — no user configuration needed. User/project agents with the same name take precedence (omp rule). The nine agents are:
+  - `frappe-scout` — read-only Frappe/ERPNext codebase investigator (hooks, APIs, permissions, DocType schemas)
+  - `frappe-dev` — full implementation agent with all `frappe-*` skills preloaded (DocTypes, controllers, APIs, jobs, reports, tests, Desk UI, frappe-ui)
+  - `frappe-reviewer` — read-only code reviewer enforcing `frappe-app-standards`, security rules, and v16 correctness
+  - `frappe-tester` — writes and runs bench tests via `fcode_bench_run run-tests`, diagnoses failures, never marks done without a passing run
+  - `frappe-ui-verifier` — verifies features in a real browser via the omp `browser` tool and the Build canvas; reports with screenshot evidence, writes no code
+  - `frappe-bench-ops` — migrate, clear-cache, build, list-apps, install-app via `fcode_bench_run`; every mutating call goes through approval; recovery checklist
+  - `frappe-builder` — Studio/Builder work via `fcode_studio`, `fcode_canvas`, and `fcode_canvas_read`
+  - `frappe-data-importer` — bulk spreadsheet import/update via the `frappe-data-import` skill and `fcode_bench_execute`; dry-run first, row-count reconciliation
+  - `skill-curator` — on-demand review of the session/skills dir: proposes new skills or merges using `fcode-skill-improve`, honouring skill lint rules; read-only, never pushes
+
 ## [0.19.0] — 2026-10-08
 
 ### Compatibility

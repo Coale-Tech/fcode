@@ -230,6 +230,13 @@ test("packaging keeps only shipped locales and excludes non-runtime artifacts", 
       from: "resources/fcode-skills",
       to: "fcode-skills",
     },
+    // Bundled Frappe-specific agents; the overlay extensions: entry points omp
+    // at this dir so frappe-scout, frappe-dev, frappe-reviewer (and siblings
+    // added by other PRs) are discovered without any user config.
+    {
+      from: "resources/fcode-agents",
+      to: "fcode-agents",
+    },
     // Offline snapshot of the two Frappe skill packs; live clones in the data
     // dir replace it once the first sync lands (omp-bridge/src/skill-packs.ts).
     {
