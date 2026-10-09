@@ -137,6 +137,7 @@ export function isReadOnlyExecuteMethod(method: string): boolean {
  */
 export function makeOmpOverlay(opts: OverlayOptions): string {
   const skillsDir = resolve(join(opts.resourcesPath, "fcode-skills"));
+  const agentsDir = resolve(join(opts.resourcesPath, "fcode-agents"));
   const screenshotsDir = resolve(opts.screenshotsDir);
   const mode = opts.approvalMode ?? "always-ask";
   const s = opts.ompSettings ?? {};
@@ -255,6 +256,13 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
       : []),
     ...(hindsightLines.length > 0 ? ["", "hindsight:", ...hindsightLines] : []),
     ...(opts.defaultModel ? ["", "modelRoles:", `  default: ${JSON.stringify(opts.defaultModel)}`] : []),
+    // extensions: bundled fcode-agents root prepended; user-configured extensions
+    // (from omp-settings.json via ompSettings) merged after so they are preserved.
+    // Precedence: project .omp/agents > user ~/.omp/agents > extension agents (omp rule).
+    "",
+    "extensions:",
+    `  - ${JSON.stringify(agentsDir)}`,
+    ...(s["extensions"] ?? []).map((e) => `  - ${JSON.stringify(e)}`),
     // Task / isolation / eval / collab / LSP / IDA / MCP / commands settings
     ...ompSettingsYaml(s),
   ].join("\n");
@@ -415,12 +423,11 @@ function ompSettingsYaml(s: OmpSettingsValues): string[] {
     if (themeLight !== undefined && themeLight !== "") lines.push(`  light: ${JSON.stringify(themeLight)}`);
   }
 
-  // NOTE: `extensions` and `disabledExtensions` (OmpSettingsValues keys from
-  // omp/packages/coding-agent/src/extensibility/settings.ts) are NOT written to
-  // the overlay here. omp reads them directly from omp-settings.json (injected
-  // via FCODE_OMP_SETTINGS env var) when it resolves extensibility settings.
-  // The disable toggle in extensions-mgmt-ipc.ts writes to omp-settings.json
-  // and the env var refreshes on sidecar restart — no overlay entry needed.
+  // NOTE: `disabledExtensions` (OmpSettingsValues key) is NOT written to the
+  // overlay — omp reads it from omp-settings.json (FCODE_OMP_SETTINGS env).
+  // `extensions` IS written inline in makeOmpOverlay: bundled fcode-agents is
+  // always first, then user extensions from ompSettings are appended so they
+  // survive (overlay wins over omp-settings.json for this array key).
   return lines;
 }
 
