@@ -49,6 +49,8 @@ const EXPECTED_AGENTS = new Set([
   // AgentsBenchBuilder PR — append "frappe-bench-ops", "frappe-builder"
   // AgentsDataCurator PR  — append "frappe-data-importer", "skill-curator"
   // AgentsTesterUi PR     — append "frappe-tester", "frappe-ui-verifier"
+  "frappe-tester",
+  "frappe-ui-verifier",
 ]);
 
 /** Valid omp built-in tool names (from omp/packages/coding-agent/src/tools/builtin-names.ts). */
