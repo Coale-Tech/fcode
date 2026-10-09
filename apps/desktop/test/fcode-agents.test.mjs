@@ -46,7 +46,9 @@ const EXPECTED_AGENTS = new Set([
   "frappe-dev",
   "frappe-reviewer",
   "frappe-scout",
-  // AgentsBenchBuilder PR — append "frappe-bench-ops", "frappe-builder"
+  // AgentsBenchBuilder PR
+  "frappe-bench-ops",
+  "frappe-builder",
   // AgentsDataCurator PR  — append "frappe-data-importer", "skill-curator"
   // AgentsTesterUi PR     — append "frappe-tester", "frappe-ui-verifier"
 ]);
