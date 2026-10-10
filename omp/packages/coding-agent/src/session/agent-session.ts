@@ -5903,6 +5903,16 @@ export class AgentSession implements SettingsScope {
 		return this.#tools.refreshRpcHostTools(rpcTools);
 	}
 
+	/** This session's RPC host tools as approval-gated proxies, for forwarding to subagents. */
+	getRpcHostTools(): AgentTool[] {
+		return this.#tools.getRpcHostAdapters();
+	}
+
+	/** Registers already-gated parent host tools (from getRpcHostTools) on a subagent session. */
+	refreshSubagentRpcHostTools(rpcTools: AgentTool[]): Promise<void> {
+		return this.#tools.refreshSubagentRpcHostTools(rpcTools);
+	}
+
 	/** Whether auto-compaction is currently running */
 	get isCompacting(): boolean {
 		return this.#maintenance.isCompacting;
