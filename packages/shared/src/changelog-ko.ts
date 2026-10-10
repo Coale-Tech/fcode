@@ -2,6 +2,17 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const koEntries: ChangelogEntry[] = [
   {
+    "version": "0.20.0",
+    "date": "2026-10-10",
+    "highlights": [
+      "Fcode에 9개의 전문화된 Frappe/ERPNext 서브에이전트가 포함되어 제공됩니다(`apps/desktop/resources/fcode-agents/`). `extensions:`를 통해 자동으로 감지되며 별도 설정이 필요하지 않습니다. 에이전트: `frappe-scout`(읽기 전용 코드베이스 조사), `frappe-dev`(모든 `frappe-*` 스킬 포함 전체 구현), `frappe-reviewer`(코드 리뷰 및 보안), `frappe-tester`, `frappe-ui-verifier`, `frappe-bench-ops`, `frappe-builder`, `frappe-data-importer`, `skill-curator`. 동일한 이름의 사용자/프로젝트 에이전트가 기본 제공 에이전트보다 우선합니다.",
+      "`frappe-tester`는 `fcode_bench_run run-tests`를 통해 bench 테스트를 작성하고 실행하며, 성공적인 실행 없이는 작업을 완료로 표시하지 않습니다. `frappe-ui-verifier`는 `browser` 도구와 Build 캔버스를 통해 실제 브라우저에서 기능을 검증하고 스크린샷 증거를 제공하며 코드는 작성하지 않습니다. 함께 독립적인 테스트 및 브라우저 검증 패스를 제공합니다.",
+      "`task`로 시작된 서브에이전트는 에이전트의 `tools:` 프론트매터에 해당 도구가 나열된 경우 `fcode_bench_run`, `fcode_bench_execute`, `fcode_canvas`, `fcode_canvas_read`, `fcode_studio`를 직접 호출할 수 있습니다. 모든 호출은 부모 세션의 승인 흐름을 거치며 Fcode 승인 대화 상자가 평소대로 표시됩니다(`always-ask` 유지). `tools:` 목록이 없는 에이전트는 호스트 도구를 받지 않습니다.",
+      "`frappe-bench-ops`는 `fcode_bench_run`을 통해 migrate, clear-cache, build, list-apps, install-app을 실행하며 모든 변경 호출은 승인이 필요합니다. `frappe-builder`는 `fcode_studio`, `fcode_canvas`, `fcode_canvas_read`를 통해 Studio와 Builder를 구동합니다. `frappe-data-importer`는 `fcode_bench_execute`를 통해 스프레드시트 일괄 가져오기/업데이트를 수행합니다 — 먼저 시험 실행, 마지막에 행 수 검증.",
+      "`skill-curator`는 요청 시 세션/스킬 디렉토리를 검토합니다: `fcode-skill-improve`를 사용해 새 스킬을 제안하거나 병합하고, 스킬 lint 규칙을 준수하며 읽기 전용입니다(절대 푸시하지 않음). 0.19.0에서 도입된 백그라운드 스킬 리뷰를 보완합니다.",
+    ],
+  },
+  {
     "version": "0.19.0",
     "date": "2026-10-08",
     "highlights": [

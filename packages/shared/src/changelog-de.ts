@@ -2,6 +2,17 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const deEntries: ChangelogEntry[] = [
   {
+    "version": "0.20.0",
+    "date": "2026-10-10",
+    "highlights": [
+      "Neun spezialisierte Frappe/ERPNext-Subagenten werden mit Fcode ausgeliefert (`apps/desktop/resources/fcode-agents/`) und über `extensions:` automatisch erkannt — keine Konfiguration erforderlich. Agents: `frappe-scout` (Nur-Lese-Codebase-Recherche), `frappe-dev` (vollständige Implementierung mit allen `frappe-*`-Skills), `frappe-reviewer` (Code-Review und Sicherheit), `frappe-tester`, `frappe-ui-verifier`, `frappe-bench-ops`, `frappe-builder`, `frappe-data-importer` und `skill-curator`. Nutzer- oder Projekt-Agents mit gleichem Namen überschreiben mitgelieferte Agents.",
+      "`frappe-tester` schreibt und führt Bench-Tests via `fcode_bench_run run-tests` aus und markiert eine Aufgabe erst als erledigt, wenn ein Testlauf erfolgreich war. `frappe-ui-verifier` prüft Funktionen in einem echten Browser via `browser`-Tool und Build-Canvas und liefert Screenshot-Belege, ohne Code zu schreiben. Zusammen bieten sie einen unabhängigen Test- und Browser-Verifikationspass.",
+      "Über `task` gestartete Subagenten können `fcode_bench_run`, `fcode_bench_execute`, `fcode_canvas`, `fcode_canvas_read` und `fcode_studio` direkt aufrufen, sofern diese Tools im `tools:`-Frontmatter des Agents gelistet sind. Jeder Aufruf durchläuft den Genehmigungsfluss der Elternsitzung — der Fcode-Genehmigungsdialog erscheint wie gewohnt (`always-ask` bleibt aktiv). Agents ohne explizite `tools:`-Liste erhalten keine Host-Tools.",
+      "`frappe-bench-ops` führt migrate, clear-cache, build, list-apps und install-app via `fcode_bench_run` aus, wobei jeder mutierenden Aufruf genehmigt werden muss. `frappe-builder` steuert Studio und Builder via `fcode_studio`, `fcode_canvas` und `fcode_canvas_read`. `frappe-data-importer` importiert/aktualisiert Tabellen per `fcode_bench_execute` — erst Probelauf, dann Zeilenabgleich.",
+      "`skill-curator` überprüft auf Anfrage das Sitzungs-/Skills-Verzeichnis: schlägt neue Skills vor oder führt Merges via `fcode-skill-improve` durch, hält Skill-Lint-Regeln ein und ist rein lesend (pusht nie). Ergänzt die in 0.19.0 eingeführte Hintergrund-Skill-Überprüfung.",
+    ],
+  },
+  {
     "version": "0.19.0",
     "date": "2026-10-08",
     "highlights": [

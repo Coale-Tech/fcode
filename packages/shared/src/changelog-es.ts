@@ -2,6 +2,17 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const esEntries: ChangelogEntry[] = [
   {
+    "version": "0.20.0",
+    "date": "2026-10-10",
+    "highlights": [
+      "Nueve subagentes especializados de Frappe/ERPNext se incluyen con Fcode (`apps/desktop/resources/fcode-agents/`) y se detectan automáticamente a través de `extensions:`, sin necesidad de configuración. Los agentes son: `frappe-scout` (investigación de código de solo lectura), `frappe-dev` (implementación completa con todas las habilidades `frappe-*`), `frappe-reviewer` (revisión de código y seguridad), `frappe-tester`, `frappe-ui-verifier`, `frappe-bench-ops`, `frappe-builder`, `frappe-data-importer` y `skill-curator`. Los agentes de usuario o proyecto con el mismo nombre sobrescriben los incluidos.",
+      "`frappe-tester` escribe y ejecuta pruebas de bench mediante `fcode_bench_run run-tests` y no marca una tarea como completada sin una ejecución exitosa. `frappe-ui-verifier` verifica funciones en un navegador real mediante la herramienta `browser` y el canvas de Build, reportando con evidencia de capturas de pantalla sin escribir código. Juntos ofrecen un pase de verificación independiente de pruebas y navegador.",
+      "Los subagentes iniciados por `task` pueden llamar directamente a `fcode_bench_run`, `fcode_bench_execute`, `fcode_canvas`, `fcode_canvas_read` y `fcode_studio` cuando estas herramientas están listadas en el frontmatter `tools:` del agente. Cada llamada pasa por el flujo de aprobación de la sesión padre — el diálogo de aprobación de Fcode aparece como de costumbre (`always-ask` activo). Los agentes sin una lista `tools:` explícita no reciben herramientas de host.",
+      "`frappe-bench-ops` ejecuta migrate, clear-cache, build, list-apps e install-app via `fcode_bench_run`, con cada llamada mutante requiriendo aprobación. `frappe-builder` maneja Studio y Builder via `fcode_studio`, `fcode_canvas` y `fcode_canvas_read`. `frappe-data-importer` importa/actualiza hojas de cálculo via `fcode_bench_execute` — primero un ensayo en seco, luego reconciliación de filas.",
+      "`skill-curator` revisa el directorio de sesión/habilidades bajo demanda: propone nuevas habilidades o fusiones usando `fcode-skill-improve`, respeta las reglas de lint de habilidades y es de solo lectura (nunca hace push). Complementa la revisión de habilidades en segundo plano introducida en 0.19.0.",
+    ],
+  },
+  {
     "version": "0.19.0",
     "date": "2026-10-08",
     "highlights": [

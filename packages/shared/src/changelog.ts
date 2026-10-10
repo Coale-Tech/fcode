@@ -30,6 +30,17 @@ export type ChangelogEntry = {
 
 const enEntries: ChangelogEntry[] = [
   {
+    version: "0.20.0",
+    date: "2026-10-10",
+    highlights: [
+      "Nine specialised Frappe/ERPNext subagents ship with Fcode (`apps/desktop/resources/fcode-agents/`) and are discovered automatically — no configuration needed. The agents are: `frappe-scout` (read-only codebase investigator), `frappe-dev` (full implementation with all `frappe-*` skills), `frappe-reviewer` (code review and security), `frappe-tester`, `frappe-ui-verifier`, `frappe-bench-ops`, `frappe-builder`, `frappe-data-importer`, and `skill-curator`. User or project agents with the same name override bundled ones.",
+      "`frappe-tester` writes and runs bench tests via `fcode_bench_run run-tests`, never marking a task done without a passing run. `frappe-ui-verifier` verifies features in a real browser via the `browser` tool and the Build canvas, reporting with screenshot evidence and writing no code. Together they give an independent test-and-browser verification pass without touching implementation code.",
+      "Subagents spawned by `task` can now call `fcode_bench_run`, `fcode_bench_execute`, `fcode_canvas`, `fcode_canvas_read`, and `fcode_studio` directly when those tools are listed in the agent's `tools:` frontmatter. Every call routes through the parent's approval flow — the Fcode dialog fires as usual (`always-ask` in force; read-only auto-approval unchanged). Agents without an explicit `tools:` list receive no host tools.",
+      "`frappe-bench-ops` runs migrate, clear-cache, build, list-apps and install-app via `fcode_bench_run` with every mutating call going through approval. `frappe-builder` drives Studio and Builder via `fcode_studio`, `fcode_canvas`, and `fcode_canvas_read`. `frappe-data-importer` does bulk spreadsheet import/update via `fcode_bench_execute` — dry-run first, row-count reconciliation last.",
+      "`skill-curator` reviews the session/skills directory on demand: it proposes new skills or merges using `fcode-skill-improve`, honours skill lint rules, and is read-only (never pushes). It complements the background skill review introduced in 0.19.0.",
+    ],
+  },
+  {
     version: "0.19.0",
     date: "2026-10-08",
     highlights: [
@@ -944,6 +955,17 @@ const enEntries: ChangelogEntry[] = [
 
 const zhCNEntries: ChangelogEntry[] = [
   {
+    version: "0.20.0",
+    date: "2026-10-10",
+    highlights: [
+      "九个专用 Frappe/ERPNext 子代理随 Fcode 一起发布（`apps/desktop/resources/fcode-agents/`），通过 `extensions:` 自动发现，无需配置。包括：`frappe-scout`（只读代码库调查）、`frappe-dev`（完整实现，预载全部 `frappe-*` 技能）、`frappe-reviewer`（代码审查与安全）、`frappe-tester`、`frappe-ui-verifier`、`frappe-bench-ops`、`frappe-builder`、`frappe-data-importer` 和 `skill-curator`。同名的用户/项目代理会覆盖内置代理。",
+      "`frappe-tester` 通过 `fcode_bench_run run-tests` 编写并运行 bench 测试，必须通过才能标记完成。`frappe-ui-verifier` 通过 `browser` 工具和 Build 画布在真实浏览器中验证功能，仅生成截图证据，不编写代码。两者共同提供独立的测试与浏览器验证流程。",
+      "通过 `task` 启动的子代理，若在 `tools:` 前置信息中列出了主机工具，即可直接调用 `fcode_bench_run`、`fcode_bench_execute`、`fcode_canvas`、`fcode_canvas_read` 和 `fcode_studio`。每次调用都经过父会话的审批流程，Fcode 审批对话框照常弹出（`always-ask` 保持不变）。未明确列出 `tools:` 的代理不获得任何主机工具。",
+      "`frappe-bench-ops` 通过 `fcode_bench_run` 执行 migrate、clear-cache、build、list-apps 和 install-app，每次变更调用均需审批。`frappe-builder` 通过 `fcode_studio`、`fcode_canvas` 和 `fcode_canvas_read` 驱动 Studio 和 Builder。`frappe-data-importer` 通过 `fcode_bench_execute` 进行批量电子表格导入/更新——先试运行，最后行数核对。",
+      "`skill-curator` 按需审查会话/技能目录：使用 `fcode-skill-improve` 提出新技能或合并建议，遵守技能 lint 规则，为只读操作（永不推送）。与 0.19.0 引入的后台技能审阅互补。",
+    ],
+  },
+  {
     version: "0.19.0",
     date: "2026-10-08",
     highlights: [
@@ -1856,6 +1878,17 @@ const zhCNEntries: ChangelogEntry[] = [
 ];
 
 const zhTWEntries: ChangelogEntry[] = [
+  {
+    version: "0.20.0",
+    date: "2026-10-10",
+    highlights: [
+      "九個專用 Frappe/ERPNext 子代理程式隨 Fcode 一起發布（`apps/desktop/resources/fcode-agents/`），透過 `extensions:` 自動探索，無需設定。包含：`frappe-scout`（唯讀程式碼庫調查）、`frappe-dev`（完整實作，預載全部 `frappe-*` 技能）、`frappe-reviewer`（程式碼審查與安全性）、`frappe-tester`、`frappe-ui-verifier`、`frappe-bench-ops`、`frappe-builder`、`frappe-data-importer` 和 `skill-curator`。同名的使用者/專案代理程式會覆蓋內建代理程式。",
+      "`frappe-tester` 透過 `fcode_bench_run run-tests` 撰寫並執行 bench 測試，必須通過才能標記完成。`frappe-ui-verifier` 透過 `browser` 工具和 Build 畫布在真實瀏覽器中驗證功能，僅產生截圖證據，不撰寫程式碼。兩者共同提供獨立的測試與瀏覽器驗證流程。",
+      "透過 `task` 啟動的子代理程式，若在 `tools:` 前置資料中列出了主機工具，即可直接呼叫 `fcode_bench_run`、`fcode_bench_execute`、`fcode_canvas`、`fcode_canvas_read` 和 `fcode_studio`。每次呼叫都經過父工作階段的核准流程，Fcode 核准對話框照常顯示（`always-ask` 維持不變）。未明確列出 `tools:` 的代理程式不獲得任何主機工具。",
+      "`frappe-bench-ops` 透過 `fcode_bench_run` 執行 migrate、clear-cache、build、list-apps 和 install-app，每次變更呼叫均需核准。`frappe-builder` 透過 `fcode_studio`、`fcode_canvas` 和 `fcode_canvas_read` 驅動 Studio 和 Builder。`frappe-data-importer` 透過 `fcode_bench_execute` 進行批量試算表匯入/更新——先試執行，最後列數核對。",
+      "`skill-curator` 按需審查工作階段/技能目錄：使用 `fcode-skill-improve` 提出新技能或合併建議，遵守技能 lint 規則，為唯讀操作（永不推送）。與 0.19.0 引入的背景技能審閱互補。",
+    ],
+  },
   {
     version: "0.19.0",
     date: "2026-10-08",
