@@ -526,6 +526,9 @@ function buildExecutorOptions(
 		mcpManager: enableMCP ? (session.mcpManager ?? MCPManager.instance()) : undefined,
 		enableMCP,
 		customTools: request.customTools,
+		// Forward parent RPC host tools so subagents whose tools: frontmatter lists them
+		// can call them directly through the same bridge (filtered in executor.ts).
+		parentRpcHostTools: session.getRpcHostTools?.(),
 		workPoolYieldItems: request.workPoolYieldItems,
 		contextFiles: session.contextFiles?.filter(file => path.basename(file.path).toLowerCase() !== "agents.md"),
 		skills,

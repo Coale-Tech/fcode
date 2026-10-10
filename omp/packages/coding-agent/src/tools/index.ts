@@ -351,6 +351,11 @@ export interface ToolSession {
 	getAgentId?: () => string | null;
 	/** Look up a registered tool by name (used by the eval js backend's tool bridge). */
 	getToolByName?: (name: string) => AgentTool | undefined;
+	/**
+	 * Original (pre-wrap) adapters for all RPC host tools registered on this session.
+	 * Forwarded to subagents so they can call host tools through the same bridge.
+	 */
+	getRpcHostTools?: () => AgentTool[];
 	/** Look up an enabled tool through the eval bridge's normal permission pipeline. */
 	getToolForEvalBridge?: (name: string) => AgentTool | undefined;
 	/** Current session context for eval-bridged tool execution. */

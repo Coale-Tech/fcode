@@ -6,7 +6,7 @@
 
 import * as fs from "node:fs/promises";
 import path from "node:path";
-import type { AgentEvent, AgentIdentity, AgentMessage, AgentTelemetryConfig } from "@oh-my-pi/pi-agent-core";
+import type { AgentEvent, AgentIdentity, AgentMessage, AgentTelemetryConfig, AgentTool } from "@oh-my-pi/pi-agent-core";
 import { AgentBusyError, EventLoopKeepalive, recordHandoff, resolveTelemetry } from "@oh-my-pi/pi-agent-core";
 import type { Api, Model, ServiceTierByFamily, Usage } from "@oh-my-pi/pi-ai";
 import { logger, popLoopPhase, prompt, pushLoopPhase, untilAborted } from "@oh-my-pi/pi-utils";
@@ -499,6 +499,13 @@ export interface ExecutorOptions {
 	enableMCP?: boolean;
 	/** Kernel-defined tools explicitly exposed by the parent eval session. */
 	customTools?: CustomTool[];
+	/**
+	 * The parent's approval-gated host tools. Those the subagent's `tools:` frontmatter names are
+	 * registered on the child session. Calls still run through the PARENT's approval gate and UI
+	 * (the child itself runs yolo). Omitted: no host tools forwarded (conservative default when
+	 * the agent has no explicit tools: list).
+	 */
+	parentRpcHostTools?: AgentTool[];
 	/** Workpool items accepted by the child yield tool during this turn. */
 	workPoolYieldItems?: WorkPoolYieldItem[];
 	/**
@@ -3956,6 +3963,17 @@ export async function runSubprocess(options: ExecutorOptions): Promise<SingleRes
 				formatModelStringWithRouting(session.model) === formatModelStringWithRouting(model)
 			) {
 				sessionManager.appendModelChange(formatModelStringWithRouting(model), retryFallbackRole);
+			}
+
+			// Forward parent RPC host tools filtered to the agent's declared tools: list.
+			// Only when toolNames is explicitly set (agent has tools: frontmatter) do we
+			// forward — conservative: an unrestricted agent gets no host tools.
+			if (options.parentRpcHostTools?.length && toolNames !== undefined) {
+				const allowed = new Set(toolNames);
+				const filtered = options.parentRpcHostTools.filter(t => allowed.has(t.name));
+				if (filtered.length > 0) {
+					await session.refreshSubagentRpcHostTools(filtered);
+				}
 			}
 			sessionCreatedAt = performance.now();
 

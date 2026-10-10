@@ -2080,7 +2080,7 @@ export class SessionTools {
 		return this.runToolRegistryMutation(() => this.#applyRpcHostToolRefresh(snapshot));
 	}
 
-	async #applyRpcHostToolRefresh(rpcTools: AgentTool[]): Promise<void> {
+	async #applyRpcHostToolRefresh(rpcTools: AgentTool[], gate = true): Promise<void> {
 		const nextToolNames = rpcTools.map(tool => tool.name);
 		const uniqueToolNames = new Set(nextToolNames);
 		if (uniqueToolNames.size !== nextToolNames.length) {
@@ -2108,6 +2108,12 @@ export class SessionTools {
 
 		const extensionRunner = this.#host.extensionRunner();
 		for (const tool of rpcTools) {
+			// Subagent copies come from getRpcHostAdapters(): already gated by the parent's wrapper.
+			if (!gate) {
+				this.#toolRegistry.set(tool.name, tool);
+				this.#rpcHostToolNames.add(tool.name);
+				continue;
+			}
 			const metaWrapped = wrapToolWithMetaNotice(tool);
 			const finalTool = (
 				extensionRunner ? new ExtensionToolWrapper(metaWrapped, extensionRunner) : metaWrapped
@@ -2133,6 +2139,37 @@ export class SessionTools {
 			for (const [name, tool] of previousRpcHostTools) this.#toolRegistry.set(name, tool);
 			throw error;
 		}
+	}
+
+	/**
+	 * RPC host tools as registered on THIS (parent) session, for subagents. Each is a proxy over
+	 * the parent's approval-wrapped tool whose `execute` drops the subagent's context, so approval
+	 * resolves against the parent's settings (`runner.sessionSettings`) and prompts through the
+	 * parent's UI. Subagents run `yolo`; without this a forwarded host tool would run unapproved.
+	 */
+	getRpcHostAdapters(): AgentTool[] {
+		return [...this.#rpcHostToolNames].flatMap(name => {
+			const tool = this.#toolRegistry.get(name);
+			if (!tool) return [];
+			return [
+				new Proxy(tool, {
+					get(target, key) {
+						if (key === "execute") {
+							return (id: string, params: unknown, signal?: AbortSignal, onUpdate?: unknown) =>
+								(target.execute as (...a: unknown[]) => unknown)(id, params, signal, onUpdate);
+						}
+						const value = Reflect.get(target, key, target);
+						return typeof value === "function" ? value.bind(target) : value;
+					},
+				}),
+			];
+		});
+	}
+
+	/** Registers the parent's gated host tools (from getRpcHostAdapters) on a subagent session. */
+	refreshSubagentRpcHostTools(rpcTools: AgentTool[]): Promise<void> {
+		const snapshot = [...rpcTools];
+		return this.runToolRegistryMutation(() => this.#applyRpcHostToolRefresh(snapshot, false));
 	}
 }
 

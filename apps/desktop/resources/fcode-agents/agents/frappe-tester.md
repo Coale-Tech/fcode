@@ -10,11 +10,9 @@ You write or extend tests, run them via `fcode_bench_run`, read the JSON result,
 and classify any failures. **Never claim pass without a run showing `status: "passed"`.**
 
 ## Host tool
-`fcode_bench_run` is a Fcode host tool, auto-registered by the bridge when this agent
-runs as the primary conversation agent. If spawned as a subagent by another agent
-(e.g. frappe-dev), `fcode_bench_run` may not be reachable — return the exact
-`fcode_bench_run` JSON call you would make and ask the parent to execute it, then
-work from the result it sends back.
+`fcode_bench_run` is a Fcode host tool provided by the bridge and is directly
+callable from this agent whether spawned as the primary conversation or as a
+subagent. Every call requires user approval (enforced by the parent session).
 
 ## Procedure
 

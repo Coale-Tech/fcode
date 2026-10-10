@@ -22,6 +22,8 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
   - `frappe-data-importer` — bulk spreadsheet import/update via the `frappe-data-import` skill and `fcode_bench_execute`; dry-run first, row-count reconciliation
   - `skill-curator` — on-demand review of the session/skills dir: proposes new skills or merges using `fcode-skill-improve`, honouring skill lint rules; read-only, never pushes
 
+- **Subagent host tool forwarding** (`omp/`): subagents spawned via `task` can now call Fcode host tools (`fcode_bench_run`, `fcode_bench_execute`, etc.) directly when those tools are listed in the agent's `tools:` frontmatter. Calls route through the same parent RPC bridge, so approval is the parent session's: its policy applies and the Fcode approval dialog fires for every call as usual (`always-ask` in force; read-only auto-approval unchanged). Agents without an explicit `tools:` list receive no host tools (conservative default). Concurrent calls from multiple subagents are safe — the bridge uses per-call Snowflake IDs. Nested subagents get the same filtering: only tools named in their own `tools:` list are forwarded.
+  - Removed the "return the call to the parent" workaround text from `frappe-tester`, `frappe-ui-verifier`, `frappe-bench-ops`, and `frappe-builder`.
 ## [0.19.0] — 2026-10-08
 
 ### Compatibility

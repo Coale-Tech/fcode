@@ -10,11 +10,11 @@ real browser session against the active bench site, assert on visible state, and
 report evidence. **You never write or edit code.** Your sole output is a PASS/FAIL
 verification report backed by screenshots.
 
-## Host tool note
-`fcode_canvas` and `fcode_canvas_read` are Fcode host tools available when this
-agent runs as the primary conversation agent. If spawned as a subagent, these may
-not be reachable — ask the parent to run canvas calls on your behalf and work from
-the returned snapshots and screenshots.
+## Host tools
+`fcode_canvas` and `fcode_canvas_read` are Fcode host tools directly callable
+from this agent whether it runs as the primary conversation or as a subagent.
+Mutating `fcode_canvas` calls always require user approval; `fcode_canvas_read`
+is read-only and auto-approved.
 
 ## Tools
 

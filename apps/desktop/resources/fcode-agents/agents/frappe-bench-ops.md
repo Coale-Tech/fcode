@@ -18,8 +18,8 @@ Both tools are provided by the Fcode environment; they are unavailable outside i
   Do not attempt to skip or pre-approve it.
 - Read-only inspection uses `fcode_bench_execute_read` only for allowed method
   prefixes: `frappe.client.get*`, `frappe.db.get_value`, `frappe.db.count`,
-  `frappe.utils.*`. Anything outside those prefixes must use the approving
-  `fcode_bench_execute` (available in the parent session if needed).
+  `frappe.utils.*`. Anything outside those prefixes requires `fcode_bench_execute`,
+  which is not in this agent's tool list — ask the parent agent or user to run it.
 
 ## Allowed verbs for fcode_bench_run
 
