@@ -10,6 +10,14 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 
+## [0.20.0] — 2026-10-10
+
+### Compatibility
+
+| Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
+|-------|-----------------|-----------|-----------------|--------|
+| 0.20.0 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
+
 ### Added
 - **Bundled Frappe agents** (`apps/desktop/resources/fcode-agents/`): nine specialised omp subagents ship with Fcode and are discovered automatically via an `extensions:` entry in the generated omp overlay — no user configuration needed. User/project agents with the same name take precedence (omp rule). The nine agents are:
   - `frappe-scout` — read-only Frappe/ERPNext codebase investigator (hooks, APIs, permissions, DocType schemas)
@@ -23,7 +31,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
   - `skill-curator` — on-demand review of the session/skills dir: proposes new skills or merges using `fcode-skill-improve`, honouring skill lint rules; read-only, never pushes
 
 - **Subagent host tool forwarding** (`omp/`): subagents spawned via `task` can now call Fcode host tools (`fcode_bench_run`, `fcode_bench_execute`, etc.) directly when those tools are listed in the agent's `tools:` frontmatter. Calls route through the same parent RPC bridge, so approval is the parent session's: its policy applies and the Fcode approval dialog fires for every call as usual (`always-ask` in force; read-only auto-approval unchanged). Agents without an explicit `tools:` list receive no host tools (conservative default). Concurrent calls from multiple subagents are safe — the bridge uses per-call Snowflake IDs. Nested subagents get the same filtering: only tools named in their own `tools:` list are forwarded.
-  - Removed the "return the call to the parent" workaround text from `frappe-tester`, `frappe-ui-verifier`, `frappe-bench-ops`, and `frappe-builder`.
+
 ## [0.19.0] — 2026-10-08
 
 ### Compatibility
@@ -275,6 +283,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Security: YAML injection via `agentModelOverrides` key fixed (agent key now `JSON.stringify`-quoted in overlay); `validateOmpSettings` rejects keys with non-identifier chars (newlines, colons, spaces); `file:`/`git+file:`/`svn+`/`hg+` URI schemes blocked in `validateInstallSpec`; collab panel only renders `<a>` for http(s) URLs; Hindsight supervisor strips raw process output from IPC state message; port validated 1024–65535 in `hindsightLocalStart`; `benchRun` validates each `args` element against an identifier-safe regex.
 - `inflight-checkpoint.test.mjs` flaky timing fixed (freeze `Date.now()` via `t.mock.timers`); `plugin-mcp.test.mjs` `connectTimeoutMs` 20 → 300.
 
+[0.20.0]: https://github.com/Coale-Tech/fcode/releases/tag/v0.20.0
 [0.19.0]: https://github.com/Coale-Tech/fcode/releases/tag/v0.19.0
 [0.18.1]: https://github.com/Coale-Tech/fcode/releases/tag/v0.18.1
 [0.18.0]: https://github.com/Coale-Tech/fcode/releases/tag/v0.18.0

@@ -2,6 +2,17 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const trEntries: ChangelogEntry[] = [
   {
+    "version": "0.20.0",
+    "date": "2026-10-10",
+    "highlights": [
+      "Fcode ile birlikte dokuz özelleştirilmiş Frappe/ERPNext alt ajanı gelir (`apps/desktop/resources/fcode-agents/`) ve `extensions:` aracılığıyla otomatik olarak keşfedilir — yapılandırma gerekmez. Ajanlar: `frappe-scout` (salt okunur kod tabanı araştırması), `frappe-dev` (tüm `frappe-*` becerileri yüklenmiş tam uygulama), `frappe-reviewer` (kod incelemesi ve güvenlik), `frappe-tester`, `frappe-ui-verifier`, `frappe-bench-ops`, `frappe-builder`, `frappe-data-importer` ve `skill-curator`. Aynı ada sahip kullanıcı veya proje ajanları yerleşik ajanların önüne geçer.",
+      "`frappe-tester`, `fcode_bench_run run-tests` aracılığıyla bench testleri yazar ve çalıştırır; başarılı bir çalışma olmadan görevi tamamlanmış olarak işaretlemez. `frappe-ui-verifier`, `browser` aracı ve Build canvas üzerinden gerçek bir tarayıcıda özellikleri doğrular, ekran görüntüsü kanıtlarıyla raporlar ve kod yazmaz. Birlikte bağımsız bir test ve tarayıcı doğrulama geçişi sağlarlar.",
+      "`task` tarafından başlatılan alt ajanlar, ajanın `tools:` ön maddesinde listelenen araçlar varsa `fcode_bench_run`, `fcode_bench_execute`, `fcode_canvas`, `fcode_canvas_read` ve `fcode_studio`'yu doğrudan çağırabilir. Her çağrı üst oturumun onay akışından geçer — Fcode onay iletişim kutusu her zamanki gibi görünür (`always-ask` etkin). Açık bir `tools:` listesi olmayan ajanlar hiçbir host aracı almaz.",
+      "`frappe-bench-ops`, `fcode_bench_run` aracılığıyla migrate, clear-cache, build, list-apps ve install-app işlemlerini çalıştırır; her değişiklik çağrısı onay gerektirir. `frappe-builder`, `fcode_studio`, `fcode_canvas` ve `fcode_canvas_read` aracılığıyla Studio ve Builder'ı yönetir. `frappe-data-importer`, `fcode_bench_execute` aracılığıyla toplu elektronik tablo içe aktarma/güncelleme yapar — önce deneme çalışması, en son satır sayısı mutabakatı.",
+      "`skill-curator`, oturum/beceri dizinini talep üzerine inceler: `fcode-skill-improve` kullanarak yeni beceriler veya birleştirmeler önerir, beceri lint kurallarına uyar ve salt okunurdur (asla push yapmaz). 0.19.0'da tanıtılan arka plan beceri incelemesini tamamlar.",
+    ],
+  },
+  {
     "version": "0.19.0",
     "date": "2026-10-08",
     "highlights": [

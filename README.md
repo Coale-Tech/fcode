@@ -17,7 +17,7 @@
 
 </div>
 
-> **Early preview.** The newest release is the unsigned [v0.19.0](https://github.com/Coale-Tech/fcode/releases/tag/v0.19.0) for macOS, Windows, and Linux. It ships the omp agent and the Code, Build, and Bench surfaces; it is not yet the completed Frappe IDE described by the project roadmap.
+> **Early preview.** The newest release is the unsigned [v0.20.0](https://github.com/Coale-Tech/fcode/releases/tag/v0.20.0) for macOS, Windows, and Linux. It ships the omp agent and the Code, Build, and Bench surfaces; it is not yet the completed Frappe IDE described by the project roadmap.
 
 ## Contents
 
@@ -69,6 +69,25 @@ Fcode supports Frappe **v15 and v16** benches.
 
 - **Bundled Frappe skills** that teach the agent Frappe's conventions: DocType development, API development, app hooks, bench operations, Studio, Builder and frappe-ui (`apps/desktop/resources/fcode-skills/`).
 - **Self-improving skills** (Settings → Skills): the Frappe skill packs sync in the background; a curator archives stale skills (never deletes), an optional background review proposes new skills from your sessions for you to approve, skills are linted and secret-scanned, and a timeline shows what changed. Nothing is pushed without your click.
+
+#### Bundled agents
+
+Nine specialised omp subagents ship with Fcode (`apps/desktop/resources/fcode-agents/`) and are auto-discovered — no configuration needed. User or project agents with the same name override the bundled ones. The built-in omp agents (`task`, `scout`, `reviewer`, `security-reviewer`, `sonic`) remain available as always.
+
+| Agent | Purpose | When to use |
+| --- | --- | --- |
+| `frappe-scout` | Read-only codebase investigator: hooks, APIs, permissions, DocType schemas | Research before implementing; tracing an unfamiliar call path |
+| `frappe-dev` | Full implementation with all `frappe-*` skills preloaded (DocTypes, controllers, APIs, jobs, reports, Desk UI, frappe-ui) | Building or editing Frappe app code end-to-end |
+| `frappe-reviewer` | Read-only code reviewer enforcing `frappe-app-standards`, security rules, and v16 correctness | Pre-merge review; catching security or standards issues |
+| `frappe-tester` | Writes and runs bench tests via `fcode_bench_run run-tests`; never marks done without a passing run | Adding or fixing tests; verifying a feature without touching production code |
+| `frappe-ui-verifier` | Verifies features in a real browser via the `browser` tool and the Build canvas; reports with screenshot evidence, writes no code | End-to-end visual check after a UI change |
+| `frappe-bench-ops` | Runs migrate, clear-cache, build, list-apps and install-app via `fcode_bench_run`; every mutating call goes through approval | Bench maintenance; safe migrations with a recovery checklist |
+| `frappe-builder` | Studio and Builder work via `fcode_studio`, `fcode_canvas`, and `fcode_canvas_read` | Designing or publishing Studio apps and pages |
+| `frappe-data-importer` | Bulk spreadsheet import/update via `fcode_bench_execute`; dry-run first, row-count reconciliation last | Loading or updating records from a CSV or Excel file |
+| `skill-curator` | Reviews the session/skills directory on demand; proposes new skills or merges via `fcode-skill-improve`; read-only, never pushes | Distilling session learnings into reusable skills |
+
+Subagents that list host tools in their `tools:` frontmatter call them through the **parent's approval flow** — the same Fcode approval dialog fires for every call (`always-ask` in force; read-only auto-approval unchanged).
+
 
 ### Workspace tools
 
@@ -202,7 +221,7 @@ Application identity: product name `Fcode`, bundle identifier `com.coaletech.fco
 
 ## Current status and limitations
 
-The current release line is 0.19.x. The newest release is the unsigned [v0.19.0](https://github.com/Coale-Tech/fcode/releases/tag/v0.19.0), which ships Frappe skill packs, self-improving skills with an approval gate and journey, skill curator and lint, frozen memory, a token/cost meter, bench run-tests, and the Electron e2e CI suite. See [CHANGELOG.md](CHANGELOG.md) for the full history.
+The current release line is 0.20.x. The newest release is the unsigned [v0.20.0](https://github.com/Coale-Tech/fcode/releases/tag/v0.20.0), which ships nine bundled Frappe/ERPNext subagents (including frappe-tester, frappe-ui-verifier, frappe-bench-ops, frappe-builder, frappe-data-importer, and skill-curator), and subagent host tool forwarding so agents can call fcode_bench_run and friends with the parent's approval prompts. See [CHANGELOG.md](CHANGELOG.md) for the full history.
 
 The release pipeline builds macOS (arm64 and x64), Linux (x64) and Windows (x64). Known gaps:
 
@@ -213,7 +232,7 @@ The release pipeline builds macOS (arm64 and x64), Linux (x64) and Windows (x64)
 
 | Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
 | --- | --- | --- | --- | --- |
-| 0.19.0 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
+| 0.20.0 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
 
 ## Build from source
 

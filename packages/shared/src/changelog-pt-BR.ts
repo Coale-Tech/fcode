@@ -2,6 +2,17 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const ptBREntries: ChangelogEntry[] = [
   {
+    "version": "0.20.0",
+    "date": "2026-10-10",
+    "highlights": [
+      "Nove subagentes Frappe/ERPNext especializados são incluídos com o Fcode (`apps/desktop/resources/fcode-agents/`) e detectados automaticamente via `extensions:`, sem necessidade de configuração. Os agentes são: `frappe-scout` (investigação de codebase somente leitura), `frappe-dev` (implementação completa com todas as habilidades `frappe-*`), `frappe-reviewer` (revisão de código e segurança), `frappe-tester`, `frappe-ui-verifier`, `frappe-bench-ops`, `frappe-builder`, `frappe-data-importer` e `skill-curator`. Agentes de usuário ou projeto com o mesmo nome substituem os agentes embutidos.",
+      "`frappe-tester` escreve e executa testes bench via `fcode_bench_run run-tests` e nunca marca uma tarefa como concluída sem uma execução bem-sucedida. `frappe-ui-verifier` verifica funcionalidades em um navegador real via ferramenta `browser` e canvas Build, reportando com evidências de captura de tela sem escrever código. Juntos, oferecem um passo independente de verificação de testes e navegador.",
+      "Subagentes iniciados por `task` podem chamar diretamente `fcode_bench_run`, `fcode_bench_execute`, `fcode_canvas`, `fcode_canvas_read` e `fcode_studio` quando essas ferramentas estão listadas no frontmatter `tools:` do agente. Cada chamada passa pelo fluxo de aprovação da sessão pai — a caixa de diálogo Fcode aparece como de costume (`always-ask` ativo). Agentes sem uma lista `tools:` explícita não recebem ferramentas de host.",
+      "`frappe-bench-ops` executa migrate, clear-cache, build, list-apps e install-app via `fcode_bench_run`, com cada chamada mutante exigindo aprovação. `frappe-builder` controla Studio e Builder via `fcode_studio`, `fcode_canvas` e `fcode_canvas_read`. `frappe-data-importer` importa/atualiza planilhas via `fcode_bench_execute` — primeiro uma execução de teste, por último reconciliação de linhas.",
+      "`skill-curator` revisa o diretório de sessão/habilidades sob demanda: propõe novas habilidades ou mesclagens usando `fcode-skill-improve`, respeita as regras de lint de habilidades e é somente leitura (nunca faz push). Complementa a revisão de habilidades em segundo plano introduzida na 0.19.0.",
+    ],
+  },
+  {
     "version": "0.19.0",
     "date": "2026-10-08",
     "highlights": [
