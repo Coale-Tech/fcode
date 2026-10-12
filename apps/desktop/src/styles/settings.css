@@ -3679,4 +3679,4 @@
   box-shadow: 0 0 0 1px var(--ds-accent);
 }
 .nav-layout-thumb { width: 64px; height: 44px; }
-.nav-layout-card-label { font-size: var(--d-text-sm); color: var(--ds-text-primary); }
+.nav-layout-card-label { font-size: var(--d-text-sm); color: var(--ds-text-primary); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

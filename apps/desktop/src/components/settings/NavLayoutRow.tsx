@@ -1,8 +1,9 @@
 import { useTranslation } from "react-i18next";
 import type { AppSettings } from "@pi-desktop/shared";
-import { SettingsRow } from "../../features/settings/primitives";
 import { NAV_LAYOUTS, type NavLayout } from "@pi-desktop/shared";
-import { resolveNavLayout } from "../../lib/nav-layout";
+import { SettingsRow } from "../../features/settings/primitives";
+import { resolveNavLayout, nextNavLayout } from "../../lib/nav-layout";
+import { cx } from "../ui";
 
 const LABEL = {
   tabs: "settings.navLayoutTabs",
@@ -52,9 +53,26 @@ export function NavLayoutRow({
 }) {
   const { t } = useTranslation();
   const current = resolveNavLayout(settings.navLayout);
+
+  function onKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    const next = nextNavLayout(current, e.key);
+    if (next === null) return;
+    e.preventDefault();
+    void saveSettings({ navLayout: next });
+    const btn = e.currentTarget.querySelector<HTMLButtonElement>(
+      `[data-nav-layout-option="${next}"]`,
+    );
+    btn?.focus();
+  }
+
   return (
     <SettingsRow title={t("settings.navLayout")} description={t("settings.navLayoutDesc")}>
-      <div className="nav-layout-picker" role="radiogroup" aria-label={t("settings.navLayout")}>
+      <div
+        className="nav-layout-picker"
+        role="radiogroup"
+        aria-label={t("settings.navLayout")}
+        onKeyDown={onKeyDown}
+      >
         {NAV_LAYOUTS.map((id) => (
           <button
             key={id}
@@ -63,6 +81,7 @@ export function NavLayoutRow({
             aria-checked={current === id}
             data-nav-layout-option={id}
             className={cx("nav-layout-card", current === id && "is-selected")}
+            tabIndex={current === id ? 0 : -1}
             onClick={() => void saveSettings({ navLayout: id })}
           >
             <Thumb layout={id} />
