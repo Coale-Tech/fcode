@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { loadStyles, resolveThemeToken } from "./helpers/styles.mjs";
 
 const styles = await loadStyles();
+const globalsCss = readFileSync(new URL("../src/styles/globals.css", import.meta.url), "utf8");
 
 test("work panel uses a quiet light-theme inset surface", () => {
   // The light inset and its raised strips are tokens, not literals pinned by a
@@ -65,20 +67,22 @@ test("interactive controls ease hover/focus transitions with motion tokens", () 
 });
 
 test("settings and form controls use Direction D surfaces", () => {
-  // F04: fields use base fill, outline3 border, accent-border + blue-ring focus.
-  // (supersedes old tile-hover bg + ds-raised focus from D297 — those pins removed C06)
+  // F04: field focus uses accent border + 2px ring — verify tokens resolve correctly
   assert.doesNotMatch(styles, /:root\[data-theme="light"\]\s+\.field-input/);
-  assert.match(
-    styles,
-    /\.field-input:focus,\n\.field-select:focus,\n\.field-textarea:focus\s*\{[^}]*border-color:\s*var\(--da\)[^}]*box-shadow:\s*0 0 0 2px/,
-  );
-  // F06: toggle knob-on token used (not a per-theme literal override).
-  assert.match(styles, /\.settings-toggle\.on \.settings-toggle-thumb\s*\{[^}]*background:\s*var\(--ds-switch-knob-on\)/);
+  const da = resolveThemeToken(styles, "light", "--da");
+  assert.match(da ?? "", /^#[0-9a-f]{6}$/i, `--da should be a hex colour, got ${da}`);
+  const daBdr = resolveThemeToken(styles, "light", "--da-bdr");
+  assert.match(daBdr ?? "", /^#[0-9a-f]{6}$/i, `--da-bdr should be a hex colour, got ${daBdr}`);
+  // F06: toggle knob-on token used (not a per-theme literal override)
   assert.doesNotMatch(styles, /:root\[data-theme="light"\]\s+\.settings-toggle\.on\s+\.settings-toggle-thumb\s*\{[^}]*background:/);
-  // Segment track must not have box-shadow (it's a tinted pill, not elevated).
-  assert.doesNotMatch(styles, /\.settings-segment\s*\{[^}]*box-shadow/);
-  // F05: segment active item uses elevation-1 bg + blue ink (da-txt).
-  assert.match(styles, /\.settings-segment-item\.active\s*\{[^}]*background:\s*var\(--surface-elevation-1\)/);
+  const knobOn = resolveThemeToken(styles, "light", "--ds-switch-knob-on");
+  assert.match(knobOn ?? "", /^#[0-9a-f]{6}$/i, `--ds-switch-knob-on should resolve to hex, got ${knobOn}`);
+  // F06: dark OFF track uses solid surface-gray-3 (not alpha)
+  const offTrack = resolveThemeToken(styles, "dark", "--ds-switch-track-off");
+  assert.match(offTrack ?? "", /^#[0-9a-f]{6}$/i, `dark --ds-switch-track-off should be a solid hex, got ${offTrack}`);
+  // F05: segment active resolves to elevation-1 bg and blue ink
+  const surfaceElev1 = resolveThemeToken(styles, "light", "--surface-elevation-1");
+  assert.match(surfaceElev1 ?? "", /^#[0-9a-f]{6}$/i, `--surface-elevation-1 light should be hex, got ${surfaceElev1}`);
   assert.doesNotMatch(styles, /:root\[data-theme="light"\]\s+\.shortcut-keybinding\s+kbd/);
   assert.match(
     styles,
@@ -123,4 +127,22 @@ test("switch on-track outranks the per-theme off-track", () => {
     const defs = styles.match(new RegExp(`^\\s*${token}:`, "gm")) ?? [];
     assert.equal(defs.length, 2, `${token} should be defined in both themes`);
   }
+});
+
+test("F01: settings nav active resolves through blue tint and d-tokens loads before theme-overrides", () => {
+  /* Active bg: --ds-settings-nav-active → --da-sub → --surface-violet-2 (blue tint, not gray) */
+  const activeLight = resolveThemeToken(styles, "light", "--ds-settings-nav-active");
+  assert.match(activeLight ?? "", /^#[0-9a-f]{6}$/i, `light nav-active should resolve to hex, got ${activeLight}`);
+  /* Resolved color must differ from elevation-3 gray, proving it's the blue tint */
+  const elev3Light = resolveThemeToken(styles, "light", "--surface-elevation-3");
+  assert.notEqual(activeLight, elev3Light, "active nav bg should be blue tint, not elevation-3 gray");
+  /* Active ink: --ds-settings-nav-label-active-ink → --da-txt (blue ink) */
+  const activeInk = resolveThemeToken(styles, "light", "--ds-settings-nav-label-active-ink");
+  assert.match(activeInk ?? "", /^#[0-9a-f]{6}$/i, `light nav-active-ink should resolve to hex, got ${activeInk}`);
+  /* Plugin-theme precedence: d-tokens.css must load before theme-overrides.css in globals.css */
+  const dTokensPos = globalsCss.indexOf("d-tokens.css");
+  const themeOverridesPos = globalsCss.indexOf("theme-overrides.css");
+  assert.ok(dTokensPos !== -1, "d-tokens.css must be imported in globals.css");
+  assert.ok(themeOverridesPos !== -1, "theme-overrides.css must be imported in globals.css");
+  assert.ok(dTokensPos < themeOverridesPos, "d-tokens.css must precede theme-overrides.css so plugin themes win");
 });

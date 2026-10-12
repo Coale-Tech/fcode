@@ -18,6 +18,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { loadStyles, resolveThemeToken } from "./helpers/styles.mjs";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 const [tokensCss, uiKitCss, settingsCss, modelConfigCss, extensionsCss, pluginsCss, scheduledCss, sessionsCss, dTokensCss] =
@@ -32,6 +33,7 @@ const [tokensCss, uiKitCss, settingsCss, modelConfigCss, extensionsCss, pluginsC
     read("../src/styles/sessions.css"),
     read("../src/styles/d-tokens.css"),
   ]);
+const styles = await loadStyles();
 
 /** Body of one rule, so a declaration can be asserted inside the right block. */
 function declarations(css, selectorText) {
@@ -50,11 +52,11 @@ function heightValue(body, property) {
 }
 
 test("the field vocabulary shares one height metric", () => {
-  /* F04/D.css:734: field height = 28px via --d-ctrl; declaration lives in d-tokens.css */
-  assert.match(
-    dTokensCss,
-    /--ds-field-height:\s*var\(--d-ctrl\)/,
-  );
+  /* Resolved-value: --d-ctrl = 28px and --ds-field-height resolves through it (D.css:734) */
+  const dCtrl = resolveThemeToken(styles, "light", "--d-ctrl");
+  assert.equal(dCtrl, "28px", `--d-ctrl should be 28px, got ${dCtrl}`);
+  const fieldH = resolveThemeToken(styles, "light", "--ds-field-height");
+  assert.equal(fieldH, "28px", `--ds-field-height should resolve to 28px, got ${fieldH}`);
   const field = declarations(uiKitCss, ".field-input,\n.field-select,\n.field-textarea");
   assert.equal(heightValue(field, "min-height"), "var(--ds-field-height)");
 });

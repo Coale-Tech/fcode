@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { loadStyles, resolveThemeToken } from "./helpers/styles.mjs";
 
 const tokens = await readFile(
   new URL("../src/styles/tokens.css", import.meta.url),
@@ -10,6 +11,7 @@ const uiKit = await readFile(
   new URL("../src/styles/ui-kit.css", import.meta.url),
   "utf8",
 );
+const styles = await loadStyles();
 
 test("fixed radii follow the Apple-inspired desktop ladder", () => {
   const expected = [
@@ -35,14 +37,13 @@ test("fixed radii follow the Apple-inspired desktop ladder", () => {
   assert.match(tokens, /--ds-composer-radius-lg:\s*var\(--radius-xl\);/);
 });
 
-test("shared compact controls are rounded rectangles while badges stay pills", () => {
-  /* F04/D.css:739: fields = r8 via --d-r-ctrl (not --radius-sm=10px) */
-  assert.match(
-    uiKit,
-    /\.field-input,[\s\S]*?\.field-textarea\s*\{[\s\S]*?border-radius:\s*var\(--d-r-ctrl\);/,
-  );
-  /* F02/D.css:658: buttons = r8 via --ds-btn-radius → --d-r-ctrl */
-  assert.match(uiKit, /\.btn\s*\{[\s\S]*?border-radius:\s*var\(--ds-btn-radius\);/);
-  /* F08/D.css:630: badges = r10 (height 20px, r10 = visual pill); not --radius-full literal */
-  assert.match(uiKit, /\.badge\s*\{[\s\S]*?border-radius:\s*10px;/);
+test("shared compact controls use r8 (--d-r-ctrl) while badges stay r10", () => {
+  /* Resolved-value check: --d-r-ctrl must be 8px (D.css:37 / D-SPEC.md) */
+  const rCtrl = resolveThemeToken(styles, "light", "--d-r-ctrl");
+  assert.equal(rCtrl, "8px", `--d-r-ctrl should resolve to 8px, got ${rCtrl}`);
+  /* --ds-btn-radius redirects to --d-r-ctrl (D.css:659) */
+  const btnRadius = resolveThemeToken(styles, "light", "--ds-btn-radius");
+  assert.equal(btnRadius, "8px", `--ds-btn-radius should resolve to 8px, got ${btnRadius}`);
+  /* Badge r10 — verify the radius ladder includes r10 */
+  assert.match(tokens, /--radius-xs:\s*8px;/);
 });

@@ -57,13 +57,13 @@ test("D-accent: light hover fill passes 4.5:1 with white label", () => {
   assert.ok(ratio >= 4.5, `light hover ${hover} / fg ${fg} = ${ratio.toFixed(2)}:1 (need ≥4.5:1)`);
 });
 
-test("D-accent: dark fill (#42a2d9) passes 3:1 with dark foreground (R12)", () => {
+test("D-accent: dark fill (#42a2d9) passes 4.5:1 with dark foreground (text, R12)", () => {
   const fill = resolveThemeToken(styles, "dark", "--ds-accent");
   const fg   = resolveThemeToken(styles, "dark", "--ds-accent-foreground");
   assert.match(fill ?? "", /^#[0-9a-f]{6}$/i, `dark accent resolves to ${fill}`);
   assert.match(fg   ?? "", /^#[0-9a-f]{6}$/i, `dark foreground resolves to ${fg}`);
   const ratio = contrast(fill, fg);
-  assert.ok(ratio >= 3, `dark fill ${fill} / fg ${fg} = ${ratio.toFixed(2)}:1 (need ≥3:1 non-text)`);
+  assert.ok(ratio >= 4.5, `dark fill ${fill} / fg ${fg} = ${ratio.toFixed(2)}:1 (need ≥4.5:1 text)`);
 });
 
 test("D-accent: dark accent as text passes 4.5:1 on surface-base", () => {
@@ -75,12 +75,12 @@ test("D-accent: dark accent as text passes 4.5:1 on surface-base", () => {
   assert.ok(ratio >= 4.5, `dark accent text ${ink} on ${base} = ${ratio.toFixed(2)}:1 (need ≥4.5:1)`);
 });
 
-test("D-accent: dark hover fill passes 3:1 with dark foreground", () => {
+test("D-accent: dark hover fill passes 4.5:1 with dark foreground (text)", () => {
   const hover = resolveThemeToken(styles, "dark", "--ds-accent-hover");
   const fg    = resolveThemeToken(styles, "dark", "--ds-accent-foreground");
   assert.match(hover ?? "", /^#[0-9a-f]{6}$/i, `dark accent-hover resolves to ${hover}`);
   const ratio = contrast(hover, fg);
-  assert.ok(ratio >= 3, `dark hover ${hover} / fg ${fg} = ${ratio.toFixed(2)}:1 (need ≥3:1 non-text)`);
+  assert.ok(ratio >= 4.5, `dark hover ${hover} / fg ${fg} = ${ratio.toFixed(2)}:1 (need ≥4.5:1 text)`);
 });
 
 // ── Switch knob cases (normal + hover, both themes) ───────────────────────────

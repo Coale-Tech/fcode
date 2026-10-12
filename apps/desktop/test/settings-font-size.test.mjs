@@ -2,7 +2,7 @@ import { readAppSource, readSettingsSource } from "./helpers/source-contracts.mj
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { loadStyles } from "./helpers/styles.mjs";
+import { loadStyles, resolveThemeToken } from "./helpers/styles.mjs";
 
 const rowSource = await readFile(
   new URL("../src/components/settings/FontSizeRow.tsx", import.meta.url),
@@ -43,8 +43,10 @@ test("the renderer applies a global type scale without a reload", () => {
   assert.match(appSource, /resolveFontScale\(settings/);
   assert.match(appSource, /"--font-scale"/);
   assert.match(tokensSource, /--font-scale:\s*1;/);
-  /* F12: base UI size is 13px (D.css:36/89); user font scale still multiplies it */
-  assert.match(tokensSource, /--text-base:\s*calc\(13px \* var\(--font-scale\)\);/);
+  /* F12: --d-text resolves through --text-base so user scale still multiplies it.
+     Resolved-value: at --font-scale:1 (default), --d-text = 13px. */
+  const dText = resolveThemeToken(styles, "light", "--d-text");
+  assert.equal(dText, "calc(13px * var(--font-scale))", `--d-text should resolve to calc(13px * var(--font-scale)), got ${dText}`);
   assert.doesNotMatch(tokensSource, /--reading-font-size/);
   assert.doesNotMatch(tokensSource, /\.thread-wrap,\s*\n\.composer-dock \{/);
 });
