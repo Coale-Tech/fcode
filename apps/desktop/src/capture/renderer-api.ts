@@ -103,6 +103,10 @@ export function installRendererApi(): () => void {
       document.documentElement.dataset.theme = theme;
     },
     setNavLayout: (layout) => {
+      // C02: update the settings store so useAppShellRuntime reads the correct
+      // navLayoutRef for column budget (not just the dataset attribute).
+      const s = useAppStore.getState().settings;
+      if (s) useAppStore.setState({ settings: { ...s, navLayout: layout } });
       document.documentElement.dataset.navLayout = layout;
     },
     clearProject: () => useAppStore.getState().clearProject(),
