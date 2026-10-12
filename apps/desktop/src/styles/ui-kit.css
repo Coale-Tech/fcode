@@ -76,6 +76,7 @@
   /* 28px height: 1px border + 5px pad + ~13px text + 5px pad + 1px border = 25px; leaves margin. */
   padding: 5px 11px;
   height: var(--d-ctrl);
+  min-height: var(--ds-field-height);
   color: var(--ds-text-primary);
   outline: none;
   transition:

@@ -1322,6 +1322,7 @@
   /* Height matches field metric (--ds-field-height = --d-ctrl = 28px) so pill
      selects align with text inputs in the same row. */
   height: var(--ds-field-height);
+  min-height: var(--ds-field-height);
   border-radius: var(--radius-full);
   border: 0;
   /* D297: controls on a tile row are raised fills, not ringed boxes. */
