@@ -18,7 +18,7 @@
 - Every new user-visible string goes through `t()` and exists in all 9 locales (`en, zh-CN, zh-TW, de, es, fr, ko, tr, pt-BR`).
 - Source edits use the `edit` tool, not sed/perl/python. omp/hashline tools take absolute paths.
 - Do not push, tag or release. Do not touch `CHANGELOG.md` (integrator-owned). Do not edit design artifacts under `~/.gstack`.
-- Known baseline (do not "fix" here): desktop `tsc` has 3 pre-existing errors; the hindsight "fast exit" `node --test` fails (3505/3506). Record the baseline in Task 1 and compare against it, never against zero.
+- **Exact-zero tsc baseline** (authoritative; supersedes any "3 pre-existing errors" wording below): `cd apps/desktop && ./node_modules/.bin/tsc --noEmit -p .` must produce exactly 0 errors. Any error is a regression. Full `node --test` failures tolerated ONLY for known load-flaky tests: npm-executable, remote-host-ssh-password, remote-host-ssh-transport, codesign x2, hindsight fast-exit.
 - Frappe reference is the installed `coale_v16` source (frappe 16.35.0). The user said 16.5.1; no such bench exists. This plan touches no Frappe code.
 - Accessibility: all text/interactive colour pairs introduced here must meet 4.5:1 (text) or 3:1 (non-text). The design's light accent `#2E8AC2` is 3.8:1 with white, so Task 1 uses the next step darker; this is a deliberate deviation from the mockups.
 
@@ -292,7 +292,7 @@ export function shellChromeWidth(layout: NavLayout): number {
 ```
 
 - [ ] **Step 4: Run — expect PASS** (`node --test test/nav-layout.test.mjs test/turn-process.test.mjs`).
-- [ ] **Step 5: `tsc`** — still exactly the 3 baseline errors.
+- [ ] **Step 5: `tsc`** — exactly 0 errors.
 - [ ] **Step 6: Commit** `feat(settings): navLayout preference + resolver`
 
 ---
@@ -346,7 +346,7 @@ Change the `useLayoutEffect(..., [])` at 104-116 to depend on `[navLayout]` so a
 ```
 If `CaptureRigStubs` requires an entry, mirror `setThemeAttr` there.
 
-- [ ] **Step 5:** `tsc` (3 baseline errors only). Run capture rig, then in DevTools console `document.documentElement.dataset.navLayout` is `rail`; set `navLayout:"island"` via Settings IPC later in Task 4 and confirm the shell width budget changes (the work-panel auto-collapse threshold moves by 10px: 74→84).
+- [ ] **Step 5:** `tsc` (exactly 0 errors). Run capture rig, then in DevTools console `document.documentElement.dataset.navLayout` is `rail`; set `navLayout:"island"` via Settings IPC later in Task 4 and confirm the shell width budget changes (the work-panel auto-collapse threshold moves by 10px: 74→84).
 - [ ] **Step 6: Commit** `feat(renderer): apply navLayout attribute and layout-aware column budget`
 
 ---
@@ -498,7 +498,7 @@ export function NavLayoutRow({
 
 - [ ] **Step 6:** Search index: add `"settings.navLayout", "settings.navLayoutDesc", "settings.navLayoutTabs", "settings.navLayoutRail", "settings.navLayoutIsland",` after `"settings.fontSize",` in the `general` entry.
 
-- [ ] **Step 7:** `pnpm --filter @pi-desktop/i18n test` → PASS. `tsc` baseline. Capture rig → Settings → General → Appearance; click each card; confirm `document.documentElement.dataset.navLayout` changes and survives `Cmd+R`.
+- [ ] **Step 7:** `pnpm --filter @pi-desktop/i18n test` → PASS. `tsc` exactly 0 errors. Capture rig → Settings → General → Appearance; click each card; confirm `document.documentElement.dataset.navLayout` changes and survives `Cmd+R`.
 - [ ] **Step 8: Commit** `feat(settings): navigation layout picker`
 
 ---
@@ -896,9 +896,8 @@ Concrete deltas (from `pages-d/*/notes.md`):
 ```bash
 cd /Users/mac/ERPNext/frappe_agent/PI-Desktop
 pnpm --filter @pi-desktop/i18n test
-pnpm --filter @pi-desktop/desktop test            # only the baseline hindsight failure
-(cd apps/desktop && ./node_modules/.bin/tsc --noEmit -p . 2>&1 | grep -c "error TS")   # 3
-pnpm test:e2e                                      # 28/28
+pnpm --filter @pi-desktop/desktop test            # only flaky list (npm-executable, remote-host-ssh-*, codesign x2, hindsight fast-exit) failing
+(cd apps/desktop && ./node_modules/.bin/tsc --noEmit -p . 2>&1 | grep -c "error TS")   # must be 0
 ```
 - [ ] **Step 5:** Docs updated as listed; remove any scratch files in the repo. `git status` shows no `CHANGELOG.md` change.
 - [ ] **Step 6: Commit** `docs(ui): direction D design system + capture matrix`
@@ -915,4 +914,4 @@ pnpm test:e2e                                      # 28/28
 
 **Review Focus coverage:** 1 → T7/T11/T13/T14; 2 → T3/T9; 3 → T6; 4 → T6 step 4; 5 → T2 test; 6 → T1 ordering + T13; 7 → T8; 8 → T8 step 4; 9 → T1 test + T5.
 
-**Not verified here (state at execution):** Windows/Linux window controls cannot be run on this macOS host; onboarding steps 2–3 have no mockup; the 3 pre-existing tsc errors and 1 pre-existing test failure are carried, not fixed.
+**Not verified here (state at execution):** Windows/Linux window controls cannot be run on this macOS host; onboarding steps 2–3 have no mockup.
