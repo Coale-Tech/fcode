@@ -124,10 +124,11 @@
   --ds-success:          var(--ink-green-8);
   --ds-warning:          var(--ink-amber-9);
   --ds-error:            var(--ink-red-8);
-  /* Accent = FileBird's sky blue (Tailwind sky-600/500/400), same in both themes. */
-  --ds-accent:           #0284c7;
-  --ds-accent-hover:     #0ea5e9;
-  --ds-accent-soft:      #38bdf8;
+  /* Accent = FileBird blue (Direction D). Light fill is the mockup's hover step
+     (#2578AB): the mockup's #2E8AC2 is 3.8:1 with a white label. */
+  --ds-accent:           #2578ab;
+  --ds-accent-hover:     #1f6fa3;
+  --ds-accent-soft:      #4f9ccb;
   --ds-accent-blue:      var(--ds-accent);
   --ds-text-tertiary:    var(--ink-gray-3);
   --ds-main-pane-min-width: 450px;
@@ -222,6 +223,12 @@
 
   /* Mermaid diagram canvas */
   --ds-mermaid-canvas: var(--surface-base);
+
+  /* Accent = FileBird's exact dark blues; dark label because white is 2.8:1 here. */
+  --ds-accent:            #42a2d9;
+  --ds-accent-hover:      #56b9f2;
+  --ds-accent-soft:       #92d2f8;
+  --ds-accent-foreground: #0a1f2e;
 }
 
 /* ─── Light-theme specifics ─── */

@@ -1,0 +1,26 @@
+/* Direction D — dimensions, type scale and the re-pointing of the existing ladder.
+   Values come from design kit-d/D-SPEC.md. Loaded right after tokens.css so
+   theme-overrides.css (plugin themes) still wins. */
+:root {
+  --d-navbar-h: 48px;
+  --d-ph-h: 48px;
+  --d-mini-h: 32px;
+  --d-status-h: 28px;
+  --d-rail-w: 50px;
+  --d-rail-island: 60px;
+  --d-gap: 12px;
+  --d-ctrl: 28px;
+  --d-ctrl-lg: 32px;
+  --d-row-h: 30px;
+  --d-r: 12px;
+  --d-r-ctrl: 8px;
+  --d-r-sm: 4px;
+  --d-text: 13px;
+  --d-text-sm: 12px;
+  --d-text-xs: 11px;
+  --d-text-chat: 14px;
+
+  --ds-toolbar-height: var(--d-navbar-h);
+  --ds-btn-radius: var(--d-r-ctrl);
+  --ds-btn-radius-sm: 6px;
+}
