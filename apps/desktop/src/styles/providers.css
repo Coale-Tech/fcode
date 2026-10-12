@@ -224,6 +224,8 @@
   height: var(--d-segment-item);
   padding: 0 10px;
   font-size: var(--d-text-sm);
+  font-weight: var(--font-weight-medium);
+  gap: 5px;
   line-height: var(--leading-tighter);
   transition: background var(--motion-duration-fast) var(--motion-ease-out), color var(--motion-duration-fast) var(--motion-ease-out);
 }
@@ -236,7 +238,7 @@
   background: var(--surface-elevation-1);
   color: var(--da-txt);
   box-shadow: var(--elevation-sm);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-medium);  /* same as base; kept explicit for clarity */
 }
 
 @media (max-width: 980px) {

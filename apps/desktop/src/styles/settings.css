@@ -902,6 +902,7 @@
   gap: 12px;
   padding: 0 12px;
   min-height: 44px;
+  flex-shrink: 0;
 }
 
 .settings-row-copy {
@@ -909,7 +910,7 @@
   flex: 1;
 }
 
-/* Direction D: title 13px / desc 12px muted. */
+/* Direction D: title --d-text (13px × scale) / desc --d-text-xs (11px × scale) muted. */
 .settings-row-title {
   color: var(--ds-settings-row-label-ink);
   font-size: var(--d-text);
@@ -918,6 +919,7 @@
 }
 
 .settings-row-desc {
+  margin-top: 1px;
   color: var(--ds-settings-row-desc-ink);
   font-size: var(--d-text-xs);
   font-weight: var(--font-weight-regular);
@@ -999,7 +1001,6 @@
 
 .settings-font-size .settings-segment-item {
   flex: 1 0 auto;
-  padding-inline: 8px;
   white-space: nowrap;
 }
 
@@ -1286,7 +1287,7 @@
 }
 
 .settings-toggle.on .settings-toggle-thumb {
-  /* translate = track-width - knob - 2*inset = 28 - 12 - 4 = 12px */
+  /* translate = track-width - knob - 2*inset = 32 - 14 - 4 = 14px (D.css toggle tokens) */
   transform: translateX(calc(var(--d-toggle-w) - var(--d-toggle-knob) - 2 * var(--d-toggle-inset)));
   background: var(--ds-switch-knob-on);
 }
@@ -1508,6 +1509,25 @@
 .settings-menu-select-trigger:hover,
 .settings-font-trigger:hover {
   background: var(--ds-bg-hover);
+}
+
+/* F04: dark — elevation2 fill / outline-gray-2 border (D.css:1542-1545) */
+:root[data-theme="dark"] .settings-language-trigger,
+:root[data-theme="dark"] .settings-theme-trigger,
+:root[data-theme="dark"] .settings-menu-select-trigger,
+:root[data-theme="dark"] .settings-font-trigger {
+  background: var(--surface-elevation-2);
+  border-color: var(--outline-gray-2);
+}
+
+/* F04: focus — accent border + 2px ring (D.css:762-763) */
+.settings-language-trigger:focus-visible,
+.settings-theme-trigger:focus-visible,
+.settings-menu-select-trigger:focus-visible,
+.settings-font-trigger:focus-visible {
+  outline: none;
+  border-color: var(--da);
+  box-shadow: 0 0 0 2px var(--da-bdr);
 }
 
 /* A write in flight keeps the trigger readable but not re-openable. */

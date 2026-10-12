@@ -37,10 +37,10 @@
   --d-r: 12px;
   --d-r-ctrl: 8px;
   --d-r-sm: 4px;
-  --d-text: 13px;
-  --d-text-sm: 12px;
-  --d-text-xs: 11px;
-  --d-text-chat: 14px;
+  --d-text:      var(--text-base);                      /* 13px × --font-scale (F12) */
+  --d-text-sm:   calc(12px * var(--font-scale));         /* F12: scale-aware */
+  --d-text-xs:   calc(11px * var(--font-scale));         /* F12: scale-aware */
+  --d-text-chat: calc(14px * var(--font-scale));         /* F12: scale-aware */
 
   /* Component metrics (tokenised so component CSS uses var() not literals) */
   /* F06: 32×18 track / 14px knob / 2px inset / translate = 32-14-4 = 14px */
@@ -92,9 +92,9 @@
   --ink-violet-6:     #56B9F2;
   --ink-violet-7:     #7CC6F2;
   --ink-violet-8:     #92D2F8;
-  /* off-state switch track */
-  --ds-switch-track-off:       var(--surface-alpha-gray-2);
-  --ds-switch-track-off-hover: var(--surface-alpha-gray-3);
+  /* off-state switch track: solid surface-gray-3 (F06; D.css:826-828) */
+  --ds-switch-track-off:       var(--surface-gray-3);
+  --ds-switch-track-off-hover: var(--surface-gray-4);
   /* knob-off stays base (near-black in dark) */
   --ds-switch-knob-off:        var(--surface-base);
   /* thumbnail bg: dark uses surface-base (D.css:66) */

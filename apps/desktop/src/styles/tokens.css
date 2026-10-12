@@ -44,7 +44,7 @@
   --ds-bg-chip: var(--surface-alpha-gray-2);
 
   /* Text */
-  --ds-text-primary:   var(--ink-gray-9);
+  --ds-text-primary:   var(--ink-gray-8);
   --ds-text-secondary: var(--ink-gray-7);
   --ds-text-muted:     var(--ink-gray-5);
   --ds-text-faint:     var(--ink-gray-4);
@@ -68,17 +68,16 @@
 
   /* Settings / fields */
   --ds-settings-field-bg:   var(--surface-elevation-1);
-  --ds-settings-nav-active:           var(--surface-elevation-3);  /* FD2 restyle → Raven active */
+  --ds-settings-nav-active:           var(--da-sub);  /* F01: blue tint (design D.css:387-390) */
   /* Settings-specific design tokens — Raven restyle (F/S1).
      FD3: numeric --radius-N steps only inside Settings; global named scale untouched.
      FD5: settings rail keeps macOS vibrancy via .sidebar-surface on darwin (allowed mismatch). */
   --ds-settings-nav-item-hover-bg:    var(--surface-gray-3);
-  --ds-settings-nav-item-active-bg:   var(--surface-elevation-3);
-  --ds-settings-nav-item-shadow:      var(--shadow-sm);
+  --ds-settings-nav-item-active-bg:   var(--da-sub);  /* F01: blue tint (matches --ds-settings-nav-active) */
+  --ds-settings-nav-item-shadow:      var(--elevation-sm);
   --ds-settings-nav-group-ink:        var(--ink-gray-5);
   --ds-settings-nav-label-ink:        var(--ink-gray-6);
-  --ds-settings-nav-label-active-ink: var(--ink-gray-8);
-  --ds-settings-separator:            var(--outline-gray-2);
+  --ds-settings-nav-label-active-ink: var(--da-txt);  /* F01: blue ink (D.css:388-389) */
   --ds-settings-header-ink:           var(--ink-gray-8);
   --ds-settings-desc-ink:             var(--ink-gray-6);
   --ds-settings-section-ink:          var(--ink-gray-5);
@@ -140,7 +139,7 @@
   --ds-elevation-stroke: 0 0 0 0.5px var(--outline-gray-2);
 
   /* Shadows */
-  --ds-shadow-dialog:      var(--shadow-2xl);
+  --ds-shadow-dialog:      var(--shadow-xl);  /* F09: elevation-xl per D.css:1033 */
   --ds-shadow-model-menu:  var(--shadow-2xl);
   --ds-shadow-composer:    var(--shadow);
 
@@ -148,16 +147,9 @@
   --ds-sidebar-width:              256px;
   --ds-settings-nav-width:         224px;  /* FD2: Raven w-56 = 224px (was 275px) */
   --ds-control-size:               28px;
-  /* Buttons follow Espresso's frappe-ui Button: md = its default `sm`
-     (h-7 text-base px-2 rounded-4), sm = its `xs` (h-6 text-xs px-1.5
-     rounded-3). Every labelled action (Button / .btn) uses these. */
-  --ds-btn-height:                 28px;
+  /* Button geometry — d-tokens.css redirects the pad/font/weight values below so
+     only the height-sm and tracking/leading fallbacks live here (not shadowed). */
   --ds-btn-height-sm:              24px;
-  --ds-btn-pad-x:                  8px;
-  --ds-btn-pad-x-sm:               6px;
-  --ds-btn-font-size:              var(--text-base);
-  --ds-btn-font-size-sm:           var(--text-xs);
-  --ds-btn-font-weight:            var(--text-base--font-weight);
   --ds-btn-tracking:               var(--text-base--letter-spacing);
   --ds-btn-leading:                var(--text-base--line-height);
   /* --ds-field-height now live in d-tokens.css as var(--d-ctrl) */
@@ -210,7 +202,7 @@
 
   /* Switch track/knob: track-off/knob-off live in d-tokens.css per-theme; knob-on stays here */
   /* knob-on must pass 3:1 on --ds-accent (#42a2d9); white is 2.84:1 (fail).
-     --ds-accent-foreground (#0a1f2e) gives 5.63:1 (pass). */
+     --ds-accent-foreground (#0a1f2e) gives 5.93:1 (pass). */
   --ds-switch-knob-on:         var(--ds-accent-foreground);
 
   /* Mermaid diagram canvas */
