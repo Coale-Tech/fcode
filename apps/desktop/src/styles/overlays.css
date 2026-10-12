@@ -479,15 +479,7 @@
   display: none;
 }
 
-/* Direction D: the update Restart CTA is a high-signal action — keep accent fill
-   so it reads as urgent even in a notification-tone banner. */
-.update-notice-actions .btn-primary {
-  background: var(--ds-accent);
-  color: var(--ds-accent-foreground);
-}
-.update-notice-actions .btn-primary:hover:not(:disabled) {
-  background: var(--ds-accent-hover);
-}
+/* Update Restart CTA uses standard black primary (D-SPEC: black primary button). */
 
 .update-notice-dismiss {
   display: inline-flex;
