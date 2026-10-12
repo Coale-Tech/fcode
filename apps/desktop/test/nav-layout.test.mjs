@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { register } from "node:module";
 import test from "node:test";
 register(new URL("./helpers/ts-import-hooks.mjs", import.meta.url));
-const { NAV_LAYOUTS, DEFAULT_NAV_LAYOUT, resolveNavLayout, shellChromeWidth } =
-  await import("../src/lib/nav-layout.ts");
+const { NAV_LAYOUTS, DEFAULT_NAV_LAYOUT } = await import("@pi-desktop/shared");
+const { resolveNavLayout, shellChromeWidth } = await import("../src/lib/nav-layout.ts");
 
 test("an absent or corrupt saved layout resolves to the default, never a broken shell", () => {
   for (const v of [undefined, null, "", "dock", 2, {}, "TABS"]) {

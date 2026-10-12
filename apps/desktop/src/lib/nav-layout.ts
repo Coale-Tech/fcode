@@ -1,12 +1,8 @@
-import type { AppSettings } from "@pi-desktop/shared";
-
-export type NavLayout = NonNullable<AppSettings["navLayout"]>;
-export const NAV_LAYOUTS: readonly NavLayout[] = ["tabs", "rail", "island"];
-export const DEFAULT_NAV_LAYOUT: NavLayout = "rail";
-
-export function isNavLayout(value: unknown): value is NavLayout {
-  return typeof value === "string" && (NAV_LAYOUTS as readonly string[]).includes(value);
-}
+import {
+  isNavLayout,
+  DEFAULT_NAV_LAYOUT,
+  type NavLayout,
+} from "@pi-desktop/shared";
 
 export function resolveNavLayout(value: unknown): NavLayout {
   return isNavLayout(value) ? value : DEFAULT_NAV_LAYOUT;

@@ -196,6 +196,7 @@ import {
   defaultCommandShellForPlatform,
   IPC,
   isCommandShellId,
+  isNavLayout,
   normalizeLargePasteThreshold,
   normalizeMode,
   normalizeNetworkProxy,
@@ -215,7 +216,6 @@ import type {
   ModelConfigImportSource,
 } from "@pi-desktop/shared";
 export type { ModelConfigImportCandidate, ModelConfigImportSource };
-import { isNavLayout } from "./nav-layout";
 
 export interface ImportCandidate {
   source: ImportSource;
