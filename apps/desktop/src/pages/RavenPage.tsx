@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { RavenSettings } from "@pi-desktop/shared";
+import { IPC, type RavenSettings } from "@pi-desktop/shared";
 import { api } from "../lib/api";
 import { useBlockingOverlayActive } from "../lib/blocking-overlay";
 import { useAppStore } from "../stores/app-store";
@@ -22,9 +22,14 @@ export function RavenPage({ blocked }: { blocked: boolean }) {
   const [settings, setSettings] = useState<RavenSettings | null>(null);
   const ready = settings?.enabled === true;
 
-  useEffect(() => {
+  const fetchSettings = useCallback(() => {
     void api.ravenSettingsGet().then((r) => setSettings(r.settings)).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    fetchSettings();
+    return window.piDesktop?.on?.(IPC.event.ravenChanged, fetchSettings);
+  }, [fetchSettings]);
 
   useEffect(() => {
     if (!ready) return;

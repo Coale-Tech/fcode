@@ -52,20 +52,21 @@ export function VoiceSettingsSection({
   const [devices, setDevices] = useState<AudioInputDevice[]>([]);
   const [models, setModels] = useState<ModelState[]>([]);
   const [permission, setPermission] = useState<string>("undetermined");
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     voiceIpc
       .getDevices()
       .then((d) => setDevices(Array.isArray(d) ? d as AudioInputDevice[] : []))
-      .catch(() => {});
+      .catch(() => setLoadError(true));
     voiceIpc
       .getModels()
       .then((m) => setModels(Array.isArray(m) ? m as ModelState[] : []))
-      .catch(() => {});
+      .catch(() => setLoadError(true));
     voiceIpc
       .checkPermission()
       .then((p) => setPermission(typeof p === "string" ? p : "undetermined"))
-      .catch(() => {});
+      .catch(() => setLoadError(true));
   }, []);
 
   useEffect(() => {
@@ -110,7 +111,12 @@ export function VoiceSettingsSection({
           />
         </SettingsRow>
       </SettingsCard>
-
+      {/* ---- Load error ---- */}
+      {loadError && (
+        <p role="alert" style={{ margin: 0, padding: "6px 0" }}>
+          {t("settings.voiceLoadError", "Could not load microphone devices or voice models")}
+        </p>
+      )}
       {/* ---- Permission warning ---- */}
       {permission === "denied" && (
         <SettingsCard title={t("settings.voiceMicDenied")}>

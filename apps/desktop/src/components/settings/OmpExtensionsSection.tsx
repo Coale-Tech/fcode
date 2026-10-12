@@ -2,6 +2,7 @@
  * Settings section for omp extension management.
  * Lists installed npm/marketplace plugins with enable/disable and uninstall;
  * provides an install-from-spec field.
+ * G3: McpMarketPanel mounted here behind a "Browse MCP Market" toggle.
  */
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -10,9 +11,12 @@ import { api } from "../../lib/api";
 import { Badge, Button, Input, SettingsToggle } from "../ui";
 import { SettingsCard } from "../../features/settings/primitives";
 import { DestructiveActionDialog } from "../DestructiveActionDialog";
+import { McpMarketPanel } from "./McpMarketPanel";
 
 export function OmpExtensionsSection() {
   const { t } = useTranslation();
+  const [view, setView] = useState<"main" | "market">("main");
+  const [mcpInstalledIds, setMcpInstalledIds] = useState<string[]>([]);
   const [extensions, setExtensions] = useState<OmpExtensionEntry[] | null>(null);
   const [installSpec, setInstallSpec] = useState("");
   const [installBusy, setInstallBusy] = useState(false);
@@ -23,6 +27,8 @@ export function OmpExtensionsSection() {
 
   const load = useCallback(() => {
     api.ompExtensionsList().then((res) => setExtensions(res.extensions)).catch(() => setExtensions([]));
+    // Load MCP IDs for the market panel "already installed" badges
+    api.listMcpServers({ level: "global" }).then((res) => setMcpInstalledIds(res.servers.map((s) => s.id))).catch(() => {});
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -65,6 +71,16 @@ export function OmpExtensionsSection() {
     }
   }, [installSpec, load, t]);
 
+  if (view === "market") {
+    return (
+      <McpMarketPanel
+        installedIds={mcpInstalledIds}
+        onBack={() => setView("main")}
+        onInstalled={() => { load(); setView("main"); }}
+      />
+    );
+  }
+
   return (
     <>
       {pendingUninstall && (
@@ -77,6 +93,11 @@ export function OmpExtensionsSection() {
         />
       )}
       <SettingsCard title={t("settings.ompExtGroup")}>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "8px" }}>
+          <Button size="sm" variant="secondary" onClick={() => setView("market")}>
+            {t("settings.ompExtBrowseMcpMarket", "Browse MCP Market")}
+          </Button>
+        </div>
         {/* Install row */}
         <div className="settings-row">
           <div className="settings-row-content" style={{ flex: 1 }}>

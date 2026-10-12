@@ -119,6 +119,7 @@ export function PermissionCard({
         site={site}
         command={rawCommand}
         consequence={consequence}
+        agentName={permission.agentName ?? undefined}
         onConfirm={() => { restoreComposerFocus(); void resolve("allow-once"); }}
         onCancel={() => { restoreComposerFocus(); void resolve("deny"); }}
       />

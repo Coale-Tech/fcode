@@ -10,6 +10,31 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 
+### Changed
+- `pi-host` (headless remote host) now runs the omp-bridge sidecar like the desktop, so remote sessions get omp and the nine bundled Fcode agents. The bundle ships `omp-bridge/bridge.js` and `resources/{bin/omp,fcode-agents,fcode-skills}`; `--resources <dir>` overrides the lookup. Desktop-only host tools (`GenerateImages`, `BrowserPreview`, bench, studio, canvas, kanban) are not available on pi-host.
+- Provider env for omp (`FCODE_PROVIDER_*_KEY`, `FCODE_MODELS_CONFIG`, `FCODE_DEFAULT_MODEL`) is built by one shared `ompProviderEnv` in `@pi-desktop/host-runtime`, used by desktop and pi-host.
+- `scripts/e2e-remote-host.mjs` drives the omp-bridge sidecar; a provider-less turn is now admitted and settles instead of failing closed at admission.
+
+### Added
+- Settings > Agents lists every agent omp will load (project, user, Fcode bundled, omp built-ins) with source badge, tool count and a per-agent model override; shadowed duplicates are flagged. New IPC `ompAgentList`.
+- Settings > Skills: Browse Market, New/Edit/Remove skill. Settings > Extensions: MCP market. Skill curator controls and a proposal body preview in skill review.
+- Settings > Memory: frozen-memory cap, project `.omp/MEMORY.md` editor, Auto-Learn toggle.
+- Chat: Plan approval bar; destructive-action dialogs name the requesting subagent; `/skill:<name>` completes mid-sentence.
+- Bench: install app, build Studio app, list apps.
+- Settings > omp "Choose binary…" now persists an override used as `OMP_BIN`.
+- Structured tool presentations for `fcode_*` and `kanban_*` tools.
+- Raven/Kanban/remote-host views refresh live.
+
+### Removed
+- The orphaned subagent editor (`SubagentEditorSheet`, presets, model picker) and its source-text tests.
+- Unused IPC channels `buildCanvasGetState` and `kanbanListRuns` (no renderer caller; Kanban runs come from the board payload).
+- The legacy subagent catalog (explorer, code-reviewer, test-runner, fixer, ui-designer) from desktop session launch and `launch-resolver`: the `subagents`/`subagentProviders`/`subagentModelKeys` sidecar params (omp ignored them), the ten `subagent*` IPC channels with their `api.ts` wrappers and mcp-control specs, and the `provider.resolveSubagentModel` hook on host-runtime `AgentSidecar`. Native `native-pi:` sessions keep their own catalog in `agent-runtime`.
+
+### Fixed
+- Voice settings show a load error instead of silently empty state; settings radii use design tokens; README no longer claims a non-existent fcode-skills bundle.
+- Permission dialogs raised from a delegated subagent say which subagent asked (when exactly one delegate is running).
+- Bench page (site list, process panel, failure banner, empty state) is translated in all 9 locales.
+
 ## [0.20.0] — 2026-10-10
 
 ### Compatibility

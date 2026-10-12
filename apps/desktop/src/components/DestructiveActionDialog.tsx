@@ -14,6 +14,7 @@
  */
 
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "./ui";
 import { portalToBody } from "../lib/portal-visibility";
 
@@ -28,6 +29,8 @@ export interface DestructiveActionDialogProps {
   onConfirm: () => void;
   /** Called when the user clicks Cancel. */
   onCancel: () => void;
+  /** Optional name of the sub-agent that requested this action. */
+  agentName?: string;
 }
 
 /**
@@ -53,7 +56,9 @@ export function DestructiveActionDialog({
   consequence,
   onConfirm,
   onCancel,
+  agentName,
 }: DestructiveActionDialogProps) {
+  const { t } = useTranslation();
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const cancelRef = useRef<HTMLButtonElement | null>(null);
 
@@ -118,6 +123,10 @@ export function DestructiveActionDialog({
           Run <strong>{command}</strong> on <strong>{site}</strong>. This{" "}
           {consequence} and cannot be undone.
         </p>
+
+        {agentName && (
+          <p className="dd-agent">{t("permission.fromSubagent", { agent: agentName })}</p>
+        )}
 
         <div className="dd-actions">
           <Button

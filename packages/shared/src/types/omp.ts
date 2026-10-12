@@ -361,6 +361,8 @@ export interface OmpSettingsValues {
   "skills.review.maxInputTokens"?: number;
   /** When true (default), validated skills are staged as proposals awaiting approval. */
   "skills.review.requireApproval"?: boolean;
+  // Auto-Learn (omp/packages/coding-agent/src/autolearn/settings.ts)
+  "autolearn.enabled"?: boolean;
 }
 
 // ── Skill approval / journey ──────────────────────────────────────────────────
@@ -638,4 +640,26 @@ export interface OmpSkillCuratorStatusResult {
 /** Result of `ompSkillCuratorRestore` / `ompSkillCuratorPin`. */
 export interface OmpSkillCuratorMutateResult {
   ok: boolean;
+}
+
+/** Source tier for one entry in the effective agent list. */
+export type OmpAgentSource = "project" | "user" | "fcode" | "omp";
+
+/** One entry in the effective agent list (merged across all sources). */
+export interface OmpAgentEntry {
+  name: string;
+  description: string;
+  /** Tool names declared in frontmatter; empty for "all tools" agents (e.g. task). */
+  tools: string[];
+  /** Model pin if the agent frontmatter declares one (e.g. "@smol"). */
+  model?: string;
+  /** Where this agent came from. */
+  source: OmpAgentSource;
+  /** True when a higher-priority source provides an agent with the same name. */
+  shadowed?: boolean;
+}
+
+/** Result of `ompAgentList`. */
+export interface OmpAgentListResult {
+  agents: OmpAgentEntry[];
 }

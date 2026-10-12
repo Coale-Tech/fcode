@@ -7,7 +7,8 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { OmpModel, OmpSettingsValues } from "@pi-desktop/shared";
+import type { OmpAgentEntry, OmpModel, OmpSettingsValues } from "@pi-desktop/shared";
+import { useAppStore } from "../../stores/app-store";
 import { api } from "../../lib/api";
 import { Button, Input, SettingsToggle } from "../../components/ui";
 import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect";
@@ -21,28 +22,27 @@ import { OmpUsageSection } from "../../components/settings/OmpUsageSection";
 import { OmpWorktreeSection } from "../../components/settings/OmpWorktreeSection";
 import { OmpExtensionsSection } from "../../components/settings/OmpExtensionsSection";
 
-/** Bundled omp agent names (from omp/packages/coding-agent/src/task/agents.ts). */
-const BUNDLED_AGENTS = ["task", "sonic", "scout", "reviewer", "security-reviewer"] as const;
-
 export type OmpSettingsPart = "defaults" | "agents" | "tools" | "extensions" | "memory";
 
 /** Renders one slice of omp settings; the Settings rail splits AI into several pages. */
 export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
   const { t } = useTranslation();
+  const projectPath = useAppStore((s) => s.workspace?.path ?? null);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
   const [omp, setOmp] = useState<OmpSettingsValues>({});
   const [ompModels, setOmpModels] = useState<OmpModel[]>([]);
-
+  const [agents, setAgents] = useState<OmpAgentEntry[]>([]);
   const load = useCallback(() => {
     setLoadState("loading");
-    Promise.all([api.ompSettingsGet(), api.ompModelsList()])
-      .then(([settings, models]) => {
+    Promise.all([api.ompSettingsGet(), api.ompModelsList(), api.ompAgentList(projectPath ?? undefined)])
+      .then(([settings, models, agentList]) => {
         setOmp(settings);
         setOmpModels(models.models);
+        setAgents(agentList.agents);
         setLoadState("ready");
       })
       .catch(() => setLoadState("error"));
-  }, []);
+  }, [projectPath]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -146,9 +146,9 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
             />
           </SettingsRow>
           {/* ── Agent model overrides ─────────────────────────────── */}
-          {BUNDLED_AGENTS.map((agent) => {
-            const current = omp["task.agentModelOverrides"]?.[agent] ?? "";
-            const modelOptions = [
+          {agents.filter((a) => !a.shadowed).map((agent) => {
+            const current = omp["task.agentModelOverrides"]?.[agent.name] ?? "";
+            const modelOpts = [
               { id: "", label: t("settings.ompAgentModelOverridesDefault") },
               ...ompModels.map((m) => {
                 const fullId = `${m.provider.id}/${m.id}`;
@@ -156,25 +156,31 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
                 return { id: fullId, label, title: fullId };
               }),
             ];
+            const sourceBadge = agent.source !== "omp"
+              ? ` (${agent.source})`
+              : "";
+            const toolSummary = agent.tools.length > 0
+              ? `${agent.tools.length} tool${agent.tools.length === 1 ? "" : "s"}`
+              : t("settings.ompAgentAllTools", "all tools");
+            const desc = agent.description
+              ? `${agent.description} · ${toolSummary}`
+              : toolSummary;
             return (
               <SettingsRow
-                key={agent}
-                title={agent}
-                description={t("settings.ompAgentModelOverridesDesc")}
+                key={`${agent.source}:${agent.name}`}
+                title={agent.name + sourceBadge}
+                description={desc}
               >
                 <SettingsMenuSelect
-                  label={agent}
+                  label={agent.name}
                   value={current}
                   onChange={(v) => {
                     const overrides = { ...(omp["task.agentModelOverrides"] ?? {}) };
-                    if (v === "") {
-                      delete overrides[agent];
-                    } else {
-                      overrides[agent] = v;
-                    }
+                    if (v === "") { delete overrides[agent.name]; }
+                    else { overrides[agent.name] = v; }
                     void save({ "task.agentModelOverrides": overrides });
                   }}
-                  options={modelOptions}
+                  options={modelOpts}
                 />
               </SettingsRow>
             );

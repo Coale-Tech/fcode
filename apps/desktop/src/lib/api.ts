@@ -90,9 +90,6 @@ import type {
   ToolPermissionResolution,
   UserSkillInput,
   UserSkillRecord,
-  UserSubagentInput,
-  UserSubagentRecord,
-  SubagentDefinition,
   WorkspaceDiff,
   AppMenuCommand,
   AppNotification,
@@ -169,8 +166,8 @@ import type {
   OmpUserProfileSetResult,
   KanbanBoard,
   KanbanSettings,
-  KanbanRun,
   RavenSettings,
+  OmpAgentListResult,
   OmpSkillCuratorStatusResult,
   OmpSkillCuratorMutateResult,
   OmpSkillProposalListResult,
@@ -1205,51 +1202,6 @@ export const api = {
   revealUserSkill: (id: string, query?: Partial<AgentCapabilityQuery>) =>
     invoke(IPC.invoke.skillReveal, { id, ...query }),
 
-  // --- Subagents the user owns ----------------------------------------------
-  listUserSubagents: (query?: Pick<AgentCapabilityQuery, "level">) =>
-    invoke<{ subagents: UserSubagentRecord[] }>(IPC.invoke.subagentList, query),
-  /**
-   * What `Task` would offer right now, merged across the shipped builtins and
-   * the registry. `builtins` keeps a switched-off default in the list, flagged
-   * `enabled: false`, so Settings can still show that row and its switch.
-   */
-  subagentCatalog: () =>
-    invoke<{
-      subagents: SubagentDefinition[];
-      builtins: Array<SubagentDefinition & { enabled: boolean }>;
-      diagnostics: string[];
-      projectPath: string | null;
-    }>(IPC.invoke.subagentCatalog),
-  createUserSubagent: (subagent: UserSubagentInput) =>
-    invoke<{ subagent: UserSubagentRecord }>(IPC.invoke.subagentCreate, subagent),
-  updateUserSubagent: (id: string, subagent: Omit<UserSubagentInput, "id">) =>
-    invoke<{ subagent: UserSubagentRecord }>(IPC.invoke.subagentUpdate, {
-      id,
-      ...subagent,
-    }),
-  /** The record plus the document body, for the editor. */
-  readUserSubagent: (id: string) =>
-    invoke<{ subagent: UserSubagentRecord | null; body?: string }>(
-      IPC.invoke.subagentRead,
-      id,
-    ),
-  removeUserSubagent: (id: string) => invoke(IPC.invoke.subagentRemove, id),
-  setUserSubagentEnabled: (id: string, enabled: boolean) =>
-    invoke(IPC.invoke.subagentSetEnabled, { id, enabled }),
-  /**
-   * Turn one shipped default off, or back on. The id is the `Task` handle
-   * (`explorer`), never a document id: a builtin has no file to switch.
-   */
-  setBuiltinSubagentEnabled: (id: string, enabled: boolean) =>
-    invoke<{ id: string; enabled: boolean }>(IPC.invoke.subagentSetBuiltinEnabled, {
-      id,
-      enabled,
-    }),
-  setUserSubagentScope: (id: string, scope: ActivationScope) =>
-    invoke(IPC.invoke.subagentSetScope, { id, scope }),
-  /** Registry entries reveal by id; project documents pass their own path. */
-  revealSubagent: (target: { id?: string; path?: string }) =>
-    invoke(IPC.invoke.subagentReveal, target),
   openPluginPanel: (id: string) => invoke(IPC.invoke.pluginOpenPanel, id),
   togglePluginLauncher: () => invoke(IPC.invoke.pluginLauncherToggle),
   dismissPluginLauncher: () => invoke(IPC.invoke.pluginLauncherDismiss),
@@ -1927,9 +1879,9 @@ export const api = {
   /** Kanban: archive or unarchive a task. */
   kanbanArchive: (taskId: string, archived: boolean) =>
     invoke<{ board: KanbanBoard }>(IPC.invoke.kanbanArchive, { taskId, archived }),
-  /** Kanban: list runs for a given task. */
-  kanbanListRuns: (taskId: string) =>
-    invoke<{ runs: KanbanRun[] }>(IPC.invoke.kanbanListRuns, { taskId }),
+  /** G15: open native file picker to choose omp binary; saves path, restarts sidecar. */
+  ompPickBinaryPath: () =>
+    invoke<{ picked: boolean; path?: string }>(IPC.invoke.ompPickBinaryPath),
   /** Kanban: get current settings (enabled, caps). */
   kanbanSettingsGet: () =>
     invoke<{ settings: KanbanSettings }>(IPC.invoke.kanbanSettingsGet),
@@ -1977,4 +1929,13 @@ export const api = {
   /** Write cross-project user profile to ~/.omp/agent/USER.md (server caps at 1024 chars). */
   ompUserProfileSet: (text: string) =>
     invoke<OmpUserProfileSetResult>(IPC.invoke.ompUserProfileSet, { text }),
+  /** Effective agent list merged from all sources (project/.omp/agents, user ~/.omp/agent/agents, fcode bundled, omp bundled). */
+  ompAgentList: (projectPath?: string) =>
+    invoke<OmpAgentListResult>(IPC.invoke.ompAgentList, { projectPath }),
+  /** Read project-scoped memory from <workspace>/.omp/MEMORY.md. */
+  ompProjectMemoryGet: (workspacePath: string) =>
+    invoke<OmpUserProfileGetResult>(IPC.invoke.ompProjectMemoryGet, { workspacePath }),
+  /** Write project-scoped memory to <workspace>/.omp/MEMORY.md (server caps at 16 KiB). */
+  ompProjectMemorySet: (workspacePath: string, text: string) =>
+    invoke<OmpUserProfileSetResult>(IPC.invoke.ompProjectMemorySet, { workspacePath, text }),
 };

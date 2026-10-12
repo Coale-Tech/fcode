@@ -14,9 +14,7 @@ import type {
   PluginSummary,
   PluginTheme,
   ProjectRecord,
-  SubagentDefinition,
   UserSkillRecord,
-  UserSubagentRecord,
 } from "@pi-desktop/shared";
 import { useAppStore } from "../stores/app-store";
 import { api } from "../lib/api";
@@ -61,8 +59,6 @@ export function installCaptureRig(): CaptureRig {
   const originalMarketDetail = api.marketGetDetail;
   const originalListMcpServers = api.listMcpServers;
   const originalListUserSkills = api.listUserSkills;
-  const originalListUserSubagents = api.listUserSubagents;
-  const originalSubagentCatalog = api.subagentCatalog;
   const originalListProjects = api.listProjects;
   const methods: CaptureRigMethods = {
     openWorkPanelArtifact: (
@@ -651,8 +647,6 @@ export function installCaptureRig(): CaptureRig {
       if (count <= 0) {
         (api as any).listMcpServers = originalListMcpServers;
         (api as any).listUserSkills = originalListUserSkills;
-        (api as any).listUserSubagents = originalListUserSubagents;
-        (api as any).subagentCatalog = originalSubagentCatalog;
         (api as any).listProjects = originalListProjects;
         return;
       }
@@ -800,107 +794,6 @@ export function installCaptureRig(): CaptureRig {
           updatedAt: "2026-06-02T10:00:00.000Z",
         },
       ];
-      // One global definition per state the row can report: active, customized,
-      // builtin replacement, and turned off.
-      const subagents: UserSubagentRecord[] = [
-        {
-          id: "log-reader",
-          name: "log-reader",
-          level: "global",
-          description:
-            "Read a build log end to end and report the first real failure with its file and line.",
-          enabled: true,
-          scope: { mode: "global", projects: [] },
-          tools: ["Read", "Grep", "Bash"],
-          path: "/Users/pi/.agents/subagents/log-reader.md",
-          sizeBytes: 1_840,
-          createdAt: "2026-08-05T09:00:00.000Z",
-          updatedAt: "2026-08-06T11:20:00.000Z",
-        },
-        {
-          id: "schema-diff",
-          name: "schema-diff",
-          level: "global",
-          description:
-            "Compare the migration files on a branch against the committed schema and list what drifted.",
-          enabled: true,
-          scope: { mode: "global", projects: [] },
-          tools: ["Read", "Glob", "Grep"],
-          model: "anthropic/claude-haiku-4-5",
-          thinkingLevel: "low",
-          path: "/Users/pi/.agents/subagents/schema-diff.md",
-          sizeBytes: 3_120,
-          createdAt: "2026-07-28T09:00:00.000Z",
-          updatedAt: "2026-08-02T14:05:00.000Z",
-        },
-        {
-          id: "explorer",
-          name: "explorer",
-          level: "global",
-          description: "My own explorer, with the repository's layout written into the prompt.",
-          enabled: true,
-          scope: { mode: "global", projects: [] },
-          tools: ["Read", "Glob", "Grep"],
-          path: "/Users/pi/.agents/subagents/explorer.md",
-          sizeBytes: 2_260,
-          createdAt: "2026-08-01T09:00:00.000Z",
-          updatedAt: "2026-08-01T09:00:00.000Z",
-        },
-        {
-          id: "release-drafter",
-          name: "release-drafter",
-          level: "global",
-          description: "Draft the release notes for a tag range, grouped by user-visible change.",
-          enabled: false,
-          scope: { mode: "global", projects: [] },
-          tools: ["Read", "Grep"],
-          path: "/Users/pi/.agents/subagents/release-drafter.md",
-          sizeBytes: 980,
-          createdAt: "2026-06-20T09:00:00.000Z",
-          updatedAt: "2026-06-20T09:00:00.000Z",
-        },
-      ];
-      // The effective catalog main would compute: global user documents replace
-      // builtins by name, and the other builtins remain available.
-      const catalog: SubagentDefinition[] = [
-        {
-          name: "log-reader",
-          description: "A user-owned log reader, tuned for its CI output.",
-          prompt: "You are log-reader.\n",
-          tools: ["Read", "Grep"],
-          source: "user",
-          filePath: "/Users/pi/.agents/subagents/log-reader.md",
-        },
-        {
-          name: "explorer",
-          description: "My own explorer, with the repository's layout written into the prompt.",
-          prompt: "You are explorer.\n",
-          tools: ["Read", "Glob", "Grep"],
-          source: "user",
-          filePath: "/Users/pi/.agents/subagents/explorer.md",
-        },
-        {
-          name: "code-reviewer",
-          description:
-            "Review a change for correctness, then report findings ranked by severity.",
-          prompt: "You are code-reviewer.\n",
-          tools: ["Read", "Glob", "Grep"],
-          source: "builtin",
-        },
-        {
-          name: "test-runner",
-          description: "Run the test suite, then report the first failure that is not flaky.",
-          prompt: "You are test-runner.\n",
-          tools: ["Read", "Glob", "Grep", "Bash"],
-          source: "builtin",
-        },
-      ];
-
-      // The shipped defaults the page lists separately, one of them switched
-      // off, so a capture exercises the switch on a built-in row.
-      const builtinRows = catalog
-        .filter((item) => item.source === "builtin")
-        .map((item, index) => ({ ...item, enabled: index !== 0 }));
       const rowsForQuery = <T extends { level?: string; projectPath?: string }>(
         rows: readonly T[],
         query: { level?: string; projectPath?: string } = {},
@@ -920,13 +813,6 @@ export function installCaptureRig(): CaptureRig {
       };
       (api as any).listUserSkills = async (query: { level?: string; projectPath?: string } = {}) => ({
         skills: rowsForQuery(skills, query).slice(0, count),
-      });
-      (api as any).listUserSubagents = async () => ({ subagents });
-      (api as any).subagentCatalog = async () => ({
-        subagents: catalog,
-        builtins: builtinRows,
-        diagnostics: [],
-        projectPath: "/Users/pi/work/api",
       });
     },
     seedPluginThemes: (count = 2) => {
@@ -1108,8 +994,6 @@ export function installCaptureRig(): CaptureRig {
       api.marketGetDetail = originalMarketDetail;
       api.listMcpServers = originalListMcpServers;
       api.listUserSkills = originalListUserSkills;
-      api.listUserSubagents = originalListUserSubagents;
-      api.subagentCatalog = originalSubagentCatalog;
       api.listProjects = originalListProjects;
     },
   };

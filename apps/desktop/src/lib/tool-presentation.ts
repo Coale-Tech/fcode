@@ -609,6 +609,30 @@ function resultBlocks(
     const rawText = rawEnvelope ? envelopeText(rawEnvelope) : null;
     if (rawText) blocks.push(codeBlock("output", rawText));
     mapped = true;
+  } else if (toolNameNorm.startsWith("fcode_") || toolNameNorm.startsWith("kanban_")) {
+    // Structured field presentation for Fcode host tools (T7) and Kanban worker tools.
+    // Shows the well-known input args as fields, then kwargs (bench execute), then any
+    // output the tool produced.
+    const KEY_ARGS = ["command", "method", "action", "site", "app", "page", "title", "reason", "kind", "body", "url"];
+    const fcodeFields: ToolFieldRow[] = [];
+    for (const key of KEY_ARGS) {
+      const v = stringAt(args, key);
+      if (v) fcodeFields.push({ label: key, value: v });
+    }
+    if (fcodeFields.length > 0) blocks.push({ kind: "fields", role: "details", rows: fcodeFields });
+    // kwargs forwarded to the Frappe Python method (fcode_bench_execute tools)
+    const kwargsRaw = args ? args["kwargs"] : undefined;
+    const kwargs =
+      kwargsRaw != null && typeof kwargsRaw === "object" && !Array.isArray(kwargsRaw)
+        ? (kwargsRaw as Record<string, unknown>)
+        : null;
+    if (kwargs && Object.keys(kwargs).length > 0) {
+      blocks.push(...recordBlocks(kwargs, "input"));
+    }
+    const fcodeEnvelope = asRecord(message.toolResult);
+    const fcodeText = fcodeEnvelope ? envelopeText(fcodeEnvelope) : null;
+    if (fcodeText) blocks.push(codeBlock("output", fcodeText));
+    mapped = true;
   } else {
     switch (action) {
       case "read": {

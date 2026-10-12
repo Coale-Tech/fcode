@@ -11,11 +11,13 @@ import { IconX } from "./icons";
 import { Button, TooltipButton } from "./ui";
 import { OnboardingChecklist } from "./OnboardingChecklist";
 import { SessionPane } from "./SessionPane";
+import { PlanApprovalBar } from "./PlanApprovalBar";
 import { ConversationWidthHandles } from "./ConversationWidthHandles";
 import { useAppStore } from "../stores/app-store";
 import { headPermission } from "../lib/pending-permissions";
 import { headAsk } from "../lib/pending-asks";
 import { IPC } from "@pi-desktop/shared";
+import { api } from "../lib/api";
 
 const StableComposer = memo(Composer);
 
@@ -111,6 +113,10 @@ export const ChatSurface = memo(function ChatSurface({
         headAsk(state.pendingAsks, state.activeSessionId),
     ),
   );
+  // G1: pending plan proposal for the active session — shows PlanApprovalBar near the composer.
+  const activePendingPlan = useAppStore((state) =>
+    state.activeSessionId ? state.pendingPlans[state.activeSessionId] : undefined,
+  );
 
   const heroProject = useMemo(
     () =>
@@ -197,9 +203,9 @@ export const ChatSurface = memo(function ChatSurface({
               variant="secondary"
               size="sm"
               onClick={() => {
-                // TODO: open a file picker to choose the omp binary path.
-                // For now dismiss so the user can set OMP_BIN env and relaunch.
-                setSidecarFatal(null);
+                void api.ompPickBinaryPath().then((res) => {
+                  if (res.picked) setSidecarFatal(null);
+                }).catch(() => { /* dialog cancelled or IPC unavailable */ });
               }}
             >
               {t("errors.sidecarFatal.action", "Choose binary…")}
@@ -263,6 +269,9 @@ export const ChatSurface = memo(function ChatSurface({
               />
             ))}
           </div>
+          {activePendingPlan ? (
+            <PlanApprovalBar proposal={activePendingPlan} />
+          ) : null}
           <StableComposer variant="docked" />
         </>
       )}

@@ -67,7 +67,7 @@ Fcode supports Frappe **v15 and v16** benches.
   | `fcode_canvas_read` | Snapshot, console and screenshot of the canvas | No prompt |
   | `fcode_studio` | Publish/unpublish Studio apps and pages, revert drafts, toggle app export | Always asks |
 
-- **Bundled Frappe skills** that teach the agent Frappe's conventions: DocType development, API development, app hooks, bench operations, Studio, Builder and frappe-ui (`apps/desktop/resources/fcode-skills/`).
+- **Bundled Frappe skills** (`apps/desktop/resources/fcode-skills/`): `fcode-bench`, `fcode-builder`, `fcode-skill-improve`, and `fcode-studio`. The broader Frappe skill set (DocType development, API development, app hooks, frappe-ui, etc.) comes from the **skill-packs clone**, which syncs in the background (see Self-improving skills below).
 - **Self-improving skills** (Settings → Skills): the Frappe skill packs sync in the background; a curator archives stale skills (never deletes), an optional background review proposes new skills from your sessions for you to approve, skills are linted and secret-scanned, and a timeline shows what changed. Nothing is pushed without your click.
 
 #### Bundled agents

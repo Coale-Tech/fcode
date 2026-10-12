@@ -5,6 +5,7 @@ import {
   fileReferenceLabel,
   formatCommandInsert,
   formatFileInsert,
+  formatSkillInsert,
   normalizeLargePasteThreshold,
   restoreInlineComposerFileReferenceTokens,
   rewriteIdeographicCommaTrigger,
@@ -44,9 +45,9 @@ describe("detectTrigger — slash mode", () => {
     });
   });
 
-  it("never triggers mid-draft or on later lines", () => {
-    expect(detectTrigger("hi /cmd", 7)).toBeNull();
-    expect(detectTrigger("hi\n/cmd", 7)).toBeNull();
+  it("never opens the slash-command menu mid-draft or on later lines", () => {
+    expect(detectTrigger("hi /cmd", 7)?.mode).not.toBe("slash");
+    expect(detectTrigger("hi\n/cmd", 7)?.mode).not.toBe("slash");
   });
 });
 
@@ -134,6 +135,39 @@ describe("detectTrigger — file mode", () => {
   it("returns null for out-of-range cursors", () => {
     expect(detectTrigger("@a", 5)).toBeNull();
     expect(detectTrigger("@a", -1)).toBeNull();
+  });
+});
+
+describe("detectTrigger — skill mode", () => {
+  it("triggers on /word mid-sentence (preceded by space)", () => {
+    expect(detectTrigger("run /bench now", 10)).toEqual({
+      mode: "skill",
+      query: "bench",
+      tokenStart: 4,
+      tokenEnd: 10,
+    });
+  });
+
+  it("triggers at the end of draft mid-sentence", () => {
+    expect(detectTrigger("use /dev", 8)).toEqual({
+      mode: "skill",
+      query: "dev",
+      tokenStart: 4,
+      tokenEnd: 8,
+    });
+  });
+
+  it("does NOT trigger when slash is at position 0 (that is slash mode)", () => {
+    const t = detectTrigger("/bench", 6);
+    expect(t?.mode).not.toBe("skill");
+  });
+
+  it("does NOT trigger for path-like tokens containing a second slash", () => {
+    expect(detectTrigger("see /usr/bin", 12)).toBeNull();
+  });
+
+  it("formatSkillInsert produces /skill:<name> with trailing space", () => {
+    expect(formatSkillInsert("fcode-bench")).toBe("/skill:fcode-bench ");
   });
 });
 

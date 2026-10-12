@@ -299,6 +299,8 @@ export const SETTINGS_NAV: SettingsNavEntry[] = [
       "settings.ompAgentModelOverridesDesc",
       "settings.ompAgentModelOverridesDefault",
       "settings.ompWorktreesGroup",
+      "settings.ompAgentAllTools",
+      "settings.ompAgentModelOverridesLoading",
     ],
   },
   {

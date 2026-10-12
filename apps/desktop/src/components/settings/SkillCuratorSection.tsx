@@ -1,13 +1,14 @@
 /**
  * Compact panel showing agent-created skill usage (frappeskills branch + managed-skills).
  * Lets the user pin skills (exclude from curation) or restore archived ones.
+ * G7: adds controls for skills.curator.enabled/staleDays/archiveDays.
  */
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { OmpSkillCuratorEntry } from "@pi-desktop/shared";
+import type { OmpSettingsValues, OmpSkillCuratorEntry } from "@pi-desktop/shared";
 import { api } from "../../lib/api";
-import { Badge, Button } from "../ui";
-import { SettingsCard } from "../../features/settings/primitives";
+import { Badge, Button, Input, SettingsToggle } from "../ui";
+import { SettingsCard, SettingsRow } from "../../features/settings/primitives";
 
 const STATUS_TONE: Record<string, "neutral" | "warning" | "error" | "success"> = {
   active: "success",
@@ -21,6 +22,7 @@ export function SkillCuratorSection() {
   const [skills, setSkills] = useState<OmpSkillCuratorEntry[]>([]);
   const [busy, setBusy] = useState<string | null>(null); // skill name currently in flight
   const [error, setError] = useState("");
+  const [omp, setOmp] = useState<OmpSettingsValues>({});
 
   const load = () =>
     api
@@ -28,7 +30,16 @@ export function SkillCuratorSection() {
       .then((r) => setSkills(r.skills))
       .catch((e: unknown) => setError(String((e as Error).message ?? e)));
 
-  useEffect(() => { void load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    void load();
+    api.ompSettingsGet().then(setOmp).catch(() => undefined);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const save = (patch: OmpSettingsValues) => {
+    const merged = { ...omp, ...patch };
+    setOmp(merged);
+    void api.ompSettingsSet(patch).then(setOmp).catch(() => setOmp(merged));
+  };
 
   const act = async (name: string, fn: () => Promise<unknown>) => {
     setBusy(name);
@@ -37,9 +48,55 @@ export function SkillCuratorSection() {
     finally { setBusy(null); await load(); }
   };
 
+  const curatorEnabled = omp["skills.curator.enabled"] !== false;
+
   return (
     <SettingsCard title={t("settings.skillCuratorTitle")}>
       <p className="settings-row-desc">{t("settings.skillCuratorDesc")}</p>
+
+      {/* Curator settings (G7) */}
+      <SettingsRow
+        title={t("settings.skillCuratorEnabled", "Enabled")}
+        description={t("settings.skillCuratorEnabledDesc", "Automatically archive skills that have not been used recently")}
+      >
+        <SettingsToggle
+          checked={curatorEnabled}
+          label={t("settings.skillCuratorEnabled", "Enabled")}
+          onChange={() => save({ "skills.curator.enabled": !curatorEnabled })}
+        />
+      </SettingsRow>
+      <SettingsRow
+        title={t("settings.skillCuratorStaleDays", "Stale after (days)")}
+        description={t("settings.skillCuratorStaleDaysDesc", "Days since last use before a skill is considered stale")}
+      >
+        <Input
+          type="number"
+          min={1}
+          max={365}
+          value={String(omp["skills.curator.staleDays"] ?? 30)}
+          onChange={(e) => {
+            const n = parseInt(e.target.value, 10);
+            if (Number.isFinite(n) && n >= 1 && n <= 365) save({ "skills.curator.staleDays": n });
+          }}
+        />
+      </SettingsRow>
+      <SettingsRow
+        title={t("settings.skillCuratorArchiveDays", "Archive after (days)")}
+        description={t("settings.skillCuratorArchiveDaysDesc", "Days since last use before a stale skill is archived")}
+      >
+        <Input
+          type="number"
+          min={1}
+          max={365}
+          value={String(omp["skills.curator.archiveDays"] ?? 90)}
+          onChange={(e) => {
+            const n = parseInt(e.target.value, 10);
+            if (Number.isFinite(n) && n >= 1 && n <= 365) save({ "skills.curator.archiveDays": n });
+          }}
+        />
+      </SettingsRow>
+
+      {/* Skill usage list */}
       {skills.length === 0 ? (
         <p className="settings-row-desc">{t("settings.skillCuratorNoSkills")}</p>
       ) : (

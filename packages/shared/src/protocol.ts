@@ -297,16 +297,6 @@ export const IPC = {
     skillTransfer: "pi-desktop/skill/transfer",
     skillRead: "pi-desktop/skill/read",
     skillReveal: "pi-desktop/skill/reveal",
-    subagentList: "pi-desktop/subagent/list",
-    subagentCatalog: "pi-desktop/subagent/catalog",
-    subagentCreate: "pi-desktop/subagent/create",
-    subagentUpdate: "pi-desktop/subagent/update",
-    subagentRead: "pi-desktop/subagent/read",
-    subagentRemove: "pi-desktop/subagent/remove",
-    subagentSetEnabled: "pi-desktop/subagent/setEnabled",
-    subagentSetScope: "pi-desktop/subagent/setScope",
-    subagentSetBuiltinEnabled: "pi-desktop/subagent/setBuiltinEnabled",
-    subagentReveal: "pi-desktop/subagent/reveal",
     marketRefresh: "pi-desktop/market/refresh",
     marketSearch: "pi-desktop/market/search",
     marketGetDetail: "pi-desktop/market/getDetail",
@@ -461,8 +451,6 @@ export const IPC = {
     buildCanvasSetBounds: "pi-desktop/build/canvas/setBounds",
     /** Build tab canvas — show or hide the WebContentsView. */
     buildCanvasSetVisible: "pi-desktop/build/canvas/setVisible",
-    /** Build tab canvas — get the current BrowserState. */
-    buildCanvasGetState: "pi-desktop/build/canvas/getState",
     /** Build tab canvas — back/forward/reload/stop action. */
     buildCanvasAction: "pi-desktop/build/canvas/action",
     /** Build tab — start the watch-studio watcher for live Studio sync. */
@@ -513,6 +501,10 @@ export const IPC = {
     ompAbortBash: "pi-desktop/omp/abort-bash",
     /** Set the omp event filter (null = all events; string[] = allowlist). */
     ompSetEventFilter: "pi-desktop/omp/set-event-filter",
+    /** Effective agent list: omp bundled + fcode extension + user ~/.omp/agent/agents + project .omp/agents. */
+    ompAgentList: "pi-desktop/omp/agents/list",
+    /** Open a native file picker to choose the omp binary; saves override and restarts sidecar. */
+    ompPickBinaryPath: "pi-desktop/omp/pickBinaryPath",
     /** Kanban board: list all tasks, links, comments, runs. */
     kanbanList: "pi-desktop/kanban/list",
     /** Kanban board: create a user card (lands in triage/todo/ready per rules). */
@@ -529,8 +521,6 @@ export const IPC = {
     kanbanComment: "pi-desktop/kanban/comment",
     /** Kanban board: archive or unarchive a task. */
     kanbanArchive: "pi-desktop/kanban/archive",
-    /** Kanban board: list runs for a task. */
-    kanbanListRuns: "pi-desktop/kanban/listRuns",
     /** Kanban board: get + set settings (enabled, caps). */
     kanbanSettingsGet: "pi-desktop/kanban/settings/get",
     /** Kanban board: get + set settings. */
@@ -543,6 +533,10 @@ export const IPC = {
     ompUserProfileGet: "pi-desktop/omp/user-profile/get",
     /** Write the cross-project user-profile text to ~/.omp/agent/USER.md (cap 1024 chars). */
     ompUserProfileSet: "pi-desktop/omp/user-profile/set",
+    /** Read project-scoped memory from <workspace>/.omp/MEMORY.md. */
+    ompProjectMemoryGet: "pi-desktop/omp/project-memory/get",
+    /** Write project-scoped memory to <workspace>/.omp/MEMORY.md (cap 16 KiB). */
+    ompProjectMemorySet: "pi-desktop/omp/project-memory/set",
     /** Raven chat destination: get + set settings (enabled, site URL). */
     ravenSettingsGet: "pi-desktop/raven/settings/get",
     ravenSettingsSet: "pi-desktop/raven/settings/set",

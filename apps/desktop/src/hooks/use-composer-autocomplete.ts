@@ -6,6 +6,7 @@ import {
   fileReferenceLabel,
   formatCommandInsert,
   formatFileInsert,
+  formatSkillInsert,
   fuzzyMatchCommand,
   fuzzyMatchPath,
   selectBestMatches,
@@ -220,7 +221,7 @@ export function useComposerAutocomplete({
   useEffect(() => {
     if (!trigger || dismissed) return;
     const now = Date.now();
-    if (trigger.mode === "slash") {
+    if (trigger.mode === "slash" || trigger.mode === "skill") {
       if (
         commandsCache &&
         commandsCache.key === workspaceKey &&
@@ -278,6 +279,11 @@ export function useComposerAutocomplete({
     if (trigger.mode === "slash") {
       return commands ? filterCommands(commands, trigger.query) : [];
     }
+    if (trigger.mode === "skill") {
+      // Filter to skill-kind commands only; insert as /skill:<name>
+      const skills = commands ? commands.filter((c) => c.kind === "skill") : null;
+      return skills ? filterCommands(skills, trigger.query) : [];
+    }
     return files ? filterFiles(files.entries, trigger.query) : [];
   }, [trigger, dismissed, commands, files]);
 
@@ -289,7 +295,7 @@ export function useComposerAutocomplete({
 
   const sourceReady =
     !!trigger &&
-    (trigger.mode === "slash" ? commands !== null : files !== null);
+    (trigger.mode === "slash" || trigger.mode === "skill" ? commands !== null : files !== null);
   const open = !!trigger && !dismissed && sourceReady;
 
   const close = useCallback(() => {
@@ -319,9 +325,11 @@ export function useComposerAutocomplete({
         };
       }
       const insert =
-        item.kind === "command"
-          ? formatCommandInsert(item.command.name)
-          : formatFileInsert(item.entry.path, item.entry.kind);
+        item.kind === "command" && trigger?.mode === "skill"
+          ? formatSkillInsert(item.command.name)
+          : item.kind === "command"
+            ? formatCommandInsert(item.command.name)
+            : formatFileInsert(item.entry.path, item.entry.kind);
       return applyCompletion(value, trigger, insert);
     },
     [trigger, items, value],
