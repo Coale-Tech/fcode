@@ -76,6 +76,7 @@ export const SETTINGS_NAV: SettingsNavEntry[] = [
       "settings.navLayoutTabs",
       "settings.navLayoutRail",
       "settings.navLayoutIsland",
+      "settings.navLayoutCaption",
       "settings.closeBehaviorTitle",
       "settings.closeBehaviorTray",
       "settings.closeBehaviorQuit",
