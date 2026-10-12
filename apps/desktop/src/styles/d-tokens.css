@@ -1,7 +1,29 @@
 /* Direction D — dimensions, type scale and the re-pointing of the existing ladder.
    Values come from design kit-d/D-SPEC.md. Loaded right after tokens.css so
    theme-overrides.css (plugin themes) still wins. */
+
+/* ── Blue semantic ramp (F01): remap espresso violet → FileBird blue ─── */
+/* Light theme (and :root default): overrides espresso.css purple violet* */
 :root {
+  --surface-violet-1: #F2F9FD;
+  --surface-violet-2: #E4F2FB;
+  --outline-violet-1: #D5EAF7;
+  --outline-violet-2: #BFDFF2;
+  --outline-violet-3: #9CCDEA;
+  --outline-violet-4: #6BB3DF;
+  --ink-violet-5:     #4F9CCB;
+  --ink-violet-6:     #2E8AC2;
+  --ink-violet-7:     #1F6FA3;
+  --ink-violet-8:     #165A88;
+
+  /* da* = direction-accent aliases used by D primitives and page fragments */
+  --da:     var(--ds-accent);        /* approved fill: #2578ab (light) */
+  --da-h:   var(--ds-accent-hover);  /* approved hover: #1f6fa3 (light) */
+  --da-sub: var(--surface-violet-2); /* selection tint: #E4F2FB (light) */
+  --da-txt: var(--ink-violet-8);     /* selection ink:  #165A88 (light) */
+  --da-bdr: var(--outline-violet-3); /* selection ring: #9CCDEA (light) */
+
+  /* Direction D component dimensions */
   --d-navbar-h: 48px;
   --d-ph-h: 48px;
   --d-mini-h: 32px;
@@ -21,23 +43,67 @@
   --d-text-chat: 14px;
 
   /* Component metrics (tokenised so component CSS uses var() not literals) */
-  --d-toggle-w:      28px;   /* switch track width  */
-  --d-toggle-h:      16px;   /* switch track height */
-  --d-toggle-knob:   12px;   /* knob diameter       */
-  --d-toggle-inset:   2px;   /* knob offset from track edge */
-  --d-segment-track: 28px;   /* segmented-control track height */
-  --d-segment-item:  24px;   /* segmented-control item height  */
-  --d-checkbox:      14px;   /* checkbox size */
-  --d-textarea-min:  64px;   /* textarea min-height */
+  /* F06: 32×18 track / 14px knob / 2px inset / translate = 32-14-4 = 14px */
+  --d-toggle-w:      32px;
+  --d-toggle-h:      18px;
+  --d-toggle-knob:   14px;
+  --d-toggle-inset:   2px;
+  --d-segment-track: 28px;
+  --d-segment-item:  24px;
+  --d-checkbox:      14px;
+  --d-textarea-min:  64px;
 
   /* Redirect design-system ladder to Direction D values */
   --ds-toolbar-height:        var(--d-navbar-h);
   --ds-btn-height:            var(--d-ctrl);
   --ds-btn-radius:            var(--d-r-ctrl);
-  --ds-btn-radius-sm:         6px;
+  --ds-btn-radius-sm:         var(--d-r-ctrl);  /* F03: sm also r8 */
+  --ds-btn-gap:               5px;              /* F03: gap5 */
+  --ds-btn-pad-x:             10px;             /* F03: pad10 */
+  --ds-btn-pad-x-sm:          7px;              /* F03: small pad7 */
   --ds-btn-font-size:         var(--d-text);
   --ds-btn-font-size-sm:      var(--d-text-sm);
   --ds-btn-font-weight:       var(--font-weight-medium);
   --ds-field-height:          var(--d-ctrl);
   --ds-settings-radius-ctrl:  var(--d-r-ctrl);
+  /* Border tokens (D.css:40-41) */
+  --d-border:                 var(--outline-gray-2);
+  --d-border-ctrl:            var(--outline-gray-3);
+}
+
+/* Dark theme: remap violet to FileBird dark blues */
+:root[data-theme="dark"] {
+  --surface-violet-1: #152F43;
+  --surface-violet-2: #1D4764;
+  --outline-violet-1: #1F4A66;
+  --outline-violet-2: #27597A;
+  --outline-violet-3: #327198;
+  --outline-violet-4: #3F86B3;
+  --ink-violet-5:     #4A9FD0;
+  --ink-violet-6:     #56B9F2;
+  --ink-violet-7:     #7CC6F2;
+  --ink-violet-8:     #92D2F8;
+  /* off-state switch track */
+  --ds-switch-track-off:       var(--surface-alpha-gray-2);
+  --ds-switch-track-off-hover: var(--surface-alpha-gray-3);
+  /* knob-off stays base (near-black in dark) */
+  --ds-switch-knob-off:        var(--surface-base);
+}
+
+/* Light theme: blue ramp + switch tokens (each appears exactly once per theme) */
+:root[data-theme="light"] {
+  --surface-violet-1: #F2F9FD;
+  --surface-violet-2: #E4F2FB;
+  --outline-violet-1: #D5EAF7;
+  --outline-violet-2: #BFDFF2;
+  --outline-violet-3: #9CCDEA;
+  --outline-violet-4: #6BB3DF;
+  --ink-violet-5:     #4F9CCB;
+  --ink-violet-6:     #2E8AC2;
+  --ink-violet-7:     #1F6FA3;
+  --ink-violet-8:     #165A88;
+  /* F06: off-track = gray3 (D.css:827) / knob = base (D.css:837) */
+  --ds-switch-track-off:       var(--surface-gray-3);
+  --ds-switch-track-off-hover: var(--surface-gray-4);
+  --ds-switch-knob-off:        var(--surface-base);
 }

@@ -87,7 +87,6 @@
   --ds-settings-header-desc-ink:      var(--ink-gray-6);
   /* Radii: numeric steps, no named --radius-sm/-md/-lg (FD3) */
   --ds-settings-radius-item:          var(--radius-1);  /* 4px — nav items, controls */
-  --ds-settings-radius-ctrl:          var(--radius-1);  /* 4px — buttons, inputs, selects */
   --ds-field-inset-bg:      var(--surface-gray-2);
   --ds-field-inset-focus-bg:var(--surface-elevation-2);
 
@@ -161,7 +160,7 @@
   --ds-btn-font-weight:            var(--text-base--font-weight);
   --ds-btn-tracking:               var(--text-base--letter-spacing);
   --ds-btn-leading:                var(--text-base--line-height);
-  --ds-field-height:               calc(18px + var(--text-base) * var(--leading-body));
+  /* --ds-field-height now live in d-tokens.css as var(--d-ctrl) */
   --ds-work-panel-toggle-size:     28px;
   --ds-work-panel-toggle-inset:    12px;
   --ds-work-panel-control-gap:     4px;
@@ -212,10 +211,7 @@
   /* Modal/permission veil */
   --ds-modal-veil: color-mix(in oklab, var(--surface-base) 78%, transparent);
 
-  /* Switch track/knob (each token must appear exactly twice: once per theme) */
-  --ds-switch-track-off:       var(--surface-alpha-gray-2);
-  --ds-switch-track-off-hover: var(--surface-alpha-gray-3);
-  --ds-switch-knob-off:        var(--ink-gray-6);
+  /* Switch track/knob: track-off/knob-off live in d-tokens.css per-theme; knob-on stays here */
   /* knob-on must pass 3:1 on --ds-accent (#42a2d9); white is 2.84:1 (fail).
      --ds-accent-foreground (#0a1f2e) gives 5.63:1 (pass). */
   --ds-switch-knob-on:         var(--ds-accent-foreground);
@@ -249,10 +245,7 @@
   /* Work panel inset — a token, so contributed themes can move it (D418) */
   --ds-bg-dock:       var(--surface-gray-1);
 
-  /* Switch track/knob (each token must appear exactly twice: once per theme) */
-  --ds-switch-track-off:       var(--surface-alpha-gray-2);
-  --ds-switch-track-off-hover: var(--surface-alpha-gray-3);
-  --ds-switch-knob-off:        var(--ink-gray-6);
+  /* Switch track/knob: track-off/knob-off live in d-tokens.css per-theme; knob-on stays here */
   --ds-switch-knob-on:         var(--surface-base);
 
   /* Mermaid diagram canvas */
@@ -314,7 +307,7 @@
     feature works without a page reload. Other Espresso text-* are fixed px;
     only Fcode-specific steps and the base are scaled here.
   */
-  --text-base: calc(14px * var(--font-scale));
+  --text-base: calc(13px * var(--font-scale));
   --text-3xs:       calc(10.5px * var(--font-scale));
   --text-xs-plus:   calc(11.5px * var(--font-scale));
   --text-sm-plus:   calc(12.5px * var(--font-scale));
