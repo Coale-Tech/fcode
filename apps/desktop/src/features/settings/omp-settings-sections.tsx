@@ -7,7 +7,7 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { OmpAgentEntry, OmpModel, OmpSettingsValues } from "@pi-desktop/shared";
+import type { OmpAgentEntry, OmpAcpInfoResult, OmpModel, OmpSettingsValues } from "@pi-desktop/shared";
 import { useAppStore } from "../../stores/app-store";
 import { api } from "../../lib/api";
 import { Button, Input, SettingsToggle } from "../../components/ui";
@@ -21,10 +21,66 @@ import { SkillJourneySection } from "../../components/settings/SkillJourneySecti
 import { OmpUsageSection } from "../../components/settings/OmpUsageSection";
 import { OmpWorktreeSection } from "../../components/settings/OmpWorktreeSection";
 import { OmpExtensionsSection } from "../../components/settings/OmpExtensionsSection";
+import { HooksSection } from "./HooksSection";
+import { CommandsSection } from "./CommandsSection";
+import { MaintenanceSection } from "./MaintenanceSection";
 
 export type OmpSettingsPart = "defaults" | "agents" | "tools" | "extensions" | "memory";
 
-/** Renders one slice of omp settings; the Settings rail splits AI into several pages. */
+/** ACP (Agent Client Protocol) server info card — shows launch command and editor snippets. */
+function AcpInfoSection() {
+  const { t } = useTranslation();
+  const [info, setInfo] = useState<OmpAcpInfoResult | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
+
+  const load = async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      setInfo(await api.ompAcpInfo());
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copy = (text: string, key: string) => {
+    void navigator.clipboard.writeText(text).then(() => {
+      setCopied(key);
+      setTimeout(() => setCopied(null), 1500);
+    });
+  };
+
+  return (
+    <SettingsCard title={t("nonRpcModes.acpTitle")}>
+      <SettingsRow title={t("nonRpcModes.acpTitle")} description={t("nonRpcModes.acpDesc")}>
+        <Button type="button" size="sm" variant="secondary" disabled={loading} onClick={() => void load()}>
+          {loading ? "…" : "Load info"}
+        </Button>
+      </SettingsRow>
+      {info && (
+        <>
+          <SettingsRow title={t("nonRpcModes.acpCopyCommand")} description={info.command}>
+            <Button type="button" size="sm" variant="secondary" onClick={() => copy(info.command, "cmd")}>
+              {copied === "cmd" ? t("nonRpcModes.acpCopied") : t("nonRpcModes.acpCopyCommand")}
+            </Button>
+          </SettingsRow>
+          <SettingsRow title={t("nonRpcModes.acpCopyZed")} description="">
+            <Button type="button" size="sm" variant="secondary" onClick={() => copy(info.zedSnippet, "zed")}>
+              {copied === "zed" ? t("nonRpcModes.acpCopied") : t("nonRpcModes.acpCopyZed")}
+            </Button>
+          </SettingsRow>
+          <SettingsRow title={t("nonRpcModes.acpCopyJetBrains")} description="">
+            <Button type="button" size="sm" variant="secondary" onClick={() => copy(info.jetbrainsSnippet, "jb")}>
+              {copied === "jb" ? t("nonRpcModes.acpCopied") : t("nonRpcModes.acpCopyJetBrains")}
+            </Button>
+          </SettingsRow>
+        </>
+      )}
+    </SettingsCard>
+  );
+}
+
 export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
   const { t } = useTranslation();
   const projectPath = useAppStore((s) => s.workspace?.path ?? null);
@@ -493,6 +549,43 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
 
       {part === "tools" && (
         <>
+        {/* ── Opt-in Tools ─────────────────────────────────────────── */}
+        <SettingsCard title={t("settings.ompOptInToolsGroup")}>
+          <SettingsRow title="AST Grep" description="Structural AST search using ast-grep patterns. Default off; enable if the model should perform structural code searches.">
+            <SettingsToggle
+              checked={omp["astGrep.enabled"] === true}
+              label="AST Grep"
+              onChange={() => void save({ "astGrep.enabled": !(omp["astGrep.enabled"] === true) })}
+            />
+          </SettingsRow>
+          <SettingsRow title="Checkpoint / Rewind" description="Let the agent save and restore conversation checkpoints. Default off; useful for exploratory sessions.">
+            <SettingsToggle
+              checked={omp["checkpoint.enabled"] === true}
+              label="Checkpoint / Rewind"
+              onChange={() => void save({ "checkpoint.enabled": !(omp["checkpoint.enabled"] === true) })}
+            />
+          </SettingsRow>
+          <SettingsRow title="GitHub CLI" description="GitHub operations (issues, PRs, Actions, search, checkout). Default off; requires gh CLI in PATH.">
+            <SettingsToggle
+              checked={omp["github.enabled"] === true}
+              label="GitHub CLI"
+              onChange={() => void save({ "github.enabled": !(omp["github.enabled"] === true) })}
+            />
+          </SettingsRow>
+          <SettingsRow title="Security Scan" description="OMP-native security scan planning and the security:// resource namespace. Default off.">
+            <SettingsToggle
+              checked={omp["security.enabled"] === true}
+              label="Security Scan"
+              onChange={() => void save({ "security.enabled": !(omp["security.enabled"] === true) })}
+            />
+          </SettingsRow>
+        </SettingsCard>
+        </>
+      )}
+
+
+      {part === "tools" && (
+        <>
         {/* ── MCP ──────────────────────────────────────────────────── */}
         <SettingsCard title={t("settings.ompMcpGroup")}>
           <SettingsRow title={t("settings.ompMcpEnableProjectConfig")} description={t("settings.ompMcpEnableProjectConfigDesc")}>
@@ -703,10 +796,26 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
         </>
       )}
 
+      {part === "agents" && (
+        <>
+        {/* ── Maintenance: cleanse + autoresearch ──────────────────── */}
+        <MaintenanceSection />
+        </>
+      )}
+
       {part === "extensions" && (
         <>
         {/* ── Extensions ───────────────────────────────────────────── */}
         <OmpExtensionsSection />
+        </>
+      )}
+
+      {part === "extensions" && (
+        <>
+        {/* ── Hooks & Commands ─────────────────────────────────────── */}
+        <HooksSection />
+        <CommandsSection />
+        <AcpInfoSection />
         </>
       )}
     </>

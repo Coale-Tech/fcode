@@ -36,7 +36,7 @@ const THEME = {
   brightWhite: "#fafafa",
 };
 
-type Tab = { key: number; cwd?: string };
+type Tab = { key: number; cwd?: string; initialCommand?: string };
 
 /** FileBird's IPC errors carry a JSON `{code, message}` payload in the message. */
 function errorMessage(cause: unknown): string {
@@ -57,7 +57,7 @@ type DataEvent = { id: string; data: Uint8Array };
 type ExitEvent = { id: string; code: number | null; signal: string | null };
 
 /** One shell: xterm here, the PTY in the main process (FileBird's TerminalService). */
-function TerminalInstance({ cwd, visible }: { cwd?: string; visible: boolean }) {
+function TerminalInstance({ cwd, initialCommand, visible }: { cwd?: string; initialCommand?: string; visible: boolean }) {
   const holder = useRef<HTMLDivElement>(null);
   const refit = useRef<() => void>(() => undefined);
 
@@ -141,6 +141,7 @@ function TerminalInstance({ cwd, visible }: { cwd?: string; visible: boolean }) 
       .then((opened) => {
         if (disposed) return void api.terminalClose(opened.id);
         id = opened.id;
+        if (initialCommand) void api.terminalWrite(opened.id, new TextEncoder().encode(initialCommand + '\n'));
         fitToBox();
         terminal.focus();
       })
@@ -222,6 +223,18 @@ export function TerminalPanel({ visible }: { visible: boolean }) {
     return () => window.removeEventListener("keydown", onKey, true);
   }, []);
 
+  const pendingTuiCommand = useAppStore((s) => s.pendingTuiCommand);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: pendingTuiCommand is the trigger
+  useEffect(() => {
+    if (!pendingTuiCommand) return;
+    useAppStore.setState({ pendingTuiCommand: null });
+    const state = useAppStore.getState();
+    const cwd = state.workspace?.path || undefined;
+    const key = nextKey.current++;
+    setTabs((current) => [...current, { key, cwd, initialCommand: pendingTuiCommand }]);
+    setActive(key);
+  }, [pendingTuiCommand]);
+
   const shown = visible && open;
   return (
     <div className="terminal-panel" hidden={!shown} data-terminal-panel>
@@ -245,7 +258,7 @@ export function TerminalPanel({ visible }: { visible: boolean }) {
         </button>
       </div>
       {tabs.map((tab) => (
-        <TerminalInstance key={tab.key} cwd={tab.cwd} visible={shown && tab.key === active} />
+        <TerminalInstance key={tab.key} cwd={tab.cwd} initialCommand={tab.initialCommand} visible={shown && tab.key === active} />
       ))}
     </div>
   );

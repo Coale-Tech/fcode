@@ -93,5 +93,6 @@ export function createInitialState(): AppStateData {
     kanbanEnabled: false,
     ravenEnabled: false,
     terminalOpen: false,
+    pendingTuiCommand: null,
   };
 }

@@ -41,9 +41,13 @@ import type {
   OmpUserProfileSetResult,
   OmpAgentListResult,
   OmpAgentSource,
+  OmpSessionGetTreeResult,
+  OmpSessionMessagesResult,
+  OmpSessionMessagesPageResult,
+  OmpNewSessionResult,
+  OmpSwitchSessionResult,
 } from "@pi-desktop/shared";
 import type { OmpSkillCuratorStatusResult, OmpSkillCuratorMutateResult, OmpSkillProposalListResult, OmpSkillProposalActResult, OmpSkillJourneyResult } from "@pi-desktop/shared";
-import { existsSync } from "node:fs";
 import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -52,25 +56,14 @@ import { promisify } from "node:util";
 import { shell } from "electron";
 import type { AgentSidecar } from "../agent-sidecar";
 import { desktopDataDir } from "../data-paths.ts";
+import { ompAgentDir } from "../omp-agent-dir.js";
+import { resolveOmpBin, ompChildEnv, appResourcesPath } from "../omp-binary";
 import { skillPackDiscard, skillPackOpenPr, skillPackStatus } from "../skill-packs";
 import { curatorPin, curatorRestore, curatorStatus } from "../skill-curator.ts";
 import { approveProposal, getJourneyEvents, listPendingProposals, rejectProposal } from "../skill-review.ts";
 import type { IpcRegistrar } from "./types";
 
 const execFileP = promisify(execFile);
-
-/**
- * Resolve the omp binary path using the same priority order as the bridge:
- * OMP_BIN env → <resourcesPath>/bin/omp → "omp" on PATH.
- */
-function resolveOmpBin(): string {
-  if (process.env.OMP_BIN) return process.env.OMP_BIN;
-  const rp = process.resourcesPath ?? "";
-  for (const p of [join(rp, "bin", "omp"), join(rp, "bin", "omp.exe")]) {
-    if (existsSync(p)) return p;
-  }
-  return "omp";
-}
 
 /** Parse a skills.json; returns empty record on missing/invalid file. */
 async function readSkillsManifest(file: string): Promise<Record<string, string>> {
@@ -310,12 +303,11 @@ async function readAgentDir(dir: string, source: OmpAgentSource): Promise<OmpAge
  * Agents with the same name from lower-priority sources are marked `shadowed`.
  */
 async function listEffectiveAgents(projectPath: string | null): Promise<OmpAgentListResult> {
-  const home = homedir();
-  const fcodeAgentsDir = join(process.resourcesPath ?? "", "fcode-agents", "agents");
+  const fcodeAgentsDir = join(appResourcesPath(), "fcode-agents", "agents");
 
   const [projectAgents, userAgents, fcodeAgents] = await Promise.all([
     projectPath ? readAgentDir(join(projectPath, ".omp", "agents"), "project") : Promise.resolve([]),
-    readAgentDir(join(home, ".omp", "agent", "agents"), "user"),
+    readAgentDir(join(ompAgentDir(), "agents"), "user"),
     readAgentDir(fcodeAgentsDir, "fcode"),
   ]);
 
@@ -493,10 +485,47 @@ export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpc
     return sidecar.call<OmpSessionBranchMessagesResult>("omp.session.branchMessages");
   });
 
+  // ── omp.session.getTree ────────────────────────────────────────────────────
+  handle(IPC.invoke.ompSessionGetTree, async () => {
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<OmpSessionGetTreeResult>("omp.session.getTree");
+  });
+
+  // ── omp.session.getMessages ────────────────────────────────────────────────
+  handle(IPC.invoke.ompSessionGetMessages, async () => {
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<OmpSessionMessagesResult>("omp.session.getMessages");
+  });
+
+  // ── omp.session.getMessagesPage ────────────────────────────────────────────
+  handle(IPC.invoke.ompSessionGetMessagesPage, async (input: { cursor?: unknown; limit?: unknown } = {}) => {
+    const sidecar = getSidecar() ?? unavailable();
+    const params: Record<string, unknown> = {};
+    if (typeof input.cursor === "string" && input.cursor) params.cursor = input.cursor;
+    if (typeof input.limit === "number" && input.limit > 0) params.limit = Math.floor(input.limit);
+    return sidecar.call<OmpSessionMessagesPageResult>("omp.session.getMessagesPage", params);
+  });
+
+  // ── omp.session.newSession ─────────────────────────────────────────────────
+  handle(IPC.invoke.ompNewSession, async (input: { parentSession?: unknown } = {}) => {
+    const sidecar = getSidecar() ?? unavailable();
+    const params: Record<string, unknown> = {};
+    if (typeof input.parentSession === "string" && input.parentSession) params.parentSession = input.parentSession;
+    return sidecar.call<OmpNewSessionResult>("omp.session.newSession", params);
+  });
+
+  // ── omp.session.switchSession ──────────────────────────────────────────────
+  handle(IPC.invoke.ompSwitchSession, async (input: { sessionPath?: unknown } = {}) => {
+    const sessionPath = typeof input?.sessionPath === "string" ? input.sessionPath.trim() : "";
+    if (!sessionPath) invalid("sessionPath required");
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<OmpSwitchSessionResult>("omp.session.switchSession", { sessionPath });
+  });
+
   // ── omp.skills.installed.list ──────────────────────────────────────────────
-  // Reads ~/.omp/agent/skills.json + skills.lock.json directly — no omp RPC.
+  // Reads <agentDir>/skills.json + skills.lock.json directly — no omp RPC.
   handle(IPC.invoke.ompInstalledSkillsList, async (): Promise<OmpInstalledSkillsListResult> => {
-    const agentDir = join(homedir(), ".omp", "agent");
+    const agentDir = ompAgentDir();
     const [manifest, lock] = await Promise.all([
       readSkillsManifest(join(agentDir, "skills.json")),
       readSkillsLock(join(agentDir, "skills.lock.json")),
@@ -556,7 +585,7 @@ export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpc
   // Shells out to `omp stats --json` and returns a compact subset.
   handle(IPC.invoke.ompHistoricalStats, async (): Promise<OmpHistoricalStatsResult> => {
     const bin = resolveOmpBin();
-    const { stdout } = await execFileP(bin, ["stats", "--json"], { timeout: 30_000 });
+    const { stdout } = await execFileP(bin, ["stats", "--json"], { timeout: 30_000, env: ompChildEnv() });
     // omp stats --json emits one JSON object to stdout after syncing sessions.
     // It may also write sync progress to stderr; we ignore that.
     const raw = JSON.parse(stdout.trim()) as {
@@ -833,19 +862,19 @@ export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpc
   });
 
   // ── omp.user-profile.get ──────────────────────────────────────────────────
-  // Reads ~/.omp/agent/USER.md; returns empty string when absent.
+  // Reads <agentDir>/USER.md; returns empty string when absent.
   handle(IPC.invoke.ompUserProfileGet, async (): Promise<OmpUserProfileGetResult> => {
-    const text = await readUserProfile(join(homedir(), ".omp", "agent"));
+    const text = await readUserProfile(ompAgentDir());
     return { text };
   });
 
   // ── omp.user-profile.set ──────────────────────────────────────────────────
-  // Writes ~/.omp/agent/USER.md atomically (temp+rename); caps at 1024 chars.
+  // Writes <agentDir>/USER.md atomically (temp+rename); caps at 1024 chars.
   handle(IPC.invoke.ompUserProfileSet, async (
     input: { text?: unknown } = {},
   ): Promise<OmpUserProfileSetResult> => {
     if (typeof input?.text !== "string") invalid("text (string) required");
-    return writeUserProfile(join(homedir(), ".omp", "agent"), input.text as string);
+    return writeUserProfile(ompAgentDir(), input.text as string);
   });
 
   // ── omp.project-memory.get ────────────────────────────────────────────────

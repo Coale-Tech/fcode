@@ -19,21 +19,6 @@ import { minimalChildEnv } from "../child-process-env";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-/** Verbs the fcode_bench_run host tool may invoke. "start" stays in BenchPage. */
-export const ALLOWED_BENCH_VERBS = new Set([
-  "migrate",
-  "clear-cache",
-  "build",
-  "build-studio-app",
-  "list-apps",
-  "install-app",
-]);
-
-/** Returns true when the verb is safe for the fcode_bench_run host tool. */
-export function shouldAutoApproveVerb(verb: string): boolean {
-  return ALLOWED_BENCH_VERBS.has(verb);
-}
-
 /** Maximum automatic restarts for the studio watcher (E21). */
 export const WATCHER_MAX_RESTARTS = 5;
 

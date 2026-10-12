@@ -21,15 +21,16 @@ import type { PluginRuntime } from "../plugin-runtime";
 import type { UserMcpRuntime } from "../user-mcp";
 import type { RuntimeState } from "./context";
 import type { FinishTurn } from "./plans";
-import { benchSupervisor, ALLOWED_BENCH_VERBS, benchFailureText } from "../bench/supervisor";
-import { isReadOnlyBenchMethod } from "../bench/approval";
-import { studioExpression } from "../bench/studio-actions";
-import { buildRunTestsArgs, runTestsReport, SITE_RE } from "../bench/run-tests";
-import { pythonLiteral } from "../bench/python-literal";
-import { shell } from "electron";
-import { parseAllowedExternalUrl } from "../safe-open-external";
-import type { KanbanBoard } from "./kanban-core";
+import { benchSupervisor, benchFailureText } from "../bench/supervisor";
 import {
+  ALLOWED_BENCH_VERBS,
+  isReadOnlyBenchMethod,
+  studioExpression,
+  buildRunTestsArgs,
+  runTestsReport,
+  SITE_RE,
+  pythonLiteral,
+  type KanbanBoard,
   createTask as kanbanCreateTask,
   completeTask as kanbanCompleteTask,
   blockTask as kanbanBlockTask,
@@ -39,7 +40,9 @@ import {
   agentCardCountForSession,
   recomputeReady as kanbanRecomputeReady,
   type KanbanBlockKind,
-} from "./kanban-core";
+} from "@pi-desktop/host-runtime";
+import { shell } from "electron";
+import { parseAllowedExternalUrl } from "../safe-open-external";
 
 export type SidecarRuntimeDependencies = {
   runtimeState: RuntimeState;

@@ -4,8 +4,9 @@
  * No Electron direct imports; all side effects come through the injected deps.
  */
 import { randomUUID } from "node:crypto";
-import type { KanbanBoard, KanbanTask } from "./kanban-core";
 import {
+  type KanbanBoard,
+  type KanbanTask,
   claimTask,
   crashTask,
   reclaimTask,
@@ -14,7 +15,7 @@ import {
   recomputeReady,
   completeTask,
   incrementNudge,
-} from "./kanban-core";
+} from "@pi-desktop/host-runtime";
 import type { KanbanSettings } from "./kanban-settings";
 
 export type KanbanRunnerDeps = {

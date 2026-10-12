@@ -185,6 +185,8 @@ export type AppState = {
   ravenEnabled: boolean;
   /** Integrated terminal panel under chat; Ctrl+` and the workspace bar toggle it. */
   terminalOpen: boolean;
+  /** Pending command to run in a new integrated-terminal tab; consumed by TerminalPanel. */
+  pendingTuiCommand: string | null;
   /** Bench log view follows new output while true; toggleFollowLog (Mod+Shift+B) flips it. */
   benchLogFollowTail: boolean;
   /** Tab ids come from the shared settings index. */
@@ -363,6 +365,7 @@ export type AppState = {
   setKanbanEnabled: (enabled: boolean) => void;
   setRavenEnabled: (enabled: boolean) => void;
   toggleTerminal: () => void;
+  openTuiTerminal: (cmd: string) => void;
   navBack: () => void;
   navForward: () => void;
   canNavBack: () => boolean;

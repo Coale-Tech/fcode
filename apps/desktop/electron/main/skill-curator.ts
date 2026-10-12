@@ -4,7 +4,7 @@
  * and cannot be imported here). Provides status, restore, and pin operations.
  */
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
+import { ompAgentDir } from "./omp-agent-dir.js";
 import { join } from "node:path";
 import type { OmpSkillCuratorEntry, OmpSkillCuratorMutateResult, OmpSkillCuratorStatusResult } from "@pi-desktop/shared";
 
@@ -71,7 +71,7 @@ export async function curatorRestore(dataDir: string, name: string): Promise<Omp
     dest = readFileSync(join(archiveDir, "_origin"), "utf8").trim();
   } catch {
     // Fallback: restore to managed-skills (safe default)
-    dest = join(homedir(), ".omp", "agent", "managed-skills", name);
+    dest = join(ompAgentDir(), "managed-skills", name);
   }
 
   try {

@@ -15,8 +15,7 @@ import { register } from "node:module";
 register(new URL("./helpers/ts-import-hooks.mjs", import.meta.url));
 
 const { createKanbanWiring } = await import("../electron/main/runtime/kanban-wiring.ts");
-const { createTask, emptyBoard } = await import("../electron/main/runtime/kanban-core.ts");
-const { loadBoard, saveBoard } = await import("../electron/main/runtime/kanban-store.ts");
+const { createTask, emptyBoard, loadBoard, saveBoard } = await import("@pi-desktop/host-runtime");
 const { writeKanbanSettings } = await import("../electron/main/runtime/kanban-settings.ts");
 const { IPC } = await import("../../../packages/shared/src/protocol.ts");
 

@@ -140,6 +140,7 @@ import type {
   HindsightLocalState,
   ToolApprovalMode,
   OmpSettingsValues,
+  OmpSettingDescriptor,
   OmpSessionStatsResult,
   OmpShareResult,
   OmpSubagentListResult,
@@ -173,6 +174,23 @@ import type {
   OmpSkillProposalListResult,
   OmpSkillProposalActResult,
   OmpSkillJourneyResult,
+  OmpSessionGetTreeResult,
+  OmpSessionMessagesResult,
+  OmpSessionMessagesPageResult,
+  OmpNewSessionResult,
+  OmpSwitchSessionResult,
+  OmpHooksListResult,
+  OmpHookMutateResult,
+  OmpCommandMutateResult,
+  OmpCommandReadResult,
+  OmpCleanseResult,
+  OmpAutoresearchResult,
+  OmpCliSubcommand,
+  OmpCliRunResult,
+  OmpCliOutputEvent,
+  OmpCliDoneEvent,
+  OmpTuiOpenResult,
+  OmpAcpInfoResult,
 } from "@pi-desktop/shared";
 import {
   defaultCommandShellForPlatform,
@@ -1680,6 +1698,8 @@ export const api = {
   /** Persist omp settings groups (task/eval/browser/collab); restarts the agent sidecar. */
   ompSettingsSet: (patch: OmpSettingsValues) =>
     invoke<OmpSettingsValues>(IPC.invoke.ompSettingsSet, patch as Record<string, unknown>),
+  /** Full omp settings manifest — descriptor array generated at build time by slice A. */
+  ompSettingsManifest: () => invoke<OmpSettingDescriptor[]>(IPC.invoke.ompSettingsManifest),
   /** List login providers known to omp. */
   ompLoginProviders: () =>
     invoke<OmpLoginProvidersResult>(IPC.invoke.ompLoginProviders),
@@ -1838,6 +1858,30 @@ export const api = {
   /** Enable or disable an extension. Updates disabledExtensions and restarts sidecar. */
   ompExtensionSetEnabled: (id: string, enabled: boolean) =>
     invoke<OmpSettingsValues>(IPC.invoke.ompExtensionSetEnabled, { id, enabled }),
+  /** List hooks from user and optionally project omp config dirs. */
+  ompHooksList: (projectPath?: string) =>
+    invoke<OmpHooksListResult>(IPC.invoke.ompHooksList, { projectPath }),
+  /** Create a hook script in the user or project omp config dir. */
+  ompHooksCreate: (tool: string, hookType: "pre" | "post", ext: string, content: string, scope: "user" | "project", projectPath?: string) =>
+    invoke<OmpHookMutateResult>(IPC.invoke.ompHooksCreate, { tool, hookType, ext, content, scope, projectPath }),
+  /** Edit (overwrite) an existing hook script. */
+  ompHooksEdit: (path: string, content: string, scope: "user" | "project", projectPath?: string) =>
+    invoke<OmpHookMutateResult>(IPC.invoke.ompHooksEdit, { path, content, scope, projectPath }),
+  /** Delete a hook script. */
+  ompHooksDelete: (path: string, scope: "user" | "project", extensionId?: string, projectPath?: string) =>
+    invoke<OmpHookMutateResult>(IPC.invoke.ompHooksDelete, { path, scope, extensionId, projectPath }),
+  /** Create a user slash-command markdown file. */
+  ompCommandsCreate: (name: string, content: string, scope: "user" | "project", projectPath?: string) =>
+    invoke<OmpCommandMutateResult>(IPC.invoke.ompCommandsCreate, { name, content, scope, projectPath }),
+  /** Edit (overwrite) a slash-command markdown file. */
+  ompCommandsEdit: (name: string, content: string, scope: "user" | "project", projectPath?: string) =>
+    invoke<OmpCommandMutateResult>(IPC.invoke.ompCommandsEdit, { name, content, scope, projectPath }),
+  /** Delete a slash-command markdown file. */
+  ompCommandsDelete: (name: string, scope: "user" | "project", projectPath?: string) =>
+    invoke<OmpCommandMutateResult>(IPC.invoke.ompCommandsDelete, { name, scope, projectPath }),
+  /** Read the markdown content of a user/project slash-command file (for edit pre-fill). */
+  ompCommandRead: (name: string, scope: "user" | "project", projectPath?: string) =>
+    invoke<OmpCommandReadResult>(IPC.invoke.ompCommandRead, { name, scope, projectPath }),
   /** Run a shell command in omp's session cwd; bridge emits output as a transcript system block. */
   ompBash: (command: string) =>
     invoke<OmpBashResult>(IPC.invoke.ompBash, { command }),
@@ -1938,4 +1982,51 @@ export const api = {
   /** Write project-scoped memory to <workspace>/.omp/MEMORY.md (server caps at 16 KiB). */
   ompProjectMemorySet: (workspacePath: string, text: string) =>
     invoke<OmpUserProfileSetResult>(IPC.invoke.ompProjectMemorySet, { workspacePath, text }),
+  /** Get the hierarchical session tree (all branches and child sessions). */
+  ompSessionGetTree: () =>
+    invoke<OmpSessionGetTreeResult>(IPC.invoke.ompSessionGetTree),
+  /** Get all messages in the current omp session (no paging). */
+  ompSessionGetMessages: () =>
+    invoke<OmpSessionMessagesResult>(IPC.invoke.ompSessionGetMessages),
+  /** Get one page of messages from the current omp session. */
+  ompSessionGetMessagesPage: (params?: { cursor?: string; limit?: number }) =>
+    invoke<OmpSessionMessagesPageResult>(IPC.invoke.ompSessionGetMessagesPage, params ?? {}),
+  /** Start a new omp session. parentSession: optional session dir path to branch from. */
+  ompNewSession: (params?: { parentSession?: string }) =>
+    invoke<OmpNewSessionResult>(IPC.invoke.ompNewSession, params ?? {}),
+  /** Switch the current omp session to a different session directory. */
+  ompSwitchSession: (sessionPath: string) =>
+    invoke<OmpSwitchSessionResult>(IPC.invoke.ompSwitchSession, { sessionPath }),
+  /** Run `omp cleanse [args]` in the workspace via bundled binary; resolves when done. */
+  ompCleanse: (workspace: string, opts: { request?: string; all?: boolean } = {}) =>
+    invoke<OmpCleanseResult>(IPC.invoke.ompCleanse, { workspace, ...opts }),
+  /** Dispatch `/autoresearch [goal]` to the active session (goal="off" to disable). */
+  ompAutoresearch: (goal?: string) =>
+    invoke<OmpAutoresearchResult>(IPC.invoke.ompAutoresearch, { goal }),
+  /** Start an allowlisted omp CLI subcommand; returns { runId }. Output arrives via onOmpCliOutput events. */
+  ompCliRun: (subcommand: OmpCliSubcommand, args: string[]) =>
+    invoke<OmpCliRunResult>(IPC.invoke.ompCliRun, { subcommand, args }),
+  /** Cancel an in-flight omp CLI run by runId. */
+  ompCliCancel: (runId: string) =>
+    invoke<void>(IPC.invoke.ompCliCancel, { runId }),
+  /** Subscribe to stdout/stderr chunks from an omp CLI run. */
+  onOmpCliOutput: (listener: (event: OmpCliOutputEvent) => void) => {
+    if (!window.piDesktop?.on) return () => undefined;
+    return window.piDesktop.on(IPC.event.ompCliOutput, (payload) =>
+      listener(payload as OmpCliOutputEvent),
+    );
+  },
+  /** Subscribe to omp CLI run completion. */
+  onOmpCliDone: (listener: (event: OmpCliDoneEvent) => void) => {
+    if (!window.piDesktop?.on) return () => undefined;
+    return window.piDesktop.on(IPC.event.ompCliDone, (payload) =>
+      listener(payload as OmpCliDoneEvent),
+    );
+  },
+  /** Open omp TUI in the integrated terminal, resuming the given session. */
+  ompTuiOpen: (input: { sessionId: string; projectPath?: string }) =>
+    invoke<OmpTuiOpenResult>(IPC.invoke.ompTuiOpen, input),
+  /** Get ACP launch info: command and editor config snippets for Zed/JetBrains. */
+  ompAcpInfo: () =>
+    invoke<OmpAcpInfoResult>(IPC.invoke.ompAcpInfo),
 };

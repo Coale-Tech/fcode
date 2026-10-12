@@ -38,6 +38,7 @@ import {
   IconWrench,
   IconKanban as IconColumns,
   IconRaven,
+  IconTerminal,
 } from "../../components/icons";
 import { Badge, Button, cx, SegmentedControl, SettingsToggle } from "../../components/ui";
 import { ModelConfigPage } from "../../components/settings/ModelConfigPage";
@@ -70,6 +71,8 @@ import { ConfigSyncPage } from "../../components/settings/ConfigSyncPage";
 import { OmpSettingsSections } from "./omp-settings-sections";
 import { KanbanSettingsSection } from "./KanbanSettingsSection";
 import { RavenSettingsSection } from "./RavenSettingsSection";
+import { OmpAdvancedSettings } from "./OmpAdvancedSettings";
+import { OmpToolsPage } from "../omp-tools/OmpToolsPage";
 
 type SettingsTab = ReturnType<typeof useAppStore.getState>["settingsTab"];
 
@@ -252,6 +255,8 @@ export function SettingsPage() {
       aiExtensions: <IconPlug size={14} />,
       kanban: <IconColumns size={14} />,
       raven: <IconRaven size={14} />,
+      ompAdvanced: <IconSliders size={14} />,
+      ompTools: <IconTerminal size={14} />,
       about: <IconInfo size={14} />,
     };
     return navEntries.map((entry) => ({
@@ -657,6 +662,8 @@ export function SettingsPage() {
           )}
           {tab === "kanban" && <KanbanSettingsSection />}
           {tab === "raven" && <RavenSettingsSection />}
+          {tab === "ompAdvanced" && <OmpAdvancedSettings />}
+          {tab === "ompTools" && <OmpToolsPage />}
           </>}
 
           </div>

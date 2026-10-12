@@ -43,11 +43,15 @@ import { registerHindsightLocalIpc } from "./hindsight-local-ipc";
 import { registerApprovalModeIpc } from "./approval-mode-ipc";
 import { registerOmpSettingsIpc } from "./omp-settings-ipc";
 import { registerExtensionsMgmtIpc } from "./extensions-mgmt-ipc";
+import { registerHooksCommandsIpc } from "./hooks-commands-ipc";
+import { registerMaintenanceIpc } from "./maintenance-ipc";
 import type { createTraySessions } from "../tray-sessions";
 import type { createTaskbarUnreadBadge } from "../taskbar-unread-badge";
 import { registerKanbanIpc, type KanbanIpcDependencies } from "./kanban-ipc";
 import { registerFileBirdIpc } from "./filebird-ipc";
 import { registerRavenIpc } from "./raven-ipc";
+import { registerOmpCliIpc } from "./omp-cli-ipc";
+import { registerOmpNonRpcIpc } from "./omp-acp";
 
 export type RegisterIpcDependencies = {
   isQuitting: () => boolean;
@@ -445,6 +449,13 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     dataDir,
     restartSidecar: async () => dependencies.onProviderMutation?.(),
   });
+  registerOmpNonRpcIpc({ registrar, dataDir, getHost, listRuntimeProviders });
+  registerHooksCommandsIpc({
+    registrar,
+    dataDir,
+    restartSidecar: async () => dependencies.onProviderMutation?.(),
+  });
+  registerMaintenanceIpc({ registrar, getSidecar });
   registerRavenIpc({
     registrar,
     dataDir,
@@ -598,6 +609,8 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     isDeveloperMode,
     getMainWindow,
   });
+
+  registerOmpCliIpc({ registrar, sendToRenderer });
 
 
   return async (channel: string, args: readonly unknown[] = []) => {

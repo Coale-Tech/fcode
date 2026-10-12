@@ -3,9 +3,10 @@
  * Stored in `<dataDir>/omp-settings.json`; injected into the bridge overlay
  * on sidecar restart via the `FCODE_OMP_SETTINGS` env var.
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { OmpSettingsValues } from "@pi-desktop/shared";
+import { fileURLToPath } from "node:url";
+import type { OmpAdvancedSettings, OmpSettingDescriptor, OmpSettingsValues } from "@pi-desktop/shared";
 import { writeJsonAtomicSync } from "./atomic-json";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -161,9 +162,147 @@ const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   "theme.light":                   { type: "string" },
   // Auto-Learn (omp/packages/coding-agent/src/autolearn/settings.ts)
   "autolearn.enabled":             { type: "boolean" },
+  // Opt-in tools (omp/packages/coding-agent/src/tools/settings.ts; default: false)
+  "astGrep.enabled":    { type: "boolean" },
+  "checkpoint.enabled": { type: "boolean" },
+  "github.enabled":     { type: "boolean" },
+  "security.enabled":   { type: "boolean" },
   // Generic manifest-driven settings (validated per-id by the manifest in slice A)
   advanced:                       { type: "record" },
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Curated id lookup — used to reject advanced entries that have a dedicated field.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Every key in OmpSettingsValues that has a dedicated curated field (excluding `advanced`). */
+export const CURATED_OMP_SETTING_IDS: Readonly<Record<string, true>> = Object.fromEntries(
+  Object.keys(SCHEMA)
+    .filter((k) => k !== "advanced")
+    .map((k) => [k, true as const]),
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Manifest (omp-settings-manifest.json) — read-once cache.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Undefined = not yet attempted; null = file not found. */
+let _manifestCache: OmpSettingDescriptor[] | null | undefined;
+
+/** Pre-built id → descriptor index for O(1) validation lookups. */
+let _manifestIndex: Record<string, OmpSettingDescriptor> | undefined;
+
+function loadManifestCached(): OmpSettingDescriptor[] | null {
+  if (_manifestCache !== undefined) return _manifestCache;
+  // Resolve the directory of this module in both CJS (Electron) and ESM (tests).
+  const moduleDir = fileURLToPath(new URL(".", import.meta.url));
+  const candidates = [
+    process.resourcesPath ? join(process.resourcesPath, "omp-settings-manifest.json") : "",
+    join(moduleDir, "../../resources/omp-settings-manifest.json"),
+    join(moduleDir, "../../../resources/omp-settings-manifest.json"),
+  ];
+  for (const c of candidates) {
+    if (!c || !existsSync(c)) continue;
+    try {
+      const raw: unknown = JSON.parse(readFileSync(c, "utf8"));
+      if (
+        raw !== null &&
+        typeof raw === "object" &&
+        !Array.isArray(raw) &&
+        "descriptors" in raw &&
+        Array.isArray(raw.descriptors)
+      ) {
+        // raw.descriptors is unknown[] here; cast to descriptor array is safe because
+        // this file is written by gen-omp-settings-manifest.mjs which owns its schema.
+        _manifestCache = raw.descriptors as OmpSettingDescriptor[];
+        _manifestIndex = Object.fromEntries(_manifestCache.map((d) => [d.id, d]));
+        return _manifestCache;
+      }
+    } catch {
+      // Corrupt file — try next candidate.
+    }
+  }
+  _manifestCache = null;
+  return null;
+}
+
+/** Return the manifest descriptors (empty array when the file has not been generated yet). */
+export function loadManifest(): OmpSettingDescriptor[] {
+  return loadManifestCached() ?? [];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Advanced settings validation (against the manifest)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function checkAdvancedValue(id: string, value: unknown, desc: OmpSettingDescriptor): void {
+  const label = `omp advanced setting ${JSON.stringify(id)}`;
+  switch (desc.type) {
+    case "boolean":
+      if (typeof value !== "boolean")
+        throw new Error(`${label}: expected boolean, got ${typeof value}`);
+      break;
+    case "string":
+      if (typeof value !== "string")
+        throw new Error(`${label}: expected string, got ${typeof value}`);
+      break;
+    case "number":
+      if (typeof value !== "number" || !Number.isFinite(value))
+        throw new Error(`${label}: expected finite number, got ${typeof value}`);
+      if (desc.min !== undefined && value < desc.min)
+        throw new Error(`${label}: ${value} is below minimum ${desc.min}`);
+      if (desc.max !== undefined && value > desc.max)
+        throw new Error(`${label}: ${value} is above maximum ${desc.max}`);
+      break;
+    case "enum": {
+      const allowed = desc.values ?? [];
+      if (typeof value !== "string" || !allowed.includes(value))
+        throw new Error(`${label}: expected one of [${allowed.join(", ")}], got ${JSON.stringify(value)}`);
+      break;
+    }
+    case "array":
+      if (!Array.isArray(value))
+        throw new Error(`${label}: expected array, got ${typeof value}`);
+      break;
+    case "record":
+      if (typeof value !== "object" || value === null || Array.isArray(value))
+        throw new Error(`${label}: expected object, got ${typeof value}`);
+      break;
+  }
+}
+
+/**
+ * Validate a raw `advanced` object against the manifest.
+ *
+ * - Unknown ids (not in manifest) are rejected.
+ * - Curated ids (with a dedicated OmpSettingsValues field) are rejected.
+ * - Secret values are never included in error messages.
+ * - When the manifest file has not been generated yet, values pass through
+ *   (no validation possible); a warning is emitted on first call.
+ */
+export function validateAdvancedSettings(raw: Record<string, unknown>): OmpAdvancedSettings {
+  const manifest = loadManifestCached();
+  const index = _manifestIndex;
+  if (manifest === null) {
+    // Manifest not generated yet (build step not run). Pass through for robustness.
+    console.warn("omp-settings-config: manifest not found — skipping advanced setting validation");
+    return raw as OmpAdvancedSettings;
+  }
+  const out: OmpAdvancedSettings = {};
+  for (const [id, value] of Object.entries(raw)) {
+    if (value === undefined || value === null) continue;
+    if (CURATED_OMP_SETTING_IDS[id]) {
+      throw new Error(
+        `omp advanced setting ${JSON.stringify(id)}: this setting has a dedicated field — set it via the curated settings instead`,
+      );
+    }
+    const desc = index?.[id];
+    if (!desc) throw new Error(`omp advanced setting ${JSON.stringify(id)}: unknown id (not in manifest)`);
+    checkAdvancedValue(id, value, desc);
+    out[id] = value;
+  }
+  return out;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public API
@@ -191,6 +330,16 @@ export function validateOmpSettings(patch: Record<string, unknown>): OmpSettings
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(patch)) {
     if (value === undefined || value === null) continue; // allow omission
+    // "advanced" is validated against the manifest, not the generic record schema.
+    if (key === "advanced") {
+      if (typeof value !== "object" || Array.isArray(value)) {
+        throw new Error(`omp setting "advanced": expected object, got ${typeof value}`);
+      }
+      // Narrowed to non-null non-array object — safe to treat as Record<string, unknown>.
+      const rawAdvanced = value as Record<string, unknown>;
+      out["advanced"] = validateAdvancedSettings(rawAdvanced);
+      continue;
+    }
     const rule = SCHEMA[key as keyof OmpSettingsValues];
     if (!rule) {
       throw new Error(`unknown omp setting key: ${JSON.stringify(key)}`);

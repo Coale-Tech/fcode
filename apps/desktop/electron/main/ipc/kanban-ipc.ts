@@ -4,8 +4,8 @@
  */
 import { IPC } from "@pi-desktop/shared";
 import type { IpcRegistrar } from "./types";
-import type { KanbanBoard } from "../runtime/kanban-core";
 import {
+  type KanbanBoard,
   createTask,
   moveTask,
   addLink,
@@ -14,7 +14,7 @@ import {
   recomputeReady,
   removeLink,
   updateTask,
-} from "../runtime/kanban-core";
+} from "@pi-desktop/host-runtime";
 import type { KanbanRunner } from "../runtime/kanban-runner";
 import type { KanbanSettings } from "../runtime/kanban-settings";
 import { validateKanbanSettings } from "../runtime/kanban-settings";

@@ -30,7 +30,8 @@ test("makeOmpOverlay defaults to always-ask when no approvalMode given", () => {
 test("makeOmpOverlay starts omp on Fcode's default model only when one is given", () => {
   assert.equal(parseYaml(makeOmpOverlay(BASE_OPTS)).modelRoles, undefined);
   const yaml = parseYaml(makeOmpOverlay({ ...BASE_OPTS, defaultModel: "fcode-p1/gpt-x" }));
-  assert.deepEqual(yaml.modelRoles, { default: "fcode-p1/gpt-x" });
+  const m = "fcode-p1/gpt-x";
+  assert.deepEqual(yaml.modelRoles, { default: m, task: m, smol: m, slow: m });
 });
 
 test("makeOmpOverlay uses provided approvalMode for all three modes", () => {

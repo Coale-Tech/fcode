@@ -9,7 +9,7 @@ import { register } from "node:module";
 register(new URL("./helpers/ts-import-hooks.mjs", import.meta.url));
 
 const { registerKanbanIpc } = await import("../electron/main/ipc/kanban-ipc.ts");
-const { emptyBoard } = await import("../electron/main/runtime/kanban-core.ts");
+const { emptyBoard } = await import("@pi-desktop/host-runtime");
 const { IPC } = await import("../../../packages/shared/src/protocol.ts");
 
 function setup(initial) {

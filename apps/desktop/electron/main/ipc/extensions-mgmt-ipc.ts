@@ -9,8 +9,6 @@
  * The spec is validated before spawning to reject paths and shell metacharacters.
  */
 import { execFile } from "node:child_process";
-import { existsSync } from "node:fs";
-import { join } from "node:path";
 import { promisify } from "node:util";
 import { ErrorCodes, IPC } from "@pi-desktop/shared";
 import type {
@@ -20,19 +18,11 @@ import type {
   OmpSettingsValues,
 } from "@pi-desktop/shared";
 import { readOmpSettings, validateOmpSettings, writeOmpSettings } from "../omp-settings-config";
+import { resolveOmpBin, ompChildEnv } from "../omp-binary";
 import type { IpcRegistrar } from "./types";
 
 const execFileP = promisify(execFile);
 
-// ── omp binary resolution (matches omp-ipc.ts) ──────────────────────────────
-function resolveOmpBin(): string {
-  if (process.env.OMP_BIN) return process.env.OMP_BIN;
-  const rp = process.resourcesPath ?? "";
-  for (const p of [join(rp, "bin", "omp"), join(rp, "bin", "omp.exe")]) {
-    if (existsSync(p)) return p;
-  }
-  return "omp";
-}
 
 // ── Spec validation ──────────────────────────────────────────────────────────
 
@@ -176,7 +166,7 @@ export function registerExtensionsMgmtIpc({
     const bin = resolveOmpBin();
     let stdout = "";
     try {
-      ({ stdout } = await execFileP(bin, ["plugin", "list", "--json"], { timeout: 30_000 }));
+      ({ stdout } = await execFileP(bin, ["plugin", "list", "--json"], { timeout: 30_000, env: ompChildEnv() }));
     } catch {
       // omp not available or no plugins installed — return empty list
       return { extensions: [] };
@@ -197,7 +187,7 @@ export function registerExtensionsMgmtIpc({
       let stderr = "";
       try {
         ({ stdout, stderr } = await execFileP(bin, ["plugin", "install", spec], {
-          timeout: 120_000,
+          timeout: 120_000, env: ompChildEnv(),
         }));
       } catch (rawErr) {
         let msg = rawErr instanceof Error ? rawErr.message : String(rawErr);
@@ -227,7 +217,7 @@ export function registerExtensionsMgmtIpc({
       let stderr = "";
       try {
         ({ stdout, stderr } = await execFileP(bin, ["plugin", "uninstall", name], {
-          timeout: 60_000,
+          timeout: 60_000, env: ompChildEnv(),
         }));
       } catch (rawErr) {
         let msg = rawErr instanceof Error ? rawErr.message : String(rawErr);

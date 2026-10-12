@@ -8,7 +8,8 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { ErrorCodes, IPC } from "@pi-desktop/shared";
 import { defaultRoots, discoverBenches } from "../bench/discovery";
-import { benchSupervisor, shouldAutoApproveVerb } from "../bench/supervisor";
+import { shouldAutoApproveVerb } from "@pi-desktop/host-runtime";
+import { benchSupervisor } from "../bench/supervisor";
 import type { IpcRegistrar } from "./types";
 import type { BrowserWindow } from "electron";
 

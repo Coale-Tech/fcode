@@ -22,6 +22,8 @@ export type SettingsTabId =
   | "aiExtensions"
   | "kanban"
   | "raven"
+  | "ompAdvanced"
+  | "ompTools"
   | "about";
 
 export type SettingsNavGroupId =
@@ -377,6 +379,27 @@ export const SETTINGS_NAV: SettingsNavEntry[] = [
     titleKey: "raven.settings.title",
     group: "ai",
     keywordKeys: ["raven.settings.enabled", "raven.settings.url", "raven.title"],
+  },
+  {
+    id: "ompAdvanced",
+    labelKey: "settings.nav.ompAdvanced",
+    titleKey: "settings.nav.ompAdvanced",
+    group: "ai",
+    keywordKeys: [
+      "settings.ompAdvancedSearch",
+      "settings.ompAdvancedModifiedOnly",
+    ],
+  },
+  {
+    id: "ompTools",
+    labelKey: "settings.nav.ompTools",
+    titleKey: "settings.nav.ompTools",
+    group: "ai",
+    keywordKeys: [
+      "ompTools.command",
+      "ompTools.run",
+      "ompTools.output",
+    ],
   },
   {
     id: "about",

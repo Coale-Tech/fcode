@@ -124,7 +124,7 @@ import { createSessionCoordination } from "./runtime/session-coordination";
 import { createScheduledRuntime } from "./runtime/scheduled";
 import { createKanbanWiring } from "./runtime/kanban-wiring";
 import { readKanbanSettings, writeKanbanSettings } from "./runtime/kanban-settings";
-import { loadBoard, saveBoard } from "./runtime/kanban-store";
+import { loadBoard, saveBoard } from "@pi-desktop/host-runtime";
 import { createDesktopServices } from "./services/desktop-services";
 import { createPluginServices } from "./services/plugin-services";
 import { wirePluginThemeRuntimeServices } from "./plugin-theme-services";

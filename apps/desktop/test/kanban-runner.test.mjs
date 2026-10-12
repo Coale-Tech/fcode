@@ -8,7 +8,7 @@ const {
   createTask,
   claimTask,
   completeTask,
-} = await import("../electron/main/runtime/kanban-core.ts");
+} = await import("@pi-desktop/host-runtime");
 
 const { createKanbanRunner } = await import("../electron/main/runtime/kanban-runner.ts");
 

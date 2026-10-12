@@ -349,6 +349,36 @@ function diffBlock(oldText: string, newText: string): ToolBlock | null {
   };
 }
 
+/**
+ * Parse a unified diff string (from EditToolDetails.diff) into a diff ToolBlock.
+ * Header lines (@@, ---, +++) are kept as context so the viewer shows hunk ranges;
+ * up to MAX_DIFF_LINES are kept, with the remainder counted in `hidden`.
+ * Returns null when the diff has no actual additions or deletions.
+ */
+function parsePatchDiff(diff: string): ToolBlock | null {
+  const rawLines = diff.split("\n");
+  const lines: ToolDiffLine[] = [];
+  for (const line of rawLines) {
+    if (lines.length >= MAX_DIFF_LINES) break;
+    if (line.startsWith("+") && !line.startsWith("+++")) {
+      lines.push({ type: "add", text: line.slice(1) });
+    } else if (line.startsWith("-") && !line.startsWith("---")) {
+      lines.push({ type: "del", text: line.slice(1) });
+    } else {
+      lines.push({ type: "context", text: line.startsWith(" ") ? line.slice(1) : line });
+    }
+  }
+  if (!lines.some((l) => l.type !== "context")) return null;
+  return {
+    kind: "diff",
+    role: "diff",
+    lines,
+    hidden: Math.max(0, rawLines.length - lines.length),
+    copy: lines.map((l) => `${l.type === "add" ? "+" : l.type === "del" ? "-" : " "}${l.text}`).join("\n"),
+  };
+}
+
+
 function filesBlock(paths: string[], label?: string): ToolBlock | null {
   if (paths.length === 0) return null;
   return {
@@ -491,15 +521,22 @@ export function toolResultChips(message: ToolPresentationMessage): ToolChip[] {
   if (exitCode !== null && exitCode !== 0) {
     chips.push({ role: "exit", count: exitCode });
   }
-  const count = numberAt(details, "count");
+  // GrepToolDetails uses matchCount; GlobToolDetails / AstGrepToolDetails use fileCount.
+  const count =
+    numberAt(details, "count") ??
+    numberAt(details, "matchCount") ??
+    numberAt(details, "fileCount");
   const counted =
     Array.isArray(details.matches) ||
     Array.isArray(details.files) ||
-    Array.isArray(details.counts);
+    Array.isArray(details.counts) ||
+    typeof details.displayContent === "string";
   if (count !== null && counted) {
     chips.push({ role: action === "list" ? "files" : "matches", count });
   }
-  const replacements = numberAt(details, "replacements");
+  // AstEditToolDetails uses totalReplacements; other edits use replacements.
+  const replacements =
+    numberAt(details, "replacements") ?? numberAt(details, "totalReplacements");
   if (replacements !== null && replacements > 0) {
     chips.push({ role: "replacements", count: replacements });
   }
@@ -632,6 +669,96 @@ function resultBlocks(
     const fcodeEnvelope = asRecord(message.toolResult);
     const fcodeText = fcodeEnvelope ? envelopeText(fcodeEnvelope) : null;
     if (fcodeText) blocks.push(codeBlock("output", fcodeText));
+    mapped = true;
+  } else if (toolNameNorm === "grep" || toolNameNorm === "ast_grep") {
+    // GrepToolDetails / AstGrepToolDetails: displayContent is the pre-formatted
+    // match output produced by omp. Falls back to a file list when absent.
+    const displayContent = stringAt(details, "displayContent");
+    if (displayContent) {
+      blocks.push(codeBlock("output", displayContent));
+    } else {
+      const paths = stringArray(details?.files);
+      const fb = paths ? filesBlock(paths) : null;
+      if (fb) blocks.push(fb);
+    }
+    mapped = true;
+  } else if (toolNameNorm === "ast_edit") {
+    // AstEditToolDetails: displayContent is the pre-formatted replacement summary.
+    const displayContent = stringAt(details, "displayContent");
+    if (displayContent) {
+      blocks.push(codeBlock("output", displayContent));
+    } else {
+      const paths = stringArray(details?.files);
+      const fb = paths ? filesBlock(paths) : null;
+      if (fb) blocks.push(fb);
+    }
+    mapped = true;
+  } else if (toolNameNorm === "edit") {
+    // EditToolDetails.diff: unified diff; shown as a diff block when not already
+    // covered by ReviewChangeCard. Falls back to showing the ops text.
+    const reviewed = reviewChangeFromMessage(message as unknown as UiMessage) !== null;
+    if (!reviewed) {
+      const diff = stringAt(details, "diff");
+      if (diff) {
+        const db = parsePatchDiff(diff);
+        if (db) blocks.push(db);
+      } else {
+        const ops = stringAt(args, "ops");
+        if (ops !== null) blocks.push(codeBlock("input", ops));
+      }
+    }
+    const warnings = stringArray(details?.warnings);
+    if (warnings) {
+      for (const warning of warnings) {
+        blocks.push({ kind: "note", role: "notice", text: warning });
+      }
+    }
+    mapped = true;
+  } else if (toolNameNorm === "lsp") {
+    // LspToolDetails: action + server name as fields, then text from the envelope.
+    const lspAction = stringAt(details, "action");
+    const serverName = stringAt(details, "serverName");
+    const lspFields: ToolFieldRow[] = [];
+    if (lspAction) lspFields.push({ label: "action", value: lspAction });
+    if (serverName) lspFields.push({ label: "server", value: serverName });
+    if (lspFields.length > 0) blocks.push({ kind: "fields", role: "details", rows: lspFields });
+    const rawEnvelopeLsp = asRecord(message.toolResult);
+    const lspText = rawEnvelopeLsp ? envelopeText(rawEnvelopeLsp) : null;
+    if (lspText) blocks.push(codeBlock("output", lspText));
+    mapped = true;
+  } else if (toolNameNorm === "todo") {
+    // TodoToolDetails.phases: each phase → label with completed/active/open counts.
+    const rawPhases = Array.isArray(details?.phases) ? (details.phases as unknown[]) : null;
+    if (rawPhases && rawPhases.length > 0) {
+      const rows: ToolFieldRow[] = [];
+      for (const raw of rawPhases) {
+        const phase = asRecord(raw);
+        if (!phase) continue;
+        const name = stringAt(phase, "name") ?? "(phase)";
+        const tasks = Array.isArray(phase.tasks) ? (phase.tasks as unknown[]) : [];
+        let done = 0, active = 0, open = 0;
+        for (const t of tasks) {
+          const task = asRecord(t);
+          const status = task ? stringAt(task, "status") ?? "" : "";
+          if (status === "completed") done++;
+          else if (status === "in_progress") active++;
+          else open++;
+        }
+        const parts = [
+          done > 0 ? `✓ ${done}` : "",
+          active > 0 ? `● ${active}` : "",
+          open > 0 ? `○ ${open}` : "",
+        ].filter(Boolean);
+        rows.push({ label: name, value: parts.join("  ") || `${tasks.length} tasks` });
+      }
+      if (rows.length > 0) blocks.push({ kind: "fields", role: "details", rows });
+    }
+    mapped = true;
+  } else if (toolNameNorm === "web_search") {
+    // SearchResultDetails: omp pre-formats the result in the envelope content blocks.
+    const rawEnvelopeWs = asRecord(message.toolResult);
+    const wsText = rawEnvelopeWs ? envelopeText(rawEnvelopeWs) : null;
+    if (wsText) blocks.push(codeBlock("output", wsText));
     mapped = true;
   } else {
     switch (action) {

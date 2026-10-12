@@ -1,8 +1,7 @@
 import { IPC } from "@pi-desktop/shared";
-import type { KanbanBoard } from "./kanban-core";
+import { loadBoard, saveBoard, type KanbanBoard } from "@pi-desktop/host-runtime";
 import { createKanbanRunner } from "./kanban-runner";
 import { readKanbanSettings } from "./kanban-settings";
-import { loadBoard, saveBoard } from "./kanban-store";
 
 type KanbanLabels = {
   kanban: { notify: { blocked: string; done: string; dailyCap: string } };

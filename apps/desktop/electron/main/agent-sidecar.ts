@@ -4,6 +4,7 @@ import {
   AgentSidecar as RuntimeAgentSidecar,
   type StderrHandler,
 } from "@pi-desktop/host-runtime";
+import { appResourcesPath } from "./omp-binary";
 import { desktopDataDir } from "./data-paths";
 import { redactValue } from "./logger";
 
@@ -60,7 +61,7 @@ export class AgentSidecar extends RuntimeAgentSidecar {
           ...process.env,
           ELECTRON_RUN_AS_NODE: "1",
           FCODE_DATA_DIR: desktopDataDir(),
-          ...(process.resourcesPath ? { FCODE_RESOURCES_PATH: process.resourcesPath } : {}),
+          FCODE_RESOURCES_PATH: appResourcesPath(),
           ...providerEnv,
         },
       },
