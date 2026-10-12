@@ -148,12 +148,6 @@ export function registerKanbanIpc({
     return { board: mutate((board) => archiveTask(board, taskId, archived)) };
   });
 
-  handle(IPC.invoke.kanbanListRuns, async (input: { taskId?: string } = {}) => {
-    const taskId = String(input.taskId ?? "");
-    const board = getBoard();
-    return { runs: board.runs.filter((r) => r.taskId === taskId) };
-  });
-
   handle(IPC.invoke.kanbanSettingsGet, async () => ({ settings: getSettings() }));
 
   // Renderer sends a partial patch; merge over the stored settings so a single

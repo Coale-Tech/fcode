@@ -986,6 +986,28 @@ describe("OmpBridge.handleSubagentFrame — lifecycle and progress frames map to
 
     restore();
   });
+
+  it("permission request names the sole running delegate; unattributed with none or two", () => {
+    const bridge = new OmpBridge();
+    const b = bridge as unknown as Record<string, (...a: unknown[]) => void> & { sessions: Map<string, unknown> };
+    b.sessions.set("s", { projectPath: "/", inputModalities: [] });
+    const lifecycle = (id: string, agent: string, status: string) =>
+      bridge.handleOmpFrame(JSON.stringify({ type: "subagent_lifecycle", payload: { id, agent, status, parentToolCallId: `p-${id}` } }));
+    const ask = () => {
+      const { events, restore } = captureAgentEvents();
+      b.handleUiRequest.call(bridge, { type: "extension_ui_request", id: "ui", method: "select", title: "Allow tool: fcode_bench_run", options: ["Allow once", "Deny"] });
+      restore();
+      return (events.at(-1) as { event: { request: Record<string, unknown> } }).event.request;
+    };
+
+    expect(ask().agentName).toBeUndefined();
+    lifecycle("a", "frappe-bench-ops", "started");
+    expect(ask()).toMatchObject({ agentName: "frappe-bench-ops", parentToolCallId: "p-a" });
+    lifecycle("b", "frappe-scout", "started");
+    expect(ask().agentName).toBeUndefined();
+    lifecycle("b", "frappe-scout", "completed");
+    expect(ask().agentName).toBe("frappe-bench-ops");
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

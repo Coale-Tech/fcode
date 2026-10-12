@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
  * Headless remote Host E2E (E2E-231 host half): boots a real `pi-host` with
- * the debug host-core and the bundled sidecar on a throwaway data dir, pairs
+ * the debug host-core and the omp-bridge sidecar on a throwaway data dir, pairs
  * a device over the loopback RACP-WS socket, registers a project, creates a
  * session, reads the workspace, drops the connection, and reconnects by
  * cursor. No model provider is configured, so `turn/start` is expected to
  * fail closed with `MODEL_NOT_CONFIGURED` rather than hang.
  *
- * Prereqs: `pnpm build:js`, `pnpm -C packages/agent-runtime bundle`, and a
+ * Prereqs: `pnpm build:js`, `pnpm -C packages/omp-bridge bundle`, and a
  * host-core binary (target/debug or PI_DESKTOP_HOST_BIN).
  */
 import { spawn } from "node:child_process";
@@ -22,7 +22,7 @@ import { resolveHostBinary } from "./e2e/host.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const cli = join(root, "apps/pi-host/dist/cli.js");
-const sidecar = join(root, "packages/agent-runtime/dist-bundle/sidecar.js");
+const sidecar = join(root, "packages/omp-bridge/dist-bundle/bridge.js");
 for (const [label, path] of [["pi-host cli", cli], ["sidecar bundle", sidecar]]) {
   if (!existsSync(path)) {
     console.error(`${label} missing: ${path}`);
@@ -161,17 +161,23 @@ try {
   const diff = await owner.client.request("workspace/diff", { sessionId: created.session.id });
   record("workspace-diff-runs-on-host", typeof diff.repo === "boolean");
 
-  // No provider is configured: the turn must fail closed with a typed code and leave the session idle.
+  // No Fcode provider is configured: omp still starts the turn (it resolves models itself), so
+  // admission succeeds and the turn must settle as failed instead of leaving the session running.
   let turnError = null;
   try {
     await owner.client.request("turn/start", { sessionId: created.session.id, input: { text: "hello" }, context: { requestId: "r1", idempotencyKey: "e2e-1" } });
   } catch (error) {
     turnError = errorCodeOf(error);
   }
-  record("turn-without-provider-fails-closed", turnError === "MODEL_NOT_CONFIGURED", String(turnError));
-  await sleep(200);
-  const after = await owner.client.request("session/get", { sessionId: created.session.id });
-  record("failed-admission-leaves-session-idle", after.session.status === "idle" && !after.session.activeTurnId, shortJson(after.session));
+  record("turn-without-provider-is-admitted", turnError === null, String(turnError));
+  let after = null;
+  for (let attempt = 0; attempt < 120; attempt += 1) {
+    after = await owner.client.request("session/get", { sessionId: created.session.id });
+    if (!after.session.activeTurnId) break;
+    await sleep(500);
+  }
+  const turnKinds = owner.events.filter((event) => event.scope === "session" && event.kind.startsWith("turn.")).map((event) => event.kind);
+  record("provider-less-turn-settles-and-leaves-session-idle", after.session.status === "idle" && !after.session.activeTurnId && turnKinds.some((kind) => kind === "turn.failed" || kind === "turn.completed"), turnKinds.join(","));
 
   const renamed = await owner.client.request("session/rename", { sessionId: created.session.id, title: "Renamed remotely" });
   const configured = await owner.client.request("session/configure", { sessionId: created.session.id, permissionMode: "accept-edits" });

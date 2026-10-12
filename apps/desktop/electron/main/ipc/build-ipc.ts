@@ -147,13 +147,6 @@ export function registerBuildIpc({
     return { ok: true };
   });
 
-  handle(IPC.invoke.buildCanvasGetState, async () => {
-    return {
-      state: browserPane.getState(),
-      owner: browserPane.currentOwner(),
-    };
-  });
-
   handle(
     IPC.invoke.buildCanvasAction,
     async (input: { action: "back" | "forward" | "reload" | "stop" }) => {

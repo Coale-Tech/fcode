@@ -11,6 +11,8 @@ export type PiHostConfig = {
   port: number;
   hostCoreBinary: string;
   sidecarEntry: string;
+  /** `FCODE_RESOURCES_PATH` for the sidecar; empty when none was found (no omp binary, no bundled agents). */
+  resourcesPath: string;
   /** The Node executable used for the sidecar; defaults to this process's. */
   nodeBinary: string;
   /** Print a fresh single-use pairing token at start and exit once it is consumed or expired. */
@@ -41,13 +43,23 @@ export function hostCoreCandidates(root = here()): string[] {
   ].filter(Boolean);
 }
 
+/** The omp-bridge sidecar: the same bundle the desktop ships. */
 export function sidecarCandidates(root = here()): string[] {
   return [
     process.env.PI_HOST_SIDECAR ?? "",
-    join(root, "agent-runtime/sidecar.js"),
-    join(root, "../agent-runtime/sidecar.js"),
-    join(root, "../../../packages/agent-runtime/dist-bundle/sidecar.js"),
-    join(root, "../../../packages/agent-runtime/dist/sidecar.js"),
+    join(root, "omp-bridge/bridge.js"),
+    join(root, "../omp-bridge/bridge.js"),
+    join(root, "../../../packages/omp-bridge/dist-bundle/bridge.js"),
+  ].filter(Boolean);
+}
+
+/** Directory holding `bin/omp`, `fcode-agents/` and `fcode-skills/`; the desktop's `resources/` in a checkout. */
+export function resourcesCandidates(root = here()): string[] {
+  return [
+    process.env.PI_HOST_RESOURCES ?? "",
+    join(root, "resources"),
+    join(root, "../resources"),
+    join(root, "../../desktop/resources"),
   ].filter(Boolean);
 }
 
@@ -94,6 +106,9 @@ export function resolveConfig(args: CliArgs, env: NodeJS.ProcessEnv = process.en
     port,
     hostCoreBinary: args["host-core"] ? resolve(String(args["host-core"])) : firstExisting(hostCoreCandidates(), "host-core binary"),
     sidecarEntry: args.sidecar ? resolve(String(args.sidecar)) : firstExisting(sidecarCandidates(), "agent sidecar entry"),
+    resourcesPath: args.resources
+      ? resolve(String(args.resources))
+      : (resourcesCandidates().find((dir) => existsSync(join(dir, "fcode-agents"))) ?? ""),
     nodeBinary: String(args.node ?? env.PI_HOST_NODE ?? process.execPath),
     pair: args.pair === true || args.pair === "true",
     pairingLifetimeMs: Number(args["pairing-lifetime-ms"] ?? DEFAULT_PAIRING_LIFETIME_MS),

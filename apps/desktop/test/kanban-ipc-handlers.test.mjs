@@ -53,8 +53,6 @@ test("create then move returns the updated board", async () => {
   const { taskId } = await k.call(IPC.invoke.kanbanCreate, { title: "t", body: "", projectPath: "/p" });
   const { board } = await k.call(IPC.invoke.kanbanMove, { taskId, status: "blocked" });
   assert.equal(board.tasks.find((t) => t.id === taskId).status, "blocked");
-  const { runs } = await k.call(IPC.invoke.kanbanListRuns, { taskId });
-  assert.deepEqual(runs, []);
 });
 
 test("update edits title/body/priority; blank title and negative priority are guarded", async () => {

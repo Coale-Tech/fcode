@@ -423,6 +423,12 @@ function ompSettingsYaml(s: OmpSettingsValues): string[] {
     if (themeLight !== undefined && themeLight !== "") lines.push(`  light: ${JSON.stringify(themeLight)}`);
   }
 
+  // autolearn section (omp/packages/coding-agent/src/autolearn/settings.ts)
+  const autolearnEnabled = s["autolearn.enabled"];
+  if (autolearnEnabled !== undefined) {
+    lines.push("", "autolearn:", `  enabled: ${autolearnEnabled}`);
+  }
+
   // NOTE: `disabledExtensions` (OmpSettingsValues key) is NOT written to the
   // overlay — omp reads it from omp-settings.json (FCODE_OMP_SETTINGS env).
   // `extensions` IS written inline in makeOmpOverlay: bundled fcode-agents is
@@ -684,6 +690,8 @@ export class OmpBridge {
   private pendingUiRequests = new Map<string, { sessionId: string; toolCallId: string; toolName: string; viaSelect: boolean }>();
   /** Per-session most-recent open tool_execution_start (args kept for risk classification) */
   private openTools = new Map<string, { toolCallId: string; toolName: string; args?: unknown }>();
+  /** Delegates between lifecycle `started` and a terminal status, by omp subagent id. */
+  private runningSubagents = new Map<string, { agent: string; parentToolCallId?: string }>();
   /** Whether the kanban tools are currently registered with omp. */
   private hostToolsKanban = false;
   /** Tracks in-flight `prompt` calls awaiting their terminal prompt_result frame. */
@@ -1609,6 +1617,11 @@ export class OmpBridge {
     });
 
     const { type, ...request } = mapped;
+    // omp's ui request names no asker. `task` returns at once and the delegate
+    // runs on, so with no parent tool open a request comes from the delegate;
+    // ponytail: only attributable when exactly one runs, else left unattributed.
+    const [only] = this.runningSubagents.size === 1 && !openTool ? this.runningSubagents.values() : [];
+    if (only) Object.assign(request, { agentName: only.agent, ...(only.parentToolCallId ? { parentToolCallId: only.parentToolCallId } : {}) });
     this.notify("agent.event", {
       sessionId,
       ts: Date.now(),
@@ -1656,6 +1669,7 @@ export class OmpBridge {
       const status = String(payload.status ?? "");
 
       if (status === "started") {
+        this.runningSubagents.set(toolCallId, { agent: agentName, parentToolCallId });
         this.notify("agent.event", {
           sessionId,
           ts: Date.now(),
@@ -1669,6 +1683,7 @@ export class OmpBridge {
           },
         });
       } else {
+        this.runningSubagents.delete(toolCallId);
         // completed, failed, aborted
         this.notify("agent.event", {
           sessionId,

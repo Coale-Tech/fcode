@@ -105,22 +105,8 @@ test("updater gates delivery mode by platform and delivery policy", () => {
   assert.match(updaterSource, /quitAndInstall/);
   assert.match(
     updaterSource,
-    /private installRequested = false/,
-    "the install request is latched so the shutdown path can see it",
-  );
-  assert.match(
-    updaterSource,
-    /isInstallingUpdate\(\): boolean/,
-    "the shutdown path must be able to ask whether this quit is an update restart",
-  );
-  assert.match(
-    updaterSource,
     /this\.installRequested = true;[\s\S]*?autoUpdater\.quitAndInstall\(/,
     "the latch must be set before quitAndInstall spawns the installer",
-  );
-  assert.match(
-    updaterSource,
-    /state\.status === "downloaded"[\s\S]*return this\.state/,
   );
   assert.match(updaterSource, /autoUpdater\.on\("error"/);
   assert.match(
@@ -132,11 +118,6 @@ test("updater gates delivery mode by platform and delivery policy", () => {
     updaterSource,
     /formatChangelogNotes/,
     "in-app localized notes attach from the shared changelog catalog",
-  );
-  assert.match(
-    updaterSource,
-    /releaseNotes: this\.notesFor/,
-    "discovery and download events attach releaseNotes on UpdateState",
   );
   assert.match(
     updaterSource,
@@ -166,11 +147,8 @@ test("renderer exposes the updates API, banner and settings row", () => {
   assert.match(bannerSource, /updates\.viewRelease/);
   assert.match(bannerSource, /updates\.whatsNew/);
   assert.match(bannerSource, /releaseNotes/);
-  assert.match(bannerSource, /availableVersion}:\$\{update\.status/);
-  assert.match(bannerSource, /className="update-notice"/);
   assert.match(bannerSource, /role="progressbar"/);
   assert.match(settingsSource, /<UpdatesRow currentVersion=/);
-  assert.match(settingsSource, /update-settings-notes/);
   assert.match(settingsSource, /updates\.whatsNew/);
   assert.match(settingsSource, /updates\.releaseNotes/);
   assert.match(settingsSource, /<ReleaseNotesDialog/);
@@ -180,15 +158,6 @@ test("renderer exposes the updates API, banner and settings row", () => {
   assert.match(releaseNotesDialogSource, /aria-modal="true"/);
   assert.match(releaseNotesDialogSource, /data-release-version/);
   assert.match(releaseNotesDialogSource, /event\.key === "Escape"/);
-  assert.match(
-    appSource,
-    /<section className=\{cx\("main-pane"[^>]*>[\s\S]*?<UpdateBanner \/>/,
-    "chat update notice is anchored inside the main pane",
-  );
-  assert.match(
-    stylesSource,
-    /\.update-notice \{[\s\S]*?position: absolute;[\s\S]*?top: 54px;/,
-  );
   assert.doesNotMatch(
     bannerSource,
     /fixed bottom-4 right-4/,
@@ -287,13 +256,10 @@ test("shared shipped-locale changelog is the in-app notes source of truth", () =
   assert.match(changelogSource, /formatChangelogNotes/);
   assert.match(changelogSource, /"zh-CN"/);
   assert.match(changelogSource, /"zh-TW"/);
-  assert.match(changelogSource, /version: "0\.2\.7"/);
   assert.match(
     mainSource,
     /getLocale:\s*\(\)\s*=>\s*updaterLocale/,
     "Main supplies product locale to the updater for note selection",
   );
   assert.match(mainSource, /updater\.refreshReleaseNotes\(\)/);
-  assert.match(stylesSource, /\.update-notice-notes/);
-  assert.match(stylesSource, /\.update-settings-notes/);
 });

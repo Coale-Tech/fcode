@@ -1,8 +1,6 @@
 import assert from "node:assert/strict";
 import { registerHooks } from "node:module";
 import test from "node:test";
-
-import { genericModelConfig } from "@pi-desktop/agent-runtime";
 import { ModelsDevCatalog } from "../electron/main/models-dev-catalog.ts";
 
 const runtimeModule = new URL("../electron/main/runtime/provider-catalog.ts", import.meta.url);
@@ -167,13 +165,8 @@ test("full wire IDs isolate configured bindings while catalog aliases remain met
       binding("PROXY/CATALOG-MODEL ", 32_000, ["high"]),
     ],
   };
-  const catalogConfig = genericModelConfig(modelId, provider.baseUrl);
   assert.equal(runtime.bindingForModel(provider, ` ${modelId} `), provider.models[1]);
   assert.equal(runtime.modelsDevModelFor(provider, modelId)?.modelId, "catalog-model");
-  const selected = runtime.effectiveSubagentModelConfig(provider, modelId, catalogConfig);
-  assert.equal(selected.modelConfig.name, modelId, "request wire ID is not rewritten");
-  assert.equal(selected.modelConfig.contextWindow, 32_000);
-  assert.deepEqual(selected.capabilities.supportedThinkingLevels, ["high"]);
   const session = { providerId: provider.id, modelId };
   assert.deepEqual(runtime.enrichSession(session, [provider]).supportedThinkingLevels, ["high"]);
   assert.equal(runtime.enrichProvider(provider, modelId).contextWindow, 32_000);
@@ -182,7 +175,6 @@ test("full wire IDs isolate configured bindings while catalog aliases remain met
 
   provider.models = [provider.models[0]];
   assert.equal(runtime.bindingForModel(provider, modelId), undefined);
-  assert.equal(runtime.effectiveSubagentModelConfig(provider, modelId, catalogConfig).modelConfig.contextWindow, 128_000);
   assert.deepEqual(runtime.enrichSession(session, [provider]).supportedThinkingLevels, ["low", "medium", "high"]);
   assert.equal(runtime.enrichProvider(provider, modelId).contextWindow, 128_000);
   const otherProvider = { ...provider, id: "other-provider", models: [binding(modelId, 48_000, ["off"])] };

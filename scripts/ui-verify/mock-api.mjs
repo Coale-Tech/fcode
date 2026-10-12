@@ -331,8 +331,6 @@ function buildMockHandlers(memoryState) {
     }),
     "pi-desktop/mcp/list": () => ({ servers: [] }),
     "pi-desktop/skill/list": () => ({ skills: [] }),
-    "pi-desktop/subagent/list": () => ({ subagents: [] }),
-    "pi-desktop/subagent/catalog": () => ({ definitions: [] }),
     "pi-desktop/providers/listModels": () => ({ models: [] }),
     "pi-desktop/providers/modelCatalogStatus": () => ({
       lastUpdated: "2026-09-01T00:00:00Z",

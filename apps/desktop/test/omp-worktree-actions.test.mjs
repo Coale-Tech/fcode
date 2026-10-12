@@ -20,6 +20,7 @@ const electronStub = `data:text/javascript,${encodeURIComponent(`
 `)}`;
 
 const fsPromisesStub = `data:text/javascript,${encodeURIComponent(`
+  export async function mkdir(p, opts) { return; }
   export async function readFile(p) { return ""; }
   export async function readdir(p) { return []; }
   export async function rm(p, opts) { return; }

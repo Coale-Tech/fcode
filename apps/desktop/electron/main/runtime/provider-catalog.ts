@@ -83,30 +83,6 @@ export function createProviderCatalogRuntime({
       modelId,
     });
 
-  /**
-   * Apply the exact provider/model binding before exposing a model to a
-   * subagent. The catalog supplies the baseline, but an explicit binding owns
-   * the effective thinking capability for the endpoint.
-   */
-  const effectiveSubagentModelConfig = (
-    provider: Pick<RuntimeProvider, "models">,
-    modelId: string,
-    catalogModelConfig: Parameters<typeof modelConfigWithBinding>[0],
-  ) => {
-    const resolved = resolveBindingContextWindow(
-      catalogModelConfig,
-      bindingForModel(provider, modelId),
-    );
-    const modelConfig = modelConfigWithBinding(
-      resolved.catalogConfig,
-      resolved.binding,
-    );
-    return {
-      modelConfig,
-      capabilities: capabilitiesFromModelConfig(modelConfig),
-    };
-  };
-
   const enrichProvider = <T extends RuntimeProvider>(
     provider: T,
     selectedModelId?: string,
@@ -359,7 +335,6 @@ export function createProviderCatalogRuntime({
   return {
     bindingForModel,
     modelsDevModelFor,
-    effectiveSubagentModelConfig,
     enrichProvider,
     normalizeThinkingLevel,
     normalizeSettings,

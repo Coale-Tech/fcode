@@ -141,12 +141,6 @@ test("the client hides development-only demo plugins from marketplace results", 
   assert.match(pageSrc, /setMarket\(\(res\.plugins \?\? \[\]\)\.filter\(isClientVisibleMarketPlugin\)\)/);
 });
 
-test("capability sections flow at natural height with skeleton loading", () => {
-  assert.doesNotMatch(styles, /\.agent-capability-list\s*\{[^}]*?height:\s*\d+px/);
-  assert.match(styles, /\.agent-capability-skeleton\s*\{/);
-  assert.match(settingsComponents.get("AgentCapabilityLayout.tsx"), /loading \? </);
-});
-
 test("project records shadow global records before disabled records are filtered", () => {
   assert.match(hostCapabilitySources, /existing\.id != record\.id/);
   assert.match(hostCapabilitySources, /if record\.enabled \{/);

@@ -24,6 +24,9 @@ import { fileURLToPath } from "node:url";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createServer } from "vite";
+import i18n from "i18next";
+import { I18nextProvider } from "react-i18next";
+import { catalogs, flattenCatalog } from "@pi-desktop/i18n";
 
 async function loadBenchPageModule() {
   const server = await createServer({
@@ -79,17 +82,22 @@ test("no active failure and no selected bench both resolve to null", async () =>
 
 test("representative user path: the visible failure banner follows the selected bench, not the one that failed", async () => {
   const { selectVisibleStartFailure, ProcessPanel } = await loadBenchPageModule();
+  await i18n.init({ lng: "en", resources: { en: { translation: flattenCatalog(catalogs.en) } }, interpolation: { escapeValue: false } });
   const renderFor = (selectedBench) =>
     renderToStaticMarkup(
-      createElement(ProcessPanel, {
-        status: "failed",
-        anotherBenchRunning: false,
-        onStart() {},
-        onStop() {},
-        elapsedLabel: "",
-        warnings: [],
-        startFailure: selectVisibleStartFailure(failureForA, selectedBench),
-      }),
+      createElement(
+        I18nextProvider,
+        { i18n },
+        createElement(ProcessPanel, {
+          status: "failed",
+          anotherBenchRunning: false,
+          onStart() {},
+          onStop() {},
+          elapsedLabel: "",
+          warnings: [],
+          startFailure: selectVisibleStartFailure(failureForA, selectedBench),
+        }),
+      ),
     );
 
   const onA = renderFor(benchA);

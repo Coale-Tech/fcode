@@ -4,7 +4,8 @@
  *
  *   dist-bundle/pi-host-<version>-<platform>-<arch>/
  *     pi-host.js                 the CLI, esbuild-bundled with every workspace package
- *     agent-runtime/sidecar.js   the same sidecar bundle the desktop ships
+ *     omp-bridge/bridge.js       the omp sidecar bundle the desktop ships
+ *     resources/                 bin/omp, fcode-agents, fcode-skills (FCODE_RESOURCES_PATH)
  *     bin/pi-desktop-host-core   the platform host-core binary
  *     node_modules/node-pty      optional; terminals are disabled without it
  *     package.json               { type: module, version }
@@ -31,10 +32,12 @@ const platform = String(args.platform ?? process.platform);
 const arch = String(args.arch ?? process.arch);
 const exe = platform === "win32" ? ".exe" : "";
 const hostCore = resolve(String(args["host-core"] ?? join(root, `target/release/pi-desktop-host-core${exe}`)));
-const sidecar = join(root, "packages/agent-runtime/dist-bundle/sidecar.js");
+const sidecar = join(root, "packages/omp-bridge/dist-bundle/bridge.js");
+const resources = join(root, "apps/desktop/resources");
+const ompBinary = join(resources, "bin", `omp-${platform}-${arch}${exe}`);
 const out = resolve(String(args.out ?? join(app, "dist-bundle", `pi-host-${version}-${platform}-${arch}`)));
 
-for (const [label, path] of [["host-core binary", hostCore], ["sidecar bundle", sidecar]]) {
+for (const [label, path] of [["host-core binary", hostCore], ["omp-bridge bundle", sidecar], [`omp binary (node scripts/build-omp.mjs for ${platform}-${arch})`, ompBinary], ["fcode-agents", join(resources, "fcode-agents")]]) {
   if (!existsSync(path)) {
     console.error(`${label} missing: ${path}`);
     process.exit(1);
@@ -43,7 +46,8 @@ for (const [label, path] of [["host-core binary", hostCore], ["sidecar bundle", 
 
 rmSync(out, { recursive: true, force: true });
 mkdirSync(join(out, "bin"), { recursive: true });
-mkdirSync(join(out, "agent-runtime"), { recursive: true });
+mkdirSync(join(out, "omp-bridge"), { recursive: true });
+mkdirSync(join(out, "resources/bin"), { recursive: true });
 
 execFileSync(
   require.resolve("esbuild/bin/esbuild"),
@@ -61,8 +65,11 @@ execFileSync(
   ],
   { stdio: "inherit", cwd: app },
 );
-cpSync(sidecar, join(out, "agent-runtime/sidecar.js"));
-writeFileSync(join(out, "agent-runtime/package.json"), '{ "type": "module" }\n');
+cpSync(sidecar, join(out, "omp-bridge/bridge.js"));
+writeFileSync(join(out, "omp-bridge/package.json"), '{ "type": "module" }\n');
+cpSync(ompBinary, join(out, "resources/bin/omp"));
+chmodSync(join(out, "resources/bin/omp"), 0o755);
+for (const dir of ["fcode-agents", "fcode-skills"]) cpSync(join(resources, dir), join(out, "resources", dir), { recursive: true });
 cpSync(hostCore, join(out, `bin/pi-desktop-host-core${exe}`));
 chmodSync(join(out, `bin/pi-desktop-host-core${exe}`), 0o755);
 try {

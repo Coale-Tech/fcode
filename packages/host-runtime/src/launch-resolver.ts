@@ -1,4 +1,3 @@
-import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import {
@@ -14,20 +13,16 @@ import {
   type Mode,
   type SessionThinkingLevel,
   type UserSkillRecord,
-  type UserSubagentRecord,
 } from "@pi-desktop/shared";
 import {
   capabilitiesFromModelConfig,
   clampThinkingLevel,
   genericModelConfig,
   loadInstructionChain,
-  loadSubagentDefinitions,
   modelConfigWithBinding,
   optionalProviderHeaders,
-  resolveSubagentProviders,
   visionFromModelConfig,
   type RuntimeProviderConfig,
-  type UserSubagentDocument,
 } from "@pi-desktop/agent-runtime";
 
 import type { HostRpc } from "./host-ports.js";
@@ -128,8 +123,8 @@ function isLaunchAdmissionError(error: unknown): boolean {
  * `resolveAgentRuntimeLaunch` minus the surfaces a headless machine does not
  * have: no plugin tools, no user MCP relay, no plugin agents, no vendor OAuth
  * accounts. Everything else — provider rows and secrets, the effective
- * command shell, project instructions and memory, the user's skills and
- * subagent definitions — comes from the same host-core registries.
+ * command shell, project instructions and memory, the user's skills — comes
+ * from the same host-core registries.
  */
 export function createHeadlessLaunchResolver(options: HeadlessLaunchResolverOptions): LaunchResolver {
   const { getHost, dataDir, log } = options;
@@ -148,38 +143,6 @@ export function createHeadlessLaunchResolver(options: HeadlessLaunchResolverOpti
       return result.skills ?? [];
     } catch (error) {
       if (!isHostUnavailable(error)) log("warn", "skills list failed", { error: String(error) });
-      return [];
-    }
-  }
-
-  async function activeUserSubagentDocuments(projectPath: string | undefined): Promise<UserSubagentDocument[]> {
-    let records: UserSubagentRecord[] = [];
-    try {
-      const result = await requireHost().call<{ subagents: UserSubagentRecord[] }>("agents.active", {
-        projectPath: projectPath ?? null,
-      });
-      records = result.subagents ?? [];
-    } catch (error) {
-      if (!isHostUnavailable(error)) log("warn", "subagent list failed", { error: String(error) });
-      return [];
-    }
-    const documents: UserSubagentDocument[] = [];
-    for (const record of records) {
-      try {
-        documents.push({ id: record.id, document: await readFile(record.path, "utf8"), filePath: record.path });
-      } catch (error) {
-        log("warn", "subagent document unreadable", { id: record.id, error: String(error) });
-      }
-    }
-    return documents;
-  }
-
-  async function disabledBuiltinSubagents(): Promise<string[]> {
-    try {
-      const result = await requireHost().call<{ disabled: string[] }>("agents.disabledBuiltins");
-      return result.disabled ?? [];
-    } catch (error) {
-      if (!isHostUnavailable(error)) log("warn", "builtin subagent state failed", { error: String(error) });
       return [];
     }
   }
@@ -335,66 +298,6 @@ export function createHeadlessLaunchResolver(options: HeadlessLaunchResolverOpti
     const userSkills = (await activeUserSkills(projectPath)).filter((skill) => isActiveInProject(skill, projectPath ?? null));
     const pluginSkills = userSkills.map((skill) => ({ id: skill.id, name: skill.name, description: skill.description }));
 
-    const subagentCatalog = await loadSubagentDefinitions(projectPath, {
-      userDocuments: await activeUserSubagentDocuments(projectPath),
-      disabledBuiltins: await disabledBuiltinSubagents(),
-    });
-    const subagentBindings = await resolveSubagentProviders({
-      definitions: subagentCatalog.definitions,
-      providers: providers.providers,
-      getSecret,
-      resolveModel: async (pinned, pinnedModelId) => {
-        const row = providers.providers.find((candidate) => candidate.id === pinned.id);
-        const resolved = effectiveModelConfig(row ?? { ...pinned, models: [] }, pinnedModelId, pinned.baseUrl);
-        return { modelConfig: resolved.modelConfig, capabilities: resolved.capabilities };
-      },
-    });
-    const subagentModelKeys: string[] = [];
-    for (const row of providers.providers) {
-      if (!row.enabled) continue;
-      for (const binding of row.models ?? []) {
-        if (!binding.availableForSubagents) continue;
-        let key = `${row.vendorKey ?? row.name}/${binding.id}`;
-        if (subagentBindings.providers[key]?.id && subagentBindings.providers[key].id !== row.id) {
-          key = `${row.id}/${binding.id}`;
-        }
-        if (subagentBindings.providers[key]) {
-          subagentModelKeys.push(key);
-          continue;
-        }
-        if (row.authKind === OAUTH_AUTH_KIND) continue;
-        let apiKey = "";
-        if (row.authKind !== "none") {
-          try {
-            apiKey = (await getSecret(row.id)) ?? "";
-          } catch {
-            continue;
-          }
-          if (!apiKey) continue;
-        }
-        const effective = effectiveModelConfig(row, binding.id, row.baseUrl);
-        subagentBindings.providers[key] = {
-          id: row.id,
-          name: row.name,
-          ...(row.vendorKey ? { vendorKey: row.vendorKey } : {}),
-          ...(row.baseUrl ? { baseUrl: row.baseUrl } : {}),
-          modelId: binding.id,
-          apiKey,
-          ...(row.authKind ? { authKind: row.authKind } : {}),
-          ...(row.apiStyle ? { apiStyle: row.apiStyle } : {}),
-          ...optionalProviderHeaders(row.headers),
-          supportsReasoning: effective.capabilities.supportsReasoning,
-          supportedThinkingLevels: [...effective.capabilities.supportedThinkingLevels],
-          modelConfig: effective.modelConfig,
-        };
-        subagentModelKeys.push(key);
-      }
-    }
-    const subagentDiagnostics = [...subagentCatalog.diagnostics, ...subagentBindings.diagnostics];
-    if (subagentDiagnostics.length > 0) {
-      log("warn", "subagent definitions have problems", { sessionId, diagnostics: subagentDiagnostics });
-    }
-
     const sessionMode = typeof session.mode === "string" ? session.mode : undefined;
     const defaultMode = typeof settings.defaultMode === "string" ? settings.defaultMode : undefined;
     return {
@@ -431,9 +334,6 @@ export function createHeadlessLaunchResolver(options: HeadlessLaunchResolverOpti
         pluginTools: [],
         pluginSkills,
         trustedExtensions: [],
-        subagents: subagentCatalog.definitions,
-        subagentProviders: subagentBindings.providers,
-        subagentModelKeys,
       },
     };
   }

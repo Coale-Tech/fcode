@@ -13,7 +13,6 @@ const anchoredSurfaceSources = await Promise.all(
   [
     "../src/pages/ProjectsPage.tsx",
     readPluginsSource(),
-    "../src/components/settings/AgentCapabilityLayout.tsx",
     "../src/components/extensions/ScopeControl.tsx",
     readComposerSource(),
     "../src/components/ComposerAutocomplete.tsx",

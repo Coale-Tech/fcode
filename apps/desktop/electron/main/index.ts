@@ -690,7 +690,6 @@ const providerCatalogRuntime = createProviderCatalogRuntime({
 });
 const {
   bindingForModel,
-  effectiveSubagentModelConfig,
   enrichProvider,
   enrichProviderList,
   sessionCapabilityContext,
@@ -713,15 +712,12 @@ const createdSessionLaunchRuntime = createSessionLaunchRuntime({
   getWorkspacePath: currentWorkspacePath,
   pluginActiveInProject,
   bindingForModel,
-  effectiveSubagentModelConfig,
   normalizeThinkingLevel,
 });
 sessionLaunchRuntime = createdSessionLaunchRuntime;
 const {
   refreshUserMcp,
   activeUserSkills,
-  activeUserSubagentDocuments,
-  disabledBuiltinSubagents,
   loadUserSkillBody,
   resolveEffectiveCommandShell,
   resolveAgentRuntimeLaunch,
@@ -1126,8 +1122,6 @@ const sidecarRuntime = createSidecarRuntime({
   agentExtensions,
   vendorOAuth,
   listRuntimeProviders,
-  modelsDevCatalog,
-  effectiveSubagentModelConfig,
   browserHost,
   plugins,
   sessionProjects,
@@ -1282,8 +1276,6 @@ function registerIpc() {
     mcpOAuth,
     refreshUserMcp,
     describeError,
-    activeUserSubagentDocuments,
-    disabledBuiltinSubagents,
     pluginViews,
     pluginScopes,
     rememberPluginScopes,

@@ -1,5 +1,4 @@
 import { mkdir } from "node:fs/promises";
-import { join } from "node:path";
 
 import { AgentHost, type ApprovalPort } from "@pi-desktop/agent-host";
 import {
@@ -12,6 +11,8 @@ import {
   createHostQueueStore,
   createHostSessionPort,
   listPendingToolRequests,
+  ompProviderEnv,
+  type HostProviderRecord,
 } from "@pi-desktop/host-runtime";
 import { DeviceTokenAuthenticator, RacpServer, bindRacpWebSocket, type RacpHostOperations, type WsBinding } from "@pi-desktop/racp";
 import { APP_VERSION, type AgentEventEnvelope } from "@pi-desktop/shared";
@@ -60,6 +61,12 @@ export async function startPiHost(config: PiHostConfig, options: { log?: HostLog
 
   const approvals: ApprovalPort = {
     async resolveTool(requestId, decision) {
+      // omp asks for approval itself, so host-core has no record of the request:
+      // the sidecar answers when it owns the id, host-core otherwise.
+      const viaSidecar = await getSidecar()
+        ?.call<{ handled?: boolean }>("tool_permission.resolve", { requestId, decision })
+        .catch(() => undefined);
+      if (viaSidecar?.handled) return;
       const host = getHost();
       if (!host) throw new Error("host unavailable");
       await host.call("permissions.resolve", { requestId, decision });
@@ -148,8 +155,29 @@ export async function startPiHost(config: PiHostConfig, options: { log?: HostLog
     log("info", "host-core handshake ok", { generation: host.generation });
   };
   const startSidecar = async () => {
+    // omp-bridge reaches the user's providers through env: keys never touch disk.
+    const host = getHost();
+    const providerEnv = host
+      ? await host
+          .call<{ providers: HostProviderRecord[] }>("providers.list", { includeDisabled: false })
+          .then(({ providers }) => ompProviderEnv(host, providers, config.dataDir))
+          .catch((error: unknown) => {
+            log("warn", "provider injection failed; omp starts without Fcode providers", { error: String(error) });
+            return {};
+          })
+      : {};
+    if (!config.resourcesPath) log("warn", "no resources directory found; omp binary and fcode agents are unavailable (set --resources or PI_HOST_RESOURCES)");
     const sidecar = new AgentSidecar({
-      launch: { command: config.nodeBinary, args: [config.sidecarEntry], env: { ...process.env, PI_DESKTOP_DATA_DIR: config.dataDir } },
+      launch: {
+        command: config.nodeBinary,
+        args: [config.sidecarEntry],
+        env: {
+          ...process.env,
+          FCODE_DATA_DIR: config.dataDir,
+          ...(config.resourcesPath ? { FCODE_RESOURCES_PATH: config.resourcesPath } : {}),
+          ...providerEnv,
+        },
+      },
       onStderr: log.child("agent"),
     });
     sidecar.onExit(({ intentional, code, signal, stderrTail }) => {
@@ -193,7 +221,7 @@ export async function startPiHost(config: PiHostConfig, options: { log?: HostLog
     state.sidecar = sidecar;
     runtime.attachSidecar(sidecar);
     if (state.host) sidecar.setHost(state.host);
-    await sidecar.call("sidecar.configure", { hostBinary: config.hostCoreBinary, dataDir: config.dataDir });
+    await sidecar.call("sidecar.configure", { hostBinary: config.hostCoreBinary, dataDir: config.dataDir, resourcesPath: config.resourcesPath });
     log("info", "agent sidecar configured");
   };
   const supervisor = new RuntimeSupervisor({

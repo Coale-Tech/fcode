@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { writeFileSync } from "node:fs";
 import { dialog, type BrowserWindow, type IpcMain, type IpcMainInvokeEvent } from "electron";
 import { err, ErrorCodes, IPC, ok, type Result } from "@pi-desktop/shared";
 import type { AgentHostBridge } from "../agent-host-bridge";
@@ -67,8 +68,6 @@ export type RegisterIpcDependencies = {
   getBackendRouter?: () => BackendRouter | null;
   getNotificationViewingSessionId: () => string | null;
   setNotificationViewingSessionId: (sessionId: string | null) => void;
-  activeUserSubagentDocuments: (...args: any[]) => Promise<any>;
-  disabledBuiltinSubagents: () => Promise<string[]>;
   mcpOAuth?: McpOAuthManager;
   [name: string]: any;
   /** Optional kanban board deps; absent when kanban runner is not wired yet. */
@@ -136,8 +135,6 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     bindingForModel,
     agentExtensions,
     activeUserSkills,
-    activeUserSubagentDocuments,
-    disabledBuiltinSubagents,
     pluginActiveInProject,
     getWorkPanelReservationWidth,
     setWorkPanelReservationWidth,
@@ -431,6 +428,18 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     dataDir,
     restartSidecar: async () => dependencies.onProviderMutation?.(),
   });
+  // G15: native binary picker — saves override path to disk and restarts sidecar.
+  handle(IPC.invoke.ompPickBinaryPath, async () => {
+    const owner = getMainWindow();
+    const options = { title: "Choose omp binary", properties: ["openFile" as const] };
+    const result = owner
+      ? await dialog.showOpenDialog(owner, options)
+      : await dialog.showOpenDialog(options);
+    if (result.canceled || !result.filePaths[0]) return { picked: false };
+    writeFileSync(join(dataDir, "omp-bin-override.txt"), result.filePaths[0]);
+    await dependencies.onProviderMutation?.();
+    return { picked: true, path: result.filePaths[0] };
+  });
   registerExtensionsMgmtIpc({
     registrar,
     dataDir,
@@ -536,9 +545,6 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     getHost,
     searchSkillMarket,
     fetchSkillMarketDocument,
-    optionalWorkspaceRoot,
-    activeUserSubagentDocuments,
-    disabledBuiltinSubagents,
     stripWinLongPrefix,
     sendToRenderer,
     logger,

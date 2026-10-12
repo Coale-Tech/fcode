@@ -34,14 +34,6 @@ test("T6 Gap1: failure panel renders problem and fix (role=alert)", () => {
   assert.match(source, /startFailure.*role.*alert|role.*alert.*startFailure/s);
 });
 
-test("T6 Gap1: Retry button is rendered inside the failure panel", () => {
-  assert.match(source, /Retry/);
-});
-
-test("T6 Gap1: Copy log button is rendered inside the failure panel", () => {
-  assert.match(source, /Copy log/);
-});
-
 // ── Gap 2: one-shot verb states ────────────────────────────────────────────────
 
 test("T6 Gap2: oneshotState Map is declared", () => {

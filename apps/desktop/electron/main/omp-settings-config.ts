@@ -159,6 +159,8 @@ const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   // Appearance — HTML export themes (omp/packages/coding-agent/src/modes/settings.ts)
   "theme.dark":                    { type: "string" },
   "theme.light":                   { type: "string" },
+  // Auto-Learn (omp/packages/coding-agent/src/autolearn/settings.ts)
+  "autolearn.enabled":             { type: "boolean" },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

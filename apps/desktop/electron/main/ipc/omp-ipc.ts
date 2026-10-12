@@ -39,10 +39,12 @@ import type {
   OmpWorktreeAddResult,
   OmpUserProfileGetResult,
   OmpUserProfileSetResult,
+  OmpAgentListResult,
+  OmpAgentSource,
 } from "@pi-desktop/shared";
 import type { OmpSkillCuratorStatusResult, OmpSkillCuratorMutateResult, OmpSkillProposalListResult, OmpSkillProposalActResult, OmpSkillJourneyResult } from "@pi-desktop/shared";
 import { existsSync } from "node:fs";
-import { readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { execFile } from "node:child_process";
@@ -212,6 +214,125 @@ export async function writeUserProfile(
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
 }
+
+const PROJECT_MEMORY_MAX_CHARS = 16 * 1024; // 16 KiB — larger than USER.md
+const PROJECT_MEMORY_FILE = "MEMORY.md";
+const PROJECT_MEMORY_DIR = ".omp";
+
+/**
+ * Write project memory to `<workspaceDir>/.omp/MEMORY.md` atomically (temp+rename).
+ * Creates `.omp/` if absent. Content truncated to PROJECT_MEMORY_MAX_CHARS.
+ */
+async function writeProjectMemory(
+  workspaceDir: string,
+  text: string,
+): Promise<OmpUserProfileSetResult> {
+  const ompDir = join(workspaceDir, PROJECT_MEMORY_DIR);
+  const dest   = join(ompDir, PROJECT_MEMORY_FILE);
+  const tmp    = `${dest}.tmp.${Date.now()}`;
+  try {
+    await mkdir(ompDir, { recursive: true });
+    await writeFile(tmp, text.slice(0, PROJECT_MEMORY_MAX_CHARS), "utf8");
+    await rename(tmp, dest);
+    return { ok: true };
+  } catch (e) {
+    rm(tmp, { force: true }).catch(() => { /* ignore */ });
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+// ── Agent list (F1: effective agent list across all sources) ──────────────────
+
+/** omp's five bundled agents; descriptions from omp/packages/coding-agent/src/task/agents.ts. */
+const OMP_BUNDLED_AGENTS: ReadonlyArray<{ name: string; description: string; tools: string[]; model?: string }> = [
+  { name: "task",             description: "General-purpose subagent with full capabilities for delegated multi-step tasks", tools: [], model: "@task" },
+  { name: "sonic",            description: "Low-reasoning agent for strictly mechanical updates or data collection only", tools: [], model: "@smol" },
+  { name: "scout",            description: "MUST be used for exploratory codebase research, rapid code analysis, and broad pattern searches. Fast read-only scout returning compressed context for handoff.", tools: ["read", "find", "grep", "glob", "web_search"], model: "@smol" },
+  { name: "reviewer",         description: "Code review specialist for quality/security analysis", tools: ["read", "find", "grep", "glob", "bash", "lsp", "web_search", "ast_grep"] },
+  { name: "security-reviewer", description: "Read-only security specialist for evidence-backed repository vulnerability discovery", tools: ["read", "find", "grep", "glob", "lsp", "ast_grep"] },
+];
+
+/** Minimal YAML frontmatter parser — mirrors fcode-agents.test.mjs parseFrontmatter. */
+function parseFrontmatterFields(content: string): Record<string, unknown> | null {
+  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!match) return null;
+  const yaml = match[1]!;
+  const result: Record<string, unknown> = {};
+  let currentList: string[] | null = null;
+  for (const line of yaml.split(/\r?\n/)) {
+    const listItem = line.match(/^[ \t]+-[ \t]+(.+)$/);
+    if (listItem && currentList !== null) {
+      currentList.push(listItem[1]!.trim().replace(/^["']|["']$/g, ""));
+      continue;
+    }
+    const inlineArr = line.match(/^(\w[\w-]*):\s*\[([^\]]*)\]\s*$/);
+    if (inlineArr) {
+      currentList = null;
+      result[inlineArr[1]!] = inlineArr[2]!.split(",").map((s) => s.trim().replace(/^["']|["']$/g, "")).filter(Boolean);
+      continue;
+    }
+    const kv = line.match(/^(\w[\w-]*):\s*(.*)$/);
+    if (kv) {
+      currentList = null;
+      const val = kv[2]!.trim();
+      if (val === "") { result[kv[1]!] = []; currentList = result[kv[1]!] as string[]; }
+      else { result[kv[1]!] = val.replace(/^["']|["']$/g, ""); }
+    }
+  }
+  return result;
+}
+
+/** Read all .md agent files from a directory; returns [] when dir is absent. */
+async function readAgentDir(dir: string, source: OmpAgentSource): Promise<OmpAgentListResult["agents"]> {
+  let files: string[];
+  try { files = (await readdir(dir)).filter((f) => f.endsWith(".md")); }
+  catch { return []; }
+  const agents: OmpAgentListResult["agents"] = [];
+  for (const file of files) {
+    try {
+      const content = await readFile(join(dir, file), "utf8");
+      const fm = parseFrontmatterFields(content);
+      if (!fm) continue;
+      const name = typeof fm["name"] === "string" ? fm["name"].trim() : "";
+      if (!name) continue;
+      const description = typeof fm["description"] === "string" ? fm["description"].trim() : "";
+      const tools = Array.isArray(fm["autoloadSkills"]) ? [] :
+        Array.isArray(fm["tools"]) ? fm["tools"] as string[] : [];
+      const model = typeof fm["model"] === "string" ? fm["model"].trim() : undefined;
+      agents.push({ name, description, tools, ...(model ? { model } : {}), source });
+    } catch { /* skip unreadable files */ }
+  }
+  return agents;
+}
+
+/**
+ * Build the effective agent list across all four sources.
+ * Precedence: project > user > fcode > omp bundled.
+ * Agents with the same name from lower-priority sources are marked `shadowed`.
+ */
+async function listEffectiveAgents(projectPath: string | null): Promise<OmpAgentListResult> {
+  const home = homedir();
+  const fcodeAgentsDir = join(process.resourcesPath ?? "", "fcode-agents", "agents");
+
+  const [projectAgents, userAgents, fcodeAgents] = await Promise.all([
+    projectPath ? readAgentDir(join(projectPath, ".omp", "agents"), "project") : Promise.resolve([]),
+    readAgentDir(join(home, ".omp", "agent", "agents"), "user"),
+    readAgentDir(fcodeAgentsDir, "fcode"),
+  ]);
+
+  const ompAgents: OmpAgentListResult["agents"] = OMP_BUNDLED_AGENTS.map((a) => ({ ...a, source: "omp" as OmpAgentSource }));
+
+  // All agents in precedence order; first occurrence of a name wins.
+  const all = [...projectAgents, ...userAgents, ...fcodeAgents, ...ompAgents];
+  const seen = new Set<string>();
+  return {
+    agents: all.map((agent) => {
+      if (seen.has(agent.name)) return { ...agent, shadowed: true };
+      seen.add(agent.name);
+      return agent;
+    }),
+  };
+}
+
 
 /** Register all omp IPC channels. */
 export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpcDependencies): void {
@@ -725,5 +846,42 @@ export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpc
   ): Promise<OmpUserProfileSetResult> => {
     if (typeof input?.text !== "string") invalid("text (string) required");
     return writeUserProfile(join(homedir(), ".omp", "agent"), input.text as string);
+  });
+
+  // ── omp.project-memory.get ────────────────────────────────────────────────
+  // Reads <workspace>/.omp/MEMORY.md; returns empty string when absent.
+  handle(IPC.invoke.ompProjectMemoryGet, async (
+    input: { workspacePath?: unknown } = {},
+  ): Promise<OmpUserProfileGetResult> => {
+    if (typeof input?.workspacePath !== "string" || !input.workspacePath) return { text: "" };
+    try {
+      const text = await readFile(
+        join(input.workspacePath as string, PROJECT_MEMORY_DIR, PROJECT_MEMORY_FILE),
+        "utf8",
+      );
+      return { text: text.trim() };
+    } catch {
+      return { text: "" };
+    }
+  });
+
+  // ── omp.project-memory.set ────────────────────────────────────────────────
+  // Writes <workspace>/.omp/MEMORY.md atomically; caps at 16 KiB.
+  handle(IPC.invoke.ompProjectMemorySet, async (
+    input: { workspacePath?: unknown; text?: unknown } = {},
+  ): Promise<OmpUserProfileSetResult> => {
+    if (typeof input?.workspacePath !== "string" || !input.workspacePath) invalid("workspacePath (string) required");
+    if (typeof input?.text !== "string") invalid("text (string) required");
+    return writeProjectMemory(input.workspacePath as string, input.text as string);
+  });
+
+  // ── omp.agents.list ──────────────────────────────────────────────────────
+  // Reads agent .md files from all four sources, applies precedence ordering
+  // (project > user > fcode > omp bundled), and marks shadowed entries.
+  handle(IPC.invoke.ompAgentList, async (
+    input: { projectPath?: unknown } = {},
+  ): Promise<OmpAgentListResult> => {
+    const projectPath = typeof input?.projectPath === "string" ? input.projectPath.trim() : "";
+    return listEffectiveAgents(projectPath || null);
   });
 }

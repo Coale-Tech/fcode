@@ -42,7 +42,7 @@ test("settings CSS uses only numeric radius tokens, not named-scale aliases", ()
   );
   assert.doesNotMatch(
     css,
-    /border-radius:\s*var\(--radius-(?:sm|md|lg|xl|2xl)\)/,
+    /border-radius:\s*var\(--radius-(?:sm|md|lg|xl|2xl)(?:[,\s][^)]+)?\)/,
     "settings.css must not use the named radius scale (sm/md/lg/xl/2xl); use --radius-N numeric steps",
   );
 });
