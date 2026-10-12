@@ -82,8 +82,8 @@ Contrast reference (computed, WCAG 2.x): `#2578AB`/white 4.82, `#42A2D9` on dark
 
 ```bash
 cd /Users/mac/ERPNext/frappe_agent/PI-Desktop/apps/desktop
-./node_modules/.bin/tsc --noEmit -p . 2>&1 | grep -c "error TS"          # expect 3
-node --test test/*.test.mjs 2>&1 | grep -E "^# (pass|fail)"               # expect fail 1 (hindsight fast-exit)
+./node_modules/.bin/tsc --noEmit -p . 2>&1 | grep -c "error TS"          # expect 0
+node --test test/*.test.mjs 2>&1 | grep -E "^# (pass|fail)"               # expect fail 0 (flaky: npm-executable, remote-host-ssh-password, remote-host-ssh-transport, codesign x2, hindsight fast-exit)
 ```
 Write both numbers in the Task 1 commit message body.
 
@@ -540,7 +540,7 @@ Spec deltas (from `kit-d/D-SPEC.md` §buttons/inputs/segmented/toggle/rows):
 .btn-primary:hover:not(:disabled) { background: color-mix(in oklab, var(--ds-text-primary) 85%, var(--ds-bg-primary)); }
 ```
 - [ ] **Step 3:** `grep -rn "btn-primary" apps/desktop/src --include=*.tsx | wc -l` — list call sites; any place that relied on the blue primary to signal "the" action (composer Send, onboarding Continue, update banner) gets an explicit accent modifier **in its own partial**, not by reverting the primitive: composer `.composer-send` already has its own rule — confirm it uses `--ds-accent`; if it inherited `.btn-primary`, add `background: var(--ds-accent); color: var(--ds-accent-foreground)` to it.
-- [ ] **Step 4: Run** `node --test test/*.test.mjs` → only the baseline failure; `tsc` baseline.
+- [ ] **Step 4: Run** `node --test test/*.test.mjs` → only flaky-list tests (npm-executable, remote-host-ssh-*, codesign x2, hindsight fast-exit) failing; `tsc --noEmit` must be 0 errors.
 - [ ] **Step 5: Visual smoke.** Capture Settings/Plugins/dialog light+dark; compare to `pages-d/settings-general-appearance/variant-D2*.png` and `D-components.html` (kit-d). Controls are 28px, segmented fits, no overflow with `de` locale.
 - [ ] **Step 6: Commit** `style(renderer): direction D primitives`
 
@@ -898,6 +898,7 @@ cd /Users/mac/ERPNext/frappe_agent/PI-Desktop
 pnpm --filter @pi-desktop/i18n test
 pnpm --filter @pi-desktop/desktop test            # only flaky list (npm-executable, remote-host-ssh-*, codesign x2, hindsight fast-exit) failing
 (cd apps/desktop && ./node_modules/.bin/tsc --noEmit -p . 2>&1 | grep -c "error TS")   # must be 0
+pnpm test:e2e                                      # 28/28
 ```
 - [ ] **Step 5:** Docs updated as listed; remove any scratch files in the repo. `git status` shows no `CHANGELOG.md` change.
 - [ ] **Step 6: Commit** `docs(ui): direction D design system + capture matrix`
