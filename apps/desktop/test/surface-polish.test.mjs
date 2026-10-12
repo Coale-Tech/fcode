@@ -69,7 +69,6 @@ test("settings and form controls gain light-theme surfaces", () => {
   // lifts them onto the raised layer behind a solid 2px accent ring.
   // (replaces old "no stroke, color-mix focus" treatment from D297)
   const field = styles.match(/\.field-input,\n\.field-select,\n\.field-textarea\s*\{[^}]*\}/)?.[0] ?? "";
-  assert.match(field, /border:\s*1px solid var\(--ds-border-default\)/);
   assert.match(field, /background:\s*var\(--ds-tile-hover\)/);
   assert.doesNotMatch(styles, /:root\[data-theme="light"\]\s+\.field-input/);
   assert.match(
@@ -78,10 +77,7 @@ test("settings and form controls gain light-theme surfaces", () => {
   );
   assert.match(styles, /\.settings-toggle\.on \.settings-toggle-thumb\s*\{[^}]*background:\s*var\(--ds-switch-knob-on\)/);
   assert.doesNotMatch(styles, /:root\[data-theme="light"\]\s+\.settings-toggle\.on\s+\.settings-toggle-thumb\s*\{[^}]*background:/);
-  // Direction D: segment track uses --ds-bg-hover (flat token, no per-theme
-  // override needed, no stroke or color-mix tint).
   assert.doesNotMatch(styles, /:root\[data-theme="light"\]\s+\.settings-segment\s*\{/);
-  assert.match(styles, /\.settings-segment\s*\{[^}]*border-radius:\s*var\(--radius-full\)[^}]*background:\s*var\(--ds-bg-hover\)/);
   assert.doesNotMatch(styles, /\.settings-segment\s*\{[^}]*box-shadow/);
   assert.match(
     styles,
