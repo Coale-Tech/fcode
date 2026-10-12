@@ -20,10 +20,24 @@
   --d-text-xs: 11px;
   --d-text-chat: 14px;
 
-  --ds-toolbar-height: var(--d-navbar-h);
-  --ds-btn-radius: var(--d-r-ctrl);
-  --ds-btn-radius-sm: 6px;
-  --ds-btn-font-size: var(--d-text);
-  --ds-btn-font-size-sm: var(--d-text-sm);
-  --ds-btn-font-weight: var(--font-weight-medium);
+  /* Component metrics (tokenised so component CSS uses var() not literals) */
+  --d-toggle-w:      28px;   /* switch track width  */
+  --d-toggle-h:      16px;   /* switch track height */
+  --d-toggle-knob:   12px;   /* knob diameter       */
+  --d-toggle-inset:   2px;   /* knob offset from track edge */
+  --d-segment-track: 28px;   /* segmented-control track height */
+  --d-segment-item:  24px;   /* segmented-control item height  */
+  --d-checkbox:      14px;   /* checkbox size */
+  --d-textarea-min:  64px;   /* textarea min-height */
+
+  /* Redirect design-system ladder to Direction D values */
+  --ds-toolbar-height:        var(--d-navbar-h);
+  --ds-btn-height:            var(--d-ctrl);
+  --ds-btn-radius:            var(--d-r-ctrl);
+  --ds-btn-radius-sm:         6px;
+  --ds-btn-font-size:         var(--d-text);
+  --ds-btn-font-size-sm:      var(--d-text-sm);
+  --ds-btn-font-weight:       var(--font-weight-medium);
+  --ds-field-height:          var(--d-ctrl);
+  --ds-settings-radius-ctrl:  var(--d-r-ctrl);
 }

@@ -1004,6 +1004,16 @@
   line-height: var(--leading-normal);
 }
 
+/* Direction D: the "Allow once" CTA in a permission card is a time-sensitive,
+   high-signal action — keep accent fill so it stands out against the transcript. */
+.permission-card-actions .btn-primary {
+  background: var(--ds-accent);
+  color: var(--ds-accent-foreground);
+}
+.permission-card-actions .btn-primary:hover:not(:disabled) {
+  background: var(--ds-accent-hover);
+}
+
 /* Deny button: danger-tinted ghost */
 .permission-deny-btn.btn-ghost {
   color: var(--ds-error);

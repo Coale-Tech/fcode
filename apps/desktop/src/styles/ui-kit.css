@@ -3,9 +3,8 @@
   the overlay/dialog base used by every floating surface.
 */
 
-/* Surfaces and fields carry tone, not strokes (D297): a card is a soft tile,
-   a field is a filled well that lifts and gains an accent ring only while
-   focused. Both themes share the formula through the tile tokens. */
+/* Direction D: panel-card has 1px border + --d-r radius; fields are 28px tall
+   with border-default ring and gain a solid 2px accent ring on focus. */
 .ui-tooltip {
   position: fixed;
   z-index: 1000;
@@ -74,7 +73,8 @@
   border: 1px solid var(--ds-border-default);
   border-radius: var(--d-r-ctrl);
   background: var(--ds-tile-hover);
-  padding: 9px 11px;
+  /* 28px height: 1px border + 5px pad + ~13px text + 5px pad + 1px border = 25px; leaves margin. */
+  padding: 5px 11px;
   height: var(--d-ctrl);
   color: var(--ds-text-primary);
   outline: none;
@@ -85,7 +85,7 @@
 
 .field-textarea {
   height: auto;
-  min-height: 64px;
+  min-height: var(--d-textarea-min);
 }
 
 .field-input:focus,
@@ -192,6 +192,7 @@
 }
 
 .btn-ghost {
+  border: 0;
   color: var(--ds-text-secondary);
 }
 .btn-ghost:hover:not(:disabled) {
@@ -374,8 +375,8 @@
 .ds-checkbox {
   appearance: none;
   -webkit-appearance: none;
-  width: 14px;
-  height: 14px;
+  width: var(--d-checkbox);
+  height: var(--d-checkbox);
   flex: 0 0 auto;
   border-radius: var(--d-r-sm);
   border: 1.5px solid var(--ds-text-secondary);
