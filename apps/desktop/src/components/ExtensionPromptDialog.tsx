@@ -143,17 +143,9 @@ function ExtensionPromptDialog({
         aria-describedby={`${dialogId}-source`}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="session-rename-dialog-head">
-          <div className="session-rename-dialog-heading">
-            <h2 id={`${dialogId}-title`} className="session-rename-dialog-title">
-              <IconPlug size={16} aria-hidden />
-              {title}
-            </h2>
-            <p id={`${dialogId}-source`} className="session-rename-dialog-description">
-              {t("plugins.agentExtension.prompt.source", { label: prompt.extensionLabel })}
-              <code className="extension-prompt-source-path">{prompt.extensionId}</code>
-            </p>
-          </div>
+        <div className="dialog-head">
+          <IconPlug size={16} aria-hidden />
+          <span id={`${dialogId}-title`} className="session-rename-dialog-title-text">{title}</span>
           <TooltipButton
             type="button"
             className="session-rename-dialog-close"
@@ -165,37 +157,43 @@ function ExtensionPromptDialog({
           </TooltipButton>
         </div>
         <form onSubmit={submit}>
-          {request.kind === "confirm" ? (
-            <p className="extension-prompt-message">{request.message}</p>
-          ) : null}
-          {request.kind === "select" ? (
-            <div className="extension-prompt-options" role="radiogroup" aria-label={request.title}>
-              {request.options.map((option) => (
-                <label key={option} className="extension-prompt-option">
-                  <input
-                    type="radio"
-                    name={`${dialogId}-option`}
-                    value={option}
-                    checked={selected === option}
-                    onChange={() => setSelected(option)}
-                  />
-                  <span>{option}</span>
-                </label>
-              ))}
-            </div>
-          ) : null}
-          {request.kind === "input" ? (
-            <input
-              ref={inputRef}
-              className="field-input"
-              value={draft}
-              placeholder={request.placeholder ?? t("plugins.agentExtension.prompt.placeholder")}
-              onChange={(event) => setDraft(event.target.value)}
-              aria-label={request.title}
-              spellCheck={false}
-            />
-          ) : null}
-          <div className="session-rename-dialog-actions">
+          <div className="dialog-body">
+            <p id={`${dialogId}-source`} className="session-rename-dialog-description">
+              {t("plugins.agentExtension.prompt.source", { label: prompt.extensionLabel })}
+              <code className="extension-prompt-source-path">{prompt.extensionId}</code>
+            </p>
+            {request.kind === "confirm" ? (
+              <p className="extension-prompt-message">{request.message}</p>
+            ) : null}
+            {request.kind === "select" ? (
+              <div className="extension-prompt-options" role="radiogroup" aria-label={request.title}>
+                {request.options.map((option) => (
+                  <label key={option} className="extension-prompt-option">
+                    <input
+                      type="radio"
+                      name={`${dialogId}-option`}
+                      value={option}
+                      checked={selected === option}
+                      onChange={() => setSelected(option)}
+                    />
+                    <span>{option}</span>
+                  </label>
+                ))}
+              </div>
+            ) : null}
+            {request.kind === "input" ? (
+              <input
+                ref={inputRef}
+                className="field-input"
+                value={draft}
+                placeholder={request.placeholder ?? t("plugins.agentExtension.prompt.placeholder")}
+                onChange={(event) => setDraft(event.target.value)}
+                aria-label={request.title}
+                spellCheck={false}
+              />
+            ) : null}
+          </div>
+          <div className="dialog-foot">
             <Button type="button" variant="ghost" onClick={() => onSettle(undefined)}>
               {request.kind === "confirm"
                 ? t("plugins.agentExtension.prompt.no")

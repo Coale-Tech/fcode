@@ -114,21 +114,20 @@ export function DestructiveActionDialog({
         className="dialog destructive-dialog"
         onClick={(event) => event.stopPropagation()}
       >
-        <h2 id="dd-title" className="dd-title">
-          Confirm: {command}
-        </h2>
-
-        <p id="dd-desc" className="dd-body">
-          {/* One sentence naming site, command and consequence — plan D14. */}
-          Run <strong>{command}</strong> on <strong>{site}</strong>. This{" "}
-          {consequence} and cannot be undone.
-        </p>
-
-        {agentName && (
-          <p className="dd-agent">{t("permission.fromSubagent", { agent: agentName })}</p>
-        )}
-
-        <div className="dd-actions">
+        <div className="dialog-head">
+          <span id="dd-title">Confirm: {command}</span>
+        </div>
+        <div className="dialog-body">
+          <p id="dd-desc">
+            {/* One sentence naming site, command and consequence — plan D14. */}
+            Run <strong>{command}</strong> on <strong>{site}</strong>. This{" "}
+            {consequence} and cannot be undone.
+          </p>
+          {agentName && (
+            <p className="dd-agent">{t("permission.fromSubagent", { agent: agentName })}</p>
+          )}
+        </div>
+        <div className="dialog-foot">
           <Button
             ref={cancelRef}
             type="button"

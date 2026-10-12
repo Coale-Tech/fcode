@@ -315,6 +315,11 @@
   animation: surface-in var(--motion-duration-normal) var(--motion-ease-out) both;
 }
 
+/* F09: dark — elevation-1 bg (auto via token) / outline-gray-2 border (D.css:1551) */
+:root[data-theme="dark"] .dialog {
+  border-color: var(--outline-gray-2);
+}
+
 /* Optional head/body/foot sub-element classes (D.css:1039-1059) */
 .dialog-head {
   padding: 14px 16px 12px;
@@ -432,8 +437,19 @@
   background: var(--ds-border-subtle);
 }
 
-/* F07: checkbox — 1px outline3/base fill/white check (D.css:843-857).
-   Dark glyph (#0a1f2e) is the R12 approved deviation: 5.9:1 on #42a2d9. */
+/* Checkbox wrapper: flex row with gap; label gap stays 6px per kanban override. */
+.ui-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: var(--d-text);
+  color: var(--ds-text-primary);
+  user-select: none;
+}
+
+/* F07: checkbox — 14px/r4/outline3/base treatment; 10px check glyph (D.css:843-857).
+   Dark glyph (#0a1f2e) is the R12 approved deviation: 5.93:1 on #42a2d9. */
 .ds-checkbox {
   appearance: none;
   -webkit-appearance: none;
@@ -444,7 +460,9 @@
   border: 1px solid var(--d-border-ctrl);
   background: var(--surface-base);
   cursor: pointer;
-  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition:
     background var(--motion-duration-fast) var(--motion-ease-out),
     border-color var(--motion-duration-fast) var(--motion-ease-out);
@@ -453,17 +471,20 @@
   background: var(--ds-accent);
   border-color: var(--ds-accent);
 }
+/* 10px check glyph centred in 14px box via mask-image on a filled block (D.css:857) */
 .ds-checkbox:checked::after {
   content: "";
-  position: absolute;
-  top: 1px;
-  left: 4px;
-  width: 3px;
-  height: 7px;
-  /* Light: white on #2578ab = 4.8:1 ✓; Dark: #0a1f2e on #42a2d9 = 5.9:1 ✓ (R12). */
-  border: solid var(--ds-accent-foreground);
-  border-width: 0 1.5px 1.5px 0;
-  transform: rotate(45deg);
+  display: block;
+  width: 10px;
+  height: 10px;
+  background-color: var(--ds-accent-foreground);
+  /* Light: #ffffff on #2578ab = 4.82:1 ✓; Dark: #0a1f2e on #42a2d9 = 5.93:1 ✓ (R12) */
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5L4 7.5L8.5 2' stroke='black' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5L4 7.5L8.5 2' stroke='black' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  -webkit-mask-size: 10px 10px;
+  mask-size: 10px 10px;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
 }
 .ds-checkbox:disabled {
   opacity: 0.4;

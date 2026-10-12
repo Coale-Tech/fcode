@@ -750,7 +750,7 @@ export function Checkbox({
 }) {
   return (
     <label className={cx("ui-checkbox", className)}>
-      <input type="checkbox" {...props} />
+      <input type="checkbox" className="ds-checkbox" {...props} />
       <span>{label}</span>
     </label>
   );
