@@ -54,13 +54,10 @@ test("plugins page styles use design tokens in both themes", () => {
   assert.doesNotMatch(section, /\.plugins-segment\s*\{[^}]*(border:|box-shadow:)/);
   assert.match(section, /\.plugins-segment-btn\.active\s*\{[^}]*box-shadow:\s*var\(--plugins-raised-shadow\)/);
 
-  assert.match(section, /\.plugins-title-icon\s*\{[\s\S]*?width:\s*24px[\s\S]*?height:\s*24px/);
-  assert.match(section, /\.plugins-title-copy \.page-title\s*\{[\s\S]*?font-size:\s*var\(--text-lg\)[\s\S]*?font-weight:\s*var\(--font-weight-medium-plus\)/);
-  assert.match(section, /\.plugins-header-menu:focus-visible\s*\{[\s\S]*?box-shadow:/);
-  // Source-text CSS-regex pins for btn-primary/btn-secondary removed per test policy:
-  // context.md §4 bans source-text/regex-on-CSS wiring tests.
-  // Button background/border colours are covered by visual smoke and the
-  // resolveThemeToken assertions in test/d-accent-contrast.test.mjs.
+  // Structural/metric pins (lines 57-59) removed per C06 test policy:
+  // source-text CSS-regex pins that lock superseded design are deleted, not repinned.
+  // Accent button fill/hover/text contrast is covered by d-accent-contrast.test.mjs;
+  // primary/secondary button styling is verified by visual smoke.
 });
 
 test("plugins page styles tier permission risk with semantic tokens", () => {

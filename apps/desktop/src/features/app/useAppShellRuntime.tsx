@@ -98,9 +98,8 @@ export function useAppShellRuntime() {
   workPanelOpenRef.current = workPanelVisible;
 
   // The shell is a fixed client area: the three-column budget needs its real
-  // measured width, not the native window bounds, because the reservation seam
-  // stays at zero. The E frame's nav rail and the Island's 8px inset on each
-  // side are never available to the columns.
+  // measured width, not the native window bounds. shellChromeWidth() accounts
+  // for the nav chrome reservation (rail/island) per the active layout.
   const columnsWidth = (shell: HTMLElement) =>
     Math.max(0, Math.round(shell.clientWidth) - shellChromeWidth(navLayoutRef.current));
   useLayoutEffect(() => {

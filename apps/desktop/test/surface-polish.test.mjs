@@ -43,9 +43,9 @@ test("work panel interactive rows ease hover fills with motion tokens", () => {
   }
 });
 
-test("button press feedback eases transform instead of snapping", () => {
+test("interactive controls ease hover/focus transitions with motion tokens", () => {
+  /* F03: .btn no longer has press-scale; test only the motion-token easing present. */
   for (const selector of [
-    ".btn",
     ".icon-btn",
     ".title-nav-btn",
     ".nav-item",
@@ -59,40 +59,33 @@ test("button press feedback eases transform instead of snapping", () => {
     );
     assert.match(styles, re, `${selector} should ease pressed feedback`);
   }
-  assert.match(styles, /\.btn:active:not\(:disabled\)\s*\{[\s\S]*?scale\(0\.98\)/);
+  /* Composer send/stop still have press feedback (not button primitives) */
   assert.match(styles, /\.send-btn:active:not\(:disabled\)[\s\S]*?scale\(0\.94\)/);
   assert.match(styles, /\.stop-btn:active:not\(:disabled\)[\s\S]*?scale\(0\.94\)/);
 });
 
-test("settings and form controls gain light-theme surfaces", () => {
-  // Direction D: fields are 28px tall with a 1px border-default ring; focus
-  // lifts them onto the raised layer behind a solid 2px accent ring.
-  // (replaces old "no stroke, color-mix focus" treatment from D297)
-  const field = styles.match(/\.field-input,\n\.field-select,\n\.field-textarea\s*\{[^}]*\}/)?.[0] ?? "";
-  assert.match(field, /background:\s*var\(--ds-tile-hover\)/);
+test("settings and form controls use Direction D surfaces", () => {
+  // F04: fields use base fill, outline3 border, accent-border + blue-ring focus.
+  // (supersedes old tile-hover bg + ds-raised focus from D297 — those pins removed C06)
   assert.doesNotMatch(styles, /:root\[data-theme="light"\]\s+\.field-input/);
   assert.match(
     styles,
-    /\.field-input:focus,\n\.field-select:focus,\n\.field-textarea:focus\s*\{[^}]*background:\s*var\(--ds-raised\)[^}]*box-shadow:\s*0 0 0 2px/,
+    /\.field-input:focus,\n\.field-select:focus,\n\.field-textarea:focus\s*\{[^}]*border-color:\s*var\(--da\)[^}]*box-shadow:\s*0 0 0 2px/,
   );
+  // F06: toggle knob-on token used (not a per-theme literal override).
   assert.match(styles, /\.settings-toggle\.on \.settings-toggle-thumb\s*\{[^}]*background:\s*var\(--ds-switch-knob-on\)/);
   assert.doesNotMatch(styles, /:root\[data-theme="light"\]\s+\.settings-toggle\.on\s+\.settings-toggle-thumb\s*\{[^}]*background:/);
-  assert.doesNotMatch(styles, /:root\[data-theme="light"\]\s+\.settings-segment\s*\{/);
+  // Segment track must not have box-shadow (it's a tinted pill, not elevated).
   assert.doesNotMatch(styles, /\.settings-segment\s*\{[^}]*box-shadow/);
-  assert.match(
-    styles,
-    /\.settings-segment-item\.active\s*\{[^}]*background:\s*var\(--ds-raised\)[^}]*box-shadow:\s*var\(--ds-raised-shadow\)/,
-  );
+  // F05: segment active item uses elevation-1 bg + blue ink (da-txt).
+  assert.match(styles, /\.settings-segment-item\.active\s*\{[^}]*background:\s*var\(--surface-elevation-1\)/);
   assert.doesNotMatch(styles, /:root\[data-theme="light"\]\s+\.shortcut-keybinding\s+kbd/);
   assert.match(
     styles,
     /\.shortcut-keybinding kbd\s*\{[^}]*background:\s*var\(--ds-raised\)[^}]*box-shadow:\s*var\(--ds-raised-shadow\)/,
   );
   assert.doesNotMatch(styles, /\.shortcut-keybinding kbd\s*\{[^}]*border:/);
-  // The dialog scrim is a token now (issue #341). Its light value used to sit as
-  // a literal inside a `:root[data-theme="light"]` override, which raised
-  // specificity above the base rule *and* skipped the variable; the lighter
-  // light veil now lives in the light token block, so a theme can move it.
+  // Dialog scrim is a token (issue #341).
   assert.match(styles, /:root\[data-theme="light"\]\s*\{[^}]*--ds-scrim:/);
   assert.match(styles, /\.overlay\s*\{[^}]*background:\s*var\(--ds-scrim\)/);
   assert.doesNotMatch(styles, /:root\[data-theme="light"\]\s+\.overlay\s*\{/);
