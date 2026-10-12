@@ -46,6 +46,7 @@ import { KeyboardShortcutsSection } from "../../components/settings/KeyboardShor
 import { FontFamilyRow } from "../../components/settings/FontFamilyRow";
 import { ThinkingDisplayModeRow } from "../../components/settings/ThinkingDisplayModeRow";
 import { FontSizeRow } from "../../components/settings/FontSizeRow";
+import { NavLayoutRow } from "../../components/settings/NavLayoutRow";
 import { LanguageRow } from "../../components/settings/LanguageRow";
 import { MemoryTab, memoryHealth } from "./MemoryTab";
 import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect";
@@ -437,6 +438,7 @@ export function SettingsPage() {
                 <LanguageRow settings={settings} saveSettings={saveSettings} />
                 <FontFamilyRow settings={settings} saveSettings={saveSettings} />
                 <FontSizeRow settings={settings} saveSettings={saveSettings} />
+                <NavLayoutRow settings={settings} saveSettings={saveSettings} />
               </SettingsCard>
 
               <NetworkProxySection settings={settings} saveSettings={saveSettings} />
