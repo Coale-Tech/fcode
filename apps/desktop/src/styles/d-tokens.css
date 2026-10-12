@@ -76,6 +76,29 @@
   --d-nl-card-r:              10px;
   --d-nl-check:               16px;
   --d-nl-gap:                 10px;
+  --d-nl-section-pb:          14px;   /* nl-section bottom padding */
+  --d-nl-card-bw:             2px;    /* card border-width + focus outline */
+  --d-nl-ring-w:              3px;    /* selected ring spread */
+  --d-nl-foot-py:             7px;    /* nl-foot top/bottom padding */
+  --d-nl-foot-gap:            6px;    /* nl-foot label/badge gap */
+  --d-nl-glyph:               9px;    /* check-mark SVG size */
+  /* wf thumbnail sketch metrics (fragment-d2.html:43-59) */
+  --d-wf-nb-h:                13px;
+  --d-wf-rail-sm:             9px;
+  --d-wf-rail-lg:             13px;
+  --d-wf-ri:                  5px;
+  --d-wf-sidebar:             30px;
+  --d-wf-dot:                 4px;
+  --d-wf-pill-h:              6px;
+  --d-wf-bar-h:               3px;
+  --d-wf-micro:               2px;
+  --d-wf-sm:                  3px;
+  --d-wf-island-r:            5px;
+  --d-wf-pill-a:              22px;   /* tabs active pill width */
+  --d-wf-pill-ml:             5px;    /* tabs active pill margin-left */
+  --d-wf-pill-b:              18px;
+  --d-wf-pill-c:              16px;
+  --d-wf-sb-tall:             5px;    /* island sidebar "on" bar height */
   /* C03: field horizontal padding (ui-kit.css:78) */
   --d-field-px:               8px;
 }

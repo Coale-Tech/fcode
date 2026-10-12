@@ -5,10 +5,10 @@ import { resolveNavLayout, nextNavLayout } from "../../lib/nav-layout";
 import { cx } from "../ui";
 
 // Exception: picker cards use raw <button role="radio"> rather than the Button
-// primitive because the card structure (88px thumbnail + footer + check badge)
-// is incompatible with Button's fixed 28px height model, and the ARIA role is
-// "radio" not "button". Button primitive enforces --ds-btn-* metrics that would
-// break the 178×88px card layout. Recorded as required by implementer-rules.
+// primitive (ui.tsx:527-555). Button spreads all props so role/aria-checked/
+// tabIndex are compatible, but it always applies the .btn class (ui-kit.css:157)
+// which enforces height:var(--ds-btn-height)=28px; there is no unstyled/auto-
+// height prop to suppress it, collapsing the 88px card thumbnail. Raw kept.
 
 const LABEL: Record<NavLayout, string> = {
   tabs:   "settings.navLayoutTabs",
@@ -31,9 +31,9 @@ function Thumb({ layout }: { layout: NavLayout }) {
       <div className="nl-thumb" aria-hidden="true">
         <div className="wf-nb">
           {dots}
-          <div className="wf-pill on" style={{ width: "22px", marginLeft: "5px" }} />
-          <div className="wf-pill" style={{ width: "18px" }} />
-          <div className="wf-pill" style={{ width: "16px" }} />
+          <div className="wf-pill on wf-pl-a" />
+          <div className="wf-pill wf-pl-b" />
+          <div className="wf-pill wf-pl-c" />
         </div>
         <div className="wf-body-row">
           <div className="wf-canvas-area">
@@ -61,14 +61,14 @@ function Thumb({ layout }: { layout: NavLayout }) {
             <div className="wf-ri" />
           </div>
           <div className="wf-sidebar">
-            <div className="wf-sb-bar on" style={{ height: "5px", borderRadius: "2px" }} />
+            <div className="wf-sb-bar on wf-sb-bar--tall" />
             <div className="wf-sb-bar" />
             <div className="wf-sb-bar" />
             <div className="wf-sb-bar" />
           </div>
-          <div className="wf-canvas-area" style={{ padding: "2px" }}>
+          <div className="wf-canvas-area wf-canvas-sm">
             <div className="wf-island-wrap">
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
+              <div className="wf-col">
                 <div className="wf-row" style={{ width: "70%" }} />
                 <div className="wf-row" style={{ width: "50%" }} />
               </div>
