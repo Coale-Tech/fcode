@@ -88,6 +88,8 @@ export type AppSettings = {
   fontScale?: number;
   /** Transcript presentation only; absent means detailed. Reasoning is retained. */
   thinkingDisplayMode?: "detailed" | "compact";
+  /** Window navigation shell: top tabs, icon rail, or labelled rail + sessions island. Absent means "rail". */
+  navLayout?: "tabs" | "rail" | "island";
   /**
    * @deprecated Unreleased D343 px field. Reads migrate into `fontScale`
    * as `px / 14`; new writes persist `fontScale` instead.

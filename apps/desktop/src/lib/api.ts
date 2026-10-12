@@ -215,6 +215,7 @@ import type {
   ModelConfigImportSource,
 } from "@pi-desktop/shared";
 export type { ModelConfigImportCandidate, ModelConfigImportSource };
+import { isNavLayout } from "./nav-layout";
 
 export interface ImportCandidate {
   source: ImportSource;
@@ -456,6 +457,11 @@ export function validateSettingsWrite(settings: AppSettings): AppSettings {
     settings.thinkingDisplayMode !== "compact"
   ) {
     throw Object.assign(new Error("thinkingDisplayMode is invalid"), {
+      errorCode: "INVALID_PARAMS",
+    });
+  }
+  if (settings.navLayout !== undefined && !isNavLayout(settings.navLayout)) {
+    throw Object.assign(new Error("navLayout is invalid"), {
       errorCode: "INVALID_PARAMS",
     });
   }
