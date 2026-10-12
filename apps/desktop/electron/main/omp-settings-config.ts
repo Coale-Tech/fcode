@@ -161,6 +161,8 @@ const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   "theme.light":                   { type: "string" },
   // Auto-Learn (omp/packages/coding-agent/src/autolearn/settings.ts)
   "autolearn.enabled":             { type: "boolean" },
+  // Generic manifest-driven settings (validated per-id by the manifest in slice A)
+  advanced:                       { type: "record" },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -225,6 +225,32 @@ export interface OmpSubagentMessagesResult {
 }
 
 /**
+ * One omp setting as declared by omp's registry (`config/all-settings.ts`),
+ * emitted into `omp-settings-manifest.json` at build time. The advanced
+ * settings page renders from these descriptors; nothing is hand-listed.
+ */
+export interface OmpSettingDescriptor {
+  /** Dotted id, e.g. "retry.maxRetries". */
+  id: string;
+  type: "boolean" | "string" | "number" | "enum" | "array" | "record";
+  default?: unknown;
+  /** enum */
+  values?: readonly string[];
+  /** number */
+  min?: number;
+  max?: number;
+  tab: string;
+  group: string;
+  label: string;
+  description?: string;
+  secret?: boolean;
+  options?: readonly { value: string; label: string }[];
+}
+
+/** Dotted omp setting id → value, for settings without a curated key in {@link OmpSettingsValues}. */
+export type OmpAdvancedSettings = Record<string, unknown>;
+
+/**
  * User-controlled omp settings persisted in `omp-settings.json` and injected
  * into the overlay on sidecar restart. Only the configured subset is written;
  * absent keys keep omp's own defaults.
@@ -363,6 +389,8 @@ export interface OmpSettingsValues {
   "skills.review.requireApproval"?: boolean;
   // Auto-Learn (omp/packages/coding-agent/src/autolearn/settings.ts)
   "autolearn.enabled"?: boolean;
+  /** Generic settings from the omp manifest; a curated key above always wins over the same id here. */
+  advanced?: OmpAdvancedSettings;
 }
 
 // ── Skill approval / journey ──────────────────────────────────────────────────
