@@ -225,7 +225,9 @@
   padding: 0 10px;
   font-size: var(--d-text-sm);
   font-weight: var(--font-weight-medium);
-  gap: 5px;
+  display: flex;
+  align-items: center;
+  gap: var(--d-seg-gap);
   line-height: var(--leading-tighter);
   transition: background var(--motion-duration-fast) var(--motion-ease-out), color var(--motion-duration-fast) var(--motion-ease-out);
 }

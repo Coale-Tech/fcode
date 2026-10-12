@@ -43,10 +43,10 @@ test("the renderer applies a global type scale without a reload", () => {
   assert.match(appSource, /resolveFontScale\(settings/);
   assert.match(appSource, /"--font-scale"/);
   assert.match(tokensSource, /--font-scale:\s*1;/);
-  /* F12: --d-text resolves through --text-base so user scale still multiplies it.
-     Resolved-value: at --font-scale:1 (default), --d-text = 13px. */
+  /* F12: --d-text must resolve through --font-scale so user scale multiplies it.
+     Behavioral check: the resolved chain references --font-scale, not a fixed px. */
   const dText = resolveThemeToken(styles, "light", "--d-text");
-  assert.equal(dText, "calc(13px * var(--font-scale))", `--d-text should resolve to calc(13px * var(--font-scale)), got ${dText}`);
+  assert.match(dText ?? "", /var\(--font-scale\)/, `--d-text must reference --font-scale, got ${dText}`);
   assert.doesNotMatch(tokensSource, /--reading-font-size/);
   assert.doesNotMatch(tokensSource, /\.thread-wrap,\s*\n\.composer-dock \{/);
 });

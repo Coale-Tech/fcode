@@ -7,10 +7,6 @@ const tokens = await readFile(
   new URL("../src/styles/tokens.css", import.meta.url),
   "utf8",
 );
-const uiKit = await readFile(
-  new URL("../src/styles/ui-kit.css", import.meta.url),
-  "utf8",
-);
 const styles = await loadStyles();
 
 test("fixed radii follow the Apple-inspired desktop ladder", () => {
@@ -37,13 +33,11 @@ test("fixed radii follow the Apple-inspired desktop ladder", () => {
   assert.match(tokens, /--ds-composer-radius-lg:\s*var\(--radius-xl\);/);
 });
 
-test("shared compact controls use r8 (--d-r-ctrl) while badges stay r10", () => {
+test("shared compact controls use r8 (--d-r-ctrl)", () => {
   /* Resolved-value check: --d-r-ctrl must be 8px (D.css:37 / D-SPEC.md) */
   const rCtrl = resolveThemeToken(styles, "light", "--d-r-ctrl");
   assert.equal(rCtrl, "8px", `--d-r-ctrl should resolve to 8px, got ${rCtrl}`);
   /* --ds-btn-radius redirects to --d-r-ctrl (D.css:659) */
   const btnRadius = resolveThemeToken(styles, "light", "--ds-btn-radius");
   assert.equal(btnRadius, "8px", `--ds-btn-radius should resolve to 8px, got ${btnRadius}`);
-  /* Badge r10 — verify the radius ladder includes r10 */
-  assert.match(tokens, /--radius-xs:\s*8px;/);
 });

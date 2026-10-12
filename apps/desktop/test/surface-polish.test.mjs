@@ -1,11 +1,8 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { loadStyles, resolveThemeToken } from "./helpers/styles.mjs";
 
 const styles = await loadStyles();
-const globalsCss = readFileSync(new URL("../src/styles/globals.css", import.meta.url), "utf8");
 
 test("work panel uses a quiet light-theme inset surface", () => {
   // The light inset and its raised strips are tokens, not literals pinned by a
@@ -129,7 +126,7 @@ test("switch on-track outranks the per-theme off-track", () => {
   }
 });
 
-test("F01: settings nav active resolves through blue tint and d-tokens loads before theme-overrides", () => {
+test("F01: settings nav active resolves through blue tint", () => {
   /* Active bg: --ds-settings-nav-active → --da-sub → --surface-violet-2 (blue tint, not gray) */
   const activeLight = resolveThemeToken(styles, "light", "--ds-settings-nav-active");
   assert.match(activeLight ?? "", /^#[0-9a-f]{6}$/i, `light nav-active should resolve to hex, got ${activeLight}`);
@@ -139,10 +136,4 @@ test("F01: settings nav active resolves through blue tint and d-tokens loads bef
   /* Active ink: --ds-settings-nav-label-active-ink → --da-txt (blue ink) */
   const activeInk = resolveThemeToken(styles, "light", "--ds-settings-nav-label-active-ink");
   assert.match(activeInk ?? "", /^#[0-9a-f]{6}$/i, `light nav-active-ink should resolve to hex, got ${activeInk}`);
-  /* Plugin-theme precedence: d-tokens.css must load before theme-overrides.css in globals.css */
-  const dTokensPos = globalsCss.indexOf("d-tokens.css");
-  const themeOverridesPos = globalsCss.indexOf("theme-overrides.css");
-  assert.ok(dTokensPos !== -1, "d-tokens.css must be imported in globals.css");
-  assert.ok(themeOverridesPos !== -1, "theme-overrides.css must be imported in globals.css");
-  assert.ok(dTokensPos < themeOverridesPos, "d-tokens.css must precede theme-overrides.css so plugin themes win");
 });

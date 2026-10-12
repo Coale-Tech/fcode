@@ -21,7 +21,7 @@ import test from "node:test";
 import { loadStyles, resolveThemeToken } from "./helpers/styles.mjs";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
-const [tokensCss, uiKitCss, settingsCss, modelConfigCss, extensionsCss, pluginsCss, scheduledCss, sessionsCss, dTokensCss] =
+const [tokensCss, uiKitCss, settingsCss, modelConfigCss, extensionsCss, pluginsCss, scheduledCss, sessionsCss] =
   await Promise.all([
     read("../src/styles/tokens.css"),
     read("../src/styles/ui-kit.css"),
@@ -31,7 +31,6 @@ const [tokensCss, uiKitCss, settingsCss, modelConfigCss, extensionsCss, pluginsC
     read("../src/styles/plugins.css"),
     read("../src/features/scheduled/scheduled-editor.css"),
     read("../src/styles/sessions.css"),
-    read("../src/styles/d-tokens.css"),
   ]);
 const styles = await loadStyles();
 

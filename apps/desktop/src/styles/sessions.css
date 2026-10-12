@@ -574,11 +574,13 @@
   line-height: var(--leading-body);
 }
 
+/* F09: close button right-aligned in dialog head via auto left margin (D-components.html:421) */
 .session-rename-dialog-close {
   display: inline-flex;
   width: 28px;
   height: 28px;
   flex: 0 0 auto;
+  margin-left: auto;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);

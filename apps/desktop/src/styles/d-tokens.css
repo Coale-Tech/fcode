@@ -101,6 +101,12 @@
   --d-wf-sb-tall:             5px;    /* island sidebar "on" bar height */
   /* C03: field horizontal padding (ui-kit.css:78) */
   --d-field-px:               8px;
+  /* C06: component metric tokens replacing bare literals */
+  --d-seg-gap:                5px;    /* segment-item icon/label gap (D.css:807) */
+  --d-row-desc-mt:            1px;    /* settings row desc margin-top (fragment-d2.html:29) */
+  --d-focus-ring:             2px;    /* trigger/field focus ring spread (D.css:762-763) */
+  --d-checkbox-gap:           6px;    /* checkbox wrapper label gap */
+  --d-checkbox-glyph:         10px;   /* ds-checkbox check-mark glyph size (D.css:857) */
 }
 
 /* Dark theme: remap violet to FileBird dark blues */
