@@ -62,7 +62,8 @@
   color: var(--ds-text-secondary);
 }
 .panel-card {
-  border-radius: var(--radius-lg);
+  border-radius: var(--d-r);
+  border: 1px solid var(--ds-border-default);
   background: var(--ds-tile);
 }
 
@@ -70,15 +71,11 @@
 .field-select,
 .field-textarea {
   width: 100%;
-  border: 0;
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--ds-border-default);
+  border-radius: var(--d-r-ctrl);
   background: var(--ds-tile-hover);
   padding: 9px 11px;
-  /* The whole field vocabulary pins to one height, so a native select (whose
-     closed box resolves ~2px shorter on its own) and an input that asks for a
-     smaller font (`text-sm-plus`) still line up with the plain input beside
-     them. Compact surfaces that own a smaller scale override the minimum. */
-  min-height: var(--ds-field-height);
+  height: var(--d-ctrl);
   color: var(--ds-text-primary);
   outline: none;
   transition:
@@ -86,11 +83,16 @@
     box-shadow var(--motion-duration-fast) var(--motion-ease-out);
 }
 
+.field-textarea {
+  height: auto;
+  min-height: 64px;
+}
+
 .field-input:focus,
 .field-select:focus,
 .field-textarea:focus {
   background: var(--ds-raised);
-  box-shadow: 0 0 0 2px color-mix(in oklab, var(--ds-accent) 22%, transparent);
+  box-shadow: 0 0 0 2px var(--ds-accent);
 }
 
 .field-input:read-only,
@@ -143,7 +145,7 @@
   flex-shrink: 0;
   white-space: nowrap;
   padding: 0 var(--ds-btn-pad-x);
-  border: 0;
+  border: 1px solid transparent;
   border-radius: var(--ds-btn-radius);
   font-family: inherit;
   font-size: var(--ds-btn-font-size);
@@ -174,20 +176,19 @@
 }
 
 .btn-primary {
-  background: var(--ds-accent);
-  color: var(--ds-accent-foreground);
+  background: var(--ds-text-primary);
+  color: var(--ds-bg-primary);
+  border-color: transparent;
 }
-.btn-primary:hover:not(:disabled) {
-  background: var(--ds-accent-hover);
-  opacity: 1;
-}
+.btn-primary:hover:not(:disabled) { background: color-mix(in oklab, var(--ds-text-primary) 85%, var(--ds-bg-primary)); }
 
 .btn-secondary {
-  background: var(--ds-tile-hover);
+  background: transparent;
   color: var(--ds-text-primary);
+  border-color: var(--ds-border-default);
 }
 .btn-secondary:hover:not(:disabled) {
-  background: var(--ds-tile-deep);
+  background: var(--ds-bg-hover);
 }
 
 .btn-ghost {
@@ -373,10 +374,10 @@
 .ds-checkbox {
   appearance: none;
   -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   flex: 0 0 auto;
-  border-radius: var(--radius-3xs);
+  border-radius: var(--d-r-sm);
   border: 1.5px solid var(--ds-text-secondary);
   background: transparent;
   cursor: pointer;
@@ -394,10 +395,10 @@
 .ds-checkbox:checked::after {
   content: "";
   position: absolute;
-  top: 2px;
-  left: 5px;
-  width: 4px;
-  height: 8px;
+  top: 1px;
+  left: 4px;
+  width: 3px;
+  height: 7px;
   border: solid var(--ds-accent-foreground);
   border-width: 0 1.5px 1.5px 0;
   transform: rotate(45deg);

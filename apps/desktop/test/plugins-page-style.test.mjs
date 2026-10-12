@@ -58,13 +58,15 @@ test("plugins page styles use design tokens in both themes", () => {
   assert.match(section, /\.plugins-title-copy \.page-title\s*\{[\s\S]*?font-size:\s*var\(--text-lg\)[\s\S]*?font-weight:\s*var\(--font-weight-medium-plus\)/);
   assert.match(section, /\.plugins-header-menu:focus-visible\s*\{[\s\S]*?box-shadow:/);
 
+  // Direction D: btn-primary = black fill (--ds-text-primary), label inverted (--ds-bg-primary)
   assert.match(
     stylesSource,
-    /\.btn-primary\s*\{[\s\S]*?background:\s*var\(--ds-accent\);[\s\S]*?color:\s*var\(--ds-bg-primary\);/,
+    /\.btn-primary\s*\{[\s\S]*?background:\s*var\(--ds-text-primary\);[\s\S]*?color:\s*var\(--ds-bg-primary\);/,
   );
+  // Direction D: btn-secondary = transparent + 1px --ds-border-default
   assert.match(
     stylesSource,
-    /\.btn-secondary\s*\{[\s\S]*?background:\s*var\(--ds-bg-secondary\);[\s\S]*?color:\s*var\(--ds-text-primary\);[\s\S]*?--ds-border-default/,
+    /\.btn-secondary\s*\{[\s\S]*?background:\s*transparent;[\s\S]*?color:\s*var\(--ds-text-primary\);[\s\S]*?--ds-border-default/,
   );
 });
 

@@ -162,8 +162,6 @@
   --ds-btn-font-weight:            var(--text-base--font-weight);
   --ds-btn-tracking:               var(--text-base--letter-spacing);
   --ds-btn-leading:                var(--text-base--line-height);
-  --ds-btn-radius:                 var(--radius-4);
-  --ds-btn-radius-sm:              var(--radius-3);
   --ds-field-height:               calc(18px + var(--text-base) * var(--leading-body));
   --ds-work-panel-toggle-size:     28px;
   --ds-work-panel-toggle-inset:    12px;

@@ -23,4 +23,7 @@
   --ds-toolbar-height: var(--d-navbar-h);
   --ds-btn-radius: var(--d-r-ctrl);
   --ds-btn-radius-sm: 6px;
+  --ds-btn-font-size: var(--d-text);
+  --ds-btn-font-size-sm: var(--d-text-sm);
+  --ds-btn-font-weight: var(--font-weight-medium);
 }

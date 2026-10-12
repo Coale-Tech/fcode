@@ -199,14 +199,15 @@
   background: color-mix(in oklab, var(--ds-error) 20%, transparent);
 }
 
-/* D297: a tinted pill track; the active item is raised on it by shadow. */
+/* Direction D: bg-hover track, 28px tall, items 24px, active = elevated + accent text */
 .settings-segment {
   display: inline-flex;
   align-items: center;
   gap: 2px;
   padding: 2px;
+  height: 28px;
   border-radius: var(--radius-full);
-  background: color-mix(in oklab, var(--ds-text-primary) 6%, transparent);
+  background: var(--ds-bg-hover);
 }
 
 .settings-segment-item {
@@ -215,8 +216,9 @@
   background: transparent;
   color: var(--ds-text-secondary);
   border-radius: var(--radius-full);
-  padding: 6px 12px;
-  font-size: var(--text-sm); /* Espresso TabButtons: text-sm, medium when active */
+  height: 24px;
+  padding: 0 12px;
+  font-size: var(--text-sm);
   line-height: var(--leading-tighter);
   transition: background var(--motion-duration-fast) var(--motion-ease-out), color var(--motion-duration-fast) var(--motion-ease-out);
 }
@@ -227,7 +229,7 @@
 
 .settings-segment-item.active {
   background: var(--ds-raised);
-  color: var(--ds-text-primary);
+  color: var(--ds-accent);
   box-shadow: var(--ds-raised-shadow);
   font-weight: var(--font-weight-medium);
 }
