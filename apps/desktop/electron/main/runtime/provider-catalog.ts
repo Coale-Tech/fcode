@@ -3,6 +3,7 @@ import {
   SESSION_THINKING_LEVELS,
   defaultCommandShellForPlatform,
   isCommandShellId,
+  isNavLayout,
   resolveBindingContextWindow,
   validateNetworkProxy,
   validateSpeechSettings,
@@ -181,6 +182,7 @@ export function createProviderCatalogRuntime({
       defaultCommandShell?: unknown;
       infiniteProviderRetry?: unknown;
       keepAwakeWhileRunning?: unknown;
+      navLayout?: unknown;
       networkProxy?: unknown;
     };
     if (
@@ -204,6 +206,14 @@ export function createProviderCatalogRuntime({
       typeof value.keepAwakeWhileRunning !== "boolean"
     ) {
       throw Object.assign(new Error("keepAwakeWhileRunning is invalid"), {
+        errorCode: ErrorCodes.INVALID_PARAMS,
+      });
+    }
+    if (
+      Object.prototype.hasOwnProperty.call(value, "navLayout") &&
+      !isNavLayout(value.navLayout)
+    ) {
+      throw Object.assign(new Error("navLayout is invalid"), {
         errorCode: ErrorCodes.INVALID_PARAMS,
       });
     }

@@ -879,6 +879,11 @@ fn validate_settings_value(value: &Value) -> Result<(), JsonRpcError> {
     if let Err(message) = crate::network_proxy::validate_network_proxy(value) {
         return Err(rpc_err(1002, message, "INVALID_PARAMS"));
     }
+    if let Some(layout) = object.get("navLayout") {
+        if !matches!(layout.as_str(), Some("tabs") | Some("rail") | Some("island")) {
+            return Err(rpc_err(1002, "navLayout must be tabs, rail, or island", "INVALID_PARAMS"));
+        }
+    }
     let Some(shell_value) = object.get("defaultCommandShell") else {
         return Ok(());
     };
