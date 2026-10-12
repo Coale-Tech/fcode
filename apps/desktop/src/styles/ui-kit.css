@@ -75,7 +75,7 @@
   border: 1px solid var(--d-border-ctrl);
   border-radius: var(--d-r-ctrl);
   background: var(--surface-base);
-  padding: 0 8px;
+  padding: 0 var(--d-field-px);
   height: var(--d-ctrl);
   min-height: var(--ds-field-height);
   color: var(--ink-gray-8);

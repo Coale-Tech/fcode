@@ -69,6 +69,15 @@
   /* Border tokens (D.css:40-41) */
   --d-border:                 var(--outline-gray-2);
   --d-border-ctrl:            var(--outline-gray-3);
+  /* F11/C03: nl-picker card dimensions — nav layout picker (fragment-d2.html:35-59) */
+  --d-canvas-bg:              var(--surface-gray-2);  /* thumbnail bg (light) */
+  --d-nl-card-w:              178px;
+  --d-nl-thumb-h:             88px;
+  --d-nl-card-r:              10px;
+  --d-nl-check:               16px;
+  --d-nl-gap:                 10px;
+  /* C03: field horizontal padding (ui-kit.css:78) */
+  --d-field-px:               8px;
 }
 
 /* Dark theme: remap violet to FileBird dark blues */
@@ -88,6 +97,8 @@
   --ds-switch-track-off-hover: var(--surface-alpha-gray-3);
   /* knob-off stays base (near-black in dark) */
   --ds-switch-knob-off:        var(--surface-base);
+  /* thumbnail bg: dark uses surface-base (D.css:66) */
+  --d-canvas-bg:               var(--surface-base);
   /* Sidebar glass tint (darwin vibrancy overlay) — ≤60% to let material through */
   --ds-sidebar-glass-tint:         color-mix(in oklab, var(--ds-bg-sidebar) 40%, transparent);
   --ds-sidebar-glass-sheen-top:    color-mix(in oklab, var(--white) 7%, transparent);
