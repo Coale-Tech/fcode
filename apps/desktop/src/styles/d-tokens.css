@@ -88,6 +88,10 @@
   --ds-switch-track-off-hover: var(--surface-alpha-gray-3);
   /* knob-off stays base (near-black in dark) */
   --ds-switch-knob-off:        var(--surface-base);
+  /* Sidebar glass tint (darwin vibrancy overlay) — ≤60% to let material through */
+  --ds-sidebar-glass-tint:         color-mix(in oklab, var(--ds-bg-sidebar) 40%, transparent);
+  --ds-sidebar-glass-sheen-top:    color-mix(in oklab, var(--white) 7%, transparent);
+  --ds-sidebar-glass-sheen-bottom: color-mix(in oklab, var(--white) 4%, transparent);
 }
 
 /* Light theme: blue ramp + switch tokens (each appears exactly once per theme) */
@@ -106,4 +110,8 @@
   --ds-switch-track-off:       var(--surface-gray-3);
   --ds-switch-track-off-hover: var(--surface-gray-4);
   --ds-switch-knob-off:        var(--surface-base);
+  /* Sidebar glass tint (darwin vibrancy overlay) — ≤60% to let material through */
+  --ds-sidebar-glass-tint:         color-mix(in oklab, var(--ds-bg-sidebar) 40%, transparent);
+  --ds-sidebar-glass-sheen-top:    color-mix(in oklab, var(--white) 7%, transparent);
+  --ds-sidebar-glass-sheen-bottom: color-mix(in oklab, var(--white) 4%, transparent);
 }

@@ -201,10 +201,7 @@
   --ds-settings-rail-bg: var(--ds-bg-under);
   --ds-bg-sidebar: var(--ds-settings-rail-bg, var(--ds-bg-under));
 
-  /* Sidebar glass tint (darwin vibrancy overlay) — ≤60% to let material through */
-  --ds-sidebar-glass-tint:         color-mix(in oklab, var(--ds-bg-sidebar) 40%, transparent);
-  --ds-sidebar-glass-sheen-top:    color-mix(in oklab, var(--white) 7%, transparent);
-  --ds-sidebar-glass-sheen-bottom: color-mix(in oklab, var(--white) 4%, transparent);
+  /* Sidebar glass tint lives in d-tokens.css (Direction D theme blocks) */
 
   /* Scrim: ~45% black over dark content */
   --ds-scrim: color-mix(in oklab, var(--black) 45%, transparent);
@@ -232,10 +229,7 @@
   --ds-settings-rail-bg: var(--surface-gray-2);
   --ds-bg-sidebar: var(--ds-settings-rail-bg);
 
-  /* Sidebar glass tint (darwin vibrancy overlay) — ≤60% to let material through */
-  --ds-sidebar-glass-tint:         color-mix(in oklab, var(--ds-bg-sidebar) 40%, transparent);
-  --ds-sidebar-glass-sheen-top:    color-mix(in oklab, var(--white) 7%, transparent);
-  --ds-sidebar-glass-sheen-bottom: color-mix(in oklab, var(--white) 4%, transparent);
+  /* Sidebar glass tint lives in d-tokens.css (Direction D theme blocks) */
 
   /* Scrim: ~28% near-black — lighter so white dialogs stay readable (issue #341) */
   --ds-scrim: color-mix(in oklab, var(--black) 28%, transparent);

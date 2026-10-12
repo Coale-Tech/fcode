@@ -20,7 +20,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
-const [tokensCss, uiKitCss, settingsCss, modelConfigCss, extensionsCss, pluginsCss, scheduledCss, sessionsCss] =
+const [tokensCss, uiKitCss, settingsCss, modelConfigCss, extensionsCss, pluginsCss, scheduledCss, sessionsCss, dTokensCss] =
   await Promise.all([
     read("../src/styles/tokens.css"),
     read("../src/styles/ui-kit.css"),
@@ -30,6 +30,7 @@ const [tokensCss, uiKitCss, settingsCss, modelConfigCss, extensionsCss, pluginsC
     read("../src/styles/plugins.css"),
     read("../src/features/scheduled/scheduled-editor.css"),
     read("../src/styles/sessions.css"),
+    read("../src/styles/d-tokens.css"),
   ]);
 
 /** Body of one rule, so a declaration can be asserted inside the right block. */
@@ -49,9 +50,10 @@ function heightValue(body, property) {
 }
 
 test("the field vocabulary shares one height metric", () => {
+  /* F04/D.css:734: field height = 28px via --d-ctrl; declaration lives in d-tokens.css */
   assert.match(
-    tokensCss,
-    /--ds-field-height:\s*calc\(18px \+ var\(--text-base\) \* var\(--leading-body\)\)/,
+    dTokensCss,
+    /--ds-field-height:\s*var\(--d-ctrl\)/,
   );
   const field = declarations(uiKitCss, ".field-input,\n.field-select,\n.field-textarea");
   assert.equal(heightValue(field, "min-height"), "var(--ds-field-height)");

@@ -36,10 +36,13 @@ test("fixed radii follow the Apple-inspired desktop ladder", () => {
 });
 
 test("shared compact controls are rounded rectangles while badges stay pills", () => {
+  /* F04/D.css:739: fields = r8 via --d-r-ctrl (not --radius-sm=10px) */
   assert.match(
     uiKit,
-    /\.field-input,[\s\S]*?\.field-textarea\s*\{[\s\S]*?border-radius:\s*var\(--radius-sm\);/,
+    /\.field-input,[\s\S]*?\.field-textarea\s*\{[\s\S]*?border-radius:\s*var\(--d-r-ctrl\);/,
   );
-  assert.match(uiKit, /\.btn\s*\{[\s\S]*?border-radius:\s*var\(--radius-sm\);/);
-  assert.match(uiKit, /\.badge\s*\{[\s\S]*?border-radius:\s*var\(--radius-full\);/);
+  /* F02/D.css:658: buttons = r8 via --ds-btn-radius → --d-r-ctrl */
+  assert.match(uiKit, /\.btn\s*\{[\s\S]*?border-radius:\s*var\(--ds-btn-radius\);/);
+  /* F08/D.css:630: badges = r10 (height 20px, r10 = visual pill); not --radius-full literal */
+  assert.match(uiKit, /\.badge\s*\{[\s\S]*?border-radius:\s*10px;/);
 });
