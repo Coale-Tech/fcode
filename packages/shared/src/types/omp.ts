@@ -41,6 +41,8 @@ export interface OmpSlashCommand {
   input?: { hint?: string };
   subcommands?: Array<{ name: string; description?: string; usage?: string }>;
   source: string;
+  /** "user" | "project" | "native"; mirrors omp's SlashCommand.level. */
+  level?: "user" | "project" | "native";
 }
 
 /** Result of `omp.commands.list`. */
@@ -387,11 +389,140 @@ export interface OmpSettingsValues {
   "skills.review.maxInputTokens"?: number;
   /** When true (default), validated skills are staged as proposals awaiting approval. */
   "skills.review.requireApproval"?: boolean;
+  // Opt-in tools (omp/packages/coding-agent/src/tools/settings.ts; default: false)
+  "astGrep.enabled"?: boolean;
+  "checkpoint.enabled"?: boolean;
+  "github.enabled"?: boolean;
+  "security.enabled"?: boolean;
   // Auto-Learn (omp/packages/coding-agent/src/autolearn/settings.ts)
   "autolearn.enabled"?: boolean;
   /** Generic settings from the omp manifest; a curated key above always wins over the same id here. */
   advanced?: OmpAdvancedSettings;
 }
+
+/**
+ * Runtime set of every dotted key that Fcode handles explicitly in
+ * {@link OmpSettingsValues} (excluding `advanced`).
+ *
+ * The advanced settings page uses this to hide descriptors that are already
+ * covered by a curated section, keeping a single source of truth.
+ *
+ * The `satisfies` check below ensures this stays complete: TypeScript fails
+ * if a key is added to `OmpSettingsValues` without also adding it here.
+ */
+/** @internal completeness-check; satisfies errors if OmpSettingsValues gains a key not listed here. */
+const _curatedCheck = {
+  "task.isolation.enabled": true,
+  "isolation.backend": true,
+  "worktree.clone": true,
+  "task.maxConcurrency": true,
+  "task.maxRecursionDepth": true,
+  "task.agentModelOverrides": true,
+  "eval.py": true,
+  "eval.js": true,
+  "eval.tools.enabled": true,
+  "python.kernelMode": true,
+  "python.interpreter": true,
+  "bash.autoApproveReadOnly": true,
+  "browser.enabled": true,
+  "browser.cdpUrl": true,
+  "browser.relay": true,
+  "browser.relayUrl": true,
+  "browser.headless": true,
+  "collab.relayUrl": true,
+  "collab.webUrl": true,
+  "collab.displayName": true,
+  "collab.autoStart": true,
+  "steeringMode": true,
+  "followUpMode": true,
+  "interruptMode": true,
+  "loop.mode": true,
+  "lsp.enabled": true,
+  "lsp.formatOnWrite": true,
+  "lsp.diagnosticsOnWrite": true,
+  "lsp.diagnosticsOnEdit": true,
+  "ida.enabled": true,
+  "ida.python": true,
+  "ida.installDir": true,
+  "mcp.enableProjectConfig": true,
+  "mcp.renderMarkdownResults": true,
+  "mcp.notifications": true,
+  "skills.enabled": true,
+  "skills.registryUrl": true,
+  "skills.enableClaudeUser": true,
+  "skills.listMode": true,
+  "skills.customDirectories": true,
+  "commands.enableClaudeUser": true,
+  "commands.enableClaudeProject": true,
+  "extensions": true,
+  "disabledExtensions": true,
+  "hindsight.autoRecall": true,
+  "hindsight.autoRetain": true,
+  "hindsight.retainMode": true,
+  "hindsight.mentalModelsEnabled": true,
+  "hindsight.mentalModelAutoSeed": true,
+  "memory.injectMaxChars": true,
+  "memory.frozen.maxChars": true,
+  "mnemopi.scoping": true,
+  "mnemopi.dbPath": true,
+  "mnemopi.bank": true,
+  "mnemopi.embeddingVariant": true,
+  "mnemopi.autoRecall": true,
+  "mnemopi.autoRetain": true,
+  "mnemopi.polyphonicRecall": true,
+  "mnemopi.enhancedRecall": true,
+  "mnemopi.proactiveLinking": true,
+  "mnemopi.noEmbeddings": true,
+  "mnemopi.embeddingModel": true,
+  "mnemopi.embeddingApiUrl": true,
+  "mnemopi.llmBaseUrl": true,
+  "mnemopi.llmModel": true,
+  "mnemopi.retainEveryNTurns": true,
+  "mnemopi.recallLimit": true,
+  "mnemopi.recallContextTurns": true,
+  "mnemopi.recallMaxQueryChars": true,
+  "mnemopi.injectionTokenLimit": true,
+  "mnemopi.debug": true,
+  "hindsight.scoping": true,
+  "hindsight.bankIdPrefix": true,
+  "hindsight.retainEveryNTurns": true,
+  "hindsight.retainOverlapTurns": true,
+  "hindsight.recallBudget": true,
+  "hindsight.recallMaxTokens": true,
+  "hindsight.recallContextTurns": true,
+  "hindsight.recallMaxQueryChars": true,
+  "hindsight.debug": true,
+  "hindsight.requestTimeoutMs": true,
+  "hindsight.reflectTimeoutMs": true,
+  "hindsight.recallTimeoutMs": true,
+  "hindsight.retainTimeoutMs": true,
+  "hindsight.mentalModelMaxRenderChars": true,
+  "sharpshooter.model": true,
+  "sharpshooter.intervalMinutes": true,
+  "sharpshooter.injectionTokenLimit": true,
+  "memories.maxRolloutsPerStartup": true,
+  "memories.maxRolloutAgeDays": true,
+  "memories.minRolloutIdleHours": true,
+  "memories.summaryInjectionTokenLimit": true,
+  "theme.dark": true,
+  "theme.light": true,
+  "skills.curator.enabled": true,
+  "skills.curator.staleDays": true,
+  "skills.curator.archiveDays": true,
+  "skills.review.enabled": true,
+  "skills.review.intervalTurns": true,
+  "skills.review.model": true,
+  "skills.review.maxInputTokens": true,
+  "skills.review.requireApproval": true,
+  "astGrep.enabled": true,
+  "checkpoint.enabled": true,
+  "github.enabled": true,
+  "security.enabled": true,
+  "autolearn.enabled": true,
+} satisfies Record<keyof Omit<OmpSettingsValues, "advanced">, true>;
+
+/** Lookup table — every omp setting id already covered by a curated key in {@link OmpSettingsValues}. */
+export const CURATED_OMP_KEYS: Readonly<Record<string, true>> = _curatedCheck;
 
 // ── Skill approval / journey ──────────────────────────────────────────────────
 
@@ -690,4 +821,158 @@ export interface OmpAgentEntry {
 /** Result of `ompAgentList`. */
 export interface OmpAgentListResult {
   agents: OmpAgentEntry[];
+}
+
+// ── Session RPC surface (slice D) ────────────────────────────────────────────
+
+/**
+ * One node in the session tree returned by `get_tree`.
+ * Mirrors omp's `SessionTreeNode`; children are nested nodes.
+ * Content of `entry` is opaque (omp-internal); use `OmpSessionEntry` for ids.
+ */
+export interface OmpSessionTreeNode {
+  entry: OmpSessionEntry;
+  children: OmpSessionTreeNode[];
+  label?: string;
+}
+
+/** Result of `omp.session.getTree`. */
+export interface OmpSessionGetTreeResult {
+  tree: OmpSessionTreeNode[];
+  leafId: string | null;
+}
+
+/** Result of `omp.session.getMessages` (full message list, no paging). */
+export interface OmpSessionMessagesResult {
+  /** Raw AgentMessage objects from omp; typed as unknown for forward-compat. */
+  messages: unknown[];
+}
+
+/** One page of messages from `get_messages_page`. */
+export interface OmpSessionMessagesPageResult {
+  messages: unknown[];
+  /** Opaque cursor; absent when this is the last page. */
+  nextCursor?: string;
+  totalMessages: number;
+}
+
+/** Result of `omp.session.newSession`. */
+export interface OmpNewSessionResult {
+  cancelled: boolean;
+}
+
+/** Result of `omp.session.switchSession`. */
+export interface OmpSwitchSessionResult {
+  cancelled: boolean;
+}
+
+// ── Hooks / Slash-Command authoring (slice E1) ────────────────────────────────
+
+/** One hook script entry (pre- or post-tool execution hook). */
+export interface OmpHookEntry {
+  /** Filename including extension, e.g. "bash.sh". */
+  name: string;
+  /** Absolute path to the hook script. */
+  path: string;
+  /** "pre" | "post" */
+  type: "pre" | "post";
+  /** Tool the hook applies to, e.g. "bash" or "*" for all. */
+  tool: string;
+  /** "user" (in ~/.omp/agent/) or "project" (in .omp/ relative to cwd). */
+  level: "user" | "project";
+  /** Raw script content. */
+  content: string;
+  /**
+   * True when this hook is not in disabledExtensions.
+   * The extension id is `hook:<type>:<tool>:<name>` per omp's hookCapability.toExtensionId.
+   */
+  enabled: boolean;
+}
+
+/** Result of `ompHooksList`. */
+export interface OmpHooksListResult {
+  hooks: OmpHookEntry[];
+}
+
+/** Result of `ompHooksCreate` / `ompHooksEdit` / `ompHooksDelete`. */
+export interface OmpHookMutateResult {
+  ok: boolean;
+  error?: string;
+}
+
+/** Result of `ompCommandsCreate` / `ompCommandsEdit` / `ompCommandsDelete`. */
+export interface OmpCommandMutateResult {
+  ok: boolean;
+  error?: string;
+}
+
+/** Result of `ompCommandRead` — raw file content of a user slash-command. */
+export interface OmpCommandReadResult {
+  content: string;
+}
+
+/** Result of `ompCleanse` — output of `omp cleanse` run in the workspace. */
+export interface OmpCleanseResult {
+  ok: boolean;
+  output: string;
+}
+
+/** Result of `ompAutoresearch` — ack from the `/autoresearch` slash command dispatch. */
+export interface OmpAutoresearchResult {
+  /** false = slash command ran locally; true = fell through to LLM; absent = error. */
+  agentInvoked?: boolean;
+}
+
+// ── omp CLI runner (slice F) ──────────────────────────────────────────────────
+
+/** Allowed omp CLI subcommands exposed via `ompCliRun`. */
+export type OmpCliSubcommand =
+  | "stats"
+  | "usage"
+  | "gc"
+  | "models"
+  | "ps"
+  | "worktree"
+  | "tiny-models"
+  | "toks"
+  | "config"
+  | "web-search";
+
+/** Result of `ompCliRun` — the run identifier (output arrives via events). */
+export interface OmpCliRunResult {
+  runId: string;
+}
+
+/** `ompCliOutput` event payload — one stdout/stderr chunk from a CLI run. */
+export interface OmpCliOutputEvent {
+  runId: string;
+  chunk: string;
+  stream: "stdout" | "stderr";
+}
+
+/** `ompCliDone` event payload — CLI run completed or was killed. */
+export interface OmpCliDoneEvent {
+  runId: string;
+  exitCode: number | null;
+  killed: boolean;
+}
+
+/** Result of `omp.tui.open` — TUI launch script path and project cwd. */
+export interface OmpTuiOpenResult {
+  /** Executable shell script (mode 0600) that sets provider env and execs omp TUI. */
+  scriptPath: string;
+  /** Working directory (session project path) for the integrated terminal. */
+  cwd: string | null;
+}
+
+/** Result of `omp.acp.info` — ACP launch command and editor config snippets. */
+export interface OmpAcpInfoResult {
+  /** Full command: `<binaryPath> acp --config <overlayPath>` */
+  command: string;
+  binaryPath: string;
+  overlayPath: string;
+  /** JSON string to paste into Zed's `agent_servers` array. */
+  zedSnippet: string;
+  /** JSON string for JetBrains / cursor-style agent config. */
+  jetbrainsSnippet: string;
 }

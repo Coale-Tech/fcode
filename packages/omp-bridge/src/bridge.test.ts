@@ -7,8 +7,10 @@ import { tmpdir } from "node:os";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   OmpBridge,
+  initFcodeAgentDir,
   isReadOnlyExecuteMethod,
   makeOmpOverlay,
+  ompBinaryCandidates,
   resolveOmpBinary,
   writeOmpOverlay,
 } from "./bridge.js";
@@ -177,6 +179,64 @@ describe("makeOmpOverlay memory section", () => {
     expect(makeOmpOverlay({ ...base, memory: { backend: "mnemopi" } })).not.toContain("hindsight:");
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Opt-in tools — default off means key omitted; explicit true/false emits YAML
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("makeOmpOverlay — opt-in tools (astGrep / checkpoint / github / security)", () => {
+  const base = { dataDir: "/d", resourcesPath: "/r", screenshotsDir: "/s" };
+
+  it("omits all four sections when settings are absent (default off)", () => {
+    const overlay = makeOmpOverlay(base);
+    expect(overlay).not.toContain("astGrep:");
+    expect(overlay).not.toContain("checkpoint:");
+    // github: is not emitted by the base overlay
+    expect(overlay).not.toMatch(/^github:/m);
+    expect(overlay).not.toContain("\nsecurity:");
+  });
+
+  it("emits astGrep.enabled: true when enabled", () => {
+    const overlay = makeOmpOverlay({ ...base, ompSettings: { "astGrep.enabled": true } });
+    const parsed = parseYaml(overlay) as Record<string, unknown>;
+    expect((parsed.astGrep as Record<string, unknown>).enabled).toBe(true);
+  });
+
+  it("emits astGrep.enabled: false when explicitly disabled", () => {
+    const overlay = makeOmpOverlay({ ...base, ompSettings: { "astGrep.enabled": false } });
+    const parsed = parseYaml(overlay) as Record<string, unknown>;
+    expect((parsed.astGrep as Record<string, unknown>).enabled).toBe(false);
+  });
+
+  it("emits checkpoint.enabled: true when enabled", () => {
+    const overlay = makeOmpOverlay({ ...base, ompSettings: { "checkpoint.enabled": true } });
+    const parsed = parseYaml(overlay) as Record<string, unknown>;
+    expect((parsed.checkpoint as Record<string, unknown>).enabled).toBe(true);
+  });
+
+  it("emits github.enabled: true when enabled", () => {
+    const overlay = makeOmpOverlay({ ...base, ompSettings: { "github.enabled": true } });
+    const parsed = parseYaml(overlay) as Record<string, unknown>;
+    expect((parsed.github as Record<string, unknown>).enabled).toBe(true);
+  });
+
+  it("emits security.enabled: true when enabled", () => {
+    const overlay = makeOmpOverlay({ ...base, ompSettings: { "security.enabled": true } });
+    const parsed = parseYaml(overlay) as Record<string, unknown>;
+    expect((parsed.security as Record<string, unknown>).enabled).toBe(true);
+  });
+
+  it("default-off: omitting the key means omp keeps its own default (false)", () => {
+    // No ompSettings at all; the overlay must not set these keys so omp's own
+    // registry default (false for all four) applies.
+    const overlay = makeOmpOverlay(base);
+    const parsed = parseYaml(overlay) as Record<string, unknown>;
+    expect(parsed).not.toHaveProperty("astGrep");
+    expect(parsed).not.toHaveProperty("checkpoint");
+    expect(parsed).not.toHaveProperty("security");
+  });
+});
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // YAML injection guards — agentModelOverrides key quoting (security)
@@ -1118,5 +1178,362 @@ describe("OmpBridge — system lines need a session", () => {
     (b.sessions as Map<string, unknown>).set("s1", { projectPath: "/", inputModalities: [] });
     bridge.handleOmpFrame(JSON.stringify({ type: "notice", message: "later" }));
     expect(notifications).toMatchObject([{ sessionId: "s1" }]);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// G1/G2 hygiene — binary resolution order, subagent roles, config isolation
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("resolveOmpBinary — dev staged binary (G1 hygiene)", () => {
+  it("prefers devBinDir over PATH when packaged binary absent", () => {
+    // Create a fake dev staged binary
+    const devBinDir = join(dir, "dev-resources", "bin");
+    mkdirSync(devBinDir, { recursive: true });
+    const platform = process.platform;
+    const arch = process.arch;
+    const devBin = join(devBinDir, `omp-${platform}-${arch}`);
+    writeFileSync(devBin, "#!/bin/sh");
+    const result = resolveOmpBinary({ resourcesPath: "/no-such-path", env: {}, devBinDir });
+    expect(result).toBe(devBin);
+  });
+
+  it("packaged binary wins over dev staged binary", () => {
+    // packaged binary in resourcesPath
+    mkdirSync(join(dir, "bin"), { recursive: true });
+    writeFileSync(join(dir, "bin", "omp"), "#!/bin/sh");
+    // also create a dev staged binary that should NOT win
+    const devBinDir = join(dir, "dev-resources", "bin");
+    mkdirSync(devBinDir, { recursive: true });
+    writeFileSync(join(devBinDir, `omp-${process.platform}-${process.arch}`), "#!/bin/sh");
+    const result = resolveOmpBinary({ resourcesPath: dir, env: {}, devBinDir });
+    expect(result).toBe(join(dir, "bin", "omp"));
+  });
+
+  it("OMP_BIN env wins over everything", () => {
+    const devBinDir = join(dir, "dev-resources", "bin");
+    mkdirSync(devBinDir, { recursive: true });
+    writeFileSync(join(devBinDir, `omp-${process.platform}-${process.arch}`), "#!/bin/sh");
+    const result = resolveOmpBinary({ resourcesPath: dir, env: { OMP_BIN: "/my/omp" }, devBinDir });
+    expect(result).toBe("/my/omp");
+  });
+
+  it("falls back to 'omp' on PATH and writes a warning when nothing found", () => {
+    const stderrWrites: string[] = [];
+    const origWrite = process.stderr.write.bind(process.stderr);
+    process.stderr.write = ((data: string) => { stderrWrites.push(data); return true; }) as typeof process.stderr.write;
+    try {
+      const result = resolveOmpBinary({ resourcesPath: "/no-such", env: {}, devBinDir: "/no-such-dev" });
+      expect(result).toBe("omp");
+      expect(stderrWrites.some((s) => s.includes("WARNING"))).toBe(true);
+    } finally {
+      process.stderr.write = origWrite;
+    }
+  });
+
+  it("ompBinaryCandidates includes dev staged binary when devBinDir provided", () => {
+    const devBinDir = "/dev/resources/bin";
+    const candidates = ompBinaryCandidates("/resources", devBinDir);
+    expect(candidates).toContain(join(devBinDir, `omp-${process.platform}-${process.arch}`));
+    expect(candidates[candidates.length - 1]).toBe("omp"); // PATH always last
+  });
+});
+
+describe("makeOmpOverlay — subagent model roles (G2 hygiene)", () => {
+  const base = { dataDir: "/d", resourcesPath: "/r", screenshotsDir: "/s" };
+  const defaultModel = "fcode-anthropic/claude-sonnet-4-5";
+
+  it("sets default, task, smol, slow roles to defaultModel", () => {
+    const overlay = makeOmpOverlay({ ...base, defaultModel });
+    expect(overlay).toContain(`  default: ${JSON.stringify(defaultModel)}`);
+    expect(overlay).toContain(`  task: ${JSON.stringify(defaultModel)}`);
+    expect(overlay).toContain(`  smol: ${JSON.stringify(defaultModel)}`);
+    expect(overlay).toContain(`  slow: ${JSON.stringify(defaultModel)}`);
+  });
+
+  it("all four roles are under a single modelRoles: block", () => {
+    const overlay = makeOmpOverlay({ ...base, defaultModel });
+    const modelRolesIdx = overlay.indexOf("modelRoles:");
+    expect(modelRolesIdx).toBeGreaterThan(0);
+    // All four roles appear after the modelRoles: heading
+    const after = overlay.slice(modelRolesIdx);
+    expect(after).toContain("  default:");
+    expect(after).toContain("  task:");
+    expect(after).toContain("  smol:");
+    expect(after).toContain("  slow:");
+  });
+
+  it("emits no modelRoles block when defaultModel is absent", () => {
+    const overlay = makeOmpOverlay(base);
+    expect(overlay).not.toContain("modelRoles:");
+  });
+});
+
+describe("initFcodeAgentDir (G1 — config isolation)", () => {
+  it("creates the agent dir if it does not exist", () => {
+    const agentDir = join(dir, "omp-agent");
+    expect(existsSync(agentDir)).toBe(false);
+    initFcodeAgentDir(agentDir);
+    expect(existsSync(agentDir)).toBe(true);
+  });
+
+  it("copies agent.db from source on first run", () => {
+    // Set up a fake source agent dir with an agent.db
+    const srcAgentDir = join(dir, "src-agent");
+    mkdirSync(srcAgentDir, { recursive: true });
+    writeFileSync(join(srcAgentDir, "agent.db"), "FAKE_DB_CONTENT");
+
+    const destAgentDir = join(dir, "omp-agent");
+    initFcodeAgentDir(destAgentDir, srcAgentDir);
+
+    expect(existsSync(join(destAgentDir, "agent.db"))).toBe(true);
+    expect(readFileSync(join(destAgentDir, "agent.db"), "utf8")).toBe("FAKE_DB_CONTENT");
+  });
+
+  it("does not re-import agent.db on second run (sentinel guards)", () => {
+    const srcAgentDir = join(dir, "src-agent");
+    mkdirSync(srcAgentDir, { recursive: true });
+    writeFileSync(join(srcAgentDir, "agent.db"), "ORIGINAL");
+
+    const destAgentDir = join(dir, "omp-agent");
+    initFcodeAgentDir(destAgentDir, srcAgentDir);  // first run → copies
+    // Overwrite dest db to simulate manual edit
+    writeFileSync(join(destAgentDir, "agent.db"), "CHANGED");
+    // Update source to a different value
+    writeFileSync(join(srcAgentDir, "agent.db"), "NEW_SOURCE");
+    initFcodeAgentDir(destAgentDir, srcAgentDir);  // second run → no-op
+
+    // Dest should still have "CHANGED", not "NEW_SOURCE"
+    expect(readFileSync(join(destAgentDir, "agent.db"), "utf8")).toBe("CHANGED");
+  });
+
+  it("is a no-op when source has no agent.db", () => {
+    const srcAgentDir = join(dir, "src-agent-empty");
+    mkdirSync(srcAgentDir, { recursive: true });
+    // No agent.db in source
+
+    const destAgentDir = join(dir, "omp-agent");
+    initFcodeAgentDir(destAgentDir, srcAgentDir);
+
+    expect(existsSync(destAgentDir)).toBe(true);
+    expect(existsSync(join(destAgentDir, "agent.db"))).toBe(false);
+  });
+
+  it("does not import config.yml (isolation: Fcode uses overlay for all settings)", () => {
+    const srcAgentDir = join(dir, "src-agent");
+    mkdirSync(srcAgentDir, { recursive: true });
+    writeFileSync(join(srcAgentDir, "agent.db"), "DB");
+    writeFileSync(join(srcAgentDir, "config.yml"), "modelRoles:\n  default: claude-haiku-4-5\n");
+
+    const destAgentDir = join(dir, "omp-agent");
+    initFcodeAgentDir(destAgentDir, srcAgentDir);
+
+    // config.yml must NOT be copied (Fcode uses overlay instead)
+    expect(existsSync(join(destAgentDir, "config.yml"))).toBe(false);
+    expect(existsSync(join(destAgentDir, "agent.db"))).toBe(true);
+  });
+
+  it("copies agents/ recursively from source on first run", () => {
+    const srcAgentDir = join(dir, "src-agent");
+    mkdirSync(join(srcAgentDir, "agents", "my-agent"), { recursive: true });
+    writeFileSync(join(srcAgentDir, "agents", "my-agent", "agent.md"), "# My Agent");
+
+    const destAgentDir = join(dir, "omp-agent");
+    initFcodeAgentDir(destAgentDir, srcAgentDir);
+
+    expect(existsSync(join(destAgentDir, "agents", "my-agent", "agent.md"))).toBe(true);
+    expect(readFileSync(join(destAgentDir, "agents", "my-agent", "agent.md"), "utf8")).toBe("# My Agent");
+  });
+
+  it("copies USER.md from source on first run", () => {
+    const srcAgentDir = join(dir, "src-agent");
+    mkdirSync(srcAgentDir, { recursive: true });
+    writeFileSync(join(srcAgentDir, "USER.md"), "# My Profile");
+
+    const destAgentDir = join(dir, "omp-agent");
+    initFcodeAgentDir(destAgentDir, srcAgentDir);
+
+    expect(existsSync(join(destAgentDir, "USER.md"))).toBe(true);
+    expect(readFileSync(join(destAgentDir, "USER.md"), "utf8")).toBe("# My Profile");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Slice D — Session RPC surface (get_tree, get_messages, get_messages_page,
+//            new_session, switch_session, fork rejection)
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { SESSION_RPC_FORWARD } from "./session-rpc.js";
+
+/** Minimal bridge wired to capture omp stdin + host stdout writes. */
+function sessionBridge() {
+  const bridge = new OmpBridge();
+  const b = bridge as unknown as Record<string, unknown>;
+  b.config = { dataDir: "/d", resourcesPath: "" };
+  const ompWrites: Array<Record<string, unknown>> = [];
+  const hostWrites: Array<Record<string, unknown>> = [];
+  b.ompProcess = {
+    stdin: {
+      write: vi.fn((data: string) => {
+        try { ompWrites.push(JSON.parse(data.trim())); } catch { /* ignore */ }
+      }),
+    },
+  };
+  const origWrite = process.stdout.write.bind(process.stdout);
+  process.stdout.write = ((data: string) => {
+    try { hostWrites.push(JSON.parse(String(data).trim())); } catch { /* ignore */ }
+    return true;
+  }) as typeof process.stdout.write;
+  const call = (method: string, params: Record<string, unknown> = {}) =>
+    bridge.handleHostFrame({ jsonrpc: "2.0", id: `h-${method}`, method, params });
+  const respondOmp = (id: string, command: string, data: unknown = {}) =>
+    bridge.handleOmpFrame(JSON.stringify({ id, type: "response", command, success: true, data }));
+  const restore = () => { process.stdout.write = origWrite; };
+  return { ompWrites, hostWrites, call, respondOmp, restore };
+}
+
+describe("SESSION_RPC_FORWARD — map integrity", () => {
+  it("maps every expected bridge method to a non-empty omp command", () => {
+    const expected: Array<[string, string]> = [
+      ["omp.session.getTree", "get_tree"],
+      ["omp.session.getMessages", "get_messages"],
+      ["omp.session.getMessagesPage", "get_messages_page"],
+      ["omp.session.newSession", "new_session"],
+      ["omp.session.switchSession", "switch_session"],
+    ];
+    for (const [method, ompType] of expected) {
+      expect(SESSION_RPC_FORWARD[method as keyof typeof SESSION_RPC_FORWARD]).toBe(ompType);
+    }
+  });
+});
+
+describe("OmpBridge — omp.session.getTree forwards get_tree (slice D)", () => {
+  it("writes get_tree to omp stdin and returns the result to the host", async () => {
+    const { ompWrites, hostWrites, call, respondOmp, restore } = sessionBridge();
+    try {
+      call("omp.session.getTree");
+      await Promise.resolve();
+      const sent = ompWrites.find((f) => f.type === "get_tree");
+      expect(sent).toBeDefined();
+      const callId = String(sent!.id);
+      respondOmp(callId, "get_tree", { tree: [], leafId: null });
+      await Promise.resolve();
+      const reply = hostWrites.find((f) => String(f.id) === `h-omp.session.getTree`);
+      expect(reply?.result).toMatchObject({ tree: [], leafId: null });
+    } finally { restore(); }
+  });
+});
+
+describe("OmpBridge — omp.session.getMessages forwards get_messages (slice D)", () => {
+  it("writes get_messages to omp stdin and returns messages to the host", async () => {
+    const { ompWrites, hostWrites, call, respondOmp, restore } = sessionBridge();
+    try {
+      call("omp.session.getMessages");
+      await Promise.resolve();
+      const sent = ompWrites.find((f) => f.type === "get_messages");
+      expect(sent).toBeDefined();
+      respondOmp(String(sent!.id), "get_messages", { messages: ["msg1"] });
+      await Promise.resolve();
+      const reply = hostWrites.find((f) => String(f.id) === "h-omp.session.getMessages");
+      expect(reply?.result).toMatchObject({ messages: ["msg1"] });
+    } finally { restore(); }
+  });
+});
+
+describe("OmpBridge — omp.session.getMessagesPage forwards get_messages_page with cursor + limit (slice D)", () => {
+  it("passes cursor and limit to omp", async () => {
+    const { ompWrites, hostWrites, call, respondOmp, restore } = sessionBridge();
+    try {
+      call("omp.session.getMessagesPage", { cursor: "abc123", limit: 20 });
+      await Promise.resolve();
+      const sent = ompWrites.find((f) => f.type === "get_messages_page");
+      expect(sent).toBeDefined();
+      expect(sent!.cursor).toBe("abc123");
+      expect(sent!.limit).toBe(20);
+      respondOmp(String(sent!.id), "get_messages_page", { messages: [], nextCursor: "def456", totalMessages: 42 });
+      await Promise.resolve();
+      const reply = hostWrites.find((f) => String(f.id) === "h-omp.session.getMessagesPage");
+      expect(reply?.result).toMatchObject({ totalMessages: 42, nextCursor: "def456" });
+    } finally { restore(); }
+  });
+
+  it("omits cursor and limit when not provided", async () => {
+    const { ompWrites, call, restore } = sessionBridge();
+    try {
+      call("omp.session.getMessagesPage");
+      await Promise.resolve();
+      const sent = ompWrites.find((f) => f.type === "get_messages_page");
+      expect(sent).toBeDefined();
+      expect(sent!.cursor).toBeUndefined();
+      expect(sent!.limit).toBeUndefined();
+    } finally { restore(); }
+  });
+});
+
+describe("OmpBridge — omp.session.newSession forwards new_session (slice D)", () => {
+  it("forwards new_session and returns cancelled:false", async () => {
+    const { ompWrites, hostWrites, call, respondOmp, restore } = sessionBridge();
+    try {
+      call("omp.session.newSession");
+      await Promise.resolve();
+      const sent = ompWrites.find((f) => f.type === "new_session");
+      expect(sent).toBeDefined();
+      expect(sent!.parentSession).toBeUndefined();
+      respondOmp(String(sent!.id), "new_session", { cancelled: false });
+      await Promise.resolve();
+      const reply = hostWrites.find((f) => String(f.id) === "h-omp.session.newSession");
+      expect(reply?.result).toMatchObject({ cancelled: false });
+    } finally { restore(); }
+  });
+
+  it("passes parentSession when provided", async () => {
+    const { ompWrites, call, restore } = sessionBridge();
+    try {
+      call("omp.session.newSession", { parentSession: "/some/session/dir" });
+      await Promise.resolve();
+      const sent = ompWrites.find((f) => f.type === "new_session");
+      expect(sent!.parentSession).toBe("/some/session/dir");
+    } finally { restore(); }
+  });
+});
+
+describe("OmpBridge — omp.session.switchSession forwards switch_session (slice D)", () => {
+  it("forwards switch_session with sessionPath", async () => {
+    const { ompWrites, hostWrites, call, respondOmp, restore } = sessionBridge();
+    try {
+      call("omp.session.switchSession", { sessionPath: "/d/omp-threads/sess-abc" });
+      await Promise.resolve();
+      const sent = ompWrites.find((f) => f.type === "switch_session");
+      expect(sent).toBeDefined();
+      expect(sent!.sessionPath).toBe("/d/omp-threads/sess-abc");
+      respondOmp(String(sent!.id), "switch_session", { cancelled: false });
+      await Promise.resolve();
+      const reply = hostWrites.find((f) => String(f.id) === "h-omp.session.switchSession");
+      expect(reply?.result).toMatchObject({ cancelled: false });
+    } finally { restore(); }
+  });
+
+  it("rejects with error when sessionPath is missing", async () => {
+    const { hostWrites, call, restore } = sessionBridge();
+    try {
+      call("omp.session.switchSession");
+      await Promise.resolve();
+      const reply = hostWrites.find((f) => String(f.id) === "h-omp.session.switchSession");
+      expect(reply?.error).toBeDefined();
+      expect(String(reply!.error.message ?? reply!.error.data ?? "")).toContain("sessionPath");
+    } finally { restore(); }
+  });
+});
+
+describe("OmpBridge — native.session.fork gives user-visible reason (D2)", () => {
+  it("responds with an error containing 'branch' as alternative (not just 'unsupported')", async () => {
+    const { hostWrites, call, restore } = sessionBridge();
+    try {
+      call("native.session.fork");
+      await Promise.resolve();
+      const reply = hostWrites.find((f) => String(f.id) === "h-native.session.fork");
+      expect(reply?.result?.error).toContain("branch");
+      expect(reply?.result?.error).not.toBe("native bridging unsupported");
+    } finally { restore(); }
   });
 });

@@ -4,14 +4,15 @@
  * the debug host-core and the omp-bridge sidecar on a throwaway data dir, pairs
  * a device over the loopback RACP-WS socket, registers a project, creates a
  * session, reads the workspace, drops the connection, and reconnects by
- * cursor. No model provider is configured, so `turn/start` is expected to
- * fail closed with `MODEL_NOT_CONFIGURED` rather than hang.
+ * cursor. It also checks that omp settings (incl. `advanced`) and approval
+ * mode reach the omp overlay and that portable host tools are offered. No
+ * model provider is configured, so a turn settles without a model reply.
  *
  * Prereqs: `pnpm build:js`, `pnpm -C packages/omp-bridge bundle`, and a
  * host-core binary (target/debug or PI_DESKTOP_HOST_BIN).
  */
 import { spawn } from "node:child_process";
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync, existsSync } from "node:fs";
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -34,6 +35,10 @@ const dataDir = mkdtempSync(join(tmpdir(), "pi-host-e2e-"));
 const project = join(dataDir, "project");
 mkdirSync(project, { recursive: true });
 writeFileSync(join(project, "README.md"), "# remote project\n");
+// Pre-write omp settings with an advanced key and a non-default approval mode
+// to verify the pi-host env-parity path (ompSidecarExtraEnv) reaches the bridge.
+writeFileSync(join(dataDir, "omp-settings.json"), JSON.stringify({ "eval.py": false, advanced: { "memory.injectMaxChars": 4000 } }));
+writeFileSync(join(dataDir, "approval-mode.json"), JSON.stringify("write"));
 
 const results = [];
 const record = (id, ok, detail = "") => {
@@ -107,6 +112,18 @@ try {
   const ready = await startHost(["--pair"]);
   const url = `ws://127.0.0.1:${ready.info.port}/v1/racp/ws`;
   record("host-boots-on-loopback", ready.info.host === "127.0.0.1" && ready.info.port > 0 && typeof ready.info.hostId === "string", shortJson(ready.info));
+
+  // Env parity: pi-host reads omp-settings.json + approval-mode.json (via
+  // ompSidecarExtraEnv) and passes them as FCODE_OMP_SETTINGS / FCODE_TOOL_APPROVAL_MODE.
+  // The bridge writes omp-overlay.yml before accepting the first RPC frame, so
+  // it exists by the time PI_HOST_READY is printed.
+  const overlayPath = join(dataDir, "omp-overlay.yml");
+  const overlay = existsSync(overlayPath) ? readFileSync(overlayPath, "utf8") : "";
+  record("env-parity-approval-mode-reaches-overlay", overlay.includes("approvalMode: write"), overlay ? "ok" : "overlay missing");
+  record("env-parity-advanced-setting-reaches-overlay", overlay.includes("injectMaxChars"), overlay ? "ok" : "overlay missing");
+  // Portable host tools (kanban_*, fcode_bench_*) are registered in pi-host and
+  // auto-approved in the overlay; execution needs a live model (out of scope here).
+  record("portable-host-tools-offered-in-overlay", overlay.includes("kanban_create: allow") && overlay.includes("fcode_bench_execute_read: allow"));
 
   // Pairing: the token is single-use and the device token replaces it.
   const pairing = client(url, ready.pairing.token);

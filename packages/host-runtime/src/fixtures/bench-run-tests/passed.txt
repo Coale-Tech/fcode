@@ -1,0 +1,14 @@
+Starting test run with parameters: site=coale, module=fcode_sample_tests, verbose=False, tests=('test_ok', 'test_skipped'), force=False, profile=False, failfast=False, skip_before_tests=False, debug=False, selected_categories=[]
+View detailed logs (using --verbose): /home/dev/frappe-bench/logs/frappe.testing.log
+
+Running 2 unspecified-category tests for fcode_sample_tests
+
+fcode_sample_tests.TestSample
+   [32m ✔ [0m test_ok
+   [37m = [0m test_skipped
+
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.002s
+
+OK (skipped=1)

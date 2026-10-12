@@ -1,9 +1,9 @@
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { ompProviderEnv } from "./omp-env.js";
+import { ompProviderEnv, ompSidecarExtraEnv } from "./omp-env.js";
 import type { HostProviderRecord } from "./launch-resolver.js";
 
 const dirs: string[] = [];
@@ -52,5 +52,46 @@ describe("ompProviderEnv", () => {
 
   it("returns nothing when no provider is usable", async () => {
     expect(await ompProviderEnv(host({}), [row("nokey")], tempDir())).toEqual({});
+  });
+});
+
+describe("ompSidecarExtraEnv", () => {
+  it("returns defaults when no config files exist", () => {
+    const dir = tempDir();
+    const env = ompSidecarExtraEnv(dir);
+    expect(env.FCODE_OMP_SETTINGS).toBe("{}");
+    expect(env.FCODE_TOOL_APPROVAL_MODE).toBe("always-ask");
+    expect(env.FCODE_MEMORY_BACKEND).toBe("mnemopi");
+    expect(env.FCODE_HINDSIGHT_URL).toBeUndefined();
+  });
+
+  it("reads omp-settings.json including advanced key into FCODE_OMP_SETTINGS", () => {
+    const dir = tempDir();
+    writeFileSync(join(dir, "omp-settings.json"), JSON.stringify({ "eval.py": true, advanced: { "memory.injectMaxChars": 4000 } }));
+    const env = ompSidecarExtraEnv(dir);
+    const parsed = JSON.parse(env.FCODE_OMP_SETTINGS) as Record<string, unknown>;
+    expect(parsed["eval.py"]).toBe(true);
+    expect((parsed.advanced as Record<string, unknown>)["memory.injectMaxChars"]).toBe(4000);
+  });
+
+  it("reads approval-mode.json into FCODE_TOOL_APPROVAL_MODE", () => {
+    const dir = tempDir();
+    writeFileSync(join(dir, "approval-mode.json"), JSON.stringify("yolo"));
+    expect(ompSidecarExtraEnv(dir).FCODE_TOOL_APPROVAL_MODE).toBe("yolo");
+  });
+
+  it("rejects invalid approval modes and falls back to always-ask", () => {
+    const dir = tempDir();
+    writeFileSync(join(dir, "approval-mode.json"), JSON.stringify("superadmin"));
+    expect(ompSidecarExtraEnv(dir).FCODE_TOOL_APPROVAL_MODE).toBe("always-ask");
+  });
+
+  it("reads memory.json backend and Hindsight fields", () => {
+    const dir = tempDir();
+    writeFileSync(join(dir, "memory.json"), JSON.stringify({ backend: "hindsight", hindsightUrl: "https://h.example.com", hindsightBank: "fcode" }));
+    const env = ompSidecarExtraEnv(dir);
+    expect(env.FCODE_MEMORY_BACKEND).toBe("hindsight");
+    expect(env.FCODE_HINDSIGHT_URL).toBe("https://h.example.com");
+    expect(env.FCODE_HINDSIGHT_BANK).toBe("fcode");
   });
 });

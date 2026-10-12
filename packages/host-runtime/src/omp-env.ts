@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import type { HostRpc } from "./host-ports.js";
@@ -61,5 +61,62 @@ export async function ompProviderEnv(
     .catch(() => undefined);
   const { defaultProviderId: id, defaultModelId: model } = settings ?? {};
   if (id && model && injected.has(id)) env.FCODE_DEFAULT_MODEL = `fcode-${id}/${model}`;
+  return env;
+}
+
+/** Read omp-settings.json; returns {} on any error (file absent or invalid JSON). */
+function readOmpSettings(dataDir: string): Record<string, unknown> {
+  try {
+    const raw = JSON.parse(readFileSync(join(dataDir, "omp-settings.json"), "utf8")) as unknown;
+    if (raw !== null && typeof raw === "object" && !Array.isArray(raw)) return raw as Record<string, unknown>;
+  } catch { /* absent or invalid */ }
+  return {};
+}
+
+/** Read approval-mode.json; returns "always-ask" on any error. */
+function readApprovalMode(dataDir: string): string {
+  try {
+    const raw = JSON.parse(readFileSync(join(dataDir, "approval-mode.json"), "utf8")) as unknown;
+    if (typeof raw === "string" && ["always-ask", "write", "yolo"].includes(raw)) return raw;
+  } catch { /* absent or invalid */ }
+  return "always-ask";
+}
+
+/** Read memory.json; returns { backend: "mnemopi" } on any error. */
+function readMemoryConfig(dataDir: string): { backend: string; hindsightUrl?: string; hindsightBank?: string } {
+  try {
+    const raw = JSON.parse(readFileSync(join(dataDir, "memory.json"), "utf8")) as Record<string, unknown>;
+    const backends = ["mnemopi", "hindsight", "sharpshooter", "local", "off"];
+    const backend = typeof raw.backend === "string" && backends.includes(raw.backend) ? raw.backend : null;
+    if (!backend) throw new Error("invalid backend");
+    const out: { backend: string; hindsightUrl?: string; hindsightBank?: string } = { backend };
+    if (typeof raw.hindsightUrl === "string") out.hindsightUrl = raw.hindsightUrl;
+    if (typeof raw.hindsightBank === "string") out.hindsightBank = raw.hindsightBank;
+    return out;
+  } catch { /* absent or invalid */ }
+  return { backend: "mnemopi" };
+}
+
+/**
+ * Env vars that the sidecar (omp-bridge) reads to configure overlay settings,
+ * memory backend, and tool approval mode. Shared by pi-host (and usable by
+ * the desktop as a single-source reader for these three JSON config files).
+ *
+ * Does NOT include provider secrets (use ompProviderEnv for those) or
+ * HINDSIGHT_API_TOKEN (desktop fetches it from the host-core secret store;
+ * pi-host users pass it via environment directly).
+ */
+export function ompSidecarExtraEnv(dataDir: string): Record<string, string> {
+  const env: Record<string, string> = {};
+  // omp settings (curated + advanced)
+  const settings = readOmpSettings(dataDir);
+  env.FCODE_OMP_SETTINGS = JSON.stringify(settings);
+  // Tool approval mode
+  env.FCODE_TOOL_APPROVAL_MODE = readApprovalMode(dataDir);
+  // Memory backend
+  const mem = readMemoryConfig(dataDir);
+  env.FCODE_MEMORY_BACKEND = mem.backend;
+  if (mem.hindsightUrl) env.FCODE_HINDSIGHT_URL = mem.hindsightUrl;
+  if (mem.hindsightBank) env.FCODE_HINDSIGHT_BANK = mem.hindsightBank;
   return env;
 }

@@ -132,3 +132,6 @@ writeFileSync(
 );
 
 console.log(`build-omp: done (${staged.length}/${crossTargets.length} targets staged: ${staged.join(", ")})`);
+
+// Generate the settings manifest from the omp registry (same process, sourceHash already computed).
+run("bun", [join(scriptDir, "gen-omp-settings-manifest.mjs")], repoRoot);

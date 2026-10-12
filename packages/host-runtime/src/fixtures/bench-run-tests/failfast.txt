@@ -1,0 +1,26 @@
+Starting test run with parameters: site=coale, module=fcode_sample_tests, verbose=False, tests=(), force=False, profile=False, failfast=True, skip_before_tests=False, debug=False, selected_categories=[]
+View detailed logs (using --verbose): /home/dev/frappe-bench/logs/frappe.testing.log
+
+Running 5 unspecified-category tests for fcode_sample_tests
+
+fcode_sample_tests.TestOther
+   [32m ✔ [0m test_also_ok
+
+fcode_sample_tests.TestSample
+   [31m ✖ [0m test_error
+
+
+======================================================================
+ ERROR  test_error (fcode_sample_tests.TestSample.test_error)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fcode-sample/fcode_sample_tests.py", line 12, in test_error
+    {}["missing"]
+    ~~^^^^^^^^^^^
+    self = <fcode_sample_tests.TestSample testMethod=test_error>
+KeyError: 'missing'
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.017s
+
+FAILED (errors=1)

@@ -377,6 +377,8 @@ export const IPC = {
     /** omp settings groups (task/eval/browser/collab) persisted host-side. */
     ompSettingsGet: "pi-desktop/omp-settings/get",
     ompSettingsSet: "pi-desktop/omp-settings/set",
+    /** Full omp settings manifest — descriptor array generated at build time. Owned by slice A. */
+    ompSettingsManifest: "pi-desktop/omp-settings/manifest",
     ompSessionStats: "pi-desktop/omp/session/stats",
     /** List all live subagents in the active omp session. */
     ompSubagentList: "pi-desktop/omp/subagent/list",
@@ -485,6 +487,16 @@ export const IPC = {
     ompSessionEntries: "pi-desktop/omp/session/entries",
     /** Get preview messages for the current branch. */
     ompSessionBranchMessages: "pi-desktop/omp/session/branchMessages",
+    /** Get the hierarchical session tree (get_tree RPC). */
+    ompSessionGetTree: "pi-desktop/omp/session/getTree",
+    /** Get all messages in the current omp session (get_messages RPC). */
+    ompSessionGetMessages: "pi-desktop/omp/session/getMessages",
+    /** Get one page of messages from the current omp session (get_messages_page RPC). */
+    ompSessionGetMessagesPage: "pi-desktop/omp/session/getMessagesPage",
+    /** Start a new omp session, optionally branched from a parent session (new_session RPC). */
+    ompNewSession: "pi-desktop/omp/session/newSession",
+    /** Switch the omp session to a different session directory (switch_session RPC). */
+    ompSwitchSession: "pi-desktop/omp/session/switchSession",
     /** Trigger /share slash command and return the snapshot URL. */
     ompShare: "pi-desktop/omp/share",
     /** List installed omp extensions (npm + marketplace plugins) via omp plugin list --json. */
@@ -546,6 +558,34 @@ export const IPC = {
     /** FileBird pane: renderer-reported hole rect and visibility (full-width FileBird route only). */
     fileBirdSetBounds: "pi-desktop/filebird/setBounds",
     fileBirdSetVisible: "pi-desktop/filebird/setVisible",
+    /** List hook scripts from ~/.omp/agent/hooks/ and .omp/hooks/ (slice E1). */
+    ompHooksList: "pi-desktop/omp/hooks/list",
+    /** Create a hook script in the user or project omp config dir. */
+    ompHooksCreate: "pi-desktop/omp/hooks/create",
+    /** Overwrite an existing hook script (validated by path allowlist). */
+    ompHooksEdit: "pi-desktop/omp/hooks/edit",
+    /** Delete a hook script (must be inside omp config dirs). */
+    ompHooksDelete: "pi-desktop/omp/hooks/delete",
+    /** Create a user slash-command markdown file under ~/.omp/agent/commands/ or .omp/commands/. */
+    ompCommandsCreate: "pi-desktop/omp/commands/create",
+    /** Overwrite an existing user slash-command markdown file. */
+    ompCommandsEdit: "pi-desktop/omp/commands/edit",
+    /** Delete a user slash-command markdown file. */
+    ompCommandsDelete: "pi-desktop/omp/commands/delete",
+    /** Read the markdown content of a user slash-command file (for edit pre-fill). */
+    ompCommandRead: "pi-desktop/omp/commands/read",
+    /** Open omp TUI for the current session in the integrated terminal (Slice I). */
+    ompTuiOpen: "pi-desktop/omp/tui/open",
+    /** Get ACP launch info: command and editor config snippets (Slice I). */
+    ompAcpInfo: "pi-desktop/omp/acp/info",
+    /** Start an allowlisted omp CLI subcommand; returns { runId } immediately. Output arrives via ompCliOutput events. */
+    ompCliRun: "pi-desktop/omp/cli/run",
+    /** Cancel an in-flight omp CLI run by runId. */
+    ompCliCancel: "pi-desktop/omp/cli/cancel",
+    /** Run `omp cleanse [args]` in the current workspace via bundled binary; returns output when done. */
+    ompCleanse: "pi-desktop/omp/cleanse",
+    /** Dispatch `/autoresearch [goal]` to the active omp session (toggles autoresearch mode). */
+    ompAutoresearch: "pi-desktop/omp/autoresearch",
     /**
      * Integrated terminal: FileBird's own terminal channels and handlers
      * (apps/filebird/src/main/ipc/terminal.ipc.ts), which validate every field.
@@ -617,6 +657,10 @@ export const IPC = {
     /** Output of every terminal session (`{ id, data }`); listeners filter by id. */
     terminalData: "terminal:data",
     terminalExit: "terminal:exit",
+    /** Stdout/stderr chunk from an omp CLI run (`{ runId, chunk, stream }`). */
+    ompCliOutput: "pi-desktop/omp/cli/output",
+    /** omp CLI run completed (`{ runId, exitCode, killed }`). */
+    ompCliDone: "pi-desktop/omp/cli/done",
   },
 } as const;
 
