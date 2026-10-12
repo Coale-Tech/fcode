@@ -894,14 +894,14 @@
   }
 }
 
-/* FD2: rows are flat with separator, no card chrome. Direction D: min-height = --d-row-h + 10px. */
+/* F10: rows — min44 / pad0×12 / gap12 as rendered (D.css:959-971; fragment-d2:24-28) */
 .settings-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 32px;
-  padding: 8px 0;
-  min-height: calc(var(--d-row-h) + 10px);
+  gap: 12px;
+  padding: 0 12px;
+  min-height: 44px;
 }
 
 .settings-row-copy {
@@ -919,7 +919,7 @@
 
 .settings-row-desc {
   color: var(--ds-settings-row-desc-ink);
-  font-size: var(--d-text-sm);
+  font-size: var(--d-text-xs);
   font-weight: var(--font-weight-regular);
   line-height: var(--leading-relaxed);
 }
@@ -941,11 +941,10 @@
   align-items: center;
   justify-content: flex-end;
 }
-
 /*
-  Direction D: the toggle (16 px tall via --d-toggle-h) is shorter than the field
-  metric (--d-ctrl = 28 px). Give the control column a matching minimum so toggle
-  rows stay the same height as select rows; the switch stays centred via align-items.
+  Direction D: toggle (18px tall via --d-toggle-h) is shorter than field
+  metric (--d-ctrl = 28px); give control column matching minimum so toggle
+  rows stay same height as select rows.
 */
 .settings-row-control:has(> .settings-toggle) {
   min-height: var(--ds-field-height);
@@ -1226,14 +1225,12 @@
   height: var(--d-toggle-h);
   flex: 0 0 auto;
   border-radius: var(--radius-full);
-  background: var(--surface-gray-4);
-  transition:
-    background 300ms ease-in-out,
-    box-shadow 300ms ease-in-out;
+  /* F06: off-track = gray3 (D.css:827); hover = gray4 */
+  background: var(--ds-switch-track-off);
 }
 
 .settings-toggle:hover {
-  background: var(--surface-gray-5);
+  background: var(--ds-switch-track-off-hover);
 }
 
 /*
@@ -1315,22 +1312,20 @@
   font-size: var(--text-md);
 }
 
+/* F04: pill-select becomes framed field (D.css:734-765; fragment Appearance:29) */
 .settings-pill-select,
 .settings-row-control .field-select {
   width: max-content;
   max-width: 100%;
-  /* Height matches field metric (--ds-field-height = --d-ctrl = 28px) so pill
-     selects align with text inputs in the same row. */
   height: var(--ds-field-height);
   min-height: var(--ds-field-height);
-  border-radius: var(--radius-full);
-  border: 0;
-  /* D297: controls on a tile row are raised fills, not ringed boxes. */
-  background: var(--ds-raised);
-  box-shadow: var(--ds-raised-shadow);
-  padding: 0 28px 0 12px;
-  color: var(--ds-text-primary);
-  font-size: var(--text-sm-plus);
+  border-radius: var(--d-r-ctrl);
+  border: 1px solid var(--d-border-ctrl);
+  background: var(--surface-base);
+  box-shadow: none;
+  padding: 0 28px 0 8px;
+  color: var(--ink-gray-8);
+  font-size: var(--d-text);
 }
 
 /* Global UI font picker (Appearance card). The closed pill shares the
@@ -1473,6 +1468,7 @@
   width: 100%;
 }
 
+/* F04: language/theme/font/menu triggers become framed D fields (D.css:734-765) */
 .settings-language-trigger,
 .settings-theme-trigger,
 .settings-menu-select-trigger,
@@ -1483,15 +1479,14 @@
   width: max-content;
   max-width: 100%;
   min-width: 0;
-  /* One closed-trigger height for every picker: the metric a text input in the
-     same Settings row resolves to, so the two never disagree (see the token). */
   height: var(--ds-field-height);
-  padding: 0 10px 0 12px;
-  border-radius: var(--ds-settings-radius-ctrl);
-  background: var(--ds-raised);
-  box-shadow: var(--ds-raised-shadow);
-  color: var(--ds-text-primary);
-  font-size: var(--text-sm-plus);
+  padding: 0 10px 0 8px;
+  border-radius: var(--d-r-ctrl);
+  border: 1px solid var(--d-border-ctrl);
+  background: var(--surface-base);
+  box-shadow: none;
+  color: var(--ink-gray-8);
+  font-size: var(--d-text);
 }
 
 .settings-menu-select-anchor.is-full .settings-menu-select-trigger {

@@ -60,40 +60,52 @@
 .ui-help-icon:focus-visible {
   color: var(--ds-text-secondary);
 }
+/* F09: flat card — base/r8/outline3 (D.css:901-907) */
 .panel-card {
-  border-radius: var(--d-r);
-  border: 1px solid var(--ds-border-default);
-  background: var(--ds-tile);
+  border-radius: var(--d-r-ctrl);
+  border: 1px solid var(--d-border-ctrl);
+  background: var(--surface-base);
 }
 
+/* F04: framed fields — base fill / outline3 / pad0×8 / 13px / r8 (D.css:734-764) */
 .field-input,
 .field-select,
 .field-textarea {
   width: 100%;
-  border: 1px solid var(--ds-border-default);
+  border: 1px solid var(--d-border-ctrl);
   border-radius: var(--d-r-ctrl);
-  background: var(--ds-tile-hover);
-  /* 28px height: 1px border + 5px pad + ~13px text + 5px pad + 1px border = 25px; leaves margin. */
-  padding: 5px 11px;
+  background: var(--surface-base);
+  padding: 0 8px;
   height: var(--d-ctrl);
   min-height: var(--ds-field-height);
-  color: var(--ds-text-primary);
+  color: var(--ink-gray-8);
+  font-size: var(--d-text);
   outline: none;
   transition:
-    background var(--motion-duration-fast) var(--motion-ease-out),
+    border-color var(--motion-duration-fast) var(--motion-ease-out),
     box-shadow var(--motion-duration-fast) var(--motion-ease-out);
 }
 
 .field-textarea {
   height: auto;
   min-height: var(--d-textarea-min);
+  padding: 6px 8px;
 }
 
+/* Focus: accent border + 2px blue-outline ring (D.css:761-764) */
 .field-input:focus,
 .field-select:focus,
 .field-textarea:focus {
-  background: var(--ds-raised);
-  box-shadow: 0 0 0 2px var(--ds-accent);
+  border-color: var(--da);
+  box-shadow: 0 0 0 2px var(--da-bdr);
+}
+
+/* Dark: raised2 fill / outline2 border (D.css:1542-1545) */
+:root[data-theme="dark"] .field-input,
+:root[data-theme="dark"] .field-select,
+:root[data-theme="dark"] .field-textarea {
+  background: var(--surface-elevation-2);
+  border-color: var(--outline-gray-2);
 }
 
 .field-input:read-only,
@@ -141,7 +153,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--ds-btn-gap, 5px);
   height: var(--ds-btn-height);
   flex-shrink: 0;
   white-space: nowrap;
@@ -156,8 +168,8 @@
   transition:
     background var(--motion-duration-fast) var(--motion-ease-out),
     color var(--motion-duration-fast) var(--motion-ease-out),
-    opacity var(--motion-duration-fast) var(--motion-ease-out),
-    transform var(--motion-duration-fast) var(--motion-ease-out);
+    border-color var(--motion-duration-fast) var(--motion-ease-out),
+    opacity var(--motion-duration-fast) var(--motion-ease-out);
 }
 
 .btn-sm {
@@ -167,38 +179,42 @@
   font-size: var(--ds-btn-font-size-sm);
 }
 
+/* F03: .45 disabled opacity per D.css:678; no press-scale (D.css has no active transform). */
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
-.btn:active:not(:disabled) {
-  transform: scale(0.98);
-}
 
+/* F02: primary = surface-gray10 fill / ink-base label / matching border (D.css:682-687) */
 .btn-primary {
-  background: var(--ds-text-primary);
-  color: var(--ds-bg-primary);
-  border-color: transparent;
+  background: var(--surface-gray-10);
+  color: var(--ink-base);
+  border-color: var(--surface-gray-10);
 }
-.btn-primary:hover:not(:disabled) { background: color-mix(in oklab, var(--ds-text-primary) 85%, var(--ds-bg-primary)); }
+.btn-primary:hover:not(:disabled) {
+  background: var(--ink-gray-8);
+  border-color: var(--ink-gray-8);
+}
 
+/* F02: secondary = gray2 fill / ink-gray8 / outline3 border / gray3 hover (D.css:689-695) */
 .btn-secondary {
-  background: transparent;
-  color: var(--ds-text-primary);
-  border-color: var(--ds-border-default);
+  background: var(--surface-gray-2);
+  color: var(--ink-gray-8);
+  border-color: var(--d-border-ctrl);
 }
 .btn-secondary:hover:not(:disabled) {
-  background: var(--ds-bg-hover);
+  background: var(--surface-gray-3);
 }
 
+/* F03: ghost keeps 1px transparent border (D.css:698-703); removed border:0 */
 .btn-ghost {
-  border: 0;
-  color: var(--ds-text-secondary);
+  border-color: transparent;
+  color: var(--ink-gray-7);
 }
 .btn-ghost:hover:not(:disabled) {
-  background: var(--ds-bg-hover);
-  color: var(--ds-text-primary);
+  background: var(--surface-gray-2);
+  color: var(--ink-gray-9);
 }
 
 .btn-danger {
@@ -222,29 +238,42 @@
   padding: 0;
 }
 
+/* F08: badge — 20px/r10/11px/500/pad7/semantic 1px outlines (D.css:628-654) */
 .badge {
   display: inline-flex;
   align-items: center;
-  border-radius: var(--radius-full);
-  padding: 2px 8px;
-  font-size: var(--text-xs);
-  line-height: var(--leading-normal);
+  height: 20px;
+  border-radius: 10px;
+  padding: 0 7px;
+  font-size: var(--d-text-xs);
+  font-weight: 500;
+  white-space: nowrap;
+  border: 1px solid transparent;
 }
 .badge-neutral {
-  background: color-mix(in oklab, var(--ds-text-primary) 8%, transparent);
-  color: var(--ds-text-secondary);
+  background: var(--surface-gray-2);
+  color: var(--ink-gray-6);
+  border-color: var(--d-border);
 }
 .badge-success {
-  background: color-mix(in oklab, var(--ds-success) 16%, transparent);
-  color: var(--ds-success);
+  background: var(--surface-green-2);
+  color: var(--ink-green-8);
+  border-color: var(--outline-green-2);
 }
 .badge-error {
-  background: color-mix(in oklab, var(--ds-error) 16%, transparent);
-  color: var(--ds-error);
+  background: var(--surface-red-2);
+  color: var(--ink-red-8);
+  border-color: var(--outline-red-2);
 }
 .badge-warning {
-  background: color-mix(in oklab, var(--ds-warning) 16%, transparent);
-  color: var(--ds-warning);
+  background: var(--surface-amber-2);
+  color: var(--ink-amber-8);
+  border-color: var(--outline-amber-2);
+}
+.badge-accent {
+  background: var(--da-sub);
+  color: var(--da-txt);
+  border-color: var(--da-bdr);
 }
 
 #pi-desktop-overlays {
@@ -270,17 +299,48 @@
   animation: overlay-in var(--motion-duration-normal) var(--motion-ease-out) both;
 }
 
+/* F09: dialog — 480/r12/elevation1/outline-elevation1/80vh (D.css:1027-1060) */
 .dialog {
-  width: min(100%, 440px);
-  /* Overlay is a flex box; auto min-width would let wide content overflow it. */
+  width: min(100%, 480px);
   min-width: 0;
   max-width: 100%;
-  border: 1px solid var(--ds-border-default);
-  border-radius: var(--radius-lg-plus);
-  background: var(--ds-bg-elevated-opaque);
+  max-height: 80vh;
+  border: 1px solid var(--outline-elevation-1);
+  border-radius: var(--d-r);
+  background: var(--surface-elevation-1);
   box-shadow: var(--ds-shadow-dialog);
-  padding: 18px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   animation: surface-in var(--motion-duration-normal) var(--motion-ease-out) both;
+}
+
+/* Optional head/body/foot sub-element classes (D.css:1039-1059) */
+.dialog-head {
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--d-border);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-gray-9);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.dialog-body {
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+  font-size: var(--d-text);
+}
+.dialog-foot {
+  padding: 10px 16px;
+  border-top: 1px solid var(--d-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  background: var(--surface-gray-1);
+  flex-shrink: 0;
 }
 /* Pointer-anchored right-click menu (see components/ContextMenu.tsx). It is
    measured before it is revealed, so `is-open` gates a surface that would
@@ -372,7 +432,8 @@
   background: var(--ds-border-subtle);
 }
 
-/* ---- Checkbox: high-contrast custom draw (dark + light) ---- */
+/* F07: checkbox — 1px outline3/base fill/white check (D.css:843-857).
+   Dark glyph (#0a1f2e) is the R12 approved deviation: 5.9:1 on #42a2d9. */
 .ds-checkbox {
   appearance: none;
   -webkit-appearance: none;
@@ -380,20 +441,18 @@
   height: var(--d-checkbox);
   flex: 0 0 auto;
   border-radius: var(--d-r-sm);
-  border: 1.5px solid var(--ds-text-secondary);
-  background: transparent;
+  border: 1px solid var(--d-border-ctrl);
+  background: var(--surface-base);
   cursor: pointer;
   position: relative;
   transition:
     background var(--motion-duration-fast) var(--motion-ease-out),
     border-color var(--motion-duration-fast) var(--motion-ease-out);
 }
-
 .ds-checkbox:checked {
   background: var(--ds-accent);
   border-color: var(--ds-accent);
 }
-
 .ds-checkbox:checked::after {
   content: "";
   position: absolute;
@@ -401,11 +460,11 @@
   left: 4px;
   width: 3px;
   height: 7px;
+  /* Light: white on #2578ab = 4.8:1 ✓; Dark: #0a1f2e on #42a2d9 = 5.9:1 ✓ (R12). */
   border: solid var(--ds-accent-foreground);
   border-width: 0 1.5px 1.5px 0;
   transform: rotate(45deg);
 }
-
 .ds-checkbox:disabled {
   opacity: 0.4;
   cursor: not-allowed;
