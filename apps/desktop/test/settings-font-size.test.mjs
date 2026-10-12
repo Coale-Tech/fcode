@@ -43,7 +43,8 @@ test("the renderer applies a global type scale without a reload", () => {
   assert.match(appSource, /resolveFontScale\(settings/);
   assert.match(appSource, /"--font-scale"/);
   assert.match(tokensSource, /--font-scale:\s*1;/);
-  assert.match(tokensSource, /--text-base:\s*calc\(14px \* var\(--font-scale\)\);/);
+  /* F12: base UI size is 13px (D.css:36/89); user font scale still multiplies it */
+  assert.match(tokensSource, /--text-base:\s*calc\(13px \* var\(--font-scale\)\);/);
   assert.doesNotMatch(tokensSource, /--reading-font-size/);
   assert.doesNotMatch(tokensSource, /\.thread-wrap,\s*\n\.composer-dock \{/);
 });
