@@ -11,7 +11,10 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 ## [Unreleased]
 
 ### Changed
-- `pi-host` (headless remote host) now runs the omp-bridge sidecar like the desktop, so remote sessions get omp and the nine bundled Fcode agents. The bundle ships `omp-bridge/bridge.js` and `resources/{bin/omp,fcode-agents,fcode-skills}`; `--resources <dir>` overrides the lookup. Desktop-only host tools (`GenerateImages`, `BrowserPreview`, bench, studio, canvas, kanban) are not available on pi-host.
+- `pi-host` (headless remote host) now runs the omp-bridge sidecar like the desktop, so remote sessions get omp and the nine bundled Fcode agents. The bundle ships `omp-bridge/bridge.js` and `resources/{bin/omp,fcode-agents,fcode-skills}`; `--resources <dir>` overrides the lookup. It passes curated and `advanced` omp settings, approval mode and memory backend through `ompSidecarExtraEnv`, and registers `fcode_bench_*`, `fcode_studio` (`FCODE_BENCH_PATH`, `FCODE_BENCH_SITE`) and `kanban_*`. `GenerateImages`, `BrowserPreview` and `fcode_canvas*` stay desktop-only (see `apps/pi-host/README.md`). Bench and Kanban pure modules now live once in `@pi-desktop/host-runtime`.
+- omp now runs with its own agent dir, `<dataDir>/omp-agent` (`PI_CODING_AGENT_DIR`), so `~/.omp/agent` config no longer leaks into Fcode sessions. First launch imports `agent.db` (logins), `agents/` and `USER.md` once; `config.yml`, skills and sessions are not imported. User agents, `USER.md`, skills and hooks/commands are read from that dir. First launch regenerates omp's skill routing hints with model calls (cached afterwards).
+- Subagent roles (`task`, `smol`, `slow`) now default to the session model via the overlay's `modelRoles`, instead of whatever `~/.omp` assigned them.
+- Dev builds resolve the bundled omp (`apps/desktop/resources/bin/omp-<platform>-<arch>`) and bundled `fcode-agents`/`fcode-skills` from `apps/desktop/resources`; PATH `omp` is a last resort and logs a warning. One `resolveOmpBin`/`ompChildEnv`/`appResourcesPath` in the desktop main process replaces five copies.
 - Provider env for omp (`FCODE_PROVIDER_*_KEY`, `FCODE_MODELS_CONFIG`, `FCODE_DEFAULT_MODEL`) is built by one shared `ompProviderEnv` in `@pi-desktop/host-runtime`, used by desktop and pi-host.
 - `scripts/e2e-remote-host.mjs` drives the omp-bridge sidecar; a provider-less turn is now admitted and settles instead of failing closed at admission.
 
@@ -24,6 +27,13 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Settings > omp "Choose binary…" now persists an override used as `OMP_BIN`.
 - Structured tool presentations for `fcode_*` and `kanban_*` tools.
 - Raven/Kanban/remote-host views refresh live.
+- Settings > omp Advanced: every omp setting with UI metadata (385 today) rendered from a manifest generated at build time from the vendored registry (`scripts/gen-omp-settings-manifest.mjs`, hash-checked against `omp.build.json`). Search, modified-only filter, reset-to-default, secret masking. Values live in `OmpSettingsValues.advanced`, validated in the main process and written to the omp overlay by `overlay-advanced.ts`; curated keys always win. New IPC `ompSettingsManifest`.
+- Settings > Tools: opt-in toggles (default off) for `ast_grep`, `checkpoint`/`rewind`, `github` and `security_scan`. Dedicated presentations for `edit` (diff), `grep`/`ast_grep`, `ast_edit`, `lsp`, `todo`, `web_search`; collapsed-row chips for match/file counts.
+- Session RPCs `get_tree`, `get_messages`, `get_messages_page`, `new_session` and `switch_session` reach the renderer; the session tree panel has a New session button and a paged Messages tab. `native.session.fork` stays rejected with a message pointing to branch / new session (omp has no fork RPC).
+- Settings: Hooks (list, enable/disable, create, edit, delete; user and project scope), user slash commands (create, edit, delete) and a Plugins section.
+- Settings > Agents: Maintenance panel with `omp cleanse` and `/autoresearch`. `compress` and `judgment` are not exposed (batch-file tool / internal API), `security_scan` is a Tools toggle.
+- Settings > CLI Tools: allowlisted runner for non-interactive omp subcommands (`stats`, `usage`, `gc`, `models`, `ps`, `worktree`, `tiny-models`, `toks`, `config`, `web-search`) using the bundled binary, no shell.
+- "Open in omp TUI" on a chat opens the bundled omp TUI in the integrated terminal on the same session (the launch script deletes itself before exec); Settings > Extensions shows the `omp acp` command and Zed/JetBrains snippets. Print mode and `omp setup` are intentionally not exposed.
 
 ### Removed
 - The orphaned subagent editor (`SubagentEditorSheet`, presets, model picker) and its source-text tests.
