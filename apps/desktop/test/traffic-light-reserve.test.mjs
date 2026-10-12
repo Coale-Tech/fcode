@@ -34,9 +34,10 @@ test("the macOS traffic lights have one geometry owner across processes", () => 
 });
 
 test("the renderer publishes the native footprint before first paint", () => {
+  // Behavioural: the constant is imported from the correct package (merged or solo)
   assert.match(
     entrySource,
-    /import \{ MAC_TRAFFIC_LIGHT_EDGE_DIP \} from "@pi-desktop\/shared";/,
+    /import\s*\{[^}]*MAC_TRAFFIC_LIGHT_EDGE_DIP[^}]*\}\s*from\s*["']@pi-desktop\/shared["']/,
   );
   const bootstrap = entrySource.slice(
     0,

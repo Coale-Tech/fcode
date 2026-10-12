@@ -9,6 +9,7 @@ import type { GlobalPermissionMode } from "./permissions.js";
 import type { PluginMarketSource } from "./plugins.js";
 import type { SpeechSettings } from "./speech.js";
 import type { ThinkingLevel } from "./models.js";
+import type { NavLayout } from "../nav-layout.js";
 
 export type ThemePreference = "system" | "light" | "dark" | `plugin:${string}`;
 
@@ -89,7 +90,7 @@ export type AppSettings = {
   /** Transcript presentation only; absent means detailed. Reasoning is retained. */
   thinkingDisplayMode?: "detailed" | "compact";
   /** Window navigation shell: top tabs, icon rail, or labelled rail + sessions island. Absent means "rail". */
-  navLayout?: "tabs" | "rail" | "island";
+  navLayout?: NavLayout;
   /**
    * @deprecated Unreleased D343 px field. Reads migrate into `fontScale`
    * as `px / 14`; new writes persist `fontScale` instead.
