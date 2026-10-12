@@ -31,6 +31,7 @@ import { useAppStore } from "../../stores/app-store";
 import { useSidebarTransition } from "./useSidebarTransition";
 import { useStartupWatchdog } from "./useStartupWatchdog";
 import { useTraySessions } from "./useTraySessions";
+import { resolveNavLayout, shellChromeWidth } from "../../lib/nav-layout";
 
 const MODIFIER_ONLY_KEYS = new Set([
   "Alt",
@@ -41,8 +42,6 @@ const MODIFIER_ONLY_KEYS = new Set([
 ]);
 
 const PLUGIN_THEME_STYLE_ID = "pi-plugin-theme";
-/** `--nav-rail-width` (60px) plus the Island's 8px margin on both sides (chrome.css, chat-shell.css). */
-const SHELL_CHROME_WIDTH = 60 + 16;
 
 export function useAppShellRuntime() {
   const { t } = useTranslation();
@@ -59,6 +58,9 @@ export function useAppShellRuntime() {
   const handlePlansChanged = useAppStore((s) => s.handlePlansChanged);
   const abort = useAppStore((s) => s.abort);
   const settings = useAppStore((s) => s.settings);
+  const navLayout = resolveNavLayout(settings?.navLayout);
+  const navLayoutRef = useRef(navLayout);
+  navLayoutRef.current = navLayout;
   const workPanelOpen = useAppStore((s) => s.workPanelOpen);
   const workPanelWidth = useAppStore((s) => s.workPanelWidth);
   const pluginThemes = useAppStore((s) => s.pluginThemes);
@@ -100,7 +102,7 @@ export function useAppShellRuntime() {
   // stays at zero. The E frame's nav rail and the Island's 8px inset on each
   // side are never available to the columns.
   const columnsWidth = (shell: HTMLElement) =>
-    Math.max(0, Math.round(shell.clientWidth) - SHELL_CHROME_WIDTH);
+    Math.max(0, Math.round(shell.clientWidth) - shellChromeWidth(navLayoutRef.current));
   useLayoutEffect(() => {
     const shell = appShellRef.current;
     if (!shell) return;
@@ -113,7 +115,7 @@ export function useAppShellRuntime() {
     const observer = new ResizeObserver(update);
     observer.observe(shell);
     return () => observer.disconnect();
-  }, []);
+  }, [navLayout]);
   const resolveSidebarMax = () =>
     sidebarWidthBudget({
       containerWidth: (appShellRef.current && columnsWidth(appShellRef.current)) || shellWidthRef.current,
@@ -543,6 +545,12 @@ export function useAppShellRuntime() {
       String(resolveFontScale(settings ?? {})),
     );
   }, [settings?.fontScale, settings?.fontSize]);
+
+  // Nav-layout attribute drives CSS layout switching (rail, tabs, island).
+  // Separate from the theme effect so a plugin-theme change cannot skip it.
+  useEffect(() => {
+    document.documentElement.dataset.navLayout = navLayout;
+  }, [navLayout]);
 
   useEffect(() => {
     if (bootstrapStartedRef.current) return;

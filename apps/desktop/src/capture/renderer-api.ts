@@ -10,6 +10,7 @@
  * object, so later capture calls stay synchronous as before.
  */
 import { useAppStore, type AppState, type ToastOptions } from "../stores/app-store";
+import type { NavLayout } from "../lib/nav-layout";
 import type { CaptureRig, CaptureRigMethods } from "./capture-rig";
 
 type CaptureRigMethod = keyof CaptureRigMethods;
@@ -27,6 +28,7 @@ export type RendererApi = {
   selectSession: (id: string) => Promise<void>;
   setSettingsTab: (tab: AppState["settingsTab"]) => void;
   setThemeAttr: (theme: "light" | "dark") => void;
+  setNavLayout: (layout: NavLayout) => void;
   clearProject: () => Promise<void>;
   showToast: (message: string, opts?: ToastOptions) => void;
 } & (CaptureRigStubs | CaptureRigMethods);
@@ -99,6 +101,9 @@ export function installRendererApi(): () => void {
     setSettingsTab: (tab) => useAppStore.getState().setSettingsTab(tab),
     setThemeAttr: (theme) => {
       document.documentElement.dataset.theme = theme;
+    },
+    setNavLayout: (layout) => {
+      document.documentElement.dataset.navLayout = layout;
     },
     clearProject: () => useAppStore.getState().clearProject(),
     showToast: (message, opts) => useAppStore.getState().showToast(message, opts),
