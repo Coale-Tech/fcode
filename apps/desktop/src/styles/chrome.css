@@ -461,9 +461,6 @@
   display: flex;
   align-items: center;
   margin-right: auto;
-  /* The row already pads 12px, so the title only adds the difference between
-     that and what of the traffic-light reserve the rail leaves over. */
-  padding-left: max(0px, calc(var(--ds-pane-lead-inset) - 12px));
 }
 
 /* Preview- and route-band actions take the shared chrome-control geometry from
@@ -703,37 +700,6 @@
   );
 }
 
-/* The macOS traffic lights own the window's top-left corner. Everything below
- * reads `--ds-window-lead-inset`: the cluster's right edge (native geometry,
- * injected at boot from @pi-desktop/shared — see window-chrome.ts) plus the
- * breathing room kept before the first shell control. Fullscreen hides the
- * buttons, so the reserve falls back to the ordinary 8px gutter; Windows and
- * Linux keep the 0px default from tokens.css and use their renderer-drawn
- * controls instead.
- *
- * The E frame's nav rail takes the window's left edge, so surfaces beside it
- * read `--ds-pane-lead-inset`: whatever of the reserve the rail leaves over. */
-:root[data-platform="darwin"] {
-  --ds-window-lead-inset: calc(
-    var(--ds-traffic-light-edge) + var(--ds-traffic-light-gap)
-  );
-}
-
-:root[data-platform="darwin"][data-fullscreen="true"] {
-  --ds-window-lead-inset: 8px;
-}
-
-:root {
-  --nav-rail-width: 60px;
-  --ds-pane-lead-inset: max(
-    8px,
-    calc(var(--ds-window-lead-inset) - var(--nav-rail-width))
-  );
-}
-
-:root[data-platform="darwin"] .conversation-topbar.ct-collapsed {
-  --ct-lead-inset: var(--ds-pane-lead-inset);
-}
 
 /*
  * The dock toggle returns to the top bar while the sidebar is collapsed, and it
@@ -1163,9 +1129,6 @@
   -webkit-app-region: drag;
 }
 
-:root[data-platform="darwin"] .sidebar-header {
-  padding-left: var(--ds-pane-lead-inset);
-}
 
 :root[data-platform="darwin"] .sidebar-header > .brand {
   display: none;
@@ -1225,9 +1188,6 @@
   --preview-chrome-action-lane: var(--ds-preview-action-lane-width);
 }
 
-:root[data-platform="darwin"] .app-shell.work-panel-maximized.sidebar-collapsed {
-  --preview-chrome-inset: var(--ds-pane-lead-inset);
-}
 
 /* Match the scenic backdrop's child-layer specificity so preview navigation
  * stays above the work panel while non-control pixels remain pass-through. */
@@ -1238,7 +1198,7 @@
   left: var(--nav-rail-width);
   z-index: 200;
   display: flex;
-  height: var(--ds-toolbar-height);
+  height: var(--d-ph-h);
   align-items: center;
   padding-left: var(--preview-chrome-inset);
   pointer-events: none;
@@ -1280,10 +1240,6 @@
   app-region: drag;
 }
 
-/* Keep destinations below the traffic lights, inside the titlebar band. */
-:root[data-platform="darwin"]:not([data-fullscreen="true"]) .nav-rail {
-  padding-top: var(--ds-toolbar-height);
-}
 
 .nav-rail-group {
   display: flex;

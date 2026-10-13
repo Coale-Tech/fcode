@@ -126,6 +126,9 @@ export const zhCN = {
   nav: {
     pinnedSessions: "置顶",
     home: "首页",
+    chat: "对话",
+    build: "构建",
+    bench: "工作台",
     newTask: "新建任务",
     newProject: "新建项目",
     projects: "项目",

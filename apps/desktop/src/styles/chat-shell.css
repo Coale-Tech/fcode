@@ -86,8 +86,8 @@
 /* Workspace context strip: the quiet status row at the pane's foot. */
 .workspace-bar {
   display: flex;
-  height: 28px;
-  flex: 0 0 28px;
+  height: var(--d-status-h);
+  flex: 0 0 var(--d-status-h);
   align-items: center;
   gap: 6px;
   padding: 0 12px;

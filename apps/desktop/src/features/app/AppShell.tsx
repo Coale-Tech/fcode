@@ -17,6 +17,7 @@ import { ToastHost } from "../../components/Toast";
 import { UpdateBanner } from "../../components/UpdateBanner";
 import { cx, TooltipButton } from "../../components/ui";
 import { WindowControls } from "../../components/WindowControls";
+import { ShellNavbar } from "../../components/ShellNavbar";
 import { WorkPanel } from "../../components/workpanel/WorkPanel";
 import { WorkspaceBar } from "../../components/WorkspaceBar";
 import { useCopyTex } from "../../hooks/use-copy-tex";
@@ -139,6 +140,9 @@ export function AppShell() {
   if (ready) {
     shell = (
       <>
+        {/* ShellNavbar: outside the inert/hidden subtree; stays usable in settings mode
+            (Review Focus 4). Drag region + Cmd-K awesomebar for all pages. */}
+        <ShellNavbar onOpenSearch={() => setSearchOpen(true)} />
         <PortalVisibilityProvider visible={page !== "settings"}>
           <div
             className="app-chat-shell"

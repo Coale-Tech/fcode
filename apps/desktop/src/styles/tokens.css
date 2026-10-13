@@ -162,7 +162,6 @@
   --ds-window-controls-width: 120px;
   --ds-traffic-light-edge: 0px;
   --ds-traffic-light-gap: 12px;
-  --ds-window-lead-inset: 0px;
   /* Composer radius: 20px (--radius-xl in the Fcode Apple ladder) */
   --ds-composer-radius:    var(--radius-xl);
   --ds-composer-radius-lg: var(--radius-xl);

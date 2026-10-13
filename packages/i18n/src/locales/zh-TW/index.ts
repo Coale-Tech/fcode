@@ -126,6 +126,9 @@ export const zhTW = {
   nav: {
     pinnedSessions: "釘選",
     home: "首頁",
+    chat: "對話",
+    build: "建置",
+    bench: "工作台",
     newTask: "新建任務",
     newProject: "新建專案",
     projects: "專案",

@@ -660,7 +660,10 @@ test("preview mode keeps shell actions and restores routes before navigation", (
   assert.match(globalStyles, /\.window-chrome-row\.sidebar-expanded \{[^}]*left: calc\(var\(--nav-rail-width\) \+ var\(--ds-sidebar-width\)\);/);
   assert.match(globalStyles, /\.app-shell\.work-panel-maximized \{[^}]*--preview-chrome-inset:\s*8px;[^}]*--preview-chrome-action-lane:\s*calc\(var\(--ds-control-size\) \+ 8px\);/);
   assert.match(globalStyles, /\.app-shell\.work-panel-maximized\.sidebar-collapsed \{[^}]*--preview-chrome-action-lane:\s*var\(--ds-preview-action-lane-width\);/);
-  assert.match(globalStyles, /:root\[data-platform="darwin"\] \.app-shell\.work-panel-maximized\.sidebar-collapsed \{[^}]*--preview-chrome-inset:\s*var\(--ds-pane-lead-inset\);/);
+  /* lead-inset cutover (Task 6): ShellNavbar owns the darwin traffic-light reserve;
+   * --ds-pane-lead-inset is removed, so the darwin preview-chrome-inset override
+   * is also gone. --preview-chrome-inset stays 8px on all platforms. */
+  assert.doesNotMatch(globalStyles, /--preview-chrome-inset:\s*var\(--ds-pane-lead-inset\)/);
   assert.match(globalStyles, /\.app-shell\.work-panel-maximized \.work-panel-header \{[^}]*margin-left:\s*calc\(var\(--preview-chrome-inset\) \+ var\(--preview-chrome-action-lane\)\);[^}]*padding-left:\s*0;/);
   assert.match(globalStyles, /\.work-panel-header \{[^}]*app-region:\s*drag;/);
   assert.match(globalStyles, /\.app-shell\.work-panel-maximized \.work-panel-main \{[^}]*var\(--ds-bg-dock-raised\) 0 var\(--ds-toolbar-height\)/);

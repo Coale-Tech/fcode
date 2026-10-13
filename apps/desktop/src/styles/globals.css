@@ -14,6 +14,7 @@
 @import "./d-tokens.css";
 @import "./base.css";
 @import "./chrome.css";
+@import "./d-shell.css";
 @import "./chat-shell.css";
 @import "./composer.css";
 @import "./sidebar-threads.css";

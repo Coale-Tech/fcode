@@ -131,6 +131,9 @@ export const en = {
   nav: {
     "pinnedSessions": "Pinned",
     home: "Home",
+    chat: "Chat",
+    build: "Build",
+    bench: "Bench",
     newTask: "New task",
     newProject: "New project",
     projects: "Projects",

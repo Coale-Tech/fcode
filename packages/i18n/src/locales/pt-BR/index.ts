@@ -123,6 +123,9 @@ export const ptBR = {
   nav: {
     pinnedSessions: "Fixadas",
     home: "Início",
+    chat: "Chat",
+    build: "Build",
+    bench: "Bancada",
     newTask: "Nova tarefa",
     newProject: "Novo projeto",
     projects: "Projetos",

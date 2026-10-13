@@ -124,6 +124,9 @@ export const fr = {
   "nav": {
     "pinnedSessions": "Épinglées",
     "home": "Accueil",
+    "chat": "Chat",
+    "build": "Build",
+    "bench": "Atelier",
     "newTask": "Nouvelle tâche",
     "newProject": "Nouveau projet",
     "projects": "Projets",

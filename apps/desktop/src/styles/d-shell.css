@@ -1,0 +1,150 @@
+/*
+ * Direction D — shell frame.
+ *
+ * Design source: kit-d/D.css (D.css) lines cited inline.
+ * Design authority (R10): flex + absolute awesomebar (D.css:119-130,194-202),
+ * NOT the brief's grid — R11a overrides brief's minmax(240px,480px) column.
+ *
+ * Approved deviations (R12):
+ *   - light accent #2578ab (AA contrast) instead of #2E8AC2
+ *   - dark on-accent glyph dark (#0a1f2e)
+ */
+
+/* ── App shell becomes a flex column now ShellNavbar is the top row ── */
+/* D.css:97-107 (.d-app) */
+.app-shell { flex-direction: column; }
+
+/*
+ * .app-chat-shell was display:contents so its children were direct flex items
+ * of .app-shell (flex row). Now it becomes the body row below the navbar.
+ * base.css:175-181 is superseded here.
+ */
+.app-chat-shell {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  position: relative; /* establish positioning context for .window-chrome-row */
+}
+.app-chat-shell[hidden] { display: none; }
+
+/*
+ * --nav-rail-width was defined next to --ds-pane-lead-inset in chrome.css
+ * (deleted as part of the lead-inset cutover). Keep it here so
+ * .window-chrome-row still resolves it.
+ */
+:root { --nav-rail-width: 60px; }
+
+/* ── Navbar (shared base, 48px) ───────────────────────────────────────
+ * D.css:119-130 (.d-nav); using shell-navbar class for the app.
+ * display:flex + position:relative lets the absolutely-centred awesomebar
+ * stay anchored to the navbar regardless of left/right content width. */
+.shell-navbar {
+  display: flex;
+  align-items: center;
+  height: var(--d-navbar-h);          /* 48px — D.css:23 / D-SPEC.md row 1  */
+  flex: 0 0 var(--d-navbar-h);
+  padding: 0 var(--d-gap);            /* 0 12px — D.css:124                 */
+  gap: 8px;                           /* D.css:125                           */
+  background: var(--surface-elevation-1); /* D.css:126                      */
+  border-bottom: 1px solid var(--d-border); /* D.css:127; --d-border=outline-gray-2 */
+  position: relative;                 /* D.css:128 — anchor for abs awesomebar */
+  z-index: 30;                        /* D.css:129                           */
+}
+
+/*
+ * macOS traffic-light reserve (darwin only, not fullscreen).
+ * D1 tabs:   78px — D-SPEC.md row 1, D1-shell.html:83 (width:78px;flex-shrink:0)
+ * D2 rail:   56px — D-SPEC.md row 1, D2-shell.html:71 (width:56px;flex-shrink:0)
+ * D3 island: 56px — D3-shell.html:306 (width:56px;flex-shrink:0)
+ */
+:root[data-platform="darwin"] .shell-navbar                             { padding-left: 56px; }
+:root[data-platform="darwin"] .shell-navbar[data-nav-layout="tabs"]     { padding-left: 78px; }
+:root[data-platform="darwin"][data-fullscreen="true"] .shell-navbar     { padding-left: var(--d-gap); }
+
+/*
+ * Windows/Linux: reserve right edge for renderer-drawn WindowControls.
+ * WindowControls width = 120px (--ds-window-controls-width) + 4px breathing room.
+ */
+:root:not([data-platform="darwin"]) .shell-navbar { padding-right: 124px; }
+
+/* ── Left section: brand / tabs / breadcrumb ──────────────────────── */
+/* D.css:147-152 (.d-nav-tabs wrapper) and D.css:181-191 (.d-breadcrumb) */
+.shell-navbar-start {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+/* Breadcrumb: D.css:181-191 (.d-breadcrumb) */
+.shell-navbar-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--d-text);       /* 13px — D.css:185 */
+  color: var(--ink-gray-5);       /* D.css:186 */
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.shell-navbar-crumb-root  { color: var(--ink-gray-5); }            /* D2-shell.html:23 */
+.shell-navbar-crumb-sep   { color: var(--ink-gray-3); }            /* D.css:191 (.sep) */
+.shell-navbar-crumb-page  { color: var(--ink-gray-8); font-weight: 500; } /* D.css:190 (span) */
+
+/* ── Centred awesomebar — absolute, 300px ─────────────────────────
+ * D.css:194-235 (.d-awesomebar / .d-search-icon / .d-search-kbd)
+ * R11a: 300px fixed width, not brief's minmax(240px,480px). */
+.shell-awesomebar {
+  position: absolute;              /* D.css:195 */
+  left: 50%;                       /* D.css:196 */
+  transform: translateX(-50%);     /* D.css:197 */
+  width: 300px;                    /* D.css:199 */
+  height: var(--d-ctrl-lg);        /* 32px — D.css:206 */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  color: var(--ink-gray-5);
+  background: var(--ds-bg-hover);
+  border: 1px solid var(--d-border-ctrl);   /* outline-gray-3 — D.css:207 */
+  border-radius: var(--d-r-ctrl);            /* 8px — D.css:33  */
+  font-size: var(--d-text);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .12s;   /* D.css:215 */
+  z-index: 1;
+}
+.shell-awesomebar:hover         { border-color: var(--ink-gray-3); }
+.shell-awesomebar:focus-visible {
+  outline: 2px solid var(--ds-accent);
+  outline-offset: 2px;
+}
+
+.shell-awesomebar-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-gray-4);   /* D.css:217 placeholder colour */
+}
+
+.shell-awesomebar-kbd {
+  font: inherit;
+  font-size: var(--d-text-xs);   /* 11px — D.css:230 */
+  color: var(--ink-gray-3);
+  white-space: nowrap;
+}
+
+/* ── Right end placeholder (right cluster: Task 8) ───────────────── */
+.shell-navbar-end {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;          /* D.css:243 (.d-nav-right margin-left:auto) */
+  flex-shrink: 0;
+}

@@ -90,7 +90,10 @@ test("work panel collapse control is the viewport-fixed shell toggle", () => {
 
 test("macOS hides sidebar branding and keeps header actions beside traffic lights", () => {
   assert.doesNotMatch(sidebarSource, /sidebar-macos-drag-row/);
-  assert.match(
+  /* lead-inset cutover (Task 6): ShellNavbar owns the darwin traffic-light reserve;
+   * --ds-pane-lead-inset is removed, so the darwin sidebar-header padding override
+   * is also gone — the sidebar header inherits the standard 8px gutter instead. */
+  assert.doesNotMatch(
     globalStyles,
     /:root\[data-platform="darwin"\] \.sidebar-header\s*\{[^}]*padding-left:\s*var\(--ds-pane-lead-inset\);/s,
   );

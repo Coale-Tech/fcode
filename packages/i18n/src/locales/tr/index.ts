@@ -133,6 +133,9 @@ export const tr = {
   nav: {
     "pinnedSessions": "Sabitlenmiş",
     home: "Ana sayfa",
+    chat: "Sohbet",
+    build: "Derleme",
+    bench: "Masa",
     newTask: "Yeni görev",
     newProject: "Yeni proje",
     projects: "Projeler",
