@@ -2,13 +2,7 @@ import { useTranslation } from "react-i18next";
 import type { AppSettings } from "@pi-desktop/shared";
 import { NAV_LAYOUTS, type NavLayout } from "@pi-desktop/shared";
 import { resolveNavLayout, nextNavLayout } from "../../lib/nav-layout";
-import { cx } from "../ui";
-
-// Exception: picker cards use raw <button role="radio"> rather than the Button
-// primitive (ui.tsx:527-555). Button spreads all props so role/aria-checked/
-// tabIndex are compatible, but it always applies the .btn class (ui-kit.css:157)
-// which enforces height:var(--ds-btn-height)=28px; there is no unstyled/auto-
-// height prop to suppress it, collapsing the 88px card thumbnail. Raw kept.
+import { Button, cx } from "../ui";
 
 const LABEL: Record<NavLayout, string> = {
   tabs:   "settings.navLayoutTabs",
@@ -139,12 +133,13 @@ export function NavLayoutRow({
         onKeyDown={onKeyDown}
       >
         {NAV_LAYOUTS.map((id) => (
-          <button
+          <Button
             key={id}
             type="button"
             role="radio"
             aria-checked={current === id}
             data-nav-layout-option={id}
+            variant="ghost"
             className={cx("nl-card", current === id && "is-selected")}
             tabIndex={current === id ? 0 : -1}
             onClick={() => void saveSettings({ navLayout: id })}
@@ -160,7 +155,7 @@ export function NavLayoutRow({
                 </div>
               )}
             </div>
-          </button>
+          </Button>
         ))}
       </div>
       <div className="nl-caption">{t("settings.navLayoutCaption")}</div>

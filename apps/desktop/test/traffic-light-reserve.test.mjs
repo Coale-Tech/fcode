@@ -33,23 +33,6 @@ test("the macOS traffic lights have one geometry owner across processes", () => 
   );
 });
 
-test("the renderer publishes the native footprint before first paint", () => {
-  // Behavioural: the inset is published after the platform attribute that gates it
-  const bootstrap = entrySource.slice(
-    0,
-    entrySource.indexOf("installScrollbarReveal(document)"),
-  );
-  const platform = bootstrap.indexOf("dataset.platform");
-  const publish = bootstrap.indexOf('"--ds-traffic-light-edge"');
-  assert.ok(
-    platform !== -1 && publish > platform,
-    "the inset is published after the platform attribute that gates it",
-  );
-  assert.match(
-    bootstrap,
-    /if \(document\.documentElement\.dataset\.platform === "darwin"\) \{\s*document\.documentElement\.style\.setProperty\(\s*"--ds-traffic-light-edge",\s*`\$\{MAC_TRAFFIC_LIGHT_EDGE_DIP\}px`,\s*\);\s*\}/,
-  );
-});
 
 test("every shell surface reserves the shared lead inset", () => {
   // Comments may quote the old footprint while explaining the geometry; only

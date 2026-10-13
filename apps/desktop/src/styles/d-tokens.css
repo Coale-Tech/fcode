@@ -107,6 +107,9 @@
   --d-focus-ring:             2px;    /* trigger/field focus ring spread (D.css:762-763) */
   --d-checkbox-gap:           6px;    /* checkbox wrapper label gap */
   --d-checkbox-glyph:         10px;   /* ds-checkbox check-mark glyph size (D.css:857) */
+  --d-nl-focus-offset: 2px;   /* C03: nl-card focus outline offset */
+  --d-nl-caption-pt:   4px;   /* C03: nl-caption section top padding */
+  --d-wf-border:       1px;   /* C03: wireframe non-hairline border/pad (1px) */
 }
 
 /* Dark theme: remap violet to FileBird dark blues */

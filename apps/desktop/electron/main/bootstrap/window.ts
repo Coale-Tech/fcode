@@ -1847,6 +1847,152 @@ export async function createWindow({
             await setTheme("light");
             await new Promise((r) => setTimeout(r, 350));
             await shot("pi-settings-live");
+            // ── C05 acceptance shots: picker states, keyboard, locale, reload ──
+            // These must run while the General/Appearance tab is visible (light).
+            const sleep = (ms: number) => {
+              const { promise, resolve } = Promise.withResolvers<void>();
+              setTimeout(resolve, ms);
+              return promise;
+            };
+            const clickPicker = async (layout: string) => {
+              await windowState.mainWindow!.webContents.executeJavaScript(
+                `document.querySelector('[data-nav-layout-option="${layout}"]')?.dispatchEvent(new MouseEvent('click',{bubbles:true}))`,
+              );
+              await sleep(350);
+            };
+            // tabs selected
+            await clickPicker("tabs");
+            await shot("pi-settings-picker-tabs");
+            // island selected
+            await clickPicker("island");
+            await shot("pi-settings-picker-island");
+            // rail (default) selected — also restores the default
+            await clickPicker("rail");
+            await shot("pi-settings-picker-rail");
+            // Keyboard focus: focus the checked card, then ArrowRight → next card
+            await windowState.mainWindow!.webContents.executeJavaScript(`
+              (() => {
+                const rg = document.querySelector('[role="radiogroup"]');
+                const card = rg?.querySelector('[aria-checked="true"]');
+                card?.focus();
+              })()
+            `);
+            await sleep(150);
+            await shot("pi-settings-picker-focus");
+            await windowState.mainWindow!.webContents.executeJavaScript(`
+              document.activeElement?.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}))
+            `);
+            await sleep(350);
+            // NAV_LAYOUTS = ["tabs","rail","island"]: ArrowRight from rail(idx 1) → island(idx 2)
+            await shot("pi-settings-picker-keyboard-island");
+            // Reset to rail before C02 measurements
+            await clickPicker("rail");
+            // C02: measure shell budget using the real picker path (IPC-only does not update renderer store)
+            await setPage("chat");
+            await sleep(400);
+            const measure = async (label: string) => {
+              const m = await windowState.mainWindow!.webContents.executeJavaScript(`
+                (() => {
+                  const el = document.documentElement;
+                  const navLayout = el.dataset.navLayout || "rail";
+                  const CHROME = { tabs: 24, rail: 74, island: 84 };
+                  const shellEl = document.querySelector(".app-shell");
+                  const shellClientWidth = shellEl ? shellEl.clientWidth : 0;
+                  const chromeW = CHROME[navLayout] || 74;
+                  return { navLayout, shellClientWidth, chromeW, usableWidth: shellClientWidth - chromeW };
+                })()
+              `);
+              console.log("C02_" + label, JSON.stringify(m));
+              return m;
+            };
+            const mRail1 = await measure("rail");
+            // Navigate to settings → click island picker → back to chat → measure island
+            await setPage("settings");
+            await setSettingsTab("general");
+            await sleep(250);
+            await clickPicker("island");
+            await setPage("chat");
+            await sleep(400);
+            const mIsland = await measure("island");
+            console.log("C02_usable_delta", mRail1.usableWidth - mIsland.usableWidth, "(expect 10)");
+            // Navigate to settings → click rail → back to chat → measure rail_restored
+            await setPage("settings");
+            await setSettingsTab("general");
+            await sleep(250);
+            await clickPicker("rail");
+            await setPage("chat");
+            await sleep(400);
+            const mRail2 = await measure("rail_restored");
+            console.log(
+              "C02_clientWidth_stable",
+              mRail1.shellClientWidth === mRail2.shellClientWidth,
+              mRail1.shellClientWidth,
+              mRail2.shellClientWidth,
+            );
+            // Non-default persisted layout via real picker: island → reload → prove persistence
+            await setPage("settings");
+            await setSettingsTab("general");
+            await sleep(250);
+            await clickPicker("island");
+            await sleep(300);
+            await shot("pi-settings-picker-island-before-reload");
+            // Renderer reload — main process settings survive; renderer re-reads via IPC
+            await windowState.mainWindow!.webContents.executeJavaScript(
+              `window.location.reload()`,
+            );
+            await sleep(3000);
+            // Re-navigate after reload (React boot is async)
+            for (let i = 0; i < 12; i++) {
+              const ready = await windowState.mainWindow!.webContents.executeJavaScript(
+                `!!window.__PI_DESKTOP__?.setPage`,
+              );
+              if (ready) break;
+              await sleep(250);
+            }
+            await windowState.mainWindow!.webContents.executeJavaScript(
+              `window.__PI_DESKTOP__?.setPage?.("settings")`,
+            );
+            await windowState.mainWindow!.webContents.executeJavaScript(
+              `window.__PI_DESKTOP__?.setSettingsTab?.("general")`,
+            );
+            await windowState.mainWindow!.webContents.executeJavaScript(
+              `window.__PI_DESKTOP__?.setThemeAttr?.("light")`,
+            );
+            await sleep(500);
+            await shot("pi-settings-picker-island-after-reload");
+            // Restore to rail via picker for German locale shots
+            await windowState.mainWindow!.webContents.executeJavaScript(
+              `document.querySelector('[data-nav-layout-option="rail"]')?.dispatchEvent(new MouseEvent('click',{bubbles:true}))`,
+            );
+            await sleep(350);
+            // German locale shots (light + dark) — IPC settings/set triggers settingsChanged
+            // which the renderer i18n listener responds to
+            await windowState.mainWindow!.webContents.executeJavaScript(`
+              (async () => {
+                const s = await window.piDesktop.invoke("pi-desktop/settings/get");
+                await window.piDesktop.invoke("pi-desktop/settings/set", { ...s, language: "de" });
+              })()
+            `);
+            await sleep(700);
+            await shot("pi-settings-picker-de-light");
+            await windowState.mainWindow!.webContents.executeJavaScript(
+              `window.__PI_DESKTOP__?.setThemeAttr?.("dark")`,
+            );
+            await sleep(300);
+            await shot("pi-settings-picker-de-dark");
+            // Restore English + rail before continuing normal capture flow
+            await windowState.mainWindow!.webContents.executeJavaScript(`
+              (async () => {
+                const s = await window.piDesktop.invoke("pi-desktop/settings/get");
+                await window.piDesktop.invoke("pi-desktop/settings/set", { ...s, language: "en", navLayout: "rail" });
+              })()
+            `);
+            await sleep(600);
+            await setPage("settings");
+            await setSettingsTab("general");
+            await setTheme("light");
+            await sleep(300);
+            // ── end C05 acceptance shots ──
             await windowState.mainWindow!.webContents.executeJavaScript(
               `window.__PI_DESKTOP__?.seedPluginThemes?.(0)`,
             );
