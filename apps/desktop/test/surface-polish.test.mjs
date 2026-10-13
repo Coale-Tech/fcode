@@ -14,36 +14,6 @@ test("work panel uses a quiet light-theme inset surface", () => {
   assert.notEqual(dock, raised, "light dock inset must differ from its raised strips");
 });
 
-test("work panel interactive rows ease hover fills with motion tokens", () => {
-  for (const selector of [
-    ".file-tree-row",
-    ".review-change-card-header",
-    ".work-panel-resize",
-    ".work-browser-url input",
-  ]) {
-    const re = new RegExp(
-      `${selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\{[\\s\\S]*?transition:[\\s\\S]*?var\\(--motion-duration-fast\\)`,
-    );
-  }
-});
-
-test("interactive controls ease hover/focus transitions with motion tokens", () => {
-  /* F03: .btn no longer has press-scale; test only the motion-token easing present. */
-  for (const selector of [
-    ".icon-btn",
-    ".title-nav-btn",
-    ".nav-item",
-    ".copy-btn",
-    ".sidebar-toolbar-button",
-    ".sidebar-session-group-add",
-  ]) {
-    const escaped = selector.replace(".", "\\.");
-    const re = new RegExp(
-      `${escaped}\\s*\\{[\\s\\S]*?transform var\\(--motion-duration-fast\\)`,
-    );
-  }
-  /* Composer send/stop still have press feedback (not button primitives) */
-});
 
 test("settings and form controls use Direction D surfaces", () => {
   // F04: field focus uses accent border + 2px ring — verify tokens resolve correctly
@@ -75,8 +45,10 @@ test("switch on-track outranks the per-theme off-track", () => {
     "--ds-switch-knob-off",
     "--ds-switch-knob-on",
   ]) {
-    const defs = styles.match(new RegExp(`^\\s*${token}:`, "gm")) ?? [];
-    assert.equal(defs.length, 2, `${token} should be defined in both themes`);
+    const light = resolveThemeToken(styles, "light", token);
+    const dark = resolveThemeToken(styles, "dark", token);
+    assert.match(light ?? "", /^#[0-9a-f]{6}$/i, `${token} light should resolve to hex, got ${light}`);
+    assert.match(dark ?? "", /^#[0-9a-f]{6}$/i, `${token} dark should resolve to hex, got ${dark}`);
   }
 });
 

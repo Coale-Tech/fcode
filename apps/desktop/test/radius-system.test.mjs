@@ -1,12 +1,7 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { loadStyles, resolveThemeToken } from "./helpers/styles.mjs";
 
-const tokens = await readFile(
-  new URL("../src/styles/tokens.css", import.meta.url),
-  "utf8",
-);
 const styles = await loadStyles();
 
 
