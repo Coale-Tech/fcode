@@ -55,7 +55,7 @@
   right: auto;
   bottom: auto;
   z-index: 40;
-  width: min(120px, calc(100vw - 24px));
+  width: min(230px, calc(100vw - 24px)); /* D: .cf-perm-menu width 230px */
   max-height: min(520px, calc(100vh - 92px));
   overflow-y: auto;
   padding: 6px;
@@ -76,7 +76,7 @@
   right: auto;
   bottom: auto;
   z-index: 40;
-  width: min(240px, calc(100vw - 24px));
+  width: min(280px, calc(100vw - 24px)); /* D: .cf-model-menu width 280px */
   max-height: min(520px, calc(100vh - 92px));
   overflow-y: auto;
   padding: 5px;
@@ -595,12 +595,12 @@
 }
 
 .composer-plus-item.active {
-  background: var(--ds-bg-active);
+  background: color-mix(in oklab, var(--ds-accent) 14%, transparent); /* D: da-sub tint */
   border-radius: var(--radius-sm);
 }
 
 .composer-plus-item.active span:last-child {
-  color: var(--ds-text-primary);
+  color: var(--ds-accent); /* D: da-txt accent */
 }
 
 /* Keyboard highlight mirrors hover; both can coexist with .active. */
@@ -609,7 +609,7 @@
 }
 
 .composer-plus-item.active.kb-active {
-  background: var(--ds-bg-active);
+  background: color-mix(in oklab, var(--ds-accent) 20%, transparent);
 }
 
 .composer-model-check {
@@ -707,4 +707,13 @@
 .plan-approval-menu-item svg {
   flex: 0 0 auto;
   margin-left: auto;
+}
+
+/* lane T10: D chip geometry — must come after theme-overrides.css !important rules.
+   26px height / 8px radius / 12px font per D-SPEC .d-bench-chip / .cf-perm-item / .cf-model-item. */
+.mode-chip {
+  height: 26px !important;
+  border-radius: var(--d-r-ctrl) !important;
+  font-size: var(--d-text-sm) !important;
+  padding: 0 8px !important;
 }

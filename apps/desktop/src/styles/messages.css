@@ -1549,6 +1549,7 @@
   border-radius: var(--radius-lg-plus);
   padding: 10px 14px;
   line-height: var(--leading-chat);
+  font-size: var(--d-text-chat); /* D: .d-msg-body 14px */
 }
 
 .message-user-text {
@@ -2533,15 +2534,42 @@
   background: transparent;
 }
 
+/* D: 30px circle tool node (R11e; replaces bare icon). */
 .tool-row-icon {
   display: inline-flex;
   flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--d-border-ctrl);
+  background: var(--ds-bg-inset);
+  align-items: center;
+  justify-content: center;
   color: var(--ds-text-muted);
+  flex-shrink: 0;
+  margin-top: 2px;
+  z-index: 1;
 }
-
-/* A lifecycle row is a subagent row (D268): it carries the same accent the
-   topology node's avatar uses, so scanning the transcript groups it with the
-   Task card it reports on rather than with the file tools around it. */
+.tool-row-icon svg {
+  width: 12px;
+  height: 12px;
+}
+/* Status-based node colours matching D.css .d-tool-node variants. */
+.tool-row.status-running .tool-row-icon:not(.is-subagent) {
+  border-color: var(--outline-amber-3);
+  background: var(--surface-amber-2);
+  color: var(--ink-amber-8);
+}
+.tool-row.status-success .tool-row-icon:not(.is-subagent) {
+  border-color: var(--outline-green-3);
+  background: var(--surface-green-2);
+  color: var(--ink-green-8);
+}
+.tool-row.status-error .tool-row-icon:not(.is-subagent) {
+  border-color: var(--outline-red-3);
+  background: var(--surface-red-2);
+  color: var(--ink-red-8);
+}
 .tool-row-icon.is-subagent {
   color: var(--ds-accent);
 }
@@ -2603,7 +2631,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: var(--font-mono);
-  font-size: var(--text-xs-plus);
+  font-size: var(--d-text-xs); /* D: .d-tool-sub 11px mono path */
   color: var(--ds-text-muted);
 }
 
@@ -3260,4 +3288,9 @@
   max-width: 100%;
   max-height: 480px;
   object-fit: contain;
+}
+
+/* D: 14px chat prose — higher specificity overrides prose.css .prose-chat base (lane T10). */
+.message-row .prose-chat {
+  font-size: var(--d-text-chat);
 }

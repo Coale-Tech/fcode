@@ -22,6 +22,8 @@ import { buildActivityTimeline } from "../../lib/activity-summary";
 import { reviewChangesFromMessages } from "../../lib/workspace-review";
 import { formatToolDuration } from "../../lib/tool-display";
 import { toolWorkPanelTab } from "../../lib/work-panel-tabs";
+import { OmpCollabPanel } from "../chat/transcript/OmpCollabPanel";
+import { OmpTuiPanel } from "../chat/transcript/OmpTuiPanel";
 
 // Stable fallback: a fresh [] per call breaks useSyncExternalStore snapshot caching.
 const EMPTY_PHASES: OmpTodoPhase[] = [];
@@ -37,6 +39,10 @@ export const OmpActivityTab = memo(function OmpActivityTab() {
     sessionId ? (s.sessionTodoPhases[sessionId] ?? EMPTY_PHASES) : EMPTY_PHASES,
   );
   const openWorkPanelTab = useAppStore((s) => s.openWorkPanelTab);
+  const isOmpSession = useAppStore((s) =>
+    sessionId ? s.sessions.find((x) => x.id === sessionId)?.source !== "pi-native" : false,
+  );
+  const projectPath = useAppStore((s) => s.workspace?.path ?? undefined);
 
   const timeline = buildActivityTimeline(messages);
   const changes = reviewChangesFromMessages(messages);
@@ -172,6 +178,14 @@ export const OmpActivityTab = memo(function OmpActivityTab() {
               </div>
             );
           })}
+        </section>
+      )}
+
+      {/* ── Session actions (omp TUI + share; ruled into Activity, no design home) ── */}
+      {sessionId && isOmpSession && (
+        <section className="activity-session">
+          <OmpTuiPanel sessionId={sessionId} projectPath={projectPath} />
+          <OmpCollabPanel sessionId={sessionId} />
         </section>
       )}
     </div>

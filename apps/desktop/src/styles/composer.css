@@ -22,6 +22,7 @@
   inset-inline: 0;
   bottom: 0;
   padding: 0 24px 16px;
+  border-top: 1px solid var(--ds-border-default); /* D: full-width separator, R11e */
   background: transparent;
 }
 
@@ -288,7 +289,7 @@
 
 .composer-input {
   width: 100%;
-  min-height: 3lh;
+  min-height: 56px; /* D: .d-composer-textarea min-height, R11e */
   max-height: 7lh;
   overflow-y: hidden;
   resize: none;
@@ -296,7 +297,7 @@
   outline: none;
   background: transparent;
   color: var(--ds-text-primary);
-  font-size: var(--text-base);
+  font-size: var(--d-text-chat); /* D: 14px chat prose */
   line-height: var(--leading-body);
   white-space: pre-wrap;
   overflow-wrap: break-word;
@@ -428,12 +429,12 @@
 
 .send-btn {
   display: inline-flex;
-  height: 28px;
-  width: 28px; /* Codex spacing-token-button-composer = 28px */
-  flex: 0 0 28px;
+  height: var(--d-ctrl-lg); /* D: 32px × 32px square, R11e */
+  width: var(--d-ctrl-lg);
+  flex: 0 0 var(--d-ctrl-lg);
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-full);
+  border-radius: var(--d-r-ctrl); /* D: 8px, not full-circle */
   background: var(--ds-accent);
   color: var(--ds-accent-foreground);
   transition: opacity var(--motion-duration-fast) var(--motion-ease-out), transform var(--motion-duration-fast) var(--motion-ease-out);
@@ -515,12 +516,12 @@
 
 .stop-btn {
   display: inline-flex;
-  height: 28px;
-  width: 28px;
-  flex: 0 0 28px;
+  height: var(--d-ctrl-lg); /* D: 32px parity with send-btn */
+  width: var(--d-ctrl-lg);
+  flex: 0 0 var(--d-ctrl-lg);
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-full);
+  border-radius: var(--d-r-ctrl);
   background: color-mix(in oklab, var(--ds-text-primary) 16%, transparent);
   color: var(--ds-text-primary);
   transition:

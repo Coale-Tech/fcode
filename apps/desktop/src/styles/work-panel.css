@@ -1212,8 +1212,8 @@
   justify-content: space-between;
   gap: 6px;
   padding: 0 10px 5px;
-  color: var(--ds-text-muted);
-  font-size: var(--text-xs);
+  color: var(--ds-text-faint); /* D: cf-act-sec uses --ink-gray-4 = --ds-text-faint */
+  font-size: var(--d-text-xs); /* D: cf-act-sec 11px */
   font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);
