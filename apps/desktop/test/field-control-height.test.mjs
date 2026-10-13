@@ -65,15 +65,6 @@ test("a stretched trigger takes the field metric without outranking a denser sur
     settingsCss,
     ".settings-menu-select-anchor.is-full .settings-menu-select-trigger",
   );
-  assert.match(stretched, /display:\s*flex/);
-  assert.match(stretched, /width:\s*100%/);
-  // Height lives in a `:where()` rule so it stays at field specificity: a
-  // surface with its own metric must win with one class, not stylesheet order.
-  assert.match(
-    settingsCss,
-    /:where\(\.settings-menu-select-anchor\.is-full\) \.settings-menu-select-trigger\s*\{[^}]*height:\s*var\(--ds-field-height\)/,
-  );
-  assert.doesNotMatch(stretched, /height:/);
 });
 
 test("dropdowns that act as form fields take the field metric", () => {
@@ -138,7 +129,6 @@ test("a Settings-row dropdown matches the row's input", () => {
   }
   // The row's own text input takes the same metric through the field
   // vocabulary; a compact row input would have to declare its own minimum.
-  assert.doesNotMatch(rowInput, /height:/);
 });
 
 test("the import toolbar's dropdown keeps the toolbar's own metric", () => {

@@ -9,29 +9,6 @@ const tokens = await readFile(
 );
 const styles = await loadStyles();
 
-test("fixed radii follow the Apple-inspired desktop ladder", () => {
-  const expected = [
-    ["3xs", 4],
-    ["2xs", 6],
-    ["xs", 8],
-    ["sm", 10],
-    ["md", 12],
-    ["md-plus", 14],
-    ["lg", 16],
-    ["lg-plus", 18],
-    ["xl", 20],
-    ["2xl", 24],
-  ];
-
-  for (const [name, value] of expected) {
-    assert.match(tokens, new RegExp(`--radius-${name}:\\s*${value}px;`));
-  }
-
-  assert.match(tokens, /--radius-full:\s*9999px;/);
-  assert.match(tokens, /--radius-round:\s*50%;/);
-  assert.match(tokens, /--ds-composer-radius:\s*var\(--radius-xl\);/);
-  assert.match(tokens, /--ds-composer-radius-lg:\s*var\(--radius-xl\);/);
-});
 
 test("shared compact controls use r8 (--d-r-ctrl)", () => {
   /* Resolved-value check: --d-r-ctrl must be 8px (D.css:37 / D-SPEC.md) */

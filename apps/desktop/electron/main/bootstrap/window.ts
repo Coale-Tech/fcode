@@ -1869,7 +1869,8 @@ export async function createWindow({
             // rail (default) selected — also restores the default
             await clickPicker("rail");
             await shot("pi-settings-picker-rail");
-            // Keyboard focus: focus the checked card, then ArrowRight → next card
+            // Keyboard focus: focus the checked card via DOM, then use native Electron
+            // sendInputEvent(ArrowRight) — real OS-level keypress, not synthetic KeyboardEvent
             await windowState.mainWindow!.webContents.executeJavaScript(`
               (() => {
                 const rg = document.querySelector('[role="radiogroup"]');
@@ -1878,16 +1879,38 @@ export async function createWindow({
               })()
             `);
             await sleep(150);
-            await shot("pi-settings-picker-focus");
-            await windowState.mainWindow!.webContents.executeJavaScript(`
-              document.activeElement?.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}))
+            const focusProv = await windowState.mainWindow!.webContents.executeJavaScript(`
+              (() => ({
+                time: new Date().toISOString(),
+                tag: document.activeElement?.tagName,
+                role: document.activeElement?.getAttribute('role'),
+                ariaChecked: document.activeElement?.getAttribute('aria-checked'),
+                navLayoutOption: document.activeElement?.getAttribute('data-nav-layout-option'),
+                klass: (document.activeElement?.className ?? '').toString().slice(0,80),
+              }))()
             `);
+            console.log("C05_focus_prov", JSON.stringify(focusProv));
+            await shot("pi-settings-picker-focus");
+            // Real OS-level input: native Electron sendInputEvent, not synthetic KeyboardEvent
+            windowState.mainWindow!.webContents.sendInputEvent({ type: 'keyDown', keyCode: 'Right' });
+            await sleep(30);
+            windowState.mainWindow!.webContents.sendInputEvent({ type: 'keyUp', keyCode: 'Right' });
             await sleep(350);
             // NAV_LAYOUTS = ["tabs","rail","island"]: ArrowRight from rail(idx 1) → island(idx 2)
+            const keyProv = await windowState.mainWindow!.webContents.executeJavaScript(`
+              (() => ({
+                time: new Date().toISOString(),
+                navLayoutOption: document.activeElement?.getAttribute('data-nav-layout-option'),
+                ariaChecked: document.activeElement?.getAttribute('aria-checked'),
+                storeLayout: document.documentElement.dataset.navLayout,
+              }))()
+            `);
+            console.log("C05_keyboard_prov", JSON.stringify(keyProv));
             await shot("pi-settings-picker-keyboard-island");
             // Reset to rail before C02 measurements
             await clickPicker("rail");
-            // C02: measure shell budget using the real picker path (IPC-only does not update renderer store)
+            // C02: measure shell budget using CSS-variable chrome widths (same tokens
+            // nav-layout.ts keeps in sync) plus real DOM sidebar/workpanel/main measurements.
             await setPage("chat");
             await sleep(400);
             const measure = async (label: string) => {
@@ -1895,18 +1918,38 @@ export async function createWindow({
                 (() => {
                   const el = document.documentElement;
                   const navLayout = el.dataset.navLayout || "rail";
-                  const CHROME = { tabs: 24, rail: 74, island: 84 };
                   const shellEl = document.querySelector(".app-shell");
                   const shellClientWidth = shellEl ? shellEl.clientWidth : 0;
-                  const chromeW = CHROME[navLayout] || 74;
-                  return { navLayout, shellClientWidth, chromeW, usableWidth: shellClientWidth - chromeW };
+                  // Real chrome from CSS tokens (same vars nav-layout.ts uses)
+                  const cs = getComputedStyle(el);
+                  const railPx   = parseFloat(cs.getPropertyValue("--d-rail-w"))      || 50;
+                  const islandPx = parseFloat(cs.getPropertyValue("--d-rail-island")) || 60;
+                  const gapPx    = parseFloat(cs.getPropertyValue("--d-gap"))         || 12;
+                  const RAIL_W = { tabs: 0, rail: railPx, island: islandPx };
+                  const chromeW     = (RAIL_W[navLayout] ?? railPx) + gapPx * 2;
+                  const usableWidth = Math.max(0, Math.round(shellClientWidth) - chromeW);
+                  // Actual sidebar element
+                  const sidebarEl = document.querySelector(".sidebar");
+                  const sidebarW  = sidebarEl ? Math.round(sidebarEl.clientWidth) : 0;
+                  // WorkPanel state
+                  const wpEl   = document.querySelector(".work-panel");
+                  const wpW    = wpEl ? Math.round(wpEl.clientWidth) : 0;
+                  const wpOpen = wpW > 4;
+                  // Main pane: usable minus sidebar minus open workpanel
+                  const mainPaneW   = usableWidth - sidebarW - (wpOpen ? wpW : 0);
+                  const mainFloorOk = mainPaneW >= 450;
+                  // Sidebar budget max (MAIN_PANE_MIN_WIDTH=450, SIDEBAR_WIDTH_MAX=220, _MIN=160)
+                  const sidebarMax = Math.min(220, Math.max(160, usableWidth - 450 - 1));
+                  return { navLayout, shellClientWidth, railPx, islandPx, gapPx,
+                           chromeW, usableWidth, sidebarW, sidebarMax,
+                           wpW, wpOpen, mainPaneW, mainFloorOk };
                 })()
               `);
               console.log("C02_" + label, JSON.stringify(m));
               return m;
             };
             const mRail1 = await measure("rail");
-            // Navigate to settings → click island picker → back to chat → measure island
+            // Measure island layout
             await setPage("settings");
             await setSettingsTab("general");
             await sleep(250);
@@ -1915,7 +1958,16 @@ export async function createWindow({
             await sleep(400);
             const mIsland = await measure("island");
             console.log("C02_usable_delta", mRail1.usableWidth - mIsland.usableWidth, "(expect 10)");
-            // Navigate to settings → click rail → back to chat → measure rail_restored
+            // Measure tabs layout
+            await setPage("settings");
+            await setSettingsTab("general");
+            await sleep(250);
+            await clickPicker("tabs");
+            await setPage("chat");
+            await sleep(400);
+            const mTabs = await measure("tabs");
+            console.log("C02_tabs_reserve", mTabs.chromeW, "(expect 24: 0+2×12)");
+            // Restore rail
             await setPage("settings");
             await setSettingsTab("general");
             await sleep(250);
@@ -1929,6 +1981,33 @@ export async function createWindow({
               mRail1.shellClientWidth,
               mRail2.shellClientWidth,
             );
+            console.log("C02_main_floor_rail", mRail2.mainFloorOk, mRail2.mainPaneW, ">= 450");
+            // Boundary case: resize to 750px wide — rail mainPane ≥450, island mainPane <450
+            const origContentSize = windowState.mainWindow!.getContentSize();
+            windowState.mainWindow!.setContentSize(750, origContentSize[1]);
+            await sleep(400);
+            const mBoundRail = await measure("boundary_rail");
+            await setPage("settings");
+            await setSettingsTab("general");
+            await sleep(200);
+            await clickPicker("island");
+            await setPage("chat");
+            await sleep(400);
+            const mBoundIsland = await measure("boundary_island");
+            console.log(
+              "C02_boundary",
+              "delta", mBoundRail.mainPaneW - mBoundIsland.mainPaneW,
+              "rail_floor_ok", mBoundRail.mainFloorOk, mBoundRail.mainPaneW,
+              "island_floor_ok", mBoundIsland.mainFloorOk, mBoundIsland.mainPaneW,
+            );
+            // Restore window size and rail layout
+            windowState.mainWindow!.setContentSize(origContentSize[0], origContentSize[1]);
+            await sleep(400);
+            await setPage("settings");
+            await setSettingsTab("general");
+            await sleep(200);
+            await clickPicker("rail");
+            await sleep(250);
             // Non-default persisted layout via real picker: island → reload → prove persistence
             await setPage("settings");
             await setSettingsTab("general");
@@ -1965,26 +2044,90 @@ export async function createWindow({
               `document.querySelector('[data-nav-layout-option="rail"]')?.dispatchEvent(new MouseEvent('click',{bubbles:true}))`,
             );
             await sleep(350);
-            // German locale shots (light + dark) — IPC settings/set triggers settingsChanged
-            // which the renderer i18n listener responds to
-            await windowState.mainWindow!.webContents.executeJavaScript(`
-              (async () => {
-                const s = await window.piDesktop.invoke("pi-desktop/settings/get");
-                await window.piDesktop.invoke("pi-desktop/settings/set", { ...s, language: "de" });
+            // German locale: click LanguageRow trigger → Deutsch option → wait for DOM confirmation
+            // Using real UI interaction (IPC pi-desktop/settings/set does not trigger
+            // settingsChanged for language; only LanguageRow's saveSettings call does).
+            await windowState.mainWindow!.webContents.executeJavaScript(
+              `window.__PI_DESKTOP__?.setPage?.("settings")`,
+            );
+            await windowState.mainWindow!.webContents.executeJavaScript(
+              `window.__PI_DESKTOP__?.setSettingsTab?.("general")`,
+            );
+            await windowState.mainWindow!.webContents.executeJavaScript(
+              `window.__PI_DESKTOP__?.setThemeAttr?.("light")`,
+            );
+            await sleep(400);
+            // Open the language dropdown
+            await windowState.mainWindow!.webContents.executeJavaScript(
+              `document.querySelector('.settings-language-trigger')?.dispatchEvent(new MouseEvent('click',{bubbles:true}))`,
+            );
+            await sleep(350);
+            // Click Deutsch (match by .settings-language-option-native text)
+            const deClickResult = await windowState.mainWindow!.webContents.executeJavaScript(`
+              (() => {
+                for (const opt of document.querySelectorAll('.settings-language-option')) {
+                  const native = opt.querySelector('.settings-language-option-native');
+                  if (native?.textContent?.trim() === 'Deutsch') {
+                    opt.dispatchEvent(new MouseEvent('click', {bubbles: true}));
+                    return 'clicked-de';
+                  }
+                }
+                return 'not-found';
               })()
             `);
-            await sleep(700);
+            console.log("C05_de_click", deClickResult);
+            // Poll until German text appears in DOM (Island-Seitenleiste confirms locale switch)
+            for (let i = 0; i < 25; i++) {
+              const germanReady: boolean = await windowState.mainWindow!.webContents.executeJavaScript(
+                `document.body.textContent?.includes('Island-Seitenleiste') ?? false`,
+              );
+              if (germanReady) break;
+              await sleep(200);
+            }
+            const deProvLight = await windowState.mainWindow!.webContents.executeJavaScript(`
+              (() => ({
+                time: new Date().toISOString(),
+                navLayout: document.documentElement.dataset.navLayout,
+                theme: document.documentElement.dataset.theme,
+                islandLabel: document.querySelector('[data-nav-layout-option="island"] .nl-card-label')?.textContent?.trim(),
+                langTrigger: document.querySelector('.settings-language-trigger-label')?.textContent?.trim(),
+                germanDomConfirmed: document.body.textContent?.includes('Island-Seitenleiste') ?? false,
+              }))()
+            `);
+            console.log("C05_de_light_prov", JSON.stringify(deProvLight));
             await shot("pi-settings-picker-de-light");
             await windowState.mainWindow!.webContents.executeJavaScript(
               `window.__PI_DESKTOP__?.setThemeAttr?.("dark")`,
             );
             await sleep(300);
+            const deProvDark = await windowState.mainWindow!.webContents.executeJavaScript(`
+              (() => ({
+                time: new Date().toISOString(),
+                navLayout: document.documentElement.dataset.navLayout,
+                theme: document.documentElement.dataset.theme,
+                germanDomConfirmed: document.body.textContent?.includes('Island-Seitenleiste') ?? false,
+              }))()
+            `);
+            console.log("C05_de_dark_prov", JSON.stringify(deProvDark));
             await shot("pi-settings-picker-de-dark");
-            // Restore English + rail before continuing normal capture flow
+            // Restore English via UI (click trigger → English option)
+            await windowState.mainWindow!.webContents.executeJavaScript(
+              `window.__PI_DESKTOP__?.setThemeAttr?.("light")`,
+            );
+            await sleep(200);
+            await windowState.mainWindow!.webContents.executeJavaScript(
+              `document.querySelector('.settings-language-trigger')?.dispatchEvent(new MouseEvent('click',{bubbles:true}))`,
+            );
+            await sleep(350);
             await windowState.mainWindow!.webContents.executeJavaScript(`
-              (async () => {
-                const s = await window.piDesktop.invoke("pi-desktop/settings/get");
-                await window.piDesktop.invoke("pi-desktop/settings/set", { ...s, language: "en", navLayout: "rail" });
+              (() => {
+                for (const opt of document.querySelectorAll('.settings-language-option')) {
+                  const native = opt.querySelector('.settings-language-option-native');
+                  if (native?.textContent?.trim() === 'English' || opt.textContent?.includes('English')) {
+                    opt.dispatchEvent(new MouseEvent('click', {bubbles: true}));
+                    return 'clicked-en';
+                  }
+                }
               })()
             `);
             await sleep(600);

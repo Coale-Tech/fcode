@@ -577,8 +577,8 @@
 /* F09: close button right-aligned in dialog head via auto left margin (D-components.html:421) */
 .session-rename-dialog-close {
   display: inline-flex;
-  width: 28px;
-  height: 28px;
+  width: var(--d-close-btn);
+  height: var(--d-close-btn);
   flex: 0 0 auto;
   margin-left: auto;
   align-items: center;

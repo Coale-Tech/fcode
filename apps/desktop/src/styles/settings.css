@@ -900,9 +900,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 0 12px;
-  height: 44px;
+  gap: var(--d-settings-row-pad);
+  padding: 0 var(--d-settings-row-pad);
+  height: var(--d-settings-row-h);
   flex-shrink: 0;
 }
 
@@ -910,7 +910,7 @@
 .settings-row:has(.settings-row-desc),
 .settings-row:has(.settings-font-size) {
   height: auto;
-  min-height: 44px;
+  min-height: var(--d-settings-row-h);
 }
 
 .settings-row-copy {
@@ -3782,7 +3782,7 @@
   align-items: center;
   flex-shrink: 0;
 }
-.wf-ri { width: var(--d-wf-ri); height: var(--d-wf-ri); border-radius: 1px; background: var(--surface-gray-3); flex-shrink: 0; }
+.wf-ri { width: var(--d-wf-ri); height: var(--d-wf-ri); border-radius: var(--d-wf-ri-r); background: var(--surface-gray-3); flex-shrink: 0; }
 .wf-ri.on { background: var(--da-sub); }
 .wf-sidebar {
   width: var(--d-wf-sidebar);

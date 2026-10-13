@@ -110,6 +110,28 @@
   --d-nl-focus-offset: 2px;   /* C03: nl-card focus outline offset */
   --d-nl-caption-pt:   4px;   /* C03: nl-caption section top padding */
   --d-wf-border:       1px;   /* C03: wireframe non-hairline border/pad (1px) */
+  /* C03: wireframe icon radius */
+  --d-wf-ri-r:         1px;   /* .wf-ri border-radius (D wireframe 1px precision) */
+  /* C06: settings row */
+  --d-settings-row-h:  44px;  /* ordinary settings-row height (D.css:959-971) — differs from --d-row-h:30px nav row */
+  --d-settings-row-pad: 12px; /* settings-row gap and horizontal padding */
+  /* C06: segment item */
+  --d-seg-pad:         10px;  /* segment-item horizontal padding (D.css:807) */
+  /* C06: close button */
+  --d-close-btn:       28px;  /* session/dialog close icon-btn size */
+  /* C06: badge */
+  --d-badge-h:         20px;  /* badge height (D.css:628) */
+  --d-badge-r:         10px;  /* badge border-radius (D.css:628) */
+  --d-badge-pad:        7px;  /* badge horizontal padding (D.css:628) */
+  /* C06: dialog geometry */
+  --d-dialog-w:       480px;  /* dialog max-width (D.css:1027) */
+  --d-dialog-max-h:   80vh;   /* dialog max-height (D.css:1027) */
+  --d-dialog-head-pad: 14px 16px 12px; /* dialog-head padding (D.css:1039) */
+  --d-dialog-head-font: 14px; /* dialog-head font-size (D.css:1039) */
+  --d-dialog-head-gap:  8px;  /* dialog-head icon/title gap (D.css:1039) */
+  --d-dialog-body-pad: 16px;  /* dialog-body padding (D.css:1051) */
+  --d-dialog-foot-pad: 10px 16px; /* dialog-foot padding (D.css:1059) */
+  --d-dialog-foot-gap:  6px;  /* dialog-foot action gap (D.css:1059) */
 }
 
 /* Dark theme: remap violet to FileBird dark blues */

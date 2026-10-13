@@ -222,7 +222,7 @@
   color: var(--ink-gray-6);
   border-radius: var(--radius-full);
   height: var(--d-segment-item);
-  padding: 0 10px;
+  padding: 0 var(--d-seg-pad);
   font-size: var(--d-text-sm);
   font-weight: var(--font-weight-medium);
   display: flex;
