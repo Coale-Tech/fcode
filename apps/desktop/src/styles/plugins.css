@@ -37,6 +37,7 @@
   align-items: center;
   gap: 16px;
   margin: 0;
+  min-height: var(--d-ph-h);
   padding: 0 0 2px;
 }
 
@@ -286,8 +287,8 @@
 
 .plugins-group-label {
   margin: 0;
-  color: var(--ds-text-muted);
-  font-size: var(--text-xs);
+  color: var(--ds-text-tertiary);
+  font-size: var(--d-text-xs);
   font-weight: var(--font-weight-medium);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
@@ -592,7 +593,7 @@
   flex: 0 0 auto;
   border-radius: var(--radius-full);
   padding: 1px 8px 1px 6px;
-  font-size: var(--text-3xs);
+  font-size: var(--d-text-sm);
   line-height: var(--leading-relaxed);
   color: var(--ds-text-secondary);
   background: var(--plugins-tile-hover);

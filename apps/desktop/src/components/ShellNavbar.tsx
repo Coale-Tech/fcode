@@ -23,16 +23,17 @@ import { NavTabs } from "./NavTabs";
 import type { AppState } from "../stores/app-state";
 
 const PAGE_LABEL_KEY: Record<AppState["page"], string> = {
-  chat:         "nav.chat",
-  build:        "nav.build",
-  bench:        "nav.bench",
-  raven:        "raven.title",
-  filebird:     "fileBird.title",
-  kanban:       "kanban.title",
-  scheduled:    "scheduled.title",
-  plugins:      "plugins.title",
-  pulls:        "pulls.title",
-  settings:     "nav.settings",
+  chat:          "nav.chat",
+  build:         "nav.build",
+  bench:         "nav.bench",
+  raven:         "raven.title",
+  filebird:      "fileBird.title",
+  kanban:        "kanban.title",
+  scheduled:     "scheduled.title",
+  plugins:       "plugins.title",
+  pulls:         "pulls.title",
+  settings:      "nav.settings",
+  notifications: "notifications.title",
 };
 
 export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {

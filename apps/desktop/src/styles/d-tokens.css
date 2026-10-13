@@ -181,3 +181,14 @@
   --ds-sidebar-glass-sheen-top:    color-mix(in oklab, var(--white) 7%, transparent);
   --ds-sidebar-glass-sheen-bottom: color-mix(in oklab, var(--white) 4%, transparent);
 }
+
+/* lane T12 — kanban + notifications page dimensions */
+:root {
+  --d-kd-col-w:        210px;                             /* kanban column width */
+  --d-kd-board-gap:    10px;                              /* kanban board column gap */
+  --d-kd-col-h:        32px;                              /* kanban column header height */
+  --d-kd-chip-font:    calc(10px * var(--font-scale));    /* kanban card chip font-size */
+  --d-kd-drawer-w:     420px;                             /* kanban drawer width */
+  --d-notif-icon:      28px;                              /* notification row icon size */
+  --d-notif-dot:        7px;                              /* notification unread dot */
+}

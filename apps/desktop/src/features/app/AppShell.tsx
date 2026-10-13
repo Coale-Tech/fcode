@@ -72,6 +72,11 @@ const FileBirdPage = lazy(() =>
     default: module.FileBirdPage,
   })),
 );
+const NotificationsPage = lazy(() =>
+  import("../../components/NotificationCenter").then((module) => ({
+    default: module.NotificationsPage,
+  })),
+);
 
 export function AppShell() {
   const {
@@ -315,6 +320,10 @@ export function AppShell() {
                     <div className="route-surface route-page">
                       <KanbanPage />
                     </div>
+                  ) : page === "notifications" ? (
+                    <div className="route-surface route-page">
+                      <NotificationsPage />
+                    </div>
                   ) : (
                     <ChatSurface visible={page === "chat"} />
                   )}
@@ -350,7 +359,7 @@ export function AppShell() {
               disabled={
                 !presentedWorkPanelOpen &&
                 !workPanelExiting &&
-                (page === "settings" || page === "plugins" || page === "scheduled" || page === "raven" || page === "filebird")
+                (page === "settings" || page === "plugins" || page === "scheduled" || page === "raven" || page === "filebird" || page === "notifications")
               }
               onClick={togglePresentedWorkPanel}
             >
