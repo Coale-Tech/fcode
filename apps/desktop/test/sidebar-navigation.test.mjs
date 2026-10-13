@@ -27,18 +27,27 @@ const shortcutSource = await readFile(
   "utf8",
 );
 test("home sidebar and nav rail expose only the supported destination entries", async () => {
+  // NavRail now renders data-nav via navItems(); stable selector strings live in nav-items.ts
+  const navItemsSource = await readFile(
+    new URL("../src/components/nav-items.ts", import.meta.url),
+    "utf8",
+  );
   const railSource = await readFile(
     new URL("../src/components/NavRail.tsx", import.meta.url),
     "utf8",
   );
   assert.match(sidebarSource, /data-nav="home"/);
-  assert.match(railSource, /data-nav="plugins"/);
-  assert.match(railSource, /data-nav="scheduled"/);
-  for (const source of [sidebarSource, railSource]) {
+  // Stable selectors guaranteed by navItems() contract (nav-items.ts):
+  assert.match(navItemsSource, /dataNav:\s*"plugins"/);
+  assert.match(navItemsSource, /dataNav:\s*"scheduled"/);
+  // NavRail hand-renders Settings with a literal selector:
+  assert.match(railSource, /data-nav="settings"/);
+  for (const source of [sidebarSource, navItemsSource]) {
     assert.doesNotMatch(source, /data-nav="projects"/);
     assert.doesNotMatch(source, /data-nav="pulls"/);
-    assert.doesNotMatch(source, /t\("nav\.(?:pullRequests|scheduled)"\)/);
   }
+  assert.doesNotMatch(navItemsSource, /t\("nav\.(?:pullRequests|scheduled)"\)/);
+  assert.doesNotMatch(sidebarSource, /t\("nav\.(?:pullRequests|scheduled)"\)/);
 });
 
 test("sidebar brand returns to the chat home", () => {

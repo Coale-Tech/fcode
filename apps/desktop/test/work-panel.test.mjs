@@ -657,7 +657,7 @@ test("preview mode keeps shell actions and restores routes before navigation", (
   assert.ok(spacer);
   assert.doesNotMatch(row + spacer, /app-region:|background:/);
   assert.match(globalStyles, /\.window-chrome-row button \{[^}]*pointer-events:\s*auto;[^}]*app-region:\s*no-drag;/);
-  assert.match(globalStyles, /\.window-chrome-row\.sidebar-expanded \{[^}]*left: calc\(var\(--nav-rail-width\) \+ var\(--ds-sidebar-width\)\);/);
+  assert.match(globalStyles, /\.window-chrome-row\.sidebar-expanded \{[^}]*left: calc\(var\(--d-rail-w\) \+ var\(--ds-sidebar-width\)\);/);
   assert.match(globalStyles, /\.app-shell\.work-panel-maximized \{[^}]*--preview-chrome-inset:\s*8px;[^}]*--preview-chrome-action-lane:\s*calc\(var\(--ds-control-size\) \+ 8px\);/);
   assert.match(globalStyles, /\.app-shell\.work-panel-maximized\.sidebar-collapsed \{[^}]*--preview-chrome-action-lane:\s*var\(--ds-preview-action-lane-width\);/);
   /* lead-inset cutover (Task 6): ShellNavbar owns the darwin traffic-light reserve;

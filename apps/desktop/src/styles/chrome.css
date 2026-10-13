@@ -1195,7 +1195,7 @@
   position: absolute;
   top: 0;
   right: 0;
-  left: var(--nav-rail-width);
+  left: var(--d-rail-w);
   z-index: 200;
   display: flex;
   height: var(--d-ph-h);
@@ -1205,7 +1205,7 @@
 }
 
 .window-chrome-row.sidebar-expanded {
-  left: calc(var(--nav-rail-width) + var(--ds-sidebar-width));
+  left: calc(var(--d-rail-w) + var(--ds-sidebar-width));
 }
 
 .window-chrome-row button {
@@ -1228,9 +1228,9 @@
 
 .nav-rail {
   display: flex;
-  width: var(--nav-rail-width);
+  width: var(--d-rail-w);
   height: 100%;
-  flex: 0 0 var(--nav-rail-width);
+  flex: 0 0 var(--d-rail-w);
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
@@ -1281,28 +1281,17 @@
 
 .nav-rail-btn:hover,
 .nav-rail .notification-trigger:hover {
-  background: var(--surface-gray-3);
-  color: var(--ink-gray-7);
+  background: var(--surface-gray-2);
+  color: var(--ink-gray-8);
 }
 
 .nav-rail-btn.active,
 .nav-rail .notification-trigger.active {
-  background: var(--surface-gray-4);
-  color: var(--ink-gray-9);
+  background: var(--da-sub);
+  color: var(--da-txt);
+  box-shadow: var(--elevation-sm);
 }
 
-/* Active destination marker, flush with the rail's left edge. */
-.nav-rail-btn.active::before {
-  position: absolute;
-  top: 50%;
-  left: calc((32px - var(--nav-rail-width)) / 2);
-  width: 4px;
-  height: 20px;
-  border-radius: 0 var(--radius-full) var(--radius-full) 0;
-  background: var(--ink-gray-9);
-  content: "";
-  transform: translateY(-50%);
-}
 
 .nav-rail .notification-badge {
   border-color: var(--ds-bg-sidebar, var(--ds-bg-primary));

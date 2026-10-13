@@ -30,6 +30,7 @@
   --d-status-h: 28px;
   --d-rail-w: 50px;
   --d-rail-island: 60px;
+  --d-rail-exp: 220px;       /* D2 rail expanded state (D.css:28,334) */
   --d-gap: 12px;
   --d-ctrl: 28px;
   --d-ctrl-lg: 32px;

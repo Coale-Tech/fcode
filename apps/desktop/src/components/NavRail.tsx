@@ -16,16 +16,31 @@ import {
 } from "./icons";
 import { NotificationCenter } from "./NotificationCenter";
 import { TooltipButton, cx } from "./ui";
+import { navItems } from "./nav-items";
+import type { NavItemId } from "./nav-items";
 
 /**
- * E frame: the global 60px icon rail at the window's left edge. Destinations
- * on top, daily footer actions (settings, plugins, scheduled, notifications)
- * at the bottom. The top band is a window drag region that also keeps the
- * macOS traffic lights clear; every button opts out with `no-drag`.
+ * Icon map for every nav-item id.  Exported (R2) so Task 8/9 can reference the
+ * same canonical icon set without duplicating the mapping.
+ */
+export const NAV_ICONS = {
+  chat:      IconChat,
+  build:     IconMonitor,
+  bench:     IconServer,
+  scheduled: IconClock,
+  kanban:    IconKanban,
+  raven:     IconRaven,
+  filebird:  IconFileBird,
+  plugins:   IconPlug,
+} satisfies Record<NavItemId, unknown>;
+
+/**
+ * D2 icon rail: left 50px nav strip (collapsed) or 220px (expanded).
  *
- * Primary nav items (Chat, Code, Build, Bench) show a visible text label
- * below the icon; no tooltip is needed for labelled items and none is shown.
- * Footer items remain icon-only with tooltips.
+ * Primary destinations are rendered as labelled buttons (label hidden in `rail`
+ * mode via CSS, visible in `island` mode).  Footer items use TooltipButton
+ * (icon-only with tooltip always shown).  NotificationCenter and Settings are
+ * hand-rendered because they carry memory-status dots / special interactions.
  */
 export function NavRail() {
   const { t } = useTranslation();
@@ -35,8 +50,7 @@ export function NavRail() {
   const canNavBack = useAppStore((s) => s.canNavBack);
   const memStatus = useAppStore((s) => s.memoryStatus);
   const mHealth = memoryHealth(memStatus);
-  // Fetch on mount + re-fetch on kanbanChanged; stored in AppState so other
-  // consumers can subscribe without their own fetch.
+
   const kanbanEnabled = useAppStore((s) => s.kanbanEnabled);
   const setKanbanEnabled = useAppStore((s) => s.setKanbanEnabled);
   useEffect(() => {
@@ -49,6 +63,7 @@ export function NavRail() {
     if (!bridge?.on) return;
     return bridge.on(IPC.event.kanbanChanged, () => { void fetchEnabled(); });
   }, [setKanbanEnabled]);
+
   const ravenEnabled = useAppStore((s) => s.ravenEnabled);
   const setRavenEnabled = useAppStore((s) => s.setRavenEnabled);
   useEffect(() => {
@@ -62,110 +77,55 @@ export function NavRail() {
     return bridge.on(IPC.event.ravenChanged, () => { void fetchEnabled(); });
   }, [setRavenEnabled]);
 
+  const items = navItems({ kanban: kanbanEnabled, raven: ravenEnabled });
+  const primary = items.filter((i) => i.group === "primary");
+  const footer  = items.filter((i) => i.group === "footer");
+
   return (
     <nav className="nav-rail sidebar-surface" aria-label="Primary">
       <div className="nav-rail-group no-drag">
-        {/* Labelled primary destinations — no tooltip needed */}
-        <button
-          type="button"
-          className={cx("nav-rail-btn nav-rail-labeled", page === "chat" && "active")}
-          data-nav="chat"
-          aria-label="Chat"
-          aria-pressed={page === "chat"}
-          onClick={() => setPage("chat")}
-        >
-          <IconChat size={16} aria-hidden />
-          <span className="nav-rail-label">Chat</span>
-        </button>
-        <button
-          type="button"
-          className={cx("nav-rail-btn nav-rail-labeled", page === "build" && "active")}
-          data-nav="build-canvas"
-          aria-label="Build"
-          aria-pressed={page === "build"}
-          onClick={() => setPage("build")}
-        >
-          <IconMonitor size={16} aria-hidden />
-          <span className="nav-rail-label">Build</span>
-        </button>
-        <button
-          type="button"
-          className={cx("nav-rail-btn nav-rail-labeled", page === "bench" && "active")}
-          data-nav="bench"
-          aria-label="Bench"
-          aria-pressed={page === "bench"}
-          onClick={() => setPage("bench")}
-        >
-          <IconServer size={16} aria-hidden />
-          <span className="nav-rail-label">Bench</span>
-        </button>
+        {primary.map((item) => {
+          const Icon = NAV_ICONS[item.id];
+          return (
+            <button
+              key={item.id}
+              type="button"
+              className={cx("nav-rail-btn nav-rail-labeled", page === item.page && "active")}
+              data-nav={item.dataNav}
+              aria-label={t(item.labelKey)}
+              aria-pressed={page === item.page}
+              title={t(item.labelKey)}
+              onClick={() => setPage(item.page)}
+            >
+              <Icon size={16} aria-hidden />
+              <span className="nav-rail-label">{t(item.labelKey)}</span>
+            </button>
+          );
+        })}
       </div>
 
       <div className="nav-rail-group nav-rail-footer no-drag">
-        {/* Footer items: icon-only with tooltips */}
-        <TooltipButton
-          type="button"
-          className={cx("nav-rail-btn", page === "scheduled" && "active")}
-          data-nav="scheduled"
-          tooltip={t("scheduled.title")}
-          ariaLabel={t("scheduled.title")}
-          onClick={() => setPage("scheduled")}
-          aria-pressed={page === "scheduled"}
-        >
-          <IconClock size={16} aria-hidden />
-        </TooltipButton>
-        {kanbanEnabled && (
-          <TooltipButton
-            type="button"
-            className={cx("nav-rail-btn", page === "kanban" && "active")}
-            data-nav="kanban"
-            tooltip={t("kanban.title")}
-            ariaLabel={t("kanban.title")}
-            onClick={() => setPage("kanban")}
-            aria-pressed={page === "kanban"}
-          >
-            <IconKanban size={16} aria-hidden />
-          </TooltipButton>
-        )}
-        {ravenEnabled && (
-          <TooltipButton
-            type="button"
-            className={cx("nav-rail-btn", page === "raven" && "active")}
-            data-nav="raven"
-            tooltip={t("raven.title")}
-            ariaLabel={t("raven.title")}
-            onClick={() => setPage("raven")}
-            aria-pressed={page === "raven"}
-          >
-            <IconRaven size={16} aria-hidden />
-          </TooltipButton>
-        )}
-        <TooltipButton
-          type="button"
-          className={cx("nav-rail-btn", page === "filebird" && "active")}
-          data-nav="filebird"
-          tooltip={t("fileBird.title")}
-          ariaLabel={t("fileBird.title")}
-          onClick={() => setPage("filebird")}
-          aria-pressed={page === "filebird"}
-        >
-          <IconFileBird size={16} aria-hidden />
-        </TooltipButton>
-        <TooltipButton
-          type="button"
-          className={cx("nav-rail-btn", page === "plugins" && "active")}
-          data-nav="plugins"
-          tooltip={t("nav.plugins")}
-          ariaLabel={t("nav.plugins")}
-          onClick={() =>
-            page === "plugins"
-              ? (canNavBack() ? navBack() : setPage("chat"))
-              : setPage("plugins")
-          }
-          aria-pressed={page === "plugins"}
-        >
-          <IconPlug size={16} aria-hidden />
-        </TooltipButton>
+        {footer.map((item) => {
+          const Icon = NAV_ICONS[item.id];
+          const handleClick =
+            item.id === "plugins"
+              ? () => (page === "plugins" ? (canNavBack() ? navBack() : setPage("chat")) : setPage("plugins"))
+              : () => setPage(item.page);
+          return (
+            <TooltipButton
+              key={item.id}
+              type="button"
+              className={cx("nav-rail-btn", page === item.page && "active")}
+              data-nav={item.dataNav}
+              tooltip={t(item.labelKey)}
+              ariaLabel={t(item.labelKey)}
+              onClick={handleClick}
+              aria-pressed={page === item.page}
+            >
+              <Icon size={16} aria-hidden />
+            </TooltipButton>
+          );
+        })}
         <NotificationCenter />
         <TooltipButton
           type="button"

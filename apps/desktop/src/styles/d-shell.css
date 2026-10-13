@@ -28,12 +28,6 @@
 }
 .app-chat-shell[hidden] { display: none; }
 
-/*
- * --nav-rail-width was defined next to --ds-pane-lead-inset in chrome.css
- * (deleted as part of the lead-inset cutover). Keep it here so
- * .window-chrome-row still resolves it.
- */
-:root { --nav-rail-width: 60px; }
 
 /* ── Navbar (shared base, 48px) ───────────────────────────────────────
  * D.css:119-130 (.d-nav); using shell-navbar class for the app.
@@ -175,4 +169,80 @@
   gap: 4px;
   margin-left: auto;          /* D.css:243 (.d-nav-right margin-left:auto) */
   flex-shrink: 0;
+}
+/* ── D2 Rail layout ─────────────────────────────────────────────────────
+ *
+ * chrome.css holds the base .nav-rail rules with --d-rail-w (50px).
+ * This section adds: island layout override, icon-only collapsed mode,
+ * expanded (220px) state, canvas island surface, and window-chrome-row
+ * overrides for non-rail layouts.
+ *
+ * Design refs: D.css:322-449 (rail), D.css:451-461 (canvas)
+ */
+
+/* ── Island layout: rail 60px (D3) ── */
+:root[data-nav-layout="island"] .nav-rail {
+  width: var(--d-rail-island);
+  flex: 0 0 var(--d-rail-island);
+}
+:root[data-nav-layout="island"] .app-shell > :where(.app-chat-shell) > .window-chrome-row {
+  left: var(--d-rail-island);
+}
+:root[data-nav-layout="island"] .window-chrome-row.sidebar-expanded {
+  left: calc(var(--d-rail-island) + var(--ds-sidebar-width));
+}
+
+/* ── Tabs layout: no left rail ── */
+:root[data-nav-layout="tabs"] .app-shell > :where(.app-chat-shell) > .window-chrome-row {
+  left: 0;
+}
+:root[data-nav-layout="tabs"] .window-chrome-row.sidebar-expanded {
+  left: var(--ds-sidebar-width);
+}
+
+/* ── D2 rail: labels hidden in collapsed rail mode (D.css:404-414) ── */
+/* In island mode (D3), labels are revealed — override there (Task 9). */
+:root[data-nav-layout="rail"] .nav-rail-label { display: none; }
+:root[data-nav-layout="rail"] .nav-rail-btn.nav-rail-labeled {
+  /* revert to square icon-only button; label span is hidden */
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  flex-direction: row;
+  gap: 0;
+  padding: 0;
+}
+
+/* ── D2 rail: expanded 220px state (D.css:334 .d-rail.expanded) ── */
+:root[data-nav-layout="rail"] .nav-rail.expanded {
+  width: var(--d-rail-exp);
+  flex: 0 0 var(--d-rail-exp);
+  align-items: flex-start;
+}
+:root[data-nav-layout="rail"] .nav-rail.expanded .nav-rail-label {
+  display: block;                  /* reveal labels when expanded */
+}
+:root[data-nav-layout="rail"] .nav-rail.expanded .nav-rail-btn.nav-rail-labeled {
+  width: calc(var(--d-rail-exp) - 12px); /* item margin 1px × 6px = 12px (D.css:373) */
+  height: 32px;
+  flex-direction: row;
+  gap: 2px;
+  padding: 0;
+}
+
+/* ── D2 canvas island (D.css:451-461, D.css:464-481) ── */
+/* app-chat-shell body becomes the gray canvas backdrop */
+:root[data-nav-layout="rail"] .app-chat-shell {
+  background: var(--d-canvas-bg);      /* light: surface-gray-2; dark: surface-base */
+}
+/* main-pane is the white island floating on the canvas */
+:root[data-nav-layout="rail"] .main-pane:not(.is-workbench) {
+  margin: 0 var(--d-gap) var(--d-gap) 0;
+  border-radius: var(--d-r);
+  border: 1px solid var(--d-border);
+}
+/* workbench pages (build/bench) own their own panels; no island wrap */
+:root[data-nav-layout="rail"] .main-pane.is-workbench {
+  margin: 0;
+  border: none;
 }
