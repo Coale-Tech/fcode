@@ -1250,7 +1250,7 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 6px 0;                               /* D.css:340 */
+  padding: var(--d-rail-item-mx) 0;            /* D.css:340 */
   display: flex;
   flex-direction: column;
 }
@@ -1258,7 +1258,7 @@
 /* Dividers between scroll sub-groups (D.css:362-366) */
 .nav-rail-divider {
   height: 1px;
-  margin: 4px var(--d-r-ctrl);                  /* D.css:364 — d-r-ctrl = 8px */
+  margin: var(--d-rail-divider-gap) var(--d-r-ctrl);   /* D.css:364 */
   background: var(--d-border);
   flex-shrink: 0;
 }

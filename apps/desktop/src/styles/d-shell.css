@@ -220,7 +220,7 @@
 }
 :root[data-nav-layout="rail"] .nav-rail.expanded .nav-rail-label {
   opacity: 1;
-  max-width: 160px;
+  max-width: var(--d-rail-label-max);
 }
 :root[data-nav-layout="rail"] .nav-rail.expanded .nav-rail-btn.nav-rail-labeled {
   justify-content: flex-start;                  /* icon left, label follows */
@@ -252,7 +252,7 @@
 
 /* ── D2 rail footer: notification+settings+toggle (D.css:432-449) ── */
 .nav-rail-foot {
-  padding: 6px;
+  padding: var(--d-rail-item-mx);
   border-top: 1px solid var(--d-border);
   display: flex;
   flex-direction: column;

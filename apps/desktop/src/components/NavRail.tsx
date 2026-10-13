@@ -119,7 +119,7 @@ export function NavRail() {
   return (
     <nav className={cx("nav-rail", expanded && "expanded")} aria-label="Primary">
       {/* Upper scrollable section: all page destinations with dividers */}
-      <div className="nav-rail-scroll no-drag">
+      <div id="nav-rail-scroll" className="nav-rail-scroll no-drag">
         {primary.map(renderItem)}
         <div className="nav-rail-divider" role="separator" />
         {utility.map(renderItem)}
@@ -151,6 +151,7 @@ export function NavRail() {
           type="button"
           className="nav-rail-toggle"
           aria-expanded={expanded}
+          aria-controls="nav-rail-scroll"
           title={expanded ? t("nav.collapseRail") : t("nav.expandRail")}
           aria-label={expanded ? t("nav.collapseRail") : t("nav.expandRail")}
           onClick={() => setExpanded((v) => !v)}

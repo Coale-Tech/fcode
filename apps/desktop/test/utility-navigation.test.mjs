@@ -31,7 +31,9 @@ function visit(node) {
   ts.forEachChild(node, visit);
 }
 visit(source);
-// Do not assert handlers.length — handler location varies across refactors.
+// Fail loudly if no handler matched — prevents silent undefined()() call
+if (!handlers.length) throw new Error(
+  "NavRail.tsx: plugins click handler pattern not found — update the AST walk in utility-navigation.test.mjs");
 const clickFooter = new Function("state",
   `const { page, canNavBack, navBack, setPage } = state; return (${handlers[0]})();`);
 
