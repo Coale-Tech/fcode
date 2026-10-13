@@ -15,11 +15,11 @@
   height: 100%;
   min-height: 0;
   z-index: 20;
-  /* The dock is a step lighter than the conversation pane, and that tone
-     change is its only edge (D297): no divider against the chat column.
-     `--ds-bg-dock` is a token, not a literal, so a contributed theme can move
-     the whole column (D419). */
+  /* lane T11: canvas island surface (D.css:.d-panel) */
   background: var(--ds-bg-dock);
+  border-radius: var(--d-r);
+  border: 1px solid var(--outline-elevation-1);
+  box-shadow: var(--elevation-base);
   /*
    * Animate the allocated dock width as well as its small compositor slide.
    * Transform-only feedback used to leave the flex item at full width before
@@ -129,7 +129,7 @@
 .work-panel-header {
   position: relative;
   display: flex;
-  height: var(--ds-toolbar-height);
+  height: var(--d-mini-h); /* lane T11: 32px mini-head (D.css:.d-mini-head) */
   flex: 0 0 auto;
   align-items: center;
   gap: var(--ds-work-panel-control-gap);

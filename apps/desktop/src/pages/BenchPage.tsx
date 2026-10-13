@@ -795,10 +795,16 @@ function BenchDetail({
         )}
       </header>
 
-      {/* Top of the console split: sites, processes, one-shot commands */}
+      {/* lane T11: 3-column detail body (224px | flex | 252px per design) */}
       <div className="wb-detail-body">
-        <div className="wb-panels">
+
+        {/* LEFT (224px): Sites */}
+        <div className="wb-bfd-left">
           <SiteList sites={bench.sites} />
+        </div>
+
+        {/* CENTER (flex): Process status + Log */}
+        <div className="wb-bfd-center">
           <ProcessPanel
             status={status}
             blocker={blocker}
@@ -807,133 +813,134 @@ function BenchDetail({
             startFailure={startFailure}
             warnings={warnings}
           />
-        </div>
-
-        {/* One-shot commands — Gap 2 / T6 */}
-        <div className="wb-sec-lbl">{t("bench.oneshotCommands", "One-shot commands")}</div>
-        {bench.sites.length > 1 && (
-          <div className="wb-migrate-site">
-            <label className="wb-sec-lbl" htmlFor="migrate-site-select">
-              {t("bench.migrateSite", "Migrate site")}
-            </label>
-            <select
-              id="migrate-site-select"
-              className="wb-select-sm"
-              value={migrateSite ?? ""}
-              onChange={(e) => onMigrateSiteChange(e.target.value)}
-              aria-label={t("bench.selectSiteForMigrate", "Select site for migrate")}
-            >
-              <option value="">{t("bench.chooseSite", "— choose site —")}</option>
-              {bench.sites.map((s) => (
-                <option key={s.name} value={s.name}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-        {/* G12: install-app name input */}
-        <div className="wb-install-app">
-          <label className="wb-sec-lbl" htmlFor="install-app-input">
-            {t("bench.installAppName", "App to install")}
-          </label>
-          <input
-            id="install-app-input"
-            type="text"
-            className="wb-input-sm"
-            placeholder={t("bench.installAppPlaceholder", "e.g. erpnext")}
-            value={installAppName}
-            onChange={(e) => onInstallAppNameChange(e.target.value)}
-            aria-label={t("bench.installAppName", "App to install")}
-          />
-        </div>
-        <div className="wb-cmds">
-          {ONESHOT_VERBS.map((verb) => {
-            const vs = oneshotState.get(oneshotKey(bench.path, verb));
-            const isDisabled =
-              status !== "running" ||
-              vs?.status === "running" ||
-              (verb === "migrate" && !migrateSite) ||
-              (verb === "install-app" && !installAppName.trim());
-            return (
-              <div key={verb} className="wb-cmd">
+          {logCollapsed ? (
+            <div className="wb-log-collapsed">
+              <span className="wb-log-title">{t("bench.log", "Log")}</span>
+              <span className="wb-muted">{t("bench.logStartsWhenRunning", "Starts when the bench starts")}</span>
+            </div>
+          ) : (
+            <div className="wb-log">
+              <div className="wb-log-hd">
+                <span className="wb-log-title">{t("bench.log", "Log")}</span>
                 <Button
-                  variant="secondary"
-                  onClick={(e) => onRun(verb, e.currentTarget)}
-                  disabled={isDisabled}
-                  title={verb}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onFollowTailChange(!followTail)}
                 >
-                  {vs?.status === "running"
-                    ? `${verb} …`
-                    : vs?.status === "ok"
-                    ? `✓ ${verb}`
-                    : vs?.status === "error"
-                    ? `✗ ${verb}`
-                    : verb}
+                  {followTail ? t("bench.following", "⇊ following") : t("bench.follow", "⇊ follow")}
                 </Button>
-                {vs?.status === "ok" && vs.elapsed && (
-                  <span className="wb-cmd-ok">
-                    {vs.elapsed} · {t("bench.exitOk", "exit 0")}
-                  </span>
-                )}
-                {/* G12: list-apps and other read-only verbs show output on success */}
-                {vs?.status === "ok" && vs.output && (
-                  <pre className="wb-pre wb-cmd-output">{vs.output}</pre>
-                )}
-                {vs?.status === "error" && (
-                  <div className="wb-error-output">
-                    <div className="wb-error-output-hd">
-                      <span>{t("bench.exitElapsed", "exit {{elapsed}}", { elapsed: vs.elapsed })}</span>
-                      {vs.output && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigator.clipboard.writeText(vs.output ?? "")}
-                          title={t("bench.copyErrorOutput", "Copy error output")}
-                        >
-                          {t("bench.copy", "Copy")}
-                        </Button>
-                      )}
-                    </div>
-                    {vs.output && <pre className="wb-pre">{vs.output}</pre>}
-                  </div>
-                )}
               </div>
-            );
-          })}
+              <LogView
+                lines={logLines}
+                followTail={followTail}
+                onFollowTailChange={onFollowTailChange}
+                className="bench-log-view"
+              />
+            </div>
+          )}
         </div>
-      </div>
 
-      {/* Bottom of the console split: log viewer (T5) */}
-      {logCollapsed ? (
-        <div className="wb-log-collapsed">
-          <span className="wb-log-title">{t("bench.log", "Log")}</span>
-          <span className="wb-muted">{t("bench.logStartsWhenRunning", "Starts when the bench starts")}</span>
-        </div>
-      ) : (
-        <div className="wb-log">
-          <div className="wb-island-hd">
-            <span className="wb-log-title">{t("bench.log", "Log")}</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onFollowTailChange(!followTail)}
-            >
-              {followTail ? t("bench.following", "⇊ following") : t("bench.follow", "⇊ follow")}
-            </Button>
+        {/* RIGHT (252px): Commands + Install + DocTypes */}
+        <div className="wb-bfd-right">
+          {/* One-shot commands — Gap 2 / T6 */}
+          <div className="wb-sec-lbl">{t("bench.oneshotCommands", "One-shot commands")}</div>
+          {bench.sites.length > 1 && (
+            <div className="wb-migrate-site">
+              <label className="wb-sec-lbl" htmlFor="migrate-site-select">
+                {t("bench.migrateSite", "Migrate site")}
+              </label>
+              <select
+                id="migrate-site-select"
+                className="wb-select-sm"
+                value={migrateSite ?? ""}
+                onChange={(e) => onMigrateSiteChange(e.target.value)}
+                aria-label={t("bench.selectSiteForMigrate", "Select site for migrate")}
+              >
+                <option value="">{t("bench.chooseSite", "— choose site —")}</option>
+                {bench.sites.map((s) => (
+                  <option key={s.name} value={s.name}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          {/* G12: install-app name input */}
+          <div className="wb-install-app">
+            <label className="wb-sec-lbl" htmlFor="install-app-input">
+              {t("bench.installAppName", "App to install")}
+            </label>
+            <input
+              id="install-app-input"
+              type="text"
+              className="wb-input-sm"
+              placeholder={t("bench.installAppPlaceholder", "e.g. erpnext")}
+              value={installAppName}
+              onChange={(e) => onInstallAppNameChange(e.target.value)}
+              aria-label={t("bench.installAppName", "App to install")}
+            />
           </div>
-          <LogView
-            lines={logLines}
-            followTail={followTail}
-            onFollowTailChange={onFollowTailChange}
-            className="bench-log-view"
-          />
+          <div className="wb-cmds">
+            {ONESHOT_VERBS.map((verb) => {
+              const vs = oneshotState.get(oneshotKey(bench.path, verb));
+              const isDisabled =
+                status !== "running" ||
+                vs?.status === "running" ||
+                (verb === "migrate" && !migrateSite) ||
+                (verb === "install-app" && !installAppName.trim());
+              return (
+                <div key={verb} className="wb-cmd">
+                  <Button
+                    variant="secondary"
+                    onClick={(e) => onRun(verb, e.currentTarget)}
+                    disabled={isDisabled}
+                    title={verb}
+                  >
+                    {vs?.status === "running"
+                      ? `${verb} …`
+                      : vs?.status === "ok"
+                      ? `✓ ${verb}`
+                      : vs?.status === "error"
+                      ? `✗ ${verb}`
+                      : verb}
+                  </Button>
+                  {vs?.status === "ok" && vs.elapsed && (
+                    <span className="wb-cmd-ok">
+                      {vs.elapsed} · {t("bench.exitOk", "exit 0")}
+                    </span>
+                  )}
+                  {vs?.status === "ok" && vs.output && (
+                    <pre className="wb-pre wb-cmd-output">{vs.output}</pre>
+                  )}
+                  {vs?.status === "error" && (
+                    <div className="wb-error-output">
+                      <div className="wb-error-output-hd">
+                        <span>{t("bench.exitElapsed", "exit {{elapsed}}", { elapsed: vs.elapsed })}</span>
+                        {vs.output && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigator.clipboard.writeText(vs.output ?? "")}
+                            title={t("bench.copyErrorOutput", "Copy error output")}
+                          >
+                            {t("bench.copy", "Copy")}
+                          </Button>
+                        )}
+                      </div>
+                      {vs.output && <pre className="wb-pre">{vs.output}</pre>}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {/* DocTypes panel — browse-only; never mutates on browse */}
+          <div className="wb-doctypes">
+            <div className="wb-sec-lbl">DocTypes</div>
+            <DocTypeTree bench={bench} onOpen={onOpenDocTypeFile} onMigrate={onMigrateDocTypes} />
+          </div>
         </div>
-      )}
-      {/* DocTypes panel — browse-only; never mutates on browse */}
-      <div className="wb-doctypes">
-        <div className="wb-sec-lbl">DocTypes</div>
-        <DocTypeTree bench={bench} onOpen={onOpenDocTypeFile} onMigrate={onMigrateDocTypes} />
+
       </div>
     </>
   );

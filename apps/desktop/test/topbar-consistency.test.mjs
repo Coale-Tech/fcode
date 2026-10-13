@@ -40,8 +40,8 @@ test("window control band draws no boundary of its own", () => {
   assert.match(controls, /background:\s*var\(--ds-bg-primary\);/);
 });
 
-test("sidebar and work-panel headers use the shared toolbar metric", () => {
+test("sidebar header uses the shared toolbar metric", () => {
   assert.match(styleBlock("\\.sidebar-header"), /height:\s*var\(--ds-toolbar-height\);/);
   assert.match(styleBlock("\\.sidebar-header"), /flex:\s*0 0 var\(--ds-toolbar-height\);/);
-  assert.match(styleBlock("\\.work-panel-header"), /height:\s*var\(--ds-toolbar-height\);/);
+  /* work-panel-header: T11 uses --d-mini-h (32px) — source-pin deleted per AGENTS.md §no-CSS-pins */
 });
