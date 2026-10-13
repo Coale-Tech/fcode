@@ -137,6 +137,7 @@ export const zhCN = {
     checkForUpdates: "检查更新",
     buildUnknown: "版本未知",
     search: "搜索",
+    awesomebar: "搜索会话、文件、命令…",
     temporarySessions: "临时对话",
     newTemporarySession: "新建临时对话",
     noProjectSessions: "当前项目还没有对话",

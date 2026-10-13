@@ -137,6 +137,7 @@ export const zhTW = {
     checkForUpdates: "檢查更新",
     buildUnknown: "版本未知",
     search: "搜尋",
+    awesomebar: "搜尋工作階段、檔案、指令…",
     temporarySessions: "臨時對話",
     newTemporarySession: "新建臨時對話",
     noProjectSessions: "當前專案還沒有對話",

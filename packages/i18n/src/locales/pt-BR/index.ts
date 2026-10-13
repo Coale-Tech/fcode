@@ -134,6 +134,7 @@ export const ptBR = {
     checkForUpdates: "Verificar atualizações",
     buildUnknown: "Versão desconhecida",
     search: "Pesquisar",
+    awesomebar: "Pesquisar sessões, arquivos, comandos…",
     temporarySessions: "Conversas temporárias",
     newTemporarySession: "Nova conversa temporária",
     noProjectSessions: "Nenhuma conversa neste projeto ainda",

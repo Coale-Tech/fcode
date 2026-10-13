@@ -144,6 +144,7 @@ export const tr = {
     checkForUpdates: "Güncellemeleri denetle",
     buildUnknown: "Sürüm bilinmiyor",
     search: "Ara",
+    awesomebar: "Oturum, dosya, komut ara…",
     temporarySessions: "Geçici sohbetler",
     newTemporarySession: "Yeni geçici sohbet",
     noProjectSessions: "Bu projede henüz sohbet yok",

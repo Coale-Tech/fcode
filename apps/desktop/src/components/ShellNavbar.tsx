@@ -56,16 +56,23 @@ export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
         )}
       </div>
 
-      {/* Centred awesomebar — position:absolute (D.css:194-202) */}
+      {/* Centred awesomebar — position:absolute (D.css:194-235) */}
       <button
         type="button"
         className="shell-awesomebar no-drag"
+        data-nav="awesomebar"
         aria-label={t("nav.search")}
         onClick={onOpenSearch}
       >
-        <IconSearch size={13} aria-hidden />
-        <span className="shell-awesomebar-label">{t("nav.search")}</span>
-        <kbd className="shell-awesomebar-kbd">{isMac ? "⌘K" : "Ctrl K"}</kbd>
+        <IconSearch size={13} className="shell-awesomebar-icon" aria-hidden />
+        <span className="shell-awesomebar-label">{t("nav.awesomebar")}</span>
+        <div className="shell-awesomebar-kbd" aria-hidden="true">
+          {isMac ? (
+            <><kbd>⌘</kbd><kbd>K</kbd></>
+          ) : (
+            <><kbd>Ctrl</kbd><kbd>K</kbd></>
+          )}
+        </div>
       </button>
 
       {/* Right end — right cluster (bench chip + bell + gear + avatar) is Task 8 */}

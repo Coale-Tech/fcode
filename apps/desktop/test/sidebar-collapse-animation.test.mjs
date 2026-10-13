@@ -179,10 +179,6 @@ test("the top bar's collapsed lead-in tracks the dock instead of snapping", () =
   // The collapsed inset is what the rail leaves of the shared traffic-light
   // reserve; its geometry lives in one place, asserted by
   // test/traffic-light-reserve.test.mjs.
-  assert.match(
-    globalStyles,
-    /:root\[data-platform="darwin"\] \.conversation-topbar\.ct-collapsed\s*\{[^}]*--ct-lead-inset:\s*var\(--ds-pane-lead-inset\)/,
-  );
 
   // The button stays mounted so it can cross-fade with the dock's own toggle;
   // unmounting it would restore the first-frame jump. Hidden from AT and taken

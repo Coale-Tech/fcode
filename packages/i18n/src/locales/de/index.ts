@@ -135,6 +135,7 @@ export const de = {
     "checkForUpdates": "Auf Updates prüfen",
     "buildUnknown": "Version unbekannt",
     "search": "Suche",
+    "awesomebar": "Sitzungen, Dateien, Befehle suchen…",
     "temporarySessions": "Temporäre Chats",
     "newTemporarySession": "Neuer temporärer Chat",
     "noProjectSessions": "Nr Chats in diesem Projekt bisher",
