@@ -1226,59 +1226,90 @@
   background-color: var(--ds-bg-sidebar, var(--ds-bg-primary));
 }
 
+/* ── D2 Nav Rail (D.css:322-449) ─────────────────────────────────────────
+ * surface = elevation-1 (not inherited sidebar-surface); geometry from D.css.
+ */
 .nav-rail {
   display: flex;
   width: var(--d-rail-w);
   height: 100%;
   flex: 0 0 var(--d-rail-w);
   flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 0 12px;
-  /* The empty rail drags the window; its button groups opt out. */
+  align-items: stretch;
+  background: var(--surface-elevation-1);       /* D.css:329 — overrides sidebar-surface */
+  border-right: 1px solid var(--d-border);      /* D.css:330 */
+  transition: width .18s ease;                  /* D.css:332 */
+  overflow: hidden;
+  /* The empty rail drags the window; its scroll/foot groups opt out. */
   -webkit-app-region: drag;
   app-region: drag;
-  border-right: 1px solid var(--d-border);
-  transition: width .18s ease;
 }
 
-
-.nav-rail-group {
+/* Scrollable group: all page destinations (primary / utility / developer) */
+.nav-rail-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px 0;                               /* D.css:340 */
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 4px;
 }
 
+/* Dividers between scroll sub-groups (D.css:362-366) */
+.nav-rail-divider {
+  height: 1px;
+  margin: 4px var(--d-r-ctrl);                  /* D.css:364 — d-r-ctrl = 8px */
+  background: var(--d-border);
+  flex-shrink: 0;
+}
+
+/* All rail buttons — icon-only (footer/settings) and labeled (scroll items) */
 .nav-rail-btn,
 .nav-rail .notification-trigger {
   position: relative;
-  display: inline-flex;
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-4);
-  color: var(--ink-gray-5);
+  width: var(--d-ctrl-lg);                      /* 32px footer icon-only size */
+  height: var(--d-ctrl-lg);
+  flex: 0 0 var(--d-ctrl-lg);
+  border-radius: var(--d-r-ctrl);               /* D.css:374 — 8px */
+  color: var(--ink-gray-6);                     /* D.css:375 */
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
   transition: background var(--motion-duration-fast) var(--motion-ease-out),
     color var(--motion-duration-fast) var(--motion-ease-out);
 }
 
-/* Primary destinations: icon above a 10px label, filling the 60px rail. */
+/* Labeled items in scroll group: full-width horizontal row (D.css:369-382) */
 .nav-rail-btn.nav-rail-labeled {
-  width: 52px;
-  height: auto;
-  flex: 0 0 auto;
-  flex-direction: column;
-  gap: 2px;
-  padding: 6px 0 4px;
+  width: auto;                                  /* stretch set by flex column align-items:stretch */
+  height: var(--d-ctrl-lg);                     /* 32px row height (D.css:372) */
+  flex: 0 0 var(--d-ctrl-lg);
+  justify-content: center;                      /* collapsed: center icon box */
+  margin: 1px var(--d-rail-item-mx);            /* D.css:373 — 1px 6px */
+  gap: 0;                                       /* collapsed: no gap (D.css:381) */
+  overflow: hidden;
+  white-space: nowrap;
 }
 
+/* 28×28 icon box inside each item (D.css:394-401) */
+.nav-rail-icon {
+  width: var(--d-ctrl);                         /* 28px */
+  height: var(--d-ctrl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Label text — 13px (D.css:406 var(--d-text)) */
 .nav-rail-label {
-  font-size: var(--text-tiny);
+  font-size: var(--d-text);                     /* 13px — was var(--text-tiny)=11px */
+  font-weight: 500;
   line-height: var(--leading-tighter);
-  font-weight: var(--font-weight-medium);
 }
 
 .nav-rail-btn:hover,
@@ -1293,7 +1324,6 @@
   color: var(--da-txt);
   box-shadow: var(--elevation-sm);
 }
-
 
 .nav-rail .notification-badge {
   border-color: var(--ds-bg-sidebar, var(--ds-bg-primary));

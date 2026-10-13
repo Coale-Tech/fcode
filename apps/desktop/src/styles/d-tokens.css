@@ -32,6 +32,8 @@
   --d-rail-island: 60px;
   --d-rail-exp: 220px;       /* D2 rail expanded state (D.css:28,334) */
   --d-gap: 12px;
+  --d-rail-item-mx:  6px;          /* item horizontal margin (D.css:373 margin:1px 6px) */
+  --d-rail-item-gap: 2px;          /* expanded icon→label gap (D.css:413) */
   --d-ctrl: 28px;
   --d-ctrl-lg: 32px;
   --d-row-h: 30px;

@@ -12,6 +12,7 @@ import {
   IconKanban,
   IconMonitor,
   IconPlug,
+  IconPullRequest,
   IconRaven,
   IconServer,
   IconSettings,
@@ -19,7 +20,7 @@ import {
 import { NotificationCenter } from "./NotificationCenter";
 import { TooltipButton, cx } from "./ui";
 import { navItems } from "./nav-items";
-import type { NavItemId } from "./nav-items";
+import type { NavItemId, NavItem } from "./nav-items";
 
 /**
  * Icon map for every nav-item id.  Exported (R2) so Task 8/9 can reference the
@@ -34,15 +35,20 @@ export const NAV_ICONS = {
   raven:     IconRaven,
   filebird:  IconFileBird,
   plugins:   IconPlug,
+  pulls:     IconPullRequest,
 } satisfies Record<NavItemId, unknown>;
 
 /**
- * D2 icon rail: left 50px nav strip (collapsed) or 220px (expanded).
+ * D2 icon rail: left 50px strip (collapsed) or 220px (expanded).
  *
- * Primary destinations are rendered as labelled buttons (label hidden in `rail`
- * mode via CSS, visible in `island` mode).  Footer items use TooltipButton
- * (icon-only with tooltip always shown).  NotificationCenter and Settings are
- * hand-rendered because they carry memory-status dots / special interactions.
+ * Structure per D2-shell.html:115-181:
+ *   - .nav-rail-scroll   upper scrollable area: primary / utility / developer groups
+ *                        separated by .nav-rail-divider elements
+ *   - .nav-rail-foot     non-scrolling footer: NotificationCenter, Settings, divider, toggle
+ *
+ * All scroll items use TooltipButton + .nav-rail-icon wrapper for the 28×28 icon
+ * box (D.css:394-401).  Labels are hidden (opacity/max-width transition) in
+ * collapsed rail mode and revealed on .expanded (d-shell.css).
  */
 export function NavRail() {
   const { t } = useTranslation();
@@ -82,54 +88,47 @@ export function NavRail() {
   }, [setRavenEnabled]);
 
   const items = navItems({ kanban: kanbanEnabled, raven: ravenEnabled });
-  const primary = items.filter((i) => i.group === "primary");
-  const footer  = items.filter((i) => i.group === "footer");
+  const primary   = items.filter((i) => i.group === "primary");
+  const utility   = items.filter((i) => i.group === "utility");
+  const developer = items.filter((i) => i.group === "developer");
+
+  /** Render a scroll-group nav item. */
+  function renderItem(item: NavItem) {
+    const Icon = NAV_ICONS[item.id];
+    const handleClick =
+      item.id === "plugins"
+        ? () => (page === "plugins" ? (canNavBack() ? navBack() : setPage("chat")) : setPage("plugins"))
+        : () => setPage(item.page);
+    return (
+      <TooltipButton
+        key={item.id}
+        type="button"
+        className={cx("nav-rail-btn nav-rail-labeled", page === item.page && "active")}
+        data-nav={item.dataNav}
+        tooltip={t(item.labelKey)}
+        ariaLabel={t(item.labelKey)}
+        onClick={handleClick}
+        aria-pressed={page === item.page}
+      >
+        <span className="nav-rail-icon"><Icon size={16} aria-hidden /></span>
+        <span className="nav-rail-label">{t(item.labelKey)}</span>
+      </TooltipButton>
+    );
+  }
 
   return (
-    <nav className={cx("nav-rail sidebar-surface", expanded && "expanded")} aria-label="Primary">
-      <div className="nav-rail-group no-drag">
-        {primary.map((item) => {
-          const Icon = NAV_ICONS[item.id];
-          return (
-            <button
-              key={item.id}
-              type="button"
-              className={cx("nav-rail-btn nav-rail-labeled", page === item.page && "active")}
-              data-nav={item.dataNav}
-              aria-label={t(item.labelKey)}
-              aria-pressed={page === item.page}
-              title={t(item.labelKey)}
-              onClick={() => setPage(item.page)}
-            >
-              <Icon size={16} aria-hidden />
-              <span className="nav-rail-label">{t(item.labelKey)}</span>
-            </button>
-          );
-        })}
+    <nav className={cx("nav-rail", expanded && "expanded")} aria-label="Primary">
+      {/* Upper scrollable section: all page destinations with dividers */}
+      <div className="nav-rail-scroll no-drag">
+        {primary.map(renderItem)}
+        <div className="nav-rail-divider" role="separator" />
+        {utility.map(renderItem)}
+        <div className="nav-rail-divider" role="separator" />
+        {developer.map(renderItem)}
       </div>
 
-      <div className="nav-rail-group nav-rail-footer no-drag">
-        {footer.map((item) => {
-          const Icon = NAV_ICONS[item.id];
-          const handleClick =
-            item.id === "plugins"
-              ? () => (page === "plugins" ? (canNavBack() ? navBack() : setPage("chat")) : setPage("plugins"))
-              : () => setPage(item.page);
-          return (
-            <TooltipButton
-              key={item.id}
-              type="button"
-              className={cx("nav-rail-btn", page === item.page && "active")}
-              data-nav={item.dataNav}
-              tooltip={t(item.labelKey)}
-              ariaLabel={t(item.labelKey)}
-              onClick={handleClick}
-              aria-pressed={page === item.page}
-            >
-              <Icon size={16} aria-hidden />
-            </TooltipButton>
-          );
-        })}
+      {/* Footer: notifications + settings + expand toggle (D2-shell.html:167-181) */}
+      <div className="nav-rail-foot no-drag">
         <NotificationCenter />
         <TooltipButton
           type="button"
@@ -147,8 +146,7 @@ export function NavRail() {
             aria-label={t(`settings.memoryStatus${mHealth[0].toUpperCase()}${mHealth.slice(1)}`)}
           />
         </TooltipButton>
-      </div>
-      <div className="nav-rail-foot no-drag">
+        <div className="nav-rail-divider" role="separator" />
         <button
           type="button"
           className="nav-rail-toggle"

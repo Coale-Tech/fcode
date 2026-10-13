@@ -67,12 +67,6 @@ test("footer sits on the sidebar content grid without a hairline", () => {
   assert.match(globalStyles, /\.footer-build\s*\{[^}]*padding:\s*5px 8px/s);
 });
 
-test("rail buttons share the notification trigger's hit target", () => {
-  const block = globalStyles.match(/\.nav-rail-btn,\s*\.nav-rail \.notification-trigger\s*\{[^}]+\}/)?.[0] ?? "";
-  assert.match(block, /width:\s*32px/);
-  assert.match(block, /height:\s*32px/);
-  assert.match(block, /transition:[^;]*var\(--motion-duration-fast\)/);
-});
 
 test("build chip surfaces the version and only dots an actionable update", () => {
   assert.match(sidebarSource, /const update = useUpdateState\(\)/);

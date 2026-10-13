@@ -200,47 +200,68 @@
   left: var(--ds-sidebar-width);
 }
 
-/* ── D2 rail: labels hidden in collapsed rail mode (D.css:404-414) ── */
-/* In island mode (D3), labels are revealed — override there (Task 9). */
-:root[data-nav-layout="rail"] .nav-rail-label { display: none; }
+/* ── D2 rail: labels hidden/animated in collapsed rail mode (D.css:404-414) ── */
+/* opacity/max-width transition matches D.css for smooth expand animation. */
+:root[data-nav-layout="rail"] .nav-rail-label {
+  opacity: 0;
+  max-width: 0;
+  overflow: hidden;
+  transition: opacity .15s, max-width .15s;
+}
 :root[data-nav-layout="rail"] .nav-rail-btn.nav-rail-labeled {
-  /* revert to square icon-only button; label span is hidden */
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
-  flex-direction: row;
-  gap: 0;
-  padding: 0;
+  /* collapsed: icon box centered (label hidden) */
+  justify-content: center;
 }
 
-/* ── D2 rail: expanded 220px state (D.css:334 .d-rail.expanded) ── */
+/* ── D2 rail: expanded 220px state (D.css:334, 413-414) ── */
 :root[data-nav-layout="rail"] .nav-rail.expanded {
   width: var(--d-rail-exp);
   flex: 0 0 var(--d-rail-exp);
-  align-items: flex-start;
 }
 :root[data-nav-layout="rail"] .nav-rail.expanded .nav-rail-label {
-  display: block;                  /* reveal labels when expanded */
+  opacity: 1;
+  max-width: 160px;
 }
 :root[data-nav-layout="rail"] .nav-rail.expanded .nav-rail-btn.nav-rail-labeled {
-  width: calc(var(--d-rail-exp) - 12px); /* item margin 1px × 6px = 12px (D.css:373) */
-  height: 32px;
-  flex-direction: row;
-  gap: 2px;
-  padding: 0;
+  justify-content: flex-start;                  /* icon left, label follows */
+  gap: var(--d-rail-item-gap);                  /* 2px (D.css:413) */
+}
+/* When expanded, align toggle to the left edge */
+:root[data-nav-layout="rail"] .nav-rail.expanded .nav-rail-foot {
+  justify-content: flex-start;
 }
 
-/* ── D2 rail footer: expand toggle (D.css:432-449) ── */
+/* ── D2 canvas island (D.css:451-461, D.css:464-481) ── */
+/* app-chat-shell body becomes the gray canvas backdrop */
+:root[data-nav-layout="rail"] .app-chat-shell {
+  background: var(--d-canvas-bg);               /* light: surface-gray-2; dark: surface-base */
+}
+/* main-pane is the elevated glass panel floating on the canvas (D.css:464-474) */
+:root[data-nav-layout="rail"] .main-pane:not(.is-workbench) {
+  margin: var(--d-gap);                         /* all-side 12px gutter (D.css:456) */
+  border-radius: var(--d-r);
+  border: 1px solid var(--outline-elevation-1); /* D.css:471 */
+  box-shadow: var(--elevation-base);            /* D.css:470 — overrides shadow-chat-area */
+}
+/* workbench pages (build/bench) own their own panels; no island wrap */
+:root[data-nav-layout="rail"] .main-pane.is-workbench {
+  margin: 0;
+  border: none;
+  box-shadow: none;
+}
+
+/* ── D2 rail footer: notification+settings+toggle (D.css:432-449) ── */
 .nav-rail-foot {
   padding: 6px;
   border-top: 1px solid var(--d-border);
-  width: 100%;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--d-rail-item-gap);                  /* 2px between footer items */
 }
 .nav-rail-toggle {
-  width: 28px;
-  height: 28px;
+  width: var(--d-ctrl);                         /* 28px (D.css:438) */
+  height: var(--d-ctrl);
   border-radius: var(--d-r-sm);
   border: none;
   background: transparent;
@@ -252,24 +273,3 @@
   transition: background .12s;
 }
 .nav-rail-toggle:hover { background: var(--surface-gray-2); color: var(--ink-gray-8); }
-/* When expanded, align toggle to the left edge (D.css:337 .d-rail.expanded) */
-:root[data-nav-layout="rail"] .nav-rail.expanded .nav-rail-foot {
-  justify-content: flex-start;
-}
-
-/* ── D2 canvas island (D.css:451-461, D.css:464-481) ── */
-/* app-chat-shell body becomes the gray canvas backdrop */
-:root[data-nav-layout="rail"] .app-chat-shell {
-  background: var(--d-canvas-bg);      /* light: surface-gray-2; dark: surface-base */
-}
-/* main-pane is the white island floating on the canvas */
-:root[data-nav-layout="rail"] .main-pane:not(.is-workbench) {
-  margin: 0 var(--d-gap) var(--d-gap) 0;
-  border-radius: var(--d-r);
-  border: 1px solid var(--outline-elevation-1);
-}
-/* workbench pages (build/bench) own their own panels; no island wrap */
-:root[data-nav-layout="rail"] .main-pane.is-workbench {
-  margin: 0;
-  border: none;
-}
