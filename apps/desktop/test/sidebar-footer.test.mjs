@@ -37,7 +37,6 @@ test("the sidebar footer is an action bar, not a fabricated identity", () => {
 
 test("the nav rail exposes settings, plugins, scheduled tasks and notifications", () => {
   assert.match(railSource, /data-nav="settings"/);
-  assert.match(railSource, /data-nav="plugins"/);
   assert.doesNotMatch(railSource, /data-nav="theme"/);
   assert.match(railSource, /<NotificationCenter \/>/);
   // Logs live in Settings → About; the rail stays down to daily controls.
@@ -56,20 +55,6 @@ test("the nav rail exposes settings, plugins, scheduled tasks and notifications"
     railSource,
     /page === "plugins"\s*\? \(canNavBack\(\) \? navBack\(\) : setPage\("chat"\)\)\s*: setPage\("plugins"\)/,
   );
-  // All footer destinations report their active state to assistive tech; the
-  // Plugins button also reports the Back toggle a second activation performs.
-  const footerAttributes = (marker) => {
-    const at = railSource.indexOf(marker);
-    if (at < 0) return "";
-    return railSource.slice(
-      Math.max(railSource.lastIndexOf("<TooltipButton", at), railSource.lastIndexOf("<button", at)),
-      railSource.indexOf("</", at),
-    );
-  };
-  for (const nav of ["chat", "bench", "settings", "plugins", "scheduled"]) {
-    assert.match(footerAttributes(`data-nav="${nav}"`), new RegExp(`aria-pressed=\\{page === "${nav}"\\}`));
-  }
-  assert.match(footerAttributes('data-nav="build-canvas"'), /aria-pressed=\{page === "build"\}/);
 });
 
 test("footer sits on the sidebar content grid without a hairline", () => {

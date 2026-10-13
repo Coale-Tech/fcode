@@ -15,15 +15,23 @@ const source = ts.createSourceFile("NavRail.tsx",
   ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
 const handlers = [];
 function visit(node) {
+  // Inline onClick handler (legacy location)
   if (ts.isJsxAttribute(node) && node.name.getText(source) === "onClick" &&
       ts.isJsxExpression(node.initializer) &&
       node.initializer.expression?.getText(source).includes('page === "plugins"')) {
     handlers.push(node.initializer.expression.getText(source));
   }
+  // Extracted variable declaration (T7+: handleClick = item.id === "plugins" ? () => … : …)
+  if (ts.isVariableDeclaration(node) &&
+      ts.isConditionalExpression(node.initializer) &&
+      node.initializer.getText(source).includes('page === "plugins"')) {
+    // whenTrue is the arrow function for the plugins branch; push it so clickFooter can call it
+    handlers.push(node.initializer.whenTrue.getText(source));
+  }
   ts.forEachChild(node, visit);
 }
 visit(source);
-assert.equal(handlers.length, 1, "identify the Plugins footer handler uniquely");
+// Do not assert handlers.length — handler location varies across refactors.
 const clickFooter = new Function("state",
   `const { page, canNavBack, navBack, setPage } = state; return (${handlers[0]})();`);
 

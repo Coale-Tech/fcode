@@ -1,9 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { IPC } from "@pi-desktop/shared";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "../stores/app-store";
 import { memoryHealth } from "../features/settings/MemoryTab";
 import {
+  IconChevronLeft,
+  IconChevronRight,
   IconChat,
   IconClock,
   IconFileBird,
@@ -49,6 +51,8 @@ export function NavRail() {
   const navBack = useAppStore((s) => s.navBack);
   const canNavBack = useAppStore((s) => s.canNavBack);
   const memStatus = useAppStore((s) => s.memoryStatus);
+  const [expanded, setExpanded] = useState(false);
+
   const mHealth = memoryHealth(memStatus);
 
   const kanbanEnabled = useAppStore((s) => s.kanbanEnabled);
@@ -82,7 +86,7 @@ export function NavRail() {
   const footer  = items.filter((i) => i.group === "footer");
 
   return (
-    <nav className="nav-rail sidebar-surface" aria-label="Primary">
+    <nav className={cx("nav-rail sidebar-surface", expanded && "expanded")} aria-label="Primary">
       <div className="nav-rail-group no-drag">
         {primary.map((item) => {
           const Icon = NAV_ICONS[item.id];
@@ -143,6 +147,20 @@ export function NavRail() {
             aria-label={t(`settings.memoryStatus${mHealth[0].toUpperCase()}${mHealth.slice(1)}`)}
           />
         </TooltipButton>
+      </div>
+      <div className="nav-rail-foot no-drag">
+        <button
+          type="button"
+          className="nav-rail-toggle"
+          aria-expanded={expanded}
+          title={expanded ? t("nav.collapseRail") : t("nav.expandRail")}
+          aria-label={expanded ? t("nav.collapseRail") : t("nav.expandRail")}
+          onClick={() => setExpanded((v) => !v)}
+        >
+          {expanded
+            ? <IconChevronLeft size={14} aria-hidden />
+            : <IconChevronRight size={14} aria-hidden />}
+        </button>
       </div>
     </nav>
   );

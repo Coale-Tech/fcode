@@ -230,6 +230,33 @@
   padding: 0;
 }
 
+/* ── D2 rail footer: expand toggle (D.css:432-449) ── */
+.nav-rail-foot {
+  padding: 6px;
+  border-top: 1px solid var(--d-border);
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.nav-rail-toggle {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--d-r-sm);
+  border: none;
+  background: transparent;
+  color: var(--ink-gray-5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .12s;
+}
+.nav-rail-toggle:hover { background: var(--surface-gray-2); color: var(--ink-gray-8); }
+/* When expanded, align toggle to the left edge (D.css:337 .d-rail.expanded) */
+:root[data-nav-layout="rail"] .nav-rail.expanded .nav-rail-foot {
+  justify-content: flex-start;
+}
+
 /* ── D2 canvas island (D.css:451-461, D.css:464-481) ── */
 /* app-chat-shell body becomes the gray canvas backdrop */
 :root[data-nav-layout="rail"] .app-chat-shell {
@@ -239,7 +266,7 @@
 :root[data-nav-layout="rail"] .main-pane:not(.is-workbench) {
   margin: 0 var(--d-gap) var(--d-gap) 0;
   border-radius: var(--d-r);
-  border: 1px solid var(--d-border);
+  border: 1px solid var(--outline-elevation-1);
 }
 /* workbench pages (build/bench) own their own panels; no island wrap */
 :root[data-nav-layout="rail"] .main-pane.is-workbench {

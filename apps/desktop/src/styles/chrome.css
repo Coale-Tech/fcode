@@ -1238,6 +1238,8 @@
   /* The empty rail drags the window; its button groups opt out. */
   -webkit-app-region: drag;
   app-region: drag;
+  border-right: 1px solid var(--d-border);
+  transition: width .18s ease;
 }
 
 

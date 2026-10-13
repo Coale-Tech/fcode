@@ -143,6 +143,8 @@ export const en = {
     buildUnknown: "Version unknown",
     search: "Search",
     awesomebar: "Search sessions, files, commands…",
+    expandRail: "Expand navigation",
+    collapseRail: "Collapse navigation",
     temporarySessions: "Temporary chats",
     newTemporarySession: "New temporary chat",
     noProjectSessions: "No chats in this project yet",

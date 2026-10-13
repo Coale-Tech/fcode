@@ -136,6 +136,8 @@ export const de = {
     "buildUnknown": "Version unbekannt",
     "search": "Suche",
     "awesomebar": "Sitzungen, Dateien, Befehle suchen…",
+    "expandRail": "Navigation erweitern",
+    "collapseRail": "Navigation reduzieren",
     "temporarySessions": "Temporäre Chats",
     "newTemporarySession": "Neuer temporärer Chat",
     "noProjectSessions": "Nr Chats in diesem Projekt bisher",

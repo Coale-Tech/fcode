@@ -145,6 +145,8 @@ export const ko = {
     buildUnknown: "버전 알 수 없음",
     search: "검색",
     awesomebar: "세션, 파일, 명령 검색…",
+    expandRail: "탐색 확장",
+    collapseRail: "탐색 축소",
     temporarySessions: "임시 대화",
     newTemporarySession: "새 임시 채팅",
     noProjectSessions: "이 프로젝트에 채팅이 아직 없습니다",
