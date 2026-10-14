@@ -196,6 +196,7 @@ export const es = {
     "hoverCardUpdatedAt": "Actualizado {{when}}",
     "hoverCardTemporarySpace": "Temporal",
     "hoverCardBranchAria": "Rama {{name}}",
+    "workspace": "Espacio",
   },
   "workspaceBar": {
     "noBench": "Sin bench seleccionado",
@@ -2261,6 +2262,7 @@ sklm: {
   },
   "pulls": {
     "title": "Solicitudes de extracción",
+    "short": "PRs",
     "refresh": "Actualizar",
     "emptyTitle": "No hay solicitudes de extracción",
     "review": "Revisar con el agente",
@@ -3056,6 +3058,7 @@ sklm: {
   },
   "notifications": {
     "title": "Notificaciones",
+    "short": "Bandeja",
     "open": "Notificaciones abiertas",
     "openUnread": "Notificaciones abiertas, {{count}} no leídos",
     "all": "Todos",

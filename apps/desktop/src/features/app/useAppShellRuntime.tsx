@@ -172,16 +172,19 @@ export function useAppShellRuntime() {
   // Stable identity: the keydown and native-menu handlers register once and
   // must never capture a stale `sidebarCollapsed`. Every invocation is a user
   // action, so it clears an automatic-collapse record before toggling.
+  // Island sidebar is permanent: block collapse (keyboard, click) and auto-collapse.
   const toggleSidebar = useCallback(() => {
+    if (navLayoutRef.current === "island") return;
     autoCollapsedSidebarRef.current = false;
     if (sidebarCollapsedRef.current) reopenSidebar();
     else setSidebarCollapsed(true);
   }, [reopenSidebar]);
 
   // The layout, not the user, yields the sidebar when the panel would push
-  // MainChat under its floor. The record is remembered only until the panel
-  // closes.
+  // MainChat under its floor. In island mode the sidebar is permanent so
+  // this auto-collapse must also be suppressed.
   const autoCollapseSidebar = useCallback(() => {
+    if (navLayoutRef.current === "island") return;
     if (sidebarCollapsedRef.current) return;
     autoCollapsedSidebarRef.current = true;
     setSidebarCollapsed(true);

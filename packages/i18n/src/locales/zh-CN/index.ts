@@ -198,6 +198,7 @@ export const zhCN = {
     hoverCardUpdatedAt: "更新于 {{when}}",
     hoverCardTemporarySpace: "临时对话",
     hoverCardBranchAria: "分支 {{name}}",
+    workspace: "工作区",
   },
   workspaceBar: {
     noBench: "未选择 bench",
@@ -2247,6 +2248,7 @@ sklm: {
   },
   pulls: {
     title: "拉取请求",
+    short: "PRs",
     refresh: "刷新",
     emptyTitle: "暂无拉取请求",
     review: "让智能体审阅",
@@ -3045,6 +3047,7 @@ sklm: {
   },
   notifications: {
     title: "通知",
+    short: "收件箱",
     open: "打开通知中心",
     openUnread: "打开通知中心，{{count}} 条未读",
     all: "全部",

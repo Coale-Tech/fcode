@@ -28,3 +28,18 @@ export function shellChromeWidth(layout: NavLayout, railExpanded?: boolean): num
   const railW = layout === "rail" && railExpanded ? RAIL_EXPANDED_WIDTH : RAIL_WIDTH[layout];
   return railW + CANVAS_GAP * 2;
 }
+
+/** Fixed sidebar width for the island (D3) layout — matches --d-island-sb. */
+export const ISLAND_SIDEBAR_W = 256;
+
+/** In island layout the sidebar is permanent and fixed at ISLAND_SIDEBAR_W.
+ *  Returns the effective sidebar props to pass to WorkPanel so the budget
+ *  always accounts for 256px regardless of the user collapse/width state. */
+export function islandSidebarProps(
+  navLayout: NavLayout,
+  sidebarCollapsed: boolean,
+  sidebarWidth: number,
+): { sidebarCollapsed: boolean; sidebarWidth: number } {
+  if (navLayout === "island") return { sidebarCollapsed: false, sidebarWidth: ISLAND_SIDEBAR_W };
+  return { sidebarCollapsed, sidebarWidth };
+}

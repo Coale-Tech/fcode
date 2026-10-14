@@ -11,6 +11,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { TooltipButton, cx } from "./ui";
+import { resolveNavLayout } from "../lib/nav-layout";
 
 /** Default number of most-recent sessions shown per project group before the rest fold. */
 const MAX_VISIBLE_SESSIONS = 10;
@@ -237,6 +238,7 @@ export function Sidebar({
   const setPage = useAppStore((s) => s.setPage);
   const page = useAppStore((s) => s.page);
   const settings = useAppStore((s) => s.settings);
+  const navLayout = resolveNavLayout(settings?.navLayout);
   const prefetchSession = useAppStore((s) => s.prefetchSession);
   const selectSession = useAppStore((s) => s.selectSession);
   const newSession = useAppStore((s) => s.newSession);
@@ -299,6 +301,8 @@ export function Sidebar({
   const [draggingProjectKey, setDraggingProjectKey] = useState<string | null>(null);
   const [dropIndicator, setDropIndicator] = useState<{ key: string; insertAfter: boolean } | null>(null);
   const [windowFocused, setWindowFocused] = useState(true);
+  // D3 island filter (scoped to island mode; cleared on layout change via key)
+  const [d3Filter, setD3Filter] = useState("");
 
   const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
   const menuFirstItemRef = useRef<HTMLButtonElement | null>(null);
@@ -2306,6 +2310,43 @@ export function Sidebar({
       data-window-blur={windowFocused ? undefined : "true"}
       onAnimationEnd={onAnimationEnd}
     >
+      {/* D3 island header: bench/workspace card + new-session + filter
+           (D3-shell.html:420-500; design-authority R11d).
+           Replaces the D1/D2 brand-logo header (hidden via CSS .sidebar-header). */}
+      {navLayout === "island" && (
+        <div className="d3-sb-header no-drag">
+          <button
+            type="button"
+            className="d3-sb-bench"
+            onClick={() => setPage("bench")}
+            aria-label={t("nav.bench")}
+          >
+            <div className="d3-sb-bench-name">
+              {workspace?.name ?? workspace?.path?.split("/").filter(Boolean).pop() ?? t("app.shellName")}
+            </div>
+            <div className="d3-sb-bench-sub">{t("nav.workspace")}</div>
+          </button>
+          <button
+            type="button"
+            className="d3-sb-new-btn no-drag"
+            onClick={() => void createSession({ projectPath: null })}
+          >
+            <IconNewSession size={12} aria-hidden />
+            {t("nav.newTask")}
+          </button>
+          <div className="d3-sb-search no-drag">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input
+              type="search"
+              placeholder={t("nav.search")}
+              value={d3Filter}
+              onChange={(e) => setD3Filter(e.target.value)}
+              className="no-drag"
+              aria-label={t("nav.search")}
+            />
+          </div>
+        </div>
+      )}
       <div className="sidebar-header">
         <TooltipButton
           type="button"
@@ -2351,7 +2392,12 @@ export function Sidebar({
               </span>
             </div>
             <div className="sidebar-session-group-body pinned" onScroll={() => closeMenus(false)}>
-              {renderSessionRows(pinnedSessions, { global: true })}
+              {renderSessionRows(
+                d3Filter && navLayout === "island"
+                  ? pinnedSessions.filter((s) => s.title?.toLowerCase().includes(d3Filter.toLowerCase()))
+                  : pinnedSessions,
+                { global: true }
+              )}
             </div>
           </section>
         ) : null}
@@ -2428,7 +2474,12 @@ export function Sidebar({
             }}
           >
             {temporarySessionHistory.length > 0 ? (
-              renderSessionRows(temporarySessionHistory, { temporary: true })
+              renderSessionRows(
+                d3Filter && navLayout === "island"
+                  ? temporarySessionHistory.filter((s) => s.title?.toLowerCase().includes(d3Filter.toLowerCase()))
+                  : temporarySessionHistory,
+                { temporary: true }
+              )
             ) : temporarySessions.length === 0 ? (
               <div className="sidebar-session-empty">{t("nav.noTemporarySessions")}</div>
             ) : null}

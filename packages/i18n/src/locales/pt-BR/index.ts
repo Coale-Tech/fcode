@@ -195,6 +195,7 @@ export const ptBR = {
     hoverCardUpdatedAt: "Atualizado {{when}}",
     hoverCardTemporarySpace: "Temporário",
     hoverCardBranchAria: "Ramificação {{name}}",
+    workspace: "Espaço",
   },
   workspaceBar: {
     noBench: "Nenhum bench selecionado",
@@ -2216,6 +2217,7 @@ export const ptBR = {
   },
   pulls: {
     title: "Pull requests",
+    short: "PRs",
     refresh: "Atualizar",
     emptyTitle: "Nenhum pull request",
     review: "Revisar com o agente",
@@ -3011,6 +3013,7 @@ export const ptBR = {
   },
   notifications: {
     title: "Notificações",
+    short: "Caixa",
     open: "Abrir notificações",
     openUnread: "Abrir notificações, {{count}} não lidas",
     all: "Todas",

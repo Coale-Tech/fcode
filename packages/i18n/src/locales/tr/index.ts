@@ -205,6 +205,7 @@ export const tr = {
     hoverCardUpdatedAt: "Güncellendi {{when}}",
     hoverCardTemporarySpace: "Geçici",
     hoverCardBranchAria: "Dal {{name}}",
+    workspace: "Çalışma",
   },
   workspaceBar: {
     noBench: "Bench seçilmedi",
@@ -2267,6 +2268,7 @@ sklm: {
   },
   pulls: {
     title: "Çekme istekleri",
+    short: "PRs",
     refresh: "Yenile",
     emptyTitle: "Çekme isteği yok",
     review: "Ajanla incele",
@@ -3083,6 +3085,7 @@ importConfirm: "İçe aktarılan uzantılar ajan sürecinde, ajanın kendi araç
   },
   notifications: {
     title: "Bildirimler",
+    short: "Gelen",
     open: "Bildirimleri aç",
     openUnread: "Bildirimleri aç, {{count}} okunmamış",
     all: "Tümü",

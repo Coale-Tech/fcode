@@ -26,6 +26,7 @@ import { PortalVisibilityProvider } from "../../lib/portal-visibility";
 import { CollapsedTitlebarActions, RoutePending } from "./chrome";
 import { useAppShellRuntime } from "./useAppShellRuntime";
 import { useMemoryHealthPoller } from "../../hooks/use-memory-health-poller";
+import { islandSidebarProps } from "../../lib/nav-layout";
 
 const SettingsPage = lazy(() =>
   import("../../pages/SettingsPage").then((module) => ({
@@ -145,18 +146,18 @@ export function AppShell() {
         {/* ShellNavbar: outside the inert/hidden subtree; stays usable in settings mode
             (Review Focus 4). Drag region + Cmd-K awesomebar for all pages. */}
         <ShellNavbar onOpenSearch={() => setSearchOpen(true)} />
-        <PortalVisibilityProvider visible={page !== "settings"}>
+        <PortalVisibilityProvider visible={page !== "settings" || navLayout === "island"}>
           <div
             className="app-chat-shell"
-            hidden={page === "settings"}
-            inert={page === "settings" ? true : undefined}
-            aria-hidden={page === "settings" ? true : undefined}
+            hidden={page === "settings" && navLayout !== "island"}
+            inert={page === "settings" && navLayout !== "island" ? true : undefined}
+            aria-hidden={page === "settings" && navLayout !== "island" ? true : undefined}
           >
             <NavRail onExpandChange={onRailExpandChange} />
             {/* D3 island: permanent sidebar (shown even on workbench, always open) */}
             {(navLayout === "island" || (!workbench && (!sidebarCollapsed || sidebarExiting))) ? (
               <Sidebar
-                className={cx(sidebarEntering && "is-entering", sidebarExiting && "is-exiting")}
+                className={cx(navLayout !== "island" && sidebarEntering && "is-entering", navLayout !== "island" && sidebarExiting && "is-exiting")}
                 onAnimationEnd={handleSidebarAnimationEnd}
                 onToggleSidebar={toggleSidebar}
                 sidebarToggleShortcut={sidebarToggleShortcut}
@@ -228,7 +229,7 @@ export function AppShell() {
                     )}
                   </div>
                 )}
-                {page !== "settings" ? <UpdateBanner /> : null}
+                {(page !== "settings" || navLayout === "island") ? <UpdateBanner /> : null}
 
                 {backendDown && (
                   <div
@@ -286,7 +287,11 @@ export function AppShell() {
                 )}
 
                 <Suspense fallback={<RoutePending />}>
-                  {page === "pulls" ? (
+                  {page === "settings" && navLayout === "island" ? (
+                    <div className="route-surface route-page">
+                      <SettingsPage />
+                    </div>
+                  ) : page === "pulls" ? (
                     <div className="route-surface route-page">
                       <PullRequestsPage />
                     </div>
@@ -335,10 +340,9 @@ export function AppShell() {
                   finishWorkPanelExit(workPanelExitGeneration.current)
                 }
                 containerWidth={shellWidth}
-                sidebarWidth={sidebarWidth}
-                sidebarCollapsed={sidebarCollapsed}
-                sidebarExiting={sidebarExiting}
-                onAutoCollapseSidebar={autoCollapseSidebar}
+                {...islandSidebarProps(navLayout, sidebarCollapsed, sidebarWidth)}
+                sidebarExiting={navLayout === "island" ? false : sidebarExiting}
+                onAutoCollapseSidebar={navLayout === "island" ? undefined : autoCollapseSidebar}
                 maximized={workPanelMaximized}
                 onToggleMaximize={toggleWorkPanelMaximize}
               />
@@ -364,7 +368,7 @@ export function AppShell() {
             </TooltipButton>
           </div>
         </PortalVisibilityProvider>
-        {page === "settings" ? (
+        {page === "settings" && navLayout !== "island" ? (
           <Suspense fallback={<RoutePending />}>
             <SettingsPage />
           </Suspense>
@@ -372,7 +376,7 @@ export function AppShell() {
         <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
         <ToastHost />
         <ExtensionPromptHost />
-        {page === "settings" ? <UpdateBanner /> : null}
+        {page === "settings" && navLayout !== "island" ? <UpdateBanner /> : null}
       </>
     );
   }
@@ -383,7 +387,7 @@ export function AppShell() {
       className={cx(
         "app-shell",
         !ready && "app-shell-boot",
-        page === "settings" && ready && "settings-mode",
+        page === "settings" && ready && navLayout !== "island" && "settings-mode",
         sidebarCollapsed && "sidebar-collapsed",
         workPanelMaximized && "work-panel-maximized",
         showSplash && "is-booting",

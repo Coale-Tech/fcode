@@ -3,7 +3,7 @@ import { register } from "node:module";
 import test from "node:test";
 register(new URL("./helpers/ts-import-hooks.mjs", import.meta.url));
 const { NAV_LAYOUTS, DEFAULT_NAV_LAYOUT } = await import("@pi-desktop/shared");
-const { resolveNavLayout, shellChromeWidth, nextNavLayout } = await import("../src/lib/nav-layout.ts");
+const { resolveNavLayout, shellChromeWidth, nextNavLayout, islandSidebarProps } = await import("../src/lib/nav-layout.ts");
 
 test("an absent or corrupt saved layout resolves to the default, never a broken shell", () => {
   for (const v of [undefined, null, "", "dock", 2, {}, "TABS"]) {
@@ -53,4 +53,15 @@ test("nextNavLayout cycles through all layouts in both directions and returns nu
   assert.equal(nextNavLayout("rail", "Enter"), null);
   assert.equal(nextNavLayout("rail", " "), null);
   assert.equal(nextNavLayout("tabs", "Tab"), null);
+});
+
+test("island layout always budgets 256px permanent sidebar regardless of collapse or user width", () => {
+  // In island mode the sidebar is permanent and always counts 256px
+  assert.deepEqual(islandSidebarProps("island", true,  100), { sidebarCollapsed: false, sidebarWidth: 256 });
+  assert.deepEqual(islandSidebarProps("island", false, 300), { sidebarCollapsed: false, sidebarWidth: 256 });
+  assert.deepEqual(islandSidebarProps("island", true,  256), { sidebarCollapsed: false, sidebarWidth: 256 });
+  // Non-island layouts pass collapse/width through unchanged
+  assert.deepEqual(islandSidebarProps("rail",   true,  200), { sidebarCollapsed: true,  sidebarWidth: 200 });
+  assert.deepEqual(islandSidebarProps("rail",   false, 250), { sidebarCollapsed: false, sidebarWidth: 250 });
+  assert.deepEqual(islandSidebarProps("tabs",   true,  180), { sidebarCollapsed: true,  sidebarWidth: 180 });
 });
