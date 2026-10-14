@@ -17,11 +17,14 @@ export function nextNavLayout(current: NavLayout, key: string): NavLayout | null
   return null;
 }
 
-/** Keep in sync with `--d-rail-w`, `--d-rail-island`, `--d-gap` in styles/d-tokens.css. */
+/** Keep in sync with --d-rail-w, --d-rail-island, --d-rail-exp, --d-gap in styles/d-tokens.css. */
 const RAIL_WIDTH: Record<NavLayout, number> = { tabs: 0, rail: 50, island: 60 };
+const RAIL_EXPANDED_WIDTH = 220; // D2 expanded rail — matches --d-rail-exp
 const CANVAS_GAP = 12;
 
-/** Horizontal space the shell chrome takes before the sidebar/main/work-panel columns. */
-export function shellChromeWidth(layout: NavLayout): number {
-  return RAIL_WIDTH[layout] + CANVAS_GAP * 2;
+/** Horizontal space the shell chrome takes before the sidebar/main/work-panel columns.
+ *  Pass railExpanded=true when the D2 rail is in its 220px expanded state. */
+export function shellChromeWidth(layout: NavLayout, railExpanded?: boolean): number {
+  const railW = layout === "rail" && railExpanded ? RAIL_EXPANDED_WIDTH : RAIL_WIDTH[layout];
+  return railW + CANVAS_GAP * 2;
 }

@@ -1,6 +1,7 @@
 import type { CSSProperties, SVGProps } from "react";
 import {
   Activity,
+  BarChart2,
   Columns,
   AppWindow,
   Archive,
@@ -233,6 +234,7 @@ export const IconPalette = icon(Palette);
 export const IconPerson = icon(Smile);
 export const IconInfo = icon(Info);
 export const IconServer = icon(Server);
+export const IconBarChart2 = icon(BarChart2);
 export const IconSun = icon(Sun);
 export const IconMoon = icon(Moon);
 export const IconMonitor = icon(Monitor);

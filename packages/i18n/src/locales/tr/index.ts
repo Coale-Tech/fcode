@@ -134,7 +134,7 @@ export const tr = {
     "pinnedSessions": "Sabitlenmiş",
     home: "Ana sayfa",
     chat: "Sohbet",
-    build: "Derleme",
+    build: "Build",
     bench: "Bench",
     newTask: "Yeni görev",
     newProject: "Yeni proje",

@@ -114,6 +114,7 @@ export function AppShell() {
     startupRetrying,
     sidebarToggleShortcut,
     workPanelToggleTooltip,
+    onRailExpandChange,
   } = useAppShellRuntime();
   useCopyTex();
   useMemoryHealthPoller();
@@ -150,7 +151,7 @@ export function AppShell() {
             inert={page === "settings" ? true : undefined}
             aria-hidden={page === "settings" ? true : undefined}
           >
-            <NavRail />
+            <NavRail onExpandChange={onRailExpandChange} />
             {!workbench && (!sidebarCollapsed || sidebarExiting) ? (
               <Sidebar
                 className={cx(sidebarEntering && "is-entering", sidebarExiting && "is-exiting")}

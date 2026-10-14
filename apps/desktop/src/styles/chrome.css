@@ -1283,13 +1283,15 @@
     color var(--motion-duration-fast) var(--motion-ease-out);
 }
 
-/* Labeled items in scroll group: full-width horizontal row (D.css:369-382) */
-.nav-rail-btn.nav-rail-labeled {
+/* Labeled items in scroll group: full-width horizontal row (D.css:369-382).
+ * Also applies to .notification-trigger.nav-rail-labeled in the footer. */
+.nav-rail-btn.nav-rail-labeled,
+.nav-rail .notification-trigger.nav-rail-labeled {
   width: auto;                                  /* stretch set by flex column align-items:stretch */
   height: var(--d-ctrl-lg);                     /* 32px row height (D.css:372) */
   flex: 0 0 var(--d-ctrl-lg);
-  justify-content: center;                      /* collapsed: center icon box */
   margin: 1px var(--d-rail-item-mx);            /* D.css:373 — 1px 6px */
+  justify-content: flex-start;                  /* D.css:369 default flex-start (override base center) */
   gap: 0;                                       /* collapsed: no gap (D.css:381) */
   overflow: hidden;
   white-space: nowrap;

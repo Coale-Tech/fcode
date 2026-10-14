@@ -19,6 +19,14 @@ test("column budget reserves the layout's rail plus the 12px canvas gap on both 
   assert.equal(shellChromeWidth("island"), 84);
 });
 
+test("column budget accounts for D2 expanded rail width", () => {
+  assert.equal(shellChromeWidth("rail", true), 244);   // 220 + 12*2
+  assert.equal(shellChromeWidth("rail", false), 74);   // 50 + 12*2 (same as collapsed)
+  // other layouts ignore the rail-expanded flag
+  assert.equal(shellChromeWidth("tabs", true), 24);
+  assert.equal(shellChromeWidth("island", true), 84);
+});
+
 test("settings writes reject an unknown navLayout and keep other preferences", async () => {
   const { validateSettingsWrite } = await import("../src/lib/api.ts");
   const base = { defaultMode: "agent", theme: "dark", enterToSend: true, onboardingDismissed: false };

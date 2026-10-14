@@ -77,6 +77,7 @@ export function useAppShellRuntime() {
     ready && page !== "settings",
   );
   const [shellWidth, setShellWidth] = useState(0);
+  const [railExpanded, setRailExpanded] = useState(false);
   const appShellRef = useRef<HTMLDivElement>(null);
   const sidebarCollapsedRef = useRef(sidebarCollapsed);
   const sidebarWidthRef = useRef(sidebarWidth);
@@ -91,6 +92,8 @@ export function useAppShellRuntime() {
   const workPanelOpenRef = useRef(workPanelVisible);
   const workPanelMaximizedRef = useRef(false);
   const autoCollapsedSidebarRef = useRef(false);
+  const railExpandedRef = useRef(false);
+  railExpandedRef.current = railExpanded;
   sidebarCollapsedRef.current = sidebarCollapsed;
   sidebarWidthRef.current = sidebarWidth;
   shellWidthRef.current = shellWidth;
@@ -101,7 +104,7 @@ export function useAppShellRuntime() {
   // measured width, not the native window bounds. shellChromeWidth() accounts
   // for the nav chrome reservation (rail/island) per the active layout.
   const columnsWidth = (shell: HTMLElement) =>
-    Math.max(0, Math.round(shell.clientWidth) - shellChromeWidth(navLayoutRef.current));
+    Math.max(0, Math.round(shell.clientWidth) - shellChromeWidth(navLayoutRef.current, railExpandedRef.current));
   useLayoutEffect(() => {
     const shell = appShellRef.current;
     if (!shell) return;
@@ -115,6 +118,11 @@ export function useAppShellRuntime() {
     observer.observe(shell);
     return () => observer.disconnect();
   }, [navLayout]);
+  // Re-apply budget when the D2 rail expands/collapses (no outer shell resize fires).
+  useLayoutEffect(() => {
+    const shell = appShellRef.current;
+    if (shell) setShellWidth(columnsWidth(shell));
+  }, [railExpanded]);
   const resolveSidebarMax = () =>
     sidebarWidthBudget({
       containerWidth: (appShellRef.current && columnsWidth(appShellRef.current)) || shellWidthRef.current,
@@ -1019,5 +1027,6 @@ export function useAppShellRuntime() {
     startupRetrying,
     sidebarToggleShortcut,
     workPanelToggleTooltip,
+    onRailExpandChange: setRailExpanded,
   };
 }

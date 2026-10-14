@@ -62,8 +62,12 @@ function formatRelativeTime(value: string, locale: string, justNow: string): str
 
 export function NotificationCenter({
   onBeforeOpen,
+  navRailLabel,
 }: {
   onBeforeOpen?: () => void;
+  /** When set, renders the trigger as a .nav-rail-labeled item with a visible label
+   *  (shown on .expanded rail) and wraps the icon in .nav-rail-icon. */
+  navRailLabel?: string;
 }) {
   const { t, i18n } = useTranslation();
   const storedNotifications = useAppStore((state) => state.notifications);
@@ -229,7 +233,7 @@ export function NotificationCenter({
       <TooltipButton
         ref={triggerRef}
         type="button"
-        className={`footer-notification notification-trigger ${open ? "active" : ""}`}
+        className={`footer-notification notification-trigger${navRailLabel ? " nav-rail-labeled" : ""}${open ? " active" : ""}`}
         tooltip={unreadLabel}
         ariaLabel={unreadLabel}
         aria-haspopup="dialog"
@@ -243,7 +247,10 @@ export function NotificationCenter({
           }
         }}
       >
-        <IconBell size={14} aria-hidden />
+        {navRailLabel
+          ? <span className="nav-rail-icon"><IconBell size={14} aria-hidden /></span>
+          : <IconBell size={14} aria-hidden />}
+        {navRailLabel && <span className="nav-rail-label">{navRailLabel}</span>}
         {unreadCount > 0 ? (
           <span className="notification-badge" aria-hidden>
             {unreadCount > 99 ? "99+" : unreadCount}

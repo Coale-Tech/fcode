@@ -128,7 +128,7 @@ export const zhCN = {
     home: "首页",
     chat: "聊天",
     build: "构建",
-    bench: "工作台",
+    bench: "Bench",
     newTask: "新建任务",
     newProject: "新建项目",
     projects: "项目",

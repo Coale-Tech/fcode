@@ -128,7 +128,7 @@ export const zhTW = {
     home: "首頁",
     chat: "聊天",
     build: "建置",
-    bench: "工作台",
+    bench: "Bench",
     newTask: "新建任務",
     newProject: "新建專案",
     projects: "專案",

@@ -135,7 +135,7 @@ export const ko = {
     home: "홈",
     chat: "채팅",
     build: "빌드",
-    bench: "벤치",
+    bench: "Bench",
     newTask: "새 작업",
     newProject: "새 프로젝트",
     projects: "프로젝트",

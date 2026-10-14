@@ -208,10 +208,6 @@
   overflow: hidden;
   transition: opacity .15s, max-width .15s;
 }
-:root[data-nav-layout="rail"] .nav-rail-btn.nav-rail-labeled {
-  /* collapsed: icon box centered (label hidden) */
-  justify-content: center;
-}
 
 /* ── D2 rail: expanded 220px state (D.css:334, 413-414) ── */
 :root[data-nav-layout="rail"] .nav-rail.expanded {
@@ -221,8 +217,10 @@
 :root[data-nav-layout="rail"] .nav-rail.expanded .nav-rail-label {
   opacity: 1;
   max-width: var(--d-rail-label-max);
+  padding-left: var(--d-rail-item-gap);           /* D.css:414 — 2px inset */
 }
-:root[data-nav-layout="rail"] .nav-rail.expanded .nav-rail-btn.nav-rail-labeled {
+:root[data-nav-layout="rail"] .nav-rail.expanded .nav-rail-btn.nav-rail-labeled,
+:root[data-nav-layout="rail"] .nav-rail.expanded .notification-trigger.nav-rail-labeled {
   justify-content: flex-start;                  /* icon left, label follows */
   gap: var(--d-rail-item-gap);                  /* 2px (D.css:413) */
 }
@@ -242,6 +240,11 @@
   border-radius: var(--d-r);
   border: 1px solid var(--outline-elevation-1); /* D.css:471 */
   box-shadow: var(--elevation-base);            /* D.css:470 — overrides shadow-chat-area */
+}
+/* Dark mode override: elevation-1 panel surface + D.css:1536 border */
+:root[data-theme="dark"][data-nav-layout="rail"] .main-pane:not(.is-workbench) {
+  background: var(--surface-elevation-1);          /* gray-900 not gray-950 */
+  border-color: var(--outline-gray-2);             /* D.css:1536 */
 }
 /* workbench pages (build/bench) own their own panels; no island wrap */
 :root[data-nav-layout="rail"] .main-pane.is-workbench {

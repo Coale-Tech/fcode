@@ -38,7 +38,7 @@ test("the sidebar footer is an action bar, not a fabricated identity", () => {
 test("the nav rail exposes settings, plugins, scheduled tasks and notifications", () => {
   assert.match(railSource, /data-nav="settings"/);
   assert.doesNotMatch(railSource, /data-nav="theme"/);
-  assert.match(railSource, /<NotificationCenter \/>/);
+  assert.match(railSource, /<NotificationCenter\b/);
   // Logs live in Settings → About; the rail stays down to daily controls.
   assert.doesNotMatch(railSource, /openLogs/);
   // The footer keeps only the build chip; destinations moved to the rail.
