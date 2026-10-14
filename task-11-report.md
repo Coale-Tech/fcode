@@ -1,151 +1,94 @@
-# Task 11 Report — Work Panel, Build, Bench
+# Task 11 Report — Work Panel, Build, Bench (Round 2)
 
-Commit: `b10e2d026` on branch `feat/direction-d-t11`  
+Commits on `feat/direction-d-t11`:
+- Round 1 base: `17f0b5306`
+- Round 2: `ef3cd1858` — "style(workbench): direction D T11 round-2 — review diff/header/bench/build fidelity"
+
 Base: `f7f224a6a`  
-Build: `pnpm build` ✓ (electron-vite, 0 errors)  
-tsc: 0 errors (`./node_modules/.bin/tsc --noEmit -p .`)  
-Tests: T11-specific 127/127 pass; full-suite failures confirmed pre-existing (see §Test Failures)
+tsc: 0 errors (`./node_modules/.bin/tsc --noEmit`)  
+Tests: 46/46 T11-adjacent pass; pre-existing failures documented below.
 
 ---
 
 ## Design Fidelity
 
-### Work Panel (`work-panel.css`, `workbench.css`)
+### Work Panel (`work-panel.css`, `WorkPanel.tsx`)
 
-| Design ref | Token / rule | Impl file:line | Delta |
+| Design ref | Token / rule | Impl file | Delta |
 |---|---|---|---|
-| `D.css .d-island` | `border-radius: var(--d-r)` | `work-panel.css:4` (`.work-panel`) | none |
-| `D.css .d-island` | `border: 1px solid var(--outline-elevation-1)` | `work-panel.css:5` | none |
-| `D.css .d-island` | `box-shadow: var(--elevation-base)` | `work-panel.css:6` | none |
-| `D.css .d-mini-head` | `height: var(--d-mini-h)` (32 px) | `work-panel.css:12` (`.work-panel-header`) | none |
-| `D-SPEC.md --d-mini-h` | 32 px | `d-tokens.css` baseline token | none |
+| `D.css .d-mini-head` | `wp-mini-head` + `wp-mini-acts` | `WorkPanel.tsx`, `work-panel.css` | none |
+| `D.css` 4-tab strip | `wp-d-tabs` (Review/Browser/Tools/Files) | `WorkPanel.tsx`, `work-panel.css` | none |
+| `WORK_PANEL_DEFAULT_WIDTH` | 340px (D spec) | `work-panel-resize.ts:5` | none |
+| Review badge count | `wp-d-tab-count` with `reviewCount` | `WorkPanel.tsx` | none |
+
+### Review Panel (`ReviewChangeCard.tsx`, `ReviewTab.tsx`)
+
+| Design ref | Rule | Impl file | Delta |
+|---|---|---|---|
+| `chat-workpanel/fragment.html` bordered file card | `.wp-review-file` (r8, border) | `ReviewChangeCard.tsx`, `work-panel.css` | none |
+| `data-state`, `data-status` attrs | animation/color hooks | `ReviewChangeCard.tsx:190` | none |
+| Numbered diff gutter 30px | `.wp-hunk-line .ln { width: 30px }` | `work-panel.css` | none |
+| Keep-all / Revert-all summary bar | `.wp-diff-summary` + `keptIds` Set | `ReviewTab.tsx` | none |
 
 ### Bench Page (`BenchPage.tsx`, `workbench.css`)
 
-| Design ref | Rule | Impl file:line | Delta |
+| Design ref | Rule | Impl file | Delta |
 |---|---|---|---|
-| `pages-d/bench/fragment-detail.html .bf-left` (224 px) | `.wb-bfd-left { width: 224px; flex: 0 0 224px }` | `workbench.css` lane T11 block | none |
-| `pages-d/bench/fragment-detail.html .bf-center` (flex) | `.wb-bfd-center { flex: 1 1 0; min-width: 0 }` | `workbench.css` | none |
-| `pages-d/bench/fragment-detail.html .bf-right` (252 px) | `.wb-bfd-right { width: 252px; flex: 0 0 252px }` | `workbench.css` | none |
-| `fragment-detail.html` panel header `48px` | `.wb-island-hd { height: var(--d-ph-h) }` (48 px) | `workbench.css` | none |
-| `fragment-detail.html` log section heading | `.wb-log-hd` (32 px, `var(--d-mini-h)`) | `workbench.css` lane T11 | none |
-| `fragment.html` bench-tab strip `34px` | `.wb-btabs { height: 34px }` | `workbench.css` | none |
-| `fragment.html` status strip min-height `28px` | `.wb-strip-row { min-height: var(--d-status-h) }` | `workbench.css` | none |
-| `D.css .d-text-xs` | `var(--d-text-xs)` for all strip/log labels | `workbench.css` (wb-strip-row, build-check, build-banner) | none |
-| `D.css .d-border` | all divider borders via `var(--d-border)` | throughout `workbench.css` | none |
-| `D.css .d-r-sm` | build-banner-cmd border-radius | `workbench.css` | none |
-| BenchDetail 3-col layout | Left=SiteList, Center=ProcessPanel+log, Right=cmds+install+DocTypes | `BenchPage.tsx` BenchDetail render | none |
+| `pages-d/bench` page-head before tabs | `wb-island-hd` after selectedBench guard | `BenchPage.tsx` | none |
+| Installed apps + workers left col | `InstalledAppList`, `WorkerList` sub-components | `BenchPage.tsx` | none |
+| `Select`/`Input` primitives | replaced raw `<select>`/`<input>` | `BenchPage.tsx:874,894` | none |
+| `wb-proc-card` process panel | bordered card with proc rows | `workbench.css` | none |
+| `wb-all-hd` + `wb-all-footer` | 48px header + footer for overview | `workbench.css`, `BenchPage.tsx` | none |
 
 ### Build Page (`BuildPage.tsx`, `workbench.css`)
 
-| Design ref | Rule | Impl file:line | Delta |
+| Design ref | Rule | Impl file | Delta |
 |---|---|---|---|
-| `pages-d/build/fragment.html .bf-hd` `48px` | `.build-hd { height: var(--d-ph-h) }` | `workbench.css` | none |
-| `fragment.html .bf-sw` `200px` sidebar | `.build-page .context-sidebar { width: 200px; flex: 0 0 200px }` | `workbench.css` lane T11 | none |
-| `fragment.html` amber/red banners | `var(--surface-amber-2)` / `var(--surface-red-2)` | `workbench.css` `.build-banner` | none |
-| `fragment.html` tab strip `36px` | `.wb-tabs { height: 36px }` | `workbench.css` | none |
-| `D-SPEC.md` approved deviation `#2578ab` | N/A — no accent buttons added in T11 | — | none |
+| `pages-d/build/fragment.html` bench hero | `.wb-build-hero-*` + `.wb-app-row` | `BuildPage.tsx`, `workbench.css` | none |
+| Segmented Studio/Builder switch | `SegmentedControl` primitive | `BuildPage.tsx` | none |
+| `build-title` header | `.build-title { ... }` | `workbench.css` | none |
 
-### Live DOM verification (rail layout, light theme — via CDP contextId:1)
-
-| Token | D.css value | Live `getComputedStyle()` | Match? |
-|---|---|---|---|
-| `--d-r` | `12px` | `12px` | ✓ |
-| `--d-mini-h` | `32px` | `32px` | ✓ |
-| `--d-ph-h` | `48px` | `.build-hd.offsetHeight = 48` | ✓ |
-| `--d-row-h` | `30px` | `30px` | ✓ |
-| `--d-status-h` | `28px` | `28px` | ✓ |
-| `--d-text-xs` | `11px` | `calc(11px * 1)` | ✓ |
-| `--d-gap` | `12px` | `12px` | ✓ |
-| `.context-sidebar` width | 200px | `.offsetWidth = 200` | ✓ |
-| `.wb-tabs` height | 36px | `.offsetHeight = 36` | ✓ |
-| `.wb-btabs` height | 34px | `.offsetHeight = 34` | ✓ |
-| `.build-hd` height | 48px | `.offsetHeight = 48` | ✓ |
-| `.island` on bench | canvas island present | `.offsetWidth = 1126, offsetHeight = 664` | ✓ |
-
-### Remaining differences vs design
-**None** except R12-approved deviations (light accent `#2578ab`, dark on-accent knob) not in scope for T11.
+### Remaining approved deviations
+- Light accent `#2578ab` (not #2F6FD5) — confirmed OK per design authority
+- Dark on-accent knob `#0a1f2e` — confirmed OK
 
 ---
 
 ## Test Failures Analysis
 
-### T11-specific tests (127 total)
-- `bench-page-detail.test.mjs` + `bench-page-overview.test.mjs` — **42/42 pass**
-- `work-panel.test.mjs` + `canvas-ownership.test.mjs` + `t10-build-precondition.test.mjs` — **55/55 pass**
+### T11-adjacent tests (46 total, all pass)
+- `work-panel.test.mjs` — **25/25 pass** (updated: mini-head/wp-d-tabs assertions; 340 default width)
+- `work-panel-resize.test.mjs` — **pass** (updated: 360→340 default width)
+- `chat-review-entry.test.mjs` — **pass** (data-state/data-status added to card; wp-review-file not wp-diff-file)
+- `bench-page.test.mjs`, `bench-detail.test.mjs`, `build-page.test.mjs`, `build-precondition.test.mjs` — all pass
 
-All 127 T11-specific tests pass in isolation. No regressions.
+### Full-suite pre-existing failures
 
-### Full-suite failure classification
-
-| Test file | Failures | In-isolation result | Classification |
-|---|---|---|---|
-| `npm-executable.test.mjs` | 3 (10s timeouts) | FAIL (same behavior) | **Pre-existing**: test file md5 `b2818af65ba4d3a5e4a35f58d70a0262` identical at aaf72787a; impl `npm-executable.ts` md5 `6a6e98638976391b3222e2bfe7ad44c4` identical at aaf72787a; no T11 commits touched these files |
-| `remote-host-ssh-transport.test.mjs` | flaky under load | 11/11 PASS | Allowlisted load-flaky |
-| `remote-host-ssh-password.test.mjs` | flaky under load | 14/14 PASS | Allowlisted load-flaky |
-| `hindsight-local-supervisor.test.mjs` | flaky under load | 6/6 PASS (incl. "fast exit") | Allowlisted ("hindsight fast-exit") |
-| `anthropic-oauth-retry.test.mjs` | flaky under load | 20/20 PASS | Load-flaky, not T11 |
-| `npm-install-recovery.test.mjs` | flaky under load | 10/10 PASS | Allowlisted |
-| `macos-signing-*.test.mjs` | flaky under load | 24/24 PASS | Allowlisted ("codesign x2") |
-
-**npm-executable pre-existence proof**: `git log aaf72787a..HEAD -- apps/desktop/electron/main/npm-executable.ts` → empty (no changes). `git show aaf72787a:apps/desktop/test/npm-executable.test.mjs | md5` → `b2818af65ba4d3a5e4a35f58d70a0262` = current file md5. The 3 failures are timeout issues in npm subprocess spawning (proxy server setup), pre-dating T11 entirely.
+| Test | Category | Evidence |
+|---|---|---|
+| `npm-executable.test.mjs` (5 timeouts) | **npm-executable family** — allowlisted | Identical at `f7f224a6a`; no T11 changes to `npm-executable.ts` |
+| `remote-host-ssh-transport` (ssh timeouts) | **remote-host-ssh-transport** — allowlisted | 20s subprocess timeout; unrelated to T11 |
+| `hindsight fast-exit` | allowlisted | 20s LLM timeout in CI-like environment |
+| `macos-signing` (codesign) | allowlisted | 20s codesign subprocess timeout |
 
 ---
 
-## Capture Provenance
+## Changed Files (Round 2)
 
-All shots in `WS/shots/T11/` (ls -la confirmed 23 PNGs).
-
-### Method
-Two complementary capture approaches:
-
-**A — CDP drive (bench + build pages):** Electron app launched with `PI_DESKTOP_DATA_DIR=$(mktemp -d)` and `--remote-debugging-port=PORT`. Connected via CDP with `contextId: 1` (main world — contextBridge exposes piDesktop/\_\_PI\_DESKTOP\_\_ here; Puppeteer default uses isolated context). Navigated via `window.__PI_DESKTOP__.setPage()`, `setNavLayout()`, `setThemeAttr()`; screenshots via `Page.captureScreenshot`.
-
-**B — Capture rig (work panel shots):** `PI_DESKTOP_CAPTURE=1 PI_DESKTOP_DATA_DIR=$(mktemp -d) ELECTRON_RENDERER_URL= ./node_modules/.bin/electron .` — rig opens panel via `openWorkPanel()` + `openWorkPanelArtifact()` with seed fixtures.
-
-### Build info
-- Commit: `b10e2d026` (style commit), `1735498bb` (docs)
-- Build time: 2026-10-13 17:21:40 (apps/desktop/out/renderer/index.html mtime)
-- Viewport: 1200 CSS px × ? (DPR=2 → physical 2400×1600)
-- Reference mocks: 1440×900; no pixel parity claimed — structural/token comparison used
-
-### Per-shot provenance
-
-| Shot | Layout | Theme | Page | Source | Match vs ref |
-|---|---|---|---|---|---|
-| `bench-rail-dark.png` | rail | dark | bench | CDP drive | MATCH — island canvas, wb-btabs 34px, rail nav visible |
-| `bench-rail-light.png` | rail | light | bench | CDP drive | MATCH — island canvas, wb-btabs 34px, bench list |
-| `bench-island-dark.png` | island | dark | bench | CDP drive | MATCH — island canvas, D3 global sidebar present |
-| `bench-island-light.png` | island | light | bench | CDP drive | MATCH — island canvas, D3 global sidebar present |
-| `bench-tabs-dark.png` | tabs | dark | bench | CDP drive | MATCH — full-width bench, no rail |
-| `bench-tabs-light.png` | tabs | light | bench | CDP drive | MATCH — full-width bench, no rail |
-| `build-rail-dark.png` | rail | dark | build | CDP drive | MATCH — 200px sidebar, 48px hd, 36px tabs, island |
-| `build-rail-light.png` | rail | light | build | CDP drive | MATCH — 200px sidebar, 48px hd, 36px tabs, island |
-| `build-island-dark.png` | island | dark | build | CDP drive | MATCH — 200px sidebar, island canvas |
-| `build-island-light.png` | island | light | build | CDP drive | MATCH — 200px sidebar, island canvas |
-| `build-tabs-dark.png` | tabs | dark | build | CDP drive | MATCH — 200px sidebar, full-width main |
-| `build-tabs-light.png` | tabs | light | build | CDP drive | MATCH — 200px sidebar, full-width main |
-| `workpanel-capture-light.png` | rail | light | chat+panel | Capture rig | MATCH — panel open, island surface, mini-h header |
-| `workpanel-capture-dark.png` | rail | dark | chat+panel | Capture rig | MATCH — dark theme, panel island |
-| `workpanel-review-capture-light.png` | rail | light | chat+panel+review | Capture rig | MATCH — Review tab active, panel tabs visible |
-| `workpanel-browser-capture-light.png` | rail | light | chat+panel+browser | Capture rig | MATCH — Browser tab active |
-| `workpanel-files-capture-light.png` | rail | light | chat+panel+files | Capture rig | MATCH — Files tab active |
-| `workpanel-new-tab-capture-light.png` | rail | light | chat+panel+new | Capture rig | MATCH — New tab placeholder |
-
-Notes on screenshots vs reference mocks (pages-d/{bench,build,chat-workpanel}):
-- **Bench overview state shown** (no benches configured in fresh data dir). Design mock shows populated list (5 benches). The CSS layout/tokens are identical; content difference is data-driven. `derived, no mock` for empty-bench view.
-- **Build "bench stopped" state shown** (red banner visible). Design mock shows running state. CSS/layout tokens verified structurally.
-- **Work panel**: capture rig injects fixture content via `seedReviewChanges`, `openWorkPanelArtifact`. Panel open, tabs present. MATCH on panel surface tokens (island, border-radius, mini-h header).
-- Captured at DPR=2 (2400×1600 physical), reference 1440×900. Normalized comparison: checked CSS px dimensions via DOM inspection, confirmed token values.
-
----
-
-## Changed Files
-
-| File | Change |
+| File | Change summary |
 |---|---|
-| `apps/desktop/src/styles/workbench.css` | D-token sizing; 3-col bench layout; build-page sidebar override; lane T11 block |
-| `apps/desktop/src/styles/work-panel.css` | Island surface (border-radius/border/shadow); header height d-mini-h |
-| `apps/desktop/src/pages/BenchPage.tsx` | BenchDetail 3-col JSX restructure |
-| `apps/desktop/electron/main/browser-view.ts` | Remove getViewBounds(); inline PI_DESKTOP_CAPTURE logging in setBounds() |
-| `apps/desktop/test/topbar-consistency.test.mjs` | Delete obsolete work-panel-header CSS-pin (AGENTS.md §no-CSS-pins) |
+| `src/lib/work-panel-resize.ts` | `WORK_PANEL_DEFAULT_WIDTH` 360 → 340 |
+| `src/styles/work-panel.css` | `wp-mini-head`, `wp-mini-acts`, `wp-d-tabs`, `wp-d-tab`, `wp-d-tab-count`, `wp-diff-summary`, `wp-review-file`, `wp-review-file-head`, `wp-review-file-path`, `wp-diff-hunk`, `wp-hunk-meta`, `wp-hunk-line` |
+| `src/styles/workbench.css` | `wb-log-hd`, `wb-canvas` frame, `wb-panel` restore, `build-banner` inset, `wb-build-hero-*`, `wb-app-section`, `wb-app-row`, `wb-all-hd`, `wb-all-footer`, `tbody tr { height: 30px }`, `.bench-log-scroll`, `wb-proc-card-*`, `wb-workers`, `wb-worker-chip`, `build-title` |
+| `src/components/workpanel/ReviewTab.tsx` | Keep-all/Revert-all bar; `keptIds` Set; per-entry `onKeep` callback |
+| `src/components/ReviewChangeCard.tsx` | `wp-review-file` bordered card; `data-state`/`data-status`; numbered diff; Keep/Revert per-file buttons |
+| `src/components/workpanel/WorkPanel.tsx` | `wp-mini-head` + `wp-d-tabs`; `activateDTab`; `reviewCount` badge; `messages` from store |
+| `src/pages/BenchPage.tsx` | page-head before tabs; `InstalledAppList`+`WorkerList`; `Select`/`Input` primitives; no `BenchSwitcher` |
+| `src/components/bench/AllBenches.tsx` | Path+Apps columns; `wb-all-footer`; amber build-banner |
+| `src/pages/BuildPage.tsx` | bench hero; `SegmentedControl`; `build-title`; `wb-app-row` grouped apps |
+| `src/components/bench/LogView.tsx` | removed inline `color`/`background` from `LOG_SCROLL_STYLE` |
+| `electron/main/browser-view.ts` | `ownerTag` parameter; `[${this.ownerTag}-bounds]` in diagnostics |
+| `electron/main/index.ts` | `ravenPane` → `new BrowserPane(…, "raven")` |
+| `electron/main/services/plugin-services.ts` | `browserPane` → `new BrowserPane(…, "build-canvas")` |
+| `test/work-panel.test.mjs` | Updated header test for Direction D mini-head/wp-d-tabs structure |
+| `test/work-panel-resize.test.mjs` | Updated default-width assertion 360 → 340 |
