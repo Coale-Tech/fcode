@@ -21,7 +21,7 @@
   position: absolute;
   inset-inline: 0;
   bottom: 0;
-  padding: var(--d-composer-outer-pt) var(--d-composer-outer-px) 16px; /* D: 9px top, 14px sides, 16px bottom scroll reserve */
+  padding: 0 24px 16px; /* matches .home-composer-wrap (shared width envelope); 16px = scroll reserve */
   border-top: 1px solid var(--ds-border-default); /* D: full-width separator spanning panel */
   background: var(--ds-bg-primary);
 }
