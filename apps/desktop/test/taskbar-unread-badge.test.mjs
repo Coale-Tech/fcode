@@ -397,7 +397,7 @@ test("badge source has no image.resize and imports the Canvas renderer", () => {
   assert.match(source, /buildTaskbarUnreadOverlayPng/);
 });
 
-test("D295 inbox still counts failures only while shell uses full unreadCount", () => {
+test("R11g inbox includes all notification kinds; shell uses host unreadCount", () => {
   const rows = [
     {
       id: "c1",
@@ -427,11 +427,12 @@ test("D295 inbox still counts failures only while shell uses full unreadCount", 
       readAt: null,
     },
   ];
+  // R11g: inbox shows all kinds (completed + failed), unlike D295 popover
   assert.deepEqual(
     inboxNotifications(rows).map((row) => row.id),
-    ["f1"],
+    ["c1", "f1", "c2"],
   );
-  assert.equal(inboxUnreadCount(rows), 1);
-  // Shell badge path reads host unreadCount (completed + failed) — 3 here.
+  assert.equal(inboxUnreadCount(rows), 3);
+  // Shell badge path still reads host unreadCount (completed + failed) — 3 here.
   assert.equal(rows.filter((row) => row.readAt == null).length, 3);
 });

@@ -340,11 +340,13 @@ test("source uses a Segoe UI Canvas path for smooth Windows badge glyphs", () =>
   assert.match(overlaySource, /failures only|failure-only|failures-only/i);
 });
 
-test("documents the D295 bell vs shell-badge count split", () => {
+test("documents the R11g inbox design: all kinds visible, shell badge unchanged", () => {
   const inboxSource = readFileSync(
     join(root, "src/lib/notification-inbox.ts"),
     "utf8",
   );
-  assert.match(inboxSource, /task\.completed/);
-  assert.match(inboxSource, /notification\.kind !== "task\.completed"/);
+  // R11g: inbox shows all notification kinds (task.completed included)
+  assert.match(inboxSource, /R11g|all notification kinds/i);
+  // Old D295 filter removed — no kind-filter on inbox
+  assert.doesNotMatch(inboxSource, /notification\.kind !== "task\.completed"/);
 });
