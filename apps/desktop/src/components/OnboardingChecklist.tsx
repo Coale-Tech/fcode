@@ -67,7 +67,7 @@ export function OnboardingChecklist() {
   const totalSteps = 4;
 
   return (
-    <div className="ob-wrap" data-testid="onboarding-checklist">
+    <div className="ob-wrap home-onboarding-checklist" data-testid="onboarding-checklist">
       <div className="ob-card">
 
         {/* Card header */}

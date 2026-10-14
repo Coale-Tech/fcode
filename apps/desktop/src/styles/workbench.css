@@ -1210,7 +1210,8 @@
 .d-btn.sm.icon-btn { width: 24px; }
 
 /* Raven page wrap: flex column for head + surface hole */
-.raven-page-wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+/* padding-top clears the absolutely-positioned main-titlebar drag band (48px) */
+.raven-page-wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; padding-top: var(--ds-toolbar-height); }
 /* Raven mono URL chip (raven/fragment.html) */
 .raven-url-chip {
   font-size: 11px;
@@ -1222,9 +1223,32 @@
   padding: 2px 7px;
   flex-shrink: 0;
 }
+/* Raven disconnected / sign-in card (raven/fragment-disconnected.html) */
+.rv-disconnected {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.rv-signin-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: 320px;
+  text-align: center;
+}
+.rv-signin-icon { color: var(--ink-gray-4); }
+.rv-signin-title { font-size: 14px; font-weight: 600; color: var(--ink-gray-9); margin: 0; }
+.rv-signin-url  { font-size: 12px; font-family: ui-monospace, monospace; color: var(--ink-gray-5); margin: 0; }
+.rv-signin-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+/* Raven connected embed surface */
+.rv-embed { flex: 1; min-height: 0; background: var(--surface-gray-2); }
+
 
 /* FileBird page wrap: flex column for head + surface hole */
-.filebird-page-wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.filebird-page-wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; padding-top: var(--ds-toolbar-height); }
 /* FileBird kebab dropdown */
 .fb-kebab-menu {
   min-width: 160px;

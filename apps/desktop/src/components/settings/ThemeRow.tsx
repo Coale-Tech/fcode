@@ -132,7 +132,7 @@ export function ThemeRow({
     >
       {/* D design: d-seg for the 3 built-in options */}
       <div className="d-seg" role="group" aria-label={t("settings.theme")}>
-        {BUILTIN_THEME_PREFERENCES.map((id) => (
+        {(["light", "dark", "system"] as const).map((id) => (
           <button
             key={id}
             type="button"

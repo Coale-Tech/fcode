@@ -329,7 +329,7 @@
   flex: 1;
   overflow: hidden;
   padding: 0;
-  background: var(--surface-base);
+  background: var(--ds-bg-primary);
   display: flex;
   flex-direction: column;
 }
@@ -343,7 +343,7 @@
   flex-direction: column;
   gap: 8px;
   min-height: 0;
-  width: auto;
+  width: 100%;
   margin: 0;
 }
 

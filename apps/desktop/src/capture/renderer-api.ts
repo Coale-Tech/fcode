@@ -28,6 +28,7 @@ export type RendererApi = {
   selectSession: (id: string) => Promise<void>;
   setSettingsTab: (tab: AppState["settingsTab"]) => void;
   setThemeAttr: (theme: "light" | "dark") => void;
+  setTheme: (theme: "light" | "dark" | "system") => void;
   setNavLayout: (layout: NavLayout) => void;
   clearProject: () => Promise<void>;
   showToast: (message: string, opts?: ToastOptions) => void;
@@ -101,6 +102,11 @@ export function installRendererApi(): () => void {
     setSettingsTab: (tab) => useAppStore.getState().setSettingsTab(tab),
     setThemeAttr: (theme) => {
       document.documentElement.dataset.theme = theme;
+    },
+    setTheme: (theme) => {
+      const s = useAppStore.getState().settings;
+      if (s) useAppStore.setState({ settings: { ...s, theme } });
+      if (theme !== "system") document.documentElement.dataset.theme = theme;
     },
     setNavLayout: (layout) => {
       // C02: update the settings store so useAppShellRuntime reads the correct

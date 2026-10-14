@@ -158,6 +158,8 @@
   --ds-sidebar-glass-tint:         color-mix(in oklab, var(--ds-bg-sidebar) 40%, transparent);
   --ds-sidebar-glass-sheen-top:    color-mix(in oklab, var(--white) 7%, transparent);
   --ds-sidebar-glass-sheen-bottom: color-mix(in oklab, var(--white) 4%, transparent);
+  /* T13 approved deviation: dark on-accent text = very dark navy (task-13-brief.md) */
+  --da-txt: #0a1f2e;
 }
 
 /* Light theme: blue ramp + switch tokens (each appears exactly once per theme) */
