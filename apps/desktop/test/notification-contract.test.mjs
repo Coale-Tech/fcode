@@ -65,7 +65,7 @@ test("terminal notifications flow from host completion to the renderer", () => {
   assert.match(storeSource, /receiveNotification:/);
   assert.match(storeSource, /unreadNotificationCount/);
   assert.match(appSource, /api\.onNotificationChanged/);
-  assert.match(railSource, /<NotificationCenter \/>/);
+  assert.match(railSource, /<NotificationCenter[\s/>]/);
   assert.doesNotMatch(appSource, /<NotificationCenter \/>/);
   const changedHandler = appSource.match(
     /api\.onNotificationChanged[\s\S]*?\n\s*\}\);/,
