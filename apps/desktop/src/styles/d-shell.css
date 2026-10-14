@@ -224,9 +224,10 @@
   justify-content: flex-start;                  /* icon left, label follows */
   gap: var(--d-rail-item-gap);                  /* 2px (D.css:413) */
 }
-/* When expanded, align toggle to the left edge */
-:root[data-nav-layout="rail"] .nav-rail.expanded .nav-rail-foot {
-  justify-content: flex-start;
+/* Notification-center wrapper is layout-transparent so the trigger button
+ * is a direct flex child of the footer and gets stretch sizing like scroll items. */
+.nav-rail-foot .notification-center {
+  display: contents;
 }
 
 /* ── D2 canvas island (D.css:451-461, D.css:464-481) ── */
@@ -254,17 +255,20 @@
 }
 
 /* ── D2 rail footer: notification+settings+toggle (D.css:432-449) ── */
+/* align-items:stretch puts footer items on the same full-width left-start grid
+ * as scroll items (D.css:432-435 reuses .d-rail-item with margin:1px 6px). */
 .nav-rail-foot {
   padding: var(--d-rail-item-mx);
   border-top: 1px solid var(--d-border);
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: var(--d-rail-item-gap);                  /* 2px between footer items */
 }
 .nav-rail-toggle {
   width: var(--d-ctrl);                         /* 28px (D.css:438) */
   height: var(--d-ctrl);
+  align-self: center;                           /* keep toggle centered; explicit width won't stretch */
   border-radius: var(--d-r-sm);
   border: none;
   background: transparent;

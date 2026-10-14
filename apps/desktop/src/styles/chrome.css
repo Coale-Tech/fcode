@@ -1333,9 +1333,9 @@
 
 .nav-rail-btn .memory-status-dot-rail {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  border: 1.5px solid var(--ds-bg-sidebar, var(--ds-bg-primary));
+  top: var(--d-rail-dot-inset);      /* D.css: inset from button corner */
+  right: var(--d-rail-dot-inset);
+  border: 1.5px solid var(--ds-bg-sidebar, var(--ds-bg-primary));  /* hairline (≤2px) */
 }
 
 .context-sidebar {

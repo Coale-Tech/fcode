@@ -36,6 +36,7 @@
   --d-rail-item-gap: 2px;          /* expanded icon→label gap (D.css:413) */
   --d-rail-divider-gap: 4px;       /* divider vertical margin (D.css:364) */
   --d-rail-label-max: 160px;       /* expanded label max-width (D.css:413) */
+  --d-rail-dot-inset: 4px;          /* memory-status dot top/right offset inside the button */
   --d-ctrl: 28px;
   --d-ctrl-lg: 32px;
   --d-row-h: 30px;

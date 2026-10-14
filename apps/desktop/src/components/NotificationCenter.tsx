@@ -248,7 +248,7 @@ export function NotificationCenter({
         }}
       >
         {navRailLabel
-          ? <span className="nav-rail-icon"><IconBell size={14} aria-hidden /></span>
+          ? <span className="nav-rail-icon"><IconBell size={16} aria-hidden /></span>
           : <IconBell size={14} aria-hidden />}
         {navRailLabel && <span className="nav-rail-label">{navRailLabel}</span>}
         {unreadCount > 0 ? (
