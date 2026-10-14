@@ -26,6 +26,8 @@ import { PortalVisibilityProvider } from "../../lib/portal-visibility";
 import { CollapsedTitlebarActions, RoutePending } from "./chrome";
 import { useAppShellRuntime } from "./useAppShellRuntime";
 import { useMemoryHealthPoller } from "../../hooks/use-memory-health-poller";
+import { useAppStore } from "../../stores/app-store";
+import { resolveNavLayout } from "../../lib/nav-layout";
 
 const SettingsPage = lazy(() =>
   import("../../pages/SettingsPage").then((module) => ({
@@ -118,6 +120,7 @@ export function AppShell() {
   } = useAppShellRuntime();
   useCopyTex();
   useMemoryHealthPoller();
+  const navLayout = resolveNavLayout(useAppStore((s) => s.settings?.navLayout));
 
   // A boot that never reaches the shell gets a surface it can act on instead of
   // a window that only knows how to wait (issue #831). Rendered as a direct child
@@ -151,7 +154,7 @@ export function AppShell() {
             inert={page === "settings" ? true : undefined}
             aria-hidden={page === "settings" ? true : undefined}
           >
-            <NavRail onExpandChange={onRailExpandChange} />
+            {navLayout !== "tabs" && <NavRail onExpandChange={onRailExpandChange} />}
             {!workbench && (!sidebarCollapsed || sidebarExiting) ? (
               <Sidebar
                 className={cx(sidebarEntering && "is-entering", sidebarExiting && "is-exiting")}

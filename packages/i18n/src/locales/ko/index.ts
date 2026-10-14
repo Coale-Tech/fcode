@@ -147,6 +147,7 @@ export const ko = {
     awesomebar: "세션, 파일, 명령 검색…",
     expandRail: "탐색 확장",
     collapseRail: "탐색 축소",
+    more: "더 보기",
     temporarySessions: "임시 대화",
     newTemporarySession: "새 임시 채팅",
     noProjectSessions: "이 프로젝트에 채팅이 아직 없습니다",

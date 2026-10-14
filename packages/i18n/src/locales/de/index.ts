@@ -138,6 +138,7 @@ export const de = {
     "awesomebar": "Sitzungen, Dateien, Befehle suchen…",
     "expandRail": "Navigation erweitern",
     "collapseRail": "Navigation reduzieren",
+    "more": "Weitere Seiten",
     "temporarySessions": "Temporäre Chats",
     "newTemporarySession": "Neuer temporärer Chat",
     "noProjectSessions": "Nr Chats in diesem Projekt bisher",

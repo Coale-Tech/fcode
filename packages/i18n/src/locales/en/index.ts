@@ -145,6 +145,7 @@ export const en = {
     awesomebar: "Search sessions, files, commands…",
     expandRail: "Expand navigation",
     collapseRail: "Collapse navigation",
+    more: "More pages",
     temporarySessions: "Temporary chats",
     newTemporarySession: "New temporary chat",
     noProjectSessions: "No chats in this project yet",

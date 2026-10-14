@@ -200,6 +200,70 @@
   left: var(--ds-sidebar-width);
 }
 
+/* ── D1 Tabs layout: pill strip ──────────────────────────────────────
+ * Design source: D.css:146-178 (.d-nav-tabs / .d-tab)
+ * Three primary tabs (Chat/Build/Bench) + ··· overflow (R11b).
+ * Icon nav rail is hidden via conditional render in AppShell (navLayout !== 'tabs'). */
+.nav-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-left: 8px;                /* D.css:153 margin-left:8px */
+  min-width: 0;
+  overflow: hidden;
+}
+/* D.css:156-174 .d-tab */
+.nav-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--d-ctrl);           /* 28px — D.css:163 */
+  padding: 0 11px;                 /* D.css:164, pill side padding */
+  border-radius: var(--radius-full); /* pill shape — D.css:162 */
+  font-size: var(--d-text);        /* D.css:165 */
+  font-weight: 500;                /* D.css:166 */
+  color: var(--ink-gray-6);        /* D.css:167 */
+  white-space: nowrap;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.nav-tab:hover {
+  background: var(--surface-gray-2); /* D.css:173 */
+  color: var(--ink-gray-8);
+}
+/* Active: accent tint bg + accent ink (D.css:175 .d-tab.active) */
+.nav-tab.active {
+  background: var(--da-sub);       /* var(--surface-violet-2) ≈ #E4F2FB */
+  color: var(--da-txt);            /* var(--ink-violet-8)  ≈ #165A88 */
+  font-weight: 600;
+}
+/* Overflow "···" button — D.css:177 .d-tab-more */
+.nav-tab-more { font-size: 16px; letter-spacing: .05em; padding: 0 8px; }
+/* Label: truncate at 12ch on narrow windows; hidden <1100px (brief §CSS) */
+.nav-tab-label { overflow: hidden; text-overflow: ellipsis; max-width: 12ch; }
+@media (max-width: 1100px) { .nav-tab-label { display: none; } }
+
+/* Navbar icon button (Notifications / Settings in tabs right cluster)
+ * D.css:247-261 .d-nav-icon-btn */
+.shell-navbar-icon-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--d-r-ctrl);
+  border: none;
+  background: transparent;
+  color: var(--ink-gray-6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.shell-navbar-icon-btn:hover { background: var(--surface-gray-2); color: var(--ink-gray-8); }
+
 /* ── D2 rail: labels hidden/animated in collapsed rail mode (D.css:404-414) ── */
 /* opacity/max-width transition matches D.css for smooth expand animation. */
 :root[data-nav-layout="rail"] .nav-rail-label {

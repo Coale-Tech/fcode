@@ -138,6 +138,7 @@ export const fr = {
     "awesomebar": "Rechercher sessions, fichiers, commandes…",
     "expandRail": "Développer la navigation",
     "collapseRail": "Réduire la navigation",
+    "more": "Plus de pages",
     "temporarySessions": "Chats temporaires",
     "newTemporarySession": "Nouveau chat temporaire",
     "noProjectSessions": "Aucun chat dans ce domaine projet pour l'instant",

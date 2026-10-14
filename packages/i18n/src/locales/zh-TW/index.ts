@@ -140,6 +140,7 @@ export const zhTW = {
     awesomebar: "搜尋工作階段、檔案、指令…",
     expandRail: "展開導覽",
     collapseRail: "收合導覽",
+    more: "更多頁面",
     temporarySessions: "臨時對話",
     newTemporarySession: "新建臨時對話",
     noProjectSessions: "當前專案還沒有對話",

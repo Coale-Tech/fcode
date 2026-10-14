@@ -140,6 +140,7 @@ export const zhCN = {
     awesomebar: "搜索会话、文件、命令…",
     expandRail: "展开导航",
     collapseRail: "收起导航",
+    more: "更多页面",
     temporarySessions: "临时对话",
     newTemporarySession: "新建临时对话",
     noProjectSessions: "当前项目还没有对话",

@@ -147,6 +147,7 @@ export const tr = {
     awesomebar: "Oturum, dosya, komut ara…",
     expandRail: "Gezintiyi genişlet",
     collapseRail: "Gezintiyi daralt",
+    more: "Daha fazla sayfa",
     temporarySessions: "Geçici sohbetler",
     newTemporarySession: "Yeni geçici sohbet",
     noProjectSessions: "Bu projede henüz sohbet yok",

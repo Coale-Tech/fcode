@@ -137,6 +137,7 @@ export const ptBR = {
     awesomebar: "Pesquisar sessões, arquivos, comandos…",
     expandRail: "Expandir navegação",
     collapseRail: "Recolher navegação",
+    more: "Mais páginas",
     temporarySessions: "Conversas temporárias",
     newTemporarySession: "Nova conversa temporária",
     noProjectSessions: "Nenhuma conversa neste projeto ainda",

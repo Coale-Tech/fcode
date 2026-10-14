@@ -18,8 +18,10 @@
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "../stores/app-store";
 import { resolveNavLayout } from "../lib/nav-layout";
-import { IconSearch } from "./icons";
+import { IconSearch, IconSettings } from "./icons";
 import { NavTabs } from "./NavTabs";
+import { NotificationCenter } from "./NotificationCenter";
+import { TooltipButton } from "./ui";
 import type { AppState } from "../stores/app-state";
 
 const PAGE_LABEL_KEY: Record<AppState["page"], string> = {
@@ -37,9 +39,10 @@ const PAGE_LABEL_KEY: Record<AppState["page"], string> = {
 
 export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
   const { t } = useTranslation();
-  const layout  = resolveNavLayout(useAppStore((s) => s.settings?.navLayout));
-  const page    = useAppStore((s) => s.page);
-  const isMac   = (window.piDesktop?.platform ?? "darwin") === "darwin";
+  const layout   = resolveNavLayout(useAppStore((s) => s.settings?.navLayout));
+  const page     = useAppStore((s) => s.page);
+  const setPage  = useAppStore((s) => s.setPage);
+  const isMac    = (window.piDesktop?.platform ?? "darwin") === "darwin";
 
   return (
     <header className="shell-navbar drag" data-nav-layout={layout}>
@@ -75,8 +78,25 @@ export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
         </div>
       </button>
 
-      {/* Right end — right cluster (bench chip + bell + gear + avatar) is Task 8 */}
-      <div className="shell-navbar-end" aria-hidden="true" />
+      {/* Right end: Notification + Settings icons in tabs layout (D1-shell.html:119-134).
+          In rail/island layouts these live in the NavRail footer. */}
+      {layout === "tabs" ? (
+        <div className="shell-navbar-end no-drag">
+          <NotificationCenter />
+          <TooltipButton
+            type="button"
+            className="shell-navbar-icon-btn"
+            data-nav="settings"
+            tooltip={t("nav.settings")}
+            ariaLabel={t("nav.settings")}
+            onClick={() => setPage("settings")}
+          >
+            <IconSettings size={16} aria-hidden />
+          </TooltipButton>
+        </div>
+      ) : (
+        <div className="shell-navbar-end" aria-hidden="true" />
+      )}
     </header>
   );
 }

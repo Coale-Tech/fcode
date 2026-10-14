@@ -30,3 +30,8 @@ test("group semantics match D2 scroll structure", () => {
   assert.equal(g("plugins"), "developer");
   assert.equal(g("pulls"), "developer");
 });
+
+test("each destination maps to a distinct page", () => {
+  const pages = navItems({ kanban: true, raven: true }).map((i) => i.page);
+  assert.equal(new Set(pages).size, pages.length);
+});
