@@ -21,9 +21,9 @@
   position: absolute;
   inset-inline: 0;
   bottom: 0;
-  padding: 0 24px 16px;
-  border-top: 1px solid var(--ds-border-default); /* D: full-width separator, R11e */
-  background: transparent;
+  padding: var(--d-composer-outer-pt) var(--d-composer-outer-px) 16px; /* D: 9px top, 14px sides, 16px bottom scroll reserve */
+  border-top: 1px solid var(--ds-border-default); /* D: full-width separator spanning panel */
+  background: var(--ds-bg-primary);
 }
 
 /* Home mode: the shell is owned by the bottom-reserved home composer region. */
@@ -180,22 +180,24 @@
 }
 
 .composer-shell {
-  /* Positioning context for the autocomplete panel (D123–D125, ADR 0024). */
+  /* Positioning context for the autocomplete panel (D123–D125, ADR 0024).
+     D: .d-composer-inner — framed inner box (border+r8, no floating shadow plate). */
   position: relative;
   width: 100%;
-  border-radius: var(--ds-composer-radius, var(--radius-2xl));
-  background: var(--ds-bg-composer);
-  box-shadow: var(--ds-shadow-composer);
+  border: 1px solid var(--d-border-ctrl);     /* D: .d-composer-inner border */
+  border-radius: var(--d-r-ctrl);             /* D: 8px, replaces --ds-composer-radius/radius-2xl */
+  background: var(--ds-bg-elevated-opaque);   /* D: .d-composer-inner surface-elevation-2 */
+  overflow: hidden;
   isolation: isolate;
   transition:
-    background var(--motion-duration-fast) var(--motion-ease-out),
-    box-shadow var(--motion-duration-normal) var(--motion-ease-out),
-    transform var(--motion-duration-normal) var(--motion-ease-out);
+    border-color var(--motion-duration-fast) var(--motion-ease-out),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-out);
 }
 
-/* Focus deepens the lift; the shell never gains a stroke (D297). */
+/* D: accent border + 2px ring on focus (D.css:1471-1473 .d-composer-inner:focus-within) */
 .composer-shell:focus-within {
-  box-shadow: 0 7px 24px color-mix(in oklab, var(--ds-accent) 35%, transparent);
+  border-color: var(--da);
+  box-shadow: 0 0 0 var(--d-focus-ring) var(--da-bdr);
 }
 
 /* Native file-system drops get a target cue without changing shell geometry. */
@@ -289,7 +291,7 @@
 
 .composer-input {
   width: 100%;
-  min-height: 56px; /* D: .d-composer-textarea min-height, R11e */
+  min-height: var(--d-composer-input-min-h); /* D: .d-composer-textarea min-height 56px */
   max-height: 7lh;
   overflow-y: hidden;
   resize: none;
@@ -375,13 +377,16 @@
 }
 
 .composer-toolbar {
+  /* D: .d-composer-foot — divided footer with border-top + inset bg */
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   flex-wrap: nowrap;
   min-width: 0;
-  padding: 4px 8px 8px;
+  padding: 5px 8px;
+  border-top: 1px solid var(--d-border);
+  background: var(--ds-bg-inset);
 }
 
 .composer-left,

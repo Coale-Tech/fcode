@@ -2487,7 +2487,16 @@ sklm: {
       "changes": "Cambios",
       "openReview": "Abrir revisión",
       "empty": "Aún no se ejecutó nada",
-      "session": "Sesión"
+      "session": "Sesión",
+      "todoTab": "Tareas",
+      "timeline": "Historial",
+      "allow": "Permitir",
+      "deny": "Denegar",
+      "recentActivity": "Actividad reciente",
+      "openTodos": "Tareas abiertas",
+      "todoStatusDone": "hecho",
+      "todoStatusAbandoned": "omitido",
+      "todoStatusRunning": "ejecutando",
     }
   },
   "palette": {

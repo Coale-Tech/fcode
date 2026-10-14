@@ -2365,6 +2365,19 @@
   width: 100%;
   min-width: 0;
   margin: 3px 0;
+  position: relative; /* F05: connector positioning context */
+}
+
+/* F05: vertical connector line between consecutive tool nodes (D.css .d-tool-node::before) */
+.tool-row + .tool-row .tool-row-header::before {
+  content: "";
+  position: absolute;
+  left: var(--d-tool-conn-left); /* 14px = node-size/2 - 1px */
+  top: -9px;
+  width: 2px;
+  height: 9px;
+  background: var(--d-border-ctrl);
+  pointer-events: none;
 }
 
 .tool-row-header {
@@ -2380,6 +2393,7 @@
   color: var(--ds-text-secondary);
   font-size: var(--text-sm-plus);
   text-align: left;
+  position: relative; /* F05: needed for ::before connector */
 }
 
 .tool-row-header:disabled {
@@ -2597,6 +2611,15 @@
   transform: rotate(90deg);
 }
 
+/* F05: name+path column wrapper (D: .d-tool-info) */
+.tool-row-label {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  gap: 1px;
+}
+
 .tool-row-name {
   flex: none;
   font-weight: var(--font-weight-medium);
@@ -2625,13 +2648,13 @@
 }
 
 .tool-row-summary {
-  flex: 1;
+  /* Now inside .tool-row-label column — fills its row, no longer the h-stretch item */
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: var(--font-mono);
-  font-size: var(--d-text-xs); /* D: .d-tool-sub 11px mono path */
+  font-size: var(--d-text-sm); /* D: .d-tool-sub 12px mono path */
   color: var(--ds-text-muted);
 }
 

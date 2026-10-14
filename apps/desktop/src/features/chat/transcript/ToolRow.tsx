@@ -445,16 +445,42 @@ export const ToolRow = memo(function ToolRow({
             >
               <ToolActionIcon action={action} />
             </span>
-            <span
-              className={`tool-row-name ${status === "running" ? "running" : ""}`}
-            >
-              {lifecycle
-                ? t(
-                    (status === "running"
-                      ? LIFECYCLE_RUNNING_KEYS
-                      : LIFECYCLE_LABEL_KEYS)[lifecycle],
-                  )
-                : actionLabel}
+            {/* F05: tool-row-label stacks name and path in a column (D: .d-tool-info) */}
+            <span className="tool-row-label">
+              <span
+                className={`tool-row-name ${status === "running" ? "running" : ""}`}
+              >
+                {lifecycle
+                  ? t(
+                      (status === "running"
+                        ? LIFECYCLE_RUNNING_KEYS
+                        : LIFECYCLE_LABEL_KEYS)[lifecycle],
+                    )
+                  : actionLabel}
+              </span>
+              {summary ? (
+                <span
+                  className={`tool-row-summary${previewTarget ? " linked" : ""}`}
+                  title={
+                    previewTarget
+                      ? previewTarget.kind === "file"
+                        ? t("chat.previewFile")
+                        : t("chat.previewUrl")
+                      : undefined
+                  }
+                  onClick={
+                    previewTarget
+                      ? (e) => {
+                          // Open the preview target instead of toggling details.
+                          e.stopPropagation();
+                          openTarget(previewTarget);
+                        }
+                      : undefined
+                  }
+                >
+                  {summary}
+                </span>
+              ) : null}
             </span>
             {lifecycle && roster.length > 0 ? (
               <span className="tool-row-agent is-count">
@@ -464,29 +490,6 @@ export const ToolRow = memo(function ToolRow({
             {agentName ? (
               <span className="tool-row-agent" title={t("chat.subagentAgent")}>
                 {agentName}
-              </span>
-            ) : null}
-            {summary ? (
-              <span
-                className={`tool-row-summary${previewTarget ? " linked" : ""}`}
-                title={
-                  previewTarget
-                    ? previewTarget.kind === "file"
-                      ? t("chat.previewFile")
-                      : t("chat.previewUrl")
-                    : undefined
-                }
-                onClick={
-                  previewTarget
-                    ? (e) => {
-                        // Open the preview target instead of toggling details.
-                        e.stopPropagation();
-                        openTarget(previewTarget);
-                      }
-                    : undefined
-                }
-              >
-                {summary}
               </span>
             ) : null}
             <ToolChips chips={chips} />

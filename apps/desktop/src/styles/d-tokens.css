@@ -133,6 +133,20 @@
   --d-dialog-body-pad: 16px;  /* dialog-body padding (D.css:1051) */
   --d-dialog-foot-pad: 10px 16px; /* dialog-foot padding (D.css:1059) */
   --d-dialog-foot-gap:  6px;  /* dialog-foot action gap (D.css:1059) */
+  /* T10: chat/composer/activity metric tokens (F06 tokenise) */
+  --d-composer-input-min-h: 56px;   /* D.css:1482 textarea min-height */
+  --d-composer-outer-pt:    9px;    /* D.css:1449 .d-composer padding-top */
+  --d-composer-outer-px:   14px;    /* D.css:1449 .d-composer padding left/right */
+  --d-tool-node-size:  30px;         /* D.css:1383 .d-tool-node w/h */
+  --d-tool-icon-size:  12px;         /* D.css:1396 .d-tool-node svg w/h */
+  --d-tool-conn-left:  14px;         /* D.css:1373 connector: left = node-size/2 */
+  --d-perm-menu-w:    260px;         /* state-perm-menu.html:39 .cf-perm-menu */
+  --d-model-menu-w:   300px;         /* state-model-picker.html:33 .cf-model-menu */
+  --d-chip-h:          24px;         /* state-perm-menu.html:77 .cf-mode-chip h */
+  --d-chip-r:           6px;         /* state-perm-menu.html:78 .cf-mode-chip r */
+  --d-act-lpad:        10px;         /* cf-act-scroll side padding */
+  --d-act-label-pt:     8px;         /* .cf-act-sec padding-top */
+  --d-act-label-pb:     4px;         /* .cf-act-sec padding-bottom */
 }
 
 /* Dark theme: remap violet to FileBird dark blues */

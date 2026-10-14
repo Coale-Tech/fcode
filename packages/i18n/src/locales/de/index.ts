@@ -2487,7 +2487,16 @@ sklm: {
       "changes": "Änderungen",
       "openReview": "Überprüfung öffnen",
       "empty": "Noch nichts ausgeführt",
-      "session": "Sitzung"
+      "session": "Sitzung",
+      "todoTab": "Aufgaben",
+      "timeline": "Verlauf",
+      "allow": "Erlauben",
+      "deny": "Ablehnen",
+      "recentActivity": "Letzte Aktivität",
+      "openTodos": "Offene Aufgaben",
+      "todoStatusDone": "erledigt",
+      "todoStatusAbandoned": "übersprungen",
+      "todoStatusRunning": "läuft",
     }
   },
   "palette": {
