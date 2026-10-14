@@ -20,7 +20,7 @@
   position: fixed;
   inset: 0;
   /* D.css:1159 */
-  background: rgba(0,0,0,.42);
+  background: var(--d-overlay-scrim);
   z-index: 500;
   display: flex;
   align-items: flex-start;
@@ -72,10 +72,10 @@
 }
 .search-input::placeholder { color: var(--ink-gray-4); }
 
-/* D.css:1197: results list 320px max, 4px padding */
+/* fragment.html:55 overrides D.css generic 320px → 440px */
 .search-results {
   min-height: 0;
-  max-height: 320px;
+  max-height: 440px;
   overflow-y: auto;
   padding: 4px;
 }

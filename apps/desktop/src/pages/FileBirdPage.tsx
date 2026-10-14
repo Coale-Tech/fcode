@@ -5,14 +5,18 @@ import { useBlockingOverlayActive } from "../lib/blocking-overlay";
 import { IconFileBird, IconMore } from "../components/icons";
 import { Panel } from "../components/ui";
 
-
 /**
  * FileBird (apps/filebird) in a main-owned `persist:filebird` WebContentsView,
  * the RavenPage pattern: this page renders only the hole, reports its rect and
  * drives visibility; unmounting hides the view so it never covers chat.
  *
  * D design: thin 48px Fcode frame (d-page-head) with title + connection pill +
- * kebab-only (R11j). No reload/external buttons. fragment.html:54-68.
+ * kebab-only (R11j). fragment.html:54-68.
+ *
+ * Status pill: gray "Not connected" while the service is running (FileBird's
+ * internal SFTP state is not observable from this renderer; the design's
+ * green/amber states require FileBird to push status IPC events).
+ * `failed` = service unavailable → show unavailable state.
  */
 export function FileBirdPage({ blocked }: { blocked: boolean }) {
   const { t } = useTranslation();
@@ -23,9 +27,7 @@ export function FileBirdPage({ blocked }: { blocked: boolean }) {
 
   useEffect(() => {
     void api.fileBirdSetVisible(!blocked && !overlayActive).then((r) => setFailed(!r.ok));
-    return () => {
-      void api.fileBirdSetVisible(false);
-    };
+    return () => { void api.fileBirdSetVisible(false); };
   }, [blocked, overlayActive]);
 
   useEffect(() => {
@@ -56,9 +58,11 @@ export function FileBirdPage({ blocked }: { blocked: boolean }) {
         {/* Fcode-owned chrome bar: title + status pill + kebab (fragment.html:55-68) */}
         <div className="d-page-head">
           <span className="d-page-title">{t("fileBird.title")}</span>
-          <span className="d-pill green">
+          {/* Gray "Not connected" — FileBird's SFTP state is unknown from Fcode's renderer.
+              Green/amber states require a fileBirdStatus push event (future work). */}
+          <span className="d-pill gray">
             <span className="d-pill-dot" />
-            {t("fileBird.connected")}
+            {t("fileBird.idle")}
           </span>
           <div className="d-page-head-actions">
             <div className="fb-kebab" style={{ position: "relative" }}>
@@ -66,6 +70,7 @@ export function FileBirdPage({ blocked }: { blocked: boolean }) {
                 type="button"
                 className="d-btn ghost sm icon-btn"
                 title={t("fileBird.moreOptions")}
+                aria-haspopup="true"
                 aria-expanded={kebabOpen}
                 onClick={() => setKebabOpen((o) => !o)}
               >
@@ -76,15 +81,14 @@ export function FileBirdPage({ blocked }: { blocked: boolean }) {
                   className="fb-kebab-menu"
                   role="menu"
                   style={{ position: "absolute", top: "calc(100% + 4px)", right: 0, zIndex: 100 }}
+                  onKeyDown={(e) => { if (e.key === "Escape") setKebabOpen(false); }}
                 >
                   <button
                     type="button"
                     role="menuitem"
                     className="fb-menu-item"
                     onClick={() => {
-                      void api.fileBirdSetVisible(false).then(() =>
-                        api.fileBirdSetVisible(true).then((r) => setFailed(!r.ok))
-                      );
+                      void api.fileBirdReload().catch(() => {});
                       setKebabOpen(false);
                     }}
                   >
@@ -94,7 +98,10 @@ export function FileBirdPage({ blocked }: { blocked: boolean }) {
                     type="button"
                     role="menuitem"
                     className="fb-menu-item"
-                    onClick={() => setKebabOpen(false)}
+                    onClick={() => {
+                      void api.fileBirdOpenWindow().catch(() => {});
+                      setKebabOpen(false);
+                    }}
                   >
                     {t("fileBird.openWindow")}
                   </button>

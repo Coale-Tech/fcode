@@ -240,8 +240,9 @@ export function SettingsPage() {
     const { toolApprovalMode: tam, ...rest } = pendingAiChanges;
     if (Object.keys(rest).length > 0) await saveSettings(rest);
     if (tam !== undefined) {
+      // Propagate failure — pending state must not clear on error.
+      await api.toolApprovalModeSet(tam);
       setToolApprovalMode(tam);
-      await api.toolApprovalModeSet(tam).catch(() => undefined);
     }
     setPendingAiChanges({});
   };
@@ -436,7 +437,7 @@ export function SettingsPage() {
             </h1>
             {isDirty && (
               <div className="settings-dirty-bar">
-                <Button variant="secondary" size="sm" onClick={discardDirty}>{t("common.cancel")}</Button>
+                <Button variant="secondary" size="sm" onClick={discardDirty}>{t("common.discard")}</Button>
                 <Button variant="primary" size="sm" onClick={() => void saveDirty()}>{t("common.save")}</Button>
               </div>
             )}
@@ -521,9 +522,13 @@ export function SettingsPage() {
                     className="settings-permission-select"
                     label={t("settings.permissionMode")}
                     value={pendingAiChanges.defaultPermissionMode ?? settings.defaultPermissionMode ?? "ask"}
-                    onChange={(mode) =>
-                      setPendingAiChanges((p) => ({ ...p, defaultPermissionMode: mode as GlobalPermissionMode }))
-                    }
+                    onChange={(mode) => {
+                      const saved = settings.defaultPermissionMode ?? "ask";
+                      setPendingAiChanges((p) => {
+                        if (mode === saved) { const { defaultPermissionMode: _, ...rest } = p; return rest; }
+                        return { ...p, defaultPermissionMode: mode as GlobalPermissionMode };
+                      });
+                    }}
                     options={[
                       { id: "ask", label: t("settings.permissionModeAsk") },
                       { id: "accept-edits", label: t("settings.permissionModeAcceptEdits") },
@@ -542,9 +547,12 @@ export function SettingsPage() {
                     className="settings-permission-select"
                     label={t("settings.toolApprovalMode")}
                     value={pendingAiChanges.toolApprovalMode ?? toolApprovalMode}
-                    onChange={(mode) =>
-                      setPendingAiChanges((p) => ({ ...p, toolApprovalMode: mode as ToolApprovalMode }))
-                    }
+                    onChange={(mode) => {
+                      setPendingAiChanges((p) => {
+                        if (mode === toolApprovalMode) { const { toolApprovalMode: _, ...rest } = p; return rest; }
+                        return { ...p, toolApprovalMode: mode as ToolApprovalMode };
+                      });
+                    }}
                     options={[
                       { id: "always-ask", label: t("settings.toolApprovalModeAlwaysAsk") },
                       { id: "write", label: t("settings.toolApprovalModeWrite") },

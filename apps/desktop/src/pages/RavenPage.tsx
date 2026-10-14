@@ -4,7 +4,7 @@ import { IPC, type RavenSettings } from "@pi-desktop/shared";
 import { api } from "../lib/api";
 import { useBlockingOverlayActive } from "../lib/blocking-overlay";
 import { useAppStore } from "../stores/app-store";
-import { Button, Panel } from "../components/ui";
+import { Button } from "../components/ui";
 import { IconRaven, IconRefresh, IconExternal } from "../components/icons";
 
 /**
@@ -12,6 +12,11 @@ import { IconRaven, IconRefresh, IconExternal } from "../components/icons";
  * WebContentsView. This page renders only the hole: it reports the rect and
  * drives visibility. The view composites above renderer content, so overlays
  * hide it, and the unmount cleanup is what stops it covering chat.
+ *
+ * D design: always show the 48px d-page-head frame (fragment.html; notes.md).
+ * Connected state: green once the WebContentsView fires did-finish-load
+ * (ravenConnected event). Disconnected state: amber "Sign-in needed" pill
+ * with a centred sign-in card. (fragment-disconnected.html)
  */
 export function RavenPage({ blocked }: { blocked: boolean }) {
   const { t } = useTranslation();
@@ -20,6 +25,8 @@ export function RavenPage({ blocked }: { blocked: boolean }) {
   const overlayActive = useBlockingOverlayActive();
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const [settings, setSettings] = useState<RavenSettings | null>(null);
+  /** True once the Raven WebContentsView fires did-finish-load. */
+  const [connected, setConnected] = useState(false);
   const ready = settings?.enabled === true;
 
   const fetchSettings = useCallback(() => {
@@ -28,7 +35,18 @@ export function RavenPage({ blocked }: { blocked: boolean }) {
 
   useEffect(() => {
     fetchSettings();
-    return window.piDesktop?.on?.(IPC.event.ravenChanged, fetchSettings);
+    const offChanged = window.piDesktop?.on?.(IPC.event.ravenChanged, () => {
+      fetchSettings();
+      // A settings change (e.g. new URL) drops the existing pane; reset connected.
+      setConnected(false);
+    });
+    const offConnected = window.piDesktop?.on?.(IPC.event.ravenConnected, () => {
+      setConnected(true);
+    });
+    return () => {
+      offChanged?.();
+      offConnected?.();
+    };
   }, [fetchSettings]);
 
   useEffect(() => {
@@ -63,74 +81,64 @@ export function RavenPage({ blocked }: { blocked: boolean }) {
 
   if (!settings) return null;
 
-  if (ready) {
-    // D design: thin Fcode chrome (48px page head) above the native WebContentsView hole
-    // (fragment.html:254-297; R11h; notes.md Real controls)
-    const url = (() => { try { return settings.url ? new URL(settings.url).hostname + "/raven" : ""; } catch { return settings.url ?? ""; } })();
-    return (
-      <div className="raven-page-wrap">
-        {/* Fcode-owned chrome bar */}
-        <div className="d-page-head">
-          <span className="d-page-title" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <IconRaven size={15} />
-            {t("raven.title")}
-          </span>
-          {url && (
-            <span className="raven-url-chip">{url}</span>
-          )}
-          <span className="d-pill green">
-            <span className="d-pill-dot" />
-            {t("raven.connected")}
-          </span>
-          <div className="d-page-head-actions">
-            <button
-              type="button"
-              className="d-btn ghost sm icon-btn"
-              title={t("raven.reload")}
-              onClick={() => void api.ravenSettingsGet().then((r) => setSettings(r.settings)).catch(() => {})}
-            >
-              <IconRefresh size={13} />
-            </button>
-            <button
-              type="button"
-              className="d-btn ghost sm icon-btn"
-              title={t("raven.openExternal")}
-              onClick={() => settings.url && void window.open(settings.url + "/raven", "_blank")}
-            >
-              <IconExternal size={13} />
-            </button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                setSettingsTab("raven");
-                setPage("settings");
-              }}
-            >
-              {t("raven.openSettings")}
-            </Button>
-          </div>
-        </div>
-        {/* WebContentsView hole: fills the remaining space below the chrome bar */}
-        <div ref={surfaceRef} className="min-h-0 flex-1" data-raven-surface />
-      </div>
-    );
-  }
+  // D design: thin Fcode chrome (48px page head) is always present.
+  // fragment.html (connected), fragment-disconnected.html (sign-in needed).
+  const url = (() => {
+    try { return settings.url ? new URL(settings.url).hostname + "/raven" : ""; }
+    catch { return settings.url ?? ""; }
+  })();
 
   return (
-    <div className="thread-scroll">
-      <div className="page-frame">
-        <div className="page-header">
-          <h1 className="page-title">{t("raven.title")}</h1>
-        </div>
-        <Panel className="page-card page-empty">
-          <div className="page-empty-icon">
-            <IconRaven size={20} />
-          </div>
-          <div className="text-base-plus font-medium">{t("raven.empty")}</div>
+    <div className="raven-page-wrap">
+      {/* Fcode-owned chrome bar — always rendered */}
+      <div className="d-page-head">
+        <span className="d-page-title" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <IconRaven size={15} />
+          {t("raven.title")}
+        </span>
+        {url && <span className="raven-url-chip">{url}</span>}
+        {ready ? (
+          connected ? (
+            <span className="d-pill green">
+              <span className="d-pill-dot" />
+              {t("raven.connected")}
+            </span>
+          ) : (
+            <span className="d-pill gray">
+              <span className="d-pill-dot" />
+              {t("raven.connecting")}
+            </span>
+          )
+        ) : (
+          <span className="d-pill amber">
+            <span className="d-pill-dot" />
+            {t("raven.signInNeeded")}
+          </span>
+        )}
+        <div className="d-page-head-actions">
+          {ready && (
+            <>
+              <button
+                type="button"
+                className="d-btn ghost sm icon-btn"
+                title={t("raven.reload")}
+                onClick={() => void api.ravenReload().catch(() => {})}
+              >
+                <IconRefresh size={13} />
+              </button>
+              <button
+                type="button"
+                className="d-btn ghost sm icon-btn"
+                title={t("raven.openExternal")}
+                onClick={() => settings.url && void api.browserOpenExternal(new URL("/raven", settings.url).toString())}
+              >
+                <IconExternal size={13} />
+              </button>
+            </>
+          )}
           <Button
-            className="mt-5"
-            variant="primary"
+            variant="secondary"
+            size="sm"
             onClick={() => {
               setSettingsTab("raven");
               setPage("settings");
@@ -138,8 +146,41 @@ export function RavenPage({ blocked }: { blocked: boolean }) {
           >
             {t("raven.openSettings")}
           </Button>
-        </Panel>
+        </div>
       </div>
+
+      {ready ? (
+        /* WebContentsView hole: fills the remaining space below the chrome bar */
+        <div ref={surfaceRef} className="min-h-0 flex-1" data-raven-surface />
+      ) : (
+        /* Disconnected: sign-in card (fragment-disconnected.html) */
+        <div className="rv-disconnected">
+          <div className="rv-signin-card">
+            <div className="rv-signin-icon">
+              <IconRaven size={24} />
+            </div>
+            <p className="rv-signin-title">{t("raven.signInTitle")}</p>
+            {url && <p className="rv-signin-url">{url}</p>}
+            <div className="rv-signin-actions">
+              <Button
+                variant="primary"
+                onClick={() => settings.url && void api.browserOpenExternal(new URL("/raven", settings.url).toString())}
+              >
+                {t("raven.openInBrowser")}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setSettingsTab("raven");
+                  setPage("settings");
+                }}
+              >
+                {t("raven.openSettings")}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

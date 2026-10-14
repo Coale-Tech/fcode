@@ -192,6 +192,11 @@
   --d-sn-item-h:    28px;
   --d-sn-icon:      13px;
   --d-sn-grp-label: 10px;
-  /* Command palette card width (D.css:1168) */
-  --d-cmdpal-w: 560px;
+  /* Command palette card width: fragment.html:55 overrides D.css generic 560px → 580px */
+  --d-cmdpal-w: 580px;
+}
+
+/* lane t13: overlay/scrim token (D.css:1159) */
+:root {
+  --d-overlay-scrim: rgba(0, 0, 0, .42);
 }
