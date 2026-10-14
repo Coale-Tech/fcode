@@ -1967,33 +1967,57 @@ export async function createWindow({
             await sleep(400);
             const mTabs = await measure("tabs");
             // T8: tabs layout page shots (light) — Design fidelity evidence
+            const probeT8 = async (shotName: string) => {
+              const rb = await windowState.mainWindow!.webContents.executeJavaScript(`(() => {
+                const el = document.documentElement;
+                const st = window.__PI_DESKTOP__?.getSettings?.() ?? {};
+                return {
+                  theme: el.dataset.theme || "",
+                  navLayout: el.dataset.navLayout || "",
+                  page: el.dataset.page || document.querySelector("[data-nav-layout]")?.getAttribute("data-nav-layout") || "",
+                  settingsNavLayout: st.navLayout ?? "",
+                  activePage: document.body?.dataset?.page || "",
+                  navTabsPresent: !!document.querySelector(".nav-tabs"),
+                  navRailPresent: !!document.querySelector(".nav-rail"),
+                };
+              })()`);
+              console.log("T8_READBACK", shotName, JSON.stringify(rb));
+            };
             await setTheme("light");
             await setPage("chat");
             await sleep(400);
             await shot("pi-tabs-chat-light");
+            await probeT8("pi-tabs-chat-light");
             await setPage("settings");
             await sleep(600);
             await shot("pi-tabs-settings-light");
+            await probeT8("pi-tabs-settings-light");
             await setPage("build");
             await sleep(600);
             await shot("pi-tabs-build-light");
+            await probeT8("pi-tabs-build-light");
             await setPage("scheduled");
             await sleep(600);
             await shot("pi-tabs-scheduled-light");
+            await probeT8("pi-tabs-scheduled-light");
             // T8: tabs layout page shots (dark)
             await setTheme("dark");
             await setPage("chat");
             await sleep(400);
             await shot("pi-tabs-chat-dark");
+            await probeT8("pi-tabs-chat-dark");
             await setPage("settings");
             await sleep(600);
             await shot("pi-tabs-settings-dark");
+            await probeT8("pi-tabs-settings-dark");
             await setPage("bench");
             await sleep(600);
             await shot("pi-tabs-bench-dark");
+            await probeT8("pi-tabs-bench-dark");
             await setPage("pulls");
             await sleep(600);
             await shot("pi-tabs-pulls-dark");
+            await probeT8("pi-tabs-pulls-dark");
             await setTheme("light");
             console.log("C02_tabs_reserve", mTabs.chromeW, "(expect 24: 0+2×12)");
             // Restore rail
