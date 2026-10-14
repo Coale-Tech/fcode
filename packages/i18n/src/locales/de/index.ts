@@ -2458,6 +2458,10 @@ sklm: {
       "rollbackUnavailable": "Rollback nicht verfügbar",
       "rollbackConflict": "Die Datei wurde nach dieser Meldung geändert; Rollback wurde übersprungen.",
       "rollbackError": "Diese Änderung konnte nicht rückgängig gemacht werden.",
+      keep: "Keep",
+      kept: "Kept",
+      keepAll: "Keep all",
+      revertAll: "Revert all",
       "status": {
         "added": "Hinzugefügt",
         "modified": "Geändert",
@@ -3334,6 +3338,7 @@ sklm: {
     "zeroGuide": "Frappe-Installationsanleitung ↗",
     "copyCmdAria": "Befehl „{{label}}“ kopieren",
     "copied": "Kopiert!",
+    restart: "Restart",
   },
   "terminal": {
     "title": "Terminal",

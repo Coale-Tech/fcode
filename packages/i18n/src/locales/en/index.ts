@@ -2479,6 +2479,10 @@ sklm: {
       rollbackUnavailable: "Rollback unavailable",
       rollbackConflict: "The file changed after this message; rollback was skipped.",
       rollbackError: "Couldn't roll back this change.",
+      keep: "Keep",
+      kept: "Kept",
+      keepAll: "Keep all",
+      revertAll: "Revert all",
       status: {
         added: "Added",
         modified: "Modified",
@@ -3380,6 +3384,7 @@ importConfirm: "Imported extensions run inside the agent process with the same a
     zeroGuide: "Frappe installation guide ↗",
     copyCmdAria: "Copy {{label}} command",
     copied: "Copied!",
+    restart: "Restart",
   },
   terminal: {
     title: "Terminal",

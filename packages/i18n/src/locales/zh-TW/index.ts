@@ -2444,6 +2444,10 @@ sklm: {
       rollbackUnavailable: "無法回退",
       rollbackConflict: "該檔案在此訊息之後又發生了變化，已跳過回退。",
       rollbackError: "這項改動回退失敗。",
+      keep: "Keep",
+      kept: "Kept",
+      keepAll: "Keep all",
+      revertAll: "Revert all",
       status: {
         added: "新增",
         modified: "修改",
@@ -3322,6 +3326,7 @@ sklm: {
     zeroGuide: "Frappe 安裝指南 ↗",
     copyCmdAria: "複製 {{label}} 指令",
     copied: "已複製!",
+    restart: "Restart",
   },
   "terminal": {
     "title": "終端機",

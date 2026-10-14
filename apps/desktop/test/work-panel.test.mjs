@@ -230,8 +230,13 @@ test("work panel header exposes a scrollable tab strip and direct new-page actio
   // The D tab strip is a proper ARIA tablist
   assert.match(panelSource, /role="tablist"/);
   assert.match(panelSource, /role="tab"/);
-  assert.match(panelSource, /aria-selected=\{activeTab\?\.kind === "review"\}/);
-  assert.match(panelSource, /aria-selected=\{activeTab\?\.kind === "file"\}/);
+  // ARIA: ID-based selected state (not kind-based) and controls linkage
+  assert.match(panelSource, /aria-selected=\{activeTab\?\.id === REVIEW_TAB_ID\}/);
+  assert.match(panelSource, /aria-selected=\{activeTab\?\.id === BROWSER_TAB_ID\}/);
+  assert.match(panelSource, /aria-controls=\{`work-panel-surface-\$\{REVIEW_TAB_ID\}`\}/);
+  assert.match(panelSource, /id="wp-d-tab-review"/);
+  assert.match(panelSource, /id="wp-d-tab-browser"/);
+  assert.match(panelSource, /id="wp-d-tab-files"/);
   // New-tab (+ button) is still available in mini-head actions
   assert.match(panelSource, /onClick=\{openNewWorkPanelTab\}/);
   // Launcher rows still open plugin tools in the panel
@@ -239,13 +244,15 @@ test("work panel header exposes a scrollable tab strip and direct new-page actio
   // Review badge count exposed
   assert.match(panelSource, /reviewCount > 0/);
   assert.match(panelSource, /wp-d-tab-count/);
-  // D tabs activate via activateDTab helper
+  // D tabs activate via activateDTab helper with correct tab kinds
   assert.match(panelSource, /activateDTab\("review"\)/);
-  assert.match(panelSource, /activateDTab\("file"\)/);
+  assert.match(panelSource, /activateDTab\("browser"\)/);
   assert.match(panelSource, /activateDTab\("tools"\)/);
-  assert.match(panelSource, /activateDTab\("worktree"\)/);
-  // toolWorkPanelTab("review") used inside activateDTab
+  assert.match(panelSource, /activateDTab\("files"\)/);
+  // Correct plugin tab constructors used inside activateDTab
   assert.match(panelSource, /toolWorkPanelTab\("review"\)/);
+  assert.match(panelSource, /browserPluginTab\(\)/);
+  assert.match(panelSource, /fileManagerPluginTab\(\)/);
   // workPanelTools launcher still present for the + new page
   assert.match(panelSource, /workPanelTools\(t, pluginViews\)/);
   assert.match(panelSource, /pluginViews\.map\(\(view\) =>/);

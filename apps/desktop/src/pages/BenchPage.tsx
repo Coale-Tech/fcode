@@ -428,6 +428,15 @@ export function BenchPage() {
       console.error("[BenchPage] stop failed", err);
     }
   }, []);
+  // CP2-G03: Restart = stop-then-start (no benchRestart IPC exists)
+  const handleRestart = useCallback(
+    async (bench: BenchSummary) => {
+      await handleStop(bench);
+      await handleStart(bench);
+    },
+    [handleStop, handleStart],
+  );
+
 
   // Gap 2 / T6: track per-verb one-shot state (result of runOneShot)
   // Consequences for destructive verbs (T8 — plan D14)
@@ -676,6 +685,7 @@ export function BenchPage() {
               onFollowTailChange={setFollowTail}
               onStart={() => void handleStart(selectedBench)}
               onStop={() => void handleStop(selectedBench)}
+              onRestart={() => void handleRestart(selectedBench)}
               onRun={handleRun}
               onOpenDocTypeFile={handleOpenDocTypeFile}
               elapsedLabel={elapsedLabel}
@@ -767,6 +777,7 @@ function BenchDetail({
   onFollowTailChange,
   onStart,
   onStop,
+  onRestart,
   onRun,
   onOpenDocTypeFile,
   elapsedLabel,
@@ -792,6 +803,7 @@ function BenchDetail({
   onFollowTailChange: (v: boolean) => void;
   onStart: () => void;
   onStop: () => void;
+  onRestart: () => void;
   onRun: (verb: string, triggerEl?: HTMLButtonElement | null) => void;
   onOpenDocTypeFile: (absolutePath: string) => void;
   elapsedLabel: string;
@@ -816,11 +828,9 @@ function BenchDetail({
       {/* lane T11: 3-column detail body (224px | flex | 252px per design) */}
       <div className="wb-detail-body">
 
-        {/* LEFT (224px): Sites + Apps + Workers */}
+        {/* LEFT (224px): Sites (apps/workers omitted — no real data on BenchSummary) */}
         <div className="wb-bfd-left">
           <SiteList sites={bench.sites} />
-          <InstalledAppList bench={bench} />
-          <WorkerList status={status} />
         </div>
 
 
@@ -830,6 +840,7 @@ function BenchDetail({
             status={status}
             blocker={blocker}
             onStart={onStart}
+            onRestart={onRestart}
             elapsedLabel={elapsedLabel}
             startFailure={startFailure}
             warnings={warnings}
@@ -987,52 +998,7 @@ function SiteList({ sites }: { sites: BenchSite[] }) {
   );
 }
 
-/** Direction D: App list in bench detail left column (static from bench.version path) */
-function InstalledAppList({ bench }: { bench: BenchSummary }) {
-  const { t } = useTranslation();
-  // Derive approximate app list from bench path (frappe is always present in a frappe bench)
-  const knownApps = ["frappe", "erpnext", "hrms", "raven", "studio", "builder"];
-  return (
-    <div className="wb-panel">
-      <div className="wb-sec-lbl">{t("bench.apps", "Apps")}</div>
-      <ul className="wb-plain-list">
-        {knownApps.map((app) => (
-          <li key={app} className="wb-site">
-            <span className="wb-dot wb-dot-green" aria-hidden="true" />
-            <span className="wb-truncate">{app}</span>
-            {app === "frappe" && (
-              <span className="wb-badge wb-badge-gray">{bench.version}</span>
-            )}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
 
-/** Direction D: Worker chips in bench detail left column */
-const STANDARD_WORKERS = ["web.1", "worker.1", "worker.2", "redis.1", "schedule.1"] as const;
-
-function WorkerList({ status }: { status: BenchStatus }) {
-  const { t } = useTranslation();
-  const running = status === "running";
-  return (
-    <div className="wb-panel">
-      <div className="wb-sec-lbl">{t("bench.workers", "Workers")}</div>
-      <div className="wb-workers">
-        {STANDARD_WORKERS.map((w) => (
-          <span
-            key={w}
-            className={`wb-worker-chip${running ? "" : " is-stopped"}`}
-          >
-            {running && <span className="wb-dot wb-dot-green" aria-hidden="true" />}
-            {w}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 
 // Exported so the failure banner it renders (role="alert", Retry) can be
@@ -1042,6 +1008,7 @@ export function ProcessPanel({
   status,
   blocker,
   onStart,
+  onRestart,
   elapsedLabel,
   startFailure,
   warnings,
@@ -1050,6 +1017,8 @@ export function ProcessPanel({
   /** Path of the bench that blocks Retry, or null. */
   blocker: string | null;
   onStart: () => void;
+  /** Stop-then-start sequence; only shown when running. */
+  onRestart?: () => void;
   elapsedLabel: string;
   startFailure: StartFailureState | null;
   warnings: string[];
@@ -1057,34 +1026,21 @@ export function ProcessPanel({
   const { t } = useTranslation();
   const running = status === "running";
   const starting = status === "starting";
-  const procCount = running ? 5 : 0; // 5 standard Frappe workers when running
   return (
     <div className="wb-panel">
-      {/* Direction D: process card (running · procs · port · Restart) */}
+      {/* Direction D: process card (running · elapsed · Restart) */}
       <div className="wb-proc-card">
         <div className="wb-proc-card-row">
           <StatusBadge status={status} />
           {(running || starting) && elapsedLabel && (
             <span className="wb-muted">{elapsedLabel}</span>
           )}
-          {running && (
-            <Button variant="secondary" size="sm" onClick={onStart} style={{ marginLeft: "auto" }}>
+          {running && onRestart && (
+            <Button variant="secondary" size="sm" onClick={onRestart} style={{ marginLeft: "auto" }}>
               {t("bench.restart", "Restart")}
             </Button>
           )}
         </div>
-        {running && (
-          <div className="wb-proc-card-meta">
-            <span className="wb-proc-card-meta-item">
-              <span aria-hidden="true">↕</span>
-              {t("bench.procCount", "{{count}} procs", { count: procCount })}
-            </span>
-            <span className="wb-proc-card-meta-item">
-              <span aria-hidden="true">⌘</span>
-              Port :8000
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Gap 5 / T6: port-conflict warnings */}

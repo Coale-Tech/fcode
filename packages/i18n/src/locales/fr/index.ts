@@ -2458,6 +2458,10 @@ sklm: {
       "rollbackUnavailable": "Restauration indisponible",
       "rollbackConflict": "Le fichier a changé après ce message ; la restauration a été ignorée.",
       "rollbackError": "Impossible d'annuler cette modification.",
+      keep: "Keep",
+      kept: "Kept",
+      keepAll: "Keep all",
+      revertAll: "Revert all",
       "status": {
         "added": "Ajouté",
         "modified": "Modifié",
@@ -3334,6 +3338,7 @@ sklm: {
     "zeroGuide": "Guide d'installation de Frappe ↗",
     "copyCmdAria": "Copier la commande {{label}}",
     "copied": "Copié !",
+    restart: "Restart",
   },
   "terminal": {
     "title": "Terminal",

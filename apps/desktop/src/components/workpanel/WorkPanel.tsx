@@ -18,7 +18,9 @@ import {
 } from "../../lib/work-panel-tab-reorder";
 import {
   ACTIVITY_TAB,
+  browserPluginTab,
   FILE_MANAGER_PLUGIN_TAB,
+  fileManagerPluginTab,
   hasPluginView,
   isKnownWorkPanelTab,
   LEGACY_FILE_MANAGER_PLUGIN_TAB,
@@ -279,22 +281,23 @@ export function WorkPanel({
     () => reviewChangesFromMessages(messages).length,
     [messages],
   );
+  // Stable tab IDs for ARIA linkage (pure, deterministic calls)
+  const REVIEW_TAB_ID = toolWorkPanelTab("review").id;
+  const BROWSER_TAB_ID = browserPluginTab().id;
+  const TOOLS_TAB_ID = TOOLS_TAB.id;
+  const FILES_TAB_ID = fileManagerPluginTab().id;
+
   const activateDTab = useCallback(
-    (kind: "review" | "file" | "tools" | "worktree") => {
-      const existing = tabs.find((tab) => tab.kind === kind);
+    (kind: "review" | "browser" | "tools" | "files") => {
+      const spec: WorkPanelTab =
+        kind === "review" ? toolWorkPanelTab("review") :
+        kind === "browser" ? browserPluginTab() :
+        kind === "tools" ? TOOLS_TAB :
+        fileManagerPluginTab();
+      const existing = tabs.find((tab) => tab.id === spec.id);
       if (existing) {
         activateTab(existing.id);
       } else {
-        let spec: WorkPanelTab;
-        if (kind === "tools") {
-          spec = TOOLS_TAB;
-        } else if (kind === "worktree") {
-          spec = WORKTREE_TAB;
-        } else if (kind === "file") {
-          spec = { id: "file", kind: "file" as const };
-        } else {
-          spec = toolWorkPanelTab(kind);
-        }
         openWorkPanelTab(spec);
       }
     },
@@ -914,9 +917,12 @@ export function WorkPanel({
         <div className="wp-d-tabs no-drag" role="tablist" aria-label={t("panel.tabsLabel")}>
           <button
             type="button"
+            id="wp-d-tab-review"
             role="tab"
-            aria-selected={activeTab?.kind === "review"}
-            className={cx("wp-d-tab", activeTab?.kind === "review" && "is-active")}
+            aria-selected={activeTab?.id === REVIEW_TAB_ID}
+            aria-controls={`work-panel-surface-${REVIEW_TAB_ID}`}
+            tabIndex={activeTab?.id === REVIEW_TAB_ID ? 0 : -1}
+            className={cx("wp-d-tab", activeTab?.id === REVIEW_TAB_ID && "is-active")}
             onClick={() => activateDTab("review")}
           >
             {t("panel.tabs.review", "Review")}
@@ -928,30 +934,39 @@ export function WorkPanel({
           </button>
           <button
             type="button"
+            id="wp-d-tab-browser"
             role="tab"
-            aria-selected={activeTab?.kind === "file"}
-            className={cx("wp-d-tab", activeTab?.kind === "file" && "is-active")}
-            onClick={() => activateDTab("file")}
+            aria-selected={activeTab?.id === BROWSER_TAB_ID}
+            aria-controls={`work-panel-surface-${BROWSER_TAB_ID}`}
+            tabIndex={activeTab?.id === BROWSER_TAB_ID ? 0 : -1}
+            className={cx("wp-d-tab", activeTab?.id === BROWSER_TAB_ID && "is-active")}
+            onClick={() => activateDTab("browser")}
           >
             {t("panel.tabs.browser", "Browser")}
           </button>
           <button
             type="button"
+            id="wp-d-tab-tools"
             role="tab"
-            aria-selected={activeTab?.kind === "tools"}
-            className={cx("wp-d-tab", activeTab?.kind === "tools" && "is-active")}
+            aria-selected={activeTab?.id === TOOLS_TAB_ID}
+            aria-controls={`work-panel-surface-${TOOLS_TAB_ID}`}
+            tabIndex={activeTab?.id === TOOLS_TAB_ID ? 0 : -1}
+            className={cx("wp-d-tab", activeTab?.id === TOOLS_TAB_ID && "is-active")}
             onClick={() => activateDTab("tools")}
           >
             {t("panel.tabs.tools")}
           </button>
           <button
             type="button"
+            id="wp-d-tab-files"
             role="tab"
-            aria-selected={activeTab?.kind === "worktree"}
-            className={cx("wp-d-tab", activeTab?.kind === "worktree" && "is-active")}
-            onClick={() => activateDTab("worktree")}
+            aria-selected={activeTab?.id === FILES_TAB_ID}
+            aria-controls={`work-panel-surface-${FILES_TAB_ID}`}
+            tabIndex={activeTab?.id === FILES_TAB_ID ? 0 : -1}
+            className={cx("wp-d-tab", activeTab?.id === FILES_TAB_ID && "is-active")}
+            onClick={() => activateDTab("files")}
           >
-            {t("panel.tabs.files", "Files")}
+            {t("panel.tabs.file", "Files")}
           </button>
         </div>
         <div className="work-panel-body">

@@ -148,8 +148,8 @@ export function AllBenches({
                       <VersionBadge version={bench.version} />
                     </td>
                     <td className="wb-table-apps">
-                      {/* Tags for recognizable apps in this bench */}
-                      <span className="wb-muted" style={{ fontSize: 11 }}>frappe</span>
+                      {/* No apps field on BenchSummary — omit rather than guess */}
+                      <span className="wb-muted" style={{ fontSize: 11 }}>—</span>
                     </td>
                     <td className="wb-table-sites">
                       <span className="wb-truncate">{siteSummary(bench)}</span>

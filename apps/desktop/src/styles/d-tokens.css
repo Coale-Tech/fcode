@@ -133,6 +133,15 @@
   --d-dialog-body-pad: 16px;  /* dialog-body padding (D.css:1051) */
   --d-dialog-foot-pad: 10px 16px; /* dialog-foot padding (D.css:1059) */
   --d-dialog-foot-gap:  6px;  /* dialog-foot action gap (D.css:1059) */
+  /* C07: bench detail 3-column widths (D2 bench: 224px | flex | 252px) */
+  --d-bfd-left-w:     224px;
+  --d-bfd-right-w:    252px;
+}
+
+/* ── Terminal palette (bench log, code panels; always-dark) */
+:root {
+  --d-terminal-bg: #181818;  /* near-black background */
+  --d-terminal-fg: #d4d4d4;  /* light-gray foreground */
 }
 
 /* Dark theme: remap violet to FileBird dark blues */

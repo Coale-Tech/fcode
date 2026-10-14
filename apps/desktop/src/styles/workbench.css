@@ -165,7 +165,7 @@
   overflow: hidden;
 }
 .wb-bfd-left {
-  width: 224px;
+  width: var(--d-bfd-left-w);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -184,7 +184,7 @@
   overflow: hidden;
 }
 .wb-bfd-right {
-  width: 252px;
+  width: var(--d-bfd-right-w);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -1049,8 +1049,8 @@
 
 /* ── lane T11-r2: dark bench log terminal (always dark, like a real terminal) ── */
 .bench-log-scroll {
-  background: #181818 !important;
-  color: #d4d4d4 !important;
+  background: var(--d-terminal-bg) !important;
+  color: var(--d-terminal-fg) !important;
 }
 
 /* ── lane T11-r2: ProcessPanel card style (running · procs · port · Restart) ── */

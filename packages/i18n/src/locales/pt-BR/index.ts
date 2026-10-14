@@ -2409,6 +2409,10 @@ export const ptBR = {
       rollbackUnavailable: "Reversão indisponível",
       rollbackConflict: "Este arquivo foi alterado novamente após esta mensagem; a reversão foi ignorada.",
       rollbackError: "Não foi possível reverter esta alteração.",
+      keep: "Keep",
+      kept: "Kept",
+      keepAll: "Keep all",
+      revertAll: "Revert all",
       status: {
         added: "Adicionado",
         modified: "Modificado",
@@ -3288,6 +3292,7 @@ export const ptBR = {
     zeroGuide: "Guia de instalação do Frappe ↗",
     copyCmdAria: "Copiar comando {{label}}",
     copied: "Copiado!",
+    restart: "Restart",
   },
   "terminal": {
     "title": "Terminal",

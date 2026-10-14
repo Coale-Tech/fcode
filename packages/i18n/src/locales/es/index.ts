@@ -2458,6 +2458,10 @@ sklm: {
       "rollbackUnavailable": "Revertir no disponible",
       "rollbackConflict": "El archivo cambió después de este mensaje; se omitió la reversión.",
       "rollbackError": "No se pudo revertir este cambio.",
+      keep: "Keep",
+      kept: "Kept",
+      keepAll: "Keep all",
+      revertAll: "Revert all",
       "status": {
         "added": "Agregado",
         "modified": "Modificado",
@@ -3334,6 +3338,7 @@ sklm: {
     "zeroGuide": "Guía de instalación de Frappe ↗",
     "copyCmdAria": "Copiar comando {{label}}",
     "copied": "¡Copiado!",
+    restart: "Restart",
   },
   "terminal": {
     "title": "Terminal",

@@ -610,6 +610,7 @@ export function BuildPage() {
             builderInstalled={builderInstalled}
             syncDimmed={syncStatus === "loading"}
             onRetryApps={() => void loadApps()}
+            onGoBench={goBench}
           />
         </div>
 
@@ -687,6 +688,7 @@ function CanvasOverlay({
   builderInstalled,
   syncDimmed,
   onRetryApps,
+  onGoBench,
 }: {
   canvas: Canvas;
   benchStatus: BenchStatus;
@@ -696,6 +698,8 @@ function CanvasOverlay({
   builderInstalled: boolean;
   syncDimmed: boolean;
   onRetryApps: () => void;
+  /** Navigate to bench page so user can start the bench. */
+  onGoBench: () => void;
 }) {
   // Bench not running → Direction D: icon + help text + Start bench CTA
   if (benchStatus !== "running") {
@@ -711,6 +715,9 @@ function CanvasOverlay({
         <p className="wb-muted" style={{ fontSize: 13, maxWidth: 280, textAlign: "center" }}>
           Start the bench to launch the {canvas === "studio" ? "Studio" : "Builder"} canvas.
         </p>
+        <Button variant="primary" size="sm" onClick={onGoBench} style={{ marginTop: 12 }}>
+          Start bench
+        </Button>
       </div>
     );
   }
