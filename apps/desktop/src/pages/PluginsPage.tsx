@@ -185,6 +185,25 @@ export function PluginsPage() {
                 </span>
               )}
               <div className="d-page-head-actions">
+              {/* Tab segment control: Installed / Marketplace */}
+              <div className="plugins-segment">
+                <button
+                  type="button"
+                  className={cx("plugins-segment-btn", tab === "installed" && "active")}
+                  onClick={() => goInstalled(plgNav === "market" ? "all" : (plgNav as PlgNav))}
+                >
+                  {t("plugins.tabInstalled")}
+                  <span className="plugins-segment-count">{stats.total}</span>
+                </button>
+                <button
+                  type="button"
+                  className={cx("plugins-segment-btn", tab === "market" && "active")}
+                  onClick={goMarket}
+                >
+                  {t("plugins.tabMarket")}
+                  {market.length > 0 && <span className="plugins-segment-count">{market.length}</span>}
+                </button>
+              </div>
                 {tab === "installed" && plugins.length > 0 && (
                   <SearchField
                     value={installedQuery}

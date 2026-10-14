@@ -1129,7 +1129,7 @@
   gap: 10px;
   border-bottom: 1px solid var(--d-border);
   cursor: pointer;
-  transition: background 0.1s;
+  transition: background var(--motion-duration-fast) var(--motion-ease-out);
   position: relative;
   width: 100%;
   text-align: left;

@@ -24,7 +24,7 @@ function notification(overrides) {
   };
 }
 
-test("inbox hides successful completions and keeps failures in order", () => {
+test("inbox includes all notification kinds — completed tasks shown alongside failures (D inbox R11g)", () => {
   const rows = inboxNotifications([
     notification({ id: "done-1" }),
     notification({ id: "failed-1", kind: "task.failed" }),
@@ -33,11 +33,11 @@ test("inbox hides successful completions and keeps failures in order", () => {
   ]);
   assert.deepEqual(
     rows.map((row) => row.id),
-    ["failed-1", "failed-2"],
+    ["done-1", "failed-1", "done-2", "failed-2"],
   );
 });
 
-test("inbox unread count ignores unread completions", () => {
+test("inboxUnreadCount counts all unread notifications regardless of kind", () => {
   assert.equal(
     inboxUnreadCount([
       notification({ id: "done-1" }),
@@ -45,9 +45,9 @@ test("inbox unread count ignores unread completions", () => {
       notification({ id: "failed-1", kind: "task.failed" }),
       notification({ id: "failed-2", kind: "task.failed", readAt: "2026-09-04T10:02:00.000Z" }),
     ]),
-    1,
+    3,
   );
-  assert.equal(inboxUnreadCount([notification({ id: "done-1" })]), 0);
+  assert.equal(inboxUnreadCount([notification({ id: "done-1" })]), 1);
 });
 
 test("notification center renders the filtered inbox instead of the raw store", () => {

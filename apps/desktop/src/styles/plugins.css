@@ -2155,8 +2155,7 @@
   height: 26px;
   padding: 0 12px;
   background: var(--surface-gray-1);
-  border-bottom: 1px solid var(--outline-gray-1);
-  border-top: 1px solid var(--outline-gray-1);
+  box-shadow: 0 -1px 0 var(--outline-gray-1), 0 1px 0 var(--outline-gray-1);
   font-size: var(--d-text-xs);
   font-weight: 600;
   letter-spacing: .04em;
@@ -2166,8 +2165,8 @@
   top: 0;
   z-index: 4;
 }
-.plg-group-head.danger { color: var(--ink-red-7); background: var(--surface-red-1); border-color: var(--outline-red-1); }
-.plg-group-head.warn   { color: var(--ink-amber-7); background: var(--surface-amber-1); border-color: var(--outline-amber-1); }
+.plg-group-head.danger { color: var(--ink-red-7); background: var(--surface-red-1); box-shadow: 0 -1px 0 var(--outline-red-1), 0 1px 0 var(--outline-red-1); }
+.plg-group-head.warn   { color: var(--ink-amber-7); background: var(--surface-amber-1); box-shadow: 0 -1px 0 var(--outline-amber-1), 0 1px 0 var(--outline-amber-1); }
 .plg-group-count {
   font-size: var(--d-text-xs);
   background: var(--surface-gray-3);
@@ -2187,7 +2186,7 @@
   align-items: flex-start;
   gap: 10px;
   padding: 10px 12px;
-  border-bottom: 1px solid var(--outline-gray-1);
+  box-shadow: 0 1px 0 var(--outline-gray-1);
   transition: background .1s;
 }
 .plg-row:hover { background: var(--surface-gray-1); }
@@ -2198,7 +2197,7 @@
   align-items: center;
   gap: 8px;
   padding: 9px 12px;
-  border-bottom: 1px solid var(--outline-gray-1);
+  box-shadow: 0 1px 0 var(--outline-gray-1);
   background: var(--surface-gray-1);
   flex-shrink: 0;
 }
