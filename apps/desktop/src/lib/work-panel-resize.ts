@@ -2,7 +2,7 @@
 // Windows/Linux titlebar reservation. Existing persisted widths remain intact;
 // this only affects a new profile without a saved preference.
 export const WORK_PANEL_MIN_WIDTH = 244;
-export const WORK_PANEL_DEFAULT_WIDTH = 360;
+export const WORK_PANEL_DEFAULT_WIDTH = 340;
 export const WORK_PANEL_CHAT_MIN_WIDTH = 1040;
 export const WORK_PANEL_CHAT_MAX_WIDTH = 10000;
 /**

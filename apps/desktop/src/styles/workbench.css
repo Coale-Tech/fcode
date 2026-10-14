@@ -199,7 +199,9 @@
   flex-shrink: 0;
   align-items: center;
   gap: 8px;
-  padding: 0 4px 4px;
+  height: 32px; /* lane T11-r2: 32px per design .d-mini-head */
+  padding: 0 4px;
+  border-bottom: 1px solid var(--d-border);
 }
 
 .wb-sec-lbl {
@@ -551,7 +553,17 @@
   font-size: var(--text-sm);
 }
 
-.wb-canvas { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+/* lane T11-r2: framed canvas — 8px margin, r8, border per design .bf-cw */
+.wb-canvas {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  margin: 8px 12px;
+  border-radius: var(--d-r);
+  background: var(--surface-gray-1);
+  border: 1px solid var(--d-border);
+}
 
 .wb-overlay {
   position: absolute;
@@ -978,4 +990,92 @@
 /* Build canvas gap from context-sidebar (add padding to wb-page when context-sidebar present) */
 .build-page {
   padding: 0 var(--d-gap) var(--d-gap);
+}
+
+/* ── lane T11-r2: restored .wb-panel (deleted in T11; consumers at BenchPage.tsx:952,992) ── */
+.wb-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* ── lane T11-r2: build banner framed inset block (per design .d-banner) ── */
+.build-banner {
+  margin: 8px 12px 0;
+  border-radius: var(--d-r);
+  border: 1px solid currentColor;
+  border-bottom-width: 1px !important;
+}
+.build-banner.is-amber { border-color: var(--outline-amber-2); }
+.build-banner.is-red   { border-color: var(--outline-red-2); }
+
+/* ── lane T11-r2: Build sidebar hero card / app list (design .bf-*) ── */
+.wb-build-hero-body { padding: 10px 10px 11px; }
+.wb-build-hero-row  { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+.wb-build-hero-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: var(--font-weight-semibold); color: var(--ink-gray-9); }
+.wb-build-meta      { font-size: 11px; color: var(--ink-gray-5); display: flex; flex-direction: column; gap: 2px; }
+.wb-build-meta-row  { display: flex; align-items: center; gap: 4px; }
+.wb-app-section     { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-gray-4); padding: 6px 10px 3px; }
+.wb-app-section.is-sep { border-top: 1px solid var(--d-border); padding-top: 8px; margin-top: 2px; }
+.wb-app-row {
+  display: flex; align-items: center; gap: 7px;
+  height: 30px; padding: 0 10px;
+  border-bottom: 1px solid var(--d-border);
+  font-size: 13px; color: var(--ink-gray-8);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  background: none; border-left: none; border-right: none; border-top: none;
+  width: 100%; text-align: left; cursor: pointer; font: inherit;
+}
+.wb-app-row.is-selected { background: var(--da-sub); color: var(--da-txt); }
+.wb-app-row.is-muted    { color: var(--ink-gray-5); cursor: default; }
+
+/* ── lane T11-r2: Bench overview 48px header + 30px list rows ── */
+.wb-all-hd {
+  display: flex; flex-shrink: 0; align-items: center;
+  gap: 8px; height: var(--d-ph-h); padding: 0 14px;
+  border-bottom: 1px solid var(--d-border);
+}
+.wb-all-title { font-size: var(--text-lg); font-weight: var(--font-weight-semibold); color: var(--ink-gray-9); flex: 1; }
+.wb-all-footer {
+  flex-shrink: 0; padding: 6px 14px;
+  border-top: 1px solid var(--d-border);
+  font-size: 11px; color: var(--ink-gray-5);
+  display: flex; align-items: center; gap: 8px;
+}
+/* 30px table rows */
+.wb-table tbody tr { height: 30px; }
+.wb-table td { padding: 0 8px; }
+
+/* ── lane T11-r2: dark bench log terminal (always dark, like a real terminal) ── */
+.bench-log-scroll {
+  background: #181818 !important;
+  color: #d4d4d4 !important;
+}
+
+/* ── lane T11-r2: ProcessPanel card style (running · procs · port · Restart) ── */
+.wb-proc-card {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--d-border);
+  border-radius: var(--d-r);
+  background: var(--surface-gray-1);
+}
+.wb-proc-card-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.wb-proc-card-meta { display: flex; gap: 10px; font-size: 11px; color: var(--ink-gray-5); }
+.wb-proc-card-meta-item { display: flex; align-items: center; gap: 3px; }
+
+/* ── lane T11-r2: Workers section in bench detail left column ── */
+.wb-workers { display: flex; flex-wrap: wrap; gap: 5px; }
+.wb-worker-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: var(--radius-full);
+  background: var(--surface-green-2); color: var(--ink-green-8);
+  font-size: 11px; font-weight: 500;
+}
+.wb-worker-chip.is-stopped { background: var(--surface-gray-2); color: var(--ink-gray-5); }
+
+/* ── lane T11-r2: Build page "Build" title in header ── */
+.build-hd .build-title {
+  font-size: var(--text-lg); font-weight: var(--font-weight-semibold); color: var(--ink-gray-9);
 }

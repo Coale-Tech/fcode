@@ -553,7 +553,7 @@ export function createPluginServices({
       });
     }
   };
-  const browserPane = new BrowserPane(emitBrowserState);
+  const browserPane = new BrowserPane(emitBrowserState, "persist:work-browser", "build-canvas");
   const pluginViews = new PluginViewHost(({ pluginId, url }) => {
     logger.app("plugin", "warn", "plugin.api", {
       pluginId,

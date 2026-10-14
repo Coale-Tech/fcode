@@ -219,36 +219,45 @@ test("work panel uses the fixed-window internal dock", () => {
 });
 
 test("work panel header exposes a scrollable tab strip and direct new-page action", () => {
-  const headerIndex = panelSource.indexOf('className="work-panel-header"');
-  const stripIndex = panelSource.indexOf('className="work-panel-tab-strip"');
-  const actionsIndex = panelSource.indexOf('className="work-panel-actions no-drag"');
+  // Direction D: mini-head (title + actions) followed by wp-d-tabs (4-tab strip)
+  const miniHeadIndex = panelSource.indexOf('className="wp-mini-head"');
+  const dTabsIndex = panelSource.indexOf('className="wp-d-tabs no-drag"');
   const bodyIndex = panelSource.indexOf('<div className="work-panel-body">');
 
-  assert.ok(stripIndex > headerIndex);
-  assert.ok(actionsIndex > stripIndex && bodyIndex > actionsIndex);
+  assert.ok(miniHeadIndex >= 0, "wp-mini-head present");
+  assert.ok(dTabsIndex > miniHeadIndex, "wp-d-tabs follows mini-head");
+  assert.ok(bodyIndex > dTabsIndex, "work-panel-body follows wp-d-tabs");
+  // The D tab strip is a proper ARIA tablist
   assert.match(panelSource, /role="tablist"/);
   assert.match(panelSource, /role="tab"/);
-  assert.match(panelSource, /aria-selected=\{selected\}/);
-  assert.match(panelSource, /aria-controls=\{`work-panel-surface-\$\{tab\.id\}`\}/);
-  assert.match(panelSource, /className="work-panel-tab-close"/);
-  assert.match(panelSource, /event\.button !== 1/);
-  assert.match(panelSource, /workPanelTools\(t, pluginViews\)/);
-  assert.match(panelSource, /toolWorkPanelTab\("review"\)/);
-  assert.match(panelSource, /pluginViews\.map\(\(view\) =>/);
-  assert.doesNotMatch(panelSource, /HEADER_TOOLS|headerToolTab|HeaderToolKind/);
-  // Launchable tools are plugin views (`pi.file-manager`, `pi.browser`, …). The
-  // `file` *kind* remains: a `file:<path>` tab is a transcript artifact.
-  assert.doesNotMatch(panelSource, /\{ kind: "file", Icon/);
+  assert.match(panelSource, /aria-selected=\{activeTab\?\.kind === "review"\}/);
+  assert.match(panelSource, /aria-selected=\{activeTab\?\.kind === "file"\}/);
+  // New-tab (+ button) is still available in mini-head actions
   assert.match(panelSource, /onClick=\{openNewWorkPanelTab\}/);
+  // Launcher rows still open plugin tools in the panel
   assert.match(panelSource, /data-work-panel-launcher-item=\{item\.id\}/);
+  // Review badge count exposed
+  assert.match(panelSource, /reviewCount > 0/);
+  assert.match(panelSource, /wp-d-tab-count/);
+  // D tabs activate via activateDTab helper
+  assert.match(panelSource, /activateDTab\("review"\)/);
+  assert.match(panelSource, /activateDTab\("file"\)/);
+  assert.match(panelSource, /activateDTab\("tools"\)/);
+  assert.match(panelSource, /activateDTab\("worktree"\)/);
+  // toolWorkPanelTab("review") used inside activateDTab
+  assert.match(panelSource, /toolWorkPanelTab\("review"\)/);
+  // workPanelTools launcher still present for the + new page
+  assert.match(panelSource, /workPanelTools\(t, pluginViews\)/);
+  assert.match(panelSource, /pluginViews\.map\(\(view\) =>/);
+  // Old switcher cruft absent
+  assert.doesNotMatch(panelSource, /HEADER_TOOLS|headerToolTab|HeaderToolKind/);
+  assert.doesNotMatch(panelSource, /\{ kind: "file", Icon/);
   assert.doesNotMatch(panelSource, /aria-haspopup|work-panel-new-menu|role="menuitemradio"/);
   assert.match(panelSource, /role="tabpanel"/);
-  // Subagent details are tabs, not a dock takeover: the bot icon labels the
-  // tab kind and no separate back control exists.
+  // Subagent details are tabs, not a dock takeover
   assert.match(panelSource, /subagent: IconBot/);
   assert.doesNotMatch(panelSource, /work-panel-subagent-back|IconChevronLeft/);
-  // Reopening an already-open plugin view must reuse its tab so the browser
-  // keeps its location instead of being replaced by a blank singleton.
+  // Reopening an already-open plugin view reuses its tab
   assert.match(
     panelSource,
     /const existing = tabs\.find\(\(tab\) => tab\.id === item\.tab\.id\)/,
@@ -259,9 +268,7 @@ test("work panel header exposes a scrollable tab strip and direct new-page actio
   assert.doesNotMatch(panelSource, /onCollapse/);
   assert.doesNotMatch(panelSource, /work-panel-toolbar-collapse/);
   assert.match(panelSource, /panel\.tabs\.file/);
-  // Every native surface in the panel — the preview browser and each plugin
-  // view — composites above the renderer. Exit and panel-wide overlays hide
-  // it; the launcher is rendered in the panel body and needs no floating layer.
+  // PluginViewTab native surface compositing check unchanged
   const pluginSurfaceStart = panelSource.indexOf("<PluginViewTab");
   const pluginSurfaceEnd = panelSource.indexOf("/>", pluginSurfaceStart);
   const pluginSurface = panelSource.slice(pluginSurfaceStart, pluginSurfaceEnd);
@@ -273,13 +280,9 @@ test("work panel header exposes a scrollable tab strip and direct new-page actio
   assert.doesNotMatch(panelSource, /createPortal|newTabMenuRef|menuOpen/);
   assert.doesNotMatch(panelSource, /onContextMenu|work-panel-context-menu/);
   assert.doesNotMatch(globalStyles, /work-panel-new-menu|work-panel-menu-item|work-panel-open-dot/);
-  assert.match(globalStyles, /\.work-panel-tab-strip \{[^}]*overflow-x:\s*auto;/s);
-  assert.match(globalStyles, /\.work-panel-tab-strip \{[^}]*gap:\s*6px;/s);
-  assert.match(
-    globalStyles,
-    /\.work-panel-tab \{[^}]*min-width:\s*92px;[^}]*flex:\s*0 0 auto;/s,
-  );
-  assert.doesNotMatch(globalStyles, /\.work-panel-actions \{[^}]*margin-left:\s*auto;/s);
+  // D-tab strip CSS
+  assert.match(globalStyles, /\.wp-d-tabs \{/);
+  assert.match(globalStyles, /\.wp-d-tab \{/);
   assert.doesNotMatch(
     globalStyles,
     /\.work-panel-create-item|\.work-panel-switcher-(?:row|item|close|list|title)/,
@@ -340,7 +343,7 @@ test("closing the final tab keeps the panel open for the New launcher", () => {
 
 test("work panel width is renderer-owned inside the fixed window", () => {
   assert.equal(MAIN_PANE_MIN_WIDTH, 450);
-  assert.equal(WORK_PANEL_DEFAULT_WIDTH, 360);
+  assert.equal(WORK_PANEL_DEFAULT_WIDTH, 340);
   assert.equal(WORK_PANEL_MIN_WIDTH, 244);
   assert.match(panelSource, /const renderPanelWidth = layout\.panelWidth/);
   assert.match(panelSource, /setWidth\(drag\.currentWidth\)/);

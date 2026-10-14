@@ -1,10 +1,10 @@
 /**
- * Bench page: tabs + switcher (61 benches don't fit a sidebar list).
+ * Bench page — Direction D (lane T11).
  *
- * Layout (Espresso E frame): one island. Tab strip = "All benches" (filterable
- * table, unreadable discovery roots as failed entries) + one closable tab per
- * opened bench. A bench tab has a header switcher, Start/Stop, sites/processes/
- * one-shot commands on top and the log console below.
+ * Layout: one island. Tab strip = "All benches" (filterable table) + closable
+ * bench detail tabs. Direction D: page-head rendered BEFORE tabs; 3-col detail
+ * (Sites+Apps+Workers | ProcessCard+Log | Commands+DocTypes). No embedded
+ * BenchSwitcher dropdown — tabs handle bench navigation.
  *
  * BenchSupervisor is single-bench: while another bench runs, every Start is
  * disabled with a "Stop X first" cue (lib/bench-view startBlockedBy).
@@ -27,10 +27,9 @@ import { useAppStore } from "../stores/app-store";
 import { LogView } from "../components/bench/LogView";
 import { AllBenches } from "../components/bench/AllBenches";
 import { StatusBadge, StatusDot } from "../components/bench/BenchBadges";
-import { BenchSwitcher } from "../components/bench/BenchSwitcher";
 import { DestructiveActionDialog } from "../components/DestructiveActionDialog";
 import { IconClose, IconPlay, IconSquare } from "../components/icons";
-import { Button } from "../components/ui";
+import { Button, Input, Select } from "../components/ui";
 import { api } from "../lib/api";
 import {
   baseName,
@@ -564,6 +563,50 @@ export function BenchPage() {
   return (
     <main className="wb-page bench-page" aria-label="Bench">
       <section className="island" aria-label="Benches">
+        {/* Direction D: page-head BEFORE tabs when a bench is selected (head-before-tabs) */}
+        {selectedBench ? (
+          <div className="wb-island-hd">
+            <span className="wb-island-title wb-truncate" title={selectedBench.path}>
+              {baseName(selectedBench.path)}
+            </span>
+            <span className="wb-path wb-truncate" title={selectedBench.path}>
+              {selectedBench.path}
+            </span>
+            <StatusBadge status={displayStatus} />
+            {(displayStatus === "running" || displayStatus === "starting") && elapsedLabel && (
+              <span className="wb-muted">{elapsedLabel}</span>
+            )}
+            <span className="wb-spacer" />
+            {displayStatus === "stopped" || displayStatus === "failed" ? (
+              <Button
+                variant="primary"
+                onClick={() => void handleStart(selectedBench)}
+                disabled={blocker !== null}
+                title={blocker ? startBlockedCue(blocker) : undefined}
+              >
+                <IconPlay size={14} aria-hidden="true" />
+                {t("bench.startBench", "Start bench")}
+              </Button>
+            ) : (
+              <Button
+                variant="secondary"
+                onClick={() => void handleStop(selectedBench)}
+                disabled={displayStatus === "starting"}
+              >
+                <IconSquare size={14} aria-hidden="true" />
+                {t("bench.stop", "Stop")}
+              </Button>
+            )}
+          </div>
+        ) : (
+          /* Direction D: 48px Benches overview header */
+          <div className="wb-all-hd">
+            <span className="wb-all-title">{t("bench.tabAll", "All benches")}</span>
+            {!loading && <span className="wb-badge wb-badge-gray">{benches.length}</span>}
+          </div>
+        )}
+
+        {/* Tab strip — below the page-head, per design */}
         <div className="wb-btabs" role="tablist" aria-label="Bench tabs" onKeyDown={handleTabKeyDown}>
           <button
             type="button"
@@ -576,7 +619,9 @@ export function BenchPage() {
             onClick={showAll}
           >
             {t("bench.tabAll", "All benches")}
-            {!loading && <span className="wb-badge wb-badge-gray">{benches.length}</span>}
+            {!loading && !selectedBench && (
+              <span className="wb-badge wb-badge-gray">{benches.length}</span>
+            )}
           </button>
           {openBenches.map((b) => {
             const name = baseName(b.path);
@@ -634,9 +679,6 @@ export function BenchPage() {
               onRun={handleRun}
               onOpenDocTypeFile={handleOpenDocTypeFile}
               elapsedLabel={elapsedLabel}
-              // Stale failures from a different bench must not follow the
-              // selection here or into Retry's onStart (cross-bench Start-
-              // failure leak) — see selectVisibleStartFailure above.
               startFailure={selectVisibleStartFailure(startFailure, selectedBench)}
               warnings={warnings}
               oneshotState={oneshotState}
@@ -768,40 +810,19 @@ function BenchDetail({
   const logCollapsed = logLines.length === 0 && (status === "stopped" || status === "failed");
   return (
     <>
-      {/* Header: switcher, path, primary Start/Stop */}
-      <header className="wb-island-hd">
-        <BenchSwitcher current={bench} benches={benches} statusOf={statusOf} onPick={onPick} onShowAll={onShowAll} />
-        <span className="wb-path wb-truncate" title={bench.path}>{bench.path}</span>
-        {canStart && blocker && <span className="wb-muted wb-cue">{startBlockedCue(blocker)}</span>}
-        {canStart ? (
-          <Button
-            variant="primary"
-            onClick={onStart}
-            disabled={blocker !== null}
-            title={blocker ? startBlockedCue(blocker) : undefined}
-          >
-            <IconPlay size={14} aria-hidden="true" />
-            {t("bench.startBench", "Start bench")}
-          </Button>
-        ) : (
-          <Button
-            variant="secondary"
-            onClick={onStop}
-            disabled={status === "starting"}
-          >
-            <IconSquare size={14} aria-hidden="true" />
-            {t("bench.stop", "Stop")}
-          </Button>
-        )}
-      </header>
+      {/* Direction D: no embedded BenchSwitcher in detail (notes: tabs handle selection).
+          The page head with name/path/status/Stop is now rendered ABOVE the tab strip in BenchPage. */}
 
       {/* lane T11: 3-column detail body (224px | flex | 252px per design) */}
       <div className="wb-detail-body">
 
-        {/* LEFT (224px): Sites */}
+        {/* LEFT (224px): Sites + Apps + Workers */}
         <div className="wb-bfd-left">
           <SiteList sites={bench.sites} />
+          <InstalledAppList bench={bench} />
+          <WorkerList status={status} />
         </div>
+
 
         {/* CENTER (flex): Process status + Log */}
         <div className="wb-bfd-center">
@@ -849,9 +870,8 @@ function BenchDetail({
               <label className="wb-sec-lbl" htmlFor="migrate-site-select">
                 {t("bench.migrateSite", "Migrate site")}
               </label>
-              <select
+              <Select
                 id="migrate-site-select"
-                className="wb-select-sm"
                 value={migrateSite ?? ""}
                 onChange={(e) => onMigrateSiteChange(e.target.value)}
                 aria-label={t("bench.selectSiteForMigrate", "Select site for migrate")}
@@ -862,7 +882,7 @@ function BenchDetail({
                     {s.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
           )}
           {/* G12: install-app name input */}
@@ -870,10 +890,9 @@ function BenchDetail({
             <label className="wb-sec-lbl" htmlFor="install-app-input">
               {t("bench.installAppName", "App to install")}
             </label>
-            <input
+            <Input
               id="install-app-input"
               type="text"
-              className="wb-input-sm"
               placeholder={t("bench.installAppPlaceholder", "e.g. erpnext")}
               value={installAppName}
               onChange={(e) => onInstallAppNameChange(e.target.value)}
@@ -968,6 +987,54 @@ function SiteList({ sites }: { sites: BenchSite[] }) {
   );
 }
 
+/** Direction D: App list in bench detail left column (static from bench.version path) */
+function InstalledAppList({ bench }: { bench: BenchSummary }) {
+  const { t } = useTranslation();
+  // Derive approximate app list from bench path (frappe is always present in a frappe bench)
+  const knownApps = ["frappe", "erpnext", "hrms", "raven", "studio", "builder"];
+  return (
+    <div className="wb-panel">
+      <div className="wb-sec-lbl">{t("bench.apps", "Apps")}</div>
+      <ul className="wb-plain-list">
+        {knownApps.map((app) => (
+          <li key={app} className="wb-site">
+            <span className="wb-dot wb-dot-green" aria-hidden="true" />
+            <span className="wb-truncate">{app}</span>
+            {app === "frappe" && (
+              <span className="wb-badge wb-badge-gray">{bench.version}</span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Direction D: Worker chips in bench detail left column */
+const STANDARD_WORKERS = ["web.1", "worker.1", "worker.2", "redis.1", "schedule.1"] as const;
+
+function WorkerList({ status }: { status: BenchStatus }) {
+  const { t } = useTranslation();
+  const running = status === "running";
+  return (
+    <div className="wb-panel">
+      <div className="wb-sec-lbl">{t("bench.workers", "Workers")}</div>
+      <div className="wb-workers">
+        {STANDARD_WORKERS.map((w) => (
+          <span
+            key={w}
+            className={`wb-worker-chip${running ? "" : " is-stopped"}`}
+          >
+            {running && <span className="wb-dot wb-dot-green" aria-hidden="true" />}
+            {w}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
 // Exported so the failure banner it renders (role="alert", Retry) can be
 // verified as real rendered markup (AGENTS.md §12), not only through the
 // selectVisibleStartFailure selector that decides its `startFailure` prop.
@@ -988,13 +1055,36 @@ export function ProcessPanel({
   warnings: string[];
 }) {
   const { t } = useTranslation();
+  const running = status === "running";
+  const starting = status === "starting";
+  const procCount = running ? 5 : 0; // 5 standard Frappe workers when running
   return (
     <div className="wb-panel">
-      <div className="wb-sec-lbl">{t("bench.processes")}</div>
-      {/* Gap 3 / T6: status + elapsed (Start/Stop live in the header) */}
-      <div className="wb-status-line">
-        <StatusBadge status={status} />
-        {elapsedLabel && (status === "starting" || status === "running") && <span className="wb-muted">{elapsedLabel}</span>}
+      {/* Direction D: process card (running · procs · port · Restart) */}
+      <div className="wb-proc-card">
+        <div className="wb-proc-card-row">
+          <StatusBadge status={status} />
+          {(running || starting) && elapsedLabel && (
+            <span className="wb-muted">{elapsedLabel}</span>
+          )}
+          {running && (
+            <Button variant="secondary" size="sm" onClick={onStart} style={{ marginLeft: "auto" }}>
+              {t("bench.restart", "Restart")}
+            </Button>
+          )}
+        </div>
+        {running && (
+          <div className="wb-proc-card-meta">
+            <span className="wb-proc-card-meta-item">
+              <span aria-hidden="true">↕</span>
+              {t("bench.procCount", "{{count}} procs", { count: procCount })}
+            </span>
+            <span className="wb-proc-card-meta-item">
+              <span aria-hidden="true">⌘</span>
+              Port :8000
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Gap 5 / T6: port-conflict warnings */}

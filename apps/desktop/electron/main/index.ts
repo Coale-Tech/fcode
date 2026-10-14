@@ -674,7 +674,7 @@ const {
   speech,
 } = pluginServices;
 // Raven's own partition keeps the Frappe `sid` away from the work browser.
-const ravenPane = new BrowserPane(() => undefined, "persist:raven");
+const ravenPane = new BrowserPane(() => undefined, "persist:raven", "raven");
 const { rememberPluginScopes, pluginActiveInProject, broadcastPluginPanelEvent, setCurrentWorkspacePath } =
   createWorkspaceScopeRuntime({
     pluginScopes,

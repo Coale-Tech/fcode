@@ -157,8 +157,7 @@ const LOG_SCROLL_STYLE: React.CSSProperties = {
   fontFamily: "var(--font-mono)",
   fontSize: "var(--text-2xs)",
   lineHeight: `${LINE_HEIGHT}px`,
-  color: "var(--ds-text-primary)",
-  background: "var(--ds-bg-primary)",
+  /* Direction D: color/background are set by .bench-log-scroll CSS rule (always dark terminal) */
   padding: "4px 8px",
   outline: "none",
 };
