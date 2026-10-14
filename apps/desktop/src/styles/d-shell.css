@@ -258,7 +258,7 @@
 /* align-items:stretch puts footer items on the same full-width left-start grid
  * as scroll items (D.css:432-435 reuses .d-rail-item with margin:1px 6px). */
 .nav-rail-foot {
-  padding: var(--d-rail-item-mx);
+  padding-block: var(--d-rail-item-mx);          /* top/bottom only; items use margin:1px 6px for sides */
   border-top: 1px solid var(--d-border);
   display: flex;
   flex-direction: column;
