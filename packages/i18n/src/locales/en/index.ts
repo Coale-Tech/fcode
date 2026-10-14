@@ -2508,6 +2508,7 @@ sklm: {
       changes: "Changes",
       openReview: "Open Review",
       empty: "Nothing ran yet",
+      session: "Session",
     },
   },
   palette: {

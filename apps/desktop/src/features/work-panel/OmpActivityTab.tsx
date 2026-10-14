@@ -184,6 +184,9 @@ export const OmpActivityTab = memo(function OmpActivityTab() {
       {/* ── Session actions (omp TUI + share; ruled into Activity, no design home) ── */}
       {sessionId && isOmpSession && (
         <section className="activity-session">
+          <div className="activity-section-label">
+            {t("panel.activity.session")}
+          </div>
           <OmpTuiPanel sessionId={sessionId} projectPath={projectPath} />
           <OmpCollabPanel sessionId={sessionId} />
         </section>

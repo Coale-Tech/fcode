@@ -2503,6 +2503,7 @@ sklm: {
       changes: "변경 사항",
       openReview: "검토 열기",
       empty: "아직 실행된 것이 없습니다",
+      session: "세션",
     },
   },
   palette: {

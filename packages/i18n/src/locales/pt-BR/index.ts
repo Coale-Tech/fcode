@@ -2438,6 +2438,7 @@ export const ptBR = {
       changes: "Alterações",
       openReview: "Abrir revisão",
       empty: "Nada foi executado ainda",
+      session: "Sessão",
     }
   },
   palette: {

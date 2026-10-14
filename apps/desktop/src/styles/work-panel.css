@@ -1205,20 +1205,24 @@
   gap: 0;
 }
 
-/* Section label row — uppercase 11px heading, same pattern as act-s in design */
+/* Section label row — uppercase 11px heading, per D fragment .cf-act-sec */
 .activity-section-label {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  padding: 0 10px 5px;
-  color: var(--ds-text-faint); /* D: cf-act-sec uses --ink-gray-4 = --ds-text-faint */
+  padding: 8px 10px 4px;       /* D: cf-act-sec 8px top / 4px bottom; 10px sides from parent scroll */
+  color: var(--ds-text-faint); /* D: cf-act-sec color = --ink-gray-4 = --ds-text-faint */
   font-size: var(--d-text-xs); /* D: cf-act-sec 11px */
   font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: 0.06em;      /* D: cf-act-sec letter-spacing .06em (not --tracking-wide 0.02em) */
 }
 
+/* First label in activity tab: no top gap before it */
+.activity-tab > section:first-child .activity-section-label {
+  padding-top: 0;
+}
 /* ── Decision block ────────────────────────────────────────────────────────── */
 
 .activity-decision {
@@ -1407,4 +1411,12 @@
 
 .activity-count-del {
   color: var(--ds-error);
+}
+
+/* ── Session section (TUI + Collab; ruled into Activity, no D design home) ── */
+
+.activity-session {
+  margin-top: 8px;
+  border-top: 1px solid var(--ds-border-default);
+  padding-top: 4px;
 }

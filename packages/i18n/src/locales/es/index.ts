@@ -2486,7 +2486,8 @@ sklm: {
       "toolsRun": "Herramientas ejecutadas",
       "changes": "Cambios",
       "openReview": "Abrir revisión",
-      "empty": "Aún no se ejecutó nada"
+      "empty": "Aún no se ejecutó nada",
+      "session": "Sesión"
     }
   },
   "palette": {

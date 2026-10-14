@@ -2493,6 +2493,7 @@ sklm: {
       changes: "Değişiklikler",
       openReview: "İncelemeyi aç",
       empty: "Henüz hiçbir şey çalıştırılmadı",
+      session: "Oturum",
     },
   },
   palette: {

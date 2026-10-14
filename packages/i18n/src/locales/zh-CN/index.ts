@@ -2473,6 +2473,7 @@ sklm: {
       changes: "变更",
       openReview: "打开审阅",
       empty: "暂无运行记录",
+      session: "会话",
     },
   },
   palette: {
