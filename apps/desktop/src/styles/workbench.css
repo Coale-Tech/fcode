@@ -1084,3 +1084,159 @@
 }
 .ob-step-counter { font-size:11px; color:var(--ink-gray-4); }
 .ob-foot-skip { margin-right:auto; }
+/* ── D segmented control (D.css:781-815) ────────────────────────────────── */
+.d-seg {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  background: var(--surface-gray-2);
+  border-radius: var(--radius-full);
+  padding: 2px;
+  gap: 1px;
+}
+.d-seg-opt {
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  font-size: var(--d-text-sm);
+  font-weight: 500;
+  color: var(--ink-gray-6);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background .12s, color .12s;
+  gap: 5px;
+}
+.d-seg-opt svg { width: 12px; height: 12px; }
+.d-seg-opt.active {
+  background: var(--surface-elevation-1);
+  color: var(--da-txt);
+  box-shadow: var(--elevation-sm);
+}
+.d-seg-opt:hover:not(.active) { color: var(--ink-gray-8); }
+:root[data-theme="dark"] .d-seg { background: var(--surface-elevation-2); }
+
+/* ── Collapsible section (sf-sec-btn / sf-chevron, D fragment-d1.html:26-28) */
+.sf-sec-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 9px 12px;
+  font-size: var(--d-text);
+  font-weight: 500;
+  color: var(--ink-gray-8);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background .1s;
+}
+.sf-sec-btn:hover { background: var(--surface-gray-1); }
+.sf-chevron {
+  margin-left: auto;
+  width: 14px;
+  height: 14px;
+  color: var(--ink-gray-4);
+  transform: rotate(-90deg);
+  transition: transform .15s;
+  flex-shrink: 0;
+}
+.sf-chevron.open { transform: rotate(0deg); }
+/* ── D primitives: page chrome, pill, button (D.css:485-731)
+   Moved from settings.css — used by RavenPage, FileBirdPage, SettingsPage heads. */
+
+/* Page head: 48px chrome bar inside a panel (D.css:485-508) */
+.d-page-head {
+  display: flex;
+  align-items: center;
+  height: var(--d-ph-h);
+  flex: 0 0 var(--d-ph-h);
+  padding: 0 14px;
+  border-bottom: 1px solid var(--d-border);
+  background: var(--surface-gray-1);
+  gap: 8px;
+  flex-shrink: 0;
+}
+:root[data-theme="dark"] .d-page-head { background: var(--surface-elevation-2); border-color: var(--outline-gray-2); }
+.d-page-title { font-size: 14px; font-weight: 600; color: var(--ink-gray-9); }
+.d-page-head-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+
+/* Status pill (D.css:627-654) */
+.d-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 20px;
+  border-radius: 10px;
+  border: 1px solid var(--d-border);
+  padding: 0 7px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.d-pill-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.d-pill.green   { background: var(--surface-green-2);  color: var(--ink-green-8);  border-color: var(--outline-green-2); }
+.d-pill.green   .d-pill-dot { background: var(--green-500); }
+.d-pill.amber   { background: var(--surface-amber-2);  color: var(--ink-amber-8);  border-color: var(--outline-amber-2); }
+.d-pill.amber   .d-pill-dot { background: var(--amber-500); }
+.d-pill.gray    { background: var(--surface-gray-2);   color: var(--ink-gray-6);   border-color: var(--d-border); }
+.d-pill.gray    .d-pill-dot { background: var(--ink-gray-4); }
+
+/* D button base (D.css:657-731) */
+.d-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 5px; height: var(--d-ctrl); padding: 0 10px;
+  border-radius: var(--d-r-ctrl); border: 1px solid transparent;
+  font-family: inherit; font-size: var(--d-text); font-weight: 500;
+  cursor: pointer; white-space: nowrap; transition: background .12s, color .12s;
+  outline: none; flex-shrink: 0;
+}
+.d-btn:focus-visible { box-shadow: 0 0 0 2px var(--da-bdr); }
+.d-btn:disabled { opacity: .45; cursor: not-allowed; }
+.d-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+.d-btn.secondary { background: var(--surface-gray-2); color: var(--ink-gray-8); border-color: var(--d-border-ctrl); }
+.d-btn.secondary:hover:not(:disabled) { background: var(--surface-gray-3); }
+.d-btn.ghost { background: transparent; color: var(--ink-gray-7); border-color: transparent; }
+.d-btn.ghost:hover:not(:disabled) { background: var(--surface-gray-2); color: var(--ink-gray-9); }
+.d-btn.sm  { height: 24px; padding: 0 7px; font-size: var(--d-text-sm); }
+.d-btn.icon-btn { width: var(--d-ctrl); padding: 0; }
+.d-btn.sm.icon-btn { width: 24px; }
+
+/* Raven page wrap: flex column for head + surface hole */
+.raven-page-wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+/* Raven mono URL chip (raven/fragment.html) */
+.raven-url-chip {
+  font-size: 11px;
+  font-family: 'SF Mono', 'Cascadia Code', ui-monospace, monospace;
+  color: var(--ink-gray-5);
+  background: var(--surface-gray-2);
+  border: 1px solid var(--outline-gray-2);
+  border-radius: 5px;
+  padding: 2px 7px;
+  flex-shrink: 0;
+}
+
+/* FileBird page wrap: flex column for head + surface hole */
+.filebird-page-wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+/* FileBird kebab dropdown */
+.fb-kebab-menu {
+  min-width: 160px;
+  background: var(--surface-elevation-2);
+  border: 1px solid var(--outline-elevation-1);
+  border-radius: var(--d-r-ctrl);
+  box-shadow: var(--elevation-2xl);
+  overflow: hidden;
+}
+.fb-menu-item {
+  display: flex; align-items: center; width: 100%; padding: 6px 10px;
+  font-size: var(--d-text); color: var(--ink-gray-7);
+  background: transparent; border: none; cursor: pointer; font-family: inherit; text-align: left;
+}
+.fb-menu-item:hover { background: var(--surface-gray-1); color: var(--ink-gray-9); }

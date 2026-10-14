@@ -3888,110 +3888,12 @@
   flex: 0 0 auto;
   align-items: center;
 }
-
-/* lane t13: Direction D primitive classes needed by Raven/FileBird/settings page heads
-   (D.css:464-654; used by T13-owned pages and shared shell) */
-
-/* Panel: elevated surface (D.css:464-481) */
-.d-panel {
-  display: flex;
-  flex-direction: column;
-  background: var(--surface-elevation-1);
-  border-radius: var(--d-r);
-  box-shadow: var(--elevation-base);
-  border: 1px solid var(--outline-elevation-1);
-  overflow: hidden;
-  min-height: 0;
-  flex: 1;
-}
-:root[data-theme="dark"] .d-panel { background: var(--surface-elevation-1); border-color: var(--outline-gray-2); }
-
-/* Page head: 48px chrome bar inside a panel (D.css:485-508) */
-.d-page-head {
-  display: flex;
-  align-items: center;
-  height: var(--d-ph-h);
-  flex: 0 0 var(--d-ph-h);
-  padding: 0 14px;
-  border-bottom: 1px solid var(--d-border);
-  background: var(--surface-gray-1);
-  gap: 8px;
-  flex-shrink: 0;
-}
-:root[data-theme="dark"] .d-page-head { background: var(--surface-elevation-2); border-color: var(--outline-gray-2); }
-.d-page-title { font-size: 14px; font-weight: 600; color: var(--ink-gray-9); }
-.d-page-head-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; }
-
-/* Status pill (D.css:627-654) */
-.d-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 20px;
-  border-radius: 10px;
-  border: 1px solid var(--d-border);
-  padding: 0 7px;
-  font-size: 11px;
-  font-weight: 500;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.d-pill-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-.d-pill.green   { background: var(--surface-green-2);  color: var(--ink-green-8);  border-color: var(--outline-green-2); }
-.d-pill.green   .d-pill-dot { background: var(--green-500); }
-.d-pill.amber   { background: var(--surface-amber-2);  color: var(--ink-amber-8);  border-color: var(--outline-amber-2); }
-.d-pill.amber   .d-pill-dot { background: var(--amber-500); }
-.d-pill.gray    { background: var(--surface-gray-2);   color: var(--ink-gray-6);   border-color: var(--d-border); }
-.d-pill.gray    .d-pill-dot { background: var(--ink-gray-4); }
-
-/* D button base (D.css:657-731) */
-.d-btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  gap: 5px; height: var(--d-ctrl); padding: 0 10px;
-  border-radius: var(--d-r-ctrl); border: 1px solid transparent;
-  font-family: inherit; font-size: var(--d-text); font-weight: 500;
-  cursor: pointer; white-space: nowrap; transition: background .12s, color .12s;
-  outline: none; flex-shrink: 0;
-}
-.d-btn:focus-visible { box-shadow: 0 0 0 2px var(--da-bdr); }
-.d-btn:disabled { opacity: .45; cursor: not-allowed; }
-.d-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
-.d-btn.secondary { background: var(--surface-gray-2); color: var(--ink-gray-8); border-color: var(--d-border-ctrl); }
-.d-btn.secondary:hover:not(:disabled) { background: var(--surface-gray-3); }
-.d-btn.ghost { background: transparent; color: var(--ink-gray-7); border-color: transparent; }
-.d-btn.ghost:hover:not(:disabled) { background: var(--surface-gray-2); color: var(--ink-gray-9); }
-.d-btn.sm  { height: 24px; padding: 0 7px; font-size: var(--d-text-sm); }
-.d-btn.icon-btn { width: var(--d-ctrl); padding: 0; }
-.d-btn.sm.icon-btn { width: 24px; }
-
-/* Raven page wrap: flex column for head + surface hole */
-.raven-page-wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-/* Raven mono URL chip (fragment.html:265-274) */
-.raven-url-chip {
-  font-size: 11px;
-  font-family: 'SF Mono', 'Cascadia Code', ui-monospace, monospace;
-  color: var(--ink-gray-5);
+/* D: count badge inside sf-sec-btn (sn-badge, fragment-d1.html:18) */
+.sn-badge {
+  font-size: 9px;
+  font-weight: 600;
   background: var(--surface-gray-2);
-  border: 1px solid var(--outline-gray-2);
-  border-radius: 5px;
-  padding: 2px 7px;
-  flex-shrink: 0;
+  color: var(--ink-gray-6);
+  border-radius: 3px;
+  padding: 1px 4px;
 }
-
-/* FileBird page wrap: flex column for head + surface hole */
-.filebird-page-wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-/* FileBird kebab dropdown (fragment.html:37-48) */
-.fb-kebab-menu {
-  min-width: 160px;
-  background: var(--surface-elevation-2);
-  border: 1px solid var(--outline-elevation-1);
-  border-radius: var(--d-r-ctrl);
-  box-shadow: var(--elevation-2xl);
-  overflow: hidden;
-}
-.fb-menu-item {
-  display: flex; align-items: center; width: 100%; padding: 6px 10px;
-  font-size: var(--d-text); color: var(--ink-gray-7);
-  background: transparent; border: none; cursor: pointer; font-family: inherit; text-align: left;
-}
-.fb-menu-item:hover { background: var(--surface-gray-1); color: var(--ink-gray-9); }

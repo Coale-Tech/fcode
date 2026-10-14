@@ -1,9 +1,10 @@
 /**
  * Theme picker for Settings → General → Appearance.
  *
- * Language, font, and theme are searchable picker rows. Built-in System /
- * Light / Dark stay pinned at the top; plugin themes follow after a divider.
- * Search matches labels, descriptions, ids, and plugin ids.
+ * D design: three-button segmented control for System / Light / Dark.
+ * Plugin themes (plugin:*) are managed via the Extensions tab; when a plugin
+ * theme is active the seg shows none of the three as pressed and a separate
+ * "Custom" label appears so the user can revert to a built-in.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -41,6 +42,7 @@ export function ThemeRow({
   const optionRefs = useRef(new Map<string, HTMLButtonElement>());
 
   const selectedId: ThemePreference = settings.theme ?? "system";
+  const isPlugin = selectedId.startsWith("plugin:");
 
   const options = useMemo<ThemeOption[]>(() => {
     const builtins: ThemeOption[] = BUILTIN_THEME_PREFERENCES.map((id) => {
@@ -91,8 +93,8 @@ export function ThemeRow({
     optionRefs.current.get(activeId)?.scrollIntoView({ block: "nearest" });
   }, [activeId, open]);
 
-  const selected = options.find((option) => option.id === selectedId);
-  const triggerLabel = selected?.title ?? selectedId;
+  const pluginOption = options.find((o) => o.id === selectedId && o.kind === "plugin");
+  const pluginLabel = pluginOption?.title ?? selectedId.replace(/^plugin:[^:]+:/, "");
 
   const close = () => {
     setOpen(false);
@@ -117,125 +119,149 @@ export function ThemeRow({
     setActiveId(visibleIds[next] ?? "system");
   };
 
+  const builtinLabels: Record<string, string> = {
+    system: t("settings.themeSystem"),
+    light: t("settings.themeLight"),
+    dark: t("settings.themeDark"),
+  };
+
   return (
     <SettingsRow
       title={t("settings.theme")}
       description={t("settings.themeDesc")}
     >
-      <AnchoredMenu
-          className="settings-theme-anchor"
-          open={open}
-          onClose={close}
-          menuClassName="settings-theme-menu"
-          label={t("settings.theme")}
-          align="end"
-          initialFocus="input"
-          trigger={(ref) => (
-            <button
-              ref={ref}
-              type="button"
-              className="settings-theme-trigger"
-              aria-haspopup="listbox"
-              aria-expanded={open}
-              aria-label={t("settings.theme")}
-              onClick={() => {
-                setQuery("");
-                setActiveId(selectedId);
-                setOpen((current) => !current);
-              }}
-            >
-              <span className="settings-theme-trigger-label">{triggerLabel}</span>
-              <IconChevronDown size={14} aria-hidden />
-            </button>
-          )}
-        >
-          <div className="settings-theme-search">
-            <IconSearch size={13} aria-hidden />
-            <input
-              type="text"
-              value={query}
-              placeholder={t("settings.themeSearchPlaceholder")}
-              aria-label={t("settings.themeSearchPlaceholder")}
-              spellCheck={false}
-              autoCorrect="off"
-              autoCapitalize="off"
-              autoComplete="off"
-              onChange={(event) => setQuery(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "ArrowDown") {
-                  event.preventDefault();
-                  moveActive(1);
-                } else if (event.key === "ArrowUp") {
-                  event.preventDefault();
-                  moveActive(-1);
-                } else if (event.key === "Enter") {
-                  event.preventDefault();
-                  if (activeId) choose(activeId);
-                }
-              }}
-            />
-          </div>
-          <div className="settings-theme-results">
-            {visible.length === 0 ? (
-              <div className="settings-theme-empty">{t("settings.noResults")}</div>
-            ) : (
-              <ul className="settings-theme-list">
-                {visible.map((option, index) => {
-                  const isCurrent = option.id === selectedId;
-                  const isActive = option.id === activeId;
-                  const next = visible[index + 1];
-                  const showDivider =
-                    option.kind === "builtin" && next?.kind === "plugin";
-                  return (
-                    <li
-                      key={option.id}
-                      className={cx(showDivider && "has-divider")}
-                    >
-                      <button
-                        ref={(node) => {
-                          if (node) optionRefs.current.set(option.id, node);
-                          else optionRefs.current.delete(option.id);
-                        }}
-                        type="button"
-                        role="option"
-                        tabIndex={-1}
-                        aria-selected={isCurrent}
-                        className={cx(
-                          "settings-theme-option",
-                          isCurrent && "is-current",
-                          isActive && "is-active",
-                        )}
-                        onMouseEnter={() => setActiveId(option.id)}
-                        onClick={() => choose(option.id)}
-                      >
-                        <span className="settings-theme-option-copy">
-                          <span className="settings-theme-option-title">
-                            {option.title}
-                          </span>
-                          {option.hint ? (
-                            <span className="settings-theme-option-hint">
-                              {option.hint}
-                            </span>
-                          ) : null}
-                        </span>
-                        {isCurrent ? (
-                          <IconCheck
-                            size={14}
-                            className="settings-theme-check"
-                            aria-hidden
-                          />
-                        ) : null}
-                      </button>
-                      {showDivider ? (
-                        <span className="settings-theme-divider" aria-hidden />
-                      ) : null}
-                    </li>
-                  );
-                })}
-              </ul>
+      {/* D design: d-seg for the 3 built-in options */}
+      <div className="d-seg" role="group" aria-label={t("settings.theme")}>
+        {BUILTIN_THEME_PREFERENCES.map((id) => (
+          <button
+            key={id}
+            type="button"
+            className={cx("d-seg-opt", !isPlugin && selectedId === id && "active")}
+            aria-pressed={!isPlugin && selectedId === id}
+            onClick={() => void saveSettings({ theme: id })}
+          >
+            {builtinLabels[id] ?? id}
+          </button>
+        ))}
+        {/* When a plugin theme is active, show a Custom button that opens the
+            full picker so the user can switch away from the plugin theme. */}
+        {isPlugin && (
+          <AnchoredMenu
+            className="settings-theme-anchor"
+            open={open}
+            onClose={close}
+            menuClassName="settings-theme-menu"
+            label={t("settings.theme")}
+            align="end"
+            initialFocus="input"
+            trigger={(ref) => (
+              <button
+                ref={ref}
+                type="button"
+                className="d-seg-opt active"
+                aria-haspopup="listbox"
+                aria-expanded={open}
+                aria-label={pluginLabel}
+                onClick={() => {
+                  setQuery("");
+                  setActiveId(selectedId);
+                  setOpen((current) => !current);
+                }}
+              >
+                {pluginLabel}
+                <IconChevronDown size={11} aria-hidden />
+              </button>
             )}
-          </div>
-      </AnchoredMenu>
+          >
+            <div className="settings-theme-search">
+              <IconSearch size={13} aria-hidden />
+              <input
+                type="text"
+                value={query}
+                placeholder={t("settings.themeSearchPlaceholder")}
+                aria-label={t("settings.themeSearchPlaceholder")}
+                spellCheck={false}
+                autoCorrect="off"
+                autoCapitalize="off"
+                autoComplete="off"
+                onChange={(event) => setQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "ArrowDown") {
+                    event.preventDefault();
+                    moveActive(1);
+                  } else if (event.key === "ArrowUp") {
+                    event.preventDefault();
+                    moveActive(-1);
+                  } else if (event.key === "Enter") {
+                    event.preventDefault();
+                    if (activeId) choose(activeId);
+                  }
+                }}
+              />
+            </div>
+            <div className="settings-theme-results">
+              {visible.length === 0 ? (
+                <div className="settings-theme-empty">{t("settings.noResults")}</div>
+              ) : (
+                <ul className="settings-theme-list">
+                  {visible.map((option, index) => {
+                    const isCurrent = option.id === selectedId;
+                    const isActive = option.id === activeId;
+                    const next = visible[index + 1];
+                    const showDivider =
+                      option.kind === "builtin" && next?.kind === "plugin";
+                    return (
+                      <li
+                        key={option.id}
+                        className={cx(showDivider && "has-divider")}
+                      >
+                        <button
+                          ref={(node) => {
+                            if (node) optionRefs.current.set(option.id, node);
+                            else optionRefs.current.delete(option.id);
+                          }}
+                          type="button"
+                          role="option"
+                          tabIndex={-1}
+                          aria-selected={isCurrent}
+                          className={cx(
+                            "settings-theme-option",
+                            isCurrent && "is-current",
+                            isActive && "is-active",
+                          )}
+                          onMouseEnter={() => setActiveId(option.id)}
+                          onClick={() => choose(option.id)}
+                        >
+                          <span className="settings-theme-option-copy">
+                            <span className="settings-theme-option-title">
+                              {option.title}
+                            </span>
+                            {option.hint ? (
+                              <span className="settings-theme-option-hint">
+                                {option.hint}
+                              </span>
+                            ) : null}
+                          </span>
+                          {isCurrent ? (
+                            <IconCheck
+                              size={14}
+                              className="settings-theme-check"
+                              aria-hidden
+                            />
+                          ) : null}
+                        </button>
+                        {showDivider ? (
+                          <span className="settings-theme-divider" aria-hidden />
+                        ) : null}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </AnchoredMenu>
+        )}
+      </div>
     </SettingsRow>
   );
 }
