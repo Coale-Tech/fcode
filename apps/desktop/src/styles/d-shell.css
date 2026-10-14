@@ -428,3 +428,46 @@
   min-height: var(--d-row-h);
   font-size: var(--d-text-sm);  /* 12px */
 }
+
+/* D3 bench status dot (running = green, stopped = gray) */
+:root[data-nav-layout="island"] .d3-bench-dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--ink-gray-4);
+  flex-shrink: 0;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+:root[data-nav-layout="island"] .d3-bench-dot.is-on  { background: var(--color-green-6, #22c55e); }
+:root[data-nav-layout="island"] .d3-bench-dot.is-off { background: var(--ink-gray-4); }
+
+/* D3 Pinned pages section (D3-shell.html:497-519) */
+:root[data-nav-layout="island"] .d3-sb-pinned-pages {
+  flex-shrink: 0;
+}
+:root[data-nav-layout="island"] .d3-sb-pinned-list {
+  padding: 0 8px 6px;
+  display: flex; flex-direction: column; gap: 1px;
+}
+:root[data-nav-layout="island"] .d3-sb-pinned-row {
+  display: flex; align-items: center; gap: 7px;
+  width: 100%; height: 28px;
+  padding: 0 8px; border: none;
+  background: transparent; font-family: inherit;
+  font-size: 12px; color: var(--ink-gray-7);
+  border-radius: 6px; cursor: pointer; text-align: left;
+}
+:root[data-nav-layout="island"] .d3-sb-pinned-row:hover {
+  background: var(--surface-gray-1);
+  color: var(--ink-gray-9);
+}
+:root[data-nav-layout="island"] .d3-sb-pinned-row.active {
+  background: var(--surface-gray-2);
+  color: var(--ink-gray-9);
+}
+:root[data-nav-layout="island"] .d3-sb-pinned-name { flex: 1; }
+:root[data-nav-layout="island"] .d3-sb-pinned-sub  { font-size: 11px; color: var(--ink-gray-4); }
+/* Dark mode overrides */
+:root[data-theme="dark"][data-nav-layout="island"] .d3-sb-pinned-row:hover  { background: var(--surface-gray-2); }
+:root[data-theme="dark"][data-nav-layout="island"] .d3-sb-pinned-row.active { background: var(--surface-gray-3); }

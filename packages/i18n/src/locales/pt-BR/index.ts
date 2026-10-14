@@ -147,6 +147,7 @@ export const ptBR = {
     toggleWorkPanel: "Alternar painel lateral",
     sessions: "Sessões",
     filterSessions: "Filtrar sessões…",
+    pinnedPages: "Páginas fixadas",
     collapseSidebar: "Recolher barra lateral",
     expandSidebar: "Expandir barra lateral",
     resizeSidebar: "Redimensionar barra lateral",

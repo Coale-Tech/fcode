@@ -75,17 +75,21 @@ import {
   IconChevronDown,
   IconCopy,
   IconCircleAlert,
+  IconFileBird,
+  IconKanban,
   IconNewSession,
   IconFolder,
   IconMore,
   IconNewProject,
   IconPin,
   IconPencil,
+  IconRaven,
   IconSidebar,
   IconStar,
   IconTrash,
   IconX,
 } from "./icons";
+import { useBenchContext } from "../hooks/use-bench-context";
 
 type ProjectEntry = {
   path: string;
@@ -239,6 +243,9 @@ export function Sidebar({
   const page = useAppStore((s) => s.page);
   const settings = useAppStore((s) => s.settings);
   const navLayout = resolveNavLayout(settings?.navLayout);
+  const kanbanEnabled = useAppStore((s) => s.kanbanEnabled);
+  const ravenEnabled = useAppStore((s) => s.ravenEnabled);
+  const bench = useBenchContext();
   const prefetchSession = useAppStore((s) => s.prefetchSession);
   const selectSession = useAppStore((s) => s.selectSession);
   const newSession = useAppStore((s) => s.newSession);
@@ -2322,9 +2329,24 @@ export function Sidebar({
             aria-label={t("nav.bench")}
           >
             <div className="d3-sb-bench-name">
-              {workspace?.name ?? workspace?.path?.split("/").filter(Boolean).pop() ?? t("app.shellName")}
+              {bench.kind !== "empty" ? (
+                <>
+                  <span className={`d3-bench-dot ${bench.kind === "running" ? "is-on" : "is-off"}`} aria-hidden />
+                  {workspace?.name ?? bench.benchName}
+                </>
+              ) : (
+                workspace?.name ?? t("workspaceBar.noBench")
+              )}
             </div>
-            <div className="d3-sb-bench-sub">{t("nav.workspace")}</div>
+            <div className="d3-sb-bench-sub">
+              {bench.kind === "running"
+                ? bench.site
+                  ? `${t("workspaceBar.running")} · ${bench.site}`
+                  : t("workspaceBar.running")
+                : bench.kind === "stopped"
+                ? t("workspaceBar.stopped")
+                : t("workspaceBar.chooseBench")}
+            </div>
           </button>
           <button
             type="button"
@@ -2481,6 +2503,50 @@ export function Sidebar({
             ) : null}
           </div>
         </section>
+
+        {navLayout === "island" && (
+          <section className="d3-sb-pinned-pages" aria-label={t("nav.pinnedPages")}>
+            <div className="sidebar-list-toolbar sidebar-list-toolbar-secondary">
+              <span className="sidebar-list-label">{t("nav.pinnedPages")}</span>
+            </div>
+            <div className="d3-sb-pinned-list">
+              {kanbanEnabled && (
+                <button
+                  type="button"
+                  className={cx("d3-sb-pinned-row", page === "kanban" && "active")}
+                  data-nav="pinned-kanban"
+                  onClick={() => setPage("kanban")}
+                >
+                  <IconKanban size={12} aria-hidden />
+                  <span className="d3-sb-pinned-name">{t("kanban.title")}</span>
+                  {bench.kind !== "empty" && (
+                    <span className="d3-sb-pinned-sub">· {bench.benchName}</span>
+                  )}
+                </button>
+              )}
+              {ravenEnabled && (
+                <button
+                  type="button"
+                  className={cx("d3-sb-pinned-row", page === "raven" && "active")}
+                  data-nav="pinned-raven"
+                  onClick={() => setPage("raven")}
+                >
+                  <IconRaven size={12} aria-hidden />
+                  <span className="d3-sb-pinned-name">{t("raven.title")}</span>
+                </button>
+              )}
+              <button
+                type="button"
+                className={cx("d3-sb-pinned-row", page === "filebird" && "active")}
+                data-nav="pinned-filebird"
+                onClick={() => setPage("filebird")}
+              >
+                <IconFileBird size={12} aria-hidden />
+                <span className="d3-sb-pinned-name">{t("fileBird.title")}</span>
+              </button>
+            </div>
+          </section>
+        )}
 
         <div
           className="sidebar-list-toolbar"

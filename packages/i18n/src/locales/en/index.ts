@@ -155,6 +155,7 @@ export const en = {
     toggleWorkPanel: "Toggle side panel",
     sessions: "Sessions",
     filterSessions: "Filter sessions…",
+    pinnedPages: "Pinned pages",
     collapseSidebar: "Collapse sidebar",
     expandSidebar: "Expand sidebar",
     resizeSidebar: "Resize sidebar",

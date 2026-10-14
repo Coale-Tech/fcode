@@ -150,6 +150,7 @@ export const zhCN = {
     toggleWorkPanel: "切换侧边面板",
     sessions: "会话",
     filterSessions: "筛选会话…",
+    pinnedPages: "固定页面",
     collapseSidebar: "收起侧边栏",
     expandSidebar: "展开侧边栏",
     resizeSidebar: "调整侧边栏宽度",

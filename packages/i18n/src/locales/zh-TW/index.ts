@@ -150,6 +150,7 @@ export const zhTW = {
     toggleWorkPanel: "切換側邊面板",
     sessions: "會話",
     filterSessions: "篩選會話…",
+    pinnedPages: "固定頁面",
     collapseSidebar: "收起側邊欄",
     expandSidebar: "展開側邊欄",
     resizeSidebar: "調整側邊欄寬度",

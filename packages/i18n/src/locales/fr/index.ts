@@ -148,6 +148,7 @@ export const fr = {
     "toggleWorkPanel": "Basculer le panneau latéral",
     "sessions": "Sessions",
     "filterSessions": "Filtrer les sessions…",
+    "pinnedPages": "Pages épinglées",
     "collapseSidebar": "Réduire la barre latérale",
     "expandSidebar": "Développer la barre latérale",
     "resizeSidebar": "Redimensionner la barre latérale",

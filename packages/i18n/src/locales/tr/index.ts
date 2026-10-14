@@ -157,6 +157,7 @@ export const tr = {
     toggleWorkPanel: "Yan paneli aç/kapat",
     sessions: "Oturumlar",
     filterSessions: "Oturumları filtrele…",
+    pinnedPages: "Sabitlenmiş sayfalar",
     collapseSidebar: "Kenar çubuğunu daralt",
     expandSidebar: "Kenar çubuğunu genişlet",
     resizeSidebar: "Kenar çubuğu genişliğini ayarla",

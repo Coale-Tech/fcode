@@ -148,7 +148,7 @@ export function AppShell() {
         {/* ShellNavbar: outside the inert/hidden subtree; stays usable in settings mode
             (Review Focus 4). Drag region + Cmd-K awesomebar for all pages. */}
         <ShellNavbar onOpenSearch={() => setSearchOpen(true)} />
-        <PortalVisibilityProvider visible={page !== "settings"}>
+        <PortalVisibilityProvider visible={page !== "settings" || navLayout === "island"}>
           <div
             className="app-chat-shell"
             hidden={page === "settings" && navLayout !== "island"}

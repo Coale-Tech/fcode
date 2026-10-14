@@ -148,6 +148,7 @@ export const de = {
     "toggleWorkPanel": "Seitenpanel umschalten",
     "sessions": "Sitzungen",
     "filterSessions": "Sitzungen filtern…",
+    "pinnedPages": "Angeheftete Seiten",
     "collapseSidebar": "Seitenleiste einklappen",
     "expandSidebar": "Seitenleiste erweitern",
     "resizeSidebar": "Größe der Seitenleiste ändern",

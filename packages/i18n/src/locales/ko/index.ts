@@ -157,6 +157,7 @@ export const ko = {
     toggleWorkPanel: "사이드 패널 전환",
     sessions: "세션",
     filterSessions: "세션 필터…",
+    pinnedPages: "고정된 페이지",
     collapseSidebar: "사이드바 접기",
     expandSidebar: "사이드바 펼치기",
     resizeSidebar: "사이드바 크기 조절",
