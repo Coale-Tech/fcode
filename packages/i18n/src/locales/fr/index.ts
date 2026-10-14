@@ -2268,6 +2268,7 @@ sklm: {
     "filterOpen": "Ouvrir",
     "filterDraft": "Brouillon",
     "filterAll": "Tous",
+    "author": "Auteur",
     "open": "Ouvrir",
     "draft": "Brouillon"
   },
@@ -2343,6 +2344,12 @@ sklm: {
     "healthStale": "Le planificateur ne répond pas",
     "healthError": "Erreur du planificateur : {{error}}",
     "healthRetry": "Réessayer",
+    "schedulerHealthy": "Planificateur actif",
+    "healthTick": "Dernier tick il y a {{seconds}}s",
+    "detailStatus": "Statut",
+    "detailSchedule": "Planification",
+    "detailWorkspace": "Espace de travail",
+    "recentRuns": "Exécutions récentes",
     "insightsRuns": "Exécutions",
     "insightsSuccess": "Taux de succès",
     "insightsAvgDuration": "Durée moy.",
@@ -3080,6 +3087,9 @@ sklm: {
     "planApprovalBody": "Le plan proposé est prêt pour examen.",
     "actionFailed": "Impossible de mettre à jour les notifications.",
     "justNow": "À l'instant"
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "unreadCount": "{{count}} non lues",
   },
   "errors": {
     "HOST_UNAVAILABLE": "Le service local n'est pas disponible",

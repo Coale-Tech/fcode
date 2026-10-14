@@ -277,7 +277,8 @@
 }
 
 .kanban-card-selected {
-  border-color: var(--ds-accent);
+  background: var(--da-sub);
+  border-color: var(--da-bdr);
 }
 
 .kanban-card-row {
@@ -301,11 +302,11 @@
 
 .kanban-card-title {
   font-size: var(--d-text-sm);
-  font-weight: var(--font-weight-medium);
+  font-weight: 400;
   line-height: 1.4;
   word-break: break-word;
   color: var(--ink-gray-8);
-  margin-bottom: 2px;
+  margin-bottom: 5px;
 }
 
 .kanban-card-meta {

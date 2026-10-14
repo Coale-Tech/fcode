@@ -2268,6 +2268,7 @@ sklm: {
     "filterOpen": "Offen",
     "filterDraft": "Entwurf",
     "filterAll": "Alle",
+    "author": "Autor",
     "open": "Offen",
     "draft": "Entwurf"
   },
@@ -2343,6 +2344,12 @@ sklm: {
     "healthStale": "Planer reagiert nicht",
     "healthError": "Planer-Fehler: {{error}}",
     "healthRetry": "Wiederholen",
+    "schedulerHealthy": "Scheduler aktiv",
+    "healthTick": "Letzter Tick vor {{seconds}}s",
+    "detailStatus": "Status",
+    "detailSchedule": "Zeitplan",
+    "detailWorkspace": "Arbeitsbereich",
+    "recentRuns": "Letzte Ausführungen",
     "insightsRuns": "Ausführungen",
     "insightsSuccess": "Erfolgsrate",
     "insightsAvgDuration": "Durchschn. Dauer",
@@ -3080,6 +3087,9 @@ sklm: {
     "planApprovalBody": "Ein vorgeschlagener Plan ist zur Überprüfung bereit.",
     "actionFailed": "Benachrichtigungen konnten nicht aktualisiert werden.",
     "justNow": "Gerade eben"
+    "today": "Heute",
+    "yesterday": "Gestern",
+    "unreadCount": "{{count}} ungelesen",
   },
   "errors": {
     "HOST_UNAVAILABLE": "Der lokale Dienst ist nicht verfügbar",

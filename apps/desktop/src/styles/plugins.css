@@ -2074,3 +2074,143 @@
     transition: none;
   }
 }
+
+/* ── Direction D Plugins page layout (T12-F05) ───────────────────────────────
+ * Two-column: 220px left nav + flex:1 right main panel.
+ * Design authority: pages-d/plugins/fragment.html:59-312,315-639 */
+
+.plg-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding-top: var(--ds-toolbar-height);
+}
+
+/* fragment.html:61-67 */
+.plg-layout {
+  display: flex;
+  gap: var(--d-gap);
+  height: 100%;
+  width: 100%;
+  min-height: 0;
+  padding: var(--d-gap);
+}
+
+/* ── Left nav panel items (fragment.html:76-120) ─────────────────────────── */
+.plg-nav-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px;
+  min-height: 0;
+}
+.plg-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 9px;
+  border-radius: var(--d-r-ctrl);
+  font-size: var(--d-text);
+  font-weight: 500;
+  color: var(--ink-gray-7);
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  margin-bottom: 1px;
+  font-family: inherit;
+  transition: background .1s, color .1s;
+}
+.plg-nav-item:hover { background: var(--surface-gray-2); color: var(--ink-gray-9); }
+.plg-nav-item.active { background: var(--da-sub); color: var(--da-txt); }
+.plg-nav-item.active svg { color: var(--da-txt); }
+.plg-nav-badge {
+  margin-left: auto;
+  font-size: var(--d-text-xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  background: var(--surface-gray-3);
+  color: var(--ink-gray-5);
+  border-radius: 8px;
+  padding: 0 5px;
+  height: 16px;
+  line-height: 16px;
+  min-width: 18px;
+  text-align: center;
+}
+.plg-nav-item.active .plg-nav-badge { background: var(--da-sub); color: var(--da-txt); }
+.plg-nav-item.danger { color: var(--ink-red-7); }
+.plg-nav-item.danger .plg-nav-badge { background: var(--surface-red-2); color: var(--ink-red-7); }
+.plg-nav-item.warn { color: var(--ink-amber-7); }
+.plg-nav-item.warn .plg-nav-badge { background: var(--surface-amber-2); color: var(--ink-amber-8); }
+.plg-nav-divider { height: 1px; background: var(--outline-gray-1); margin: 5px 3px; }
+
+/* ── Group heads (fragment.html:123-155) ────────────────────────────────── */
+.plg-group-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 12px;
+  background: var(--surface-gray-1);
+  border-bottom: 1px solid var(--outline-gray-1);
+  border-top: 1px solid var(--outline-gray-1);
+  font-size: var(--d-text-xs);
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--ink-gray-5);
+  position: sticky;
+  top: 0;
+  z-index: 4;
+}
+.plg-group-head.danger { color: var(--ink-red-7); background: var(--surface-red-1); border-color: var(--outline-red-1); }
+.plg-group-head.warn   { color: var(--ink-amber-7); background: var(--surface-amber-1); border-color: var(--outline-amber-1); }
+.plg-group-count {
+  font-size: var(--d-text-xs);
+  background: var(--surface-gray-3);
+  color: var(--ink-gray-5);
+  border-radius: 8px;
+  padding: 0 5px;
+  height: 14px;
+  line-height: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.plg-group-head.danger .plg-group-count { background: var(--surface-red-2); color: var(--ink-red-7); }
+.plg-group-head.warn .plg-group-count   { background: var(--surface-amber-2); color: var(--ink-amber-8); }
+
+/* ── Plugin rows in D-layout (fragment.html:157-243) ───────────────────── */
+.plg-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--outline-gray-1);
+  transition: background .1s;
+}
+.plg-row:hover { background: var(--surface-gray-1); }
+
+/* Install-from-spec inline row (fragment.html:302-311) */
+.plg-install-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--outline-gray-1);
+  background: var(--surface-gray-1);
+  flex-shrink: 0;
+}
+.plg-install-row input {
+  flex: 1;
+  height: 26px;
+  font-size: var(--d-text-sm);
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  border: 1px solid var(--d-border-ctrl);
+  border-radius: var(--d-r-sm);
+  padding: 0 8px;
+  background: var(--surface-gray-1);
+  color: var(--ink-gray-8);
+}
+.plg-install-row input:focus { outline: none; border-color: var(--da); box-shadow: 0 0 0 2px var(--da-bdr); }
