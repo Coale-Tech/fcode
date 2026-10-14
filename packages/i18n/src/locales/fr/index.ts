@@ -147,6 +147,7 @@ export const fr = {
     "toggleSidebar": "Basculer la barre latérale",
     "toggleWorkPanel": "Basculer le panneau latéral",
     "sessions": "Sessions",
+    "filterSessions": "Filtrer les sessions…",
     "collapseSidebar": "Réduire la barre latérale",
     "expandSidebar": "Développer la barre latérale",
     "resizeSidebar": "Redimensionner la barre latérale",

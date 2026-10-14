@@ -147,6 +147,7 @@ export const es = {
     "toggleSidebar": "Alternar barra lateral",
     "toggleWorkPanel": "Alternar panel lateral",
     "sessions": "Sesiones",
+    "filterSessions": "Filtrar sesiones…",
     "collapseSidebar": "Contraer barra lateral",
     "expandSidebar": "Expandir barra lateral",
     "resizeSidebar": "Cambiar tamaño de barra lateral",

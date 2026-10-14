@@ -154,6 +154,7 @@ export const en = {
     toggleSidebar: "Toggle sidebar",
     toggleWorkPanel: "Toggle side panel",
     sessions: "Sessions",
+    filterSessions: "Filter sessions…",
     collapseSidebar: "Collapse sidebar",
     expandSidebar: "Expand sidebar",
     resizeSidebar: "Resize sidebar",

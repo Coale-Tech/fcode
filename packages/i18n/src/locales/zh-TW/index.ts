@@ -149,6 +149,7 @@ export const zhTW = {
     toggleSidebar: "切換側邊欄",
     toggleWorkPanel: "切換側邊面板",
     sessions: "會話",
+    filterSessions: "篩選會話…",
     collapseSidebar: "收起側邊欄",
     expandSidebar: "展開側邊欄",
     resizeSidebar: "調整側邊欄寬度",

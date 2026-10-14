@@ -2338,11 +2338,11 @@ export function Sidebar({
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             <input
               type="search"
-              placeholder={t("nav.search")}
+              placeholder={t("nav.filterSessions")}
               value={d3Filter}
               onChange={(e) => setD3Filter(e.target.value)}
               className="no-drag"
-              aria-label={t("nav.search")}
+              aria-label={t("nav.filterSessions")}
             />
           </div>
         </div>
@@ -2392,12 +2392,10 @@ export function Sidebar({
               </span>
             </div>
             <div className="sidebar-session-group-body pinned" onScroll={() => closeMenus(false)}>
-              {renderSessionRows(
-                d3Filter && navLayout === "island"
-                  ? pinnedSessions.filter((s) => s.title?.toLowerCase().includes(d3Filter.toLowerCase()))
-                  : pinnedSessions,
-                { global: true }
-              )}
+              {renderSessionRows(pinnedSessions.filter(
+                (s) => !d3Filter || navLayout !== "island" ||
+                  s.title?.toLowerCase().includes(d3Filter.toLowerCase())
+              ), { global: true })}
             </div>
           </section>
         ) : null}
@@ -2474,12 +2472,10 @@ export function Sidebar({
             }}
           >
             {temporarySessionHistory.length > 0 ? (
-              renderSessionRows(
-                d3Filter && navLayout === "island"
-                  ? temporarySessionHistory.filter((s) => s.title?.toLowerCase().includes(d3Filter.toLowerCase()))
-                  : temporarySessionHistory,
-                { temporary: true }
-              )
+              renderSessionRows(temporarySessionHistory.filter(
+                (s) => !d3Filter || navLayout !== "island" ||
+                  s.title?.toLowerCase().includes(d3Filter.toLowerCase())
+              ), { temporary: true })
             ) : temporarySessions.length === 0 ? (
               <div className="sidebar-session-empty">{t("nav.noTemporarySessions")}</div>
             ) : null}

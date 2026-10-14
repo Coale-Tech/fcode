@@ -138,6 +138,8 @@ export function AppShell() {
   // Bench and Build own their context sidebar and islands (E frame), so the
   // sessions dock stays out and the pane is a transparent host.
   const workbench = page === "bench" || page === "build";
+  // Sidebar is mounted during its exit animation (D2/tabs) or always in island (permanent sidebar).
+  const mountSidebar = !workbench && (!sidebarCollapsed || sidebarExiting) ? true : navLayout === "island";
 
   let shell: ReactNode = null;
   if (ready) {
@@ -146,7 +148,7 @@ export function AppShell() {
         {/* ShellNavbar: outside the inert/hidden subtree; stays usable in settings mode
             (Review Focus 4). Drag region + Cmd-K awesomebar for all pages. */}
         <ShellNavbar onOpenSearch={() => setSearchOpen(true)} />
-        <PortalVisibilityProvider visible={page !== "settings" || navLayout === "island"}>
+        <PortalVisibilityProvider visible={page !== "settings"}>
           <div
             className="app-chat-shell"
             hidden={page === "settings" && navLayout !== "island"}
@@ -155,9 +157,9 @@ export function AppShell() {
           >
             <NavRail onExpandChange={onRailExpandChange} />
             {/* D3 island: permanent sidebar (shown even on workbench, always open) */}
-            {(navLayout === "island" || (!workbench && (!sidebarCollapsed || sidebarExiting))) ? (
+            {mountSidebar ? (
               <Sidebar
-                className={cx(navLayout !== "island" && sidebarEntering && "is-entering", navLayout !== "island" && sidebarExiting && "is-exiting")}
+                className={cx(sidebarEntering && "is-entering", sidebarExiting && "is-exiting")}
                 onAnimationEnd={handleSidebarAnimationEnd}
                 onToggleSidebar={toggleSidebar}
                 sidebarToggleShortcut={sidebarToggleShortcut}
@@ -341,8 +343,8 @@ export function AppShell() {
                 }
                 containerWidth={shellWidth}
                 {...islandSidebarProps(navLayout, sidebarCollapsed, sidebarWidth)}
-                sidebarExiting={navLayout === "island" ? false : sidebarExiting}
-                onAutoCollapseSidebar={navLayout === "island" ? undefined : autoCollapseSidebar}
+                sidebarExiting={sidebarExiting}
+                onAutoCollapseSidebar={autoCollapseSidebar}
                 maximized={workPanelMaximized}
                 onToggleMaximize={toggleWorkPanelMaximize}
               />

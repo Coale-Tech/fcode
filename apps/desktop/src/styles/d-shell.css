@@ -286,26 +286,6 @@
 :root[data-nav-layout="island"] .app-chat-shell {
   background: var(--d-canvas-bg);
 }
-
-/* Main pane = .d3-island: floating card on gray canvas (D3-shell.html:232-243)
- * Applies to ALL pages incl. Bench/Build (design-authority.md R11d). */
-:root[data-nav-layout="island"] .main-pane {
-  margin: var(--d-gap);
-  border-radius: var(--d-r);
-  border: 1px solid var(--outline-elevation-1);
-  box-shadow: var(--elevation-base);
-  background: var(--d-canvas-bg);   /* inner gray mini-canvas (D-SPEC.md:128) */
-  overflow: hidden;                 /* clip to border-radius */
-  display: flex;
-  flex-direction: column;
-  gap: var(--d-gap);               /* inner gap between sub-panels */
-  padding: var(--d-gap);           /* 12px inner padding (D-SPEC.md:128,152) */
-}
-:root[data-theme="dark"][data-nav-layout="island"] .main-pane {
-  background: var(--surface-elevation-1);
-  border-color: var(--outline-gray-2);
-}
-
 /* Rail logo mark (D3-shell.html:351-354) */
 :root[data-nav-layout="island"] .nav-rail-logo {
   height: var(--d-navbar-h);
@@ -383,11 +363,6 @@
   pointer-events: auto;
 }
 :root[data-nav-layout="island"] .sidebar-resize-handle { display: none; }
-
-/* In island mode, D3 sidebar header replaces the D1/D2 brand-logo header */
-:root[data-nav-layout="island"] .sidebar-header { display: none; }
-/* Hide version footer — bench card is the footer in island */
-:root[data-nav-layout="island"] .sidebar-footer { display: none; }
 
 /* D3 sidebar header: bench card + new-session + filter (D3-shell.html:420-500) */
 :root[data-nav-layout="island"] .d3-sb-header {

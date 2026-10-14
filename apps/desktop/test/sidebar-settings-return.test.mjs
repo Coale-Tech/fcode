@@ -13,11 +13,13 @@ test("Settings hides the mounted chat shell and keeps its portal layers out of v
     readFile(new URL("../src/lib/portal-visibility.tsx", import.meta.url), "utf8"),
   ]);
   assert.match(appShell, /<PortalVisibilityProvider visible=\{page !== "settings"\}>/);
-  assert.match(appShell, /className="app-chat-shell"[\s\S]*?hidden=\{page === "settings"\}/);
-  assert.match(appShell, /inert=\{page === "settings" \? true : undefined\}/);
-  assert.match(appShell, /aria-hidden=\{page === "settings" \? true : undefined\}/);
+  // In non-island mode (D1/D2) the shell is hidden/inert when settings is open.
+  // In island mode (D3) the shell stays visible so NavRail+Sidebar show during settings.
+  assert.match(appShell, /className="app-chat-shell"[\s\S]*?hidden=\{page === "settings"[^}]*\}/);
+  assert.match(appShell, /inert=\{page === "settings"[^}]* \? true : undefined\}/);
+  assert.match(appShell, /aria-hidden=\{page === "settings"[^}]* \? true : undefined\}/);
   assert.match(appShell, /className="app-chat-shell"[\s\S]*?<ChatSurface visible=\{page === "chat"\} \/>/);
-  assert.match(appShell, /\{page === "settings" \? \([\s\S]*?<SettingsPage \/>/);
+  assert.match(appShell, /\{page === "settings"[^?]*\? \([\s\S]*?<SettingsPage \/>/);
   assert.match(appShell, /<ChatSurface visible=\{page === "chat"\} \/>/);
   assert.match(appShell, /<SearchDialog open=\{searchOpen\}/);
   assert.match(styles, /\.app-chat-shell\s*\{\s*display:\s*contents;/);

@@ -146,6 +146,7 @@ export const ptBR = {
     toggleSidebar: "Alternar barra lateral",
     toggleWorkPanel: "Alternar painel lateral",
     sessions: "Sessões",
+    filterSessions: "Filtrar sessões…",
     collapseSidebar: "Recolher barra lateral",
     expandSidebar: "Expandir barra lateral",
     resizeSidebar: "Redimensionar barra lateral",
