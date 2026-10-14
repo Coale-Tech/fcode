@@ -160,13 +160,17 @@ export function PullRequestsPage() {
                           ? <Badge tone="warning">{t("pulls.draft")}</Badge>
                           : <Badge tone="success">{t("pulls.open")}</Badge>}
                       </div>
-                      <div className="pr-row-meta">
-                        {pr.author && <span>{pr.author}</span>}
-                        {pr.headRefName && pr.baseRefName && (
-                          <span>{pr.headRefName} → {pr.baseRefName}</span>
-                        )}
-                      </div>
                     </div>
+                    {/* Branch column — matches d-list-head flex:0 0 var(--d-pr-col-branch) */}
+                    <div className="pr-row-branch">
+                      {pr.headRefName && pr.baseRefName
+                        ? `${pr.headRefName} → ${pr.baseRefName}`
+                        : "—"}
+                    </div>
+                    {/* CI column — no API data; show dash */}
+                    <div className="pr-row-ci" aria-label="CI status">—</div>
+                    {/* Author column */}
+                    <div className="pr-row-author">{pr.author ?? "—"}</div>
                     <div className="pr-row-actions" onClick={(e) => e.stopPropagation()}>
                       <TooltipButton
                         type="button"
