@@ -115,6 +115,7 @@ export function AppShell() {
     sidebarToggleShortcut,
     workPanelToggleTooltip,
     onRailExpandChange,
+    navLayout,
   } = useAppShellRuntime();
   useCopyTex();
   useMemoryHealthPoller();
@@ -152,7 +153,8 @@ export function AppShell() {
             aria-hidden={page === "settings" ? true : undefined}
           >
             <NavRail onExpandChange={onRailExpandChange} />
-            {!workbench && (!sidebarCollapsed || sidebarExiting) ? (
+            {/* D3 island: permanent sidebar (shown even on workbench, always open) */}
+            {(navLayout === "island" || (!workbench && (!sidebarCollapsed || sidebarExiting))) ? (
               <Sidebar
                 className={cx(sidebarEntering && "is-entering", sidebarExiting && "is-exiting")}
                 onAnimationEnd={handleSidebarAnimationEnd}
@@ -172,7 +174,7 @@ export function AppShell() {
               <div
                 className={cx(
                   "window-chrome-row",
-                  !sidebarCollapsed && !workbench && "sidebar-expanded",
+                  !sidebarCollapsed && (navLayout === "island" || !workbench) && "sidebar-expanded",
                 )}
               >
                 {sidebarCollapsed && (

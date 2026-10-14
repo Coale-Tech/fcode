@@ -189,7 +189,7 @@
   left: var(--d-rail-island);
 }
 :root[data-nav-layout="island"] .window-chrome-row.sidebar-expanded {
-  left: calc(var(--d-rail-island) + var(--ds-sidebar-width));
+  left: calc(var(--d-rail-island) + var(--d-island-sb));
 }
 
 /* ── Tabs layout: no left rail ── */
@@ -276,3 +276,77 @@
   transition: background .12s;
 }
 .nav-rail-toggle:hover { background: var(--surface-gray-2); color: var(--ink-gray-8); }
+
+/* ── D3 Island layout — full spec ──────────────────────────────────────
+ * Design refs: D3-shell.html:9-243 (d3-rail, d3-sidebar, d3-island)
+ */
+
+/* Gray canvas backdrop (same as D2 rail) */
+:root[data-nav-layout="island"] .app-chat-shell {
+  background: var(--d-canvas-bg);
+}
+
+/* Main pane: floating island card (D3-shell.html:232-243 .d3-island) */
+:root[data-nav-layout="island"] .main-pane:not(.is-workbench) {
+  margin: var(--d-gap);
+  border-radius: var(--d-r);
+  border: 1px solid var(--outline-elevation-1);
+  box-shadow: var(--elevation-base);
+}
+:root[data-theme="dark"][data-nav-layout="island"] .main-pane:not(.is-workbench) {
+  background: var(--surface-elevation-1);
+  border-color: var(--outline-gray-2);
+}
+:root[data-nav-layout="island"] .main-pane.is-workbench {
+  margin: 0;
+  border: none;
+  box-shadow: none;
+}
+
+/* Rail labels: always visible in island, 10px (D3-shell.html:98-102) */
+:root[data-nav-layout="island"] .nav-rail-label {
+  display: block;
+  font-size: var(--d-rail-island-label);
+  font-weight: 500;
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+
+/* Rail items: vertical column — icon above label, 52×46px
+ * D3-shell.html:70-82 (.d3-rail-item) */
+:root[data-nav-layout="island"] .nav-rail-btn.nav-rail-labeled,
+:root[data-nav-layout="island"] .nav-rail .notification-trigger.nav-rail-labeled {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: var(--d-rail-island-item-w);
+  min-height: var(--d-rail-island-item-h);
+  height: auto;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: var(--d-rail-item-mx) var(--d-rail-divider-gap) var(--d-rail-island-item-pb);
+  gap: var(--d-rail-island-item-gap);
+}
+
+/* Rail icon: 20×20 in island (vs 28×28 in D2; D3-shell.html:94-96) */
+:root[data-nav-layout="island"] .nav-rail-icon {
+  width: var(--d-rail-island-icon);
+  height: var(--d-rail-island-icon);
+}
+
+/* Sidebar: fixed 256px, elevation-1 surface (D3-shell.html:118-126) */
+:root[data-nav-layout="island"] .sidebar {
+  width: var(--d-island-sb);
+  flex: 0 0 var(--d-island-sb);
+  max-width: var(--d-island-sb);
+}
+:root[data-nav-layout="island"] .sidebar-surface {
+  background: var(--surface-elevation-1);
+}
+/* Sidebar is permanent in island — suppress slide animation and resize handle */
+:root[data-nav-layout="island"] .sidebar.is-entering {
+  animation: none;
+}
+:root[data-nav-layout="island"] .sidebar-resize-handle {
+  display: none;
+}

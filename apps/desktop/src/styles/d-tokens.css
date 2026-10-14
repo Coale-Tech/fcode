@@ -36,6 +36,14 @@
   --d-rail-item-gap: 2px;          /* expanded icon→label gap (D.css:413) */
   --d-rail-divider-gap: 4px;       /* divider vertical margin (D.css:364) */
   --d-rail-label-max: 160px;       /* expanded label max-width (D.css:413) */
+  /* Island (D3) rail — D3-shell.html */
+  --d-rail-island-label: calc(10px * var(--font-scale)); /* D3-shell.html:99 label size */
+  --d-rail-island-item-w: 52px;    /* D3-shell.html:75 item width */
+  --d-rail-island-item-h: 46px;    /* D3-shell.html:76 item min-height */
+  --d-rail-island-item-gap: 3px;   /* D3-shell.html:78 icon→label gap */
+  --d-rail-island-item-pb: 5px;    /* D3-shell.html:77 bottom padding */
+  --d-rail-island-icon: 20px;      /* D3-shell.html:95-96 icon box size */
+  --d-island-sb: 256px;            /* D3-shell.html:119 context sidebar */
   --d-ctrl: 28px;
   --d-ctrl-lg: 32px;
   --d-row-h: 30px;

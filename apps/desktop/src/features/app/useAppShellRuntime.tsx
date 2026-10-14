@@ -1028,5 +1028,6 @@ export function useAppShellRuntime() {
     sidebarToggleShortcut,
     workPanelToggleTooltip,
     onRailExpandChange: setRailExpanded,
+    navLayout,
   };
 }
