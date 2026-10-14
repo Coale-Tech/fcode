@@ -1491,6 +1491,7 @@ sklm: {
     search: "搜尋設定",
     searchPlaceholder: "搜尋設定…",
     noResults: "沒有匹配的設定項",
+    unsavedChanges: "未儲存的變更",
     enterToSend: "回車傳送",
     enterToSendDesc: "關閉後按 ⌘/Ctrl+Enter 傳送。",
     infiniteProviderRetry: "無盡重試",
@@ -3272,6 +3273,9 @@ sklm: {
     title: "Raven",
     empty: "在設定中新增 Raven 網站 URL 以開始聊天。",
     openSettings: "開啟 Raven 設定",
+    connected: "已連線",
+    reload: "重新載入",
+    openExternal: "在瀏覽器中開啟",
     settings: {
       title: "Raven",
       enabled: "在側邊欄顯示 Raven",
@@ -3281,7 +3285,13 @@ sklm: {
   },
   "fileBird": {
     "title": "FileBird",
-    "unavailable": "FileBird 無法啟動。請查看記錄檔，然後重新啟動 Fcode。"
+    "unavailable": "FileBird 無法啟動。請查看記錄檔，然後重新啟動 Fcode。",
+    "connected": "已連線",
+    "idle": "未連線",
+    "transferring": "傳輸中",
+    "moreOptions": "更多選項",
+    "reload": "重新載入",
+    "openWindow": "在視窗中開啟",
   },
   bench: {
     tabAll: "所有 benches",

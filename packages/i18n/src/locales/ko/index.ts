@@ -1515,6 +1515,7 @@ sklm: {
     search: "설정 검색",
     searchPlaceholder: "설정 검색…",
     noResults: "일치하는 설정 없음",
+    unsavedChanges: "저장되지 않은 변경 사항",
     enterToSend: "Enter로 보내기",
     enterToSendDesc: "끔: ⌘/Ctrl+Enter를 눌러 보내세요.",
     infiniteProviderRetry: "성공할 때까지 재시도",
@@ -3323,6 +3324,9 @@ importConfirm: "가져온 확장은 에이전트 프로세스 안에서 에이�
     title: "Raven",
     empty: "채팅을 시작하려면 설정에서 Raven 사이트 URL을 추가하세요.",
     openSettings: "Raven 설정 열기",
+    connected: "연결됨",
+    reload: "새로 고침",
+    openExternal: "브라우저에서 열기",
     settings: {
       title: "Raven",
       enabled: "사이드바에 Raven 표시",
@@ -3332,7 +3336,13 @@ importConfirm: "가져온 확장은 에이전트 프로세스 안에서 에이�
   },
   "fileBird": {
     "title": "FileBird",
-    "unavailable": "FileBird를 시작할 수 없습니다. 로그를 확인한 후 Fcode를 다시 시작하세요."
+    "unavailable": "FileBird를 시작할 수 없습니다. 로그를 확인한 후 Fcode를 다시 시작하세요.",
+    "connected": "연결됨",
+    "idle": "연결되지 않음",
+    "transferring": "전송 중",
+    "moreOptions": "더 보기",
+    "reload": "새로 고침",
+    "openWindow": "창에서 열기",
   },
   bench: {
     tabAll: "모든 benches",

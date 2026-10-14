@@ -1470,6 +1470,7 @@ export const ptBR = {
     search: "Configuração de pesquisa",
     searchPlaceholder: "Configuração de pesquisa…",
     noResults: "Nenhum resultado encontrado",
+    unsavedChanges: "Alterações não salvas",
     enterToSend: "Enter para enviar",
     enterToSendDesc: "Desativado: pressione ⌘/Ctrl+Enter para enviar.",
     infiniteProviderRetry: "Tentar novamente até obter sucesso",
@@ -3238,6 +3239,9 @@ export const ptBR = {
     title: "Raven",
     empty: "Adicione a URL do seu site Raven nas Configurações para começar a conversar.",
     openSettings: "Abrir configurações do Raven",
+    connected: "Conectado",
+    reload: "Recarregar",
+    openExternal: "Abrir no navegador",
     settings: {
       title: "Raven",
       enabled: "Mostrar Raven na barra lateral",
@@ -3247,7 +3251,13 @@ export const ptBR = {
   },
   "fileBird": {
     "title": "FileBird",
-    "unavailable": "Não foi possível iniciar o FileBird. Verifique os logs e reinicie o Fcode."
+    "unavailable": "Não foi possível iniciar o FileBird. Verifique os logs e reinicie o Fcode.",
+    "connected": "Conectado",
+    "idle": "Não conectado",
+    "transferring": "Transferindo",
+    "moreOptions": "Mais opções",
+    "reload": "Recarregar",
+    "openWindow": "Abrir em janela",
   },
   bench: {
     tabAll: "Todos os benches",

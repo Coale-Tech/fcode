@@ -181,3 +181,17 @@
   --ds-sidebar-glass-sheen-top:    color-mix(in oklab, var(--white) 7%, transparent);
   --ds-sidebar-glass-sheen-bottom: color-mix(in oklab, var(--white) 4%, transparent);
 }
+
+/* lane t13: settings nav D-metrics, command palette */
+:root {
+  /* Settings nav rail width (fragment-d1.html: 240px panel) */
+  --ds-settings-nav-width:  240px;
+  /* Nav item border-radius (sn-item: 6px from fragment) */
+  --ds-settings-radius-item: 6px;
+  /* Settings nav item/group font dimensions (fragment-d1.html:13-18) */
+  --d-sn-item-h:    28px;
+  --d-sn-icon:      13px;
+  --d-sn-grp-label: 10px;
+  /* Command palette card width (D.css:1168) */
+  --d-cmdpal-w: 560px;
+}

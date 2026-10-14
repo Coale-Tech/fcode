@@ -24,16 +24,19 @@ export function SettingsRow({
   title,
   description,
   detail,
+  className,
   children,
 }: {
   title: string;
   description?: string;
   /** Live row metadata that stays visible (not an explanation). */
   detail?: ReactNode;
+  /** lane t13: extra class (e.g. sf-dirty-row) */
+  className?: string;
   children: ReactNode;
 }) {
   return (
-    <div className="settings-row">
+    <div className={className ? `settings-row ${className}` : "settings-row"}>
       <div className="settings-row-copy">
         <div className="settings-row-title">{title}</div>
         {description ? <div className="settings-row-desc">{description}</div> : null}

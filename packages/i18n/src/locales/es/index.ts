@@ -1505,6 +1505,7 @@ sklm: {
     "search": "Configuración de búsqueda",
     "searchPlaceholder": "Configuración de búsqueda…",
     "noResults": "No hay configuraciones coincidentes",
+    "unsavedChanges": "Cambios sin guardar",
     "enterToSend": "Ingresar para enviar",
     "enterToSendDesc": "Desactivado: presione ⌘/Ctrl+Entrar para enviar.",
     "infiniteProviderRetry": "Reintentar hasta tener éxito",
@@ -3284,6 +3285,9 @@ sklm: {
     "title": "Raven",
     "empty": "Agrega la URL de tu sitio Raven en Configuración para empezar a chatear.",
     "openSettings": "Abrir configuración de Raven",
+    "connected": "Conectado",
+    "reload": "Recargar",
+    "openExternal": "Abrir en el navegador",
     "settings": {
       "title": "Raven",
       "enabled": "Mostrar Raven en la barra lateral",
@@ -3293,7 +3297,13 @@ sklm: {
   },
   "fileBird": {
     "title": "FileBird",
-    "unavailable": "FileBird no pudo iniciarse. Revisa los registros y reinicia Fcode."
+    "unavailable": "FileBird no pudo iniciarse. Revisa los registros y reinicia Fcode.",
+    "connected": "Conectado",
+    "idle": "No conectado",
+    "transferring": "Transfiriendo",
+    "moreOptions": "Más opciones",
+    "reload": "Recargar",
+    "openWindow": "Abrir en ventana",
   },
   "bench": {
     "tabAll": "Todos los benches",

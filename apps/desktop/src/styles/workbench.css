@@ -607,50 +607,73 @@
 }
 .build-check.is-fail { color: var(--ink-red-8); }
 
-/* ── Onboarding checklist (empty chat home) ─────────────────────────────── */
+/* ── Onboarding checklist (empty chat home) — lane t13 D-restyle ────────── */
+/* D design: centred 520px wizard card (onboarding/fragment.html, notes.md)
+   Steps 2-3 derived, no mock (decision 4) — these styles apply to the
+   existing inline checklist, restyled to approximate wizard card layout. */
 .wb-onboarding {
   width: 100%;
-  max-width: 560px;
+  max-width: 520px;
   margin: 0 auto;
-  padding: 12px 16px 16px;
-  border-radius: var(--radius-6);
-  background: var(--surface-base);
-  box-shadow: var(--shadow-chat-area);
+  padding: 0;
+  border-radius: var(--d-r);
+  background: var(--surface-elevation-1);
+  border: 1px solid var(--outline-elevation-1);
+  box-shadow: var(--elevation-base);
   text-align: left;
+  overflow: hidden;
 }
-.wb-onboarding-hd { display: flex; align-items: center; gap: 8px; }
-.wb-onboarding-title { color: var(--ink-gray-9); font-size: var(--text-base); font-weight: var(--font-weight-semibold); }
+.wb-onboarding-hd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--d-border);
+  background: var(--surface-gray-1);
+}
+.wb-onboarding-title { color: var(--ink-gray-9); font-size: var(--d-text-chat); font-weight: 600; }
+.wb-muted { color: var(--ink-gray-4); font-size: var(--d-text-sm); margin-left: 2px; }
+.wb-spacer { flex: 1; }
 
-.wb-progress { display: flex; gap: 4px; margin: 10px 0 12px; }
-.wb-progress-seg { flex: 1; height: 4px; border-radius: var(--radius-full); background: var(--surface-gray-3); }
-.wb-progress-seg.is-filled { background: var(--surface-gray-10); }
+/* 4-segment progress bar with accent fill for active/done (fragment.html progress) */
+.wb-progress { display: flex; gap: 4px; margin: 0; padding: 8px 14px 0; }
+.wb-progress-seg { flex: 1; height: 4px; border-radius: var(--radius-full); background: var(--outline-gray-2); }
+.wb-progress-seg.is-filled { background: var(--da); }
 
-.wb-steps { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+/* Steps list: sidebar-like inside the card */
+.wb-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 8px 14px 14px;
+  list-style: none;
+}
 .wb-step {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  min-height: 40px;
-  padding: 8px 12px;
-  border: 1px solid var(--outline-gray-1);
-  border-radius: var(--radius-4);
-  background: var(--surface-gray-1);
-  color: var(--ink-gray-5);
+  min-height: 36px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--d-r-ctrl);
+  background: transparent;
+  color: var(--ink-gray-6);
   font: inherit;
-  font-size: var(--text-base);
+  font-size: var(--d-text);
   text-align: left;
   cursor: pointer;
+  transition: background 0.1s;
 }
 .wb-step.is-current {
-  border-color: var(--ds-accent);
-  background: color-mix(in oklab, var(--ds-accent) 12%, transparent);
-  box-shadow: var(--shadow-sm);
-  color: var(--ink-gray-8);
-  font-weight: var(--font-weight-semibold);
+  border-color: var(--da-bdr);
+  background: var(--da-sub);
+  color: var(--da-txt);
+  font-weight: 500;
 }
-.wb-step.is-pending:hover { color: var(--ink-gray-8); }
-.wb-step.is-done { cursor: default; }
+.wb-step.is-pending:hover { background: var(--surface-gray-1); color: var(--ink-gray-8); }
+.wb-step.is-done { cursor: default; color: var(--ink-gray-4); }
 .wb-step.is-done .wb-step-title { text-decoration: line-through; }
 
 .wb-step-check {
@@ -658,21 +681,21 @@
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: var(--radius-full);
 }
 .wb-step-check.is-done { background: var(--surface-green-2); color: var(--ink-green-7); }
 .wb-step-check.is-current {
-  background: transparent;
-  border: 2px solid var(--ds-accent);
+  background: var(--da);
+  color: white;
 }
 .wb-step-check.is-current::after {
   content: "";
   width: 6px;
   height: 6px;
   border-radius: var(--radius-full);
-  background: var(--ds-accent);
+  background: white;
 }
 .wb-step-check.is-pending { border: 1.5px solid var(--outline-gray-3); background: var(--surface-gray-2); color: transparent; }
 

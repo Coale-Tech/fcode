@@ -115,6 +115,10 @@ export function SettingsPage() {
   const [extensions, setExtensions] = useState<PluginScenicThemesDestinationMeta[]>([]);
   const [activeExtension, setActiveExtension] = useState<PluginScenicThemesDestinationMeta | null>(null);
   const [toolApprovalMode, setToolApprovalMode] = useState<ToolApprovalMode>("always-ask");
+  // lane t13: dirty bar state — track pending AI-tab permission changes
+  // (R11h: dirty Save/Discard for fields explicitly shown dirty in the mock)
+  const [pendingAiChanges, setPendingAiChanges] = useState<Partial<AppSettings> & { toolApprovalMode?: ToolApprovalMode }>({});
+  const isDirty = Object.keys(pendingAiChanges).length > 0;
   const seenSettingsTabNonce = useRef(settingsTabNonce);
   // setSettingsTab means "show this built-in category", even when the tab id
   // does not change. Dismiss a plugin page before paint; an anchor-only deep
@@ -228,6 +232,24 @@ export function SettingsPage() {
     await api.setSettings(nextSettings);
     useAppStore.setState({ settings: nextSettings });
     await refreshProviders();
+  };
+
+  // lane t13: dirty bar — save and discard helpers for AI permissions tab
+  const saveDirty = async () => {
+    if (!isDirty) return;
+    const { toolApprovalMode: tam, ...rest } = pendingAiChanges;
+    if (Object.keys(rest).length > 0) await saveSettings(rest);
+    if (tam !== undefined) {
+      setToolApprovalMode(tam);
+      await api.toolApprovalModeSet(tam).catch(() => undefined);
+    }
+    setPendingAiChanges({});
+  };
+  const discardDirty = () => {
+    // Reset toolApprovalMode local state to current saved value
+    if (pendingAiChanges.toolApprovalMode !== undefined)
+      void api.toolApprovalModeGet().then(setToolApprovalMode).catch(() => undefined);
+    setPendingAiChanges({});
   };
 
   const selectPluginTheme = async (theme: string) => {
@@ -405,7 +427,19 @@ export function SettingsPage() {
               {!activeExtension && activeNavItem?.experimentalBadgeKey ? (
                 <Badge tone="warning">{t(activeNavItem.experimentalBadgeKey)}</Badge>
               ) : null}
+              {isDirty && (
+                <span className="d-pill amber" style={{ fontWeight: 400, fontSize: 11 }}>
+                  <span className="d-pill-dot" />
+                  {t("settings.unsavedChanges")}
+                </span>
+              )}
             </h1>
+            {isDirty && (
+              <div className="settings-dirty-bar">
+                <Button variant="secondary" size="sm" onClick={discardDirty}>{t("common.cancel")}</Button>
+                <Button variant="primary" size="sm" onClick={() => void saveDirty()}>{t("common.save")}</Button>
+              </div>
+            )}
             {activeDescription ? <p className="settings-section-desc">{activeDescription}</p> : null}
           </header>
 
@@ -475,42 +509,42 @@ export function SettingsPage() {
           {tab === "ai" && settings && (
             <div className="settings-stack">
               <SettingsCard title={t("settings.permissions")}>
+                {/* lane t13: pending dirty state — row highlight when value differs from saved */}
                 <SettingsRow
+                  className={(pendingAiChanges.defaultPermissionMode !== undefined &&
+                    pendingAiChanges.defaultPermissionMode !== (settings.defaultPermissionMode ?? "ask"))
+                    ? "sf-dirty-row" : ""}
                   title={t("settings.permissionMode")}
                   description={t("settings.permissionModeDesc")}
                 >
                   <SettingsMenuSelect
                     className="settings-permission-select"
                     label={t("settings.permissionMode")}
-                    value={settings.defaultPermissionMode ?? "ask"}
+                    value={pendingAiChanges.defaultPermissionMode ?? settings.defaultPermissionMode ?? "ask"}
                     onChange={(mode) =>
-                      void saveSettings({
-                        defaultPermissionMode: mode as GlobalPermissionMode,
-                      })
+                      setPendingAiChanges((p) => ({ ...p, defaultPermissionMode: mode as GlobalPermissionMode }))
                     }
                     options={[
                       { id: "ask", label: t("settings.permissionModeAsk") },
-                      {
-                        id: "accept-edits",
-                        label: t("settings.permissionModeAcceptEdits"),
-                      },
+                      { id: "accept-edits", label: t("settings.permissionModeAcceptEdits") },
                       { id: "auto", label: t("settings.permissionModeAuto") },
                     ]}
                   />
                 </SettingsRow>
                 <SettingsRow
+                  className={(pendingAiChanges.toolApprovalMode !== undefined &&
+                    pendingAiChanges.toolApprovalMode !== toolApprovalMode)
+                    ? "sf-dirty-row" : ""}
                   title={t("settings.toolApprovalMode")}
                   description={t("settings.toolApprovalModeDesc")}
                 >
                   <SettingsMenuSelect
                     className="settings-permission-select"
                     label={t("settings.toolApprovalMode")}
-                    value={toolApprovalMode}
-                    onChange={(mode) => {
-                      const m = mode as ToolApprovalMode;
-                      setToolApprovalMode(m);
-                      void api.toolApprovalModeSet(m).catch(() => undefined);
-                    }}
+                    value={pendingAiChanges.toolApprovalMode ?? toolApprovalMode}
+                    onChange={(mode) =>
+                      setPendingAiChanges((p) => ({ ...p, toolApprovalMode: mode as ToolApprovalMode }))
+                    }
                     options={[
                       { id: "always-ask", label: t("settings.toolApprovalModeAlwaysAsk") },
                       { id: "write", label: t("settings.toolApprovalModeWrite") },

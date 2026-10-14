@@ -5,7 +5,7 @@ import { api } from "../lib/api";
 import { useBlockingOverlayActive } from "../lib/blocking-overlay";
 import { useAppStore } from "../stores/app-store";
 import { Button, Panel } from "../components/ui";
-import { IconRaven } from "../components/icons";
+import { IconRaven, IconRefresh, IconExternal } from "../components/icons";
 
 /**
  * Raven team chat (`<site>/raven`) in a main-owned `persist:raven`
@@ -62,7 +62,61 @@ export function RavenPage({ blocked }: { blocked: boolean }) {
   }, [ready]);
 
   if (!settings) return null;
-  if (ready) return <div ref={surfaceRef} className="min-h-0 flex-1" data-raven-surface />;
+
+  if (ready) {
+    // D design: thin Fcode chrome (48px page head) above the native WebContentsView hole
+    // (fragment.html:254-297; R11h; notes.md Real controls)
+    const url = (() => { try { return settings.url ? new URL(settings.url).hostname + "/raven" : ""; } catch { return settings.url ?? ""; } })();
+    return (
+      <div className="raven-page-wrap">
+        {/* Fcode-owned chrome bar */}
+        <div className="d-page-head">
+          <span className="d-page-title" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <IconRaven size={15} />
+            {t("raven.title")}
+          </span>
+          {url && (
+            <span className="raven-url-chip">{url}</span>
+          )}
+          <span className="d-pill green">
+            <span className="d-pill-dot" />
+            {t("raven.connected")}
+          </span>
+          <div className="d-page-head-actions">
+            <button
+              type="button"
+              className="d-btn ghost sm icon-btn"
+              title={t("raven.reload")}
+              onClick={() => void api.ravenSettingsGet().then((r) => setSettings(r.settings)).catch(() => {})}
+            >
+              <IconRefresh size={13} />
+            </button>
+            <button
+              type="button"
+              className="d-btn ghost sm icon-btn"
+              title={t("raven.openExternal")}
+              onClick={() => settings.url && void window.open(settings.url + "/raven", "_blank")}
+            >
+              <IconExternal size={13} />
+            </button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setSettingsTab("raven");
+                setPage("settings");
+              }}
+            >
+              {t("raven.openSettings")}
+            </Button>
+          </div>
+        </div>
+        {/* WebContentsView hole: fills the remaining space below the chrome bar */}
+        <div ref={surfaceRef} className="min-h-0 flex-1" data-raven-surface />
+      </div>
+    );
+  }
+
   return (
     <div className="thread-scroll">
       <div className="page-frame">

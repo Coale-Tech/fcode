@@ -524,6 +524,14 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
             <div className="search-empty">{t("search.empty")}</div>
           ) : null}
         </div>
+        {/* lane t13: keyboard-legend footer (D.css d-cmdpal-foot) */}
+        <div className="d-cmdpal-foot" aria-hidden>
+          <span><span className="d-kbd">↑</span><span className="d-kbd">↓</span> navigate</span>
+          <span><span className="d-kbd">↵</span> open</span>
+          <span><span className="d-kbd">Tab</span> preview</span>
+          <span><span className="d-kbd">Esc</span> close</span>
+          <span><span className="d-kbd">⌘</span><span className="d-kbd">K</span> to open</span>
+        </div>
       </div>
     </div>
   );

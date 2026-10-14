@@ -1517,6 +1517,8 @@ sklm: {
     search: "Search settings",
     searchPlaceholder: "Search settings…",
     noResults: "No matching settings",
+    /* lane t13: dirty bar */
+    unsavedChanges: "Unsaved changes",
     enterToSend: "Enter to send",
     enterToSendDesc: "Off: press ⌘/Ctrl+Enter to send.",
     infiniteProviderRetry: "Retry until success",
@@ -3326,10 +3328,14 @@ importConfirm: "Imported extensions run inside the agent process with the same a
       dailyCap: "Kanban: daily spawn cap of {count} reached",
     },
   },
+  /* lane t13: new keys for Raven page head and FileBird page head */
   raven: {
     title: "Raven",
     empty: "Add your Raven site URL in Settings to start chatting.",
     openSettings: "Open Raven settings",
+    connected: "Connected",
+    reload: "Reload",
+    openExternal: "Open in browser",
     settings: {
       title: "Raven",
       enabled: "Show Raven in the sidebar",
@@ -3340,6 +3346,12 @@ importConfirm: "Imported extensions run inside the agent process with the same a
   fileBird: {
     title: "FileBird",
     unavailable: "FileBird couldn't start. Check the logs, then restart Fcode.",
+    connected: "Connected",
+    idle: "Not connected",
+    transferring: "Transferring",
+    moreOptions: "More options",
+    reload: "Reload",
+    openWindow: "Open in window",
   },
   bench: {
     tabAll: "All benches",

@@ -1505,6 +1505,7 @@ sklm: {
     search: "Ayarlarda ara",
     searchPlaceholder: "Ayarlarda ara…",
     noResults: "Eşleşen ayar yok",
+    unsavedChanges: "Kaydedilmemiş değişiklikler",
     enterToSend: "Enter ile gönder",
     enterToSendDesc: "Kapalı: göndermek için ⌘/Ctrl+Enter.",
     infiniteProviderRetry: "Başarılı olana kadar yeniden dene",
@@ -3313,6 +3314,9 @@ importConfirm: "İçe aktarılan uzantılar ajan sürecinde, ajanın kendi araç
     title: "Raven",
     empty: "Sohbete başlamak için Ayarlar'a Raven site URL'sini ekleyin.",
     openSettings: "Raven ayarlarını aç",
+    connected: "Bağlandı",
+    reload: "Yenile",
+    openExternal: "Tarayıcıda aç",
     settings: {
       title: "Raven",
       enabled: "Raven'ı kenar çubuğunda göster",
@@ -3322,7 +3326,13 @@ importConfirm: "İçe aktarılan uzantılar ajan sürecinde, ajanın kendi araç
   },
   "fileBird": {
     "title": "FileBird",
-    "unavailable": "FileBird başlatılamadı. Günlükleri kontrol edin ve Fcode'u yeniden başlatın."
+    "unavailable": "FileBird başlatılamadı. Günlükleri kontrol edin ve Fcode'u yeniden başlatın.",
+    "connected": "Bağlandı",
+    "idle": "Bağlı değil",
+    "transferring": "Aktarılıyor",
+    "moreOptions": "Daha fazla seçenek",
+    "reload": "Yenile",
+    "openWindow": "Pencerede aç",
   },
   bench: {
     tabAll: "Tüm benchler",
