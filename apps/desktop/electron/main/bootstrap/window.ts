@@ -1966,6 +1966,35 @@ export async function createWindow({
             await setPage("chat");
             await sleep(400);
             const mTabs = await measure("tabs");
+            // T8: tabs layout page shots (light) — Design fidelity evidence
+            await setTheme("light");
+            await setPage("chat");
+            await sleep(400);
+            await shot("pi-tabs-chat-light");
+            await setPage("settings");
+            await sleep(600);
+            await shot("pi-tabs-settings-light");
+            await setPage("build");
+            await sleep(600);
+            await shot("pi-tabs-build-light");
+            await setPage("scheduled");
+            await sleep(600);
+            await shot("pi-tabs-scheduled-light");
+            // T8: tabs layout page shots (dark)
+            await setTheme("dark");
+            await setPage("chat");
+            await sleep(400);
+            await shot("pi-tabs-chat-dark");
+            await setPage("settings");
+            await sleep(600);
+            await shot("pi-tabs-settings-dark");
+            await setPage("bench");
+            await sleep(600);
+            await shot("pi-tabs-bench-dark");
+            await setPage("pulls");
+            await sleep(600);
+            await shot("pi-tabs-pulls-dark");
+            await setTheme("light");
             console.log("C02_tabs_reserve", mTabs.chromeW, "(expect 24: 0+2×12)");
             // Restore rail
             await setPage("settings");
