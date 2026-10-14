@@ -2257,6 +2257,8 @@ sklm: {
     author: "作者",
     open: "開啟",
     draft: "草稿",
+    status: "狀態",
+    actions: "操作",
   },
   git: {
     branch: "分支",
@@ -2335,6 +2337,7 @@ sklm: {
     detailStatus: "狀態",
     detailSchedule: "排程",
     detailWorkspace: "工作區",
+    detailModel: "模型",
     recentRuns: "最近執行",
     insightsRuns: "執行次數",
     insightsSuccess: "成功率",
@@ -2343,6 +2346,7 @@ sklm: {
     import: "匯入",
     exportDone: "已匯出 {{count}} 個任務",
     importDone: "已匯入 {{count}} 個任務",
+    delete: "刪除",
   },
   permission: {
     title: "需要許可權",

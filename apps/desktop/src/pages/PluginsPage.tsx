@@ -57,7 +57,7 @@ export function PluginsPage() {
       <div className="plg-layout">
 
         {/* ── Left nav panel (220px) ── */}
-        <div style={{ width: 220, flexShrink: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
+        <div style={{ width: "var(--d-plg-nav)", flexShrink: 0, display: "flex", flexDirection: "column", minHeight: 0 }}>
           <div className="d-panel" style={{ flex: 1 }}>
             <div className="d-mini-head">
               <span className="d-mini-title">{t("plugins.title")}</span>
@@ -255,7 +255,14 @@ export function PluginsPage() {
 
             {/* Content panels */}
             {tab === "installed" ? (
-              <InstalledPluginsPanel {...page} />
+              <InstalledPluginsPanel
+                {...page}
+                installedGroups={
+                  plgNav === "all" || plgNav === "market"
+                    ? installedGroups
+                    : installedGroups.filter((g) => g.id === plgNav)
+                }
+              />
             ) : (
               <MarketplacePanel {...page} />
             )}

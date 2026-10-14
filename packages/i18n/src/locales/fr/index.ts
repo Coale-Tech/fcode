@@ -2270,7 +2270,9 @@ sklm: {
     "filterAll": "Tous",
     "author": "Auteur",
     "open": "Ouvrir",
-    "draft": "Brouillon"
+    "draft": "Brouillon",
+    "status": "Statut",
+    "actions": "Actions"
   },
   "git": {
     "branch": "Branche",
@@ -2349,6 +2351,7 @@ sklm: {
     "detailStatus": "Statut",
     "detailSchedule": "Planification",
     "detailWorkspace": "Espace de travail",
+    "detailModel": "Modèle",
     "recentRuns": "Exécutions récentes",
     "insightsRuns": "Exécutions",
     "insightsSuccess": "Taux de succès",
@@ -2357,6 +2360,7 @@ sklm: {
     "import": "Importer",
     "exportDone": "{{count}} tâches exportées",
     "importDone": "{{count}} tâches importées",
+    "delete": "Supprimer",
   },
   "permission": {
     "title": "Autorisation requise",

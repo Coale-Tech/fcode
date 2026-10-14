@@ -2277,6 +2277,8 @@ sklm: {
     author: "Yazar",
     open: "Açık",
     draft: "Taslak",
+    status: "Durum",
+    actions: "Eylemler",
   },
   git: {
     branch: "Dal",
@@ -2355,6 +2357,7 @@ sklm: {
     detailStatus: "Durum",
     detailSchedule: "Zamanlama",
     detailWorkspace: "Çalışma alanı",
+    detailModel: "Model",
     recentRuns: "Son çalıştırmalar",
     insightsRuns: "Çalışmalar",
     insightsSuccess: "Başarı oranı",
@@ -2363,6 +2366,7 @@ sklm: {
     import: "İçe aktar",
     exportDone: "{{count}} görev dışa aktarıldı",
     importDone: "{{count}} görev içe aktarıldı",
+    delete: "Sil",
   },
   permission: {
     title: "İzin gerekiyor",

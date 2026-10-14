@@ -2292,6 +2292,8 @@ sklm: {
     author: "Author",
     open: "Open",
     draft: "Draft",
+    status: "Status",
+    actions: "Actions",
   },
   git: {
     branch: "Branch",
@@ -2370,6 +2372,7 @@ sklm: {
     detailStatus: "Status",
     detailSchedule: "Schedule",
     detailWorkspace: "Workspace",
+    detailModel: "Model",
     recentRuns: "Recent runs",
     insightsRuns: "Runs",
     insightsSuccess: "Success rate",
@@ -2378,6 +2381,7 @@ sklm: {
     import: "Import",
     exportDone: "Exported {{count}} tasks",
     importDone: "Imported {{count}} tasks",
+    delete: "Delete",
   },
   permission: {
     title: "Permission needed",

@@ -2287,6 +2287,8 @@ sklm: {
     author: "작성자",
     open: "열기",
     draft: "초안",
+    status: "상태",
+    actions: "작업",
   },
   git: {
     branch: "브랜치",
@@ -2365,6 +2367,7 @@ sklm: {
     detailStatus: "상태",
     detailSchedule: "일정",
     detailWorkspace: "작업 공간",
+    detailModel: "모델",
     recentRuns: "최근 실행",
     insightsRuns: "실행",
     insightsSuccess: "성공률",
@@ -2373,6 +2376,7 @@ sklm: {
     import: "가져오기",
     exportDone: "{{count}}개 작업 내보냄",
     importDone: "{{count}}개 작업 가져옴",
+    delete: "삭제",
   },
   permission: {
     title: "권한 필요",

@@ -102,14 +102,14 @@
   flex: 1;
   min-height: 0;
   padding: 12px;
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 .kanban-column {
   display: flex;
   flex-direction: column;
   flex: 1 0 var(--d-kd-col-w);
-  min-height: 160px;
+  min-height: 0;
   max-height: 100%;
   /* No background/border: header and body carry their own elevation */
 }

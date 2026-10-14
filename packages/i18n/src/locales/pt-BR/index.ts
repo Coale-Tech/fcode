@@ -2226,6 +2226,8 @@ export const ptBR = {
     author: "Autor",
     open: "Aberto",
     draft: "Rascunho",
+    status: "Status",
+    actions: "Ações",
   },
   git: {
     branch: "Branch",
@@ -2304,6 +2306,7 @@ export const ptBR = {
     detailStatus: "Status",
     detailSchedule: "Agendamento",
     detailWorkspace: "Espaço de trabalho",
+    detailModel: "Modelo",
     recentRuns: "Execuções recentes",
     insightsRuns: "Execuções",
     insightsSuccess: "Taxa de sucesso",
@@ -2312,6 +2315,7 @@ export const ptBR = {
     import: "Importar",
     exportDone: "{{count}} tarefas exportadas",
     importDone: "{{count}} tarefas importadas",
+    delete: "Excluir",
   },
   permission: {
     title: "Permissão necessária",

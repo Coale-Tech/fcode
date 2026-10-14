@@ -65,7 +65,7 @@ export function PullRequestsPage() {
             <span className="d-page-title">{t("pulls.title")}</span>
             {workspace?.path && (
               <span className="pr-repo-chip">
-                {workspace.path.split("/").slice(-1)[0]}
+                {workspace.path.split("/").slice(-2).join("/")}
               </span>
             )}
             <div className="d-page-head-actions">
@@ -120,8 +120,10 @@ export function PullRequestsPage() {
             <div className="d-list-head">
               <div className="d-col icon" style={{ flex: "0 0 28px" }} />
               <div className="d-col" style={{ flex: 2 }}>{t("pulls.title")}</div>
-              <div className="d-col md" style={{ flex: "0 0 140px" }}>{t("git.branch")}</div>
-              <div className="d-col sm" style={{ flex: "0 0 80px" }}>{t("pulls.filterAll")}</div>
+              <div className="d-col md" style={{ flex: `0 0 var(--d-pr-col-branch)` }}>{t("git.branch")}</div>
+              <div className="d-col sm" style={{ flex: `0 0 var(--d-pr-col-ci)` }}>CI</div>
+              <div className="d-col sm" style={{ flex: `0 0 var(--d-pr-col-author)` }}>{t("pulls.author")}</div>
+              <div className="d-col sm" style={{ flex: `0 0 var(--d-pr-col-actions)`, textAlign: "right" }}>{t("pulls.actions")}</div>
             </div>
           )}
 
@@ -209,7 +211,7 @@ export function PullRequestsPage() {
             <div className="d-panel-body" style={{ overflowY: "auto" }}>
               {/* Status */}
               <div style={{ marginBottom: 12 }}>
-                <div className="pr-detail-label">{t("pulls.filterAll")}</div>
+                <div className="pr-detail-label">{t("pulls.status")}</div>
                 <Badge tone={selectedPr.isDraft ? "warning" : "success"}>
                   {t(selectedPr.isDraft ? "pulls.draft" : "pulls.open")}
                 </Badge>

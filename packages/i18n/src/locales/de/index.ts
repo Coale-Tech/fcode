@@ -2270,7 +2270,9 @@ sklm: {
     "filterAll": "Alle",
     "author": "Autor",
     "open": "Offen",
-    "draft": "Entwurf"
+    "draft": "Entwurf",
+    "status": "Status",
+    "actions": "Aktionen"
   },
   "git": {
     "branch": "Branch",
@@ -2349,6 +2351,7 @@ sklm: {
     "detailStatus": "Status",
     "detailSchedule": "Zeitplan",
     "detailWorkspace": "Arbeitsbereich",
+    "detailModel": "Modell",
     "recentRuns": "Letzte Ausführungen",
     "insightsRuns": "Ausführungen",
     "insightsSuccess": "Erfolgsrate",
@@ -2357,6 +2360,7 @@ sklm: {
     "import": "Importieren",
     "exportDone": "{{count}} Aufgaben exportiert",
     "importDone": "{{count}} Aufgaben importiert",
+    "delete": "Löschen",
   },
   "permission": {
     "title": "Berechtigung erforderlich",

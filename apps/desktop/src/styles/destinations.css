@@ -186,7 +186,7 @@
 }
 /* D-SPEC Scheduled detail panel 340px (fragment.html:4) */
 .sch-detail {
-  width: 340px;
+  width: var(--d-sch-detail);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -198,7 +198,7 @@
   align-items: center;
   gap: 6px;
   padding: 0 12px;
-  height: 28px;
+  height: var(--d-sch-health-h);
   font-size: var(--d-text-xs);
   color: var(--ink-gray-5);
   border-bottom: 1px solid var(--d-border);
@@ -206,7 +206,7 @@
   flex-shrink: 0;
 }
 .sch-health-dot {
-  width: 6px; height: 6px; border-radius: 50%;
+  width: var(--d-sch-dot); height: var(--d-sch-dot); border-radius: 50%;
   background: var(--green-500); flex-shrink: 0;
 }
 .sch-health-dot.warn { background: var(--amber-500); }
@@ -245,7 +245,7 @@
 }
 /* 320px detail panel (fragment.html:4) */
 .pr-detail {
-  width: 320px;
+  width: var(--d-pr-detail);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;

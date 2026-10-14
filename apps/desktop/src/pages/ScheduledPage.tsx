@@ -281,7 +281,7 @@ export function ScheduledPage() {
                       <div className="dest-row-body">
                         <div className="dest-row-title">
                           <span>{tasks.find((task) => task.id === run.taskId)?.title ?? t("scheduled.title")}</span>
-                          <Badge tone={run.status === "completed" ? "success" : "neutral"}>{t(statusKey[run.status])}</Badge>
+                          <Badge tone={run.status === "completed" ? "success" : run.status === "running" ? "neutral" : "error"}>{t(statusKey[run.status])}</Badge>
                         </div>
                         <p className="dest-row-meta">{date(run.startedAt)}</p>
                         {run.errorCode && <p className="dest-row-meta">{t("scheduled.runError")} ({run.errorCode})</p>}
@@ -339,13 +339,19 @@ export function ScheduledPage() {
                     </code>
                   </div>
                 )}
+                {task.modelId && (
+                  <div style={{ marginBottom: 12 }}>
+                    <div className="sch-detail-label">{t("scheduled.detailModel")}</div>
+                    <div className="sch-detail-value">{task.modelId}</div>
+                  </div>
+                )}
                 {recentRuns.length > 0 && (
                   <div>
                     <div className="sch-detail-label">{t("scheduled.recentRuns")}</div>
                     <div style={{ marginTop: 4, border: "1px solid var(--d-border)", borderRadius: 6, overflow: "hidden" }}>
                       {recentRuns.map((run, i) => (
                         <div key={run.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", fontSize: "var(--d-text-xs)", borderTop: i > 0 ? "1px solid var(--d-border)" : undefined }}>
-                          <Badge tone={run.status === "completed" ? "success" : "neutral"} style={{ flexShrink: 0 }}>{t(statusKey[run.status])}</Badge>
+                          <Badge tone={run.status === "completed" ? "success" : run.status === "running" ? "neutral" : "error"} style={{ flexShrink: 0 }}>{t(statusKey[run.status])}</Badge>
                           <span style={{ flex: 1, color: "var(--ink-gray-5)" }}>{date(run.startedAt)}</span>
                           {run.sessionId && (
                             <Button size="sm" variant="ghost" onClick={() => void action(() => openSession(run.sessionId!))}>↗</Button>
@@ -368,6 +374,13 @@ export function ScheduledPage() {
                       await api.updateScheduled({ id: task.id, enabled: !task.enabled });
                     })}>
                     {t(task.enabled ? "scheduled.pause" : "scheduled.resume")}
+                  </Button>
+                  <Button size="sm" variant="ghost" disabled={busy}
+                    onClick={() => void action(async () => {
+                      await api.deleteScheduled(task.id);
+                      setSelectedTaskId(null);
+                    })}>
+                    {t("scheduled.delete")}
                   </Button>
                 </div>
               </div>
