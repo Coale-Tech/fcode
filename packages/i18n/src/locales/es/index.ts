@@ -3086,7 +3086,7 @@ sklm: {
     "planApprovalTitle": "{{sessionTitle}} plan pendiente de aprobación",
     "planApprovalBody": "El plan propuesto está listo para su revisión.",
     "actionFailed": "No se pudieron actualizar las notificaciones.",
-    "justNow": "Justo ahora"
+    "justNow": "Justo ahora",
     "today": "Hoy",
     "yesterday": "Ayer",
     "unreadCount": "{{count}} no leídas",

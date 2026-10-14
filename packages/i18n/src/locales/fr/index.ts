@@ -3086,7 +3086,7 @@ sklm: {
     "planApprovalTitle": "{{sessionTitle}} plan en attente d'approbation",
     "planApprovalBody": "Le plan proposé est prêt pour examen.",
     "actionFailed": "Impossible de mettre à jour les notifications.",
-    "justNow": "À l'instant"
+    "justNow": "À l'instant",
     "today": "Aujourd'hui",
     "yesterday": "Hier",
     "unreadCount": "{{count}} non lues",
