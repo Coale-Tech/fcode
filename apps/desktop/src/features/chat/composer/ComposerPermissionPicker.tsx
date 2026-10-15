@@ -3,7 +3,7 @@ import type { TFunction } from "i18next";
 import type { GlobalPermissionMode, Mode } from "@pi-desktop/shared";
 import { AnchoredMenu } from "../../../components/settings/AnchoredMenu";
 import { TooltipButton } from "../../../components/ui";
-import { IconCheck, IconChevronDown, IconShield, IconPencil, IconPlay } from "../../../components/icons";
+import { IconCheck, IconChevronDown, IconShield, IconPencil, IconWrench } from "../../../components/icons";
 import { PERMISSION_MODE_I18N_KEYS } from "../../../lib/permission-mode-labels";
 
 /** Controlled permission UI shared by conversations and task drafts. */
@@ -66,7 +66,7 @@ export function ComposerPermissionPicker({t, mode, composerPermissionMode,
           {(["ask", "accept-edits", "auto"] as const).map((candidate) => {
             const isActive = composerPermissionMode === candidate;
             /* D: state-perm-menu.html — icon tile, name, description, check */
-            const Icon = candidate === "ask" ? IconShield : candidate === "accept-edits" ? IconPencil : IconPlay;
+            const Icon = candidate === "ask" ? IconShield : candidate === "accept-edits" ? IconPencil : IconWrench;
             const descKey =
               candidate === "ask" ? "chat.permissionAskDesc" :
               candidate === "accept-edits" ? "chat.permissionAcceptEditsDesc" :

@@ -1,0 +1,19 @@
+{
+  "commit": "2dc1c4dee",
+  "buildTime": "2026-10-15T09:32:00.000Z",
+  "viewport": {
+    "w": 1200,
+    "h": 800
+  },
+  "dpr": 2,
+  "shot": "pi-review-rows",
+  "dataTheme": "light",
+  "dataNavLayout": "rail",
+  "savedNavLayout": "rail",
+  "savedTheme": "light",
+  "activePage": "chat",
+  "workPanelActive": "review",
+  "reviewChanges": 4,
+  "navTabsPresent": false,
+  "navRailPresent": true
+}

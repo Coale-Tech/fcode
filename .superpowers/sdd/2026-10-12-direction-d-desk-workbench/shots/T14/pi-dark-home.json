@@ -1,0 +1,17 @@
+{
+  "commit": "2dc1c4dee",
+  "buildTime": "2026-10-15T09:32:00.000Z",
+  "viewport": {
+    "w": 1200,
+    "h": 800
+  },
+  "dpr": 2,
+  "shot": "pi-dark-home",
+  "dataTheme": "dark",
+  "dataNavLayout": "rail",
+  "savedNavLayout": "rail",
+  "savedTheme": "dark",
+  "activePage": "home",
+  "navTabsPresent": false,
+  "navRailPresent": true
+}
