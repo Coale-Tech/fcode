@@ -3462,6 +3462,9 @@ importConfirm: "Imported extensions run inside the agent process with the same a
     processes: "processes",
     benches: "Benches",
     addFolder: "Add folder",
+    live: "Live",
+    installApp: "Install app",
+    waitingForLogs: "Waiting for log output…",
   },
   terminal: {
     title: "Terminal",

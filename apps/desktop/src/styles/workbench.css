@@ -1088,23 +1088,26 @@
 .wb-proc-card-meta { display: flex; gap: 10px; font-size: 11px; color: var(--ink-gray-5); }
 .wb-proc-card-meta-item { display: flex; align-items: center; gap: 3px; }
 
-/* ── lane T11-r2: Workers section in bench detail left column ── */
-.wb-workers { display: flex; flex-wrap: wrap; gap: 5px; }
-.wb-worker-chip {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 2px 8px; border-radius: var(--radius-full);
-  background: var(--surface-green-2); color: var(--ink-green-8);
-  font-size: 11px; font-weight: 500;
+/* ── T14: Workers — vertical column rows (design .bfd-chip full-width) ── */
+.wb-workers-col { display: flex; flex-direction: column; gap: 4px; }
+.wb-worker-row {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11px; height: 22px; border-radius: 6px;
+  padding: 0 8px; border: 1px solid var(--d-border);
+  background: var(--surface-gray-2); color: var(--ink-gray-5);
 }
-.wb-worker-chip.is-stopped { background: var(--surface-gray-2); color: var(--ink-gray-5); }
+.wb-worker-row.is-running {
+  background: var(--surface-green-2); color: var(--ink-green-7);
+  border-color: var(--outline-green-1);
+}
 
-/* ── T14: worker chip dot (inline 5px circle matching design .bfd-chip-dot) ── */
+/* ── T14: worker dot (5px circle) ── */
 .wb-worker-dot {
-  width: 5px; height: 5px; border-radius: 50%;
-  background: currentColor; flex-shrink: 0;
+  display: inline-block; width: 5px; height: 5px; border-radius: 50%;
+  background: currentColor; flex-shrink: 0; vertical-align: middle;
 }
 
-/* ── T14: app detail row in bench detail left column (matching .bfd-app) ── */
+/* ── T14: app detail row (design .bfd-app) ── */
 .wb-app-detail-row {
   display: flex; align-items: center; gap: 7px;
   height: 26px; font-size: 12px; color: var(--ink-gray-7);
@@ -1114,8 +1117,77 @@
   background: var(--surface-gray-2); border: 1px solid var(--d-border);
   flex-shrink: 0; display: flex; align-items: center; justify-content: center;
 }
+/* Version mono label (design .bfd-app-branch) */
+.wb-app-version {
+  margin-left: auto; font-family: ui-monospace, Menlo, monospace;
+  font-size: 10px; color: var(--ink-gray-3); white-space: nowrap; flex-shrink: 0;
+}
 
-/* ── T14: app tags in AllBenches table (matching design .bf-app-tag) ── */
+/* ── T14: site dot colored (design .bfd-site-dot) ── */
+.wb-site-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  background: var(--outline-gray-3);
+}
+.wb-site-dot.is-default { background: var(--green-500, #22c55e); }
+
+/* ── T14: green pill badge (design .d-pill.green for default site) ── */
+.wb-pill { display: inline-flex; align-items: center; gap: 3px;
+  font-size: 9px; height: 14px; padding: 0 4px; border-radius: 7px;
+  border: 1px solid transparent; font-weight: 500; white-space: nowrap;
+}
+.wb-pill-green {
+  background: var(--surface-green-2); color: var(--ink-green-7);
+  border-color: var(--outline-green-1);
+}
+
+/* ── T14: dark log terminal surface (design .bfd-term) ── */
+.wb-log-term {
+  flex: 1; min-height: 0; background: #1a1c1f; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.08); display: flex;
+  flex-direction: column; overflow: hidden;
+}
+[data-theme="dark"] .wb-log-term { background: #0e0f11; border-color: rgba(255,255,255,.06); }
+.wb-log-term-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px; border-bottom: 1px solid rgba(255,255,255,.07);
+  background: rgba(0,0,0,.25); flex-shrink: 0;
+}
+.wb-log-term-title {
+  font-size: 11px; font-weight: 600; color: #8b949e;
+  text-transform: uppercase; letter-spacing: .05em; flex: 1;
+}
+.wb-log-term-badge {
+  font-size: 10px; color: #3fb950; background: rgba(63,185,80,.1);
+  border: 1px solid rgba(63,185,80,.2); border-radius: 8px;
+  padding: 0 5px; height: 14px; line-height: 14px;
+}
+.wb-log-term-btn {
+  font-size: 10px; color: #6e7681; background: transparent;
+  border: 1px solid rgba(255,255,255,.1); border-radius: 4px;
+  padding: 1px 6px; cursor: pointer; height: 18px; line-height: 16px;
+}
+.wb-log-term-btn:hover { border-color: rgba(255,255,255,.2); color: #8b949e; }
+.wb-log-term-empty {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+}
+.wb-log-term-empty-msg { font-size: 11px; color: #4a5568; font-style: italic; }
+
+/* ── T14: one-shot command 2×2 grid ── */
+.wb-cmd-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin-bottom: 4px;
+}
+.wb-cmd-grid-btn { justify-content: center; width: 100%; }
+.wb-cmd-out-mono {
+  font-family: ui-monospace, Menlo, monospace; font-size: 10px;
+  color: var(--ink-gray-6); background: var(--surface-gray-1);
+  border: 1px solid var(--d-border); border-radius: 4px;
+  padding: 4px 6px; margin-bottom: 4px; white-space: pre;
+  max-height: 52px; overflow: hidden;
+}
+.wb-cmd-full { width: 100%; justify-content: center; margin-bottom: 3px; }
+.wb-install-app-sec { margin-top: 10px; }
+
+/* ── T14: app tags in AllBenches table ── */
 .wb-app-tags {
   display: flex; gap: 3px; flex-wrap: wrap; align-items: center;
 }

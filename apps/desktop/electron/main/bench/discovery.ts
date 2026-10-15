@@ -170,6 +170,46 @@ export function readBenchApps(benchPath: string): string[] {
 }
 
 /**
+ * Read an installed app's version string from standard Frappe locations.
+ * Tries __version__.py, then pyproject.toml, then setup.py (in that order).
+ */
+export function readAppVersion(benchPath: string, appName: string): string {
+  const base = join(benchPath, "apps", appName);
+  // Try __version__.py (most common Frappe pattern)
+  try {
+    const content = readFileSync(join(base, appName, "__version__.py"), "utf8");
+    const m = content.match(/(?:__version__|version)\s*=\s*["']([^"']+)["']/);
+    if (m) return m[1];
+  } catch { /* try next */ }
+  // Try pyproject.toml
+  try {
+    const content = readFileSync(join(base, "pyproject.toml"), "utf8");
+    const m = content.match(/^\s*version\s*=\s*["']([^"']+)["']/m);
+    if (m) return m[1];
+  } catch { /* try next */ }
+  // Try setup.py
+  try {
+    const content = readFileSync(join(base, "setup.py"), "utf8");
+    const m = content.match(/version\s*=\s*["']([^"']+)["']/);
+    if (m) return m[1];
+  } catch { /* not found */ }
+  return "";
+}
+
+/** App with version; returned by benchDetail IPC for the left panel. */
+export type AppWithVersion = { name: string; version: string };
+
+/**
+ * Read installed apps with their versions from a bench's apps/ directory.
+ */
+export function readBenchAppsWithVersions(benchPath: string): AppWithVersion[] {
+  return readBenchApps(benchPath).map((name) => ({
+    name,
+    version: readAppVersion(benchPath, name),
+  }));
+}
+
+/**
  * Parse Procfile process names from a bench directory (definition order).
  * Exported so bench-ipc.ts can include them in the detail response.
  */

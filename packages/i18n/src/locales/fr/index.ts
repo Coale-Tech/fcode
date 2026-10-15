@@ -3413,6 +3413,9 @@ sklm: {
     processes: "processus",
     benches: "Benches",
     addFolder: "Ajouter un dossier",
+    live: "En direct",
+    installApp: "Installer app",
+    waitingForLogs: "En attente des logs…",
   },
   "terminal": {
     "title": "Terminal",
