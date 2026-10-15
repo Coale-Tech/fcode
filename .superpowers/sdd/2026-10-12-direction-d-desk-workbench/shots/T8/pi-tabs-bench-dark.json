@@ -1,7 +1,7 @@
 {
   "shot": "pi-tabs-bench-dark",
-  "commit": "unknown",
-  "buildTime": "2026-10-14T14:31:37.754Z",
+  "commit": "250b7a2cc",
+  "buildTime": "2026-10-15T12:24:02.925Z",
   "dataTheme": "dark",
   "dataNavLayout": "tabs",
   "savedNavLayout": "tabs",
@@ -9,6 +9,7 @@
   "activePage": "",
   "navTabsPresent": true,
   "navRailPresent": false,
+  "benchChipPresent": true,
   "viewport": {
     "w": 1200,
     "h": 800

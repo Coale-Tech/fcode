@@ -1,7 +1,7 @@
 {
   "shot": "pi-tabs-chat-light",
-  "commit": "unknown",
-  "buildTime": "2026-10-14T14:31:27.423Z",
+  "commit": "250b7a2cc",
+  "buildTime": "2026-10-15T12:23:44.162Z",
   "dataTheme": "light",
   "dataNavLayout": "tabs",
   "savedNavLayout": "tabs",
@@ -9,6 +9,7 @@
   "activePage": "",
   "navTabsPresent": true,
   "navRailPresent": false,
+  "benchChipPresent": true,
   "viewport": {
     "w": 1200,
     "h": 800
