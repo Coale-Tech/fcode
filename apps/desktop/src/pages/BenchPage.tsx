@@ -943,36 +943,46 @@ function BenchDetail({
               const vs = oneshotState.get(oneshotKey(bench.path, verb));
               const busy = vs?.status === "running";
               return (
-                <Button key={verb} variant="secondary" size="sm"
-                  onClick={(e) => onRun(verb, e.currentTarget)}
-                  disabled={busy || (verb === "migrate" && !migrateSite)}
-                  title={verb} className="wb-cmd-grid-btn">
-                  {busy ? `${verb} …` : verb}
-                </Button>
+                <div key={verb} className="wb-cmd-grid-cell">
+                  <Button variant="secondary" size="sm"
+                    onClick={(e) => onRun(verb, e.currentTarget)}
+                    disabled={busy || (verb === "migrate" && !migrateSite)}
+                    title={verb} className="wb-cmd-grid-btn">
+                    {busy
+                      ? `${verb} …`
+                      : vs?.status === "ok"
+                      ? `✓ ${verb}`
+                      : vs?.status === "error"
+                      ? `✗ ${verb}`
+                      : verb}
+                  </Button>
+                  {vs?.status === "ok" && (
+                    <span className="wb-cmd-ok">
+                      {vs.elapsed} · {t("bench.exitOk", "exit 0")}
+                    </span>
+                  )}
+                  {vs?.status === "ok" && vs.output && (
+                    <pre className="wb-pre wb-cmd-output">{vs.output}</pre>
+                  )}
+                  {vs?.status === "error" && (
+                    <div className="wb-error-output">
+                      <div className="wb-error-output-hd">
+                        <span>{t("bench.exitElapsed", "exit {{elapsed}}", { elapsed: vs.elapsed })}</span>
+                        {vs.output && (
+                          <Button variant="ghost" size="sm"
+                            onClick={() => navigator.clipboard.writeText(vs.output ?? "")}
+                            title={t("bench.copyErrorOutput", "Copy error output")}>
+                            {t("bench.copy", "Copy")}
+                          </Button>
+                        )}
+                      </div>
+                      {vs.output && <pre className="wb-pre">{vs.output}</pre>}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
-          {/* Mono output box for last completed command */}
-          {(["list-apps", "migrate", "clear-cache", "build"] as const)
-            .map((v) => oneshotState.get(oneshotKey(bench.path, v)))
-            .find((s) => s?.status === "ok" && s.output)?.output && (
-            <pre className="wb-cmd-out-mono">
-              {(["list-apps", "migrate", "clear-cache", "build"] as const)
-                .map((v) => oneshotState.get(oneshotKey(bench.path, v)))
-                .find((s) => s?.status === "ok" && s.output)?.output}
-            </pre>
-          )}
-          {/* Error output for any failed command */}
-          {(["migrate", "clear-cache", "build", "list-apps"] as const).map((verb) => {
-            const vs = oneshotState.get(oneshotKey(bench.path, verb));
-            if (vs?.status !== "error") return null;
-            return (
-              <div key={verb} className="wb-error-output">
-                <span>{verb} {t("bench.exitElapsed", "exit {{elapsed}}", { elapsed: vs.elapsed })}</span>
-                {vs.output && <pre className="wb-pre">{vs.output}</pre>}
-              </div>
-            );
-          })}
           {/* Full-width build-studio-app */}
           {(() => {
             const vs = oneshotState.get(oneshotKey(bench.path, "build-studio-app"));
