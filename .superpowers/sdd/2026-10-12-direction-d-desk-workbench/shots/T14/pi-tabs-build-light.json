@@ -1,0 +1,17 @@
+{
+  "shot": "pi-tabs-build-light",
+  "commit": "unknown",
+  "buildTime": "2026-10-14T14:31:30.376Z",
+  "dataTheme": "light",
+  "dataNavLayout": "tabs",
+  "savedNavLayout": "tabs",
+  "savedTheme": "light",
+  "activePage": "",
+  "navTabsPresent": true,
+  "navRailPresent": false,
+  "viewport": {
+    "w": 1200,
+    "h": 800
+  },
+  "dpr": 2
+}
