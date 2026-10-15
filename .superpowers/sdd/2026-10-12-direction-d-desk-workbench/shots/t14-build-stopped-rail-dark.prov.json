@@ -1,0 +1,9 @@
+{
+  "name": "build-stopped-rail-dark",
+  "commit": "3c02e2bfd",
+  "capturedAt": "2026-10-15T09:55:57.918Z",
+  "theme": "dark",
+  "navLayout": "rail",
+  "pageClass": "wb-page build-page",
+  "viewport": "1200x800"
+}

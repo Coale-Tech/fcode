@@ -1,0 +1,9 @@
+{
+  "name": "build-stopped-island-dark",
+  "commit": "3c02e2bfd",
+  "capturedAt": "2026-10-15T09:56:02.548Z",
+  "theme": "dark",
+  "navLayout": "island",
+  "pageClass": "wb-page build-page",
+  "viewport": "1200x800"
+}

@@ -1,0 +1,9 @@
+{
+  "name": "bench-detail-island-light",
+  "commit": "3c02e2bfd",
+  "capturedAt": "2026-10-15T09:55:38.061Z",
+  "theme": "light",
+  "navLayout": "island",
+  "pageClass": "wb-page bench-page",
+  "viewport": "1200x800"
+}

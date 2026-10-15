@@ -1,0 +1,9 @@
+{
+  "name": "bench-detail-island-dark",
+  "commit": "3c02e2bfd",
+  "capturedAt": "2026-10-15T09:55:37.093Z",
+  "theme": "dark",
+  "navLayout": "island",
+  "pageClass": "wb-page bench-page",
+  "viewport": "1200x800"
+}

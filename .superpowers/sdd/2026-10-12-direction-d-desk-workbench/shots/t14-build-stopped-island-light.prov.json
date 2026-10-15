@@ -1,0 +1,9 @@
+{
+  "name": "build-stopped-island-light",
+  "commit": "3c02e2bfd",
+  "capturedAt": "2026-10-15T09:56:03.417Z",
+  "theme": "light",
+  "navLayout": "island",
+  "pageClass": "wb-page build-page",
+  "viewport": "1200x800"
+}

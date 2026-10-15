@@ -1,0 +1,9 @@
+{
+  "name": "bench-detail-rail-light",
+  "commit": "3c02e2bfd",
+  "capturedAt": "2026-10-15T09:55:36.104Z",
+  "theme": "light",
+  "navLayout": "rail",
+  "pageClass": "wb-page bench-page",
+  "viewport": "1200x800"
+}
