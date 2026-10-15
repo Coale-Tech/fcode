@@ -132,3 +132,39 @@
 - No duplicate i18n keys (verified `appPluralLabel` vs existing `apps: "Apps"`)
 - viewedBenchPath no-cleanup is intentional and documented
 - Fake bench used for running state: minimal `Procfile` + `apps/frappe,erpnext` dirs
+
+---
+
+## Round 4 Fixes (Post-Round-3)
+
+### Issues Found
+1. **Duplicate i18n keys** — Python patching in Round 2 introduced duplicate keys:
+   - `bench.processes` duplicated in 6 locales (en, ko, pt-BR, tr, zh-CN, zh-TW) — a second lowercase variant added next to the original
+   - `workspaceBar.benchRunning/benchStopped/site/sites/openBenchLog` duplicated in German (quoted+unquoted via two separate patching runs)
+   - `bench.appSingular/appPluralLabel` duplicated in German (same cause)
+   - All caused `tsc error TS1117` in `pnpm build:js`
+   
+2. **Missing ADR index entry** — `adr/omp-settings-manifest.md` existed but was absent from `docs/adr/README.md`, causing the docs test to fail. Pre-existing in direction-d base.
+
+3. **T6 Gap2 source-shape tests broken** — My BenchPage.tsx redesign removed `✓ ${verb}`, `✗ ${verb}`, `exit 0`, and `Copy error output` patterns. Two source-shape tests caught this.
+
+4. **plugin-sdk test pre-existing failure** — `/Users/mac/vite.config.ts` stale home-dir config causes startup error; confirmed pre-existing in direction-d base (not from T14).
+
+### Fixes Applied
+- Removed duplicate locale keys with targeted Python line removal (verified per-locale)
+- Added `omp-settings-manifest` to `docs/adr/README.md` index
+- Restored `✓ ${verb}` / `✗ ${verb}` button label patterns and `exit 0` / `Copy error output` in BenchPage.tsx one-shot grid, keeping the 2×2 grid layout redesign intact
+
+### Final Test Results
+- **tsc**: 0 errors
+- **i18n**: 27/27
+- **desktop suite**: 3595/3614 pass, 11 fail (all allowlist), 6 cancelled
+  - Allowlist failures: hindsight fast-exit ×1, codesign/macos-signing ×2, npm-executable family ×6, remote-host-ssh-transport ×7 (some cancelled to 6)
+  - No non-allowlist failures
+- **docs test**: 11/11 pass (after ADR index fix)
+- **plugin-sdk test**: pre-existing failure (vite config from home dir), not from T14
+
+### Commits (Round 4)
+- `66c18507f` fix(i18n): remove duplicate locale keys
+- `18f9e4d00` fix(docs): add omp-settings-manifest ADR to index
+- `de2f4a01d` fix(bench): restore ✓/✗ oneshot button labels and exit-0/copy-error patterns (T6 Gap2)
