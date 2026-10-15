@@ -2343,7 +2343,6 @@ export const ptBR = {
     import: "Importar",
     exportDone: "{{count}} tarefas exportadas",
     importDone: "{{count}} tarefas importadas",
-    delete: "Excluir",
   },
   permission: {
     title: "Permissão necessária",

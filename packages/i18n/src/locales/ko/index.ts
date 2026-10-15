@@ -2404,7 +2404,6 @@ sklm: {
     import: "가져오기",
     exportDone: "{{count}}개 작업 내보냄",
     importDone: "{{count}}개 작업 가져옴",
-    delete: "삭제",
   },
   permission: {
     title: "권한 필요",

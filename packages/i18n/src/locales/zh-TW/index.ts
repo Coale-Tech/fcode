@@ -2374,7 +2374,6 @@ sklm: {
     import: "匯入",
     exportDone: "已匯出 {{count}} 個任務",
     importDone: "已匯入 {{count}} 個任務",
-    delete: "刪除",
   },
   permission: {
     title: "需要許可權",

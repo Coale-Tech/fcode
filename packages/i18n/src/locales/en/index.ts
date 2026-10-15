@@ -2411,7 +2411,6 @@ sklm: {
     import: "Import",
     exportDone: "Exported {{count}} tasks",
     importDone: "Imported {{count}} tasks",
-    delete: "Delete",
   },
   permission: {
     title: "Permission needed",

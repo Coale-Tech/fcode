@@ -2394,7 +2394,6 @@ sklm: {
     import: "İçe aktar",
     exportDone: "{{count}} görev dışa aktarıldı",
     importDone: "{{count}} görev içe aktarıldı",
-    delete: "Sil",
   },
   permission: {
     title: "İzin gerekiyor",

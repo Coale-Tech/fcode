@@ -2388,7 +2388,6 @@ sklm: {
     "import": "Importieren",
     "exportDone": "{{count}} Aufgaben exportiert",
     "importDone": "{{count}} Aufgaben importiert",
-    "delete": "Löschen",
   },
   "permission": {
     "title": "Berechtigung erforderlich",
