@@ -105,58 +105,58 @@ export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
         </div>
       </button>
 
-      {/* Right end cluster (D1: bench chip + bell + settings + avatar; D2/D3: empty) */}
-      {layout === "tabs" ? (
-        <div className="shell-navbar-end no-drag">
-          {/* Bench chip — D1-shell.html:121-124, D.css:272-290 */}
-          {bench.kind !== "empty" && (
-            <button
-              type="button"
-              className="shell-navbar-bench-chip no-drag"
-              data-nav="bench"
-              title={bench.benchName ?? undefined}
-              onClick={() => setPage("bench")}
-            >
-              <span
-                className="shell-navbar-bench-dot"
-                data-bench-status={bench.kind}
-                aria-hidden
-              />
-              <span className="shell-navbar-bench-name">
-                {bench.benchName ?? t("nav.bench")}
-              </span>
-              <IconChevronDown size={11} aria-hidden />
-            </button>
-          )}
-
-          {/* Notification bell */}
-          <NotificationCenter />
-
-          {/* Settings button */}
-          <TooltipButton
-            type="button"
-            className="shell-navbar-icon-btn"
-            data-nav="settings"
-            tooltip={t("nav.settings")}
-            ariaLabel={t("nav.settings")}
-            onClick={() => setPage("settings")}
-          >
-            <IconSettings size={16} aria-hidden />
-          </TooltipButton>
-
-          {/* Avatar placeholder — D1-shell.html:133 */}
+      {/* Right end cluster — bench chip + bell + settings + avatar.
+       * Design: ALL layouts (D1/D2/D3) show the same right cluster.
+       * D-SPEC: "same right cluster" for D2 and D3 (D-SPEC.md §Shell Variants).
+       * D1-shell.html:121-136, D.css:272-290 */}
+      <div className="shell-navbar-end no-drag">
+        {/* Bench chip — D1-shell.html:121-124, D.css:272-290 */}
+        {bench.kind !== "empty" && (
           <button
             type="button"
-            className="shell-navbar-avatar"
-            aria-label={t("nav.userMenu", { defaultValue: "User menu" })}
-            title={t("nav.userMenu", { defaultValue: "User menu" })}
+            className="shell-navbar-bench-chip no-drag"
+            data-nav="bench"
+            title={bench.benchName ?? undefined}
+            onClick={() => setPage("bench")}
           >
-            <IconTerminal size={12} aria-hidden />
+            <span
+              className="shell-navbar-bench-dot"
+              data-bench-status={bench.kind}
+              aria-hidden
+            />
+            <span className="shell-navbar-bench-name">
+              {bench.benchName ?? t("nav.bench")}
+            </span>
+            <IconChevronDown size={11} aria-hidden />
           </button>
-        </div>
-      ) : (
-        <div className="shell-navbar-end" aria-hidden="true" />
-      )}
+        )}
+
+        {/* Notification bell (tabs layout: 28px/16px icon per d-shell.css;
+            rail/island: same cluster, bell also in rail footer for rail nav) */}
+        <NotificationCenter />
+
+        {/* Settings button */}
+        <TooltipButton
+          type="button"
+          className="shell-navbar-icon-btn"
+          data-nav="settings"
+          tooltip={t("nav.settings")}
+          ariaLabel={t("nav.settings")}
+          onClick={() => setPage("settings")}
+        >
+          <IconSettings size={16} aria-hidden />
+        </TooltipButton>
+
+        {/* Avatar placeholder — D1-shell.html:133 */}
+        <button
+          type="button"
+          className="shell-navbar-avatar"
+          aria-label={t("nav.userMenu", { defaultValue: "User menu" })}
+          title={t("nav.userMenu", { defaultValue: "User menu" })}
+        >
+          <IconTerminal size={12} aria-hidden />
+        </button>
+      </div>
     </header>
   );
 }

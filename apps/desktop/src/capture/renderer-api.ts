@@ -108,18 +108,22 @@ export function installRendererApi(): () => void {
       // Sync both DOM attribute and store so Settings page shows correct value.
       document.documentElement.dataset.theme = theme;
       const s = useAppStore.getState().settings;
-      if (s) useAppStore.setState({ settings: { ...s, theme } });
+      // Work even when settings is null (fresh app with no bench/provider configured).
+      const base = s ?? { theme: "system", defaultMode: "plan", enterToSend: true, onboardingDismissed: false } as typeof s;
+      if (base) useAppStore.setState({ settings: { ...base, theme } });
     },
     setTheme: (theme) => {
       const s = useAppStore.getState().settings;
-      if (s) useAppStore.setState({ settings: { ...s, theme } });
+      const base = s ?? { theme, defaultMode: "plan", enterToSend: true, onboardingDismissed: false } as typeof s;
+      if (base) useAppStore.setState({ settings: { ...base, theme } });
       if (theme !== "system") document.documentElement.dataset.theme = theme;
     },
     setNavLayout: (layout) => {
       // C02: update the settings store so useAppShellRuntime reads the correct
       // navLayoutRef for column budget (not just the dataset attribute).
       const s = useAppStore.getState().settings;
-      if (s) useAppStore.setState({ settings: { ...s, navLayout: layout } });
+      const base = s ?? { theme: "system", defaultMode: "plan", enterToSend: true, onboardingDismissed: false } as typeof s;
+      if (base) useAppStore.setState({ settings: { ...base, navLayout: layout } });
       document.documentElement.dataset.navLayout = layout;
     },
     clearProject: () => useAppStore.getState().clearProject(),
