@@ -330,9 +330,12 @@ export function BenchPage() {
   }, [selectedBench?.id]);
 
   // Update global viewedBenchPath so WorkspaceBar shows bench name even when stopped.
+  // No cleanup on unmount: viewedBenchPath persists so WorkspaceBar on other pages
+  // (Build, Chat) still shows the last-viewed bench name.
   useEffect(() => {
-    setViewedBench(selectedBench?.path ?? null, selectedBench?.sites.length ?? 0);
-    return () => { setViewedBench(null, 0); };
+    if (selectedBench) {
+      setViewedBench(selectedBench.path, selectedBench.sites.length);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBench?.path, selectedBench?.sites.length]);
 
