@@ -2318,6 +2318,7 @@ sklm: {
     draft: "Taslak",
     status: "Durum",
     actions: "Eylemler",
+    updatedAgo: "{{ago}} güncellendi",
   },
   git: {
     branch: "Dal",
@@ -2376,6 +2377,7 @@ sklm: {
     cadenceMonthly: "Aylık",
     enabled: "Açık",
     disabled: "Kapalı",
+    lastFailed: "Son: başarısız",
     runNow: "Şimdi çalıştır",
     delete: "Sil",
     lastRun: "Son çalışma",

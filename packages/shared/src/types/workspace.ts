@@ -63,6 +63,12 @@ export type ProjectGroupContext = {
   memory: ProjectMemory;
 };
 
+export type PullRequestCheck = {
+  name: string;
+  state: "success" | "failure" | "pending" | "skipped";
+  durationSeconds?: number;
+};
+
 export type PullRequestSummary = {
   number: number;
   title: string;
@@ -72,6 +78,16 @@ export type PullRequestSummary = {
   baseRefName?: string;
   updatedAt?: string;
   isDraft?: boolean;
+  /** PR body / description text */
+  body?: string;
+  /** Number of changed files */
+  changedFiles?: number;
+  /** Lines added */
+  additions?: number;
+  /** Lines deleted */
+  deletions?: number;
+  /** CI check runs */
+  checks?: PullRequestCheck[];
 };
 
 /**

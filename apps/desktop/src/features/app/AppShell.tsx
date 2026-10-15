@@ -143,8 +143,11 @@ export function AppShell() {
   // Bench and Build own their context sidebar and islands (E frame), so the
   // sessions dock stays out and the pane is a transparent host.
   const workbench = page === "bench" || page === "build";
-  // Sidebar is mounted during its exit animation (D2/tabs) or always in island (permanent sidebar).
-  const mountSidebar = !workbench && (!sidebarCollapsed || sidebarExiting) ? true : navLayout === "island";
+  // D2 rail: sidebar only appears on chat page (list pages are full-width per variant-D2 refs).
+  // D3 island: permanent sidebar always mounted regardless of page.
+  // Tabs: sidebar mounts when not collapsed (or during exit animation).
+  const sidebarAllowedForLayout = navLayout === "island" || navLayout === "tabs" || page === "chat";
+  const mountSidebar = !workbench && sidebarAllowedForLayout && (!sidebarCollapsed || sidebarExiting) ? true : navLayout === "island";
 
   let shell: ReactNode = null;
   if (ready) {

@@ -404,6 +404,29 @@
   border: none;
   box-shadow: none;
 }
+/* D2/D3: list pages (non-chat, non-workbench) have no drag-band inside the card.
+ * The ShellNavbar provides the drag region. Hide the absolute main-titlebar
+ * so the page header sits flush at top of the elevated panel. */
+:root[data-nav-layout="rail"] .main-pane:not(.is-workbench) .main-titlebar,
+:root[data-nav-layout="island"] .main-pane:not(.is-workbench) .main-titlebar {
+  display: none;
+}
+/* Remove the toolbar-height clearance padding on pages that clear the (now-hidden) titlebar */
+:root[data-nav-layout="rail"] .sch-page,
+:root[data-nav-layout="island"] .sch-page,
+:root[data-nav-layout="rail"] .pr-page,
+:root[data-nav-layout="island"] .pr-page,
+:root[data-nav-layout="rail"] .notifications-page,
+:root[data-nav-layout="island"] .notifications-page,
+:root[data-nav-layout="rail"] .plg-host,
+:root[data-nav-layout="island"] .plg-host,
+:root[data-nav-layout="rail"] .raven-page-wrap,
+:root[data-nav-layout="island"] .raven-page-wrap,
+:root[data-nav-layout="rail"] .filebird-page-wrap,
+:root[data-nav-layout="island"] .filebird-page-wrap {
+  padding-top: 0;
+}
+
 
 /* ── D2 rail footer: notification+settings+toggle (D.css:432-449) ── */
 /* align-items:stretch puts footer items on the same full-width left-start grid

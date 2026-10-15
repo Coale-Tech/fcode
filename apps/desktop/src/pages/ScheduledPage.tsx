@@ -216,19 +216,23 @@ export function ScheduledPage() {
                 <div className="dest-list">
                   {tasks.map((task) => {
                     const running = runs.some((run) => run.taskId === task.id && run.status === "running");
+                    const taskRuns = runs.filter((r) => r.taskId === task.id && r.status !== "running");
+                    const lastRun = taskRuns.sort((a, b) => (b.startedAt > a.startedAt ? 1 : -1))[0];
+                    const lastFailed = lastRun?.status === "error" || lastRun?.status === "aborted";
                     return (
                       <div
                         key={task.id}
                         className={`dest-row${selectedTaskId === task.id ? " selected" : ""}`}
                         onClick={() => setSelectedTaskId(task.id === selectedTaskId ? null : task.id)}
                       >
-                        <div className="dest-row-icon"><IconClock size={16} /></div>
+                        <div className={`dest-row-icon${lastFailed ? " dest-row-icon-warn" : ""}`}><IconClock size={16} /></div>
                         <div className="dest-row-body">
                           <div className="dest-row-title">
                             <span>{task.title}</span>
-                            <Badge tone={task.enabled ? "success" : "neutral"}>
-                              {t(task.enabled ? "scheduled.enabled" : "scheduled.disabled")}
+                            <Badge tone={!task.enabled ? "neutral" : "success"}>
+                              {t(!task.enabled ? "scheduled.disabled" : running ? "scheduled.statusRunning" : "scheduled.enabled")}
                             </Badge>
+                            {lastFailed && !running && <Badge tone="warning">{t("scheduled.lastFailed")}</Badge>}
                             <Badge tone="neutral">{t(cadenceKey[task.cadence])}</Badge>
                           </div>
                           <p className="dest-row-meta line-clamp-2">{task.prompt}</p>

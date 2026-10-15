@@ -1,12 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { PullRequestSummary } from "@pi-desktop/shared";
+import type { PullRequestCheck, PullRequestSummary } from "@pi-desktop/shared";
 import { useAppStore } from "../stores/app-store";
 import { api } from "../lib/api";
 import { Badge, Button, TooltipButton, Panel } from "../components/ui";
 import { IconExternal, IconPullRequest } from "../components/icons";
 
 type Filter = "open" | "draft" | "all";
+
+function fmtAgo(d: Date): string {
+  const s = Math.round((Date.now() - d.getTime()) / 1000);
+  if (s < 60) return "just now";
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  return `${Math.floor(s / 86400)}d ago`;
+}
 
 export function PullRequestsPage() {
   const { t } = useTranslation();
@@ -20,6 +28,7 @@ export function PullRequestsPage() {
   const [loading, setLoading] = useState(false);
   const [selectedPr, setSelectedPr] = useState<PullRequestSummary | null>(null);
   const [filter, setFilter] = useState<Filter>("open");
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const refresh = async () => {
     setLoading(true);
@@ -27,6 +36,7 @@ export function PullRequestsPage() {
       const res = await api.listPullRequests();
       setPulls(res.pulls || []);
       setError(res.error || null);
+      setLastUpdated(new Date());
     } catch (e) {
       setPulls([]);
       setError(e instanceof Error ? e.message : String(e));
@@ -112,6 +122,11 @@ export function PullRequestsPage() {
                   </button>
                 ))}
               </div>
+              {lastUpdated && (
+                <span className="pr-updated-meta">
+                  {t("pulls.updatedAgo", { ago: fmtAgo(lastUpdated) })}
+                </span>
+              )}
             </div>
           )}
 
@@ -160,6 +175,12 @@ export function PullRequestsPage() {
                           ? <Badge tone="warning">{t("pulls.draft")}</Badge>
                           : <Badge tone="success">{t("pulls.open")}</Badge>}
                       </div>
+                      {(pr.headRefName || pr.author) && (
+                        <div className="pr-row-sub">
+                          {[pr.headRefName && pr.baseRefName ? `${pr.headRefName} → ${pr.baseRefName}` : null, pr.author ?? null]
+                            .filter(Boolean).join(" · ")}
+                        </div>
+                      )}
                     </div>
                     {/* Branch column — matches d-list-head flex:0 0 var(--d-pr-col-branch) */}
                     <div className="pr-row-branch">
@@ -167,8 +188,24 @@ export function PullRequestsPage() {
                         ? `${pr.headRefName} → ${pr.baseRefName}`
                         : "—"}
                     </div>
-                    {/* CI column — no API data; show dash */}
-                    <div className="pr-row-ci" aria-label="CI status">—</div>
+                    {/* CI column — show passed/total counts */}
+                    <div className="pr-row-ci" aria-label="CI status">
+                      {pr.checks && pr.checks.length > 0 ? (
+                        (() => {
+                          const total = pr.checks.length;
+                          const passed = pr.checks.filter(c => c.state === "success").length;
+                          const pending = pr.checks.some(c => c.state === "pending");
+                          const failed = pr.checks.some(c => c.state === "failure");
+                          const tone = failed ? "danger" : pending ? "warning" : "success";
+                          const icon = failed ? "✗" : pending ? "●" : "✓";
+                          return (
+                            <span className={`pr-ci-badge pr-ci-${tone}`}>
+                              {icon} {passed}/{total}
+                            </span>
+                          );
+                        })()
+                      ) : "—"}
+                    </div>
                     {/* Author column */}
                     <div className="pr-row-author">{pr.author ?? "—"}</div>
                     <div className="pr-row-actions" onClick={(e) => e.stopPropagation()}>
@@ -219,6 +256,11 @@ export function PullRequestsPage() {
                 <Badge tone={selectedPr.isDraft ? "warning" : "success"}>
                   {t(selectedPr.isDraft ? "pulls.draft" : "pulls.open")}
                 </Badge>
+                {selectedPr.updatedAt && (
+                  <span style={{ marginLeft: 6, fontSize: "var(--d-text-xs)", color: "var(--ink-gray-4)" }}>
+                    {new Date(selectedPr.updatedAt).toLocaleDateString()}
+                  </span>
+                )}
               </div>
               {/* Branch flow */}
               {selectedPr.headRefName && selectedPr.baseRefName && (
@@ -236,6 +278,49 @@ export function PullRequestsPage() {
                 <div style={{ marginBottom: 12 }}>
                   <div className="pr-detail-label">{t("pulls.author")}</div>
                   <div className="pr-detail-value">{selectedPr.author}</div>
+                </div>
+              )}
+              {/* Description */}
+              {selectedPr.body && (
+                <div style={{ marginBottom: 12 }}>
+                  <div className="pr-detail-label">Description</div>
+                  <div className="pr-detail-body">{selectedPr.body}</div>
+                </div>
+              )}
+              {/* Changes */}
+              {(selectedPr.changedFiles != null || selectedPr.additions != null) && (
+                <div style={{ marginBottom: 12 }}>
+                  <div className="pr-detail-label">Changes</div>
+                  <div className="pr-changes-row">
+                    {selectedPr.changedFiles != null && (
+                      <span className="pr-changes-files">{selectedPr.changedFiles} file{selectedPr.changedFiles !== 1 ? "s" : ""}</span>
+                    )}
+                    {selectedPr.additions != null && (
+                      <span className="pr-changes-add">+{selectedPr.additions}</span>
+                    )}
+                    {selectedPr.deletions != null && (
+                      <span className="pr-changes-del">−{selectedPr.deletions}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+              {/* CI Checks */}
+              {selectedPr.checks && selectedPr.checks.length > 0 && (
+                <div style={{ marginBottom: 12 }}>
+                  <div className="pr-detail-label">CI Checks</div>
+                  <div className="pr-checks-list">
+                    {selectedPr.checks.map((c: PullRequestCheck, i: number) => (
+                      <div key={i} className={`pr-check-row pr-check-${c.state}`}>
+                        <span className="pr-check-icon">
+                          {c.state === "success" ? "✓" : c.state === "failure" ? "✗" : c.state === "pending" ? "●" : "—"}
+                        </span>
+                        <span className="pr-check-name">{c.name}</span>
+                        {c.durationSeconds != null && (
+                          <span className="pr-check-dur">{c.durationSeconds < 60 ? `${c.durationSeconds}s` : `${Math.floor(c.durationSeconds / 60)}m ${c.durationSeconds % 60}s`}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
               {/* Actions */}
