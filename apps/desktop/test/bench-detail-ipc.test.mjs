@@ -17,7 +17,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 register(pathToFileURL(pjoin(here, "helpers/ts-import-hooks.mjs")));
 
-const { readBenchApps, readProcfileEntries } = await import(
+const { readBenchApps, readBenchAppsWithVersions, readProcfileEntries } = await import(
   "../electron/main/bench/discovery.ts"
 );
 
@@ -32,6 +32,25 @@ test("readBenchApps returns sorted app names from apps/ directory", () => {
 
     const apps = readBenchApps(root);
     assert.deepEqual(apps, ["erpnext", "frappe", "raven"]);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("readBenchAppsWithVersions returns {name, version} objects", () => {
+  const root = mkdtempSync(join(tmpdir(), "bench-detail-test-"));
+  try {
+    mkdirSync(join(root, "apps", "frappe", "frappe"), { recursive: true });
+    writeFileSync(join(root, "apps", "frappe", "frappe", "__version__.py"), '__version__ = "16.8.2"\n');
+    mkdirSync(join(root, "apps", "erpnext", "erpnext"), { recursive: true });
+    // no __version__.py — version should be empty string
+
+    const apps = readBenchAppsWithVersions(root);
+    assert.equal(apps.length, 2);
+    assert.equal(apps[0].name, "erpnext");
+    assert.equal(apps[0].version, "");
+    assert.equal(apps[1].name, "frappe");
+    assert.equal(apps[1].version, "16.8.2");
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
