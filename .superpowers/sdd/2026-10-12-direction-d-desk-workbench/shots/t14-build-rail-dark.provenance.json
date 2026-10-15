@@ -1,0 +1,12 @@
+{
+  "shot": "t14-build-rail-dark.png",
+  "commit": "536765d82",
+  "buildTime": "2026-10-15T11:41:35.325Z",
+  "viewport": "1280x800",
+  "dpr": 1,
+  "store": {
+    "theme": "dark",
+    "navLayout": "rail"
+  },
+  "pageId": "build"
+}

@@ -59,6 +59,7 @@ async function invoke<T>(channel: string, args?: unknown): Promise<T> {
 export function BuildPage() {
   const [canvas, setCanvas] = useState<Canvas>("studio");
   const setPage = useAppStore((s) => s.setPage);
+  const viewedBenchPath = useAppStore((s) => s.viewedBenchPath);
 
   // Bench status (polled every 2s)
   const [benchStatus, setBenchStatus] = useState<BenchStatus>("stopped");
@@ -149,11 +150,12 @@ export function BuildPage() {
   }, []);
 
   useEffect(() => {
+    const pathForDetail = benchPath ?? viewedBenchPath;
     if (benchStatus === "running") {
       void loadApps();
-    } else if (benchPath) {
+    } else if (pathForDetail) {
       // Bench stopped but known: read app names from disk so the sidebar shows real apps.
-      invoke<{ apps: Array<{ name: string; version: string }> }>(IPC.invoke.benchDetail, { benchPath })
+      invoke<{ apps: Array<{ name: string; version: string }> }>(IPC.invoke.benchDetail, { benchPath: pathForDetail })
         .then(({ apps }) => {
           setInstalledApps(apps.map((a) => a.name));
           setListAppsStatus("loaded");
@@ -166,7 +168,7 @@ export function BuildPage() {
       setListAppsStatus("loading");
       setInstalledApps([]);
     }
-  }, [benchStatus, benchPath, loadApps]);
+  }, [benchStatus, benchPath, viewedBenchPath, loadApps]);
 
   // ── Studio preconditions ─────────────────────────────────────────────────
 
@@ -393,7 +395,9 @@ export function BuildPage() {
   // Suppressing the "bench" key banner avoids a redundant red banner in stopped state.
   const showBanner = firstProblem !== undefined && !dismissed.includes(firstProblem.key) && firstProblem.key !== "bench";
   const benchDown = allChecks[0].state === "fail";
-  const benchName = benchPath?.split(/[\\/]/).filter(Boolean).pop() ?? null;
+  // Use supervisor benchPath when running; fall back to last-viewed bench from store.
+  const effectiveBenchPath = benchPath ?? viewedBenchPath;
+  const benchName = effectiveBenchPath?.split(/[\\/]/).filter(Boolean).pop() ?? null;
   const problemKeys = problems.map((p) => p.key).join(",");
   useEffect(() => {
     setDismissed((d) => d.filter((k) => problemKeys.split(",").includes(k)));
