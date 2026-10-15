@@ -1,17 +1,13 @@
 {
   "shot": "t14-bench-detail-tabs-light.png",
-  "commit": "20834f8e9",
-  "buildTime": "2026-10-15T11:19:02.059Z",
+  "commit": "182cd8d3a",
+  "buildTime": "2026-10-15T11:55:21.254Z",
   "viewport": "1280x800",
   "dpr": 1,
-  "savedSettings": {
-    "theme": "light",
-    "navLayout": "tabs"
-  },
   "store": {
     "theme": "light",
     "navLayout": "tabs"
   },
-  "pageCheckElem": "BUTTON",
-  "pageId": "bench-detail"
+  "pageId": "bench-detail",
+  "variant": "D2"
 }

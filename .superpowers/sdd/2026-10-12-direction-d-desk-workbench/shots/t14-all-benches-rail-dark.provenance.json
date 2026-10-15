@@ -1,0 +1,13 @@
+{
+  "shot": "t14-all-benches-rail-dark.png",
+  "commit": "182cd8d3a",
+  "buildTime": "2026-10-15T12:07:15.524Z",
+  "viewport": "1280x800",
+  "dpr": 1,
+  "store": {
+    "theme": "dark",
+    "navLayout": "rail"
+  },
+  "pageId": "all-benches",
+  "variant": "D1"
+}

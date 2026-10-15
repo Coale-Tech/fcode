@@ -1,17 +1,13 @@
 {
   "shot": "t14-bench-detail-island-light.png",
-  "commit": "20834f8e9",
-  "buildTime": "2026-10-15T11:19:00.128Z",
+  "commit": "182cd8d3a",
+  "buildTime": "2026-10-15T11:55:19.706Z",
   "viewport": "1280x800",
   "dpr": 1,
-  "savedSettings": {
-    "theme": "light",
-    "navLayout": "island"
-  },
   "store": {
     "theme": "light",
     "navLayout": "island"
   },
-  "pageCheckElem": "BUTTON",
-  "pageId": "bench-detail"
+  "pageId": "bench-detail",
+  "variant": "D3"
 }

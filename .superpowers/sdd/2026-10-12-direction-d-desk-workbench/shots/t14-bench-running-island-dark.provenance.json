@@ -1,0 +1,13 @@
+{
+  "shot": "t14-bench-running-island-dark.png",
+  "commit": "182cd8d3a",
+  "buildTime": "2026-10-15T12:06:37.012Z",
+  "viewport": "1280x800",
+  "dpr": 1,
+  "store": {
+    "theme": "dark",
+    "navLayout": "island"
+  },
+  "pageId": "bench-running",
+  "variant": "island"
+}

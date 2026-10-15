@@ -1,17 +1,13 @@
 {
   "shot": "t14-bench-detail-rail-light.png",
-  "commit": "20834f8e9",
-  "buildTime": "2026-10-15T11:18:57.393Z",
+  "commit": "182cd8d3a",
+  "buildTime": "2026-10-15T11:55:18.101Z",
   "viewport": "1280x800",
   "dpr": 1,
-  "savedSettings": {
-    "theme": "light",
-    "navLayout": "rail"
-  },
   "store": {
     "theme": "light",
     "navLayout": "rail"
   },
-  "pageCheckElem": "BUTTON",
-  "pageId": "bench-detail"
+  "pageId": "bench-detail",
+  "variant": "D1"
 }

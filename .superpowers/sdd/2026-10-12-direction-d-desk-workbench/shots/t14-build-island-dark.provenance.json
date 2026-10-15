@@ -1,12 +1,13 @@
 {
   "shot": "t14-build-island-dark.png",
-  "commit": "536765d82",
-  "buildTime": "2026-10-15T11:41:39.092Z",
+  "commit": "182cd8d3a",
+  "buildTime": "2026-10-15T11:55:35.855Z",
   "viewport": "1280x800",
   "dpr": 1,
   "store": {
     "theme": "dark",
     "navLayout": "island"
   },
-  "pageId": "build"
+  "pageId": "build",
+  "variant": "D3"
 }

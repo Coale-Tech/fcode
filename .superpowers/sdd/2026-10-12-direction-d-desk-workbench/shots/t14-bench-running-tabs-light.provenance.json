@@ -1,0 +1,13 @@
+{
+  "shot": "t14-bench-running-tabs-light.png",
+  "commit": "182cd8d3a",
+  "buildTime": "2026-10-15T12:06:39.446Z",
+  "viewport": "1280x800",
+  "dpr": 1,
+  "store": {
+    "theme": "light",
+    "navLayout": "tabs"
+  },
+  "pageId": "bench-running",
+  "variant": "tabs"
+}

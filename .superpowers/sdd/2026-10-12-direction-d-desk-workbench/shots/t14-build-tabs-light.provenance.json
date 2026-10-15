@@ -1,12 +1,13 @@
 {
   "shot": "t14-build-tabs-light.png",
-  "commit": "536765d82",
-  "buildTime": "2026-10-15T11:41:41.432Z",
+  "commit": "182cd8d3a",
+  "buildTime": "2026-10-15T11:55:38.111Z",
   "viewport": "1280x800",
   "dpr": 1,
   "store": {
     "theme": "light",
     "navLayout": "tabs"
   },
-  "pageId": "build"
+  "pageId": "build",
+  "variant": "D1"
 }

@@ -1,0 +1,13 @@
+{
+  "shot": "t14-bench-running-rail-dark.png",
+  "commit": "182cd8d3a",
+  "buildTime": "2026-10-15T12:06:35.168Z",
+  "viewport": "1280x800",
+  "dpr": 1,
+  "store": {
+    "theme": "dark",
+    "navLayout": "rail"
+  },
+  "pageId": "bench-running",
+  "variant": "rail"
+}
