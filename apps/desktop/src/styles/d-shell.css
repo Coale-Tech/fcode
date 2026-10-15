@@ -264,12 +264,24 @@
 }
 .shell-navbar-icon-btn:hover { background: var(--surface-gray-2); color: var(--ink-gray-8); }
 
-/* Notification trigger in tabs navbar: override chrome.css 32px to 28px/16px (D.css:247-261) */
+/* Notification trigger in tabs navbar: override chrome.css 32px to 28px/16px (D.css:247-263) */
 :root[data-nav-layout="tabs"] .shell-navbar-end .footer-notification {
   width: 28px;
   height: 28px;
+  border-radius: var(--d-r-ctrl);            /* D.css:251 — matches .d-nav-icon-btn */
 }
 :root[data-nav-layout="tabs"] .shell-navbar-end .footer-notification svg { width: 16px; height: 16px; }
+/* Badge metrics in tabs navbar: D.css:266-280 — 14px, inset +1/+1, no border */
+:root[data-nav-layout="tabs"] .shell-navbar-end .notification-badge {
+  top: 1px;
+  right: 1px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 7px;
+  font-size: 9px;
+  border: none;
+}
 
 /* ── Brand logo (D1-shell.html:89-95) ── */
 .shell-navbar-brand {
