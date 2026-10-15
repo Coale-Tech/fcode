@@ -19,6 +19,8 @@ export type BenchSummary = {
   path: string;
   version: BenchVersion;
   sites: BenchSite[];
+  /** Installed app names from the bench's apps/ directory. */
+  apps: string[];
 };
 
 export type BenchStatus = "stopped" | "starting" | "running" | "failed";
