@@ -1,0 +1,22 @@
+{
+  "shot": "t7r4-rail-light-expanded.png",
+  "commit": "post-r4",
+  "viewport": "1200x800",
+  "dpr": 2,
+  "locale": "en",
+  "page": "chat",
+  "layout": "rail",
+  "expanded": true,
+  "theme": "light",
+  "measurements": {
+    "expanded": true,
+    "railW": 220,
+    "paneX": 488,
+    "labelFontSize": "13px",
+    "labelOpacity": "1",
+    "labelPaddingLeft": "2px",
+    "itemJustify": "flex-start",
+    "footerNCLabelOpacity": "1",
+    "footerSettingsLabelOpacity": "1"
+  }
+}

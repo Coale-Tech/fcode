@@ -844,7 +844,7 @@
   width: 100%;
   max-width: 100%;
   margin-inline: auto;
-  padding: 0 24px 16px;
+  padding: 9px 14px 16px; /* D.css:1450 — matches composer-dock-docked (shared width envelope) */
   box-sizing: border-box;
 }
 
@@ -1119,6 +1119,13 @@
 .home-onboarding-checklist {
   margin-top: 0;
   max-width: 100%;
+  /* Prevent ob-wrap's own scroll context from clipping provider list at bottom;
+     parent .home-scroll handles scrolling instead (reported INT/chat-light-rail.png). */
+  overflow-y: visible;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex: none;
+  padding: 0;
 }
 
 @media (max-height: 760px) {

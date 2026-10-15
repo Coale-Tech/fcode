@@ -1,0 +1,169 @@
+# Review package: f234f3cd1..HEAD
+
+## Commits
+ed335d666 feat(renderer): direction D accent + density tokens
+
+## Files changed
+ apps/desktop/src/styles/d-tokens.css         | 26 +++++++++++++++++++++++
+ apps/desktop/src/styles/globals.css          |  1 +
+ apps/desktop/src/styles/tokens.css           | 15 ++++++++++----
+ apps/desktop/test/d-accent-contrast.test.mjs | 31 ++++++++++++++++++++++++++++
+ 4 files changed, 69 insertions(+), 4 deletions(-)
+
+## Diff
+diff --git a/apps/desktop/src/styles/d-tokens.css b/apps/desktop/src/styles/d-tokens.css
+new file mode 100644
+index 000000000..b8501c025
+--- /dev/null
++++ b/apps/desktop/src/styles/d-tokens.css
+@@ -0,0 +1,26 @@
++/* Direction D — dimensions, type scale and the re-pointing of the existing ladder.
++   Values come from design kit-d/D-SPEC.md. Loaded right after tokens.css so
++   theme-overrides.css (plugin themes) still wins. */
++:root {
++  --d-navbar-h: 48px;
++  --d-ph-h: 48px;
++  --d-mini-h: 32px;
++  --d-status-h: 28px;
++  --d-rail-w: 50px;
++  --d-rail-island: 60px;
++  --d-gap: 12px;
++  --d-ctrl: 28px;
++  --d-ctrl-lg: 32px;
++  --d-row-h: 30px;
++  --d-r: 12px;
++  --d-r-ctrl: 8px;
++  --d-r-sm: 4px;
++  --d-text: 13px;
++  --d-text-sm: 12px;
++  --d-text-xs: 11px;
++  --d-text-chat: 14px;
++
++  --ds-toolbar-height: var(--d-navbar-h);
++  --ds-btn-radius: var(--d-r-ctrl);
++  --ds-btn-radius-sm: 6px;
++}
+diff --git a/apps/desktop/src/styles/globals.css b/apps/desktop/src/styles/globals.css
+index 6b8531d65..eaeaa7c58 100644
+--- a/apps/desktop/src/styles/globals.css
++++ b/apps/desktop/src/styles/globals.css
+@@ -4,20 +4,21 @@
+   Renderer stylesheet entry point.
+ 
+   This file only sequences the layers below — put new rules in the partial
+   that owns the surface, not here. Import order IS the cascade: tokens and
+   base first, feature layers in the order the UI was built, and the
+   responsive/reduced-motion tail last so it can override what precedes it.
+   Reordering these imports changes rendering.
+ */
+ @import "./espresso.css";
+ @import "./tokens.css";
++@import "./d-tokens.css";
+ @import "./base.css";
+ @import "./chrome.css";
+ @import "./chat-shell.css";
+ @import "./composer.css";
+ @import "./sidebar-threads.css";
+ @import "./messages.css";
+ @import "./prose.css";
+ @import "./ui-kit.css";
+ @import "./overlays.css";
+ @import "./session-search.css";
+diff --git a/apps/desktop/src/styles/tokens.css b/apps/desktop/src/styles/tokens.css
+index bdbf942f3..9d78823bd 100644
+--- a/apps/desktop/src/styles/tokens.css
++++ b/apps/desktop/src/styles/tokens.css
+@@ -117,24 +117,25 @@
+   /* Alias shorthands used by some component CSS */
+   --ds-bg:               var(--surface-base);
+   --ds-border:           var(--ds-border-default);
+   --ds-danger:           var(--ds-error);
+   --ds-accent-foreground:var(--white);
+   /* Status inks: Espresso steps that pass WCAG 4.5:1 on --surface-base in both themes
+      (light ≥4.97:1, dark ≥6.88:1); guarded by t13-status-token-contrast.test.mjs. */
+   --ds-success:          var(--ink-green-8);
+   --ds-warning:          var(--ink-amber-9);
+   --ds-error:            var(--ink-red-8);
+-  /* Accent = FileBird's sky blue (Tailwind sky-600/500/400), same in both themes. */
+-  --ds-accent:           #0284c7;
+-  --ds-accent-hover:     #0ea5e9;
+-  --ds-accent-soft:      #38bdf8;
++  /* Accent = FileBird blue (Direction D). Light fill is the mockup's hover step
++     (#2578AB): the mockup's #2E8AC2 is 3.8:1 with a white label. */
++  --ds-accent:           #2578ab;
++  --ds-accent-hover:     #1f6fa3;
++  --ds-accent-soft:      #4f9ccb;
+   --ds-accent-blue:      var(--ds-accent);
+   --ds-text-tertiary:    var(--ink-gray-3);
+   --ds-main-pane-min-width: 450px;
+ 
+   /* Compat aliases for old Fcode gray-0/1000 still referenced in component CSS */
+   --gray-0:    var(--white);
+   --gray-1000: var(--black);
+ 
+   /* Elevation stroke */
+   --ds-elevation-stroke: 0 0 0 0.5px var(--outline-gray-2);
+@@ -215,20 +216,26 @@
+   --ds-modal-veil: color-mix(in oklab, var(--surface-base) 78%, transparent);
+ 
+   /* Switch track/knob (each token must appear exactly twice: once per theme) */
+   --ds-switch-track-off:       var(--surface-alpha-gray-2);
+   --ds-switch-track-off-hover: var(--surface-alpha-gray-3);
+   --ds-switch-knob-off:        var(--ink-gray-6);
+   --ds-switch-knob-on:         var(--white);
+ 
+   /* Mermaid diagram canvas */
+   --ds-mermaid-canvas: var(--surface-base);
++
++  /* Accent = FileBird's exact dark blues; dark label because white is 2.8:1 here. */
++  --ds-accent:            #42a2d9;
++  --ds-accent-hover:      #56b9f2;
++  --ds-accent-soft:       #92d2f8;
++  --ds-accent-foreground: #0a1f2e;
+ }
+ 
+ /* ─── Light-theme specifics ─── */
+ :root[data-theme="light"] {
+   /* Sidebar: light gray on non-darwin; darwin platform CSS applies glass on top */
+   --ds-settings-rail-bg: var(--surface-gray-2);
+   --ds-bg-sidebar: var(--ds-settings-rail-bg);
+ 
+   /* Sidebar glass tint (darwin vibrancy overlay) — ≤60% to let material through */
+   --ds-sidebar-glass-tint:         color-mix(in oklab, var(--ds-bg-sidebar) 40%, transparent);
+diff --git a/apps/desktop/test/d-accent-contrast.test.mjs b/apps/desktop/test/d-accent-contrast.test.mjs
+new file mode 100644
+index 000000000..acc6a8cdc
+--- /dev/null
++++ b/apps/desktop/test/d-accent-contrast.test.mjs
+@@ -0,0 +1,31 @@
++/**
++ * Direction D accent: the FileBird blue must stay legible as (a) text/focus
++ * ring on the page background and (b) a button fill carrying its label.
++ */
++import assert from "node:assert/strict";
++import test from "node:test";
++import { loadStyles, resolveThemeToken } from "./helpers/styles.mjs";
++
++const styles = await loadStyles();
++const lum = (hex) =>
++  [0, 2, 4]
++    .map((i) => parseInt(hex.slice(1 + i, 3 + i), 16) / 255)
++    .map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
++    .reduce((s, c, i) => s + c * [0.2126, 0.7152, 0.0722][i], 0);
++const ratio = (a, b) => {
++  const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
++  return (hi + 0.05) / (lo + 0.05);
++};
++
++for (const theme of ["light", "dark"]) {
++  const tok = (n) => resolveThemeToken(styles, theme, n);
++  test(`D accent: ${theme} accent is text-legible on the page background`, () => {
++    assert.ok(ratio(tok("--ds-accent"), tok("--ds-bg-primary")) >= 4.5);
++  });
++  test(`D accent: ${theme} accent fill carries its foreground label`, () => {
++    assert.ok(ratio(tok("--ds-accent"), tok("--ds-accent-foreground")) >= 4.5);
++  });
++  test(`D accent: ${theme} hover keeps the label legible`, () => {
++    assert.ok(ratio(tok("--ds-accent-hover"), tok("--ds-accent-foreground")) >= 4.5);
++  });
++}

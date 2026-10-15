@@ -1,0 +1,880 @@
+# Review package: ef2ae82dc..HEAD
+
+## Commits
+d34a12425 feat(shell): direction D navbar + awesomebar
+
+## Files changed
+ apps/desktop/src/components/NavTabs.tsx       |   7 ++
+ apps/desktop/src/components/ShellNavbar.tsx   |  75 +++++++++++++
+ apps/desktop/src/features/app/AppShell.tsx    |   4 +
+ apps/desktop/src/styles/chat-shell.css        |   4 +-
+ apps/desktop/src/styles/chrome.css            |  46 +-------
+ apps/desktop/src/styles/d-shell.css           | 150 ++++++++++++++++++++++++++
+ apps/desktop/src/styles/globals.css           |   1 +
+ apps/desktop/src/styles/tokens.css            |   1 -
+ apps/desktop/test/sidebar-navigation.test.mjs |   5 +-
+ apps/desktop/test/work-panel.test.mjs         |   5 +-
+ packages/i18n/src/locales/de/index.ts         |   3 +
+ packages/i18n/src/locales/en/index.ts         |   3 +
+ packages/i18n/src/locales/es/index.ts         |   3 +
+ packages/i18n/src/locales/fr/index.ts         |   3 +
+ packages/i18n/src/locales/ko/index.ts         |   3 +
+ packages/i18n/src/locales/pt-BR/index.ts      |   3 +
+ packages/i18n/src/locales/tr/index.ts         |   3 +
+ packages/i18n/src/locales/zh-CN/index.ts      |   3 +
+ packages/i18n/src/locales/zh-TW/index.ts      |   3 +
+ 19 files changed, 275 insertions(+), 50 deletions(-)
+
+## Diff
+diff --git a/apps/desktop/src/components/NavTabs.tsx b/apps/desktop/src/components/NavTabs.tsx
+new file mode 100644
+index 000000000..1983983ca
+--- /dev/null
++++ b/apps/desktop/src/components/NavTabs.tsx
+@@ -0,0 +1,7 @@
++/**
++ * NavTabs — pill-tab strip rendered in the `tabs` layout navbar.
++ * Filled by Task 8. Stub here so ShellNavbar compiles.
++ */
++export function NavTabs() {
++  return null;
++}
+diff --git a/apps/desktop/src/components/ShellNavbar.tsx b/apps/desktop/src/components/ShellNavbar.tsx
+new file mode 100644
+index 000000000..e818b72cd
+--- /dev/null
++++ b/apps/desktop/src/components/ShellNavbar.tsx
+@@ -0,0 +1,75 @@
++/**
++ * ShellNavbar — 48px direction-D window chrome bar.
++ *
++ * Always rendered outside the settings-mode inert subtree so Cmd-K and
++ * window controls remain accessible regardless of the active page.
++ *
++ * Layout variants (data-nav-layout):
++ *   tabs   → NavTabs pill strip at left (Task 8 fills content)
++ *   rail   → "Fcode / PageName" breadcrumb
++ *   island → same breadcrumb
++ *
++ * Design source: kit-d/D.css:117-244, D1-shell.html:81-136,
++ *                D2-shell.html:69-109, D3-shell.html:304-343
++ * Traffic-light reserve: 78px (tabs, D-SPEC.md:6 / D1-shell.html:83),
++ *                        56px (rail+island, D-SPEC.md:6 / D2-shell.html:71)
++ * Awesomebar: position:absolute, left:50%, 300px wide (D.css:194-202)
++ */
++import { useTranslation } from "react-i18next";
++import { useAppStore } from "../stores/app-store";
++import { resolveNavLayout } from "../lib/nav-layout";
++import { IconSearch } from "./icons";
++import { NavTabs } from "./NavTabs";
++import type { AppState } from "../stores/app-state";
++
++const PAGE_LABEL_KEY: Record<AppState["page"], string> = {
++  chat:         "nav.chat",
++  build:        "nav.build",
++  bench:        "nav.bench",
++  raven:        "raven.title",
++  filebird:     "fileBird.title",
++  kanban:       "kanban.title",
++  scheduled:    "scheduled.title",
++  plugins:      "plugins.title",
++  pulls:        "pulls.title",
++  settings:     "nav.settings",
++};
++
++export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
++  const { t } = useTranslation();
++  const layout  = resolveNavLayout(useAppStore((s) => s.settings?.navLayout));
++  const page    = useAppStore((s) => s.page);
++  const isMac   = (window.piDesktop?.platform ?? "darwin") === "darwin";
++
++  return (
++    <header className="shell-navbar drag" data-nav-layout={layout}>
++      {/* Left: tabs strip (D1) or breadcrumb (D2/D3) */}
++      <div className="shell-navbar-start no-drag">
++        {layout === "tabs" ? (
++          <NavTabs />
++        ) : (
++          <nav className="shell-navbar-breadcrumb" aria-label="Location">
++            <span className="shell-navbar-crumb-root">{t("app.shellName")}</span>
++            <span className="shell-navbar-crumb-sep" aria-hidden="true">/</span>
++            <span className="shell-navbar-crumb-page">{t(PAGE_LABEL_KEY[page])}</span>
++          </nav>
++        )}
++      </div>
++
++      {/* Centred awesomebar — position:absolute (D.css:194-202) */}
++      <button
++        type="button"
++        className="shell-awesomebar no-drag"
++        aria-label={t("nav.search")}
++        onClick={onOpenSearch}
++      >
++        <IconSearch size={13} aria-hidden />
++        <span className="shell-awesomebar-label">{t("nav.search")}</span>
++        <kbd className="shell-awesomebar-kbd">{isMac ? "⌘K" : "Ctrl K"}</kbd>
++      </button>
++
++      {/* Right end — right cluster (bench chip + bell + gear + avatar) is Task 8 */}
++      <div className="shell-navbar-end" aria-hidden="true" />
++    </header>
++  );
++}
+diff --git a/apps/desktop/src/features/app/AppShell.tsx b/apps/desktop/src/features/app/AppShell.tsx
+index 3e8c7a6fd..1cb5d6e89 100644
+--- a/apps/desktop/src/features/app/AppShell.tsx
++++ b/apps/desktop/src/features/app/AppShell.tsx
+@@ -10,20 +10,21 @@ import {
+ import { NavRail } from "../../components/NavRail";
+ import { ProjectCreateDialog } from "../../components/ProjectCreateDialog";
+ import { SearchDialog } from "../../components/SearchDialog";
+ import { Sidebar } from "../../components/Sidebar";
+ import { StartupRecovery } from "../../components/StartupRecovery";
+ import { TerminalPanel } from "../../components/TerminalPanel";
+ import { ToastHost } from "../../components/Toast";
+ import { UpdateBanner } from "../../components/UpdateBanner";
+ import { cx, TooltipButton } from "../../components/ui";
+ import { WindowControls } from "../../components/WindowControls";
++import { ShellNavbar } from "../../components/ShellNavbar";
+ import { WorkPanel } from "../../components/workpanel/WorkPanel";
+ import { WorkspaceBar } from "../../components/WorkspaceBar";
+ import { useCopyTex } from "../../hooks/use-copy-tex";
+ import { api } from "../../lib/api";
+ import { PortalVisibilityProvider } from "../../lib/portal-visibility";
+ import { CollapsedTitlebarActions, RoutePending } from "./chrome";
+ import { useAppShellRuntime } from "./useAppShellRuntime";
+ import { useMemoryHealthPoller } from "../../hooks/use-memory-health-poller";
+ 
+ const SettingsPage = lazy(() =>
+@@ -132,20 +133,23 @@ export function AppShell() {
+     );
+ 
+   // Bench and Build own their context sidebar and islands (E frame), so the
+   // sessions dock stays out and the pane is a transparent host.
+   const workbench = page === "bench" || page === "build";
+ 
+   let shell: ReactNode = null;
+   if (ready) {
+     shell = (
+       <>
++        {/* ShellNavbar: outside the inert/hidden subtree; stays usable in settings mode
++            (Review Focus 4). Drag region + Cmd-K awesomebar for all pages. */}
++        <ShellNavbar onOpenSearch={() => setSearchOpen(true)} />
+         <PortalVisibilityProvider visible={page !== "settings"}>
+           <div
+             className="app-chat-shell"
+             hidden={page === "settings"}
+             inert={page === "settings" ? true : undefined}
+             aria-hidden={page === "settings" ? true : undefined}
+           >
+             <NavRail />
+             {!workbench && (!sidebarCollapsed || sidebarExiting) ? (
+               <Sidebar
+diff --git a/apps/desktop/src/styles/chat-shell.css b/apps/desktop/src/styles/chat-shell.css
+index 4b474e0b4..cf6ea923c 100644
+--- a/apps/desktop/src/styles/chat-shell.css
++++ b/apps/desktop/src/styles/chat-shell.css
+@@ -79,22 +79,22 @@
+   background: transparent;
+ }
+ 
+ .main-pane.is-workbench > .route-page {
+   min-width: 0;
+ }
+ 
+ /* Workspace context strip: the quiet status row at the pane's foot. */
+ .workspace-bar {
+   display: flex;
+-  height: 28px;
+-  flex: 0 0 28px;
++  height: var(--d-status-h);
++  flex: 0 0 var(--d-status-h);
+   align-items: center;
+   gap: 6px;
+   padding: 0 12px;
+   border-top: 1px solid var(--outline-gray-1);
+   color: var(--ink-gray-5);
+   font-size: var(--text-xs);
+   white-space: nowrap;
+   overflow: hidden;
+ }
+ 
+diff --git a/apps/desktop/src/styles/chrome.css b/apps/desktop/src/styles/chrome.css
+index 92b957f7d..cbb010abc 100644
+--- a/apps/desktop/src/styles/chrome.css
++++ b/apps/desktop/src/styles/chrome.css
+@@ -454,23 +454,20 @@
+   display: flex;
+   align-items: center;
+   gap: 4px;
+ }
+ 
+ .main-titlebar-left {
+   pointer-events: auto;
+   display: flex;
+   align-items: center;
+   margin-right: auto;
+-  /* The row already pads 12px, so the title only adds the difference between
+-     that and what of the traffic-light reserve the rail leaves over. */
+-  padding-left: max(0px, calc(var(--ds-pane-lead-inset) - 12px));
+ }
+ 
+ /* Preview- and route-band actions take the shared chrome-control geometry from
+    the `.ct-icon-btn` group below (28px square, `--radius-md`, transparent seat,
+    hover wash). Only the press feedback belongs to the lane itself. */
+ .title-nav-btn {
+   transition:
+     background var(--motion-duration-fast) var(--motion-ease-out),
+     color var(--motion-duration-fast) var(--motion-ease-out),
+     transform var(--motion-duration-fast) var(--motion-ease-out);
+@@ -696,51 +693,20 @@
+   opacity: 0;
+ }
+ 
+ :root[data-platform="win32"] .app-work-panel-toggle,
+ :root[data-platform="linux"] .app-work-panel-toggle {
+   right: calc(
+     var(--ds-window-controls-width) + var(--ds-work-panel-toggle-inset)
+   );
+ }
+ 
+-/* The macOS traffic lights own the window's top-left corner. Everything below
+- * reads `--ds-window-lead-inset`: the cluster's right edge (native geometry,
+- * injected at boot from @pi-desktop/shared — see window-chrome.ts) plus the
+- * breathing room kept before the first shell control. Fullscreen hides the
+- * buttons, so the reserve falls back to the ordinary 8px gutter; Windows and
+- * Linux keep the 0px default from tokens.css and use their renderer-drawn
+- * controls instead.
+- *
+- * The E frame's nav rail takes the window's left edge, so surfaces beside it
+- * read `--ds-pane-lead-inset`: whatever of the reserve the rail leaves over. */
+-:root[data-platform="darwin"] {
+-  --ds-window-lead-inset: calc(
+-    var(--ds-traffic-light-edge) + var(--ds-traffic-light-gap)
+-  );
+-}
+-
+-:root[data-platform="darwin"][data-fullscreen="true"] {
+-  --ds-window-lead-inset: 8px;
+-}
+-
+-:root {
+-  --nav-rail-width: 60px;
+-  --ds-pane-lead-inset: max(
+-    8px,
+-    calc(var(--ds-window-lead-inset) - var(--nav-rail-width))
+-  );
+-}
+-
+-:root[data-platform="darwin"] .conversation-topbar.ct-collapsed {
+-  --ct-lead-inset: var(--ds-pane-lead-inset);
+-}
+ 
+ /*
+  * The dock toggle returns to the top bar while the sidebar is collapsed, and it
+  * stays mounted so it can cross-fade with the dock's own toggle.
+  *
+  * It is deliberately OUT OF FLOW. An in-flow slot has to animate its own width
+  * to keep the title from jumping, and a growing box with `overflow: hidden`
+  * slices the 28px glyph down the middle for the whole transition — the icon
+  * reads as a torn vertical shard rather than a button. Absolute positioning
+  * hands the space back to the top bar's `padding-left`, which already
+@@ -1156,23 +1122,20 @@
+   display: flex;
+   height: var(--ds-toolbar-height);
+   flex: 0 0 var(--ds-toolbar-height);
+   align-items: center;
+   justify-content: space-between;
+   gap: 4px;
+   padding: 0 8px;
+   -webkit-app-region: drag;
+ }
+ 
+-:root[data-platform="darwin"] .sidebar-header {
+-  padding-left: var(--ds-pane-lead-inset);
+-}
+ 
+ :root[data-platform="darwin"] .sidebar-header > .brand {
+   display: none;
+ }
+ 
+ .sidebar-header-actions {
+   display: flex;
+   flex: 0 0 auto;
+   align-items: center;
+   gap: 2px;
+@@ -1218,34 +1181,31 @@
+ 
+ .app-shell.work-panel-maximized {
+   --preview-chrome-inset: 8px;
+   --preview-chrome-action-lane: calc(var(--ds-control-size) + 8px);
+ }
+ 
+ .app-shell.work-panel-maximized.sidebar-collapsed {
+   --preview-chrome-action-lane: var(--ds-preview-action-lane-width);
+ }
+ 
+-:root[data-platform="darwin"] .app-shell.work-panel-maximized.sidebar-collapsed {
+-  --preview-chrome-inset: var(--ds-pane-lead-inset);
+-}
+ 
+ /* Match the scenic backdrop's child-layer specificity so preview navigation
+  * stays above the work panel while non-control pixels remain pass-through. */
+ .app-shell > :where(.app-chat-shell) > .window-chrome-row {
+   position: absolute;
+   top: 0;
+   right: 0;
+   left: var(--nav-rail-width);
+   z-index: 200;
+   display: flex;
+-  height: var(--ds-toolbar-height);
++  height: var(--d-ph-h);
+   align-items: center;
+   padding-left: var(--preview-chrome-inset);
+   pointer-events: none;
+ }
+ 
+ .window-chrome-row.sidebar-expanded {
+   left: calc(var(--nav-rail-width) + var(--ds-sidebar-width));
+ }
+ 
+ .window-chrome-row button {
+@@ -1273,24 +1233,20 @@
+   flex: 0 0 var(--nav-rail-width);
+   flex-direction: column;
+   align-items: center;
+   justify-content: space-between;
+   padding: 8px 0 12px;
+   /* The empty rail drags the window; its button groups opt out. */
+   -webkit-app-region: drag;
+   app-region: drag;
+ }
+ 
+-/* Keep destinations below the traffic lights, inside the titlebar band. */
+-:root[data-platform="darwin"]:not([data-fullscreen="true"]) .nav-rail {
+-  padding-top: var(--ds-toolbar-height);
+-}
+ 
+ .nav-rail-group {
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   gap: 4px;
+ }
+ 
+ .nav-rail-btn,
+ .nav-rail .notification-trigger {
+diff --git a/apps/desktop/src/styles/d-shell.css b/apps/desktop/src/styles/d-shell.css
+new file mode 100644
+index 000000000..bd1ea59f9
+--- /dev/null
++++ b/apps/desktop/src/styles/d-shell.css
+@@ -0,0 +1,150 @@
++/*
++ * Direction D — shell frame.
++ *
++ * Design source: kit-d/D.css (D.css) lines cited inline.
++ * Design authority (R10): flex + absolute awesomebar (D.css:119-130,194-202),
++ * NOT the brief's grid — R11a overrides brief's minmax(240px,480px) column.
++ *
++ * Approved deviations (R12):
++ *   - light accent #2578ab (AA contrast) instead of #2E8AC2
++ *   - dark on-accent glyph dark (#0a1f2e)
++ */
++
++/* ── App shell becomes a flex column now ShellNavbar is the top row ── */
++/* D.css:97-107 (.d-app) */
++.app-shell { flex-direction: column; }
++
++/*
++ * .app-chat-shell was display:contents so its children were direct flex items
++ * of .app-shell (flex row). Now it becomes the body row below the navbar.
++ * base.css:175-181 is superseded here.
++ */
++.app-chat-shell {
++  display: flex;
++  flex: 1;
++  min-height: 0;
++  min-width: 0;
++  position: relative; /* establish positioning context for .window-chrome-row */
++}
++.app-chat-shell[hidden] { display: none; }
++
++/*
++ * --nav-rail-width was defined next to --ds-pane-lead-inset in chrome.css
++ * (deleted as part of the lead-inset cutover). Keep it here so
++ * .window-chrome-row still resolves it.
++ */
++:root { --nav-rail-width: 60px; }
++
++/* ── Navbar (shared base, 48px) ───────────────────────────────────────
++ * D.css:119-130 (.d-nav); using shell-navbar class for the app.
++ * display:flex + position:relative lets the absolutely-centred awesomebar
++ * stay anchored to the navbar regardless of left/right content width. */
++.shell-navbar {
++  display: flex;
++  align-items: center;
++  height: var(--d-navbar-h);          /* 48px — D.css:23 / D-SPEC.md row 1  */
++  flex: 0 0 var(--d-navbar-h);
++  padding: 0 var(--d-gap);            /* 0 12px — D.css:124                 */
++  gap: 8px;                           /* D.css:125                           */
++  background: var(--surface-elevation-1); /* D.css:126                      */
++  border-bottom: 1px solid var(--d-border); /* D.css:127; --d-border=outline-gray-2 */
++  position: relative;                 /* D.css:128 — anchor for abs awesomebar */
++  z-index: 30;                        /* D.css:129                           */
++}
++
++/*
++ * macOS traffic-light reserve (darwin only, not fullscreen).
++ * D1 tabs:   78px — D-SPEC.md row 1, D1-shell.html:83 (width:78px;flex-shrink:0)
++ * D2 rail:   56px — D-SPEC.md row 1, D2-shell.html:71 (width:56px;flex-shrink:0)
++ * D3 island: 56px — D3-shell.html:306 (width:56px;flex-shrink:0)
++ */
++:root[data-platform="darwin"] .shell-navbar                             { padding-left: 56px; }
++:root[data-platform="darwin"] .shell-navbar[data-nav-layout="tabs"]     { padding-left: 78px; }
++:root[data-platform="darwin"][data-fullscreen="true"] .shell-navbar     { padding-left: var(--d-gap); }
++
++/*
++ * Windows/Linux: reserve right edge for renderer-drawn WindowControls.
++ * WindowControls width = 120px (--ds-window-controls-width) + 4px breathing room.
++ */
++:root:not([data-platform="darwin"]) .shell-navbar { padding-right: 124px; }
++
++/* ── Left section: brand / tabs / breadcrumb ──────────────────────── */
++/* D.css:147-152 (.d-nav-tabs wrapper) and D.css:181-191 (.d-breadcrumb) */
++.shell-navbar-start {
++  display: flex;
++  align-items: center;
++  gap: 6px;
++  min-width: 0;
++  flex-shrink: 0;
++}
++
++/* Breadcrumb: D.css:181-191 (.d-breadcrumb) */
++.shell-navbar-breadcrumb {
++  display: flex;
++  align-items: center;
++  gap: 4px;
++  font-size: var(--d-text);       /* 13px — D.css:185 */
++  color: var(--ink-gray-5);       /* D.css:186 */
++  min-width: 0;
++  white-space: nowrap;
++  overflow: hidden;
++  text-overflow: ellipsis;
++}
++.shell-navbar-crumb-root  { color: var(--ink-gray-5); }            /* D2-shell.html:23 */
++.shell-navbar-crumb-sep   { color: var(--ink-gray-3); }            /* D.css:191 (.sep) */
++.shell-navbar-crumb-page  { color: var(--ink-gray-8); font-weight: 500; } /* D.css:190 (span) */
++
++/* ── Centred awesomebar — absolute, 300px ─────────────────────────
++ * D.css:194-235 (.d-awesomebar / .d-search-icon / .d-search-kbd)
++ * R11a: 300px fixed width, not brief's minmax(240px,480px). */
++.shell-awesomebar {
++  position: absolute;              /* D.css:195 */
++  left: 50%;                       /* D.css:196 */
++  transform: translateX(-50%);     /* D.css:197 */
++  width: 300px;                    /* D.css:199 */
++  height: var(--d-ctrl-lg);        /* 32px — D.css:206 */
++  display: flex;
++  align-items: center;
++  gap: 8px;
++  padding: 0 10px;
++  color: var(--ink-gray-5);
++  background: var(--ds-bg-hover);
++  border: 1px solid var(--d-border-ctrl);   /* outline-gray-3 — D.css:207 */
++  border-radius: var(--d-r-ctrl);            /* 8px — D.css:33  */
++  font-size: var(--d-text);
++  font-family: inherit;
++  text-align: left;
++  cursor: pointer;
++  transition: border-color .12s;   /* D.css:215 */
++  z-index: 1;
++}
++.shell-awesomebar:hover         { border-color: var(--ink-gray-3); }
++.shell-awesomebar:focus-visible {
++  outline: 2px solid var(--ds-accent);
++  outline-offset: 2px;
++}
++
++.shell-awesomebar-label {
++  flex: 1;
++  min-width: 0;
++  overflow: hidden;
++  text-overflow: ellipsis;
++  white-space: nowrap;
++  color: var(--ink-gray-4);   /* D.css:217 placeholder colour */
++}
++
++.shell-awesomebar-kbd {
++  font: inherit;
++  font-size: var(--d-text-xs);   /* 11px — D.css:230 */
++  color: var(--ink-gray-3);
++  white-space: nowrap;
++}
++
++/* ── Right end placeholder (right cluster: Task 8) ───────────────── */
++.shell-navbar-end {
++  display: flex;
++  align-items: center;
++  gap: 4px;
++  margin-left: auto;          /* D.css:243 (.d-nav-right margin-left:auto) */
++  flex-shrink: 0;
++}
+diff --git a/apps/desktop/src/styles/globals.css b/apps/desktop/src/styles/globals.css
+index eaeaa7c58..34a909852 100644
+--- a/apps/desktop/src/styles/globals.css
++++ b/apps/desktop/src/styles/globals.css
+@@ -7,20 +7,21 @@
+   that owns the surface, not here. Import order IS the cascade: tokens and
+   base first, feature layers in the order the UI was built, and the
+   responsive/reduced-motion tail last so it can override what precedes it.
+   Reordering these imports changes rendering.
+ */
+ @import "./espresso.css";
+ @import "./tokens.css";
+ @import "./d-tokens.css";
+ @import "./base.css";
+ @import "./chrome.css";
++@import "./d-shell.css";
+ @import "./chat-shell.css";
+ @import "./composer.css";
+ @import "./sidebar-threads.css";
+ @import "./messages.css";
+ @import "./prose.css";
+ @import "./ui-kit.css";
+ @import "./overlays.css";
+ @import "./session-search.css";
+ @import "./theme-overrides.css";
+ @import "./composer-menus.css";
+diff --git a/apps/desktop/src/styles/tokens.css b/apps/desktop/src/styles/tokens.css
+index 0dfc62f1c..c432385cd 100644
+--- a/apps/desktop/src/styles/tokens.css
++++ b/apps/desktop/src/styles/tokens.css
+@@ -155,21 +155,20 @@
+   /* --ds-field-height now live in d-tokens.css as var(--d-ctrl) */
+   --ds-work-panel-toggle-size:     28px;
+   --ds-work-panel-toggle-inset:    12px;
+   --ds-work-panel-control-gap:     4px;
+   --ds-preview-action-lane-width:  calc(
+     2 * var(--ds-work-panel-toggle-size) + 4px + 8px
+   );
+   --ds-window-controls-width: 120px;
+   --ds-traffic-light-edge: 0px;
+   --ds-traffic-light-gap: 12px;
+-  --ds-window-lead-inset: 0px;
+   /* Composer radius: 20px (--radius-xl in the Fcode Apple ladder) */
+   --ds-composer-radius:    var(--radius-xl);
+   --ds-composer-radius-lg: var(--radius-xl);
+ 
+   /* Motion tokens */
+   --motion-duration-fast:     150ms;
+   --motion-duration-normal:   200ms;
+   --motion-duration-slow:     300ms;
+   --motion-ease-out:          cubic-bezier(0.22, 1, 0.36, 1);
+   --motion-ease-standard:     cubic-bezier(0.2, 0, 0, 1);
+diff --git a/apps/desktop/test/sidebar-navigation.test.mjs b/apps/desktop/test/sidebar-navigation.test.mjs
+index 8789b6c20..28093f264 100644
+--- a/apps/desktop/test/sidebar-navigation.test.mjs
++++ b/apps/desktop/test/sidebar-navigation.test.mjs
+@@ -83,21 +83,24 @@ test("work panel collapse control is the viewport-fixed shell toggle", () => {
+   );
+   // The reservation is platform-scoped; the base header rule stays neutral.
+   assert.doesNotMatch(
+     globalStyles,
+     /^\.work-panel-header\s*\{[^}]*margin-right:/ms,
+   );
+ });
+ 
+ test("macOS hides sidebar branding and keeps header actions beside traffic lights", () => {
+   assert.doesNotMatch(sidebarSource, /sidebar-macos-drag-row/);
+-  assert.match(
++  /* lead-inset cutover (Task 6): ShellNavbar owns the darwin traffic-light reserve;
++   * --ds-pane-lead-inset is removed, so the darwin sidebar-header padding override
++   * is also gone — the sidebar header inherits the standard 8px gutter instead. */
++  assert.doesNotMatch(
+     globalStyles,
+     /:root\[data-platform="darwin"\] \.sidebar-header\s*\{[^}]*padding-left:\s*var\(--ds-pane-lead-inset\);/s,
+   );
+   assert.match(
+     globalStyles,
+     /:root\[data-platform="darwin"\] \.sidebar-header > \.brand\s*\{[^}]*display:\s*none;/s,
+   );
+   assert.match(
+     globalStyles,
+     /\.sidebar-header-actions\s*\{[^}]*margin-left:\s*auto;/s,
+diff --git a/apps/desktop/test/work-panel.test.mjs b/apps/desktop/test/work-panel.test.mjs
+index 84af2e339..8350b42a4 100644
+--- a/apps/desktop/test/work-panel.test.mjs
++++ b/apps/desktop/test/work-panel.test.mjs
+@@ -653,15 +653,18 @@ test("preview mode keeps shell actions and restores routes before navigation", (
+   const row = globalStyles.match(/\.window-chrome-row \{[^}]*\}/)?.[0] ?? "";
+   const spacer = globalStyles.match(/\.window-chrome-drag \{[^}]*\}/)?.[0] ?? "";
+   assert.match(row, /pointer-events:\s*none/);
+   assert.match(row, /padding-left:\s*var\(--preview-chrome-inset\)/);
+   assert.ok(spacer);
+   assert.doesNotMatch(row + spacer, /app-region:|background:/);
+   assert.match(globalStyles, /\.window-chrome-row button \{[^}]*pointer-events:\s*auto;[^}]*app-region:\s*no-drag;/);
+   assert.match(globalStyles, /\.window-chrome-row\.sidebar-expanded \{[^}]*left: calc\(var\(--nav-rail-width\) \+ var\(--ds-sidebar-width\)\);/);
+   assert.match(globalStyles, /\.app-shell\.work-panel-maximized \{[^}]*--preview-chrome-inset:\s*8px;[^}]*--preview-chrome-action-lane:\s*calc\(var\(--ds-control-size\) \+ 8px\);/);
+   assert.match(globalStyles, /\.app-shell\.work-panel-maximized\.sidebar-collapsed \{[^}]*--preview-chrome-action-lane:\s*var\(--ds-preview-action-lane-width\);/);
+-  assert.match(globalStyles, /:root\[data-platform="darwin"\] \.app-shell\.work-panel-maximized\.sidebar-collapsed \{[^}]*--preview-chrome-inset:\s*var\(--ds-pane-lead-inset\);/);
++  /* lead-inset cutover (Task 6): ShellNavbar owns the darwin traffic-light reserve;
++   * --ds-pane-lead-inset is removed, so the darwin preview-chrome-inset override
++   * is also gone. --preview-chrome-inset stays 8px on all platforms. */
++  assert.doesNotMatch(globalStyles, /--preview-chrome-inset:\s*var\(--ds-pane-lead-inset\)/);
+   assert.match(globalStyles, /\.app-shell\.work-panel-maximized \.work-panel-header \{[^}]*margin-left:\s*calc\(var\(--preview-chrome-inset\) \+ var\(--preview-chrome-action-lane\)\);[^}]*padding-left:\s*0;/);
+   assert.match(globalStyles, /\.work-panel-header \{[^}]*app-region:\s*drag;/);
+   assert.match(globalStyles, /\.app-shell\.work-panel-maximized \.work-panel-main \{[^}]*var\(--ds-bg-dock-raised\) 0 var\(--ds-toolbar-height\)/);
+ });
+diff --git a/packages/i18n/src/locales/de/index.ts b/packages/i18n/src/locales/de/index.ts
+index 0d3c2e2f8..db055a772 100644
+--- a/packages/i18n/src/locales/de/index.ts
++++ b/packages/i18n/src/locales/de/index.ts
+@@ -117,20 +117,23 @@ export const de = {
+     "currentBadge": "Aktuelles",
+     "availableBadge": "Verfügbares Update",
+     "manualHint": "Laden Sie die neue Version von der Release-Seite herunter.",
+     "error": "Konnte nicht nach Updates suchen: {{message}}",
+     "dismiss": "Verwerfen",
+     "devDisabled": "Updates sind in Entwicklungs-Builds deaktiviert."
+   },
+   "nav": {
+     "pinnedSessions": "Angeheftet",
+     "home": "Startseite",
++    "chat": "Chat",
++    "build": "Build",
++    "bench": "Bench",
+     "newTask": "Neue Aufgabe",
+     "newProject": "Neues Projekt",
+     "projects": "Projekte",
+     "plugins": "Erweiterungen",
+     "settings": "Einstellungen",
+     "checkForUpdates": "Auf Updates prüfen",
+     "buildUnknown": "Version unbekannt",
+     "search": "Suche",
+     "temporarySessions": "Temporäre Chats",
+     "newTemporarySession": "Neuer temporärer Chat",
+diff --git a/packages/i18n/src/locales/en/index.ts b/packages/i18n/src/locales/en/index.ts
+index 72750a22a..7a0f5e758 100644
+--- a/packages/i18n/src/locales/en/index.ts
++++ b/packages/i18n/src/locales/en/index.ts
+@@ -124,20 +124,23 @@ export const en = {
+     currentBadge: "Current",
+     availableBadge: "Available update",
+     manualHint: "Download the new version from the releases page.",
+     error: "Couldn't check for updates: {{message}}",
+     dismiss: "Dismiss",
+     devDisabled: "Updates are disabled in development builds.",
+   },
+   nav: {
+     "pinnedSessions": "Pinned",
+     home: "Home",
++    chat: "Chat",
++    build: "Build",
++    bench: "Bench",
+     newTask: "New task",
+     newProject: "New project",
+     projects: "Projects",
+     plugins: "Extensions",
+     settings: "Settings",
+     checkForUpdates: "Check for updates",
+     buildUnknown: "Version unknown",
+     search: "Search",
+     temporarySessions: "Temporary chats",
+     newTemporarySession: "New temporary chat",
+diff --git a/packages/i18n/src/locales/es/index.ts b/packages/i18n/src/locales/es/index.ts
+index 04dca6d99..ba010f29b 100644
+--- a/packages/i18n/src/locales/es/index.ts
++++ b/packages/i18n/src/locales/es/index.ts
+@@ -117,20 +117,23 @@ export const es = {
+     "currentBadge": "Actual",
+     "availableBadge": "Actualización disponible",
+     "manualHint": "Descargue la nueva versión desde la página de lanzamientos.",
+     "error": "No se pudieron buscar actualizaciones: {{message}}",
+     "dismiss": "Descartar",
+     "devDisabled": "Las actualizaciones están deshabilitadas en las compilaciones de desarrollo."
+   },
+   "nav": {
+     "pinnedSessions": "Fijadas",
+     "home": "Inicio",
++    "chat": "Chat",
++    "build": "Build",
++    "bench": "Banco",
+     "newTask": "Nueva tarea",
+     "newProject": "Nuevo proyecto",
+     "projects": "Proyectos",
+     "plugins": "Extensiones",
+     "settings": "Configuración",
+     "checkForUpdates": "Buscar actualizaciones",
+     "buildUnknown": "Versión desconocida",
+     "search": "Buscar",
+     "temporarySessions": "Chats temporales",
+     "newTemporarySession": "Nuevo chat temporal",
+diff --git a/packages/i18n/src/locales/fr/index.ts b/packages/i18n/src/locales/fr/index.ts
+index ce07b1be0..3274d5a92 100644
+--- a/packages/i18n/src/locales/fr/index.ts
++++ b/packages/i18n/src/locales/fr/index.ts
+@@ -117,20 +117,23 @@ export const fr = {
+     "currentBadge": "Actuel",
+     "availableBadge": "Mise à jour disponible actuelle",
+     "manualHint": "Téléchargez la nouvelle version à partir de la page des versions.",
+     "error": "Impossible de vérifier les mises à jour : {{message}}",
+     "dismiss": "Ignorer",
+     "devDisabled": "Les mises à jour sont désactivées dans les versions de développement."
+   },
+   "nav": {
+     "pinnedSessions": "Épinglées",
+     "home": "Accueil",
++    "chat": "Chat",
++    "build": "Build",
++    "bench": "Atelier",
+     "newTask": "Nouvelle tâche",
+     "newProject": "Nouveau projet",
+     "projects": "Projets",
+     "plugins": "Extensions",
+     "settings": "Paramètres",
+     "checkForUpdates": "Vérifier les mises à jour",
+     "buildUnknown": "Version inconnue",
+     "search": "Recherche",
+     "temporarySessions": "Chats temporaires",
+     "newTemporarySession": "Nouveau chat temporaire",
+diff --git a/packages/i18n/src/locales/ko/index.ts b/packages/i18n/src/locales/ko/index.ts
+index c93aec159..4dc06f723 100644
+--- a/packages/i18n/src/locales/ko/index.ts
++++ b/packages/i18n/src/locales/ko/index.ts
+@@ -126,20 +126,23 @@ export const ko = {
+     currentBadge: "현재",
+     availableBadge: "업데이트 가능",
+     manualHint: "릴리스 페이지에서 새 버전을 다운로드하세요.",
+     error: "업데이트를 확인할 수 없습니다: {{message}}",
+     dismiss: "닫기",
+     devDisabled: "개발 빌드에서는 업데이트가 비활성화됩니다.",
+   },
+   nav: {
+     "pinnedSessions": "고정됨",
+     home: "홈",
++    chat: "채팅",
++    build: "빌드",
++    bench: "벤치",
+     newTask: "새 작업",
+     newProject: "새 프로젝트",
+     projects: "프로젝트",
+     plugins: "확장 기능",
+     settings: "설정",
+     checkForUpdates: "업데이트 확인",
+     buildUnknown: "버전 알 수 없음",
+     search: "검색",
+     temporarySessions: "임시 대화",
+     newTemporarySession: "새 임시 채팅",
+diff --git a/packages/i18n/src/locales/pt-BR/index.ts b/packages/i18n/src/locales/pt-BR/index.ts
+index 4abee3d27..d5d4d295f 100644
+--- a/packages/i18n/src/locales/pt-BR/index.ts
++++ b/packages/i18n/src/locales/pt-BR/index.ts
+@@ -116,20 +116,23 @@ export const ptBR = {
+     currentBadge: "Atual",
+     availableBadge: "Atualização disponível",
+     manualHint: "Baixe a nova versão na página de lançamentos.",
+     error: "Não foi possível verificar atualizações: {{message}}",
+     dismiss: "Dispensar",
+     devDisabled: "As atualizações estão desativadas em compilações de desenvolvimento."
+   },
+   nav: {
+     pinnedSessions: "Fixadas",
+     home: "Início",
++    chat: "Chat",
++    build: "Build",
++    bench: "Bancada",
+     newTask: "Nova tarefa",
+     newProject: "Novo projeto",
+     projects: "Projetos",
+     plugins: "Extensões",
+     settings: "Configurações",
+     checkForUpdates: "Verificar atualizações",
+     buildUnknown: "Versão desconhecida",
+     search: "Pesquisar",
+     temporarySessions: "Conversas temporárias",
+     newTemporarySession: "Nova conversa temporária",
+diff --git a/packages/i18n/src/locales/tr/index.ts b/packages/i18n/src/locales/tr/index.ts
+index 2b0525da8..aceed9fe0 100644
+--- a/packages/i18n/src/locales/tr/index.ts
++++ b/packages/i18n/src/locales/tr/index.ts
+@@ -126,20 +126,23 @@ export const tr = {
+     currentBadge: "Geçerli",
+     availableBadge: "Kullanılabilir güncelleme",
+     manualHint: "Yeni sürümü yayınlar sayfasından indirin.",
+     error: "Güncellemeler denetlenemedi: {{message}}",
+     dismiss: "Kapat",
+     devDisabled: "Geliştirme derlemelerinde güncellemeler kapalıdır.",
+   },
+   nav: {
+     "pinnedSessions": "Sabitlenmiş",
+     home: "Ana sayfa",
++    chat: "Sohbet",
++    build: "Derleme",
++    bench: "Masa",
+     newTask: "Yeni görev",
+     newProject: "Yeni proje",
+     projects: "Projeler",
+     plugins: "Uzantılar",
+     settings: "Ayarlar",
+     checkForUpdates: "Güncellemeleri denetle",
+     buildUnknown: "Sürüm bilinmiyor",
+     search: "Ara",
+     temporarySessions: "Geçici sohbetler",
+     newTemporarySession: "Yeni geçici sohbet",
+diff --git a/packages/i18n/src/locales/zh-CN/index.ts b/packages/i18n/src/locales/zh-CN/index.ts
+index 1485db418..5e598a46d 100644
+--- a/packages/i18n/src/locales/zh-CN/index.ts
++++ b/packages/i18n/src/locales/zh-CN/index.ts
+@@ -119,20 +119,23 @@ export const zhCN = {
+     currentBadge: "当前版本",
+     availableBadge: "可用更新",
+     manualHint: "请前往发布页下载新版本。",
+     error: "检查更新失败：{{message}}",
+     dismiss: "忽略",
+     devDisabled: "开发版本不支持自动更新。",
+   },
+   nav: {
+     pinnedSessions: "置顶",
+     home: "首页",
++    chat: "对话",
++    build: "构建",
++    bench: "工作台",
+     newTask: "新建任务",
+     newProject: "新建项目",
+     projects: "项目",
+     plugins: "扩展",
+     settings: "设置",
+     checkForUpdates: "检查更新",
+     buildUnknown: "版本未知",
+     search: "搜索",
+     temporarySessions: "临时对话",
+     newTemporarySession: "新建临时对话",
+diff --git a/packages/i18n/src/locales/zh-TW/index.ts b/packages/i18n/src/locales/zh-TW/index.ts
+index 22e221865..2ee3b2f4d 100644
+--- a/packages/i18n/src/locales/zh-TW/index.ts
++++ b/packages/i18n/src/locales/zh-TW/index.ts
+@@ -119,20 +119,23 @@ export const zhTW = {
+     currentBadge: "當前版本",
+     availableBadge: "可用更新",
+     manualHint: "請前往釋出頁下載新版本。",
+     error: "檢查更新失敗：{{message}}",
+     dismiss: "忽略",
+     devDisabled: "開發版本不支援自動更新。",
+   },
+   nav: {
+     pinnedSessions: "釘選",
+     home: "首頁",
++    chat: "對話",
++    build: "建置",
++    bench: "工作台",
+     newTask: "新建任務",
+     newProject: "新建專案",
+     projects: "專案",
+     plugins: "擴充套件",
+     settings: "設定",
+     checkForUpdates: "檢查更新",
+     buildUnknown: "版本未知",
+     search: "搜尋",
+     temporarySessions: "臨時對話",
+     newTemporarySession: "新建臨時對話",

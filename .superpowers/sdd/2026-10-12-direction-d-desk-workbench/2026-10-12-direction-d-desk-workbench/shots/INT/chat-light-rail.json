@@ -1,0 +1,13 @@
+{
+  "commit": "dc33fc5d1",
+  "buildTime": "2026-10-15 (pnpm build in direction-d)",
+  "viewport": "1200×800",
+  "dpr": 2,
+  "dataNavLayout": "rail",
+  "dataTheme": "light",
+  "persistedNavLayout": null,
+  "persistedTheme": null,
+  "captureTime": "2026-10-15T03:47:34.634Z",
+  "shotFile": "chat-light-rail.png",
+  "page": "chat"
+}

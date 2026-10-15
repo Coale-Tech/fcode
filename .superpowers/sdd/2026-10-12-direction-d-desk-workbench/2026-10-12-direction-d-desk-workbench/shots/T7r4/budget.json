@@ -1,0 +1,21 @@
+{
+  "commit": "uncommitted-round4",
+  "captureTime": "2026-10-14T10:16:44.523Z",
+  "viewport": "1200x800",
+  "devicePixelRatio": 1,
+  "shellClientWidth": 1200,
+  "collapsed": {
+    "railW": 50,
+    "shellChromeW": 74,
+    "note": "rail(50) + 2*12(canvas gap) = 74",
+    "navLayoutRef": "nav-layout.ts:RAIL_WIDTH.rail = 50"
+  },
+  "expanded": {
+    "railW": 220,
+    "shellChromeW": 244,
+    "note": "rail(220) + 2*12(canvas gap) = 244",
+    "navLayoutRef": "nav-layout.ts:RAIL_EXPANDED_WIDTH = 220"
+  },
+  "canvasGap": 12,
+  "provenanceSource": "shellChromeWidth('rail', false/true) in nav-layout.ts:27-29"
+}
