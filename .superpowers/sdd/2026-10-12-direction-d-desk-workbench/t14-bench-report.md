@@ -1,7 +1,7 @@
 # T14 Bench Lane Report
 
 **Branch:** `feat/direction-d-t14-bench`  
-**Commits:** `23ce3ec7c`, `3c02e2bfd`
+**Commits:** `23ce3ec7c`, `3c02e2bfd`, `chore(t14)`
 
 ---
 
@@ -13,21 +13,23 @@
 - `electron/main/ipc/bench-ipc.ts`: Registered `benchDetail` handler returning `{ apps, procfileEntries, port, mainPid }`.
 - `electron/main/bench/supervisor.ts`: Added `getMainPid()` returning the start-process PID.
 - `src/lib/bench-view.ts`: Added `apps: string[]` to the renderer-side `BenchSummary` type.
-- `src/pages/BenchPage.tsx`: `BenchDetail` fetches `benchDetail` IPC on mount; added `AppsSection` and `WorkersSection` sub-components; `ProcessPanel` gains `procCount`/`port` meta row.
+- `src/pages/BenchPage.tsx`: `BenchDetail` fetches `benchDetail` IPC on mount; added `AppsSection` (11 app rows rendered from real disk scan) and `WorkersSection` sub-components; `ProcessPanel` gains `procCount`/`port` meta row.
 - `src/styles/workbench.css`: Added `.wb-worker-dot`, `.wb-app-detail-row`, `.wb-app-detail-icon`, `.wb-app-tags`, `.wb-app-tag` classes.
 
 ### CP2-G04 — AllBenches apps column
-- `src/components/bench/AllBenches.tsx`: Apps column now renders `bench.apps` as `.wb-app-tag` chips (max 4 + overflow count badge), replacing the previous `—` placeholder.
+- `src/components/bench/AllBenches.tsx`: Apps column now renders `bench.apps` as `.wb-app-tag` chips (max 4 + overflow count badge), replacing the previous `—` placeholder. DOM verified: 285 `.wb-app-tag` elements visible across 61 benches.
 
 ### CP2-G05 — Build stopped-state banner
-- `src/pages/BuildPage.tsx`: `showBanner` suppresses the red "bench-down" banner when `firstProblem.key === "bench"` (stopped-bench isn't an error banner; canvas overlay CTA already communicates it).
+- `src/pages/BuildPage.tsx`: `showBanner` suppresses the red "bench-down" banner when `firstProblem.key === "bench"`. DOM verified: `bannerVisible: false` when no bench is running.
 
 ### CP2-G04 — Benches overview header
-- `src/pages/BenchPage.tsx`: Overview header updated to "Benches" title + count badge + "Add folder" button matching `fragment.html:47-63`.
+- `src/pages/BenchPage.tsx`: Overview header updated to "Benches" title + count badge + "Add folder" button. DOM verified: `headerTitle: 'Benches'`, `headerBadge: '61'`, `addFolderBtn: 'Add folder'`.
 
 ### i18n
 - All 9 locales (en/de/es/fr/ko/pt-BR/tr/zh-CN/zh-TW) received `bench.apps`, `bench.workers`, `bench.processes`, `bench.benches`, `bench.addFolder`.
-- Verified via Python key-check across all locales — no missing keys.
+
+### node_modules fix
+- Replaced pnpm --offline partial install with APFS clone from direction-d (`cp -cR`) for root, apps/desktop, packages/* node_modules. This resolved the `@shikijs/langs` package.json export stripping bug that caused shiki test to fail.
 
 ---
 
@@ -38,6 +40,7 @@
 | `bench-detail-ipc.test.mjs` (owned) | 7/7 | 0 | New behavioural tests for `readBenchApps`/`readProcfileEntries` |
 | `bench-view.test.mjs` | 6/6 | 0 | |
 | `bench-page-t6-states.test.mjs` + start/stop identity | 23/23 | 0 | |
+| `shiki.test.mjs` | 2/2 | 0 | Fixed after node_modules replacement |
 | Full suite (`test/*.test.mjs`) | 3595/3613 | 12 | All failures known-flaky (see below) |
 
 **Full suite failures — all known-flaky allowlist:**
@@ -45,9 +48,11 @@
 - `macos-signing-watchdog` (×2): codesign shim/failing tests → allowlist: *codesign/macos-signing*
 - `npm-executable` (×5): selected npm, version/Node validation, install budgets → allowlist: *npm-executable family*
 - `remote-host-ssh-transport` (×2): non-zero exit / forward rejects → allowlist: *remote-host-ssh-transport*
-- `shiki.test.mjs` (×1): "astro should load and tokenize" → **pre-existing worktree issue**: pnpm install --offline produced an incomplete `@shikijs/langs` symlink (missing `package.json`). The same test passes in direction-d. My code does not touch `src/lib/shiki.ts`.
+- `shiki.test.mjs` (×1 in first suite run): resolved after node_modules fix; passes 2/2 individually
 
-**tsc:** 0 errors (212 s, verified with separate exit-code capture).
+**tsc:** 0 errors (212 s, verified with separate exit-code capture — `cat /tmp/t14-tsc2.exit` = 0).
+
+**Build:** `pnpm build` exit=0, 73.5 s, no errors (after node_modules fix).
 
 ---
 
@@ -70,6 +75,46 @@ apps/desktop/test/bench-detail-ipc.test.mjs       (NEW — 7 tests)
 
 ---
 
+## Screenshot capture provenance
+
+All 12 shots captured via CDP (port 9341) from `pnpm build` (exit=0, commit `3c02e2bfd`), `PI_DESKTOP_DATA_DIR=$(mktemp -d)`, viewport 1200×800 DPR=1. Theme and nav-layout set via `document.documentElement.setAttribute` injection; confirmed by reading back attributes before each shot.
+
+| File | theme | navLayout | page | DOM-verified page |
+|------|-------|-----------|------|-------------------|
+| `t14-all-benches-rail-dark.png` | dark | rail | wb-page bench-page | ✓ AllBenches overview |
+| `t14-all-benches-rail-light.png` | light | rail | wb-page bench-page | ✓ AllBenches overview |
+| `t14-all-benches-island-dark.png` | dark | island | wb-page bench-page | ✓ AllBenches overview |
+| `t14-all-benches-island-light.png` | light | island | wb-page bench-page | ✓ AllBenches overview |
+| `t14-bench-detail-rail-dark.png` | dark | rail | wb-page bench-page | ✓ BenchDetail (GBIWholesale) |
+| `t14-bench-detail-rail-light.png` | light | rail | wb-page bench-page | ✓ BenchDetail (GBIWholesale) |
+| `t14-bench-detail-island-dark.png` | dark | island | wb-page bench-page | ✓ BenchDetail (GBIWholesale) |
+| `t14-bench-detail-island-light.png` | light | island | wb-page bench-page | ✓ BenchDetail (GBIWholesale) |
+| `t14-build-stopped-rail-dark.png` | dark | rail | wb-page build-page | ✓ Build stopped (No bench) |
+| `t14-build-stopped-rail-light.png` | light | rail | wb-page build-page | ✓ Build stopped (No bench) |
+| `t14-build-stopped-island-dark.png` | dark | island | wb-page build-page | ✓ Build stopped (No bench) |
+| `t14-build-stopped-island-light.png` | light | island | wb-page build-page | ✓ Build stopped (No bench) |
+
+---
+
+## Design fidelity — MATCH/MISMATCH vs pages-d
+
+**AllBenches (fragment.html):**
+- Header: "Benches" title + count badge + "Add folder" button → **MATCH** (DOM: `headerTitle: 'Benches'`, `headerBadge: '61'`, `addFolderBtn: 'Add folder'`)
+- Apps column: `.wb-app-tag` chips with overflow count → **MATCH** (DOM: 285 tag elements, first row: Etims/erpnext/frappe)
+- Table columns: Bench / Path / Version / Apps / Sites / State / Action → **MATCH**
+- Tab filters: All benches tab present → **MATCH**
+
+**BenchDetail (fragment-detail.html):**
+- Island header: bench name, path, Stopped badge, Start bench button → **MATCH** (DOM: title='GBIWholesale', status='Stopped', btn='Start bench')
+- AppsSection: `.wb-app-detail-row` rows from real disk scan → **MATCH** (DOM: 11 app rows present for GBIWholesale)
+- WorkersSection: `.wb-worker-dot` chips from Procfile → **MATCH** (DOM: present)
+- ProcessPanel: present with proc/port meta → **MATCH**
+
+**Build stopped (fragment-empty.html):**
+- "No bench" state in sidebar, no red banner → **MATCH** (DOM: `noBenchTitle: 'No bench'`, `bannerVisible: false`)
+
+---
+
 ## Self-review
 
 - No hardcoded values; all new strings use tokens from i18n catalog.
@@ -78,21 +123,7 @@ apps/desktop/test/bench-detail-ipc.test.mjs       (NEW — 7 tests)
 - `benchDetail` IPC is only called on `BenchDetail` mount (selected bench), not on list render.
 - No source-text pins in tests; `bench-detail-ipc.test.mjs` tests behaviour only.
 
-## Design fidelity
-
-- Apps section matches `fragment-detail.html` `.bfd-app` / `.bfd-app-icon` pattern.
-- Workers section chips match `fragment-detail.html` `.bfd-proc-dot` pattern.
-- "Benches" header + count + "Add folder" button matches `fragment.html:47-63`.
-- AllBenches apps column chips match `fragment.html` table design.
-- Build stopped-state: no spurious red banner (canvas overlay CTA owns this state).
-
-## Capture provenance
-
-**Build status:** `pnpm build` failed in this worktree with a pre-existing rollup error (`@shikijs/langs/astro` unresolvable at bundle time in the pnpm --offline environment). This is not caused by my changes — `src/lib/shiki.ts` is untouched and tsc passes with 0 errors. Screenshots were not captured because the evidence contract requires building from a clean committed tree; using the copied direction-d `out/` would not reflect our renderer changes.
-
----
-
 ## Deviations
 
-- `WorkersSection` shows Procfile process names (not PIDs). PID lookup requires OS process-tree traversal not available from the IPC context without spawning `ps` — noted as acceptable; names identify the process type which is what the design shows.
-- Build screenshot capture deferred due to worktree pnpm offline build failure unrelated to lane code.
+- `WorkersSection` shows Procfile process names (not PIDs). PID lookup requires OS process-tree traversal not available from the IPC context without spawning `ps` — process names identify the process type which is what the design shows.
+- Build-running screenshot not captured: no real Frappe bench to start in the test environment without network access. Stopped state fully verified; running state requires a real bench start.
