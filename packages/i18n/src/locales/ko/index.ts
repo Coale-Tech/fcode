@@ -3253,7 +3253,7 @@ importConfirm: "가져온 확장은 에이전트 프로세스 안에서 에이�
       "triage": "분류",
       "todo": "할 일",
       "ready": "준비됨",
-      "running": "진행 중",
+      "running": "실행 중",
       "blocked": "차단됨",
       "done": "완료"
     },
@@ -3440,7 +3440,8 @@ importConfirm: "가져온 확장은 에이전트 프로세스 안에서 에이�
     sites: "사이트",
     noSites: "사이트를 찾을 수 없습니다",
     defaultBadge: "기본",
-    processes: "프로세스",
+    processes_one: "프로세스 1개",
+    processes_other: "프로세스 {{count}}개",
     benches: "Benches",
     addFolder: "폴더 추가",
     newBench: "새 벤치",

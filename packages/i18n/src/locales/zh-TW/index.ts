@@ -3202,7 +3202,7 @@ sklm: {
       "triage": "分類",
       "todo": "待辦",
       "ready": "就緒",
-      "running": "進行中",
+      "running": "執行中",
       "blocked": "阻塞",
       "done": "完成"
     },
@@ -3389,7 +3389,8 @@ sklm: {
     sites: "站點",
     noSites: "找不到站點",
     defaultBadge: "預設",
-    processes: "程序",
+    processes_one: "{{count}} 個進程",
+    processes_other: "{{count}} 個進程",
     benches: "Benches",
     addFolder: "新增資料夾",
     newBench: "新增環境",

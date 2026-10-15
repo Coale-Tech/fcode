@@ -3214,7 +3214,7 @@ sklm: {
       "triage": "Triaje",
       "todo": "Por hacer",
       "ready": "Listo",
-      "running": "En progreso",
+      "running": "En ejecución",
       "blocked": "Bloqueado",
       "done": "Hecho"
     },
@@ -3401,7 +3401,8 @@ sklm: {
     "sites": "Sitios",
     "noSites": "No se encontraron sitios",
     "defaultBadge": "predeterminado",
-    "processes": "Procesos",
+    "processes_one": "1 proceso",
+    "processes_other": "{{count}} procesos",
     "cause": "Causa:",
     "fix": "Solución:",
     "docs": "Documentación ↗",

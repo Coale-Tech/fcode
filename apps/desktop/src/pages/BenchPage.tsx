@@ -1167,7 +1167,7 @@ export function ProcessPanel({
           <div className="wb-proc-card-meta">
             {procCount !== null && procCount > 0 && (
               <span className="wb-proc-card-meta-item">
-                {procCount} {t("bench.processes", "processes")}
+                {t("bench.processes", { count: procCount })}
               </span>
             )}
             {port !== null && (

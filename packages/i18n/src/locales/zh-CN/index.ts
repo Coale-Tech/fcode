@@ -3204,7 +3204,7 @@ sklm: {
       "triage": "分类",
       "todo": "待办",
       "ready": "就绪",
-      "running": "进行中",
+      "running": "运行中",
       "blocked": "阻塞",
       "done": "完成"
     },
@@ -3391,7 +3391,8 @@ sklm: {
     sites: "站点",
     noSites: "未找到站点",
     defaultBadge: "默认",
-    processes: "进程",
+    processes_one: "{{count}} 个进程",
+    processes_other: "{{count}} 个进程",
     benches: "Benches",
     addFolder: "添加文件夹",
     newBench: "新建环境",
