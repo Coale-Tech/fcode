@@ -10,6 +10,10 @@
  *  6. ShellNavbar tabs layout mounts brand + bench chip + avatar
  *  7. nav.tabsLabel i18n key exists in all 9 locales
  *  8. nav.userMenu i18n key exists in all 9 locales
+ *  9. F08 draft/scroll/layout-switch preservation:
+ *     - ChatSurface has no layout-dependent key (no unmount on layout change)
+ *     - NavTabs tab clicks only call setPage (no state-clearing side-effect)
+ *     - navLayout change goes through settings store → attribute, not page reload
  */
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -22,12 +26,16 @@ const [
   shellNavbarSource,
   notifCenterSource,
   shellCss,
+  appShellSource,
+  runtimeSource,
   en, de, es, fr, ko, ptBR, tr, zhCN, zhTW,
 ] = await Promise.all([
   read("../src/components/NavTabs.tsx"),
   read("../src/components/ShellNavbar.tsx"),
   read("../src/components/NotificationCenter.tsx"),
   read("../src/styles/d-shell.css"),
+  read("../src/features/app/AppShell.tsx"),
+  read("../src/features/app/useAppShellRuntime.tsx"),
   read("../../../packages/i18n/src/locales/en/index.ts"),
   read("../../../packages/i18n/src/locales/de/index.ts"),
   read("../../../packages/i18n/src/locales/es/index.ts"),
@@ -123,4 +131,47 @@ test("nav.more i18n key exists in all 9 locales (regression guard)", () => {
   ]) {
     assert.match(src, /["']?more["']?\s*:\s*["']/, `nav.more missing in locale: ${locale}`);
   }
+});
+
+// ── F08: draft/scroll/layout-switch preservation ────────────────────────────
+
+test("F08: ChatSurface has no layout-dependent React key — layout change does not unmount chat", () => {
+  // ChatSurface must be rendered without a key that includes navLayout.
+  // A layout-dependent key would force React to unmount+remount on every layout
+  // switch, destroying draft text and scroll position (Review Focus 8).
+  // Check: the <ChatSurface .../> JSX line does NOT contain key={...navLayout...}
+  const chatSurfaceLine = appShellSource
+    .split("\n")
+    .find((l) => l.includes("ChatSurface"));
+  assert.ok(chatSurfaceLine, "ChatSurface must be rendered in AppShell");
+  assert.doesNotMatch(
+    chatSurfaceLine,
+    /key=\{[^}]*navLayout/,
+    "ChatSurface must not have a navLayout-dependent key (would destroy draft/scroll on layout switch)",
+  );
+});
+
+test("F08: NavTabs tab click calls only setPage — no draft-clearing side effects", () => {
+  // Each primary tab onClick calls setPage(item.page) — exactly one store dispatch.
+  // Must NOT call clearDraft, clearSession, setNavLayout, or any state reset.
+  assert.match(navTabsSource, /onClick=\{.*setPage\(item\.page\)/, "tab onClick calls setPage");
+  assert.doesNotMatch(navTabsSource, /clearDraft|clearSession|resetChat|setNavLayout/,
+    "NavTabs must not call draft/session clearing or layout-changing actions on tab click");
+});
+
+test("F08: navLayout change propagates through settings store to dataset attribute (no page reload)", () => {
+  // Layout switch must update document.documentElement.dataset.navLayout via the
+  // settings → useAppShellRuntime effect, NOT via window.location.reload or navigation.
+  // Source check: useAppShellRuntime uses a useEffect on navLayout to set dataset.
+  assert.match(
+    runtimeSource,
+    /dataset\.navLayout\s*=\s*navLayout/,
+    "useAppShellRuntime must update dataset.navLayout via effect (not reload)",
+  );
+  // Confirm no location.reload in the layout-switching path
+  assert.doesNotMatch(
+    runtimeSource,
+    /location\.reload/,
+    "layout switch must not trigger page reload",
+  );
 });
