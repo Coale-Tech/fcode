@@ -26,7 +26,7 @@ import { createServer } from "node:net";
 
 // Lanes (R14) run in separate worktrees: set FCODE_WORKTREE to the lane's absolute path.
 const WORKTREE = process.env.FCODE_WORKTREE ??
-  "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d";
+  "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14-pages";
 const ELECTRON =
   `${WORKTREE}/apps/desktop/node_modules/.bin/electron`;
 const APP_DIR = `${WORKTREE}/apps/desktop`;
