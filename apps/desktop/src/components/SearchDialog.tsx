@@ -524,6 +524,13 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
             <div className="search-empty">{t("search.empty")}</div>
           ) : null}
         </div>
+        {/* lane t13: keyboard-legend footer (D.css d-cmdpal-foot); Tab preview removed — no Tab handler */}
+        <div className="d-cmdpal-foot" aria-hidden>
+          <span><span className="d-kbd">↑</span><span className="d-kbd">↓</span>{" "}{t("search.legendNavigate")}</span>
+          <span><span className="d-kbd">↵</span>{" "}{t("search.legendOpen")}</span>
+          <span><span className="d-kbd">Esc</span>{" "}{t("search.legendClose")}</span>
+          <span><span className="d-kbd">⌘</span><span className="d-kbd">K</span>{" "}{t("search.legendToOpen")}</span>
+        </div>
       </div>
     </div>
   );

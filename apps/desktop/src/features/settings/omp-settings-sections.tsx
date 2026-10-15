@@ -86,6 +86,8 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
   const projectPath = useAppStore((s) => s.workspace?.path ?? null);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
   const [omp, setOmp] = useState<OmpSettingsValues>({});
+  const [queueExpanded, setQueueExpanded] = useState(false);
+  const [worktreeExpanded, setWorktreeExpanded] = useState(false);
   const [ompModels, setOmpModels] = useState<OmpModel[]>([]);
   const [agents, setAgents] = useState<OmpAgentEntry[]>([]);
   const load = useCallback(() => {
@@ -413,54 +415,68 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
 
       {part === "agents" && (
         <>
-        {/* ── Queue Modes ──────────────────────────────────────────── */}
-        <SettingsCard title={t("settings.ompQueueModesGroup")}>
-          <SettingsRow title={t("settings.ompSteeringMode")} description={t("settings.ompSteeringModeDesc")}>
-            <SettingsMenuSelect
-              label={t("settings.ompSteeringMode")}
-              value={omp["steeringMode"] ?? "one-at-a-time"}
-              onChange={(v) => void save({ steeringMode: v as OmpSettingsValues["steeringMode"] })}
-              options={[
-                { id: "one-at-a-time", label: t("settings.ompQueueModeOneAtATime") },
-                { id: "all", label: t("settings.ompQueueModeAll") },
-              ]}
-            />
-          </SettingsRow>
-          <SettingsRow title={t("settings.ompFollowUpMode")} description={t("settings.ompFollowUpModeDesc")}>
-            <SettingsMenuSelect
-              label={t("settings.ompFollowUpMode")}
-              value={omp["followUpMode"] ?? "one-at-a-time"}
-              onChange={(v) => void save({ followUpMode: v as OmpSettingsValues["followUpMode"] })}
-              options={[
-                { id: "one-at-a-time", label: t("settings.ompQueueModeOneAtATime") },
-                { id: "all", label: t("settings.ompQueueModeAll") },
-              ]}
-            />
-          </SettingsRow>
-          <SettingsRow title={t("settings.ompInterruptMode")} description={t("settings.ompInterruptModeDesc")}>
-            <SettingsMenuSelect
-              label={t("settings.ompInterruptMode")}
-              value={omp["interruptMode"] ?? "immediate"}
-              onChange={(v) => void save({ interruptMode: v as OmpSettingsValues["interruptMode"] })}
-              options={[
-                { id: "immediate", label: t("settings.ompInterruptModeImmediate") },
-                { id: "wait", label: t("settings.ompInterruptModeWait") },
-              ]}
-            />
-          </SettingsRow>
-          <SettingsRow title={t("settings.ompLoopMode")} description={t("settings.ompLoopModeDesc")}>
-            <SettingsMenuSelect
-              label={t("settings.ompLoopMode")}
-              value={omp["loop.mode"] ?? "prompt"}
-              onChange={(v) => void save({ "loop.mode": v as OmpSettingsValues["loop.mode"] })}
-              options={[
-                { id: "prompt", label: t("settings.ompLoopModePrompt") },
-                { id: "compact", label: t("settings.ompLoopModeCompact") },
-                { id: "reset", label: t("settings.ompLoopModeReset") },
-              ]}
-            />
-          </SettingsRow>
-        </SettingsCard>
+        {/* ── Queue Modes — collapsed by default, count badge 4 (settings-ai/notes.md) */}
+        <div className="settings-card-block">
+          <button
+            className="sf-sec-btn"
+            type="button"
+            aria-expanded={queueExpanded}
+            onClick={() => setQueueExpanded((v) => !v)}
+          >
+            {t("settings.ompQueueModesGroup")}
+            <span className="sn-badge" style={{ marginLeft: "auto", marginRight: 4 }}>4</span>
+            <svg className={`sf-chevron${queueExpanded ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          {queueExpanded && (
+            <div className="settings-panel">
+              <SettingsRow title={t("settings.ompSteeringMode")} description={t("settings.ompSteeringModeDesc")}>
+                <SettingsMenuSelect
+                  label={t("settings.ompSteeringMode")}
+                  value={omp["steeringMode"] ?? "one-at-a-time"}
+                  onChange={(v) => void save({ steeringMode: v as OmpSettingsValues["steeringMode"] })}
+                  options={[
+                    { id: "one-at-a-time", label: t("settings.ompQueueModeOneAtATime") },
+                    { id: "all", label: t("settings.ompQueueModeAll") },
+                  ]}
+                />
+              </SettingsRow>
+              <SettingsRow title={t("settings.ompFollowUpMode")} description={t("settings.ompFollowUpModeDesc")}>
+                <SettingsMenuSelect
+                  label={t("settings.ompFollowUpMode")}
+                  value={omp["followUpMode"] ?? "one-at-a-time"}
+                  onChange={(v) => void save({ followUpMode: v as OmpSettingsValues["followUpMode"] })}
+                  options={[
+                    { id: "one-at-a-time", label: t("settings.ompQueueModeOneAtATime") },
+                    { id: "all", label: t("settings.ompQueueModeAll") },
+                  ]}
+                />
+              </SettingsRow>
+              <SettingsRow title={t("settings.ompInterruptMode")} description={t("settings.ompInterruptModeDesc")}>
+                <SettingsMenuSelect
+                  label={t("settings.ompInterruptMode")}
+                  value={omp["interruptMode"] ?? "immediate"}
+                  onChange={(v) => void save({ interruptMode: v as OmpSettingsValues["interruptMode"] })}
+                  options={[
+                    { id: "immediate", label: t("settings.ompInterruptModeImmediate") },
+                    { id: "wait", label: t("settings.ompInterruptModeWait") },
+                  ]}
+                />
+              </SettingsRow>
+              <SettingsRow title={t("settings.ompLoopMode")} description={t("settings.ompLoopModeDesc")}>
+                <SettingsMenuSelect
+                  label={t("settings.ompLoopMode")}
+                  value={omp["loop.mode"] ?? "prompt"}
+                  onChange={(v) => void save({ "loop.mode": v as OmpSettingsValues["loop.mode"] })}
+                  options={[
+                    { id: "prompt", label: t("settings.ompLoopModePrompt") },
+                    { id: "compact", label: t("settings.ompLoopModeCompact") },
+                    { id: "reset", label: t("settings.ompLoopModeReset") },
+                  ]}
+                />
+              </SettingsRow>
+            </div>
+          )}
+        </div>
         </>
       )}
 
@@ -791,8 +807,19 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
 
       {part === "agents" && (
         <>
-        {/* ── Agent Worktrees ──────────────────────────────────────── */}
-        <OmpWorktreeSection />
+        {/* ── Agent Worktrees — collapsed by default (settings-ai/notes.md) */}
+        <div className="settings-card-block">
+          <button
+            className="sf-sec-btn"
+            type="button"
+            aria-expanded={worktreeExpanded}
+            onClick={() => setWorktreeExpanded((v) => !v)}
+          >
+            {t("settings.ompWorktreesGroup")}
+            <svg className={`sf-chevron${worktreeExpanded ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          {worktreeExpanded && <OmpWorktreeSection />}
+        </div>
         </>
       )}
 

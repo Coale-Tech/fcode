@@ -20,8 +20,8 @@ import { useAppStore } from "../stores/app-store";
 import { resolveNavLayout } from "../lib/nav-layout";
 import { IconSearch } from "./icons";
 import { NavTabs } from "./NavTabs";
+import { SETTINGS_NAV } from "../lib/settings-search";
 import type { AppState } from "../stores/app-state";
-
 const PAGE_LABEL_KEY: Record<AppState["page"], string> = {
   chat:          "nav.chat",
   build:         "nav.build",
@@ -40,7 +40,13 @@ export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
   const { t } = useTranslation();
   const layout  = resolveNavLayout(useAppStore((s) => s.settings?.navLayout));
   const page    = useAppStore((s) => s.page);
+  const settingsTab = useAppStore((s) => s.settingsTab);
   const isMac   = (window.piDesktop?.platform ?? "darwin") === "darwin";
+  // lane t13: derive settings tab label for nested breadcrumb (T13-L03)
+  const settingsTabLabel = page === "settings"
+    ? t(SETTINGS_NAV.find((e) => e.id === settingsTab)?.labelKey ?? "nav.settings")
+    : null;
+
 
   return (
     <header className="shell-navbar drag" data-nav-layout={layout}>
@@ -53,6 +59,12 @@ export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
             <span className="shell-navbar-crumb-root">{t("app.shellName")}</span>
             <span className="shell-navbar-crumb-sep" aria-hidden="true">/</span>
             <span className="shell-navbar-crumb-page">{t(PAGE_LABEL_KEY[page])}</span>
+            {settingsTabLabel && (
+              <>
+                <span className="shell-navbar-crumb-sep" aria-hidden="true">/</span>
+                <span className="shell-navbar-crumb-page">{settingsTabLabel}</span>
+              </>
+            )}
           </nav>
         )}
       </div>

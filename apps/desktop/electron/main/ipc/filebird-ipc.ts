@@ -3,7 +3,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
-import { app, dialog, shell, WebContentsView, type BrowserWindow } from "electron";
+import { app, BrowserWindow, dialog, shell, WebContentsView } from "electron";
 import { IPC } from "@pi-desktop/shared";
 import type { FileBird } from "@pi-desktop/filebird/src/main/embed";
 import { applyContentSecurityPolicy, guardNavigation } from "@pi-desktop/filebird/src/main/security";
@@ -149,6 +149,34 @@ export function registerFileBirdIpc({ registrar, dataDir, getMainWindow, sendToR
     // Re-adding moves the view to the top, above any plugin view attached since.
     window.contentView.addChildView(pane);
     pane.setBounds(bounds);
+    return { ok: true };
+  });
+
+  registrar.handle(IPC.invoke.fileBirdReload, async () => {
+    if (view && !view.webContents.isDestroyed()) {
+      view.webContents.reload();
+      return { ok: true };
+    }
+    return { ok: false };
+  });
+
+  registrar.handle(IPC.invoke.fileBirdOpenWindow, async () => {
+    const out = fileBirdOut();
+    const win = new BrowserWindow({
+      width: 1200,
+      height: 800,
+      title: "FileBird",
+      webPreferences: {
+        preload: join(out, "preload/preload.js"),
+        partition: "persist:filebird",
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: true,
+        webSecurity: true,
+      },
+    });
+    void win.webContents.loadFile(join(out, "renderer/index.html"), { query: { embedded: "0" } });
+    win.show();
     return { ok: true };
   });
 }

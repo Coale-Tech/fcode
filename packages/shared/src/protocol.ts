@@ -555,9 +555,15 @@ export const IPC = {
     /** Raven pane: renderer-reported hole rect and visibility (full-width Raven route only). */
     ravenSetBounds: "pi-desktop/raven/setBounds",
     ravenSetVisible: "pi-desktop/raven/setVisible",
+    /** Reload the Raven WebContentsView (navigate the live pane). */
+    ravenReload: "pi-desktop/raven/reload",
     /** FileBird pane: renderer-reported hole rect and visibility (full-width FileBird route only). */
     fileBirdSetBounds: "pi-desktop/filebird/setBounds",
     fileBirdSetVisible: "pi-desktop/filebird/setVisible",
+    /** Reload the FileBird WebContentsView. */
+    fileBirdReload: "pi-desktop/filebird/reload",
+    /** Open the FileBird renderer in a new standalone window. */
+    fileBirdOpenWindow: "pi-desktop/filebird/openWindow",
     /** List hook scripts from ~/.omp/agent/hooks/ and .omp/hooks/ (slice E1). */
     ompHooksList: "pi-desktop/omp/hooks/list",
     /** Create a hook script in the user or project omp config dir. */
@@ -654,6 +660,8 @@ export const IPC = {
     kanbanChanged: "pi-desktop/kanban/event/changed",
     /** Raven settings changed (nav-rail button visibility, site URL). */
     ravenChanged: "pi-desktop/raven/event/changed",
+    /** Raven pane finished loading (WebContentsView did-finish-load). Payload: `{ url: string }`. */
+    ravenConnected: "pi-desktop/raven/event/connected",
     /** Output of every terminal session (`{ id, data }`); listeners filter by id. */
     terminalData: "terminal:data",
     terminalExit: "terminal:exit",

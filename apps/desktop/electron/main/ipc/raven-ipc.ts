@@ -8,14 +8,16 @@ export type RavenIpcDependencies = {
   registrar: IpcRegistrar;
   dataDir: string;
   /** The `persist:raven` pane. Never CDP-attached: the agent cannot script the user's Frappe session. */
-  pane: Pick<BrowserPane, "setWindow" | "navigate" | "setBounds" | "setVisible" | "dispose" | "getWebContents">;
+  pane: Pick<BrowserPane, "setWindow" | "navigate" | "setBounds" | "setVisible" | "dispose" | "getWebContents" | "action">;
   getMainWindow: () => BrowserWindow | null;
   sendChanged: () => void;
+  /** Send an event to the main renderer window. */
+  sendToRenderer: (channel: string, payload: unknown) => void;
 };
 
 type Bounds = { x: number; y: number; width: number; height: number };
 
-export function registerRavenIpc({ registrar, dataDir, pane, getMainWindow, sendChanged }: RavenIpcDependencies): void {
+export function registerRavenIpc({ registrar, dataDir, pane, getMainWindow, sendChanged, sendToRenderer }: RavenIpcDependencies): void {
   // URL the live pane was loaded with; leaving and re-entering the route keeps the page.
   let loadedUrl: string | null = null;
 
@@ -65,7 +67,19 @@ export function registerRavenIpc({ registrar, dataDir, pane, getMainWindow, send
       pane.navigate(target);
       loadedUrl = target;
     }
+    // Emit ravenConnected once the page finishes loading.
+    const wc = pane.getWebContents();
+    if (wc) {
+      wc.once("did-finish-load", () => {
+        sendToRenderer(IPC.event.ravenConnected, { url: wc.getURL() });
+      });
+    }
     pane.setVisible(true);
+    return { ok: true };
+  });
+
+  registrar.handle(IPC.invoke.ravenReload, async () => {
+    pane.action("reload");
     return { ok: true };
   });
 }

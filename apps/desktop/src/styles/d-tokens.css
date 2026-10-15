@@ -194,6 +194,8 @@
   --ds-sidebar-glass-tint:         color-mix(in oklab, var(--ds-bg-sidebar) 40%, transparent);
   --ds-sidebar-glass-sheen-top:    color-mix(in oklab, var(--white) 7%, transparent);
   --ds-sidebar-glass-sheen-bottom: color-mix(in oklab, var(--white) 4%, transparent);
+  /* T13 approved deviation: dark on-accent text = very dark navy (task-13-brief.md) */
+  --da-txt: #0a1f2e;
 }
 
 /* Light theme: blue ramp + switch tokens (each appears exactly once per theme) */
@@ -241,4 +243,22 @@
   --d-pr-col-author:    80px;   /* PR Author column width */
   --d-pr-col-actions:  140px;   /* PR Actions column width */
   --d-tab-h:            34px;   /* panel tab underline height (D.css:565) */
+}
+/* lane t13: settings nav D-metrics, command palette */
+:root {
+  /* Settings nav rail width (fragment-d1.html: 240px panel) */
+  --ds-settings-nav-width:  240px;
+  /* Nav item border-radius (sn-item: 6px from fragment) */
+  --ds-settings-radius-item: 6px;
+  /* Settings nav item/group font dimensions (fragment-d1.html:13-18) */
+  --d-sn-item-h:    28px;
+  --d-sn-icon:      13px;
+  --d-sn-grp-label: 10px;
+  /* Command palette card width: fragment.html:55 overrides D.css generic 560px → 580px */
+  --d-cmdpal-w: 580px;
+}
+
+/* lane t13: overlay/scrim token (D.css:1159) */
+:root {
+  --d-overlay-scrim: rgba(0, 0, 0, .42);
 }

@@ -1949,12 +1949,18 @@ export const api = {
     invoke(IPC.invoke.ravenSetBounds, bounds),
   /** Raven pane: show on the Raven route, hide when leaving it. */
   ravenSetVisible: (visible: boolean) => invoke(IPC.invoke.ravenSetVisible, { visible }),
+  /** Raven pane: reload the WebContentsView in place. */
+  ravenReload: () => invoke<{ ok: boolean }>(IPC.invoke.ravenReload),
   /** FileBird pane: place it over the page's hole (window-content coordinates). */
   fileBirdSetBounds: (bounds: { x: number; y: number; width: number; height: number }) =>
     invoke(IPC.invoke.fileBirdSetBounds, bounds),
   /** FileBird pane: show on the FileBird route; `ok: false` while its services are unavailable. */
   fileBirdSetVisible: (visible: boolean) =>
     invoke<{ ok: boolean }>(IPC.invoke.fileBirdSetVisible, { visible }),
+  /** FileBird pane: reload the WebContentsView in place. */
+  fileBirdReload: () => invoke<{ ok: boolean }>(IPC.invoke.fileBirdReload),
+  /** FileBird pane: open the renderer in a new standalone BrowserWindow. */
+  fileBirdOpenWindow: () => invoke<{ ok: boolean }>(IPC.invoke.fileBirdOpenWindow),
   /**
    * Integrated terminal, served by FileBird's TerminalService. Its handlers
    * return raw values and reject with a JSON `{code, message}` error, so these
