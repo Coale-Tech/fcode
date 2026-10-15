@@ -566,7 +566,7 @@ export function Sidebar({
       if (e.button === 2 || (e.pointerType === "mouse" && e.buttons === 2)) return;
       const target = e.target as Node;
       if ((target as Element)?.closest?.(
-        ".sidebar-popover, .sidebar-row-menu, .notification-popover-portaled",
+        ".sidebar-popover, .sidebar-row-menu",
       )) return;
       closeMenus(false);
     };

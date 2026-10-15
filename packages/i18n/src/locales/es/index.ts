@@ -2272,8 +2272,11 @@ sklm: {
     "filterOpen": "Abierto",
     "filterDraft": "Borrador",
     "filterAll": "Todos",
+    "author": "Autor",
     "open": "Abierto",
-    "draft": "Borrador"
+    "draft": "Borrador",
+    "status": "Estado",
+    "actions": "Acciones"
   },
   "git": {
     "branch": "Rama",
@@ -2347,6 +2350,13 @@ sklm: {
     "healthStale": "El planificador no responde",
     "healthError": "Error del planificador: {{error}}",
     "healthRetry": "Reintentar",
+    "schedulerHealthy": "Planificador activo",
+    "healthTick": "Último ciclo hace {{seconds}}s",
+    "detailStatus": "Estado",
+    "detailSchedule": "Horario",
+    "detailWorkspace": "Espacio de trabajo",
+    "detailModel": "Modelo",
+    "recentRuns": "Ejecuciones recientes",
     "insightsRuns": "Ejecuciones",
     "insightsSuccess": "Tasa de éxito",
     "insightsAvgDuration": "Dur. promedio",
@@ -2354,6 +2364,7 @@ sklm: {
     "import": "Importar",
     "exportDone": "{{count}} tareas exportadas",
     "importDone": "{{count}} tareas importadas",
+    "delete": "Eliminar",
   },
   "permission": {
     "title": "Permiso necesario",
@@ -3098,7 +3109,10 @@ sklm: {
     "planApprovalTitle": "{{sessionTitle}} plan pendiente de aprobación",
     "planApprovalBody": "El plan propuesto está listo para su revisión.",
     "actionFailed": "No se pudieron actualizar las notificaciones.",
-    "justNow": "Justo ahora"
+    "justNow": "Justo ahora",
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "unreadCount": "{{count}} no leídas",
   },
   "errors": {
     "HOST_UNAVAILABLE": "El servicio local no está disponible",

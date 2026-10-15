@@ -22,6 +22,7 @@
 
   display: flex;
   min-width: 0;
+  min-height: var(--d-ph-h);
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
@@ -164,8 +165,8 @@
 
 .projects-group-label {
   flex: 0 0 auto;
-  color: var(--ds-text-secondary);
-  font-size: var(--text-2xs);
+  color: var(--ds-text-tertiary);
+  font-size: var(--d-text-xs);
   font-weight: var(--font-weight-strong);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;

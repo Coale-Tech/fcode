@@ -197,7 +197,6 @@ function KanbanColumn({
   const { t } = useTranslation();
   const [over, setOver] = useState(false);
   const label = t(`kanban.columns.${status}`);
-  const allSelected = tasks.length > 0 && tasks.every((x) => selected.has(x.id));
 
   return (
     <section
@@ -213,14 +212,6 @@ function KanbanColumn({
       aria-label={label}
     >
       <div className="kanban-column-header">
-        <input
-          type="checkbox"
-          className="kanban-card-check"
-          checked={allSelected}
-          disabled={tasks.length === 0}
-          aria-label={t("kanban.column.selectAll", { column: label })}
-          onChange={() => onSelectAll(tasks.map((x) => x.id), !allSelected)}
-        />
         <span className="kanban-dot" data-status={status} aria-hidden />
         <span className="kanban-column-title">{label}</span>
         <span className="kanban-column-count" title={t("kanban.column.count", { count: tasks.length })}>

@@ -176,7 +176,7 @@ export type AppState = {
   toasts: ToastItem[];
   notifications: AppNotification[];
   unreadNotificationCount: number;
-  page: "chat" | "pulls" | "scheduled" | "plugins" | "settings" | "build" | "bench" | "kanban" | "raven" | "filebird";
+  page: "chat" | "pulls" | "scheduled" | "plugins" | "settings" | "build" | "bench" | "kanban" | "raven" | "filebird" | "notifications";
   /** Whether [kanban] worker sessions are shown in the sidebar. Default false (hidden). */
   showKanbanSessions: boolean;
   /** Whether the kanban feature is enabled (mirrored from KanbanSettings.enabled). */

@@ -217,3 +217,28 @@
   --ds-sidebar-glass-sheen-top:    color-mix(in oklab, var(--white) 7%, transparent);
   --ds-sidebar-glass-sheen-bottom: color-mix(in oklab, var(--white) 4%, transparent);
 }
+
+/* lane T12 — kanban + notifications page dimensions */
+:root {
+  --d-kd-col-w:        210px;                             /* kanban column width */
+  --d-kd-board-gap:    10px;                              /* kanban board column gap */
+  --d-kd-col-h:        32px;                              /* kanban column header height */
+  --d-kd-chip-font:    calc(10px * var(--font-scale));    /* kanban card chip font-size */
+  --d-kd-drawer-w:     420px;                             /* kanban drawer width */
+  --d-notif-icon:      28px;                              /* notification row icon size */
+  --d-notif-dot:        7px;                              /* notification unread dot */
+}
+
+/* lane T12 — page layout dimensions (tokenised per F09) */
+:root {
+  --d-sch-detail:      340px;   /* Scheduled right detail panel width */
+  --d-pr-detail:       320px;   /* Pull Requests right detail panel width */
+  --d-plg-nav:         220px;   /* Plugins left nav width */
+  --d-sch-health-h:     28px;   /* Scheduled health strip height */
+  --d-sch-dot:           6px;   /* health strip live dot */
+  --d-pr-col-branch:   170px;   /* PR Branch column width */
+  --d-pr-col-ci:        70px;   /* PR CI column width */
+  --d-pr-col-author:    80px;   /* PR Author column width */
+  --d-pr-col-actions:  140px;   /* PR Actions column width */
+  --d-tab-h:            34px;   /* panel tab underline height (D.css:565) */
+}

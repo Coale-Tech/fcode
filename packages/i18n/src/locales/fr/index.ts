@@ -2272,8 +2272,11 @@ sklm: {
     "filterOpen": "Ouvrir",
     "filterDraft": "Brouillon",
     "filterAll": "Tous",
+    "author": "Auteur",
     "open": "Ouvrir",
-    "draft": "Brouillon"
+    "draft": "Brouillon",
+    "status": "Statut",
+    "actions": "Actions"
   },
   "git": {
     "branch": "Branche",
@@ -2347,6 +2350,13 @@ sklm: {
     "healthStale": "Le planificateur ne répond pas",
     "healthError": "Erreur du planificateur : {{error}}",
     "healthRetry": "Réessayer",
+    "schedulerHealthy": "Planificateur actif",
+    "healthTick": "Dernier tick il y a {{seconds}}s",
+    "detailStatus": "Statut",
+    "detailSchedule": "Planification",
+    "detailWorkspace": "Espace de travail",
+    "detailModel": "Modèle",
+    "recentRuns": "Exécutions récentes",
     "insightsRuns": "Exécutions",
     "insightsSuccess": "Taux de succès",
     "insightsAvgDuration": "Durée moy.",
@@ -2354,6 +2364,7 @@ sklm: {
     "import": "Importer",
     "exportDone": "{{count}} tâches exportées",
     "importDone": "{{count}} tâches importées",
+    "delete": "Supprimer",
   },
   "permission": {
     "title": "Autorisation requise",
@@ -3098,7 +3109,10 @@ sklm: {
     "planApprovalTitle": "{{sessionTitle}} plan en attente d'approbation",
     "planApprovalBody": "Le plan proposé est prêt pour examen.",
     "actionFailed": "Impossible de mettre à jour les notifications.",
-    "justNow": "À l'instant"
+    "justNow": "À l'instant",
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "unreadCount": "{{count}} non lues",
   },
   "errors": {
     "HOST_UNAVAILABLE": "Le service local n'est pas disponible",

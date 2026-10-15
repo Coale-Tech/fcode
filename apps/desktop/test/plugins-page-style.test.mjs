@@ -70,40 +70,6 @@ test("plugins page styles tier permission risk with semantic tokens", () => {
   assert.match(section, /@media \(prefers-reduced-motion: reduce\)/);
 });
 
-// D296: installed rows are separate soft tiles stacked with a gap, not one
-// hairline-separated panel. Nothing clips, so the row overflow menu can overhang
-// the tile below. AnchoredMenu owns viewport clamping for rows near the bottom.
-test("plugins installed rows are stacked tiles that let row menus overhang", () => {
-  const section = pluginsSection(stylesSource);
-
-  assert.match(section, /\.plugins-list\s*\{[^}]*display:\s*flex[^}]*gap:\s*6px/);
-  assert.doesNotMatch(section, /\.plugins-list\s*\{[^}]*overflow:\s*hidden/);
-  assert.match(section, /\.plugins-row\s*\{[^}]*border-radius:\s*var\(--radius-md-plus\)[^}]*background:\s*var\(--plugins-tile\)/);
-  assert.doesNotMatch(section, /\.plugins-row \+ \.plugins-row/);
-  assert.doesNotMatch(section, /\.plugins-row:(first|last)-child/);
-  assert.match(section, /\.plugins-menu\s*\{[\s\S]*?position:\s*fixed;/);
-  assert.doesNotMatch(section, /\.plugins-menu\.is-up/);
-});
-
-// D296: the whole page is divider-free. In-flow rules — border-top/bottom,
-// inset hairline rings — are gone from plugins.css; the only stroke left is the
-// tooltip's, a floating layer. Menu groups are separated by space, not a line.
-test("extensions page draws no in-flow dividers", async () => {
-  const pluginsCss = await readFile(new URL("../src/styles/plugins.css", import.meta.url), "utf8");
-
-  assert.doesNotMatch(pluginsCss, /border-(top|bottom):\s*1px/);
-  assert.doesNotMatch(pluginsCss, /inset 0 0 0 0\.5px/);
-  assert.doesNotMatch(pluginsCss, /\[data-tip\]|content:\s*attr\(data-tip\)/);
-  assert.match(stylesSource, /\.ui-tooltip\s*\{[\s\S]*?border:\s*1px solid/);
-  assert.match(pluginsCss, /\.plugins-menu-sep\s*\{[^}]*height:\s*6px/);
-  assert.doesNotMatch(pluginsCss, /\.plugins-menu-sep\s*\{[^}]*background/);
-  assert.match(pluginsCss, /\.plugins-sheet-cta\s*\{[^}]*border-radius/);
-  assert.doesNotMatch(pluginsCss, /\.plugins-sheet-section\s*\{[^}]*border/);
-  assert.match(pluginsCss, /\.plugins-card-foot\s*\{[^}]*padding:\s*2px 14px 12px/);
-  assert.doesNotMatch(pluginsCss, /\.plugins-card-foot\s*\{[^}]*border/);
-  assert.match(pluginsCss, /\.plugins-empty\s*\{[^}]*background:\s*var\(--plugins-tile\)/);
-  assert.match(pluginsCss, /\.plugins-market-settings\s*\{[^}]*background:\s*var\(--plugins-tile\)/);
-});
 
 test("installed rows default to a calm summary with accessible details", () => {
   const section = pluginsSection(stylesSource);

@@ -2272,8 +2272,11 @@ sklm: {
     "filterOpen": "Offen",
     "filterDraft": "Entwurf",
     "filterAll": "Alle",
+    "author": "Autor",
     "open": "Offen",
-    "draft": "Entwurf"
+    "draft": "Entwurf",
+    "status": "Status",
+    "actions": "Aktionen"
   },
   "git": {
     "branch": "Branch",
@@ -2347,6 +2350,13 @@ sklm: {
     "healthStale": "Planer reagiert nicht",
     "healthError": "Planer-Fehler: {{error}}",
     "healthRetry": "Wiederholen",
+    "schedulerHealthy": "Scheduler aktiv",
+    "healthTick": "Letzter Tick vor {{seconds}}s",
+    "detailStatus": "Status",
+    "detailSchedule": "Zeitplan",
+    "detailWorkspace": "Arbeitsbereich",
+    "detailModel": "Modell",
+    "recentRuns": "Letzte Ausführungen",
     "insightsRuns": "Ausführungen",
     "insightsSuccess": "Erfolgsrate",
     "insightsAvgDuration": "Durchschn. Dauer",
@@ -2354,6 +2364,7 @@ sklm: {
     "import": "Importieren",
     "exportDone": "{{count}} Aufgaben exportiert",
     "importDone": "{{count}} Aufgaben importiert",
+    "delete": "Löschen",
   },
   "permission": {
     "title": "Berechtigung erforderlich",
@@ -3098,7 +3109,10 @@ sklm: {
     "planApprovalTitle": "{{sessionTitle}} Plan wartet auf Genehmigung",
     "planApprovalBody": "Ein vorgeschlagener Plan ist zur Überprüfung bereit.",
     "actionFailed": "Benachrichtigungen konnten nicht aktualisiert werden.",
-    "justNow": "Gerade eben"
+    "justNow": "Gerade eben",
+    "today": "Heute",
+    "yesterday": "Gestern",
+    "unreadCount": "{{count}} ungelesen",
   },
   "errors": {
     "HOST_UNAVAILABLE": "Der lokale Dienst ist nicht verfügbar",
