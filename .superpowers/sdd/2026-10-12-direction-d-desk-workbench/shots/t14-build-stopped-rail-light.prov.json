@@ -1,9 +1,11 @@
 {
   "name": "build-stopped-rail-light",
-  "commit": "3c02e2bfd",
-  "capturedAt": "2026-10-15T09:55:58.755Z",
+  "commit": "05cf6c6a4",
+  "capturedAt": "2026-10-15T10:22:33.351Z",
   "theme": "light",
   "navLayout": "rail",
   "pageClass": "wb-page build-page",
-  "viewport": "1200x800"
+  "viewport": "1200x800",
+  "bannerVisible": false,
+  "buildStoppedCanvas": true
 }

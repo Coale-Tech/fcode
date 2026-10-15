@@ -1,9 +1,16 @@
 {
   "name": "bench-detail-island-light",
-  "commit": "3c02e2bfd",
-  "capturedAt": "2026-10-15T09:55:38.061Z",
+  "commit": "05cf6c6a4",
+  "capturedAt": "2026-10-15T10:22:17.411Z",
   "theme": "light",
   "navLayout": "island",
   "pageClass": "wb-page bench-page",
-  "viewport": "1200x800"
+  "viewport": "1200x800",
+  "benchTitle": "K9SMS",
+  "appRows": 4,
+  "workerRows": 7,
+  "logTerm": true,
+  "cmdGrid": true,
+  "appVersions": 0,
+  "workerIsRunning": 0
 }

@@ -9,8 +9,8 @@
   min-width: 0;
   min-height: 0;
   height: 100%;
-  /* The transparent `.main-titlebar` drag band overlays the top. */
-  padding-top: var(--ds-toolbar-height);
+  /* Note: .main-titlebar drag band is transparent + pointer-events:none; it
+     overlays the island-hd region — no padding-top needed here. */
   gap: var(--d-gap); /* lane T11: canvas gap between sidebar and island */
   color: var(--ink-gray-8);
   font-size: var(--text-base);

@@ -1,9 +1,11 @@
 {
   "name": "build-stopped-island-light",
-  "commit": "3c02e2bfd",
-  "capturedAt": "2026-10-15T09:56:03.417Z",
+  "commit": "05cf6c6a4",
+  "capturedAt": "2026-10-15T10:22:35.187Z",
   "theme": "light",
   "navLayout": "island",
   "pageClass": "wb-page build-page",
-  "viewport": "1200x800"
+  "viewport": "1200x800",
+  "bannerVisible": false,
+  "buildStoppedCanvas": true
 }

@@ -392,7 +392,8 @@ export class BenchSupervisor extends EventEmitter {
     }
     this.stopWatcher();
     this.status = "stopped";
-    this.activeBenchPath = null;
+    // Keep activeBenchPath so the status bar keeps showing the bench name after
+    // stop (WorkspaceBar shows "stopped" state). It is overwritten by start().
     this.activeSite = null;
     this.startedAt = null;
     this.emit("status", this.status);

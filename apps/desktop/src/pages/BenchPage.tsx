@@ -639,7 +639,7 @@ export function BenchPage() {
             onClick={showAll}
           >
             {t("bench.tabAll", "All benches")}
-            {!loading && !selectedBench && (
+            {!loading && (
               <span className="wb-badge wb-badge-gray">{benches.length}</span>
             )}
           </button>

@@ -217,6 +217,15 @@ export function DocTypeTree({
     };
   }, [selectedBenchPath]);
 
+  // Collapse all apps by default when new entries load (design: compact right column).
+  // User can expand any app interactively. Does NOT re-collapse on filter changes
+  // (entries only change when bench changes, filter changes only affect filteredGroups).
+  useEffect(() => {
+    if (entries.length === 0) return;
+    const allAppKeys = new Set(entries.map((e) => `app:${e.app}`));
+    setCollapsed(allAppKeys);
+  }, [entries]);
+
   const groups = groupDoctypes(entries);
   const totalDirty = entries.filter((e) => e.dirty).length;
   const lowerFilter = filter.toLowerCase();
