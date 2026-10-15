@@ -214,9 +214,6 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
                 return { id: fullId, label, title: fullId };
               }),
             ];
-            const sourceBadge = agent.source !== "omp"
-              ? ` (${agent.source})`
-              : "";
             const toolSummary = agent.tools.length > 0
               ? `${agent.tools.length} tool${agent.tools.length === 1 ? "" : "s"}`
               : t("settings.ompAgentAllTools", "all tools");
@@ -226,8 +223,9 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
             return (
               <SettingsRow
                 key={`${agent.source}:${agent.name}`}
-                title={agent.name + sourceBadge}
+                title={agent.name}
                 description={desc}
+                detail={<span className="agent-source">{agent.source}</span>}
               >
                 <SettingsMenuSelect
                   label={agent.name}
@@ -816,6 +814,7 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
             onClick={() => setWorktreeExpanded((v) => !v)}
           >
             {t("settings.ompWorktreesGroup")}
+            <span className="sn-badge" style={{ marginLeft: "auto", marginRight: 4 }}>3</span>
             <svg className={`sf-chevron${worktreeExpanded ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           {worktreeExpanded && <OmpWorktreeSection />}

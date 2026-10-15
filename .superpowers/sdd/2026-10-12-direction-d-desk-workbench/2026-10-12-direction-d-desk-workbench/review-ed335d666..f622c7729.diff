@@ -1,0 +1,157 @@
+# Review package: ed335d666..HEAD
+
+## Commits
+f622c7729 feat(settings): navLayout preference + resolver
+
+## Files changed
+ apps/desktop/src/lib/api.ts           |  6 ++++++
+ apps/desktop/src/lib/nav-layout.ts    | 22 ++++++++++++++++++++++
+ apps/desktop/test/nav-layout.test.mjs | 31 +++++++++++++++++++++++++++++++
+ packages/shared/src/types/settings.ts |  2 ++
+ 4 files changed, 61 insertions(+)
+
+## Diff
+diff --git a/apps/desktop/src/lib/api.ts b/apps/desktop/src/lib/api.ts
+index 02fae6cbf..848db1da2 100644
+--- a/apps/desktop/src/lib/api.ts
++++ b/apps/desktop/src/lib/api.ts
+@@ -208,20 +208,21 @@ import {
+ } from "@pi-desktop/shared";
+ 
+ export type ImportSource = "claude-code" | "opencode" | "codex" | "pi";
+ // One definition, owned by the shared package (the host and sidecar use the
+ // same shape); re-exported so existing renderer imports keep working.
+ import type {
+   ModelConfigImportCandidate,
+   ModelConfigImportSource,
+ } from "@pi-desktop/shared";
+ export type { ModelConfigImportCandidate, ModelConfigImportSource };
++import { isNavLayout } from "./nav-layout";
+ 
+ export interface ImportCandidate {
+   source: ImportSource;
+   externalId: string;
+   title: string;
+   projectPath: string | null;
+   model: string | null;
+   createdAt: string;
+   updatedAt: string;
+   /** null when the source file was too large to scan without sampling. */
+@@ -452,20 +453,25 @@ export function normalizeSettings(settings: AppSettings): AppSettings {
+ export function validateSettingsWrite(settings: AppSettings): AppSettings {
+   if (
+     settings.thinkingDisplayMode !== undefined &&
+     settings.thinkingDisplayMode !== "detailed" &&
+     settings.thinkingDisplayMode !== "compact"
+   ) {
+     throw Object.assign(new Error("thinkingDisplayMode is invalid"), {
+       errorCode: "INVALID_PARAMS",
+     });
+   }
++  if (settings.navLayout !== undefined && !isNavLayout(settings.navLayout)) {
++    throw Object.assign(new Error("navLayout is invalid"), {
++      errorCode: "INVALID_PARAMS",
++    });
++  }
+   const value = settings as AppSettings & {
+     defaultCommandShell?: unknown;
+     largePasteThreshold?: unknown;
+     fontScale?: unknown;
+     chatContentMaxWidth?: unknown;
+     infiniteProviderRetry?: unknown;
+     smoothStreaming?: unknown;
+     networkProxy?: unknown;
+     networkPolicy?: unknown;
+   };
+diff --git a/apps/desktop/src/lib/nav-layout.ts b/apps/desktop/src/lib/nav-layout.ts
+new file mode 100644
+index 000000000..a89044ae9
+--- /dev/null
++++ b/apps/desktop/src/lib/nav-layout.ts
+@@ -0,0 +1,22 @@
++import type { AppSettings } from "@pi-desktop/shared";
++
++export type NavLayout = NonNullable<AppSettings["navLayout"]>;
++export const NAV_LAYOUTS: readonly NavLayout[] = ["tabs", "rail", "island"];
++export const DEFAULT_NAV_LAYOUT: NavLayout = "rail";
++
++export function isNavLayout(value: unknown): value is NavLayout {
++  return typeof value === "string" && (NAV_LAYOUTS as readonly string[]).includes(value);
++}
++
++export function resolveNavLayout(value: unknown): NavLayout {
++  return isNavLayout(value) ? value : DEFAULT_NAV_LAYOUT;
++}
++
++/** Keep in sync with `--d-rail-w`, `--d-rail-island`, `--d-gap` in styles/d-tokens.css. */
++const RAIL_WIDTH: Record<NavLayout, number> = { tabs: 0, rail: 50, island: 60 };
++const CANVAS_GAP = 12;
++
++/** Horizontal space the shell chrome takes before the sidebar/main/work-panel columns. */
++export function shellChromeWidth(layout: NavLayout): number {
++  return RAIL_WIDTH[layout] + CANVAS_GAP * 2;
++}
+diff --git a/apps/desktop/test/nav-layout.test.mjs b/apps/desktop/test/nav-layout.test.mjs
+new file mode 100644
+index 000000000..26f777d0c
+--- /dev/null
++++ b/apps/desktop/test/nav-layout.test.mjs
+@@ -0,0 +1,31 @@
++import assert from "node:assert/strict";
++import { register } from "node:module";
++import test from "node:test";
++register(new URL("./helpers/ts-import-hooks.mjs", import.meta.url));
++const { NAV_LAYOUTS, DEFAULT_NAV_LAYOUT, resolveNavLayout, shellChromeWidth } =
++  await import("../src/lib/nav-layout.ts");
++
++test("an absent or corrupt saved layout resolves to the default, never a broken shell", () => {
++  for (const v of [undefined, null, "", "dock", 2, {}, "TABS"]) {
++    assert.equal(resolveNavLayout(v), DEFAULT_NAV_LAYOUT);
++  }
++  assert.equal(DEFAULT_NAV_LAYOUT, "rail");
++  for (const v of NAV_LAYOUTS) assert.equal(resolveNavLayout(v), v);
++});
++
++test("column budget reserves the layout's rail plus the 12px canvas gap on both sides", () => {
++  assert.equal(shellChromeWidth("tabs"), 24);
++  assert.equal(shellChromeWidth("rail"), 74);
++  assert.equal(shellChromeWidth("island"), 84);
++});
++
++test("settings writes reject an unknown navLayout and keep other preferences", async () => {
++  const { validateSettingsWrite } = await import("../src/lib/api.ts");
++  const base = { defaultMode: "agent", theme: "dark", enterToSend: true, onboardingDismissed: false };
++  for (const navLayout of NAV_LAYOUTS) {
++    const next = { ...base, navLayout };
++    assert.equal(validateSettingsWrite(next), next);
++  }
++  assert.equal(validateSettingsWrite(base), base);
++  assert.throws(() => validateSettingsWrite({ ...base, navLayout: "dock" }), /navLayout is invalid/);
++});
+diff --git a/packages/shared/src/types/settings.ts b/packages/shared/src/types/settings.ts
+index 3e84f8c97..dca4eff27 100644
+--- a/packages/shared/src/types/settings.ts
++++ b/packages/shared/src/types/settings.ts
+@@ -81,20 +81,22 @@ export type AppSettings = {
+    * are offered by the settings picker.
+    */
+   fontFamily?: string;
+   /**
+    * Global UI type scale (D343). `1` is the product `--text-*` ramp.
+    * Absent means 1. Range 0.8–1.5 in 0.025 steps. Window zoom is independent.
+    */
+   fontScale?: number;
+   /** Transcript presentation only; absent means detailed. Reasoning is retained. */
+   thinkingDisplayMode?: "detailed" | "compact";
++  /** Window navigation shell: top tabs, icon rail, or labelled rail + sessions island. Absent means "rail". */
++  navLayout?: "tabs" | "rail" | "island";
+   /**
+    * @deprecated Unreleased D343 px field. Reads migrate into `fontScale`
+    * as `px / 14`; new writes persist `fontScale` instead.
+    */
+   fontSize?: number;
+   enterToSend: boolean;
+   /** Text length above which a plain-text paste becomes a session file reference. */
+   largePasteThreshold?: number;
+   /**
+    * @deprecated No longer read. Compaction derives its budgets from the model

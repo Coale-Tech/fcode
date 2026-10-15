@@ -1264,13 +1264,15 @@
 .ob-derived-step { display:flex; flex-direction:column; gap:12px; }
 .ob-perm-options { display:flex; flex-direction:column; gap:6px; }
 .ob-perm-row {
-  display:flex; align-items:center; padding:8px 12px;
+  display:flex; align-items:center; justify-content:space-between; padding:8px 12px;
   border:1.5px solid var(--d-border); border-radius:var(--d-r-ctrl);
   cursor:pointer; font-size:13px; color:var(--ink-gray-8);
   background:var(--surface-base); transition:border-color .12s;
 }
 .ob-perm-row:hover { border-color:var(--outline-gray-3); }
 .ob-perm-row.selected { border-color:var(--da); background:var(--da-sub); color:var(--da-txt); }
+.ob-perm-row.selected .ob-radio { border-color:var(--da); background:var(--da); box-shadow:inset 0 0 0 4px var(--surface-base); }
+.ob-perm-label { flex:1; }
 
 /* Footer */
 .ob-foot {
@@ -1740,6 +1742,11 @@
   transform: translateY(-50%);
   flex-shrink: 0;
 }
+/* Design: unread dot is violet for completed, red for failed */
+.notifications-page-row[data-kind="task.failed"] .notif-page-unread-dot {
+  background: var(--ink-red-6);
+}
+
 
 .notifications-page-empty {
   display: flex;

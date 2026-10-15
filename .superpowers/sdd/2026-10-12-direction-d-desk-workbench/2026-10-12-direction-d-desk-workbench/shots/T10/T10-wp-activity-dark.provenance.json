@@ -1,0 +1,30 @@
+{
+  "dataNavLayout": "rail",
+  "dataTheme": "dark",
+  "lang": "en",
+  "innerWidth": 1200,
+  "devicePixelRatio": 2,
+  "shellClientWidth": 1200,
+  "shellChromeW": 74,
+  "usableWidth": 1126,
+  "workPanelVisible": true,
+  "captureTime": "2026-10-14T14:35:20.501Z",
+  "commit": "9037715c0",
+  "branch": "feat/direction-d-t10",
+  "build": "pnpm build (apps/desktop), out/renderer/, built 2026-10-14 after d10837300+composer-revert",
+  "viewport": "1200x800 CSS px, DPR 2 -> 2400x1600 png",
+  "sessionSeeding": "ensureVisualFixtures() + seedRunRows(3)",
+  "settingsReadback": {
+    "theme": "dark",
+    "navLayout": "rail",
+    "ok": true
+  },
+  "rootAttrs": {
+    "data-theme": "dark",
+    "data-nav-layout": "rail"
+  },
+  "workPanelActiveTab": "activity",
+  "shotFile": "T10-wp-activity-dark.png",
+  "matchAssessment": "MATCH",
+  "matchDetail": "WorkPanel Activity tab open dark theme with Todos/Timeline/Changes sub-tabs visible; Todos (active) shows OPEN TODOS + RECENT ACTIVITY events; SESSION section visible; transcript shows tool rows with monospace command text and Done/Working status; framed composer; rail layout. Note: 'Choose binary...' dropdown visible in transcript from ensureVisualFixtures omp process probe — capture artifact only."
+}

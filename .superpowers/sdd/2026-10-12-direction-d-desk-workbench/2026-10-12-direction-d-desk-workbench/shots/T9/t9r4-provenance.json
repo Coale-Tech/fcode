@@ -1,0 +1,20 @@
+{
+  "commit": "0286506c9",
+  "buildTime": "2026-10-14T15:00:00Z",
+  "captureTime": "2026-10-14T16:13:58.735Z",
+  "viewport": "1200x800",
+  "DPR": 2,
+  "navLayout": "island",
+  "theme": "light",
+  "lang": "en",
+  "shots": [
+    "t9r4-light-chat.png",
+    "t9r4-light-bench.png",
+    "t9r4-light-settings.png",
+    "t9r4-light-scheduled.png",
+    "t9r4-dark-chat.png",
+    "t9r4-dark-bench.png",
+    "t9r4-dark-settings.png"
+  ],
+  "note": "r4 shots — after bench card live status, pinned pages, portal fix"
+}

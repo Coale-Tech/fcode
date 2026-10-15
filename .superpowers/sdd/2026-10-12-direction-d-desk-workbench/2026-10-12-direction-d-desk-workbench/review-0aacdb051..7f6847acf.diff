@@ -1,0 +1,655 @@
+# Review package: 0aacdb051..HEAD
+
+## Commits
+7f6847acf feat(shell): rail layout + shared nav items
+
+## Files changed
+ apps/desktop/src/components/NavRail.tsx       | 174 ++++++++++----------------
+ apps/desktop/src/components/nav-items.ts      |  32 +++++
+ apps/desktop/src/styles/chrome.css            |  29 ++---
+ apps/desktop/src/styles/d-shell.css           |  82 +++++++++++-
+ apps/desktop/src/styles/d-tokens.css          |   1 +
+ apps/desktop/test/nav-items.test.mjs          |  19 +++
+ apps/desktop/test/sidebar-navigation.test.mjs |  17 ++-
+ apps/desktop/test/work-panel.test.mjs         |   2 +-
+ 8 files changed, 218 insertions(+), 138 deletions(-)
+
+## Diff
+diff --git a/apps/desktop/src/components/NavRail.tsx b/apps/desktop/src/components/NavRail.tsx
+index ecc1273cc..ad867f355 100644
+--- a/apps/desktop/src/components/NavRail.tsx
++++ b/apps/desktop/src/components/NavRail.tsx
+@@ -9,170 +9,130 @@ import {
+   IconFileBird,
+   IconKanban,
+   IconMonitor,
+   IconPlug,
+   IconRaven,
+   IconServer,
+   IconSettings,
+ } from "./icons";
+ import { NotificationCenter } from "./NotificationCenter";
+ import { TooltipButton, cx } from "./ui";
++import { navItems } from "./nav-items";
++import type { NavItemId } from "./nav-items";
+ 
+ /**
+- * E frame: the global 60px icon rail at the window's left edge. Destinations
+- * on top, daily footer actions (settings, plugins, scheduled, notifications)
+- * at the bottom. The top band is a window drag region that also keeps the
+- * macOS traffic lights clear; every button opts out with `no-drag`.
++ * Icon map for every nav-item id.  Exported (R2) so Task 8/9 can reference the
++ * same canonical icon set without duplicating the mapping.
++ */
++export const NAV_ICONS = {
++  chat:      IconChat,
++  build:     IconMonitor,
++  bench:     IconServer,
++  scheduled: IconClock,
++  kanban:    IconKanban,
++  raven:     IconRaven,
++  filebird:  IconFileBird,
++  plugins:   IconPlug,
++} satisfies Record<NavItemId, unknown>;
++
++/**
++ * D2 icon rail: left 50px nav strip (collapsed) or 220px (expanded).
+  *
+- * Primary nav items (Chat, Code, Build, Bench) show a visible text label
+- * below the icon; no tooltip is needed for labelled items and none is shown.
+- * Footer items remain icon-only with tooltips.
++ * Primary destinations are rendered as labelled buttons (label hidden in `rail`
++ * mode via CSS, visible in `island` mode).  Footer items use TooltipButton
++ * (icon-only with tooltip always shown).  NotificationCenter and Settings are
++ * hand-rendered because they carry memory-status dots / special interactions.
+  */
+ export function NavRail() {
+   const { t } = useTranslation();
+   const page = useAppStore((s) => s.page);
+   const setPage = useAppStore((s) => s.setPage);
+   const navBack = useAppStore((s) => s.navBack);
+   const canNavBack = useAppStore((s) => s.canNavBack);
+   const memStatus = useAppStore((s) => s.memoryStatus);
+   const mHealth = memoryHealth(memStatus);
+-  // Fetch on mount + re-fetch on kanbanChanged; stored in AppState so other
+-  // consumers can subscribe without their own fetch.
++
+   const kanbanEnabled = useAppStore((s) => s.kanbanEnabled);
+   const setKanbanEnabled = useAppStore((s) => s.setKanbanEnabled);
+   useEffect(() => {
+     const fetchEnabled = () =>
+       import("../lib/api").then(({ api }) =>
+         api.kanbanSettingsGet().then((res) => setKanbanEnabled(res.settings.enabled)).catch(() => {})
+       ).catch(() => {});
+     void fetchEnabled();
+     const bridge = window.piDesktop;
+     if (!bridge?.on) return;
+     return bridge.on(IPC.event.kanbanChanged, () => { void fetchEnabled(); });
+   }, [setKanbanEnabled]);
++
+   const ravenEnabled = useAppStore((s) => s.ravenEnabled);
+   const setRavenEnabled = useAppStore((s) => s.setRavenEnabled);
+   useEffect(() => {
+     const fetchEnabled = () =>
+       import("../lib/api").then(({ api }) =>
+         api.ravenSettingsGet().then((res) => setRavenEnabled(res.settings.enabled)).catch(() => {})
+       ).catch(() => {});
+     void fetchEnabled();
+     const bridge = window.piDesktop;
+     if (!bridge?.on) return;
+     return bridge.on(IPC.event.ravenChanged, () => { void fetchEnabled(); });
+   }, [setRavenEnabled]);
+ 
++  const items = navItems({ kanban: kanbanEnabled, raven: ravenEnabled });
++  const primary = items.filter((i) => i.group === "primary");
++  const footer  = items.filter((i) => i.group === "footer");
++
+   return (
+     <nav className="nav-rail sidebar-surface" aria-label="Primary">
+       <div className="nav-rail-group no-drag">
+-        {/* Labelled primary destinations — no tooltip needed */}
+-        <button
+-          type="button"
+-          className={cx("nav-rail-btn nav-rail-labeled", page === "chat" && "active")}
+-          data-nav="chat"
+-          aria-label="Chat"
+-          aria-pressed={page === "chat"}
+-          onClick={() => setPage("chat")}
+-        >
+-          <IconChat size={16} aria-hidden />
+-          <span className="nav-rail-label">Chat</span>
+-        </button>
+-        <button
+-          type="button"
+-          className={cx("nav-rail-btn nav-rail-labeled", page === "build" && "active")}
+-          data-nav="build-canvas"
+-          aria-label="Build"
+-          aria-pressed={page === "build"}
+-          onClick={() => setPage("build")}
+-        >
+-          <IconMonitor size={16} aria-hidden />
+-          <span className="nav-rail-label">Build</span>
+-        </button>
+-        <button
+-          type="button"
+-          className={cx("nav-rail-btn nav-rail-labeled", page === "bench" && "active")}
+-          data-nav="bench"
+-          aria-label="Bench"
+-          aria-pressed={page === "bench"}
+-          onClick={() => setPage("bench")}
+-        >
+-          <IconServer size={16} aria-hidden />
+-          <span className="nav-rail-label">Bench</span>
+-        </button>
++        {primary.map((item) => {
++          const Icon = NAV_ICONS[item.id];
++          return (
++            <button
++              key={item.id}
++              type="button"
++              className={cx("nav-rail-btn nav-rail-labeled", page === item.page && "active")}
++              data-nav={item.dataNav}
++              aria-label={t(item.labelKey)}
++              aria-pressed={page === item.page}
++              title={t(item.labelKey)}
++              onClick={() => setPage(item.page)}
++            >
++              <Icon size={16} aria-hidden />
++              <span className="nav-rail-label">{t(item.labelKey)}</span>
++            </button>
++          );
++        })}
+       </div>
+ 
+       <div className="nav-rail-group nav-rail-footer no-drag">
+-        {/* Footer items: icon-only with tooltips */}
+-        <TooltipButton
+-          type="button"
+-          className={cx("nav-rail-btn", page === "scheduled" && "active")}
+-          data-nav="scheduled"
+-          tooltip={t("scheduled.title")}
+-          ariaLabel={t("scheduled.title")}
+-          onClick={() => setPage("scheduled")}
+-          aria-pressed={page === "scheduled"}
+-        >
+-          <IconClock size={16} aria-hidden />
+-        </TooltipButton>
+-        {kanbanEnabled && (
+-          <TooltipButton
+-            type="button"
+-            className={cx("nav-rail-btn", page === "kanban" && "active")}
+-            data-nav="kanban"
+-            tooltip={t("kanban.title")}
+-            ariaLabel={t("kanban.title")}
+-            onClick={() => setPage("kanban")}
+-            aria-pressed={page === "kanban"}
+-          >
+-            <IconKanban size={16} aria-hidden />
+-          </TooltipButton>
+-        )}
+-        {ravenEnabled && (
+-          <TooltipButton
+-            type="button"
+-            className={cx("nav-rail-btn", page === "raven" && "active")}
+-            data-nav="raven"
+-            tooltip={t("raven.title")}
+-            ariaLabel={t("raven.title")}
+-            onClick={() => setPage("raven")}
+-            aria-pressed={page === "raven"}
+-          >
+-            <IconRaven size={16} aria-hidden />
+-          </TooltipButton>
+-        )}
+-        <TooltipButton
+-          type="button"
+-          className={cx("nav-rail-btn", page === "filebird" && "active")}
+-          data-nav="filebird"
+-          tooltip={t("fileBird.title")}
+-          ariaLabel={t("fileBird.title")}
+-          onClick={() => setPage("filebird")}
+-          aria-pressed={page === "filebird"}
+-        >
+-          <IconFileBird size={16} aria-hidden />
+-        </TooltipButton>
+-        <TooltipButton
+-          type="button"
+-          className={cx("nav-rail-btn", page === "plugins" && "active")}
+-          data-nav="plugins"
+-          tooltip={t("nav.plugins")}
+-          ariaLabel={t("nav.plugins")}
+-          onClick={() =>
+-            page === "plugins"
+-              ? (canNavBack() ? navBack() : setPage("chat"))
+-              : setPage("plugins")
+-          }
+-          aria-pressed={page === "plugins"}
+-        >
+-          <IconPlug size={16} aria-hidden />
+-        </TooltipButton>
++        {footer.map((item) => {
++          const Icon = NAV_ICONS[item.id];
++          const handleClick =
++            item.id === "plugins"
++              ? () => (page === "plugins" ? (canNavBack() ? navBack() : setPage("chat")) : setPage("plugins"))
++              : () => setPage(item.page);
++          return (
++            <TooltipButton
++              key={item.id}
++              type="button"
++              className={cx("nav-rail-btn", page === item.page && "active")}
++              data-nav={item.dataNav}
++              tooltip={t(item.labelKey)}
++              ariaLabel={t(item.labelKey)}
++              onClick={handleClick}
++              aria-pressed={page === item.page}
++            >
++              <Icon size={16} aria-hidden />
++            </TooltipButton>
++          );
++        })}
+         <NotificationCenter />
+         <TooltipButton
+           type="button"
+           className={cx("nav-rail-btn", page === "settings" && "active")}
+           data-nav="settings"
+           tooltip={t("nav.settings")}
+           ariaLabel={t("nav.settings")}
+           onClick={() => setPage("settings")}
+           aria-pressed={page === "settings"}
+         >
+diff --git a/apps/desktop/src/components/nav-items.ts b/apps/desktop/src/components/nav-items.ts
+new file mode 100644
+index 000000000..11c7024f3
+--- /dev/null
++++ b/apps/desktop/src/components/nav-items.ts
+@@ -0,0 +1,32 @@
++import type { AppState } from "../stores/app-store";
++
++export type NavItemId =
++  | "chat" | "build" | "bench" | "scheduled" | "kanban" | "raven" | "filebird" | "plugins";
++
++export type NavItem = {
++  id: NavItemId;
++  page: AppState["page"];
++  dataNav: string;      // existing e2e selectors: "chat", "build-canvas", "bench", …
++  labelKey: string;
++  group: "primary" | "footer";
++};
++
++/**
++ * Ordered nav item list.  Flag-gated destinations (kanban, raven) are only
++ * included when the corresponding feature flag is enabled.
++ *
++ * Order: primary chat/build/bench, then footer scheduled/(kanban)/(raven)/filebird/plugins.
++ */
++export function navItems(flags: { kanban: boolean; raven: boolean }): NavItem[] {
++  const items: NavItem[] = [
++    { id: "chat",      page: "chat",      dataNav: "chat",         labelKey: "nav.chat",        group: "primary" },
++    { id: "build",     page: "build",     dataNav: "build-canvas", labelKey: "nav.build",       group: "primary" },
++    { id: "bench",     page: "bench",     dataNav: "bench",        labelKey: "nav.bench",       group: "primary" },
++    { id: "scheduled", page: "scheduled", dataNav: "scheduled",    labelKey: "scheduled.title", group: "footer"  },
++  ];
++  if (flags.kanban) items.push({ id: "kanban",   page: "kanban",   dataNav: "kanban",   labelKey: "kanban.title",   group: "footer" });
++  if (flags.raven)  items.push({ id: "raven",    page: "raven",    dataNav: "raven",    labelKey: "raven.title",    group: "footer" });
++  items.push(       { id: "filebird",  page: "filebird",  dataNav: "filebird", labelKey: "fileBird.title", group: "footer" });
++  items.push(       { id: "plugins",   page: "plugins",   dataNav: "plugins",  labelKey: "nav.plugins",    group: "footer" });
++  return items;
++}
+diff --git a/apps/desktop/src/styles/chrome.css b/apps/desktop/src/styles/chrome.css
+index cbb010abc..dc27c0f4c 100644
+--- a/apps/desktop/src/styles/chrome.css
++++ b/apps/desktop/src/styles/chrome.css
+@@ -1188,31 +1188,31 @@
+   --preview-chrome-action-lane: var(--ds-preview-action-lane-width);
+ }
+ 
+ 
+ /* Match the scenic backdrop's child-layer specificity so preview navigation
+  * stays above the work panel while non-control pixels remain pass-through. */
+ .app-shell > :where(.app-chat-shell) > .window-chrome-row {
+   position: absolute;
+   top: 0;
+   right: 0;
+-  left: var(--nav-rail-width);
++  left: var(--d-rail-w);
+   z-index: 200;
+   display: flex;
+   height: var(--d-ph-h);
+   align-items: center;
+   padding-left: var(--preview-chrome-inset);
+   pointer-events: none;
+ }
+ 
+ .window-chrome-row.sidebar-expanded {
+-  left: calc(var(--nav-rail-width) + var(--ds-sidebar-width));
++  left: calc(var(--d-rail-w) + var(--ds-sidebar-width));
+ }
+ 
+ .window-chrome-row button {
+   pointer-events: auto;
+   -webkit-app-region: no-drag;
+   app-region: no-drag;
+ }
+ 
+ .window-chrome-drag {
+   flex: 1 1 auto;
+@@ -1221,23 +1221,23 @@
+ 
+ /* ── E frame ──────────────────────────────────────────────────────────────
+  * Global icon rail, the sidebar backdrop the Island sits on, and the
+  * `.context-sidebar` + `.island` pair Bench and Build compose themselves. */
+ .app-shell {
+   background-color: var(--ds-bg-sidebar, var(--ds-bg-primary));
+ }
+ 
+ .nav-rail {
+   display: flex;
+-  width: var(--nav-rail-width);
++  width: var(--d-rail-w);
+   height: 100%;
+-  flex: 0 0 var(--nav-rail-width);
++  flex: 0 0 var(--d-rail-w);
+   flex-direction: column;
+   align-items: center;
+   justify-content: space-between;
+   padding: 8px 0 12px;
+   /* The empty rail drags the window; its button groups opt out. */
+   -webkit-app-region: drag;
+   app-region: drag;
+ }
+ 
+ 
+@@ -1274,42 +1274,31 @@
+ }
+ 
+ .nav-rail-label {
+   font-size: var(--text-tiny);
+   line-height: var(--leading-tighter);
+   font-weight: var(--font-weight-medium);
+ }
+ 
+ .nav-rail-btn:hover,
+ .nav-rail .notification-trigger:hover {
+-  background: var(--surface-gray-3);
+-  color: var(--ink-gray-7);
++  background: var(--surface-gray-2);
++  color: var(--ink-gray-8);
+ }
+ 
+ .nav-rail-btn.active,
+ .nav-rail .notification-trigger.active {
+-  background: var(--surface-gray-4);
+-  color: var(--ink-gray-9);
++  background: var(--da-sub);
++  color: var(--da-txt);
++  box-shadow: var(--elevation-sm);
+ }
+ 
+-/* Active destination marker, flush with the rail's left edge. */
+-.nav-rail-btn.active::before {
+-  position: absolute;
+-  top: 50%;
+-  left: calc((32px - var(--nav-rail-width)) / 2);
+-  width: 4px;
+-  height: 20px;
+-  border-radius: 0 var(--radius-full) var(--radius-full) 0;
+-  background: var(--ink-gray-9);
+-  content: "";
+-  transform: translateY(-50%);
+-}
+ 
+ .nav-rail .notification-badge {
+   border-color: var(--ds-bg-sidebar, var(--ds-bg-primary));
+ }
+ 
+ .nav-rail-btn .memory-status-dot-rail {
+   position: absolute;
+   top: 4px;
+   right: 4px;
+   border: 1.5px solid var(--ds-bg-sidebar, var(--ds-bg-primary));
+diff --git a/apps/desktop/src/styles/d-shell.css b/apps/desktop/src/styles/d-shell.css
+index b5a796fb2..4e50b55a9 100644
+--- a/apps/desktop/src/styles/d-shell.css
++++ b/apps/desktop/src/styles/d-shell.css
+@@ -21,26 +21,20 @@
+  */
+ .app-chat-shell {
+   display: flex;
+   flex: 1;
+   min-height: 0;
+   min-width: 0;
+   position: relative; /* establish positioning context for .window-chrome-row */
+ }
+ .app-chat-shell[hidden] { display: none; }
+ 
+-/*
+- * --nav-rail-width was defined next to --ds-pane-lead-inset in chrome.css
+- * (deleted as part of the lead-inset cutover). Keep it here so
+- * .window-chrome-row still resolves it.
+- */
+-:root { --nav-rail-width: 60px; }
+ 
+ /* ── Navbar (shared base, 48px) ───────────────────────────────────────
+  * D.css:119-130 (.d-nav); using shell-navbar class for the app.
+  * display:flex + position:relative lets the absolutely-centred awesomebar
+  * stay anchored to the navbar regardless of left/right content width. */
+ .shell-navbar {
+   display: flex;
+   align-items: center;
+   height: var(--d-navbar-h);          /* 48px — D.css:23 / D-SPEC.md row 1  */
+   flex: 0 0 var(--d-navbar-h);
+@@ -169,10 +163,86 @@
+ }
+ 
+ /* ── Right end placeholder (right cluster: Task 8) ───────────────── */
+ .shell-navbar-end {
+   display: flex;
+   align-items: center;
+   gap: 4px;
+   margin-left: auto;          /* D.css:243 (.d-nav-right margin-left:auto) */
+   flex-shrink: 0;
+ }
++/* ── D2 Rail layout ─────────────────────────────────────────────────────
++ *
++ * chrome.css holds the base .nav-rail rules with --d-rail-w (50px).
++ * This section adds: island layout override, icon-only collapsed mode,
++ * expanded (220px) state, canvas island surface, and window-chrome-row
++ * overrides for non-rail layouts.
++ *
++ * Design refs: D.css:322-449 (rail), D.css:451-461 (canvas)
++ */
++
++/* ── Island layout: rail 60px (D3) ── */
++:root[data-nav-layout="island"] .nav-rail {
++  width: var(--d-rail-island);
++  flex: 0 0 var(--d-rail-island);
++}
++:root[data-nav-layout="island"] .app-shell > :where(.app-chat-shell) > .window-chrome-row {
++  left: var(--d-rail-island);
++}
++:root[data-nav-layout="island"] .window-chrome-row.sidebar-expanded {
++  left: calc(var(--d-rail-island) + var(--ds-sidebar-width));
++}
++
++/* ── Tabs layout: no left rail ── */
++:root[data-nav-layout="tabs"] .app-shell > :where(.app-chat-shell) > .window-chrome-row {
++  left: 0;
++}
++:root[data-nav-layout="tabs"] .window-chrome-row.sidebar-expanded {
++  left: var(--ds-sidebar-width);
++}
++
++/* ── D2 rail: labels hidden in collapsed rail mode (D.css:404-414) ── */
++/* In island mode (D3), labels are revealed — override there (Task 9). */
++:root[data-nav-layout="rail"] .nav-rail-label { display: none; }
++:root[data-nav-layout="rail"] .nav-rail-btn.nav-rail-labeled {
++  /* revert to square icon-only button; label span is hidden */
++  width: 32px;
++  height: 32px;
++  flex: 0 0 32px;
++  flex-direction: row;
++  gap: 0;
++  padding: 0;
++}
++
++/* ── D2 rail: expanded 220px state (D.css:334 .d-rail.expanded) ── */
++:root[data-nav-layout="rail"] .nav-rail.expanded {
++  width: var(--d-rail-exp);
++  flex: 0 0 var(--d-rail-exp);
++  align-items: flex-start;
++}
++:root[data-nav-layout="rail"] .nav-rail.expanded .nav-rail-label {
++  display: block;                  /* reveal labels when expanded */
++}
++:root[data-nav-layout="rail"] .nav-rail.expanded .nav-rail-btn.nav-rail-labeled {
++  width: calc(var(--d-rail-exp) - 12px); /* item margin 1px × 6px = 12px (D.css:373) */
++  height: 32px;
++  flex-direction: row;
++  gap: 2px;
++  padding: 0;
++}
++
++/* ── D2 canvas island (D.css:451-461, D.css:464-481) ── */
++/* app-chat-shell body becomes the gray canvas backdrop */
++:root[data-nav-layout="rail"] .app-chat-shell {
++  background: var(--d-canvas-bg);      /* light: surface-gray-2; dark: surface-base */
++}
++/* main-pane is the white island floating on the canvas */
++:root[data-nav-layout="rail"] .main-pane:not(.is-workbench) {
++  margin: 0 var(--d-gap) var(--d-gap) 0;
++  border-radius: var(--d-r);
++  border: 1px solid var(--d-border);
++}
++/* workbench pages (build/bench) own their own panels; no island wrap */
++:root[data-nav-layout="rail"] .main-pane.is-workbench {
++  margin: 0;
++  border: none;
++}
+diff --git a/apps/desktop/src/styles/d-tokens.css b/apps/desktop/src/styles/d-tokens.css
+index ce261c87f..97c93487e 100644
+--- a/apps/desktop/src/styles/d-tokens.css
++++ b/apps/desktop/src/styles/d-tokens.css
+@@ -23,20 +23,21 @@
+   --da-txt: var(--ink-violet-8);     /* selection ink:  #165A88 (light) */
+   --da-bdr: var(--outline-violet-3); /* selection ring: #9CCDEA (light) */
+ 
+   /* Direction D component dimensions */
+   --d-navbar-h: 48px;
+   --d-ph-h: 48px;
+   --d-mini-h: 32px;
+   --d-status-h: 28px;
+   --d-rail-w: 50px;
+   --d-rail-island: 60px;
++  --d-rail-exp: 220px;       /* D2 rail expanded state (D.css:28,334) */
+   --d-gap: 12px;
+   --d-ctrl: 28px;
+   --d-ctrl-lg: 32px;
+   --d-row-h: 30px;
+   --d-r: 12px;
+   --d-r-ctrl: 8px;
+   --d-r-sm: 4px;
+   --d-text:      var(--text-base);                      /* 13px × --font-scale (F12) */
+   --d-text-sm:   calc(12px * var(--font-scale));         /* F12: scale-aware */
+   --d-text-xs:   calc(11px * var(--font-scale));         /* F12: scale-aware */
+diff --git a/apps/desktop/test/nav-items.test.mjs b/apps/desktop/test/nav-items.test.mjs
+new file mode 100644
+index 000000000..387bf7eda
+--- /dev/null
++++ b/apps/desktop/test/nav-items.test.mjs
+@@ -0,0 +1,19 @@
++import assert from "node:assert/strict";
++import { register } from "node:module";
++import test from "node:test";
++register(new URL("./helpers/ts-import-hooks.mjs", import.meta.url));
++const { navItems } = await import("../src/components/nav-items.ts");
++
++test("Kanban and Raven appear only when enabled", () => {
++  const ids = (f) => navItems(f).map((i) => i.id);
++  assert.deepEqual(ids({ kanban: false, raven: false }), ["chat", "build", "bench", "scheduled", "filebird", "plugins"]);
++  assert.ok(ids({ kanban: true, raven: true }).includes("kanban"));
++  assert.ok(ids({ kanban: true, raven: true }).includes("raven"));
++});
++
++test("data-nav hooks used by e2e stay stable", () => {
++  const byId = Object.fromEntries(navItems({ kanban: true, raven: true }).map((i) => [i.id, i.dataNav]));
++  assert.equal(byId.build, "build-canvas");
++  assert.equal(byId.chat, "chat");
++  assert.equal(byId.filebird, "filebird");
++});
+diff --git a/apps/desktop/test/sidebar-navigation.test.mjs b/apps/desktop/test/sidebar-navigation.test.mjs
+index 28093f264..0d0987572 100644
+--- a/apps/desktop/test/sidebar-navigation.test.mjs
++++ b/apps/desktop/test/sidebar-navigation.test.mjs
+@@ -20,32 +20,41 @@ const globalStyles = await loadStyles();
+ const appSource = await readAppSource();
+ const panelSource = await readFile(
+   new URL("../src/components/workpanel/WorkPanel.tsx", import.meta.url),
+   "utf8",
+ );
+ const shortcutSource = await readFile(
+   new URL("../../../packages/shared/src/keyboard-shortcuts.ts", import.meta.url),
+   "utf8",
+ );
+ test("home sidebar and nav rail expose only the supported destination entries", async () => {
++  // NavRail now renders data-nav via navItems(); stable selector strings live in nav-items.ts
++  const navItemsSource = await readFile(
++    new URL("../src/components/nav-items.ts", import.meta.url),
++    "utf8",
++  );
+   const railSource = await readFile(
+     new URL("../src/components/NavRail.tsx", import.meta.url),
+     "utf8",
+   );
+   assert.match(sidebarSource, /data-nav="home"/);
+-  assert.match(railSource, /data-nav="plugins"/);
+-  assert.match(railSource, /data-nav="scheduled"/);
+-  for (const source of [sidebarSource, railSource]) {
++  // Stable selectors guaranteed by navItems() contract (nav-items.ts):
++  assert.match(navItemsSource, /dataNav:\s*"plugins"/);
++  assert.match(navItemsSource, /dataNav:\s*"scheduled"/);
++  // NavRail hand-renders Settings with a literal selector:
++  assert.match(railSource, /data-nav="settings"/);
++  for (const source of [sidebarSource, navItemsSource]) {
+     assert.doesNotMatch(source, /data-nav="projects"/);
+     assert.doesNotMatch(source, /data-nav="pulls"/);
+-    assert.doesNotMatch(source, /t\("nav\.(?:pullRequests|scheduled)"\)/);
+   }
++  assert.doesNotMatch(navItemsSource, /t\("nav\.(?:pullRequests|scheduled)"\)/);
++  assert.doesNotMatch(sidebarSource, /t\("nav\.(?:pullRequests|scheduled)"\)/);
+ });
+ 
+ test("sidebar brand returns to the chat home", () => {
+   const brandButton = sidebarSource.match(
+     /<TooltipButton\s+type="button"\s+className="brand no-drag"[\s\S]*?<\/TooltipButton>/,
+   )?.[0] ?? "";
+ 
+   assert.match(brandButton, /data-nav="home"/);
+   assert.match(brandButton, /ariaLabel=\{t\("nav\.home"\)\}/);
+   assert.match(brandButton, /onClick=\{\(\) => setPage\("chat"\)\}/);
+diff --git a/apps/desktop/test/work-panel.test.mjs b/apps/desktop/test/work-panel.test.mjs
+index 8350b42a4..34cfd338d 100644
+--- a/apps/desktop/test/work-panel.test.mjs
++++ b/apps/desktop/test/work-panel.test.mjs
+@@ -650,21 +650,21 @@ test("preview mode keeps shell actions and restores routes before navigation", (
+     appSource,
+     /case "newTask":[\s\S]*?if \(workPanelMaximizedRef\.current\) setWorkPanelMaximized\(false\);/,
+   );
+   const row = globalStyles.match(/\.window-chrome-row \{[^}]*\}/)?.[0] ?? "";
+   const spacer = globalStyles.match(/\.window-chrome-drag \{[^}]*\}/)?.[0] ?? "";
+   assert.match(row, /pointer-events:\s*none/);
+   assert.match(row, /padding-left:\s*var\(--preview-chrome-inset\)/);
+   assert.ok(spacer);
+   assert.doesNotMatch(row + spacer, /app-region:|background:/);
+   assert.match(globalStyles, /\.window-chrome-row button \{[^}]*pointer-events:\s*auto;[^}]*app-region:\s*no-drag;/);
+-  assert.match(globalStyles, /\.window-chrome-row\.sidebar-expanded \{[^}]*left: calc\(var\(--nav-rail-width\) \+ var\(--ds-sidebar-width\)\);/);
++  assert.match(globalStyles, /\.window-chrome-row\.sidebar-expanded \{[^}]*left: calc\(var\(--d-rail-w\) \+ var\(--ds-sidebar-width\)\);/);
+   assert.match(globalStyles, /\.app-shell\.work-panel-maximized \{[^}]*--preview-chrome-inset:\s*8px;[^}]*--preview-chrome-action-lane:\s*calc\(var\(--ds-control-size\) \+ 8px\);/);
+   assert.match(globalStyles, /\.app-shell\.work-panel-maximized\.sidebar-collapsed \{[^}]*--preview-chrome-action-lane:\s*var\(--ds-preview-action-lane-width\);/);
+   /* lead-inset cutover (Task 6): ShellNavbar owns the darwin traffic-light reserve;
+    * --ds-pane-lead-inset is removed, so the darwin preview-chrome-inset override
+    * is also gone. --preview-chrome-inset stays 8px on all platforms. */
+   assert.doesNotMatch(globalStyles, /--preview-chrome-inset:\s*var\(--ds-pane-lead-inset\)/);
+   assert.match(globalStyles, /\.app-shell\.work-panel-maximized \.work-panel-header \{[^}]*margin-left:\s*calc\(var\(--preview-chrome-inset\) \+ var\(--preview-chrome-action-lane\)\);[^}]*padding-left:\s*0;/);
+   assert.match(globalStyles, /\.work-panel-header \{[^}]*app-region:\s*drag;/);
+   assert.match(globalStyles, /\.app-shell\.work-panel-maximized \.work-panel-main \{[^}]*var\(--ds-bg-dock-raised\) 0 var\(--ds-toolbar-height\)/);
+ });

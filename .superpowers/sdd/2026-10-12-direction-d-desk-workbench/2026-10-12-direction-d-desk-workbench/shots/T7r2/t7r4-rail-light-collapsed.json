@@ -1,0 +1,32 @@
+{
+  "shot": "t7r4-rail-light-collapsed.png",
+  "commit": "post-r4",
+  "viewport": "1200x800",
+  "dpr": 2,
+  "locale": "en",
+  "page": "chat",
+  "layout": "rail",
+  "expanded": false,
+  "theme": "light",
+  "measurements": {
+    "navLayout": "rail",
+    "theme": "light",
+    "persistedTheme": "dark",
+    "railW": 50,
+    "railBg": "rgb(255, 255, 255)",
+    "toggleAriaExpanded": "false",
+    "toggleAriaControls": "nav-rail-scroll",
+    "paneMargin": "12px",
+    "paneBorder": "1px solid rgb(237, 237, 237)",
+    "paneShadow": "rgba(255, 255, 255, 0.16) 0px 0.25px 1.5px 0px ins",
+    "scrollItems": 7,
+    "dividers": 2,
+    "navScrollId": true,
+    "footerNCLabel": true,
+    "footerSettingsLabel": true,
+    "labelOpacity": "0",
+    "labelMaxWidth": "0px",
+    "itemJustify": "center",
+    "benchGlyph": "<path d=\"M12 19h8\"></path><path d=\"m4 17 6-6-6-6\"></path>"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "shot": "t7r4-rail-dark-collapsed.png",
+  "commit": "post-r4",
+  "viewport": "1200x800",
+  "dpr": 2,
+  "locale": "en",
+  "page": "chat",
+  "layout": "rail",
+  "expanded": false,
+  "theme": "dark",
+  "measurements": {
+    "theme": "dark",
+    "railBg": "rgb(31, 31, 31)",
+    "paneBg": "rgb(31, 31, 31)",
+    "paneBorder": "1px solid rgb(56, 56, 56)"
+  }
+}

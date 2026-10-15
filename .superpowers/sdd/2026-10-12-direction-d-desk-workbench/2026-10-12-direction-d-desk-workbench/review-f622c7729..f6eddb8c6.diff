@@ -1,0 +1,233 @@
+# Review package: f622c7729..f6eddb8c6
+
+## Commits
+f6eddb8c6 feat(renderer): apply navLayout attribute and layout-aware column budget
+
+## Files changed
+ apps/desktop/src/capture/renderer-api.ts             |  5 +++++
+ apps/desktop/src/features/app/useAppShellRuntime.tsx | 16 ++++++++++++----
+ apps/desktop/src/main.tsx                            |  2 ++
+ 3 files changed, 19 insertions(+), 4 deletions(-)
+
+## Diff
+diff --git a/apps/desktop/src/capture/renderer-api.ts b/apps/desktop/src/capture/renderer-api.ts
+index 383968f34..037d90569 100644
+--- a/apps/desktop/src/capture/renderer-api.ts
++++ b/apps/desktop/src/capture/renderer-api.ts
+@@ -3,37 +3,39 @@
+  * capture suite (electron/main) and the e2e plan runner (scripts/e2e-plan-ui).
+  *
+  * Only the navigation/toast shims are installed unconditionally. The
+  * screenshot fixtures (seed* methods, `api.*` monkey-patches) live in
+  * `capture-rig.ts` and are `import()`ed the first time one of them is called
+  * with `window.__PI_CAPTURE__` set, so production bundles never evaluate them.
+  * Once the rig has loaded, its methods replace the lazy stubs on the same
+  * object, so later capture calls stay synchronous as before.
+  */
+ import { useAppStore, type AppState, type ToastOptions } from "../stores/app-store";
++import type { NavLayout } from "../lib/nav-layout";
+ import type { CaptureRig, CaptureRigMethods } from "./capture-rig";
+ 
+ type CaptureRigMethod = keyof CaptureRigMethods;
+ 
+ /** Lazy stubs: resolve with the rig method's result once the rig has loaded. */
+ type CaptureRigStubs = {
+   [K in CaptureRigMethod]: (
+     ...args: Parameters<CaptureRigMethods[K]>
+   ) => Promise<Awaited<ReturnType<CaptureRigMethods[K]>> | undefined>;
+ };
+ 
+ export type RendererApi = {
+   setPage: (page: AppState["page"]) => void;
+   refreshProviders: () => Promise<void>;
+   selectSession: (id: string) => Promise<void>;
+   setSettingsTab: (tab: AppState["settingsTab"]) => void;
+   setThemeAttr: (theme: "light" | "dark") => void;
++  setNavLayout: (layout: NavLayout) => void;
+   clearProject: () => Promise<void>;
+   showToast: (message: string, opts?: ToastOptions) => void;
+ } & (CaptureRigStubs | CaptureRigMethods);
+ 
+ declare global {
+   interface Window {
+     __PI_DESKTOP__?: RendererApi;
+     /** Set by the capture suite before it calls any fixture method. */
+     __PI_CAPTURE__?: unknown;
+   }
+@@ -93,20 +95,23 @@ export function installRendererApi(): () => void {
+   ) as CaptureRigStubs;
+ 
+   const surface: RendererApi = {
+     setPage: (page) => useAppStore.getState().setPage(page),
+     refreshProviders: () => useAppStore.getState().refreshProviders(),
+     selectSession: (id) => useAppStore.getState().selectSession(id),
+     setSettingsTab: (tab) => useAppStore.getState().setSettingsTab(tab),
+     setThemeAttr: (theme) => {
+       document.documentElement.dataset.theme = theme;
+     },
++    setNavLayout: (layout) => {
++      document.documentElement.dataset.navLayout = layout;
++    },
+     clearProject: () => useAppStore.getState().clearProject(),
+     showToast: (message, opts) => useAppStore.getState().showToast(message, opts),
+     ...stubs,
+   };
+   window.__PI_DESKTOP__ = surface;
+ 
+   return () => {
+     disposed = true;
+     rig?.dispose();
+     rig = null;
+diff --git a/apps/desktop/src/features/app/useAppShellRuntime.tsx b/apps/desktop/src/features/app/useAppShellRuntime.tsx
+index df0da5e0b..5d57370fc 100644
+--- a/apps/desktop/src/features/app/useAppShellRuntime.tsx
++++ b/apps/desktop/src/features/app/useAppShellRuntime.tsx
+@@ -24,48 +24,50 @@ import { sidebarWidthBudget } from "../../lib/sidebar-resize";
+ import { commitWorkPanelPresentation } from "../../lib/work-panel-presentation";
+ import {
+   MAIN_PANE_MIN_WIDTH,
+   workPanelWidthForSidebarReopen,
+ } from "../../lib/work-panel-resize";
+ import { browserPluginTab, fileManagerPluginTab } from "../../lib/work-panel-tabs";
+ import { useAppStore } from "../../stores/app-store";
+ import { useSidebarTransition } from "./useSidebarTransition";
+ import { useStartupWatchdog } from "./useStartupWatchdog";
+ import { useTraySessions } from "./useTraySessions";
++import { resolveNavLayout, shellChromeWidth } from "../../lib/nav-layout";
+ 
+ const MODIFIER_ONLY_KEYS = new Set([
+   "Alt",
+   "AltGraph",
+   "Control",
+   "Meta",
+   "Shift",
+ ]);
+ 
+ const PLUGIN_THEME_STYLE_ID = "pi-plugin-theme";
+-/** `--nav-rail-width` (60px) plus the Island's 8px margin on both sides (chrome.css, chat-shell.css). */
+-const SHELL_CHROME_WIDTH = 60 + 16;
+ 
+ export function useAppShellRuntime() {
+   const { t } = useTranslation();
+   const platform = window.piDesktop?.platform ?? "darwin";
+   const bootstrap = useAppStore((s) => s.bootstrap);
+   const ready = useAppStore((s) => s.ready);
+   const page = useAppStore((s) => s.page);
+   const activeSessionId = useAppStore((s) => s.activeSessionId);
+   const acknowledgeSessionOutcome = useAppStore(
+     (s) => s.acknowledgeSessionOutcome,
+   );
+   const showToast = useAppStore((s) => s.showToast);
+   const handleAgentEvent = useAppStore((s) => s.handleAgentEvent);
+   const handlePlansChanged = useAppStore((s) => s.handlePlansChanged);
+   const abort = useAppStore((s) => s.abort);
+   const settings = useAppStore((s) => s.settings);
++  const navLayout = resolveNavLayout(settings?.navLayout);
++  const navLayoutRef = useRef(navLayout);
++  navLayoutRef.current = navLayout;
+   const workPanelOpen = useAppStore((s) => s.workPanelOpen);
+   const workPanelWidth = useAppStore((s) => s.workPanelWidth);
+   const pluginThemes = useAppStore((s) => s.pluginThemes);
+   const refreshPluginThemes = useAppStore((s) => s.refreshPluginThemes);
+   const plugins = useAppStore((s) => s.plugins);
+   const projectPath = useAppStore((s) => s.workspace?.path ?? null);
+   const workPanelVisible = workPanelOpen;
+ 
+   const [searchOpen, setSearchOpen] = useState(false);
+   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+@@ -93,34 +95,34 @@ export function useAppShellRuntime() {
+   sidebarWidthRef.current = sidebarWidth;
+   shellWidthRef.current = shellWidth;
+   workPanelWidthRef.current = workPanelWidth;
+   workPanelOpenRef.current = workPanelVisible;
+ 
+   // The shell is a fixed client area: the three-column budget needs its real
+   // measured width, not the native window bounds, because the reservation seam
+   // stays at zero. The E frame's nav rail and the Island's 8px inset on each
+   // side are never available to the columns.
+   const columnsWidth = (shell: HTMLElement) =>
+-    Math.max(0, Math.round(shell.clientWidth) - SHELL_CHROME_WIDTH);
++    Math.max(0, Math.round(shell.clientWidth) - shellChromeWidth(navLayoutRef.current));
+   useLayoutEffect(() => {
+     const shell = appShellRef.current;
+     if (!shell) return;
+     const update = () => setShellWidth(columnsWidth(shell));
+     update();
+     if (typeof ResizeObserver === "undefined") {
+       window.addEventListener("resize", update);
+       return () => window.removeEventListener("resize", update);
+     }
+     const observer = new ResizeObserver(update);
+     observer.observe(shell);
+     return () => observer.disconnect();
+-  }, []);
++  }, [navLayout]);
+   const resolveSidebarMax = () =>
+     sidebarWidthBudget({
+       containerWidth: (appShellRef.current && columnsWidth(appShellRef.current)) || shellWidthRef.current,
+       workPanelOpen: workPanelOpenRef.current,
+       workPanelWidth: workPanelWidthRef.current,
+       workPanelMaximized: workPanelMaximizedRef.current,
+     });
+   const handleSidebarWidthChange = useCallback((width: number) => {
+     setSidebarWidth(clampSidebarWidth(width, resolveSidebarMax()));
+   }, []);
+@@ -537,20 +539,26 @@ export function useAppShellRuntime() {
+ 
+   // Global type scale: Settings persists a multiplier in
+   // `AppSettings.fontScale`; the `--text-*` ramp multiplies from `--font-scale`.
+   useEffect(() => {
+     document.documentElement.style.setProperty(
+       "--font-scale",
+       String(resolveFontScale(settings ?? {})),
+     );
+   }, [settings?.fontScale, settings?.fontSize]);
+ 
++  // Nav-layout attribute drives CSS layout switching (rail, tabs, island).
++  // Separate from the theme effect so a plugin-theme change cannot skip it.
++  useEffect(() => {
++    document.documentElement.dataset.navLayout = navLayout;
++  }, [navLayout]);
++
+   useEffect(() => {
+     if (bootstrapStartedRef.current) return;
+     bootstrapStartedRef.current = true;
+     // A tray activation must win over bootstrap's initial draft/plan navigation.
+     void bootstrap().finally(() => {
+       void api.menuRendererReady().catch(() => undefined);
+     });
+   }, [bootstrap]);
+ 
+   // The menu/tray acknowledgement also follows `ready`, not only the first
+diff --git a/apps/desktop/src/main.tsx b/apps/desktop/src/main.tsx
+index 035eb5599..c2a9d3dce 100644
+--- a/apps/desktop/src/main.tsx
++++ b/apps/desktop/src/main.tsx
+@@ -1,25 +1,27 @@
+ import React from "react";
+ import ReactDOM from "react-dom/client";
+ import i18n from "i18next";
+ import { initReactI18next } from "react-i18next";
+ import { catalogs, flattenCatalog, resolveLocale } from "@pi-desktop/i18n";
+ import { MAC_TRAFFIC_LIGHT_EDGE_DIP } from "@pi-desktop/shared";
+ import App from "./App";
++import { DEFAULT_NAV_LAYOUT } from "./lib/nav-layout";
+ import { PluginLauncher } from "./components/PluginLauncher";
+ import { initLanguageSync, resolveOsLocale } from "./lib/app-language";
+ import { installScrollbarReveal } from "./lib/scrollbar-reveal";
+ import "./styles/globals.css";
+ 
+ const rendererSurface = new URLSearchParams(window.location.search).get("surface");
+ if (rendererSurface) document.documentElement.dataset.surface = rendererSurface;
+ document.documentElement.dataset.theme = "dark";
++document.documentElement.dataset.navLayout = DEFAULT_NAV_LAYOUT;
+ // Window-chrome layout differs per OS (traffic lights left on macOS,
+ // controls overlay right on Windows/Linux); set before first paint.
+ document.documentElement.dataset.platform =
+   window.piDesktop?.platform ?? "darwin";
+ // The macOS traffic lights are native views with a fixed footprint; the space
+ // the shell leaves clear for them derives from the same shared constant the
+ // main process positions them with (styles/tokens.css). Only macOS has them —
+ // the 0px default keeps Windows/Linux on the renderer-drawn controls.
+ if (document.documentElement.dataset.platform === "darwin") {
+   document.documentElement.style.setProperty(

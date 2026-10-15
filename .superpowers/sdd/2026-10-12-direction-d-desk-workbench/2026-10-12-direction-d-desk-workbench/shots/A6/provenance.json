@@ -1,0 +1,86 @@
+{
+  "session": "A6",
+  "branch": "feat/direction-d",
+  "commit": "pending",
+  "captureRig": "apps/desktop/electron/main/bootstrap/window.ts",
+  "captureEnv": {
+    "PI_DESKTOP_CAPTURE": "1",
+    "ELECTRON_RENDERER_URL": "",
+    "PI_DESKTOP_DATA_DIR": "fresh tmpdir (no pre-existing user data)"
+  },
+  "captureTime": "2026-10-13T00:44:xx UTC (run 3, 129s elapsed)",
+  "viewport": { "width": 2400, "height": 1600 },
+  "dpr": 2,
+  "cssPixels": { "width": 1200, "height": 800 },
+  "build": "pnpm build (out/renderer + out/main via electron-builder / vite)",
+  "c02Measurements": {
+    "rail":  { "navLayout": "rail",   "shellClientWidth": 1200, "chromeW": 74, "usableWidth": 1126 },
+    "island": { "navLayout": "island", "shellClientWidth": 1200, "chromeW": 84, "usableWidth": 1116 },
+    "railRestored": { "navLayout": "rail", "shellClientWidth": 1200, "chromeW": 74, "usableWidth": 1126 },
+    "usableDelta": 10,
+    "clientWidthStable": true,
+    "method": "Real picker click (clickPicker via MouseEvent), then setPage(chat), then .app-shell.clientWidth"
+  },
+  "shots": {
+    "pi-settings-live.png": {
+      "desc": "Settings General/Appearance tab, light theme, rail selected (baseline before picker shots)",
+      "navLayout": "rail",
+      "theme": "light",
+      "locale": "en"
+    },
+    "pi-settings-picker-tabs.png": {
+      "desc": "Picker with Top tabs card selected (clicked via [data-nav-layout-option=tabs])",
+      "navLayout": "tabs",
+      "theme": "light",
+      "locale": "en"
+    },
+    "pi-settings-picker-island.png": {
+      "desc": "Picker with Island sidebar card selected",
+      "navLayout": "island",
+      "theme": "light",
+      "locale": "en"
+    },
+    "pi-settings-picker-rail.png": {
+      "desc": "Picker with Icon rail card selected (default restored)",
+      "navLayout": "rail",
+      "theme": "light",
+      "locale": "en"
+    },
+    "pi-settings-picker-focus.png": {
+      "desc": "Keyboard focus ring on the aria-checked (rail) card before ArrowRight",
+      "navLayout": "rail",
+      "theme": "light",
+      "locale": "en"
+    },
+    "pi-settings-picker-keyboard-island.png": {
+      "desc": "After ArrowRight from rail (NAV_LAYOUTS=['tabs','rail','island'], idx 1+1=2 → island); island card now focused+selected via real saveSettings onKeyDown",
+      "navLayout": "island",
+      "theme": "light",
+      "locale": "en"
+    },
+    "pi-settings-picker-island-before-reload.png": {
+      "desc": "Island selected via real picker click just before window.location.reload()",
+      "navLayout": "island",
+      "theme": "light",
+      "locale": "en"
+    },
+    "pi-settings-picker-island-after-reload.png": {
+      "desc": "After renderer reload, settings re-read via IPC; island persisted on disk, still selected",
+      "navLayout": "island",
+      "theme": "light",
+      "locale": "en"
+    },
+    "pi-settings-picker-de-light.png": {
+      "desc": "Settings picker in German locale (language='de' via IPC settingsChanged→i18n.changeLanguage), light theme",
+      "navLayout": "rail",
+      "theme": "light",
+      "locale": "de"
+    },
+    "pi-settings-picker-de-dark.png": {
+      "desc": "Settings picker in German locale, dark theme",
+      "navLayout": "rail",
+      "theme": "dark",
+      "locale": "de"
+    }
+  }
+}

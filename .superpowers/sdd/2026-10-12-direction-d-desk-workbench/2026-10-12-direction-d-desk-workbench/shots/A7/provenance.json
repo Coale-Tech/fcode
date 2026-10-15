@@ -1,0 +1,147 @@
+{
+  "buildSha": "1897a9dd2",
+  "branch": "feat/direction-d",
+  "captureMode": "PI_DESKTOP_CAPTURE=1",
+  "captureTime": "2026-10-13T01:37:xx",
+  "dataDir": "fresh tmpdir per run",
+  "dpr": 2,
+  "windowCss": "1200x800",
+  "outputSize": "2400x1600 (DPR-scaled)",
+  "shots": {
+    "pi-settings-picker-tabs.png": {
+      "sha256": "72e07e5e8ad489bd58dea97e87a8858bc5c966a1d1bb24ca70c6defe91c40732",
+      "page": "settings/general",
+      "theme": "light",
+      "navLayout": "tabs",
+      "notes": "C05: tabs picker card selected via real UI dispatchEvent click"
+    },
+    "pi-settings-picker-island.png": {
+      "sha256": "5edef582380d07c479d9cf2e44b855e9c9c26135caf5f9686035816c1eb59a31",
+      "page": "settings/general",
+      "theme": "light",
+      "navLayout": "island",
+      "notes": "C05: island picker card selected via real UI dispatchEvent click"
+    },
+    "pi-settings-picker-rail.png": {
+      "sha256": "886091384ebd5d89a755af2f86a8adf71050674ec32faa91eddc52d0c246a704",
+      "page": "settings/general",
+      "theme": "light",
+      "navLayout": "rail",
+      "notes": "C05: rail picker card selected (default); same as focus shot before key event"
+    },
+    "pi-settings-picker-focus.png": {
+      "sha256": "886091384ebd5d89a755af2f86a8adf71050674ec32faa91eddc52d0c246a704",
+      "page": "settings/general",
+      "theme": "light",
+      "navLayout": "rail",
+      "notes": "C05: keyboard focus via JS .focus() on rail card; DOM: activeElement=BUTTON[role=radio][data-nav-layout-option=rail][aria-checked=true]",
+      "focusProv": {
+        "tag": "BUTTON",
+        "role": "radio",
+        "ariaChecked": "true",
+        "navLayoutOption": "rail",
+        "klass": "btn btn-ghost nl-card is-selected"
+      }
+    },
+    "pi-settings-picker-keyboard-island.png": {
+      "sha256": "24a14a9374b584c144fe39d8c75f4b1218761bd12150feb25e857aaeb1e89351",
+      "page": "settings/general",
+      "theme": "light",
+      "navLayout": "island",
+      "notes": "C05: native Electron sendInputEvent({type:'keyDown',keyCode:'Right'}) from rail → island",
+      "keyboardProv": {
+        "method": "webContents.sendInputEvent({type:'keyDown',keyCode:'Right'})",
+        "before": "rail",
+        "after": {
+          "navLayoutOption": "island",
+          "ariaChecked": "true",
+          "storeLayout": "island"
+        }
+      }
+    },
+    "pi-settings-picker-island-before-reload.png": {
+      "sha256": "5edef582380d07c479d9cf2e44b855e9c9c26135caf5f9686035816c1eb59a31",
+      "page": "settings/general",
+      "theme": "light",
+      "navLayout": "island",
+      "notes": "C05: island selected before window.location.reload()"
+    },
+    "pi-settings-picker-island-after-reload.png": {
+      "sha256": "5edef582380d07c479d9cf2e44b855e9c9c26135caf5f9686035816c1eb59a31",
+      "page": "settings/general",
+      "theme": "light",
+      "navLayout": "island",
+      "notes": "C05: island persisted after reload (same visual state = persistence proven)"
+    },
+    "pi-settings-picker-de-light.png": {
+      "sha256": "a4cc0be0cb33599a65db21f8b6b6bc517b89a52ef8034e3913375cabf17a9d70",
+      "page": "settings/general",
+      "theme": "light",
+      "navLayout": "rail",
+      "locale": "de",
+      "notes": "C05: German locale via real LanguageRow UI click (Deutsch option in AnchoredMenu)",
+      "deProv": {
+        "method": "click .settings-language-trigger → click .settings-language-option[native='Deutsch']",
+        "islandLabel": "Island-Seitenleiste",
+        "langTrigger": "Deutsch",
+        "germanDomConfirmed": true
+      }
+    },
+    "pi-settings-picker-de-dark.png": {
+      "sha256": "273d82a61846b15c84d7ae20e78cdbc2b47ecfd391ce1a7e2951b13d20f1f4e3",
+      "page": "settings/general",
+      "theme": "dark",
+      "navLayout": "rail",
+      "locale": "de",
+      "notes": "C05: German locale dark theme shot",
+      "deProv": {
+        "germanDomConfirmed": true
+      }
+    }
+  },
+  "c02Measurements": {
+    "method": "CSS variable reads: --d-rail-w, --d-rail-island, --d-gap + DOM element clientWidth",
+    "rail": {
+      "navLayout": "rail",
+      "shellClientWidth": 1200,
+      "railPx": 50,
+      "islandPx": 60,
+      "gapPx": 12,
+      "chromeW": 74,
+      "usableWidth": 1126,
+      "sidebarW": 256,
+      "sidebarMax": 220,
+      "mainPaneW": 870,
+      "mainFloorOk": true
+    },
+    "island": {
+      "navLayout": "island",
+      "shellClientWidth": 1200,
+      "chromeW": 84,
+      "usableWidth": 1116,
+      "sidebarW": 256,
+      "mainPaneW": 860,
+      "mainFloorOk": true
+    },
+    "usableDelta": 10,
+    "tabs": {
+      "navLayout": "tabs",
+      "shellClientWidth": 1200,
+      "chromeW": 24,
+      "usableWidth": 1176,
+      "sidebarW": 256,
+      "mainPaneW": 920,
+      "mainFloorOk": true
+    },
+    "tabsReserve": 24,
+    "clientWidthStable": true,
+    "mainFloorRail": true,
+    "boundaryCase": {
+      "shellWidth": 1040,
+      "rail": { "chromeW": 74, "usableWidth": 966, "mainPaneW": 710, "mainFloorOk": true },
+      "island": { "chromeW": 84, "usableWidth": 956, "mainPaneW": 700, "mainFloorOk": true },
+      "delta": 10,
+      "note": "At 1040px shell width both layouts meet 450px floor; delta=10 confirmed"
+    }
+  }
+}

@@ -204,25 +204,30 @@ export function OnboardingChecklist() {
             )}
 
             {step === 3 && (
-              /* NEEDS DESIGN REVIEW — no approved mock for step 3 */
+              /* Derived from D.css primitives — no approved mock for step 3. */
               <div className="ob-derived-step">
-                <p className="ob-step-title">{t("onboarding.step3Title")}</p>
-                <p className="ob-step-desc">{t("onboarding.step3Desc")}</p>
-                <div className="ob-perm-options" role="radiogroup">
+                <div>
+                  <p className="ob-step-title">{t("onboarding.step3Title")}</p>
+                  <p className="ob-step-desc">{t("onboarding.step3Desc")}</p>
+                </div>
+                <div className="ob-perm-options" role="radiogroup" aria-label={t("onboarding.step3Title")}>
                   {(["always-ask", "write", "yolo"] as ToolApprovalMode[]).map((m) => (
-                    <label key={m} className={`ob-perm-row${permMode === m ? " selected" : ""}`}>
-                      <input
-                        type="radio"
-                        name="permMode"
-                        value={m}
-                        checked={permMode === m}
-                        onChange={() => setPermMode(m)}
-                        style={{ marginRight: 8 }}
-                      />
-                      {m === "always-ask" ? t("settings.toolApprovalModeAlwaysAsk")
-                        : m === "write" ? t("settings.toolApprovalModeWrite")
-                        : t("settings.toolApprovalModeYolo")}
-                    </label>
+                    <div
+                      key={m}
+                      className={`ob-perm-row${permMode === m ? " selected" : ""}`}
+                      role="radio"
+                      aria-checked={permMode === m}
+                      tabIndex={0}
+                      onClick={() => setPermMode(m)}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setPermMode(m); }}
+                    >
+                      <div className="ob-perm-label">
+                        {m === "always-ask" ? t("settings.toolApprovalModeAlwaysAsk")
+                          : m === "write" ? t("settings.toolApprovalModeWrite")
+                          : t("settings.toolApprovalModeYolo")}
+                      </div>
+                      <div className="ob-radio" aria-hidden />
+                    </div>
                   ))}
                 </div>
               </div>
