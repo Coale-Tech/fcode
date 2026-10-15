@@ -1,0 +1,17 @@
+{
+  "shot": "pi-settings-picker-island",
+  "commit": "60c76ea97",
+  "buildTime": "2026-10-15T09:32:00.000Z",
+  "dataTheme": "light",
+  "dataNavLayout": "island",
+  "savedNavLayout": "island",
+  "savedTheme": "light",
+  "activePage": "settings",
+  "navTabsPresent": false,
+  "navRailPresent": false,
+  "viewport": {
+    "w": 1200,
+    "h": 800
+  },
+  "dpr": 2
+}

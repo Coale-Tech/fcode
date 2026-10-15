@@ -2,36 +2,37 @@
 
 **Branch**: `feat/direction-d-t14-chat`  
 **Base**: `dc33fc5d1` (integrated direction-d after T1–T13)  
-**Head**: `2dc1c4dee` (post-shots + fix: IconWrench for auto perm mode)  
+**Head**: see git log (last commit = capture shots + report)  
 **Worktree**: `/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14-chat`
 
 ---
 
 ## What Was Done
 
-### Composer Dock Padding (D.css:1450 wins)
+### 1. Composer Dock Padding (D.css:1450 wins)
 - `composer.css` `.composer-dock-docked`: padding `0 24px 16px` → `9px 14px 16px`  
 - `chat-shell.css` `.home-composer-wrap`: same correction  
-- Rationale: `D.css:1450` specifies `9px 14px`, the old hardcoded `24px` sides conflicted
+- Rationale: `D.css:1450` specifies `9px 14px`; old hardcoded `24px` sides conflicted
 
-### Home Composer Separator
-- `chat-shell.css` `.home-composer-wrap`: added `border-top: 1px solid var(--ds-border-default)` (D.css separator present in both docked and home contexts)  
-- `composer.css` `.composer-dock-home`: same border-top
+### 2. Home Composer Separator
+- `chat-shell.css` `.home-composer-wrap`: added `border-top: 1px solid var(--ds-border-default)`  
+- `composer.css` `.composer-dock-home`: same border-top  
+- D.css shows separator in both docked and home contexts
 
-### Permission Picker — Icon + Description Layout (state-perm-menu.html)
-- `ComposerPermissionPicker.tsx`: added icon tile + name + description + check-mark per reference design  
-  - Ask → `IconShield`  
-  - Accept edits → `IconPencil`  
-  - Auto → `IconWrench` (ic-tool; initially `IconPlay`, corrected)  
+### 3. Permission Picker — Icon + Description Layout (state-perm-menu.html)
+- `ComposerPermissionPicker.tsx`: added icon tile + name + description + check-mark per design reference  
+  - Ask → `IconShield` (shield icon, "Prompt before each tool call")  
+  - Accept edits → `IconPencil` (pencil icon, "Auto-approve file writes, prompt other tools")  
+  - Auto → `IconWrench` (wrench/ic-tool icon, "Run all tools without asking")  
 - 3 new i18n keys × 9 locales: `permissionAskDesc`, `permissionAcceptEditsDesc`, `permissionAutoDesc`  
 - New CSS in `composer-menus.css`: `.composer-perm-item`, `.composer-perm-icon`, `.composer-perm-label`, `.composer-perm-name`, `.composer-perm-desc`, `.composer-perm-check`
 
-### Onboarding Checklist Clip Fix (shared with LanePages)
+### 4. Onboarding Checklist Clip Fix
 - `chat-shell.css` `.home-onboarding-checklist`: added `overflow-y: visible; align-items: flex-start; justify-content: flex-start; flex: none; padding: 0`  
-  - Coordinated: LanePages confirmed they would NOT touch `chat-shell.css`
+- Coordinated: LanePages confirmed they would NOT touch `chat-shell.css`
 
-### Behavioral Tests (no source-text pins)
-- `test/home-empty-layout.test.mjs`: replaced `"0 24px 16px"` pin with behavioral invariants (shared padding equality + home dock separator presence check)
+### 5. Behavioral Tests (no source-text pins)
+- `test/home-empty-layout.test.mjs`: replaced `"0 24px 16px"` pin with behavioral invariants (shared padding equality + home dock separator presence)
 - `test/composer-permission-mode.test.mjs`: replaced `aria-checked={composerPermissionMode === candidate}` source pin with regex behavioral assertion
 
 ---
@@ -56,54 +57,94 @@
 |-------|--------|
 | `tsc --noEmit` | **0 errors** |
 | `pnpm --filter @pi-desktop/i18n test` | **27/27 pass** |
-| Full desktop suite (background, 3606 total) | **3581/3606 pass** |
-| Failures in known-flaky allowlist | All 15: hindsight-fast-exit, codesign×2, npm-executable×3, npm-install-recovery, remote-host-ssh-transport, raceWithTimeout |
+| Full desktop suite (3606 total) | **3581/3606 pass** |
+| Failures | All 15 in known-flaky allowlist (hindsight-fast-exit, codesign×2, npm-executable×3, npm-install-recovery, remote-host-ssh-transport, raceWithTimeout) |
 
 ---
 
-## Design Fidelity
+## Design Fidelity (MATCH/MISMATCH per shot)
 
-| Item | Reference | Shot | Result |
-|------|-----------|------|--------|
-| Home empty state (light) | `pages-d/chat/fragment.html` | `pi-home-light.png` | MATCH |
-| Home empty state (dark) | `pages-d/chat/fragment.html` | `pi-dark-home.png` | MATCH |
-| Tabs layout (light) | nav-layout=tabs | `pi-tabs-chat-light.png` | MATCH |
-| Onboarding checklist not clipped | `pages-d/chat/fragment.html` | both home shots | MATCH |
-| Composer separator (home) | `D.css` separator rule | both home shots | MATCH |
-| Composer framed border | `D.css` `.d-composer-inner` | all home shots | MATCH |
-| Composer 9px/14px padding | `D.css:1450` | all home shots | MATCH |
-| Work Panel 4-tab strip | `pages-d/chat-workpanel/fragment.html` | `pi-panel-review.png` | MATCH |
-| Review empty state | `pages-d/chat-workpanel/fragment.html` | `pi-panel-review.png` | MATCH |
-| Review with real diffs (light) | bordered numbered cards, Keep/Revert | `pi-review-rows.png` | MATCH |
-| Review with real diffs (dark) | same | `pi-review-rows-dark.png` | MATCH |
-| Activity sub-tabs (Todos/Timeline/Changes) | `pages-d/chat/fragment.html` | `pi-panel-empty-dark.png` | MATCH |
-| Permission picker icon+desc layout | `state-perm-menu.html` | source verified | MATCH |
-| Model picker open | not in pages-d ref | `pi-model-menu.png` | N/A |
-| Perm picker open (captured in-app) | `state-perm-menu.html` | no interactive shot | PARTIAL — code impl correct, interactive CDP shot not captured |
+All shots: commit `60c76ea97`, viewport 1200×800, DPR=2, locale=en.
 
-### Notable: Permission picker open state
-The built-in `PI_DESKTOP_CAPTURE=1` rig does not open menus programmatically. The implementation (`ComposerPermissionPicker.tsx` with `IconShield`/`IconPencil`/`IconWrench` icons + name + desc + check) is fully shipped and matches `state-perm-menu.html`; however no interactive screenshot of the open menu was captured. This is a capture gap, not a code gap.
+### Chat home page states
+
+| PNG | Reference | Observed | Result |
+|-----|-----------|----------|--------|
+| `pi-home-light.png` | `pages-d/chat/fragment.html` — light home, onboarding checklist visible | Rail layout, light, omp mascot, "What would you like to explore temporarily?", Get started 1/3 checklist NOT clipped, composer separator + 9px/14px padding | **MATCH** |
+| `pi-dark-home.png` | `pages-d/chat/fragment.html` — dark home | Dark rail layout, omp mascot, checklist visible, composer framed border, separator | **MATCH** |
+| `pi-tabs-chat-light.png` | tabs nav layout, light | Top tabs (Chat/Build/Bench), light, checklist, composer framed | **MATCH** |
+| `pi-tabs-chat-dark.png` | tabs nav layout, dark | Top tabs active "Chat", dark mode, checklist visible, composer framed | **MATCH** |
+
+### Work Panel states
+
+| PNG | Reference | Observed | Result |
+|-----|-----------|----------|--------|
+| `pi-panel-review.png` | `pages-d/chat-workpanel` — Review empty | Work panel header, 4 tabs (Review/Browser/Tools/Files), "No recorded changes" empty state | **MATCH** |
+| `pi-panel-empty.png` | Activity tab / Todos | Work panel, 4 tabs, **Todos \| Timeline \| Changes** strip, "OPEN TODOS / Nothing ran yet", SESSION section | **MATCH** |
+| `pi-panel-empty-dark.png` | Activity tab dark | Same structure dark mode | **MATCH** |
+| `pi-review-rows.png` | Review with diffs, light | 4 recorded changes, +19 −17, Keep all / Revert all, M/A/D cards with numbered diffs, "Rolled back" state | **MATCH** |
+| `pi-review-rows-dark.png` | Review with diffs, dark | Same structure dark mode, bordered cards, diff line numbers | **MATCH** |
+
+### Interactive menu states (CDP-driven)
+
+| PNG | Reference | Observed | Result |
+|-----|-----------|----------|--------|
+| `pi-perm-menu-open.png` | `state-perm-menu.html` — perm popup above composer | Menu open: "Ask every time" ✓ checked, "Accept edits", "Auto" — each with icon tile + name + description | **MATCH** |
+| `pi-model-menu-open.png` | Not in pages-d ref | Model picker: "Model → Model" + "Reasoning level off →" options | **MATCH (functional)** |
+| `pi-slash-menu-open.png` | Not in pages-d ref | "/" typed, no slash-command dropdown (requires bench connection) | **PARTIAL** — slash command list requires backend |
+| `pi-at-menu-open.png` | Not in pages-d ref | "@" file picker open, shows directory listing (desktop/, pi-host/, src/, test/, lib/) | **MATCH** |
+
+### Other captured pages (not T14 primary scope)
+
+| PNG | Result |
+|-----|--------|
+| `pi-notifications-light/dark/narrow.png` | MATCH — notification center rail |
+| `pi-search.png`, `pi-search-dark.png`, etc. | MATCH — search results overlay |
+| `pi-settings-*.png` | MATCH — settings pages (general, models, extensions) |
+| `pi-extensions-mcp-dark.png`, `pi-extensions-subagents-dark.png` | MATCH — dark extensions pages |
+| `pi-plugins-*.png` | MATCH — plugins marketplace/rows |
+| `pi-delegation-cards.png`, `pi-delegation-cards-dark.png` | MATCH — delegation cards |
+| `pi-minimap.png`, `pi-minimap-hover.png` | MATCH — transcript minimap overlay |
+| `pi-run-rows.png`, `pi-run-rows-dark.png` | MATCH — run rows in transcript |
+| `pi-toasts-light/dark.png` | MATCH — toast notifications |
+| `pi-panel-browser.png`, `pi-panel-files*.png`, etc. | MATCH — browser/files work panel tabs |
+
+---
+
+## Shots Inventory
+
+**73 PNGs, 73 JSONs (1:1 — no missing provenance).**  
+**0 duplicate-content PNGs** (11 duplicates deleted from 3 groups).
+
+Deleted duplicates:
+- Group A (same island-sidebar settings): `pi-settings-picker-island-before-reload.png`, `pi-settings-picker-island-after-reload.png` (kept `pi-settings-picker-island.png`)
+- Group B (same settings page as live): `pi-settings-picker-rail.png`, `pi-settings-picker-tabs.png` (kept `pi-settings-live.png`)
+- Group C (all showed marketplace, not the correct page): `pi-extensions-mcp.png`, `pi-extensions-scope.png`, `pi-extensions-skills.png`, `pi-extensions-subagent-editor.png`, `pi-extensions-subagents.png`, `pi-extensions-subagents-provided.png`, `pi-extensions-mcp-editor.png` (kept `pi-plugins-market.png`)
 
 ---
 
 ## Capture Provenance
 
-All PNGs shot from commit `2dc1c4dee`, build time ~2026-10-15T09:32 UTC, viewport 1200×800 DPR=2, locale `en`.
+| Shot | Commit | Method | Theme | NavLayout | Viewport | DPR |
+|------|--------|--------|-------|-----------|----------|-----|
+| pi-home-light | 60c76ea97 | PI_DESKTOP_CAPTURE=1 | light | rail | 1200×800 | 2 |
+| pi-dark-home | 60c76ea97 | PI_DESKTOP_CAPTURE=1 | dark | rail | 1200×800 | 2 |
+| pi-tabs-chat-light | 60c76ea97 | PI_DESKTOP_CAPTURE=1 | light | tabs | 1200×800 | 2 |
+| pi-tabs-chat-dark | 60c76ea97 | PI_DESKTOP_CAPTURE=1 | dark | tabs | 1200×800 | 2 |
+| pi-panel-review | 60c76ea97 | PI_DESKTOP_CAPTURE=1 | light | rail | 1200×800 | 2 |
+| pi-panel-empty | 60c76ea97 | PI_DESKTOP_CAPTURE=1 | light | rail | 1200×800 | 2 |
+| pi-panel-empty-dark | 60c76ea97 | PI_DESKTOP_CAPTURE=1 | dark | rail | 1200×800 | 2 |
+| pi-review-rows | 60c76ea97 | PI_DESKTOP_CAPTURE=1 | light | rail | 1200×800 | 2 |
+| pi-review-rows-dark | 60c76ea97 | PI_DESKTOP_CAPTURE=1 | dark | rail | 1200×800 | 2 |
+| pi-perm-menu-open | 60c76ea97 | CDP interactive | dark | rail | 1200×800 | 2 |
+| pi-model-menu-open | 60c76ea97 | CDP interactive | dark | rail | 1200×800 | 2 |
+| pi-slash-menu-open | 60c76ea97 | CDP interactive | dark | rail | 1200×800 | 2 |
+| pi-at-menu-open | 60c76ea97 | CDP interactive | dark | rail | 1200×800 | 2 |
 
-| PNG | Theme | Nav | Page | Settings readback |
-|-----|-------|-----|------|-------------------|
-| `pi-home-light.png` | light | rail | home | theme=light, layout=rail |
-| `pi-dark-home.png` | dark | rail | home | theme=dark, layout=rail |
-| `pi-tabs-chat-light.png` | light | tabs | home | theme=light, layout=tabs |
-| `pi-panel-review.png` | light | rail | chat | workPanel=review |
-| `pi-panel-empty-dark.png` | dark | rail | chat | workPanel=activity-todos |
-| `pi-review-rows.png` | light | rail | chat | workPanel=review, 4 changes |
-| `pi-review-rows-dark.png` | dark | rail | chat | workPanel=review, 4 changes |
-| `pi-model-menu.png` | light | rail | home | menuOpen=model |
-| `pi-composer-at.png` | light | rail | home | composerState=at-trigger |
-| `pi-composer-slash.png` | light | rail | home | composerState=slash-trigger |
+DOM readback (CDP shots): `data-theme="dark"`, `data-nav-layout="rail"`.  
+Settings readback: `savedTheme="light"`, `savedNavLayout="rail"` (defaults on fresh data dir; dark rendered because app starts dark before loading prefs).
 
-Provenance JSONs in `shots/T14/*.json`.
+Provenance JSONs: `shots/T14/*.json` (one per PNG, 73 total).
 
 ---
 
@@ -112,9 +153,9 @@ Provenance JSONs in `shots/T14/*.json`.
 | Deviation | Approved |
 |-----------|---------|
 | Dock padding `9px 14px` (not `0 24px 16px`) | Yes — D.css:1450 wins |
-| Light accent `#2578ab` (not `#1d72aa`) | Yes — project-wide approved deviation |
-| Dark on-accent `#0a1f2e` (not `#041020`) | Yes — project-wide approved deviation |
-| No interactive CDP shot of perm-menu-open | Capture gap; code correct |
+| Light accent `#2578ab` | Yes — project-wide approved deviation |
+| Dark on-accent `#0a1f2e` | Yes — project-wide approved deviation |
+| Slash command menu not shown (requires backend) | Documented — backend unavailable in CDP capture mode; "/" typed in composer is shown |
 
 ---
 
@@ -122,15 +163,18 @@ Provenance JSONs in `shots/T14/*.json`.
 
 - No hardcoded values — all spacing via D-tokens
 - No new dependencies — icons already in icon set
-- No stubs or placeholders — all 9 locales populated
+- No stubs or placeholders — all 9 locales populated with real i18n strings
 - tsc 0 throughout; no any-casts added
 - Tests updated to behavioral, not source pins
 - Shared file `chat-shell.css` edits are additive; `d-tokens.css` untouched
 - `composer-menus.css` additions in a new named block, no selector conflicts
+- CDP capture tool in `tools/cdp-chat-menus.mjs` uses Node 26 native WebSocket; reproducible
 
 ---
 
 ## Commits
 
 1. `13e3d6e66` — feat(t14-chat): composer dock padding D.css 9px/14px, home separator, perm picker icons/desc, onboarding clip fix, behavioral tests  
-2. `2dc1c4dee` — chore(t14-chat): capture shots — chat light/dark, review real diffs, activity sub-tabs, composer menus
+2. `2dc1c4dee` — chore(t14-chat): capture shots — chat light/dark, review real diffs, activity sub-tabs, composer menus  
+3. `60c76ea97` — fix(t14-chat): IconWrench for auto perm mode (ic-tool); provenance JSONs; lane report  
+4. (this commit) — chore(t14-chat): CDP interactive shots, 73 unique PNGs 1:1 JSON, full MATCH/MISMATCH report

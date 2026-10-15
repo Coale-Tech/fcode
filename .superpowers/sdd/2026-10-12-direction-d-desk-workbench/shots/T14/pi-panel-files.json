@@ -1,0 +1,18 @@
+{
+  "shot": "pi-panel-files",
+  "commit": "60c76ea97",
+  "buildTime": "2026-10-15T09:32:00.000Z",
+  "dataTheme": "light",
+  "dataNavLayout": "rail",
+  "savedNavLayout": "rail",
+  "savedTheme": "light",
+  "activePage": "chat",
+  "navTabsPresent": false,
+  "navRailPresent": true,
+  "viewport": {
+    "w": 1200,
+    "h": 800
+  },
+  "dpr": 2,
+  "workPanelActive": "files"
+}

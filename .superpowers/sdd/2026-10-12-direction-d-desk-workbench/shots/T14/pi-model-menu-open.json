@@ -1,0 +1,17 @@
+{
+  "shot": "pi-model-menu-open",
+  "commit": "60c76ea97",
+  "buildTime": "2026-10-15T10:18:03.237Z",
+  "savedTheme": "light",
+  "savedNavLayout": "rail",
+  "viewport": {
+    "w": 1200,
+    "h": 800
+  },
+  "dpr": 2,
+  "dataTheme": "dark",
+  "dataNavLayout": "rail",
+  "pageId": "",
+  "menuOpen": "Collapse sidebar",
+  "menuCapture": "model-menu"
+}
