@@ -147,7 +147,7 @@ export function AppShell() {
   // D3 island: permanent sidebar always mounted regardless of page.
   // Tabs: sidebar mounts when not collapsed (or during exit animation).
   const sidebarAllowedForLayout = navLayout === "island" || navLayout === "tabs" || page === "chat";
-  const mountSidebar = !workbench && sidebarAllowedForLayout && (!sidebarCollapsed || sidebarExiting) ? true : navLayout === "island";
+  const mountSidebar = !workbench && (!sidebarCollapsed || sidebarExiting) ? sidebarAllowedForLayout : navLayout === "island";
 
   let shell: ReactNode = null;
   if (ready) {
