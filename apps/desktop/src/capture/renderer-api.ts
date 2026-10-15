@@ -60,6 +60,7 @@ const CAPTURE_RIG_METHODS = [
   "seedKanbanBoard",
   "seedScheduledTasks",
   "seedPullRequests",
+  "seedApprovalCard",
   "seedSidebarStatuses",
   "ensureVisualFixtures",
 ] as const satisfies readonly CaptureRigMethod[];
