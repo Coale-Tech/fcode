@@ -61,6 +61,7 @@ const CAPTURE_RIG_METHODS = [
   "seedScheduledTasks",
   "seedPullRequests",
   "seedSidebarStatuses",
+  "seedOmpSettings",
   "ensureVisualFixtures",
 ] as const satisfies readonly CaptureRigMethod[];
 

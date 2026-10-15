@@ -13,6 +13,9 @@ import type {
   KanbanBoard,
   McpServerRecord,
   McpServerStatus,
+  OmpAgentEntry,
+  OmpModelsListResult,
+  OmpWorktreeEntry,
   PluginSummary,
   PluginTheme,
   ProjectRecord,
@@ -52,6 +55,7 @@ export type CaptureRigMethods = {
     failed: string;
   } | null;
   ensureVisualFixtures: () => Promise<void>;
+  seedOmpSettings: () => void;
 };
 
 export type CaptureRig = CaptureRigMethods & {
@@ -72,6 +76,8 @@ export function installCaptureRig(): CaptureRig {
   const originalListScheduled = api.listScheduled;
   const originalListScheduledRuns = api.listScheduledRuns;
   const originalListPullRequests = api.listPullRequests;
+  const originalOmpModelsList = api.ompModelsList;
+  const originalOmpWorktreeList = api.ompWorktreeList;
   const methods: CaptureRigMethods = {
     openWorkPanelArtifact: (
       kind: "review" | "browser" | "file",
@@ -999,6 +1005,26 @@ export function installCaptureRig(): CaptureRig {
         failed: failed.id,
       };
     },
+    seedOmpSettings: () => {
+      if (!window.__PI_CAPTURE__) return;
+      // Mock ompModelsList — the only sidecar-gated call in OmpSettingsSections.
+      // ompSettingsGet reads disk (works without sidecar); ompAgentList reads agent dirs.
+      const fakeModels: OmpModelsListResult = {
+        models: [
+          { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6", provider: { id: "anthropic", name: "Anthropic" } },
+          { id: "claude-opus-4-5",   name: "Claude Opus 4.5",   provider: { id: "anthropic", name: "Anthropic" } },
+          { id: "gpt-4.1",           name: "GPT-4.1",           provider: { id: "openai",    name: "OpenAI"    } },
+        ],
+      };
+      api.ompModelsList = async () => fakeModels;
+      // Mock ompWorktreeList with 3 realistic entries (badge count = 3).
+      const fakeWorktrees: OmpWorktreeEntry[] = [
+        { path: "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-feat-etims", kind: "pr-checkout", branch: "feat/etims-vscu", parentRepo: "/Users/mac/ERPNext/frappe_agent/PI-Desktop" },
+        { path: "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-fix-currency", kind: "pr-checkout", branch: "fix/multi-currency", parentRepo: "/Users/mac/ERPNext/frappe_agent/PI-Desktop" },
+        { path: "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-task-iso-abc123", kind: "task-isolation", parentRepo: "/Users/mac/ERPNext/frappe_agent/PI-Desktop" },
+      ];
+      api.ompWorktreeList = async () => ({ worktrees: fakeWorktrees });
+    },
     ensureVisualFixtures: async () => {
       // Destructive fixture seeding is capture-rig only; the rig sets
       // __PI_CAPTURE__ before invoking (see electron/main capture suite).
@@ -1096,6 +1122,8 @@ export function installCaptureRig(): CaptureRig {
       api.listScheduled = originalListScheduled;
       api.listScheduledRuns = originalListScheduledRuns;
       api.listPullRequests = originalListPullRequests;
+      api.ompModelsList = originalOmpModelsList;
+      api.ompWorktreeList = originalOmpWorktreeList;
     },
   };
 }
