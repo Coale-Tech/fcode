@@ -91,6 +91,13 @@
   --d-wf-nb-h:                13px;
   --d-wf-rail-sm:             9px;
   --d-wf-rail-lg:             13px;
+  /* D1 nav-tab pill metrics — D.css:146-178, D1-shell.html:98-107 */
+  --d-nav-tab-h:              var(--d-ctrl);    /* 28px pill height */
+  --d-nav-tab-pad-x:          10px;             /* D.css:154 padding-inline */
+  --d-nav-tab-gap:            6px;              /* D.css:155 icon-label gap */
+  --d-nav-tab-icon:           13px;             /* D.css icon size */
+  --d-nav-tab-label-max:      12ch;             /* truncation cap */
+  --d-nav-tab-strip-gap:      2px;              /* D.css:148 gap between pills */
   --d-wf-ri:                  5px;
   --d-wf-sidebar:             30px;
   --d-wf-dot:                 4px;

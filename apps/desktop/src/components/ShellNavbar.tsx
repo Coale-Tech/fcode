@@ -5,9 +5,12 @@
  * window controls remain accessible regardless of the active page.
  *
  * Layout variants (data-nav-layout):
- *   tabs   → NavTabs pill strip at left (Task 8 fills content)
- *   rail   → "Fcode / PageName" breadcrumb
+ *   tabs   → brand logo + NavTabs + awesomebar + right cluster (D1-shell.html:81-136)
+ *   rail   → "Fcode / PageName" breadcrumb (D2/D3)
  *   island → same breadcrumb
+ *
+ * D1 right cluster: bench chip + notification bell + settings + avatar
+ * (D1-shell.html:121-136, D.css:238-290).
  *
  * Design source: kit-d/D.css:117-244, D1-shell.html:81-136,
  *                D2-shell.html:69-109, D3-shell.html:304-343
@@ -18,10 +21,11 @@
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "../stores/app-store";
 import { resolveNavLayout } from "../lib/nav-layout";
-import { IconSearch, IconSettings } from "./icons";
+import { IconChevronDown, IconSearch, IconSettings, IconTerminal } from "./icons";
 import { NavTabs } from "./NavTabs";
 import { NotificationCenter } from "./NotificationCenter";
 import { TooltipButton } from "./ui";
+import { useBenchContext } from "../hooks/use-bench-context";
 import type { AppState } from "../stores/app-state";
 
 const PAGE_LABEL_KEY: Record<AppState["page"], string> = {
@@ -39,17 +43,27 @@ const PAGE_LABEL_KEY: Record<AppState["page"], string> = {
 
 export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
   const { t } = useTranslation();
-  const layout   = resolveNavLayout(useAppStore((s) => s.settings?.navLayout));
-  const page     = useAppStore((s) => s.page);
-  const setPage  = useAppStore((s) => s.setPage);
-  const isMac    = (window.piDesktop?.platform ?? "darwin") === "darwin";
+  const layout  = resolveNavLayout(useAppStore((s) => s.settings?.navLayout));
+  const page    = useAppStore((s) => s.page);
+  const setPage = useAppStore((s) => s.setPage);
+  const isMac   = (window.piDesktop?.platform ?? "darwin") === "darwin";
+  const bench   = useBenchContext();
 
   return (
     <header className="shell-navbar drag" data-nav-layout={layout}>
-      {/* Left: tabs strip (D1) or breadcrumb (D2/D3) */}
+      {/* Left: brand + tabs strip (D1) or breadcrumb (D2/D3) */}
       <div className="shell-navbar-start no-drag">
         {layout === "tabs" ? (
-          <NavTabs />
+          <>
+            {/* Brand logo — D1-shell.html:89-95 */}
+            <div className="shell-navbar-brand" aria-hidden>
+              <span className="shell-navbar-brand-icon">
+                <IconTerminal size={12} />
+              </span>
+              <span className="shell-navbar-brand-name">{t("app.shellName")}</span>
+            </div>
+            <NavTabs />
+          </>
         ) : (
           <nav className="shell-navbar-breadcrumb" aria-label="Location">
             <span className="shell-navbar-crumb-root">{t("app.shellName")}</span>
@@ -78,11 +92,34 @@ export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
         </div>
       </button>
 
-      {/* Right end: Notification + Settings icons in tabs layout (D1-shell.html:119-134).
-          In rail/island layouts these live in the NavRail footer. */}
+      {/* Right end cluster (D1: bench chip + bell + settings + avatar; D2/D3: empty) */}
       {layout === "tabs" ? (
         <div className="shell-navbar-end no-drag">
-          <NotificationCenter />
+          {/* Bench chip — D1-shell.html:121-124, D.css:272-290 */}
+          {bench.kind !== "empty" && (
+            <button
+              type="button"
+              className="shell-navbar-bench-chip no-drag"
+              data-nav="bench"
+              title={bench.benchName ?? undefined}
+              onClick={() => setPage("bench")}
+            >
+              <span
+                className="shell-navbar-bench-dot"
+                data-bench-status={bench.kind}
+                aria-hidden
+              />
+              <span className="shell-navbar-bench-name">
+                {bench.benchName ?? t("nav.bench")}
+              </span>
+              <IconChevronDown size={11} aria-hidden />
+            </button>
+          )}
+
+          {/* Notification bell — anchor below for top navbar (F02) */}
+          <NotificationCenter anchor="below" />
+
+          {/* Settings button */}
           <TooltipButton
             type="button"
             className="shell-navbar-icon-btn"
@@ -93,6 +130,16 @@ export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
           >
             <IconSettings size={16} aria-hidden />
           </TooltipButton>
+
+          {/* Avatar placeholder — D1-shell.html:133 */}
+          <button
+            type="button"
+            className="shell-navbar-avatar"
+            aria-label={t("nav.userMenu", { defaultValue: "User menu" })}
+            title={t("nav.userMenu", { defaultValue: "User menu" })}
+          >
+            <IconTerminal size={12} aria-hidden />
+          </button>
         </div>
       ) : (
         <div className="shell-navbar-end" aria-hidden="true" />

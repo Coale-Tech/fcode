@@ -63,11 +63,14 @@ function formatRelativeTime(value: string, locale: string, justNow: string): str
 export function NotificationCenter({
   onBeforeOpen,
   navRailLabel,
+  anchor = "above",
 }: {
   onBeforeOpen?: () => void;
   /** When set, renders the trigger as a .nav-rail-labeled item with a visible label
    *  (shown on .expanded rail) and wraps the icon in .nav-rail-icon. */
   navRailLabel?: string;
+  /** Popup anchor direction: "above" (default, for rail footer) or "below" (navbar). */
+  anchor?: "above" | "below";
 }) {
   const { t, i18n } = useTranslation();
   const storedNotifications = useAppStore((state) => state.notifications);
@@ -93,7 +96,7 @@ export function NotificationCenter({
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [filter, setFilter] = useState<NotificationFilter>("all");
-  const [popoverPos, setPopoverPos] = useState<{ bottom: number; left: number } | null>(null);
+  const [popoverPos, setPopoverPos] = useState<{ bottom?: number; top?: number; left: number } | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -123,10 +126,11 @@ export function NotificationCenter({
       if (!rect) return;
       const width = Math.min(360, window.innerWidth - 24);
       const left = Math.max(12, Math.min(rect.left, window.innerWidth - width - 12));
-      setPopoverPos({
-        bottom: Math.max(12, window.innerHeight - rect.top + 8),
-        left,
-      });
+      setPopoverPos(
+        anchor === "below"
+          ? { top: rect.bottom + 8, left }
+          : { bottom: Math.max(12, window.innerHeight - rect.top + 8), left },
+      );
     };
     place();
     window.addEventListener("resize", place);
@@ -270,7 +274,7 @@ export function NotificationCenter({
               role="dialog"
               aria-labelledby="notification-title"
               onKeyDown={onPopoverKeyDown}
-              style={{ bottom: popoverPos.bottom, left: popoverPos.left }}
+              style={{ bottom: popoverPos.bottom, top: popoverPos.top, left: popoverPos.left }}
             >
           <header className="notification-header">
             <h2 id="notification-title">{t("notifications.title")}</h2>
