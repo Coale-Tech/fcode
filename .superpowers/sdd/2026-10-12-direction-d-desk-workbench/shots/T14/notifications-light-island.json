@@ -1,15 +1,14 @@
 {
-  "name": "notifications-light-island",
-  "commit": "3a79bd370",
-  "buildTime": "2026-10-15T10:27:57.610Z",
-  "captureTime": "2026-10-15T10:27:57.610Z",
-  "viewport": "1024x683",
-  "dpr": 2,
+  "commit": "ac50b773a",
+  "buildTime": "2026-10-15T11:08:28.996Z",
+  "viewport": "1200×800",
+  "DPR": 2,
+  "savedNavLayout": null,
+  "savedTheme": null,
+  "dataNavLayout": "island",
+  "dataTheme": "light",
+  "pageId": "notifications",
   "layout": "island",
   "theme": "light",
-  "page": "notifications",
-  "rootAttrs": {
-    "data-nav-layout": "island",
-    "data-theme": "light"
-  }
+  "notes": ""
 }

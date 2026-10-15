@@ -1,15 +1,14 @@
 {
-  "name": "plugins-light-rail",
-  "commit": "3a79bd370",
-  "buildTime": "2026-10-15T10:28:06.880Z",
-  "captureTime": "2026-10-15T10:28:06.880Z",
-  "viewport": "1024x683",
-  "dpr": 2,
+  "commit": "ac50b773a",
+  "buildTime": "2026-10-15T11:08:36.166Z",
+  "viewport": "1200×800",
+  "DPR": 2,
+  "savedNavLayout": null,
+  "savedTheme": null,
+  "dataNavLayout": "rail",
+  "dataTheme": "light",
+  "pageId": "plugins",
   "layout": "rail",
   "theme": "light",
-  "page": "plugins",
-  "rootAttrs": {
-    "data-nav-layout": "rail",
-    "data-theme": "light"
-  }
+  "notes": "plgOk=false"
 }

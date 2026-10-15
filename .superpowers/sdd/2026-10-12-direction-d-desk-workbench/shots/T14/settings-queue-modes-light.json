@@ -1,16 +1,14 @@
 {
-  "name": "settings-queue-modes-light",
-  "commit": "3a79bd370",
-  "buildTime": "2026-10-15T10:28:59.777Z",
-  "captureTime": "2026-10-15T10:28:59.777Z",
-  "viewport": "1024x683",
-  "dpr": 2,
+  "commit": "ac50b773a",
+  "buildTime": "2026-10-15T11:25:19.405Z",
+  "viewport": "1200×800",
+  "DPR": 2,
+  "savedNavLayout": null,
+  "savedTheme": null,
+  "dataNavLayout": "rail",
+  "dataTheme": "light",
+  "pageId": "settings",
   "layout": "rail",
   "theme": "light",
-  "page": "settings",
-  "rootAttrs": {
-    "data-nav-layout": "rail",
-    "data-theme": "light"
-  },
-  "note": "Agents & tasks section"
+  "notes": "queue=false"
 }

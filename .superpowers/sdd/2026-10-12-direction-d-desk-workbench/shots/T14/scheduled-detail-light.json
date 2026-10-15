@@ -1,16 +1,14 @@
 {
-  "name": "scheduled-detail-light",
-  "commit": "3a79bd370",
-  "buildTime": "2026-10-15T10:27:34.118Z",
-  "captureTime": "2026-10-15T10:27:34.118Z",
-  "viewport": "1024x683",
-  "dpr": 2,
+  "commit": "ac50b773a",
+  "buildTime": "2026-10-15T11:08:05.789Z",
+  "viewport": "1200×800",
+  "DPR": 2,
+  "savedNavLayout": null,
+  "savedTheme": null,
+  "dataNavLayout": "rail",
+  "dataTheme": "light",
+  "pageId": "scheduled",
   "layout": "rail",
   "theme": "light",
-  "page": "scheduled",
-  "rootAttrs": {
-    "data-nav-layout": "rail",
-    "data-theme": "light"
-  },
-  "note": "detail panel"
+  "notes": "detail=true row=true"
 }

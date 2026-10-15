@@ -1,15 +1,14 @@
 {
-  "name": "scheduled-dark-rail",
-  "commit": "3a79bd370",
-  "buildTime": "2026-10-15T10:27:31.269Z",
-  "captureTime": "2026-10-15T10:27:31.269Z",
-  "viewport": "1024x683",
-  "dpr": 2,
+  "commit": "ac50b773a",
+  "buildTime": "2026-10-15T11:07:58.953Z",
+  "viewport": "1200×800",
+  "DPR": 2,
+  "savedNavLayout": null,
+  "savedTheme": null,
+  "dataNavLayout": "rail",
+  "dataTheme": "dark",
+  "pageId": "scheduled",
   "layout": "rail",
   "theme": "dark",
-  "page": "scheduled",
-  "rootAttrs": {
-    "data-nav-layout": "rail",
-    "data-theme": "dark"
-  }
+  "notes": ""
 }

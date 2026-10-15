@@ -1,16 +1,14 @@
 {
-  "name": "projects-light-rail",
-  "commit": "3a79bd370",
-  "buildTime": "2026-10-15T10:28:21.131Z",
-  "captureTime": "2026-10-15T10:28:21.131Z",
-  "viewport": "1024x683",
-  "dpr": 2,
+  "commit": "ac50b773a",
+  "buildTime": "2026-10-15T11:08:49.714Z",
+  "viewport": "1200×800",
+  "DPR": 2,
+  "savedNavLayout": null,
+  "savedTheme": null,
+  "dataNavLayout": "rail",
+  "dataTheme": "light",
+  "pageId": "projects",
   "layout": "rail",
   "theme": "light",
-  "page": "projects",
-  "rootAttrs": {
-    "data-nav-layout": "rail",
-    "data-theme": "light"
-  },
-  "note": "redirects to onboarding step 1"
+  "notes": "projOk=false"
 }

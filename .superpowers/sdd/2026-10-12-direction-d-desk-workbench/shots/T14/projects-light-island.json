@@ -1,15 +1,14 @@
 {
-  "name": "projects-light-island",
-  "commit": "3a79bd370",
-  "buildTime": "2026-10-15T10:28:23.507Z",
-  "captureTime": "2026-10-15T10:28:23.507Z",
-  "viewport": "1024x683",
-  "dpr": 2,
+  "commit": "ac50b773a",
+  "buildTime": "2026-10-15T11:08:55.154Z",
+  "viewport": "1200×800",
+  "DPR": 2,
+  "savedNavLayout": null,
+  "savedTheme": null,
+  "dataNavLayout": "island",
+  "dataTheme": "light",
+  "pageId": "projects",
   "layout": "island",
   "theme": "light",
-  "page": "projects",
-  "rootAttrs": {
-    "data-nav-layout": "island",
-    "data-theme": "light"
-  }
+  "notes": ""
 }

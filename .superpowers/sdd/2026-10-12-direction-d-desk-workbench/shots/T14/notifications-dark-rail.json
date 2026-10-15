@@ -1,15 +1,14 @@
 {
-  "name": "notifications-dark-rail",
-  "commit": "3a79bd370",
-  "buildTime": "2026-10-15T10:27:56.551Z",
-  "captureTime": "2026-10-15T10:27:56.551Z",
-  "viewport": "1024x683",
-  "dpr": 2,
+  "commit": "ac50b773a",
+  "buildTime": "2026-10-15T11:08:25.352Z",
+  "viewport": "1200×800",
+  "DPR": 2,
+  "savedNavLayout": null,
+  "savedTheme": null,
+  "dataNavLayout": "rail",
+  "dataTheme": "dark",
+  "pageId": "notifications",
   "layout": "rail",
   "theme": "dark",
-  "page": "notifications",
-  "rootAttrs": {
-    "data-nav-layout": "rail",
-    "data-theme": "dark"
-  }
+  "notes": ""
 }

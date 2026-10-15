@@ -1,15 +1,14 @@
 {
-  "name": "kanban-light-rail",
-  "commit": "3a79bd370",
-  "buildTime": "2026-10-15T10:27:15.152Z",
-  "captureTime": "2026-10-15T10:27:15.152Z",
-  "viewport": "1024x683",
-  "dpr": 2,
+  "commit": "ac50b773a",
+  "buildTime": "2026-10-15T11:07:41.608Z",
+  "viewport": "1200×800",
+  "DPR": 2,
+  "savedNavLayout": null,
+  "savedTheme": null,
+  "dataNavLayout": "rail",
+  "dataTheme": "light",
+  "pageId": "kanban",
   "layout": "rail",
   "theme": "light",
-  "page": "kanban",
-  "rootAttrs": {
-    "data-nav-layout": "rail",
-    "data-theme": "light"
-  }
+  "notes": "kanbanOk=true"
 }

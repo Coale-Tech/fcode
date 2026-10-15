@@ -1,16 +1,14 @@
 {
-  "name": "onboarding-ready-light-rail",
-  "commit": "3a79bd370",
-  "buildTime": "2026-10-15T10:28:44.998Z",
-  "captureTime": "2026-10-15T10:28:44.998Z",
-  "viewport": "1024x683",
-  "dpr": 2,
+  "commit": "ac50b773a",
+  "buildTime": "2026-10-15T11:18:56.744Z",
+  "viewport": "1200×800",
+  "DPR": 2,
+  "savedNavLayout": null,
+  "savedTheme": null,
+  "dataNavLayout": "rail",
+  "dataTheme": "light",
+  "pageId": "onboarding",
   "layout": "rail",
   "theme": "light",
-  "page": "onboarding",
-  "rootAttrs": {
-    "data-nav-layout": "rail",
-    "data-theme": "light"
-  },
-  "step": 4
+  "notes": "ready,done=3,btns=Skip setup,Change settings,Start coding →"
 }
