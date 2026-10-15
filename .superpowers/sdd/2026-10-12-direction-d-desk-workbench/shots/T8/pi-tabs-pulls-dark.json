@@ -1,0 +1,17 @@
+{
+  "shot": "pi-tabs-pulls-dark",
+  "commit": "unknown",
+  "buildTime": "2026-10-14T14:31:39.192Z",
+  "dataTheme": "dark",
+  "dataNavLayout": "tabs",
+  "savedNavLayout": "tabs",
+  "savedTheme": "dark",
+  "activePage": "",
+  "navTabsPresent": true,
+  "navRailPresent": false,
+  "viewport": {
+    "w": 1200,
+    "h": 800
+  },
+  "dpr": 2
+}
