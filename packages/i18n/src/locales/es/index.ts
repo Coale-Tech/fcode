@@ -3424,6 +3424,7 @@ sklm: {
     workers: "Trabajadores",
     benches: "Benches",
     addFolder: "Agregar carpeta",
+    newBench: "Nueva bench",
     live: "En vivo",
     installApp: "Instalar app",
     waitingForLogs: "Esperando salida del log…",

@@ -3358,6 +3358,7 @@ export const ptBR = {
     processes: "Processos",
     benches: "Benches",
     addFolder: "Adicionar pasta",
+    newBench: "Nova bench",
     live: "Ao vivo",
     installApp: "Instalar app",
     waitingForLogs: "Aguardando saída do log…",

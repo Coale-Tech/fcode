@@ -28,8 +28,8 @@ import { LogView } from "../components/bench/LogView";
 import { AllBenches } from "../components/bench/AllBenches";
 import { StatusBadge, StatusDot } from "../components/bench/BenchBadges";
 import { DestructiveActionDialog } from "../components/DestructiveActionDialog";
-import { IconClose, IconPlay, IconSquare } from "../components/icons";
-import { Button, Input, Select } from "../components/ui";
+import { IconClose, IconMore, IconPlay, IconPlus, IconSquare } from "../components/icons";
+import { Button, Input, Select, TooltipButton } from "../components/ui";
 import { api } from "../lib/api";
 import {
   baseName,
@@ -634,6 +634,18 @@ export function BenchPage() {
             <Button variant="secondary" size="sm" onClick={() => void pickRoot()}>
               {t("bench.addFolder", "Add folder")}
             </Button>
+            <Button variant="primary" size="sm" onClick={() => void pickRoot()}>
+              <IconPlus size={12} aria-hidden="true" />
+              {t("bench.newBench", "New bench")}
+            </Button>
+            <TooltipButton
+              type="button"
+              className="d-btn ghost icon-btn"
+              tooltip={t("nav.more", "More")}
+              ariaLabel={t("nav.more", "More")}
+            >
+              <IconMore size={14} aria-hidden="true" />
+            </TooltipButton>
           </div>
         )}
 

@@ -3443,6 +3443,7 @@ importConfirm: "가져온 확장은 에이전트 프로세스 안에서 에이�
     processes: "프로세스",
     benches: "Benches",
     addFolder: "폴더 추가",
+    newBench: "새 벤치",
     live: "라이브",
     installApp: "앱 설치",
     waitingForLogs: "로그 출력 대기 중…",

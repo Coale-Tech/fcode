@@ -3394,6 +3394,7 @@ sklm: {
     processes: "进程",
     benches: "Benches",
     addFolder: "添加文件夹",
+    newBench: "新建环境",
     live: "实时",
     installApp: "安装应用",
     waitingForLogs: "等待日志输出…",

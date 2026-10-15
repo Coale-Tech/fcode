@@ -3392,6 +3392,7 @@ sklm: {
     processes: "程序",
     benches: "Benches",
     addFolder: "新增資料夾",
+    newBench: "新增環境",
     live: "即時",
     installApp: "安裝應用程式",
     waitingForLogs: "等待日誌輸出…",

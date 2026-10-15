@@ -3473,6 +3473,7 @@ importConfirm: "Imported extensions run inside the agent process with the same a
     workers: "Workers",
     benches: "Benches",
     addFolder: "Add folder",
+    newBench: "New bench",
     live: "Live",
     installApp: "Install app",
     waitingForLogs: "Waiting for log output…",

@@ -3433,6 +3433,7 @@ importConfirm: "İçe aktarılan uzantılar ajan sürecinde, ajanın kendi araç
     processes: "Süreçler",
     benches: "Benches",
     addFolder: "Klasör ekle",
+    newBench: "Yeni bench",
     live: "Canlı",
     installApp: "Uygulama yükle",
     waitingForLogs: "Günlük çıktısı bekleniyor…",
