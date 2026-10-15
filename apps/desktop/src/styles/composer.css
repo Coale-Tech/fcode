@@ -21,7 +21,7 @@
   position: absolute;
   inset-inline: 0;
   bottom: 0;
-  padding: 0 24px 16px; /* matches .home-composer-wrap (shared width envelope); 16px = scroll reserve */
+  padding: 9px 14px 16px; /* D.css:1450 9px top/bottom, 14px sides; 16px bottom = scroll reserve */
   border-top: 1px solid var(--ds-border-default); /* D: full-width separator spanning panel */
   background: var(--ds-bg-primary);
 }
@@ -31,6 +31,7 @@
   position: relative;
   padding: 0;
   background: transparent;
+  border-top: 1px solid var(--ds-border-default); /* D: composer has separator in both modes */
 }
 
 .composer-dock-home .composer-stack {
