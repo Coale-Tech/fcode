@@ -3412,7 +3412,6 @@ sklm: {
     restart: "Restart",
     apps: "应用",
     workers: "工作进程",
-    processes: "进程",
   },
   "terminal": {
     "title": "终端",

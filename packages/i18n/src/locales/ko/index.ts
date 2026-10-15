@@ -3461,7 +3461,6 @@ importConfirm: "가져온 확장은 에이전트 프로세스 안에서 에이�
     restart: "Restart",
     apps: "앱",
     workers: "워커",
-    processes: "프로세스",
   },
   "terminal": {
     "title": "터미널",

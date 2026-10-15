@@ -3464,7 +3464,6 @@ importConfirm: "Imported extensions run inside the agent process with the same a
     restart: "Restart",
     apps: "Apps",
     workers: "Workers",
-    processes: "processes",
     benches: "Benches",
     addFolder: "Add folder",
     live: "Live",

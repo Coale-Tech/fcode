@@ -3451,7 +3451,6 @@ importConfirm: "İçe aktarılan uzantılar ajan sürecinde, ajanın kendi araç
     restart: "Restart",
     apps: "Uygulamalar",
     workers: "Çalışanlar",
-    processes: "işlemler",
   },
   "terminal": {
     "title": "Terminal",

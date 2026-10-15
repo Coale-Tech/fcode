@@ -3376,7 +3376,6 @@ export const ptBR = {
     restart: "Restart",
     apps: "Apps",
     workers: "Trabalhadores",
-    processes: "processos",
   },
   "terminal": {
     "title": "Terminal",

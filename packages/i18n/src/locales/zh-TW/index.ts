@@ -3410,7 +3410,6 @@ sklm: {
     restart: "Restart",
     apps: "應用程式",
     workers: "工作程序",
-    processes: "程序",
   },
   "terminal": {
     "title": "終端機",

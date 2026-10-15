@@ -3415,7 +3415,6 @@ sklm: {
     restart: "Restart",
     apps: "Apps",
     workers: "Trabajadores",
-    processes: "procesos",
     benches: "Benches",
     addFolder: "Agregar carpeta",
     live: "En vivo",
