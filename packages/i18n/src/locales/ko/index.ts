@@ -2478,6 +2478,10 @@ sklm: {
       rollbackUnavailable: "되돌릴 수 없음",
       rollbackConflict: "이 메시지 후 파일이 변경되어 되돌리기를 건너뛰었습니다.",
       rollbackError: "이 변경을 되돌릴 수 없습니다.",
+      keep: "Keep",
+      kept: "Kept",
+      keepAll: "Keep all",
+      revertAll: "Revert all",
       status: {
         added: "추가됨",
         modified: "수정됨",
@@ -3388,6 +3392,7 @@ importConfirm: "가져온 확장은 에이전트 프로세스 안에서 에이�
     zeroGuide: "Frappe 설치 가이드 ↗",
     copyCmdAria: "{{label}} 명령 복사",
     copied: "복사됨!",
+    restart: "Restart",
   },
   "terminal": {
     "title": "터미널",

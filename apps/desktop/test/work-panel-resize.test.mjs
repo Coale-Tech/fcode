@@ -222,6 +222,7 @@ test("accepts only bounded integer conversation widths over IPC", () => {
 });
 
 test("double-click resets the panel to its default width", () => {
+
   assert.equal(
     workPanelResetWidth(WORK_PANEL_MIN_WIDTH, 800),
     WORK_PANEL_DEFAULT_WIDTH,

@@ -2468,6 +2468,10 @@ sklm: {
       rollbackUnavailable: "Geri alma yok",
       rollbackConflict: "Bu iletiden sonra dosya değişti; geri alma atlandı.",
       rollbackError: "Bu değişiklik geri alınamadı.",
+      keep: "Keep",
+      kept: "Kept",
+      keepAll: "Keep all",
+      revertAll: "Revert all",
       status: {
         added: "Eklendi",
         modified: "Değiştirildi",
@@ -3378,6 +3382,7 @@ importConfirm: "İçe aktarılan uzantılar ajan sürecinde, ajanın kendi araç
     zeroGuide: "Frappe kurulum kılavuzu ↗",
     copyCmdAria: "{{label}} komutunu kopyala",
     copied: "Kopyalandı!",
+    restart: "Restart",
   },
   "terminal": {
     "title": "Terminal",

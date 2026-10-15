@@ -160,6 +160,15 @@
   --d-act-lpad:        10px;         /* cf-act-scroll side padding */
   --d-act-label-pt:     8px;         /* .cf-act-sec padding-top */
   --d-act-label-pb:     4px;         /* .cf-act-sec padding-bottom */
+  /* C07: bench detail 3-column widths (D2 bench: 224px | flex | 252px) */
+  --d-bfd-left-w:     224px;
+  --d-bfd-right-w:    252px;
+}
+
+/* ── Terminal palette (bench log, code panels; always-dark) */
+:root {
+  --d-terminal-bg: #181818;  /* near-black background */
+  --d-terminal-fg: #d4d4d4;  /* light-gray foreground */
 }
 
 /* Dark theme: remap violet to FileBird dark blues */
