@@ -1,0 +1,15 @@
+{
+  "name": "projects-light-island",
+  "commit": "3a79bd370",
+  "buildTime": "2026-10-15T10:28:23.507Z",
+  "captureTime": "2026-10-15T10:28:23.507Z",
+  "viewport": "1024x683",
+  "dpr": 2,
+  "layout": "island",
+  "theme": "light",
+  "page": "projects",
+  "rootAttrs": {
+    "data-nav-layout": "island",
+    "data-theme": "light"
+  }
+}

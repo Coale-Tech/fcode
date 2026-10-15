@@ -1,0 +1,15 @@
+{
+  "name": "scheduled-light-rail",
+  "commit": "3a79bd370",
+  "buildTime": "2026-10-15T10:27:30.235Z",
+  "captureTime": "2026-10-15T10:27:30.235Z",
+  "viewport": "1024x683",
+  "dpr": 2,
+  "layout": "rail",
+  "theme": "light",
+  "page": "scheduled",
+  "rootAttrs": {
+    "data-nav-layout": "rail",
+    "data-theme": "light"
+  }
+}

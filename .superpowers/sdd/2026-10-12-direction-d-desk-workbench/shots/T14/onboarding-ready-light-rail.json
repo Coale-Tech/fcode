@@ -1,0 +1,16 @@
+{
+  "name": "onboarding-ready-light-rail",
+  "commit": "3a79bd370",
+  "buildTime": "2026-10-15T10:28:44.998Z",
+  "captureTime": "2026-10-15T10:28:44.998Z",
+  "viewport": "1024x683",
+  "dpr": 2,
+  "layout": "rail",
+  "theme": "light",
+  "page": "onboarding",
+  "rootAttrs": {
+    "data-nav-layout": "rail",
+    "data-theme": "light"
+  },
+  "step": 4
+}

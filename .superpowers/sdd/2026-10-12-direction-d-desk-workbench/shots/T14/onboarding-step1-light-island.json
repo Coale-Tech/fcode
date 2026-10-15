@@ -1,0 +1,16 @@
+{
+  "name": "onboarding-step1-light-island",
+  "commit": "3a79bd370",
+  "buildTime": "2026-10-15T10:28:41.409Z",
+  "captureTime": "2026-10-15T10:28:41.409Z",
+  "viewport": "1024x683",
+  "dpr": 2,
+  "layout": "island",
+  "theme": "light",
+  "page": "onboarding",
+  "rootAttrs": {
+    "data-nav-layout": "island",
+    "data-theme": "light"
+  },
+  "step": 1
+}

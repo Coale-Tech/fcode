@@ -1,0 +1,16 @@
+{
+  "name": "projects-light-rail",
+  "commit": "3a79bd370",
+  "buildTime": "2026-10-15T10:28:21.131Z",
+  "captureTime": "2026-10-15T10:28:21.131Z",
+  "viewport": "1024x683",
+  "dpr": 2,
+  "layout": "rail",
+  "theme": "light",
+  "page": "projects",
+  "rootAttrs": {
+    "data-nav-layout": "rail",
+    "data-theme": "light"
+  },
+  "note": "redirects to onboarding step 1"
+}

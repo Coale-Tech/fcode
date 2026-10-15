@@ -1,0 +1,15 @@
+{
+  "name": "projects-dark-rail",
+  "commit": "3a79bd370",
+  "buildTime": "2026-10-15T10:28:22.255Z",
+  "captureTime": "2026-10-15T10:28:22.255Z",
+  "viewport": "1024x683",
+  "dpr": 2,
+  "layout": "rail",
+  "theme": "dark",
+  "page": "projects",
+  "rootAttrs": {
+    "data-nav-layout": "rail",
+    "data-theme": "dark"
+  }
+}

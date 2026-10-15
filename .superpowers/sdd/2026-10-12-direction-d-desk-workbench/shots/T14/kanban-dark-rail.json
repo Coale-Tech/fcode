@@ -1,0 +1,15 @@
+{
+  "name": "kanban-dark-rail",
+  "commit": "3a79bd370",
+  "buildTime": "2026-10-15T10:27:19.332Z",
+  "captureTime": "2026-10-15T10:27:19.332Z",
+  "viewport": "1024x683",
+  "dpr": 2,
+  "layout": "rail",
+  "theme": "dark",
+  "page": "kanban",
+  "rootAttrs": {
+    "data-nav-layout": "rail",
+    "data-theme": "dark"
+  }
+}

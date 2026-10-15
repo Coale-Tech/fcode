@@ -1,0 +1,16 @@
+{
+  "name": "notifications-unread-light",
+  "commit": "3a79bd370",
+  "buildTime": "2026-10-15T10:27:59.075Z",
+  "captureTime": "2026-10-15T10:27:59.075Z",
+  "viewport": "1024x683",
+  "dpr": 2,
+  "layout": "rail",
+  "theme": "light",
+  "page": "notifications",
+  "rootAttrs": {
+    "data-nav-layout": "rail",
+    "data-theme": "light"
+  },
+  "note": "unread filter"
+}

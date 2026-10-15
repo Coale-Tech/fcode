@@ -1,0 +1,15 @@
+{
+  "name": "kanban-light-island",
+  "commit": "3a79bd370",
+  "buildTime": "2026-10-15T10:27:20.394Z",
+  "captureTime": "2026-10-15T10:27:20.394Z",
+  "viewport": "1024x683",
+  "dpr": 2,
+  "layout": "island",
+  "theme": "light",
+  "page": "kanban",
+  "rootAttrs": {
+    "data-nav-layout": "island",
+    "data-theme": "light"
+  }
+}
