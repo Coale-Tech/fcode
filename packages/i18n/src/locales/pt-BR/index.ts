@@ -2442,6 +2442,16 @@ export const ptBR = {
       changes: "Alterações",
       openReview: "Abrir revisão",
       empty: "Nada foi executado ainda",
+      session: "Sessão",
+      todoTab: "Tarefas",
+      timeline: "Linha do tempo",
+      allow: "Permitir",
+      deny: "Negar",
+      recentActivity: "Atividade recente",
+      openTodos: "Tarefas abertas",
+      todoStatusDone: "concluído",
+      todoStatusAbandoned: "ignorado",
+      todoStatusRunning: "executando",
     }
   },
   palette: {

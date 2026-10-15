@@ -2490,7 +2490,17 @@ sklm: {
       "toolsRun": "Outils exécutés",
       "changes": "Modifications",
       "openReview": "Ouvrir la révision",
-      "empty": "Rien n'a encore été exécuté"
+      "empty": "Rien n'a encore été exécuté",
+      "session": "Session",
+      "todoTab": "Tâches",
+      "timeline": "Chronologie",
+      "allow": "Autoriser",
+      "deny": "Refuser",
+      "recentActivity": "Activité récente",
+      "openTodos": "Tâches en cours",
+      "todoStatusDone": "terminé",
+      "todoStatusAbandoned": "ignoré",
+      "todoStatusRunning": "en cours",
     }
   },
   "palette": {

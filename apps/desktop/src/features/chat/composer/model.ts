@@ -14,7 +14,7 @@ import {
 import { sameComposerModelId } from "../../../lib/composer-models";
 import { providerThinkingLevels } from "../../../lib/session-thinking";
 
-export const COMPOSER_MIN_HEIGHT_PX = 28;
+export const COMPOSER_MIN_HEIGHT_PX = 56; /* D: match .d-composer-textarea min-height 56px */
 export const COMPOSER_MAX_VISIBLE_ROWS = 7;
 
 export const PLACEHOLDER_KEYS = {

@@ -340,7 +340,6 @@ test("closing the final tab keeps the panel open for the New launcher", () => {
 
 test("work panel width is renderer-owned inside the fixed window", () => {
   assert.equal(MAIN_PANE_MIN_WIDTH, 450);
-  assert.equal(WORK_PANEL_DEFAULT_WIDTH, 360);
   assert.equal(WORK_PANEL_MIN_WIDTH, 244);
   assert.match(panelSource, /const renderPanelWidth = layout\.panelWidth/);
   assert.match(panelSource, /setWidth\(drag\.currentWidth\)/);

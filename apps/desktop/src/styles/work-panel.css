@@ -1205,21 +1205,19 @@
   gap: 0;
 }
 
-/* Section label row — uppercase 11px heading, same pattern as act-s in design */
+/* Section label row — uppercase 11px heading, per D fragment .cf-act-sec */
 .activity-section-label {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  padding: 0 10px 5px;
-  color: var(--ds-text-muted);
-  font-size: var(--text-xs);
+  padding: var(--d-act-label-pt) var(--d-act-lpad) var(--d-act-label-pb); /* D: 8px top/4px bottom/10px sides */
+  color: var(--ds-text-faint); /* D: cf-act-sec color = --ink-gray-4 = --ds-text-faint */
+  font-size: var(--d-text-xs); /* D: cf-act-sec 11px */
   font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: 0.06em;      /* D: cf-act-sec letter-spacing .06em */
 }
-
-/* ── Decision block ────────────────────────────────────────────────────────── */
 
 .activity-decision {
   margin: 0 10px;
@@ -1407,4 +1405,153 @@
 
 .activity-count-del {
   color: var(--ds-error);
+}
+
+/* ── Session section (TUI + Collab; ruled into Activity, no D design home) ── */
+
+.activity-session {
+  margin-top: 8px;
+  border-top: 1px solid var(--ds-border-default);
+  padding-top: 4px;
+}
+
+/* ── Activity inner sub-tab strip (design: fragment.html:459-463 .d-panel-tabs) ── */
+
+.activity-inner-tabs {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 4px var(--d-act-lpad) 0;
+  border-bottom: 1px solid var(--ds-border-default);
+}
+
+.activity-inner-tab {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px 5px;
+  border: 0;
+  background: transparent;
+  color: var(--ds-text-muted);
+  font-size: var(--d-text-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  transition: color var(--motion-duration-fast) var(--motion-ease-out);
+}
+
+.activity-inner-tab:hover {
+  color: var(--ds-text-primary);
+}
+
+.activity-inner-tab.is-active {
+  color: var(--da);
+  border-bottom-color: var(--da);
+  font-weight: var(--font-weight-semibold);
+}
+
+.activity-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 14px;
+  padding: 0 4px;
+  border-radius: 7px;
+  background: color-mix(in oklab, var(--ds-text-muted) 18%, transparent);
+  color: var(--ds-text-muted);
+  font-size: var(--d-text-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.activity-inner-tab.is-active .activity-tab-count {
+  background: color-mix(in oklab, var(--da) 18%, transparent);
+  color: var(--da);
+}
+
+.activity-tab-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Decision block — actions row (Allow / Deny buttons) ── */
+
+.activity-decision-desc {
+  font-size: var(--text-sm);
+  color: var(--ds-text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  padding: 2px 0;
+}
+
+.activity-decision-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+/* ── Todo status time badge ── */
+
+.activity-todo-time {
+  flex-shrink: 0;
+  font-size: var(--d-text-xs);
+  color: var(--ds-text-muted);
+  white-space: nowrap;
+}
+
+/* ── Recent activity event rows (design: fragment.html:495-519 .cf-event) ── */
+
+.activity-event-row {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 3px var(--d-act-lpad);
+  font-size: var(--text-sm);
+  min-width: 0;
+}
+
+.activity-event-dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--ds-border-default);
+  align-self: center;
+}
+
+.activity-event-dot.status-ok {
+  background: var(--surface-green-6);
+}
+
+.activity-event-dot.status-running {
+  background: var(--surface-amber-6);
+}
+
+.activity-event-dot.status-error {
+  background: var(--surface-red-6);
+}
+
+.activity-event-body {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ds-text-secondary);
+}
+
+.activity-event-body strong {
+  color: var(--ds-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.activity-event-time {
+  flex-shrink: 0;
+  font-size: var(--d-text-xs);
+  color: var(--ds-text-muted);
+  white-space: nowrap;
 }
