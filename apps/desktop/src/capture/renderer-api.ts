@@ -10,7 +10,7 @@
  * object, so later capture calls stay synchronous as before.
  */
 import { useAppStore, type AppState, type ToastOptions } from "../stores/app-store";
-import type { NavLayout } from "@pi-desktop/shared";
+import type { AppSettings, NavLayout } from "@pi-desktop/shared";
 import type { CaptureRig, CaptureRigMethods } from "./capture-rig";
 
 type CaptureRigMethod = keyof CaptureRigMethods;
@@ -30,6 +30,7 @@ export type RendererApi = {
   setThemeAttr: (theme: "light" | "dark") => void;
   setTheme: (theme: "light" | "dark" | "system") => void;
   setNavLayout: (layout: NavLayout) => void;
+  getSettings: () => AppSettings | null;
   clearProject: () => Promise<void>;
   showToast: (message: string, opts?: ToastOptions) => void;
 } & (CaptureRigStubs | CaptureRigMethods);
@@ -101,7 +102,10 @@ export function installRendererApi(): () => void {
     selectSession: (id) => useAppStore.getState().selectSession(id),
     setSettingsTab: (tab) => useAppStore.getState().setSettingsTab(tab),
     setThemeAttr: (theme) => {
+      // Sync both DOM attribute and store so Settings page shows correct value.
       document.documentElement.dataset.theme = theme;
+      const s = useAppStore.getState().settings;
+      if (s) useAppStore.setState({ settings: { ...s, theme } });
     },
     setTheme: (theme) => {
       const s = useAppStore.getState().settings;
@@ -116,6 +120,7 @@ export function installRendererApi(): () => void {
       document.documentElement.dataset.navLayout = layout;
     },
     clearProject: () => useAppStore.getState().clearProject(),
+    getSettings: () => useAppStore.getState().settings ?? null,
     showToast: (message, opts) => useAppStore.getState().showToast(message, opts),
     ...stubs,
   };

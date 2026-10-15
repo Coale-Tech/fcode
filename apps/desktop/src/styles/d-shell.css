@@ -200,6 +200,157 @@
   left: var(--ds-sidebar-width);
 }
 
+/* ── D1 Tabs layout: pill strip ──────────────────────────────────────
+ * Design source: D.css:146-178 (.d-nav-tabs / .d-tab)
+ * Three primary tabs (Chat/Build/Bench) + ··· overflow (R11b).
+ * Icon nav rail is hidden via conditional render in AppShell (navLayout !== 'tabs'). */
+.nav-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--d-nav-tab-strip-gap);   /* D.css:148 */
+  flex-shrink: 0;
+  margin-left: 8px;                /* D.css:153 margin-left:8px */
+  min-width: 0;
+  overflow: hidden;
+}
+/* D.css:156-174 .d-tab */
+.nav-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--d-nav-tab-gap);          /* D.css:155 */
+  height: var(--d-nav-tab-h);         /* 28px — D.css:163 */
+  padding: 0 var(--d-nav-tab-pad-x);  /* D.css:164 */
+  border-radius: var(--radius-full); /* pill shape — D.css:162 */
+  font-size: var(--d-text);        /* D.css:165 */
+  font-weight: 500;                /* D.css:166 */
+  color: var(--ink-gray-6);        /* D.css:167 */
+  white-space: nowrap;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.nav-tab:hover {
+  background: var(--surface-gray-2); /* D.css:173 */
+  color: var(--ink-gray-8);
+}
+/* Active: accent tint bg + accent ink (D.css:175 .d-tab.active) */
+.nav-tab.active {
+  background: var(--da-sub);       /* var(--surface-violet-2) ≈ #E4F2FB */
+  color: var(--da-txt);            /* var(--ink-violet-8)  ≈ #165A88 */
+  font-weight: 600;
+}
+/* Overflow "···" button — D.css:177 .d-tab-more */
+.nav-tab-more { font-size: 16px; letter-spacing: .05em; padding: 0 8px; }
+/* Label: truncate at var(--d-nav-tab-label-max); hidden <1100px (brief §CSS) */
+.nav-tab-label { overflow: hidden; text-overflow: ellipsis; max-width: var(--d-nav-tab-label-max); }
+@media (max-width: 1100px) { .nav-tab-label { display: none; } }
+
+/* Navbar icon button (Notifications / Settings in tabs right cluster)
+ * D.css:247-261 .d-nav-icon-btn */
+.shell-navbar-icon-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--d-r-ctrl);
+  border: none;
+  background: transparent;
+  color: var(--ink-gray-6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.shell-navbar-icon-btn:hover { background: var(--surface-gray-2); color: var(--ink-gray-8); }
+
+/* Notification trigger in tabs navbar: override chrome.css 32px to 28px/16px (D.css:247-263) */
+:root[data-nav-layout="tabs"] .shell-navbar-end .footer-notification {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--d-r-ctrl);            /* D.css:251 — matches .d-nav-icon-btn */
+}
+:root[data-nav-layout="tabs"] .shell-navbar-end .footer-notification svg { width: 16px; height: 16px; }
+/* Badge metrics in tabs navbar: D.css:266-280 — 14px, inset +1/+1, no border */
+:root[data-nav-layout="tabs"] .shell-navbar-end .notification-badge {
+  top: 1px;
+  right: 1px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 7px;
+  font-size: 9px;
+  border: none;
+}
+
+/* ── Brand logo (D1-shell.html:89-95) ── */
+.shell-navbar-brand {
+  display: flex; align-items: center; gap: 7px;
+  flex-shrink: 0; font-weight: 600; font-size: 13px;
+  color: var(--ink-gray-9); margin-right: 4px;
+}
+.shell-navbar-brand-icon {
+  width: 20px; height: 20px; border-radius: 4px;
+  background: var(--surface-gray-10);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; color: #fff;
+}
+.shell-navbar-brand-name { white-space: nowrap; }
+
+/* ── Bench chip — D1-shell.html:121-124, D.css:272-290 ── */
+.shell-navbar-bench-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  height: 24px; padding: 0 8px;
+  border-radius: var(--d-r-ctrl);
+  border: 1px solid var(--d-border);
+  background: transparent;
+  font-size: 12px; font-weight: 500; color: var(--ink-gray-7);
+  cursor: pointer; transition: background .12s, border-color .12s;
+  white-space: nowrap; max-width: 120px; overflow: hidden; font-family: inherit;
+}
+.shell-navbar-bench-chip:hover { background: var(--surface-gray-2); border-color: var(--ink-gray-3); }
+.shell-navbar-bench-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shell-navbar-bench-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  flex-shrink: 0; background: var(--ink-gray-4);
+}
+.shell-navbar-bench-dot[data-bench-status="running"] { background: #16a34a; }
+.shell-navbar-bench-dot[data-bench-status="starting"] { background: #ca8a04; }
+.shell-navbar-bench-dot[data-bench-status="failed"]   { background: #dc2626; }
+
+/* ── Avatar placeholder — D1-shell.html:133 ── */
+.shell-navbar-avatar {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--surface-gray-4); color: var(--ink-gray-7);
+  border: none; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0; transition: background .12s;
+}
+.shell-navbar-avatar:hover { background: var(--surface-gray-5); }
+
+/* ── Overflow destination menu (NavTabs "···" dropdown) ── */
+.nav-tabs-overflow-menu {
+  position: fixed; z-index: 300;
+  min-width: 180px;
+  background: var(--surface-gray-0);
+  border: 1px solid var(--d-border); border-radius: var(--d-r-ctrl);
+  box-shadow: 0 4px 16px rgba(0,0,0,.12);
+  padding: 4px; display: flex; flex-direction: column; gap: 1px;
+}
+:root[data-theme="dark"] .nav-tabs-overflow-menu {
+  background: var(--surface-gray-2); box-shadow: 0 4px 16px rgba(0,0,0,.4);
+}
+.nav-tabs-overflow-item {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; height: 30px; padding: 0 10px;
+  border: none; border-radius: 4px;
+  background: transparent; color: var(--ink-gray-7);
+  font-size: 13px; font-family: inherit; text-align: left;
+  cursor: pointer; transition: background .1s, color .1s;
+}
+.nav-tabs-overflow-item:hover { background: var(--surface-gray-2); color: var(--ink-gray-9); }
+.nav-tabs-overflow-item.active { color: var(--da-txt); background: var(--da-sub); font-weight: 500; }
+.nav-tabs-overflow-item:focus-visible { outline: 2px solid var(--da-bdr); outline-offset: -2px; }
+
 /* ── D2 rail: labels hidden/animated in collapsed rail mode (D.css:404-414) ── */
 /* opacity/max-width transition matches D.css for smooth expand animation. */
 :root[data-nav-layout="rail"] .nav-rail-label {

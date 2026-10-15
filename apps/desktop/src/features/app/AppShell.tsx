@@ -160,7 +160,7 @@ export function AppShell() {
             inert={page === "settings" && navLayout !== "island" ? true : undefined}
             aria-hidden={page === "settings" && navLayout !== "island" ? true : undefined}
           >
-            <NavRail onExpandChange={onRailExpandChange} />
+            {navLayout !== "tabs" && <NavRail onExpandChange={onRailExpandChange} />}
             {/* D3 island: permanent sidebar (shown even on workbench, always open) */}
             {mountSidebar ? (
               <Sidebar
