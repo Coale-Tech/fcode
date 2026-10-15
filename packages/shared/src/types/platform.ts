@@ -86,7 +86,7 @@ export type OnboardingState = {
 };
 
 
-export type ScheduledTaskCadence = "manual" | "hourly" | "daily" | "weekly";
+export type ScheduledTaskCadence = "manual" | "hourly" | "daily" | "weekly" | "monthly";
 export type ScheduledTaskSchedule = {
   hour: number;
   minute: number;

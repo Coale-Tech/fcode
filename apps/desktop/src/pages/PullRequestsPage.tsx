@@ -155,7 +155,7 @@ export function PullRequestsPage() {
                     <div className="pr-row-body">
                       <div className="pr-row-title">
                         <span className="pr-num">#{pr.number}</span>
-                        <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>{pr.title}</span>
+                        <span style={{ minWidth: 0, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pr.title}</span>
                         {pr.isDraft
                           ? <Badge tone="warning">{t("pulls.draft")}</Badge>
                           : <Badge tone="success">{t("pulls.open")}</Badge>}

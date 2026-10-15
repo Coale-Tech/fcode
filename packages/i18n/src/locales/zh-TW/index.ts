@@ -2348,6 +2348,7 @@ sklm: {
     cadenceHourly: "每小時",
     cadenceDaily: "每天",
     cadenceWeekly: "每週",
+    cadenceMonthly: "每月",
     enabled: "已啟用",
     disabled: "已停用",
     runNow: "立即執行",

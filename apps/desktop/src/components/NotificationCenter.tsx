@@ -236,6 +236,9 @@ export function NotificationsPage() {
               onClick={() => setFilter(value)}
             >
               {t(`notifications.${value}`)}
+              {value === "all" && notifications.length > 0 && (
+                <span className="d-mini-count">{notifications.length}</span>
+              )}
               {value === "unread" && unreadCount > 0 && (
                 <span className="d-mini-count">{unreadCount}</span>
               )}
@@ -272,6 +275,7 @@ export function NotificationsPage() {
                         type="button"
                         className={`notifications-page-row${notification.readAt ? "" : " unread"}`}
                         data-notification-id={notification.id}
+                        data-kind={notification.kind}
                         disabled={busy}
                         onClick={() => void activateNotification(notification)}
                       >

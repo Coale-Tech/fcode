@@ -3897,3 +3897,17 @@
   border-radius: 3px;
   padding: 1px 4px;
 }
+
+/* Agent source badge — monospace gray pill (settings-ai/notes.md) */
+.agent-source {
+  display: inline-block;
+  font-family: ui-monospace, Menlo, Monaco, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  background: var(--surface-gray-2);
+  color: var(--ink-gray-5);
+  border-radius: 3px;
+  padding: 1px 5px;
+  border: 1px solid var(--d-border);
+  letter-spacing: 0.01em;
+}

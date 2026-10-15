@@ -2368,6 +2368,7 @@ sklm: {
     cadenceHourly: "Saatlik",
     cadenceDaily: "Günlük",
     cadenceWeekly: "Haftalık",
+    cadenceMonthly: "Aylık",
     enabled: "Açık",
     disabled: "Kapalı",
     runNow: "Şimdi çalıştır",

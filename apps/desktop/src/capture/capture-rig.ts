@@ -9,11 +9,16 @@
  * monkey-patch `api.*` list calls) and must never run from a stray call.
  */
 import type {
+  AppNotificationKind,
+  KanbanBoard,
   McpServerRecord,
   McpServerStatus,
   PluginSummary,
   PluginTheme,
   ProjectRecord,
+  PullRequestSummary,
+  ScheduledTask,
+  ScheduledTaskRun,
   UserSkillRecord,
 } from "@pi-desktop/shared";
 import { useAppStore } from "../stores/app-store";
@@ -37,6 +42,9 @@ export type CaptureRigMethods = {
   seedExtensions: (count?: number) => void;
   seedPluginThemes: (count?: number) => void;
   seedNotifications: (count?: number) => void;
+  seedKanbanBoard: (count?: number) => void;
+  seedScheduledTasks: (count?: number) => void;
+  seedPullRequests: (count?: number) => void;
   seedSidebarStatuses: () => {
     selected: string;
     running: string;
@@ -60,6 +68,10 @@ export function installCaptureRig(): CaptureRig {
   const originalListMcpServers = api.listMcpServers;
   const originalListUserSkills = api.listUserSkills;
   const originalListProjects = api.listProjects;
+  const originalKanbanList = api.kanbanList;
+  const originalListScheduled = api.listScheduled;
+  const originalListScheduledRuns = api.listScheduledRuns;
+  const originalListPullRequests = api.listPullRequests;
   const methods: CaptureRigMethods = {
     openWorkPanelArtifact: (
       kind: "review" | "browser" | "file",
@@ -855,22 +867,31 @@ export function installCaptureRig(): CaptureRig {
         return;
       }
       const now = Date.now();
-      const titles = [
+      const completedTitles = [
         "重新设计设置页面插件板块手机端 UI 布局并验证所有断点",
-        "修复 host-core 启动失败并补充错误恢复测试",
         "同步代码",
+        "Weekly HRMS payroll report generation",
       ];
-      // The inbox lists failures only, so every fixture row is a failure.
-      const notifications = Array.from({ length: count }, (_, index) => ({
-        id: `capture-notification-${index}`,
-        kind: "task.failed" as const,
-        sessionId: `capture-session-${index}`,
-        sessionTitle: titles[index] ?? `后台任务 ${index + 1}`,
-        turnId: `capture-turn-${index}`,
-        ...(index % 2 === 1 ? { errorCode: "MODEL_REQUEST_TIMEOUT" } : {}),
-        createdAt: new Date(now - (index + 1) * 60_000).toISOString(),
-        readAt: index === 2 ? new Date(now - 30_000).toISOString() : null,
-      }));
+      const failedTitles = [
+        "修复 host-core 启动失败并补充错误恢复测试",
+        "eTIMS VSCU integration — submit receipt batch",
+      ];
+      // Mix completed and failed so the inbox shows kind-aware rendering.
+      const notifications = Array.from({ length: Math.min(count, 7) }, (_, index) => {
+        const isFailed = index === 1 || index === 3;
+        return {
+          id: `capture-notification-${index}`,
+          kind: (isFailed ? "task.failed" : "task.completed") as AppNotificationKind,
+          sessionId: `capture-session-${index}`,
+          sessionTitle: isFailed
+            ? failedTitles[index % failedTitles.length]
+            : completedTitles[index % completedTitles.length],
+          turnId: `capture-turn-${index}`,
+          ...(isFailed && index % 2 === 1 ? { errorCode: "MODEL_REQUEST_TIMEOUT" } : {}),
+          createdAt: new Date(now - (index + 1) * 3_600_000).toISOString(),
+          readAt: index >= 3 ? new Date(now - (index - 2) * 1_800_000).toISOString() : null,
+        };
+      });
       useAppStore.setState({
         notifications,
         unreadNotificationCount: notifications.reduce(
@@ -879,6 +900,82 @@ export function installCaptureRig(): CaptureRig {
         ),
         refreshNotifications: async () => undefined,
       });
+    },
+    seedKanbanBoard: (count = 1) => {
+      if (!window.__PI_CAPTURE__) return;
+      const now = Date.now();
+      if (count <= 0) {
+        api.kanbanList = originalKanbanList;
+        return;
+      }
+      const board: KanbanBoard = {
+        tasks: [
+          { id: "kt-1", title: "eTIMS VSCU: receipt submit batch", body: "Submit daily receipt batch to KRA eTIMS sandbox.", status: "triage", priority: 3, createdBy: "agent", projectPath: "/apps", sessionId: undefined, archived: false, consecutiveFailures: 0, createdAt: now - 7_200_000 },
+          { id: "kt-2", title: "Fix multi-currency exchange rate caching", body: "Cache is stale after currency update.", status: "todo", priority: 2, createdBy: "user", projectPath: "/apps", archived: false, consecutiveFailures: 0, createdAt: now - 5_400_000 },
+          { id: "kt-3", title: "Generate weekly HRMS payroll report", body: "Produce PDF report for HR review.", status: "ready", priority: 1, createdBy: "agent", projectPath: "/apps", archived: false, consecutiveFailures: 0, createdAt: now - 3_600_000 },
+          { id: "kt-4", title: "Sync frappe-agent dependencies", body: "npm audit fix + upgrade pinned packages.", status: "running", priority: 2, createdBy: "agent", projectPath: "/apps", sessionId: "sess-capture-1", archived: false, consecutiveFailures: 0, createdAt: now - 1_800_000, startedAt: now - 900_000 },
+          { id: "kt-5", title: "Stock reconciliation snapshot", body: "Snapshot stock levels before month-end close.", status: "blocked", priority: 2, createdBy: "user", projectPath: "/apps", blockKind: "gave_up", blockReason: "Provider timed out after 3 retries.", archived: false, consecutiveFailures: 3, createdAt: now - 86_400_000 },
+          { id: "kt-6", title: "Update ERPNext branch to v16.35", body: "Merge upstream v16.35 hotfixes.", status: "done", priority: 1, createdBy: "user", projectPath: "/apps", archived: false, consecutiveFailures: 0, createdAt: now - 172_800_000, completedAt: now - 43_200_000 },
+          { id: "kt-7", title: "Add BOM cost rollup validation", body: "Validate BOM before production order creation.", status: "done", priority: 2, createdBy: "agent", projectPath: "/apps", archived: false, consecutiveFailures: 0, createdAt: now - 259_200_000, completedAt: now - 86_400_000 },
+        ],
+        links: [{ parentId: "kt-2", childId: "kt-3" }],
+        comments: [
+          { id: "kc-1", taskId: "kt-4", author: "mac", body: "Checking pnpm audit output.", createdAt: now - 600_000 },
+          { id: "kc-2", taskId: "kt-4", author: "agent", body: "Found 3 moderate vulnerabilities.", createdAt: now - 300_000 },
+        ],
+        runs: [
+          { id: "kr-1", taskId: "kt-4", sessionId: "sess-capture-1", status: "running", startedAt: now - 900_000, nudgeCount: 0 },
+          { id: "kr-2", taskId: "kt-6", sessionId: "sess-old-1", status: "done", summary: "Merged 12 commits.", startedAt: now - 46_800_000, endedAt: now - 43_200_000, nudgeCount: 1 },
+        ],
+        events: [],
+        dailyStats: [
+          { date: new Date(now - 172_800_000).toISOString().slice(0, 10), spawned: 3 },
+          { date: new Date(now - 86_400_000).toISOString().slice(0, 10), spawned: 2 },
+          { date: new Date(now).toISOString().slice(0, 10), spawned: 1 },
+        ],
+      };
+      api.kanbanList = async () => ({ board, paused: false });
+    },
+    seedScheduledTasks: (count = 1) => {
+      if (!window.__PI_CAPTURE__) return;
+      if (count <= 0) {
+        api.listScheduled = originalListScheduled;
+        api.listScheduledRuns = originalListScheduledRuns;
+        return;
+      }
+      const now = new Date().toISOString();
+      const tasks: ScheduledTask[] = [
+        { id: "st-1", title: "Daily ERPNext Digest", prompt: "Summarise ERPNext activity from the last 24 h and post to Raven.", cadence: "daily", mode: "agent", enabled: true, createdAt: now, updatedAt: now, lastRunAt: new Date(Date.now() - 3_600_000).toISOString(), workspacePath: "/apps" },
+        { id: "st-2", title: "Hourly CI Health Check", prompt: "Run pnpm test and report failures.", cadence: "hourly", mode: "agent", enabled: true, createdAt: now, updatedAt: now, lastRunAt: new Date(Date.now() - 600_000).toISOString(), workspacePath: "/apps" },
+        { id: "st-3", title: "Weekly HRMS Payroll Review", prompt: "Generate payroll summary for HR.", cadence: "weekly", mode: "agent", enabled: true, createdAt: now, updatedAt: now, workspacePath: "/apps" },
+        { id: "st-4", title: "Stock Reconciliation Snapshot", prompt: "Snapshot stock levels before month-end.", cadence: "monthly", mode: "agent", enabled: true, createdAt: now, updatedAt: now, lastRunAt: new Date(Date.now() - 86_400_000).toISOString(), workspacePath: "/apps" },
+        { id: "st-5", title: "Monthly Accounts Ageing", prompt: "Run accounts ageing report and email finance team.", cadence: "monthly", mode: "agent", enabled: false, createdAt: now, updatedAt: now, workspacePath: "/apps" },
+      ];
+      const health = { lastTickAt: Date.now() - 30_000, lastError: undefined, hostAvailable: true };
+      const runs: ScheduledTaskRun[] = [
+        { id: "sr-1", taskId: "st-1", sessionId: "sess-c-1", status: "completed", errorCode: null, startedAt: new Date(Date.now() - 3_600_000).toISOString(), endedAt: new Date(Date.now() - 3_540_000).toISOString() },
+        { id: "sr-2", taskId: "st-2", sessionId: "sess-c-2", status: "completed", errorCode: null, startedAt: new Date(Date.now() - 600_000).toISOString(), endedAt: new Date(Date.now() - 570_000).toISOString() },
+        { id: "sr-3", taskId: "st-4", sessionId: null, status: "error", errorCode: "PROVIDER_TIMEOUT", startedAt: new Date(Date.now() - 86_400_000).toISOString(), endedAt: new Date(Date.now() - 86_380_000).toISOString() },
+        { id: "sr-4", taskId: "st-1", sessionId: "sess-c-3", status: "completed", errorCode: null, startedAt: new Date(Date.now() - 90_000_000).toISOString(), endedAt: new Date(Date.now() - 89_940_000).toISOString() },
+        { id: "sr-5", taskId: "st-2", sessionId: "sess-c-4", status: "aborted", errorCode: null, startedAt: new Date(Date.now() - 7_800_000).toISOString(), endedAt: new Date(Date.now() - 7_740_000).toISOString() },
+      ];
+      api.listScheduled = async () => ({ tasks, health });
+      api.listScheduledRuns = async () => ({ runs });
+    },
+    seedPullRequests: (count = 1) => {
+      if (!window.__PI_CAPTURE__) return;
+      if (count <= 0) {
+        api.listPullRequests = originalListPullRequests;
+        return;
+      }
+      const pulls: PullRequestSummary[] = [
+        { number: 247, title: "feat(etims): VSCU receipt batch submission", url: "https://github.com/Coale-Tech/frappe-agent/pull/247", author: "mac", headRefName: "feat/etims-vscu", baseRefName: "main", updatedAt: new Date(Date.now() - 900_000).toISOString(), isDraft: false },
+        { number: 243, title: "fix(accounting): multi-currency exchange rate caching", url: "https://github.com/Coale-Tech/frappe-agent/pull/243", author: "agent", headRefName: "fix/multi-currency", baseRefName: "main", updatedAt: new Date(Date.now() - 7_200_000).toISOString(), isDraft: false },
+        { number: 239, title: "chore: bump dependencies (pnpm audit fix)", url: "https://github.com/Coale-Tech/frappe-agent/pull/239", author: "mac", headRefName: "chore/deps-bump", baseRefName: "main", updatedAt: new Date(Date.now() - 86_400_000).toISOString(), isDraft: false },
+        { number: 237, title: "feat(hrms): payroll summary PDF export", url: "https://github.com/Coale-Tech/frappe-agent/pull/237", author: "agent", headRefName: "feat/payroll-pdf", baseRefName: "main", updatedAt: new Date(Date.now() - 172_800_000).toISOString(), isDraft: true },
+        { number: 231, title: "docs: update AGENTS.md with new directives", url: "https://github.com/Coale-Tech/frappe-agent/pull/231", author: "mac", headRefName: "docs/agents-md", baseRefName: "main", updatedAt: new Date(Date.now() - 259_200_000).toISOString(), isDraft: false },
+      ];
+      api.listPullRequests = async () => ({ pulls });
     },
     seedSidebarStatuses: () => {
       if (!window.__PI_CAPTURE__) return null;
@@ -995,6 +1092,10 @@ export function installCaptureRig(): CaptureRig {
       api.listMcpServers = originalListMcpServers;
       api.listUserSkills = originalListUserSkills;
       api.listProjects = originalListProjects;
+      api.kanbanList = originalKanbanList;
+      api.listScheduled = originalListScheduled;
+      api.listScheduledRuns = originalListScheduledRuns;
+      api.listPullRequests = originalListPullRequests;
     },
   };
 }
