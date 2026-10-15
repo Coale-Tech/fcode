@@ -1972,16 +1972,22 @@ export async function createWindow({
                 const el = document.documentElement;
                 const st = window.__PI_DESKTOP__?.getSettings?.() ?? {};
                 return {
-                  theme: el.dataset.theme || "",
-                  navLayout: el.dataset.navLayout || "",
-                  page: el.dataset.page || document.querySelector("[data-nav-layout]")?.getAttribute("data-nav-layout") || "",
-                  settingsNavLayout: st.navLayout ?? "",
+                  dataTheme: el.dataset.theme || "",
+                  dataNavLayout: el.dataset.navLayout || "",
+                  savedNavLayout: st.navLayout ?? "",
+                  savedTheme: st.theme ?? "",
                   activePage: document.body?.dataset?.page || "",
                   navTabsPresent: !!document.querySelector(".nav-tabs"),
                   navRailPresent: !!document.querySelector(".nav-rail"),
+                  viewport: { w: window.innerWidth, h: window.innerHeight },
+                  dpr: window.devicePixelRatio,
                 };
               })()`);
-              console.log("T8_READBACK", shotName, JSON.stringify(rb));
+              let commit = "unknown";
+              try { commit = execFileSync("git", ["rev-parse", "--short", "HEAD"], { cwd: process.cwd(), encoding: "utf8" }).trim(); } catch { /**/ }
+              const provenance = { shot: shotName, commit, buildTime: new Date().toISOString(), ...rb };
+              writeFileSync(`/tmp/codex-screens/${shotName}.json`, JSON.stringify(provenance, null, 2));
+              console.log("T8_READBACK", shotName, JSON.stringify(provenance));
             };
             await setTheme("light");
             await setPage("chat");
