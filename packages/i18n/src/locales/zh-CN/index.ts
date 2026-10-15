@@ -3391,7 +3391,7 @@ sklm: {
     sites: "站点",
     noSites: "未找到站点",
     defaultBadge: "默认",
-    processes_one: "{{count}} 个进程",
+    processes_one: "1 个进程",
     processes_other: "{{count}} 个进程",
     benches: "Benches",
     addFolder: "添加文件夹",

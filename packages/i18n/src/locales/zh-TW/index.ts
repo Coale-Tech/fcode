@@ -3389,7 +3389,7 @@ sklm: {
     sites: "站點",
     noSites: "找不到站點",
     defaultBadge: "預設",
-    processes_one: "{{count}} 個進程",
+    processes_one: "1 個進程",
     processes_other: "{{count}} 個進程",
     benches: "Benches",
     addFolder: "新增資料夾",
