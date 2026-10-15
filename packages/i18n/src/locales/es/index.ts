@@ -208,7 +208,12 @@ export const es = {
     "noBench": "Sin bench seleccionado",
     "chooseBench": "Elegir bench",
     "running": "en ejecución",
-    "stopped": "detenido"
+    "stopped": "detenido",
+    benchRunning: "bench en ejecución",
+    benchStopped: "bench detenido",
+    site: "sitio",
+    sites: "sitios",
+    openBenchLog: "Abrir log de bench"
   },
   "sessionCollaboration": {
     "statusIdle": "Inactivo",
@@ -3415,6 +3420,15 @@ sklm: {
     "copyCmdAria": "Copiar comando {{label}}",
     "copied": "¡Copiado!",
     restart: "Restart",
+    apps: "Apps",
+    workers: "Trabajadores",
+    benches: "Benches",
+    addFolder: "Agregar carpeta",
+    live: "En vivo",
+    installApp: "Instalar app",
+    waitingForLogs: "Esperando salida del log…",
+    appSingular: "app",
+    appPluralLabel: "apps",
   },
   "terminal": {
     "title": "Terminal",

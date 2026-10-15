@@ -189,6 +189,10 @@ export type AppState = {
   pendingTuiCommand: string | null;
   /** Bench log view follows new output while true; toggleFollowLog (Mod+Shift+B) flips it. */
   benchLogFollowTail: boolean;
+  /** Path of the bench currently open in the Bench detail tab (even if not running). Used by WorkspaceBar. */
+  viewedBenchPath: string | null;
+  /** Site count of the currently viewed bench; 0 if not loaded. */
+  viewedBenchSiteCount: number;
   /** Tab ids come from the shared settings index. */
   settingsTab: SettingsTabId;
   /** Pending row anchor (i18n key) to flash after landing on a settings tab. */
@@ -360,6 +364,7 @@ export type AppState = {
   setSettingsTab: (tab: AppState["settingsTab"]) => void;
   setSettingsAnchor: (key: string | null) => void;
   setBenchLogFollowTail: (follow: boolean) => void;
+  setViewedBench: (path: string | null, siteCount: number) => void;
   toggleBenchLogFollowTail: () => void;
   setShowKanbanSessions: (show: boolean) => void;
   setKanbanEnabled: (enabled: boolean) => void;

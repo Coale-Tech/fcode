@@ -50,6 +50,9 @@ type LogLine = {
   text: string;
 };
 
+/** App with version from bench detail IPC (matches discovery.ts AppWithVersion). */
+type AppWithVersion = { name: string; version: string };
+
 // ── T6 gap types ─────────────────────────────────────────────────────────────
 
 type StartFailureState = {
@@ -117,6 +120,7 @@ export function BenchPage() {
   // must reach it from useAppShellRuntime, outside this component).
   const followTail = useAppStore((s) => s.benchLogFollowTail);
   const setFollowTail = useAppStore((s) => s.setBenchLogFollowTail);
+  const setViewedBench = useAppStore((s) => s.setViewedBench);
 
   // Gap 1 / T6: bench-start failure from supervisor
   const [startFailure, setStartFailure] = useState<StartFailureState | null>(null);
@@ -324,6 +328,16 @@ export function BenchPage() {
     setMigrateSite(selectedBench.sites.length === 1 ? selectedBench.sites[0].name : null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBench?.id]);
+
+  // Update global viewedBenchPath so WorkspaceBar shows bench name even when stopped.
+  // No cleanup on unmount: viewedBenchPath persists so WorkspaceBar on other pages
+  // (Build, Chat) still shows the last-viewed bench name.
+  useEffect(() => {
+    if (selectedBench) {
+      setViewedBench(selectedBench.path, selectedBench.sites.length);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBench?.path, selectedBench?.sites.length]);
 
   // A bench's process status only describes the bench the supervisor is
   // actually running; showing it for any other selected bench would let that
@@ -608,10 +622,18 @@ export function BenchPage() {
             )}
           </div>
         ) : (
-          /* Direction D: 48px Benches overview header */
+          /* Direction D: 48px Benches overview header with actions (design fragment.html:47-63) */
           <div className="wb-all-hd">
-            <span className="wb-all-title">{t("bench.tabAll", "All benches")}</span>
-            {!loading && <span className="wb-badge wb-badge-gray">{benches.length}</span>}
+            <span className="wb-all-title">{t("bench.benches", "Benches")}</span>
+            {!loading && (
+              <span className="wb-badge wb-badge-gray" style={{ fontSize: 10, height: 16, padding: "0 5px", lineHeight: "16px" }}>
+                {benches.length}
+              </span>
+            )}
+            <span className="wb-spacer" />
+            <Button variant="secondary" size="sm" onClick={() => void pickRoot()}>
+              {t("bench.addFolder", "Add folder")}
+            </Button>
           </div>
         )}
 
@@ -628,7 +650,7 @@ export function BenchPage() {
             onClick={showAll}
           >
             {t("bench.tabAll", "All benches")}
-            {!loading && !selectedBench && (
+            {!loading && (
               <span className="wb-badge wb-badge-gray">{benches.length}</span>
             )}
           </button>
@@ -817,9 +839,27 @@ function BenchDetail({
   onInstallAppNameChange: (name: string) => void;
 }) {
   const { t } = useTranslation();
-  const canStart = status === "stopped" || status === "failed";
-  // Nothing streams for a bench that is not running: collapse the empty log.
-  const logCollapsed = logLines.length === 0 && (status === "stopped" || status === "failed");
+  // T14: fetch real apps (with versions) + procfile entries + port for this bench.
+  const [detail, setDetail] = useState<{
+    apps: AppWithVersion[];
+    procfileEntries: string[];
+    port: number | null;
+  } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    invoke<{ apps: AppWithVersion[]; procfileEntries: string[]; port: number | null; mainPid: number | null }>(
+      IPC.invoke.benchDetail,
+      { benchPath: bench.path },
+    )
+      .then((d) => {
+        if (!cancelled) setDetail(d);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [bench.path]);
+
   return (
     <>
       {/* Direction D: no embedded BenchSwitcher in detail (notes: tabs handle selection).
@@ -828,13 +868,15 @@ function BenchDetail({
       {/* lane T11: 3-column detail body (224px | flex | 252px per design) */}
       <div className="wb-detail-body">
 
-        {/* LEFT (224px): Sites (apps/workers omitted — no real data on BenchSummary) */}
+        {/* LEFT (224px): Sites + Apps (with version) + Workers (vertical rows) */}
         <div className="wb-bfd-left">
           <SiteList sites={bench.sites} />
+          <AppsSection apps={detail?.apps ?? null} />
+          <WorkersSection entries={detail?.procfileEntries ?? []} running={status === "running"} />
         </div>
 
 
-        {/* CENTER (flex): Process status + Log */}
+        {/* CENTER (flex): Process status + Log terminal (always dark surface, matches .bfd-term) */}
         <div className="wb-bfd-center">
           <ProcessPanel
             status={status}
@@ -844,89 +886,69 @@ function BenchDetail({
             elapsedLabel={elapsedLabel}
             startFailure={startFailure}
             warnings={warnings}
+            procCount={detail?.procfileEntries.length ?? null}
+            port={detail?.port ?? null}
           />
-          {logCollapsed ? (
-            <div className="wb-log-collapsed">
-              <span className="wb-log-title">{t("bench.log", "Log")}</span>
-              <span className="wb-muted">{t("bench.logStartsWhenRunning", "Starts when the bench starts")}</span>
+          <div className="wb-log-term">
+            <div className="wb-log-term-head">
+              <span className="wb-log-term-title">{t("bench.log", "Log")}</span>
+              {logLines.length > 0 && (
+                <span className="wb-log-term-badge">● {t("bench.live", "Live")}</span>
+              )}
+              <button type="button" className="wb-log-term-btn"
+                onClick={() => onFollowTailChange(!followTail)}>
+                {followTail ? t("bench.following", "⇊ following") : t("bench.follow", "⇊ follow")}
+              </button>
+              <button type="button" className="wb-log-term-btn"
+                onClick={() => void navigator.clipboard.writeText(
+                  logLines.map((l) => `${new Date(l.ts).toLocaleTimeString()} ${l.text}`).join("\n")
+                )}>
+                {t("bench.copy", "Copy")}
+              </button>
             </div>
-          ) : (
-            <div className="wb-log">
-              <div className="wb-log-hd">
-                <span className="wb-log-title">{t("bench.log", "Log")}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onFollowTailChange(!followTail)}
-                >
-                  {followTail ? t("bench.following", "⇊ following") : t("bench.follow", "⇊ follow")}
-                </Button>
+            {logLines.length > 0 ? (
+              <LogView lines={logLines} followTail={followTail}
+                onFollowTailChange={onFollowTailChange} className="bench-log-view" />
+            ) : (
+              <div className="wb-log-term-empty">
+                <span className="wb-log-term-empty-msg">
+                  {status === "running" || status === "starting"
+                    ? t("bench.waitingForLogs", "Waiting for log output…")
+                    : t("bench.logStartsWhenRunning", "Starts when the bench starts")}
+                </span>
               </div>
-              <LogView
-                lines={logLines}
-                followTail={followTail}
-                onFollowTailChange={onFollowTailChange}
-                className="bench-log-view"
-              />
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
-        {/* RIGHT (252px): Commands + Install + DocTypes */}
+
+        {/* RIGHT (252px): Commands + Install + DocTypes (design variant-D1-detail bfd-right) */}
         <div className="wb-bfd-right">
-          {/* One-shot commands — Gap 2 / T6 */}
           <div className="wb-sec-lbl">{t("bench.oneshotCommands", "One-shot commands")}</div>
           {bench.sites.length > 1 && (
             <div className="wb-migrate-site">
-              <label className="wb-sec-lbl" htmlFor="migrate-site-select">
-                {t("bench.migrateSite", "Migrate site")}
-              </label>
-              <Select
-                id="migrate-site-select"
-                value={migrateSite ?? ""}
+              <Select id="migrate-site-select" value={migrateSite ?? ""}
                 onChange={(e) => onMigrateSiteChange(e.target.value)}
-                aria-label={t("bench.selectSiteForMigrate", "Select site for migrate")}
-              >
+                aria-label={t("bench.selectSiteForMigrate", "Select site for migrate")}>
                 <option value="">{t("bench.chooseSite", "— choose site —")}</option>
                 {bench.sites.map((s) => (
-                  <option key={s.name} value={s.name}>
-                    {s.name}
-                  </option>
+                  <option key={s.name} value={s.name}>{s.name}</option>
                 ))}
               </Select>
             </div>
           )}
-          {/* G12: install-app name input */}
-          <div className="wb-install-app">
-            <label className="wb-sec-lbl" htmlFor="install-app-input">
-              {t("bench.installAppName", "App to install")}
-            </label>
-            <Input
-              id="install-app-input"
-              type="text"
-              placeholder={t("bench.installAppPlaceholder", "e.g. erpnext")}
-              value={installAppName}
-              onChange={(e) => onInstallAppNameChange(e.target.value)}
-              aria-label={t("bench.installAppName", "App to install")}
-            />
-          </div>
-          <div className="wb-cmds">
-            {ONESHOT_VERBS.map((verb) => {
+          {/* 2×2 icon-button grid: migrate / clear-cache / build / list-apps */}
+          <div className="wb-cmd-grid">
+            {(["migrate", "clear-cache", "build", "list-apps"] as const).map((verb) => {
               const vs = oneshotState.get(oneshotKey(bench.path, verb));
-              const isDisabled =
-                status !== "running" ||
-                vs?.status === "running" ||
-                (verb === "migrate" && !migrateSite) ||
-                (verb === "install-app" && !installAppName.trim());
+              const busy = vs?.status === "running";
               return (
-                <div key={verb} className="wb-cmd">
-                  <Button
-                    variant="secondary"
+                <div key={verb} className="wb-cmd-grid-cell">
+                  <Button variant="secondary" size="sm"
                     onClick={(e) => onRun(verb, e.currentTarget)}
-                    disabled={isDisabled}
-                    title={verb}
-                  >
-                    {vs?.status === "running"
+                    disabled={busy || (verb === "migrate" && !migrateSite)}
+                    title={verb} className="wb-cmd-grid-btn">
+                    {busy
                       ? `${verb} …`
                       : vs?.status === "ok"
                       ? `✓ ${verb}`
@@ -934,7 +956,7 @@ function BenchDetail({
                       ? `✗ ${verb}`
                       : verb}
                   </Button>
-                  {vs?.status === "ok" && vs.elapsed && (
+                  {vs?.status === "ok" && (
                     <span className="wb-cmd-ok">
                       {vs.elapsed} · {t("bench.exitOk", "exit 0")}
                     </span>
@@ -947,12 +969,9 @@ function BenchDetail({
                       <div className="wb-error-output-hd">
                         <span>{t("bench.exitElapsed", "exit {{elapsed}}", { elapsed: vs.elapsed })}</span>
                         {vs.output && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
+                          <Button variant="ghost" size="sm"
                             onClick={() => navigator.clipboard.writeText(vs.output ?? "")}
-                            title={t("bench.copyErrorOutput", "Copy error output")}
-                          >
+                            title={t("bench.copyErrorOutput", "Copy error output")}>
                             {t("bench.copy", "Copy")}
                           </Button>
                         )}
@@ -964,13 +983,52 @@ function BenchDetail({
               );
             })}
           </div>
-          {/* DocTypes panel — browse-only; never mutates on browse */}
+          {/* Full-width build-studio-app */}
+          {(() => {
+            const vs = oneshotState.get(oneshotKey(bench.path, "build-studio-app"));
+            return (
+              <Button variant="secondary" size="sm" className="wb-cmd-full"
+                onClick={(e) => onRun("build-studio-app", e.currentTarget)}
+                disabled={vs?.status === "running"}
+                title="build-studio-app">
+                {vs?.status === "running" ? "build-studio-app …" : "build-studio-app"}
+              </Button>
+            );
+          })()}
+          {/* Install app section */}
+          <div className="wb-install-app-sec">
+            <div className="wb-sec-lbl" style={{ marginBottom: "6px" }}>{t("bench.installApp", "Install app")}</div>
+            <Input id="install-app-input" type="text"
+              placeholder={t("bench.installAppPlaceholder", "e.g. payments")}
+              value={installAppName}
+              onChange={(e) => onInstallAppNameChange(e.target.value)}
+              aria-label={t("bench.installAppName", "App to install")}
+              style={{ marginBottom: "4px" }} />
+            {(() => {
+              const vs = oneshotState.get(oneshotKey(bench.path, "install-app"));
+              return (
+                <Button variant="secondary" size="sm" className="wb-cmd-full"
+                  onClick={(e) => onRun("install-app", e.currentTarget)}
+                  disabled={!installAppName.trim() || vs?.status === "running"}>
+                  {vs?.status === "running" ? "install-app …" : "install-app"}
+                </Button>
+              );
+            })()}
+          </div>
+          {/* DocTypes panel — browse-only */}
           <div className="wb-doctypes">
-            <div className="wb-sec-lbl">DocTypes</div>
+            <div className="wb-sec-lbl">
+              DocTypes
+              {bench.apps.length > 0 && (
+                <span className="wb-sec-sub">
+                  {bench.apps.length} {bench.apps.length === 1 ? t("bench.appSingular", "app") : t("bench.appPluralLabel", "apps")}
+                  {bench.sites.length > 0 ? ` · ${bench.sites[0].name}` : ""}
+                </span>
+              )}
+            </div>
             <DocTypeTree bench={bench} onOpen={onOpenDocTypeFile} onMigrate={onMigrateDocTypes} />
           </div>
         </div>
-
       </div>
     </>
   );
@@ -987,13 +1045,59 @@ function SiteList({ sites }: { sites: BenchSite[] }) {
         <ul className="wb-plain-list">
           {sites.map((s) => (
             <li key={s.name} className="wb-site">
-              <span className={`wb-dot ${s.isDefault ? "wb-dot-green" : "wb-dot-gray"}`} aria-hidden="true" />
-              <span className="wb-truncate">{s.name}</span>
-              {s.isDefault && <span className="wb-badge wb-badge-gray">{t("bench.defaultBadge")}</span>}
+              <span className={`wb-site-dot ${s.isDefault ? "is-default" : ""}`} aria-hidden="true" />
+              <span className="wb-truncate" style={{ flex: 1 }}>{s.name}</span>
+              {s.isDefault && <span className="wb-pill wb-pill-green">{t("bench.defaultBadge")}</span>}
             </li>
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+/** T14: real installed apps with versions from bench apps/ directory. */
+function AppsSection({ apps }: { apps: AppWithVersion[] | null }) {
+  const { t } = useTranslation();
+  // Show skeleton while detail IPC loads
+  const items = apps ?? [];
+  return (
+    <div>
+      <div className="wb-sec-lbl">{t("bench.apps", "Apps")}</div>
+      {items.map((app) => (
+        <div key={app.name} className="wb-app-detail-row">
+          <span className="wb-app-detail-icon" aria-hidden="true">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <polyline points="4 17 10 11 4 5"/>
+              <line x1="12" x2="20" y1="19" y2="19"/>
+            </svg>
+          </span>
+          <span className="wb-truncate" style={{ flex: 1 }}>{app.name}</span>
+          {app.version && <span className="wb-app-version">{app.version}</span>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** T14: Procfile workers — vertical column rows matching design .bfd-chip layout. */
+function WorkersSection({ entries, running }: { entries: string[]; running: boolean }) {
+  const { t } = useTranslation();
+  if (entries.length === 0) return null;
+  return (
+    <div>
+      <div className="wb-sec-lbl">{t("bench.workers", "Workers")}</div>
+      <div className="wb-workers-col">
+        {entries.map((name) => (
+          <div key={name} className={`wb-worker-row${running ? " is-running" : ""}`}>
+            <span>
+              <span className="wb-worker-dot" aria-hidden="true" />
+              {" "}{name}
+            </span>
+            {running && <span className="wb-worker-pid-placeholder" />}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -1012,6 +1116,8 @@ export function ProcessPanel({
   elapsedLabel,
   startFailure,
   warnings,
+  procCount,
+  port,
 }: {
   status: BenchStatus;
   /** Path of the bench that blocks Retry, or null. */
@@ -1022,13 +1128,17 @@ export function ProcessPanel({
   elapsedLabel: string;
   startFailure: StartFailureState | null;
   warnings: string[];
+  /** Number of Procfile processes; null if detail not loaded yet. */
+  procCount: number | null;
+  /** Webserver port from common_site_config.json; null if not loaded. */
+  port: number | null;
 }) {
   const { t } = useTranslation();
   const running = status === "running";
   const starting = status === "starting";
   return (
     <div className="wb-panel">
-      {/* Direction D: process card (running · elapsed · Restart) */}
+      {/* Direction D: process card (running · N procs · port · elapsed · Restart) */}
       <div className="wb-proc-card">
         <div className="wb-proc-card-row">
           <StatusBadge status={status} />
@@ -1041,6 +1151,18 @@ export function ProcessPanel({
             </Button>
           )}
         </div>
+        {(running || starting) && (procCount !== null || port !== null) && (
+          <div className="wb-proc-card-meta">
+            {procCount !== null && procCount > 0 && (
+              <span className="wb-proc-card-meta-item">
+                {procCount} {t("bench.processes", "processes")}
+              </span>
+            )}
+            {port !== null && (
+              <span className="wb-proc-card-meta-item">Port :{port}</span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Gap 5 / T6: port-conflict warnings */}

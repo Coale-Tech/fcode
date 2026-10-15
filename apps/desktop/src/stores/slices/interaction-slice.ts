@@ -38,6 +38,7 @@ export function createInteractionSlice({
   | "setSettingsTab"
   | "setSettingsAnchor"
   | "setBenchLogFollowTail"
+  | "setViewedBench"
   | "toggleBenchLogFollowTail"
   | "setShowKanbanSessions"
   | "setKanbanEnabled"
@@ -99,6 +100,8 @@ export function createInteractionSlice({
     setBenchLogFollowTail: (benchLogFollowTail) => set({ benchLogFollowTail }),
     toggleBenchLogFollowTail: () =>
       set((state) => ({ benchLogFollowTail: !state.benchLogFollowTail })),
+    setViewedBench: (viewedBenchPath, viewedBenchSiteCount) =>
+      set({ viewedBenchPath, viewedBenchSiteCount }),
     setShowKanbanSessions: (showKanbanSessions) => set({ showKanbanSessions }),
     setKanbanEnabled: (kanbanEnabled) => set({ kanbanEnabled }),
     setRavenEnabled: (ravenEnabled) => set({ ravenEnabled }),

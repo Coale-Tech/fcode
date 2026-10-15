@@ -294,6 +294,11 @@ export class BenchSupervisor extends EventEmitter {
     return this.processes.get(processName)?.buffer.all() ?? [];
   }
 
+  /** PID of the `bench start` child process, or null when not running. */
+  getMainPid(): number | null {
+    return this.processes.get("start")?.child?.pid ?? null;
+  }
+
   /**
    * Start `bench start` in the active bench (E4: argv spawn, shell:false).
    */
@@ -387,7 +392,8 @@ export class BenchSupervisor extends EventEmitter {
     }
     this.stopWatcher();
     this.status = "stopped";
-    this.activeBenchPath = null;
+    // Keep activeBenchPath so the status bar keeps showing the bench name after
+    // stop (WorkspaceBar shows "stopped" state). It is overwritten by start().
     this.activeSite = null;
     this.startedAt = null;
     this.emit("status", this.status);
