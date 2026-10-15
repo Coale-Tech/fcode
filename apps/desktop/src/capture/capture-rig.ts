@@ -9,6 +9,7 @@
  * monkey-patch `api.*` list calls) and must never run from a stray call.
  */
 import type {
+  AppNotificationKind,
   KanbanBoard,
   McpServerRecord,
   McpServerStatus,
@@ -880,7 +881,7 @@ export function installCaptureRig(): CaptureRig {
         const isFailed = index === 1 || index === 3;
         return {
           id: `capture-notification-${index}`,
-          kind: (isFailed ? "task.failed" : "task.completed") as const,
+          kind: (isFailed ? "task.failed" : "task.completed") as AppNotificationKind,
           sessionId: `capture-session-${index}`,
           sessionTitle: isFailed
             ? failedTitles[index % failedTitles.length]
@@ -944,11 +945,11 @@ export function installCaptureRig(): CaptureRig {
       }
       const now = new Date().toISOString();
       const tasks: ScheduledTask[] = [
-        { id: "st-1", title: "Daily ERPNext Digest", prompt: "Summarise ERPNext activity from the last 24 h and post to Raven.", cadence: "daily", mode: "normal", enabled: true, createdAt: now, updatedAt: now, lastRunAt: new Date(Date.now() - 3_600_000).toISOString(), workspacePath: "/apps" },
-        { id: "st-2", title: "Hourly CI Health Check", prompt: "Run pnpm test and report failures.", cadence: "hourly", mode: "normal", enabled: true, createdAt: now, updatedAt: now, lastRunAt: new Date(Date.now() - 600_000).toISOString(), workspacePath: "/apps" },
-        { id: "st-3", title: "Weekly HRMS Payroll Review", prompt: "Generate payroll summary for HR.", cadence: "weekly", mode: "normal", enabled: true, createdAt: now, updatedAt: now, workspacePath: "/apps" },
-        { id: "st-4", title: "Stock Reconciliation Snapshot", prompt: "Snapshot stock levels before month-end.", cadence: "monthly", mode: "normal", enabled: true, createdAt: now, updatedAt: now, lastRunAt: new Date(Date.now() - 86_400_000).toISOString(), workspacePath: "/apps" },
-        { id: "st-5", title: "Monthly Accounts Ageing", prompt: "Run accounts ageing report and email finance team.", cadence: "monthly", mode: "normal", enabled: false, createdAt: now, updatedAt: now, workspacePath: "/apps" },
+        { id: "st-1", title: "Daily ERPNext Digest", prompt: "Summarise ERPNext activity from the last 24 h and post to Raven.", cadence: "daily", mode: "agent", enabled: true, createdAt: now, updatedAt: now, lastRunAt: new Date(Date.now() - 3_600_000).toISOString(), workspacePath: "/apps" },
+        { id: "st-2", title: "Hourly CI Health Check", prompt: "Run pnpm test and report failures.", cadence: "hourly", mode: "agent", enabled: true, createdAt: now, updatedAt: now, lastRunAt: new Date(Date.now() - 600_000).toISOString(), workspacePath: "/apps" },
+        { id: "st-3", title: "Weekly HRMS Payroll Review", prompt: "Generate payroll summary for HR.", cadence: "weekly", mode: "agent", enabled: true, createdAt: now, updatedAt: now, workspacePath: "/apps" },
+        { id: "st-4", title: "Stock Reconciliation Snapshot", prompt: "Snapshot stock levels before month-end.", cadence: "monthly", mode: "agent", enabled: true, createdAt: now, updatedAt: now, lastRunAt: new Date(Date.now() - 86_400_000).toISOString(), workspacePath: "/apps" },
+        { id: "st-5", title: "Monthly Accounts Ageing", prompt: "Run accounts ageing report and email finance team.", cadence: "monthly", mode: "agent", enabled: false, createdAt: now, updatedAt: now, workspacePath: "/apps" },
       ];
       const health = { lastTickAt: Date.now() - 30_000, lastError: undefined, hostAvailable: true };
       const runs: ScheduledTaskRun[] = [

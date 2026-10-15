@@ -2311,6 +2311,7 @@ export const ptBR = {
     cadenceHourly: "A cada hora",
     cadenceDaily: "Diário",
     cadenceWeekly: "Semanal",
+    cadenceMonthly: "Mensal",
     enabled: "Ativada",
     disabled: "Desativada",
     runNow: "Executar agora",

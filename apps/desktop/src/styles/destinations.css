@@ -284,7 +284,7 @@
 .pr-row-icon.draft { background: var(--surface-gray-2); border-color: var(--d-border); color: var(--ink-gray-5); }
 .pr-row.selected .pr-row-icon { background: var(--da-sub); border-color: var(--da-bdr); color: var(--da-txt); }
 .pr-row-body { flex: 2; min-width: 0; }
-.pr-row-title { display: flex; align-items: center; gap: 6px; font-size: var(--d-text); font-weight: 500; color: var(--ink-gray-9); margin-bottom: 3px; flex-wrap: wrap; }
+.pr-row-title { display: flex; align-items: center; gap: 6px; font-size: var(--d-text); font-weight: 500; color: var(--ink-gray-9); margin-bottom: 3px; flex-wrap: nowrap; }
 .pr-row.selected .pr-row-title { color: var(--da-txt); }
 .pr-num { font-family: ui-monospace, SFMono-Regular, monospace; font-size: var(--d-text-sm); color: var(--ink-gray-4); font-weight: 400; }
 .pr-row-meta { font-size: var(--d-text-xs); color: var(--ink-gray-4); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }

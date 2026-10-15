@@ -2372,6 +2372,7 @@ sklm: {
     cadenceHourly: "매시간",
     cadenceDaily: "매일",
     cadenceWeekly: "매주",
+    cadenceMonthly: "매월",
     enabled: "활성화됨",
     disabled: "비활성화됨",
     runNow: "지금 실행",

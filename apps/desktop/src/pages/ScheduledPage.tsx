@@ -84,6 +84,7 @@ export function ScheduledPage() {
     hourly: "scheduled.cadenceHourly",
     daily: "scheduled.cadenceDaily",
     weekly: "scheduled.cadenceWeekly",
+    monthly: "scheduled.cadenceMonthly",
   } as const;
   const statusKey = {
     running: "scheduled.statusRunning",

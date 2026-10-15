@@ -2379,6 +2379,7 @@ sklm: {
     cadenceHourly: "Hourly",
     cadenceDaily: "Daily",
     cadenceWeekly: "Weekly",
+    cadenceMonthly: "Monthly",
     enabled: "Enabled",
     disabled: "Disabled",
     runNow: "Run now",

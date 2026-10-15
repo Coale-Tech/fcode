@@ -2356,6 +2356,7 @@ sklm: {
     "cadenceHourly": "Toutes les heures",
     "cadenceDaily": "Quotidien",
     "cadenceWeekly": "Hebdomadaire",
+    "cadenceMonthly": "Mensuel",
     "enabled": "Activé",
     "disabled": "Désactivé",
     "runNow": "Exécuter maintenant",
