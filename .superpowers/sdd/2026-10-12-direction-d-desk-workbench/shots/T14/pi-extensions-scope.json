@@ -1,0 +1,17 @@
+{
+  "shot": "pi-extensions-scope",
+  "commit": "292ce5770",
+  "buildTime": "2026-10-15T11:19:00.000Z",
+  "dataTheme": "light",
+  "dataNavLayout": "rail",
+  "savedNavLayout": "rail",
+  "savedTheme": "light",
+  "activePage": "extensions",
+  "navTabsPresent": false,
+  "navRailPresent": true,
+  "viewport": {
+    "w": 1200,
+    "h": 800
+  },
+  "dpr": 2
+}

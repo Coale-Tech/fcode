@@ -1,17 +1,18 @@
 {
   "shot": "pi-tabs-pulls-dark",
-  "commit": "unknown",
-  "buildTime": "2026-10-14T14:31:39.192Z",
-  "dataTheme": "dark",
-  "dataNavLayout": "tabs",
-  "savedNavLayout": "tabs",
-  "savedTheme": "dark",
-  "activePage": "",
-  "navTabsPresent": true,
-  "navRailPresent": false,
+  "commit": "292ce5770",
+  "buildTime": "2026-10-15T11:58:52.664Z",
   "viewport": {
     "w": 1200,
     "h": 800
   },
-  "dpr": 2
+  "dpr": 2,
+  "dataTheme": "dark",
+  "dataNavLayout": "tabs",
+  "savedNavLayout": "tabs",
+  "savedTheme": "dark",
+  "activePage": "pulls",
+  "navTabsPresent": true,
+  "navRailPresent": false,
+  "hasBackendBanner": true
 }

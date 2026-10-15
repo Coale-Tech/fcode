@@ -1,12 +1,12 @@
 {
-  "shot": "pi-plugins-sheet",
-  "commit": "60c76ea97",
-  "buildTime": "2026-10-15T09:32:00.000Z",
+  "shot": "pi-settings-picker-rail",
+  "commit": "292ce5770",
+  "buildTime": "2026-10-15T11:20:00.000Z",
   "dataTheme": "light",
   "dataNavLayout": "rail",
   "savedNavLayout": "rail",
   "savedTheme": "light",
-  "activePage": "extensions",
+  "activePage": "settings",
   "navTabsPresent": false,
   "navRailPresent": true,
   "viewport": {

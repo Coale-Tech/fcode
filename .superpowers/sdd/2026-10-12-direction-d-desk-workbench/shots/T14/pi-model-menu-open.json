@@ -1,17 +1,19 @@
 {
   "shot": "pi-model-menu-open",
-  "commit": "60c76ea97",
-  "buildTime": "2026-10-15T10:18:03.237Z",
-  "savedTheme": "light",
-  "savedNavLayout": "rail",
+  "commit": "292ce5770",
+  "buildTime": "2026-10-15T11:18:50.109Z",
   "viewport": {
     "w": 1200,
     "h": 800
   },
   "dpr": 2,
-  "dataTheme": "dark",
+  "dataTheme": "light",
   "dataNavLayout": "rail",
-  "pageId": "",
-  "menuOpen": "Collapse sidebar",
-  "menuCapture": "model-menu"
+  "savedNavLayout": "rail",
+  "savedTheme": "light",
+  "activePage": "chat",
+  "navRailPresent": true,
+  "modelMenuOpen": true,
+  "hasOnboarding": false,
+  "hasBackendBanner": false
 }
