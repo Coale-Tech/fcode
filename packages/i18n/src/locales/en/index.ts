@@ -146,6 +146,8 @@ export const en = {
     expandRail: "Expand navigation",
     collapseRail: "Collapse navigation",
     more: "More pages",
+    tabsLabel: "Navigation tabs",
+    userMenu: "User menu",
     temporarySessions: "Temporary chats",
     newTemporarySession: "New temporary chat",
     noProjectSessions: "No chats in this project yet",

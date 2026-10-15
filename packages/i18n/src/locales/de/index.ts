@@ -139,6 +139,8 @@ export const de = {
     "expandRail": "Navigation erweitern",
     "collapseRail": "Navigation reduzieren",
     "more": "Weitere Seiten",
+    "tabsLabel": "Navigations-Tabs",
+    "userMenu": "Benutzermenü",
     "temporarySessions": "Temporäre Chats",
     "newTemporarySession": "Neuer temporärer Chat",
     "noProjectSessions": "Nr Chats in diesem Projekt bisher",

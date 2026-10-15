@@ -138,6 +138,8 @@ export const ptBR = {
     expandRail: "Expandir navegação",
     collapseRail: "Recolher navegação",
     more: "Mais páginas",
+    tabsLabel: "Abas de navegação",
+    userMenu: "Menu do usuário",
     temporarySessions: "Conversas temporárias",
     newTemporarySession: "Nova conversa temporária",
     noProjectSessions: "Nenhuma conversa neste projeto ainda",

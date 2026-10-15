@@ -148,6 +148,8 @@ export const tr = {
     expandRail: "Gezintiyi genişlet",
     collapseRail: "Gezintiyi daralt",
     more: "Daha fazla sayfa",
+    tabsLabel: "Gezinti sekmeleri",
+    userMenu: "Kullanıcı menüsü",
     temporarySessions: "Geçici sohbetler",
     newTemporarySession: "Yeni geçici sohbet",
     noProjectSessions: "Bu projede henüz sohbet yok",

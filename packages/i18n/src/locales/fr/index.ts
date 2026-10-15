@@ -139,6 +139,8 @@ export const fr = {
     "expandRail": "Développer la navigation",
     "collapseRail": "Réduire la navigation",
     "more": "Plus de pages",
+    "tabsLabel": "Onglets de navigation",
+    "userMenu": "Menu utilisateur",
     "temporarySessions": "Chats temporaires",
     "newTemporarySession": "Nouveau chat temporaire",
     "noProjectSessions": "Aucun chat dans ce domaine projet pour l'instant",
