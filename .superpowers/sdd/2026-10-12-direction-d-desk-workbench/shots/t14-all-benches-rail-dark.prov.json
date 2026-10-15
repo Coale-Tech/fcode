@@ -1,9 +1,13 @@
 {
   "name": "all-benches-rail-dark",
-  "commit": "05cf6c6a4",
-  "capturedAt": "2026-10-15T10:20:54.643Z",
+  "commit": "b0c160fb9",
+  "capturedAt": "2026-10-15T10:47:29.211Z",
   "theme": "dark",
   "navLayout": "rail",
   "pageClass": "wb-page bench-page",
-  "viewport": "1200x800"
+  "viewport": "1200x800",
+  "benchPage": "wb-page bench-page",
+  "islandTop": 48,
+  "tabCount": "61",
+  "benches": 61
 }
