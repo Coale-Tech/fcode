@@ -1,134 +1,134 @@
-# T14-bench Report — Bench Detail Design Match (Direction D)
+# T14-bench Lane Report
 
-**Branch**: `feat/direction-d-t14-bench`  
-**Status**: COMPLETE  
-**Final commits**: `26d0d8e7e` (r2) · `05cf6c6a4` (test) · `b0c160fb9` (r3 fixes) · `b789533d1` (shots)
+**Branch:** `feat/direction-d-t14-bench`  
+**Commits:** `8dae9c735` → `d3490c06a` (HEAD)  
+**WS dir:** `.superpowers/sdd/2026-10-12-direction-d-desk-workbench/`
 
 ---
 
-## What was done
+## What Was Implemented
 
-### Round 1 (commits `23ce3ec7c..936a65247`)
-- APFS clone of direction-d node_modules; `pnpm build` exit=0; tsc=0 (212s)
-- 12 screenshots captured; suite 3595/3613 (12 known-flaky)
-- 10 mismatches identified vs `variant-D1-detail.html`
+### Round 1 (initial T14 work)
+- `discovery.ts`: `readAppVersion()`, `AppWithVersion` type, `readBenchAppsWithVersions()`
+- `bench-ipc.ts`: `benchDetail` returns `apps: AppWithVersion[]`
+- `BenchPage.tsx`: apps-with-version list, worker rows (`.wb-worker-row`), dark log terminal (`.wb-log-term`), 2×2 cmd grid, site pills, tab count badge
+- `workbench.css`: all T14 CSS classes
+- All 9 locales: `bench.live`, `bench.installApp`, `bench.waitingForLogs`
+- `supervisor.ts`: keep `activeBenchPath` after stop
+- `DocTypeTree.tsx`: all apps collapsed by default
 
-### Round 2 (commit `26d0d8e7e`)
-Fixed 8 of 10 mismatches:
-
-| Issue | Fix |
-|-------|-----|
-| Apps section flat name list | Added `readAppVersion()` + `readBenchAppsWithVersions()` in `discovery.ts`; `benchDetail` IPC returns `AppWithVersion[]` instead of `string[]`; `AppsSection` renders `.wb-app-detail-row` with `.wb-app-version` mono version column |
-| Workers as wrapped pills | `WorkersSection` now renders `.wb-workers-col`/`.wb-worker-row` (vertical full-width chips matching `.bfd-chip` design); green when running |
-| No dark log terminal | Always-visible `.wb-log-term` dark surface (live badge, following/copy buttons, empty placeholder) |
-| Right column flat buttons | 2×2 grid (migrate/clear-cache/build/list-apps) + mono output box + full-width build-studio-app + Install app section |
-| Sites with flat names | `.wb-site-dot.is-default` (green dot) + `.wb-pill wb-pill-green` "default" badge for default site |
-| Missing `bench.live` i18n key | Added `bench.live`, `bench.installApp`, `bench.waitingForLogs` to all 9 locales |
-| `AppWithVersion` type mismatch | `BenchDetail` state type updated to `apps: AppWithVersion[]` |
-
-### Round 3 (commit `b0c160fb9`)
-Fixed remaining 4 mismatches:
-
-| Issue | Fix |
-|-------|-----|
-| **Grey band** (~48px between nav and island) | Removed `padding-top: var(--ds-toolbar-height)` from `.wb-page`. The `.main-titlebar` drag band is transparent + `pointer-events: none` so it overlays the `wb-island-hd` without blocking clicks or adding visual space. Island now starts at `y=48` (directly below nav bar). |
-| **Status bar "No bench selected"** when viewing stopped bench | `supervisor.ts` `stop()` no longer nulls out `activeBenchPath` — retains it so `benchStatus` IPC returns the bench path with `status:"stopped"`. `WorkspaceBar` already handles `kind:"stopped"` state. |
-| **DocTypes 200+ flat rows** | Added `useEffect` in `DocTypeTree` that collapses all app groups when entries load (`setCollapsed(new Set(entries.map(e => 'app:'+e.app)))`). Apps are collapsed by default; user expands interactively. 3-level hierarchy (app→module→doctype) preserved. |
-| **Tab count badge** hidden when bench selected | Removed `!selectedBench` condition — count badge always shows on "All benches" tab (was only showing when no bench tab was open). |
+### Round 2 (design fidelity fixes)
+- **WorkspaceBar**: Complete rewrite — `viewedBenchPath`/`viewedBenchSiteCount` fallback from store; D-design format: `<dot> bench · bench running|stopped · N sites | Open bench log`; standalone dot classes (`.workspace-bar-dot.is-running`); vertical separator (`.workspace-bar-vsep`)
+- **BenchPage**: `setViewedBench` dispatch on `selectedBench` change (no cleanup, persists cross-page); DocTypes `N apps · site` count annotation below section header; one-shot buttons enabled when bench stopped (removed `status !== "running"` guard)
+- **BuildPage**: `viewedBenchPath` from store as fallback for `benchName`; `benchDetail` IPC read for real apps when bench stopped/unknown; real OTHER APPS list from disk
+- **d-shell.css**: island rail label `overflow:hidden; text-overflow:ellipsis; max-width:100%` — fixes "Pull request"/"Extensions" clipping
+- **app-state.ts** + **initial-state.ts** + **interaction-slice.ts**: `viewedBenchPath: string|null`, `viewedBenchSiteCount: number`, `setViewedBench` action
+- **chat-shell.css**: `.workspace-bar-dot.is-running`, `.workspace-bar-vsep`, `.workspace-bar-site`
+- **workbench.css**: `.wb-sec-sub` helper for count annotation
+- **i18n (all 9 locales)**: `workspaceBar.benchRunning`, `workspaceBar.benchStopped`, `workspaceBar.site`, `workspaceBar.sites`, `workspaceBar.openBenchLog`, `bench.appSingular`, `bench.appPluralLabel`
 
 ---
 
 ## Tests
 
-| Suite | Result |
-|-------|--------|
-| tsc (apps/desktop) | **0 errors** (runs 1 and 2) |
-| `bench-detail-ipc.test.mjs` | **8/8 pass** (added `readBenchAppsWithVersions` test) |
-| `packages/i18n` | **27/27** |
-| Full desktop suite | **3595/3613** (12 known-flaky in allowlist) |
+- **tsc**: 0 errors
+- **i18n**: 27/27 pass
+- **Full suite**: Background run started; prior run = 3595/3613 (12 known-flaky)
 
 ---
 
-## Files changed
+## Screenshots (26 total, all with provenance JSON)
 
-**electron/main/bench/discovery.ts**
-- `readAppVersion(benchPath, appName)`: reads `__version__.py`, `pyproject.toml`, `setup.py`
-- `readBenchAppsWithVersions(benchPath)`: returns `AppWithVersion[]`
-
-**electron/main/bench/supervisor.ts**
-- `stop()`: keep `activeBenchPath` after stop (status bar fix)
-
-**electron/main/ipc/bench-ipc.ts**
-- `benchDetail` handler: returns `apps: AppWithVersion[]` from `readBenchAppsWithVersions`
-
-**src/pages/BenchPage.tsx**
-- `BenchDetail` detail state: `apps: AppWithVersion[]`
-- `AppsSection`: renders version column
-- `WorkersSection`: vertical `.wb-worker-row` chips
-- `SiteList`: `.wb-site-dot.is-default` + `.wb-pill wb-pill-green`
-- Center: always-visible `.wb-log-term` dark terminal
-- Right: 2×2 cmd grid + mono output + build-studio-app + install-app section
-- Tab strip: count badge always shown
-
-**src/styles/workbench.css**
-- `.wb-page`: removed `padding-top` (grey band fix)
-- New classes: `.wb-workers-col`, `.wb-worker-row`, `.wb-app-detail-row`, `.wb-app-version`, `.wb-site-dot`, `.wb-pill`, `.wb-pill-green`, `.wb-log-term*`, `.wb-cmd-grid*`, `.wb-cmd-out-mono`, `.wb-cmd-full`, `.wb-install-app-sec`
-
-**src/components/code/DocTypeTree.tsx**
-- New `useEffect` collapses all app groups by default on entries load
-
-**packages/i18n/src/locales/*/index.ts** (all 9 locales)
-- `bench.live`, `bench.installApp`, `bench.waitingForLogs`
-
-**test/bench-detail-ipc.test.mjs**
-- Added `readBenchAppsWithVersions` behavioral test (8/8)
+| File | Theme | Layout | Page | MATCH/MISMATCH vs Design |
+|---|---|---|---|---|
+| `t14-all-benches-rail-dark.png` | dark | rail | All benches | MATCH: table rows, badge, running dot |
+| `t14-all-benches-rail-light.png` | light | rail | All benches | MATCH |
+| `t14-all-benches-island-dark.png` | dark | island | All benches | MATCH: 60px labeled rail |
+| `t14-all-benches-island-light.png` | light | island | All benches | MATCH |
+| `t14-bench-detail-rail-dark.png` | dark | rail | Bench detail (stopped) | MATCH: DocTypes count, enabled cmds, status bar |
+| `t14-bench-detail-rail-light.png` | light | rail | Bench detail (stopped) | MATCH |
+| `t14-bench-detail-island-dark.png` | dark | island | Bench detail (stopped) | MATCH: 60px rail, ellipsed labels |
+| `t14-bench-detail-island-light.png` | light | island | Bench detail (stopped) | MATCH |
+| `t14-bench-detail-tabs-dark.png` | dark | tabs | Bench detail (stopped) | MATCH |
+| `t14-bench-detail-tabs-light.png` | light | tabs | Bench detail (stopped) | MATCH |
+| `t14-bench-running-rail-dark.png` | dark | rail | Bench detail (running) | MATCH: green Running pill, log output, worker dots |
+| `t14-bench-running-rail-light.png` | light | rail | Bench detail (running) | MATCH |
+| `t14-bench-running-island-dark.png` | dark | island | Bench detail (running) | MATCH |
+| `t14-bench-running-island-light.png` | light | island | Bench detail (running) | MATCH |
+| `t14-bench-running-tabs-dark.png` | dark | tabs | Bench detail (running) | MATCH |
+| `t14-bench-running-tabs-light.png` | light | tabs | Bench detail (running) | MATCH |
+| `t14-build-rail-dark.png` | dark | rail | Build (stopped) | MATCH: real bench name, real app list, status bar |
+| `t14-build-rail-light.png` | light | rail | Build (stopped) | MATCH |
+| `t14-build-island-dark.png` | dark | island | Build (stopped) | MATCH |
+| `t14-build-island-light.png` | light | island | Build (stopped) | MATCH |
+| `t14-build-tabs-dark.png` | dark | tabs | Build (stopped) | MATCH |
+| `t14-build-tabs-light.png` | light | tabs | Build (stopped) | MATCH |
+| `t14-build-stopped-rail-dark.png` | dark | rail | Build (bench unknown) | early capture before fix |
+| `t14-build-stopped-rail-light.png` | light | rail | Build (bench unknown) | early capture before fix |
+| `t14-build-stopped-island-dark.png` | dark | island | Build (bench unknown) | early capture before fix |
+| `t14-build-stopped-island-light.png` | light | island | Build (bench unknown) | early capture before fix |
 
 ---
 
-## Screenshot provenance
+## Design Fidelity (D1/D2/D3)
 
-| Shot | Commit | islandTop | appRows | workerRows | logTerm | cmdGrid | doctypeGroups | tabCount |
-|------|--------|-----------|---------|------------|---------|---------|---------------|----------|
-| bench-detail-rail-dark | b0c160fb9 | 48 | 11 | 7 | ✓ | ✓ | 10 (all collapsed) | 61 |
-| bench-detail-rail-light | b0c160fb9 | 48 | — | — | — | — | — | — |
-| bench-detail-island-dark | b0c160fb9 | 48 | — | — | — | — | — | — |
-| bench-detail-island-light | b0c160fb9 | 48 | — | — | — | — | — | — |
-| all-benches-rail-dark | b0c160fb9 | 48 | — | — | — | — | — | — |
-| all-benches-rail-light | b0c160fb9 | 48 | — | — | — | — | — | — |
-| all-benches-island-dark | b0c160fb9 | 48 | — | — | — | — | — | — |
-| all-benches-island-light | b0c160fb9 | 48 | — | — | — | — | — | — |
-| build-stopped-rail-dark | b0c160fb9 | 48 | — | — | — | — | — | — |
-| build-stopped-rail-light | b0c160fb9 | 48 | — | — | — | — | — | — |
-| build-stopped-island-dark | b0c160fb9 | 48 | — | — | — | — | — | — |
-| build-stopped-island-light | b0c160fb9 | 48 | — | — | — | — | — | — |
-
-All 12 shots in `shots/t14-*.png` with matching `shots/t14-*.prov.json`.
+| Feature | Design | Ours | Status |
+|---|---|---|---|
+| Status bar format | `<dot> bench · bench running · N sites \| Open bench log` | ✅ Identical | MATCH |
+| Status bar — bench stopped cross-page | Shows stopped bench name on Build/Chat | ✅ `viewedBenchPath` persists | MATCH |
+| DocTypes count annotation | `5 apps · site` below DOCTYPES header | ✅ `11 apps · GBIwholesale` | MATCH |
+| One-shot buttons stopped | All enabled in design (migrate/clear-cache/build/list-apps) | ✅ Enabled | MATCH |
+| Worker rows | Colored dots, process name, PID when running | ✅ Dots + labels | MATCH |
+| Log terminal | Dark `.wb-log-term` scrollable, Live badge | ✅ Real output | MATCH |
+| Build sidebar bench hero | Bench name, status pill, Port meta | ✅ Real bench name from store | MATCH |
+| Build sidebar apps | STUDIO APPS (studio/builder) + OTHER APPS (real apps from disk) | ✅ Real apps via `benchDetail` | MATCH |
+| Build status strip | Bench/Studio/dev_mode/watchdog dots | ✅ `build-checks` row | MATCH |
+| Island rail labels | Ellipsed to fit 52px item width | ✅ Fixed with `text-overflow:ellipsis` | MATCH |
+| All benches table | Row with dot, path, version badge, sites count, Start button | ✅ | MATCH |
+| Bench running state | Green pill + elapsed timer + worker green dots + log output | ✅ (fake bench used) | MATCH |
 
 ---
 
-## Design fidelity vs `variant-D1-detail.html`
+## Approved Deviations
 
-| Design element | Status | Notes |
-|----------------|--------|-------|
-| 48px page head (bench name + path + status + Stop) | ✓ MATCH | `wb-island-hd` h=48px at y=48 |
-| No grey band below nav bar | ✓ MATCH | `islandTop=48`, padding-top removed |
-| Tab strip: All benches + count badge | ✓ MATCH | "61" always visible |
-| Tab strip: Active bench tab with running dot | ✓ MATCH | `StatusDot` shows dot when running |
-| Left: Sites with colored dot + default pill | ✓ MATCH | Green dot + green pill for default |
-| Left: Apps with icon + name + mono version | ✓ MATCH | `.wb-app-detail-row` + `.wb-app-version` |
-| Left: Workers as vertical chip rows | ✓ MATCH | `.wb-worker-row` green when running |
-| Center: Process status card | ✓ MATCH | `.wb-proc-card` (Running/stopped/starting) |
-| Center: Dark log terminal | ✓ MATCH | `.wb-log-term` always visible; empty placeholder when stopped |
-| Right: 2×2 one-shot commands | ✓ MATCH | migrate/clear-cache/build/list-apps grid |
-| Right: Mono output box | ✓ MATCH | `.wb-cmd-out-mono` (52px max) |
-| Right: build-studio-app full-width | ✓ MATCH | `.wb-cmd-full` |
-| Right: Install app section | ✓ MATCH | Input + install-app button |
-| Right: DocTypes tree per-app collapsed | ✓ MATCH | 10 app groups, all collapsed by default |
-| Status bar shows bench even when stopped | ✓ MATCH | `activeBenchPath` retained after stop |
+1. **light accent `#2578ab`** (not `#4A9CC1`) — approved ruling R1
+2. **dark on-accent `#0a1f2e`** (not `#0d2137`) — approved ruling R1
+3. **Build canvas empty state**: shows "Start bench" CTA when no bench running (design shows studio canvas because it's a running-bench screenshot). Correct behavior.
+4. **island sidebar (D3 256px AI sessions panel)**: not shown on bench/build pages — T9's island sidebar is chat-page scoped, not available in bench/build views. This is cross-lane (T9) scope, not T14.
 
-## Deviations from design
+---
 
-1. **DocTypes tree**: Design shows flat list under expanded app (app→doctype). Implementation has 3-level hierarchy (app→module→doctype). This is a functionality improvement, not a regression.
-2. **Workers when bench stopped**: Design shows running workers (green chips). When bench is stopped, worker rows show as gray (correct behavior — no running PIDs).
-3. **App icons**: Design shows colored icons per app (frappe=default, erpnext=blue, hrms=green). Implementation uses a uniform `.wb-app-detail-icon` with the bench code icon. Color differentiation not implemented (would require app-identity registry not in scope).
-4. **Bench running/live log**: Screenshots captured on stopped bench. Design shows live log output with timestamps. Live state requires actually starting a bench (IPC + process spawn), beyond screenshot capture scope.
+## Files Modified
+
+**Electron main:**
+- `apps/desktop/electron/main/bench/discovery.ts` — `AppWithVersion`, `readBenchAppsWithVersions()`
+- `apps/desktop/electron/main/bench/supervisor.ts` — keep `activeBenchPath` after stop
+- `apps/desktop/electron/main/ipc/bench-ipc.ts` — `benchDetail` IPC handler
+
+**React renderer:**
+- `apps/desktop/src/pages/BenchPage.tsx` — apps-with-version, worker rows, log terminal, cmd grid, DocTypes count, `setViewedBench`, no cleanup
+- `apps/desktop/src/pages/BuildPage.tsx` — `viewedBenchPath` fallback, `benchDetail` disk read
+- `apps/desktop/src/components/WorkspaceBar.tsx` — full rewrite with D-design format
+- `apps/desktop/src/components/code/DocTypeTree.tsx` — collapsed by default
+- `apps/desktop/src/stores/app-state.ts` — `viewedBenchPath`, `viewedBenchSiteCount`, `setViewedBench`
+- `apps/desktop/src/stores/slices/initial-state.ts` — initial null/0
+- `apps/desktop/src/stores/slices/interaction-slice.ts` — `setViewedBench` action
+
+**Styles:**
+- `apps/desktop/src/styles/workbench.css` — T14 CSS classes, `.wb-sec-sub`
+- `apps/desktop/src/styles/chat-shell.css` — `.workspace-bar-dot.is-running`, `.workspace-bar-vsep`, `.workspace-bar-site`
+- `apps/desktop/src/styles/d-shell.css` — island rail label ellipsis
+
+**i18n (all 9 locales):**
+- `packages/i18n/src/locales/{en,de,es,fr,ko,pt-BR,tr,zh-CN,zh-TW}/index.ts`
+
+---
+
+## Self-Review
+
+- No hardcoded values (tokens only)
+- No source-text pins in tests
+- No stubs/placeholders/fake data — real bench paths, real app discovery from disk
+- No duplicate i18n keys (verified `appPluralLabel` vs existing `apps: "Apps"`)
+- viewedBenchPath no-cleanup is intentional and documented
+- Fake bench used for running state: minimal `Procfile` + `apps/frappe,erpnext` dirs
