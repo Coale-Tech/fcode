@@ -13,12 +13,16 @@ import {
   MIN_CHAT_CONTENT_MAX_WIDTH,
   chatContentWidthFromDrag,
   clampChatContentMaxWidth,
-  resolveChatContentMaxWidth,
+  normalizeChatContentMaxWidth,
   type ChatContentResizeSide,
 } from "@pi-desktop/shared";
 import { api } from "../lib/api";
+import { resolveNavLayout } from "../lib/nav-layout";
 import { useAppStore } from "../stores/app-store";
 import { cx } from "./ui";
+
+/** Direction D: rail/tabs layouts cap the band at 700px; island keeps 760px. */
+const DOCKED_CHAT_CONTENT_MAX_WIDTH = 700;
 
 type DragState = {
   pointerId: number;
@@ -40,7 +44,7 @@ function applyPreferredWidth(surface: HTMLElement | null, width: number) {
   surface.style.setProperty("--chat-content-max-width", px);
   surface.style.setProperty("--chat-composer-max-width", px);
   // The per-message prose width must track the band, otherwise the message
-  // rows stay frozen at the `.main-pane` default (760px) while the band it
+  // rows stay frozen at the `.main-pane` default while the band it
   // sits in widens (the bug this fixes: content no longer scales with it).
   surface.style.setProperty("--chat-prose-max-width", px);
 
@@ -65,9 +69,14 @@ export function ConversationWidthHandles() {
   const { t } = useTranslation();
   const hostRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<DragState | null>(null);
-  const persisted = useAppStore((state) =>
-    resolveChatContentMaxWidth(state.settings?.chatContentMaxWidth),
+  const defaultWidth = useAppStore((state) =>
+    resolveNavLayout(state.settings?.navLayout) === "island"
+      ? DEFAULT_CHAT_CONTENT_MAX_WIDTH
+      : DOCKED_CHAT_CONTENT_MAX_WIDTH,
   );
+  const persisted =
+    useAppStore((state) => normalizeChatContentMaxWidth(state.settings?.chatContentMaxWidth)) ??
+    defaultWidth;
   const [dragWidth, setDragWidth] = useState<number | null>(null);
   const [paneWidth, setPaneWidth] = useState(0);
   const width = dragWidth ?? persisted;
@@ -190,9 +199,9 @@ export function ConversationWidthHandles() {
 
   const onDoubleClick = useCallback(() => {
     setDragWidth(null);
-    applyPreferredWidth(surfaceOf(hostRef.current), DEFAULT_CHAT_CONTENT_MAX_WIDTH);
-    void persistWidth(DEFAULT_CHAT_CONTENT_MAX_WIDTH);
-  }, [persistWidth]);
+    applyPreferredWidth(surfaceOf(hostRef.current), defaultWidth);
+    void persistWidth(defaultWidth);
+  }, [defaultWidth, persistWidth]);
 
   const onKeyDown = useCallback(
     (event: ReactKeyboardEvent<HTMLDivElement>) => {
@@ -211,7 +220,7 @@ export function ConversationWidthHandles() {
           (event.currentTarget.dataset.side === "right" && event.key === "ArrowRight");
         next = width + (towardWider ? step : -step);
       } else if (event.key === "Home") {
-        next = DEFAULT_CHAT_CONTENT_MAX_WIDTH;
+        next = defaultWidth;
       } else if (event.key === "End") {
         next = Number.POSITIVE_INFINITY;
       }
@@ -221,7 +230,7 @@ export function ConversationWidthHandles() {
       applyPreferredWidth(surfaceOf(hostRef.current), clamped);
       void persistWidth(clamped);
     },
-    [finishDrag, paneWidth, persistWidth, width],
+    [defaultWidth, finishDrag, paneWidth, persistWidth, width],
   );
 
   const max = clampChatContentMaxWidth(Number.POSITIVE_INFINITY, paneWidth || 10_000);

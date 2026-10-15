@@ -189,7 +189,7 @@
   left: var(--d-rail-island);
 }
 :root[data-nav-layout="island"] .window-chrome-row.sidebar-expanded {
-  left: calc(var(--d-rail-island) + var(--ds-sidebar-width));
+  left: calc(var(--d-rail-island) + var(--d-island-sb));
 }
 
 /* ── Tabs layout: no left rail ── */
@@ -363,9 +363,10 @@
   justify-content: flex-start;                  /* icon left, label follows */
   gap: var(--d-rail-item-gap);                  /* 2px (D.css:413) */
 }
-/* When expanded, align toggle to the left edge */
-:root[data-nav-layout="rail"] .nav-rail.expanded .nav-rail-foot {
-  justify-content: flex-start;
+/* Notification-center wrapper is layout-transparent so the trigger button
+ * is a direct flex child of the footer and gets stretch sizing like scroll items. */
+.nav-rail-foot .notification-center {
+  display: contents;
 }
 
 /* ── D2 canvas island (D.css:451-461, D.css:464-481) ── */
@@ -393,17 +394,20 @@
 }
 
 /* ── D2 rail footer: notification+settings+toggle (D.css:432-449) ── */
+/* align-items:stretch puts footer items on the same full-width left-start grid
+ * as scroll items (D.css:432-435 reuses .d-rail-item with margin:1px 6px). */
 .nav-rail-foot {
-  padding: var(--d-rail-item-mx);
+  padding-block: var(--d-rail-item-mx);          /* top/bottom only; items use margin:1px 6px for sides */
   border-top: 1px solid var(--d-border);
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: var(--d-rail-item-gap);                  /* 2px between footer items */
 }
 .nav-rail-toggle {
   width: var(--d-ctrl);                         /* 28px (D.css:438) */
   height: var(--d-ctrl);
+  align-self: center;                           /* keep toggle centered; explicit width won't stretch */
   border-radius: var(--d-r-sm);
   border: none;
   background: transparent;
@@ -415,3 +419,198 @@
   transition: background .12s;
 }
 .nav-rail-toggle:hover { background: var(--surface-gray-2); color: var(--ink-gray-8); }
+
+/* ── D3 Island layout — full spec ──────────────────────────────────────
+ * Design refs: D3-shell.html:9-243 (d3-rail, d3-sidebar, d3-island)
+ *              D-SPEC.md:121-153, design-authority.md R11d
+ */
+
+/* Gray canvas backdrop — same rule as D2 rail */
+:root[data-nav-layout="island"] .app-chat-shell {
+  background: var(--d-canvas-bg);
+}
+/* Rail logo mark (D3-shell.html:351-354) */
+:root[data-nav-layout="island"] .nav-rail-logo {
+  height: var(--d-navbar-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--d-border);
+}
+:root[data-nav-layout="island"] .nav-rail-logo-mark {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  background: var(--surface-gray-9);
+  color: var(--ink-gray-1);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; letter-spacing: -0.03em;
+  user-select: none;
+}
+:root[data-theme="dark"][data-nav-layout="island"] .nav-rail-logo-mark {
+  background: var(--surface-gray-2);
+  color: var(--ink-gray-9);
+}
+
+/* Rail labels: always visible in island, 10px line-height:1 (D3-shell.html:98-102) */
+:root[data-nav-layout="island"] .nav-rail-label {
+  display: block;
+  font-size: var(--d-rail-island-label);
+  font-weight: 500;
+  line-height: 1;
+  text-align: center;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+/* Rail items: vertical column 52×46px, 4px inset in 60px rail (D3-shell.html:70-82) */
+:root[data-nav-layout="island"] .nav-rail-btn.nav-rail-labeled,
+:root[data-nav-layout="island"] .nav-rail .notification-trigger.nav-rail-labeled {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: var(--d-rail-island-item-w);   /* 52px */
+  min-height: var(--d-rail-island-item-h); /* 46px */
+  height: auto;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 6px 4px var(--d-rail-island-item-pb); /* top:6 sides:4px bottom:5px */
+  gap: var(--d-rail-island-item-gap);   /* 3px */
+}
+
+/* Rail icon: 20×20 in island (D3-shell.html:94-96) */
+:root[data-nav-layout="island"] .nav-rail-icon {
+  width: var(--d-rail-island-icon);
+  height: var(--d-rail-island-icon);
+}
+
+/* Hide D2 expand toggle and its divider (not in D3 rail) */
+:root[data-nav-layout="island"] .nav-rail-toggle,
+:root[data-nav-layout="island"] .nav-rail-foot > .nav-rail-divider { display: none; }
+
+/* Sidebar: fixed 256px, elevation-1 surface (D3-shell.html:118-126) */
+:root[data-nav-layout="island"] .sidebar {
+  width: var(--d-island-sb);
+  flex: 0 0 var(--d-island-sb);
+  max-width: var(--d-island-sb);
+  /* Pin inner min-width to fixed 256 so wider saved prefs don't overflow (chrome.css:415-416) */
+  --ds-sidebar-width: var(--d-island-sb);
+}
+:root[data-nav-layout="island"] .sidebar-surface {
+  background: var(--surface-elevation-1);
+}
+/* Permanent: suppress both enter and exit slide animations + pointer-events */
+:root[data-nav-layout="island"] .sidebar.is-entering,
+:root[data-nav-layout="island"] .sidebar.is-exiting {
+  animation: none;
+  pointer-events: auto;
+}
+:root[data-nav-layout="island"] .sidebar-resize-handle { display: none; }
+
+/* D3 sidebar header: bench card + new-session + filter (D3-shell.html:420-500) */
+:root[data-nav-layout="island"] .d3-sb-header {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 0;
+}
+:root[data-nav-layout="island"] .d3-sb-bench {
+  margin: 10px 10px 6px;
+  background: var(--surface-gray-1);
+  border: 1px solid var(--d-border);
+  border-radius: 10px;
+  padding: 8px 10px 7px;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  width: calc(100% - 20px);
+}
+:root[data-nav-layout="island"] .d3-sb-bench:hover { border-color: var(--outline-gray-3); }
+:root[data-nav-layout="island"] .d3-sb-bench-name {
+  font-size: 12px; font-weight: 600;
+  color: var(--ink-gray-9);
+}
+:root[data-nav-layout="island"] .d3-sb-bench-sub {
+  font-size: 11px; color: var(--ink-gray-4); margin-top: 3px;
+}
+:root[data-nav-layout="island"] .d3-sb-new-btn {
+  margin: 0 10px 8px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  height: 28px;
+  background: var(--surface-gray-9); color: var(--ink-gray-1);
+  border-radius: var(--d-r-ctrl); border: none;
+  font-size: 12px; font-weight: 500;
+  font-family: inherit;
+  cursor: pointer; width: calc(100% - 20px);
+  transition: background 0.12s; flex-shrink: 0;
+}
+:root[data-nav-layout="island"] .d3-sb-new-btn:hover { background: var(--surface-gray-8); }
+:root[data-theme="dark"][data-nav-layout="island"] .d3-sb-new-btn {
+  background: var(--surface-gray-2); color: var(--ink-gray-9);
+}
+:root[data-theme="dark"][data-nav-layout="island"] .d3-sb-new-btn:hover { background: var(--surface-gray-3); }
+:root[data-nav-layout="island"] .d3-sb-search {
+  margin: 0 10px 4px;
+  display: flex; align-items: center; gap: 6px;
+  height: 26px;
+  background: var(--surface-gray-1);
+  border: 1px solid var(--d-border);
+  border-radius: 6px; padding: 0 8px;
+  flex-shrink: 0;
+}
+:root[data-nav-layout="island"] .d3-sb-search input {
+  border: none; outline: none; background: transparent;
+  font-size: 12px; color: var(--ink-gray-7); width: 100%;
+  font-family: inherit;
+}
+:root[data-nav-layout="island"] .d3-sb-search input::placeholder { color: var(--ink-gray-4); }
+/* Session density: 30px rows, 12px font (D3-shell.html:196-215) */
+:root[data-nav-layout="island"] .sidebar-body .thread-item,
+:root[data-nav-layout="island"] .sidebar-body .thread-item-row {
+  height: var(--d-row-h);   /* 30px */
+  min-height: var(--d-row-h);
+  font-size: var(--d-text-sm);  /* 12px */
+}
+
+/* D3 bench status dot (running = green, stopped = gray) */
+:root[data-nav-layout="island"] .d3-bench-dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--ink-gray-4);
+  flex-shrink: 0;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+:root[data-nav-layout="island"] .d3-bench-dot.is-on  { background: var(--color-green-6, #22c55e); }
+:root[data-nav-layout="island"] .d3-bench-dot.is-off { background: var(--ink-gray-4); }
+
+/* D3 Pinned pages section (D3-shell.html:497-519) */
+:root[data-nav-layout="island"] .d3-sb-pinned-pages {
+  flex-shrink: 0;
+}
+:root[data-nav-layout="island"] .d3-sb-pinned-list {
+  padding: 0 8px 6px;
+  display: flex; flex-direction: column; gap: 1px;
+}
+:root[data-nav-layout="island"] .d3-sb-pinned-row {
+  display: flex; align-items: center; gap: 7px;
+  width: 100%; height: 28px;
+  padding: 0 8px; border: none;
+  background: transparent; font-family: inherit;
+  font-size: 12px; color: var(--ink-gray-7);
+  border-radius: 6px; cursor: pointer; text-align: left;
+}
+:root[data-nav-layout="island"] .d3-sb-pinned-row:hover {
+  background: var(--surface-gray-1);
+  color: var(--ink-gray-9);
+}
+:root[data-nav-layout="island"] .d3-sb-pinned-row.active {
+  background: var(--surface-gray-2);
+  color: var(--ink-gray-9);
+}
+:root[data-nav-layout="island"] .d3-sb-pinned-name { flex: 1; }
+:root[data-nav-layout="island"] .d3-sb-pinned-sub  { font-size: 11px; color: var(--ink-gray-4); }
+/* Dark mode overrides */
+:root[data-theme="dark"][data-nav-layout="island"] .d3-sb-pinned-row:hover  { background: var(--surface-gray-2); }
+:root[data-theme="dark"][data-nav-layout="island"] .d3-sb-pinned-row.active { background: var(--surface-gray-3); }

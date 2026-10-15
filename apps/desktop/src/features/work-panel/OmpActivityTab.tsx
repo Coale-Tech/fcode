@@ -1,18 +1,15 @@
 /**
- * OmpActivityTab — Variant B "Activity" right-panel tab.
+ * OmpActivityTab — Variant D "Activity" right-panel tab.
  *
- * Sections (top to bottom):
- *  1. "Needs your decision" amber block — only when a permission is pending.
- *     Shows tool name + "Review request" button that scrolls the inline
- *     PermissionCard into view; no Allow/Deny buttons here (those live on
- *     the PermissionCard itself).
- *  2. To-do list — from sessionTodoPhases; hidden when no todos.
- *  3. Tools run — one row per tool call (newest last), with status dot,
- *     display name, summary target, and duration.
- *  4. Changes — file list derived from workspace-review (same source as
- *     ReviewTab) with an "Open Review" button; no Keep/Rollback here.
+ * Three inner sub-tabs (design: fragment.html:453-526 .d-panel-tabs):
+ *  - Todos: decision block (Allow/Deny) + Open todos + Recent activity events
+ *  - Timeline: tool call timeline with duration
+ *  - Changes: file diffs with status badges
+ *
+ * Below the strip (always visible):
+ *  - Session: OmpTuiPanel + OmpCollabPanel (no design home — ruled into Activity)
  */
-import { memo, useCallback } from "react";
+import { memo, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { OmpTodoPhase } from "@pi-desktop/shared";
 import { Button } from "../../components/ui";
@@ -22,12 +19,18 @@ import { buildActivityTimeline } from "../../lib/activity-summary";
 import { reviewChangesFromMessages } from "../../lib/workspace-review";
 import { formatToolDuration } from "../../lib/tool-display";
 import { toolWorkPanelTab } from "../../lib/work-panel-tabs";
+import { OmpCollabPanel } from "../chat/transcript/OmpCollabPanel";
+import { OmpTuiPanel } from "../chat/transcript/OmpTuiPanel";
 
 // Stable fallback: a fresh [] per call breaks useSyncExternalStore snapshot caching.
 const EMPTY_PHASES: OmpTodoPhase[] = [];
 
+type ActivitySubTab = "todos" | "timeline" | "changes";
+
 export const OmpActivityTab = memo(function OmpActivityTab() {
   const { t } = useTranslation();
+  const [subTab, setSubTab] = useState<ActivitySubTab>("todos");
+
   const sessionId = useAppStore((s) => s.activeSessionId);
   const messages = useAppStore((s) => s.messages);
   const pendingPermission = useAppStore((s) =>
@@ -37,141 +40,248 @@ export const OmpActivityTab = memo(function OmpActivityTab() {
     sessionId ? (s.sessionTodoPhases[sessionId] ?? EMPTY_PHASES) : EMPTY_PHASES,
   );
   const openWorkPanelTab = useAppStore((s) => s.openWorkPanelTab);
+  const resolvePermission = useAppStore((s) => s.resolvePermission);
+  const isOmpSession = useAppStore((s) =>
+    sessionId ? s.sessions.find((x) => x.id === sessionId)?.source !== "pi-native" : false,
+  );
+  const projectPath = useAppStore((s) => s.workspace?.path ?? undefined);
 
   const timeline = buildActivityTimeline(messages);
   const changes = reviewChangesFromMessages(messages);
 
   // Flat task list for the todo section
   const allTasks = phases.flatMap((p) => p.tasks);
-  const doneTasks = allTasks.filter(
-    (t) => t.status === "completed" || t.status === "abandoned",
-  ).length;
-
-  // Scroll the inline PermissionCard into view and focus its first button
-  const handleReviewRequest = useCallback(() => {
-    const card = document.querySelector<HTMLElement>(".permission-card");
-    if (!card) return;
-    card.scrollIntoView({ behavior: "smooth", block: "center" });
-    requestAnimationFrame(() => {
-      card.querySelector<HTMLButtonElement>("button")?.focus();
-    });
-  }, []);
 
   const handleOpenReview = useCallback(() => {
     openWorkPanelTab(toolWorkPanelTab("review"));
   }, [openWorkPanelTab]);
 
+  const handleAllow = useCallback(() => {
+    if (!sessionId || !pendingPermission) return;
+    void resolvePermission(sessionId, pendingPermission.requestId, "allow-once");
+  }, [sessionId, pendingPermission, resolvePermission]);
+
+  const handleDeny = useCallback(() => {
+    if (!sessionId || !pendingPermission) return;
+    void resolvePermission(sessionId, pendingPermission.requestId, "deny");
+  }, [sessionId, pendingPermission, resolvePermission]);
+
   return (
     <div className="activity-tab">
-      {/* ── Decision block ─────────────────────────────────────────────── */}
-      {pendingPermission && (
-        <section className="activity-decision">
-          <div className="activity-decision-header">
-            <span className="activity-decision-icon" aria-hidden>⚠</span>
-            {t("panel.activity.decisionNeeded")}
-          </div>
-          <div className="activity-decision-tool">
-            {pendingPermission.toolName}
-          </div>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={handleReviewRequest}
-          >
-            {t("panel.activity.reviewRequest")}
-          </Button>
-        </section>
-      )}
+      {/* ── Sub-tab strip (design: fragment.html:459-463 .d-panel-tabs) ── */}
+      <div className="activity-inner-tabs" role="tablist">
+        <button
+          role="tab"
+          aria-selected={subTab === "todos"}
+          className={`activity-inner-tab${subTab === "todos" ? " is-active" : ""}`}
+          onClick={() => setSubTab("todos")}
+        >
+          {t("panel.activity.todoTab")}
+          {allTasks.length > 0 && (
+            <span className="activity-tab-count">{allTasks.length}</span>
+          )}
+        </button>
+        <button
+          role="tab"
+          aria-selected={subTab === "timeline"}
+          className={`activity-inner-tab${subTab === "timeline" ? " is-active" : ""}`}
+          onClick={() => setSubTab("timeline")}
+        >
+          {t("panel.activity.timeline")}
+        </button>
+        <button
+          role="tab"
+          aria-selected={subTab === "changes"}
+          className={`activity-inner-tab${subTab === "changes" ? " is-active" : ""}`}
+          onClick={() => setSubTab("changes")}
+        >
+          {t("panel.activity.changes")}
+          {changes.length > 0 && (
+            <span className="activity-tab-count">{changes.length}</span>
+          )}
+        </button>
+      </div>
 
-      {/* ── To-do list ─────────────────────────────────────────────────── */}
-      {allTasks.length > 0 && (
-        <section>
-          <div className="activity-section-label">
-            {t("panel.activity.todo", { done: doneTasks, total: allTasks.length })}
-          </div>
-          {allTasks.map((task, i) => {
-            const done = task.status === "completed" || task.status === "abandoned";
-            return (
-              <div
-                key={task.id ?? i}
-                className={`activity-todo-row${done ? " is-done" : ""}`}
-              >
-                <input
-                  type="checkbox"
-                  readOnly
-                  checked={done}
-                  aria-label={task.content}
-                  className="activity-todo-check"
-                />
-                <span className="activity-todo-label">{task.content}</span>
+      {/* ── Todos tab ──────────────────────────────────────────────────── */}
+      {subTab === "todos" && (
+        <div className="activity-tab-panel" role="tabpanel">
+
+          {/* Decision block (design: fragment.html:465-476 .d-approval-box) */}
+          {pendingPermission && (
+            <section className="activity-decision">
+              <div className="activity-decision-header">
+                <span className="activity-decision-icon" aria-hidden>⚠</span>
+                {t("panel.activity.decisionNeeded")}
               </div>
-            );
-          })}
-        </section>
+              <div className="activity-decision-tool">
+                {pendingPermission.toolName}
+              </div>
+              {pendingPermission.reason && (
+                <div className="activity-decision-desc">
+                  {pendingPermission.reason}
+                </div>
+              )}
+              <div className="activity-decision-actions">
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  onClick={handleAllow}
+                >
+                  {t("panel.activity.allow")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDeny}
+                >
+                  {t("panel.activity.deny")}
+                </Button>
+              </div>
+            </section>
+          )}
+
+          {/* Open todos (design: fragment.html:478-493 .cf-todo rows) */}
+          <div className="activity-section-label">
+            {t("panel.activity.openTodos")}
+          </div>
+          {allTasks.length === 0 ? (
+            <div className="activity-empty-row">{t("panel.activity.empty")}</div>
+          ) : (
+            allTasks.map((task, i) => {
+              const done = task.status === "completed" || task.status === "abandoned";
+              const statusLabel =
+                task.status === "completed" ? t("panel.activity.todoStatusDone", { defaultValue: "done" })
+                : task.status === "abandoned" ? t("panel.activity.todoStatusAbandoned", { defaultValue: "skipped" })
+                : task.status === "in_progress" ? t("panel.activity.todoStatusRunning", { defaultValue: "running" })
+                : undefined;
+              return (
+                <div
+                  key={task.id ?? i}
+                  className={`activity-todo-row${done ? " is-done" : ""}`}
+                >
+                  <input
+                    type="checkbox"
+                    readOnly
+                    checked={done}
+                    aria-label={task.content}
+                    className="activity-todo-check"
+                  />
+                  <span className="activity-todo-label">{task.content}</span>
+                  {statusLabel && (
+                    <span className="activity-todo-time">{statusLabel}</span>
+                  )}
+                </div>
+              );
+            })
+          )}
+
+          {/* Recent activity events (design: fragment.html:495-519 .cf-event rows) */}
+          {timeline.length > 0 && (
+            <>
+              <div className="activity-section-label" style={{ marginTop: "6px" }}>
+                {t("panel.activity.recentActivity")}
+              </div>
+              {timeline.map((row, i) => (
+                <div key={row.id ?? i} className="activity-event-row">
+                  <span className={`activity-event-dot status-${row.status}`} aria-hidden />
+                  <span className="activity-event-body">
+                    <strong>{row.name}</strong>
+                    {row.target ? ` · ${row.target}` : ""}
+                  </span>
+                  {row.durationMs !== undefined && (
+                    <span className="activity-event-time">
+                      {formatToolDuration(row.durationMs / 1000)}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </>
+          )}
+        </div>
       )}
 
-      {/* ── Tool timeline ───────────────────────────────────────────────── */}
-      <section>
-        <div className="activity-section-label">{t("panel.activity.toolsRun")}</div>
-        {timeline.length === 0 ? (
-          <div className="activity-empty-row">{t("panel.activity.empty")}</div>
-        ) : (
-          timeline.map((row, i) => (
-            <div key={row.id ?? i} className="activity-tool-row">
-              <span
-                className={`activity-tool-dot status-${row.status}`}
-                aria-label={row.status}
-              />
-              <span className="activity-tool-name">{row.name}</span>
-              <span className="activity-tool-target" title={row.target}>
-                {row.target}
-              </span>
-              {row.durationMs !== undefined && (
-                <span className="activity-tool-dur">
-                  {formatToolDuration(row.durationMs / 1000)}
+      {/* ── Timeline tab ──────────────────────────────────────────────── */}
+      {subTab === "timeline" && (
+        <div className="activity-tab-panel" role="tabpanel">
+          <div className="activity-section-label">{t("panel.activity.toolsRun")}</div>
+          {timeline.length === 0 ? (
+            <div className="activity-empty-row">{t("panel.activity.empty")}</div>
+          ) : (
+            timeline.map((row, i) => (
+              <div key={row.id ?? i} className="activity-tool-row">
+                <span
+                  className={`activity-tool-dot status-${row.status}`}
+                  aria-label={row.status}
+                />
+                <span className="activity-tool-name">{row.name}</span>
+                <span className="activity-tool-target" title={row.target}>
+                  {row.target}
                 </span>
-              )}
-            </div>
-          ))
-        )}
-      </section>
+                {row.durationMs !== undefined && (
+                  <span className="activity-tool-dur">
+                    {formatToolDuration(row.durationMs / 1000)}
+                  </span>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
 
-      {/* ── Changes ────────────────────────────────────────────────────── */}
-      {changes.length > 0 && (
-        <section>
+      {/* ── Changes tab ───────────────────────────────────────────────── */}
+      {subTab === "changes" && (
+        <div className="activity-tab-panel" role="tabpanel">
           <div className="activity-section-label">
             {t("panel.activity.changes")}
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={handleOpenReview}
-            >
-              {t("panel.activity.openReview")}
-            </Button>
+            {changes.length > 0 && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleOpenReview}
+              >
+                {t("panel.activity.openReview")}
+              </Button>
+            )}
           </div>
-          {changes.map((entry) => {
-            const s = entry.change.status;
-            const mark = s === "added" ? "A" : s === "deleted" ? "D" : "M";
-            const name = entry.change.path.split("/").pop() || entry.change.path;
-            return (
-              <div key={entry.change.snapshotId} className="activity-change-row">
-                <span className={`activity-change-badge badge-${mark}`}>{mark}</span>
-                <span className="activity-change-path" title={entry.change.path}>
-                  {name}
-                </span>
-                <span className="activity-change-counts">
-                  {entry.change.additions > 0 && (
-                    <span className="activity-count-add">+{entry.change.additions}</span>
-                  )}
-                  {entry.change.deletions > 0 && (
-                    <span className="activity-count-del"> −{entry.change.deletions}</span>
-                  )}
-                </span>
-              </div>
-            );
-          })}
+          {changes.length === 0 ? (
+            <div className="activity-empty-row">{t("panel.activity.empty")}</div>
+          ) : (
+            changes.map((entry) => {
+              const s = entry.change.status;
+              const mark = s === "added" ? "A" : s === "deleted" ? "D" : "M";
+              const name = entry.change.path.split("/").pop() || entry.change.path;
+              return (
+                <div key={entry.change.snapshotId} className="activity-change-row">
+                  <span className={`activity-change-badge badge-${mark}`}>{mark}</span>
+                  <span className="activity-change-path" title={entry.change.path}>
+                    {name}
+                  </span>
+                  <span className="activity-change-counts">
+                    {entry.change.additions > 0 && (
+                      <span className="activity-count-add">+{entry.change.additions}</span>
+                    )}
+                    {entry.change.deletions > 0 && (
+                      <span className="activity-count-del"> −{entry.change.deletions}</span>
+                    )}
+                  </span>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+
+      {/* ── Session (always visible — omp TUI + share; no design home) ── */}
+      {sessionId && isOmpSession && (
+        <section className="activity-session">
+          <div className="activity-section-label">
+            {t("panel.activity.session")}
+          </div>
+          <OmpTuiPanel sessionId={sessionId} projectPath={projectPath} />
+          <OmpCollabPanel sessionId={sessionId} />
         </section>
       )}
     </div>

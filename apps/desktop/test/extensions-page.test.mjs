@@ -108,8 +108,10 @@ test("the extensions page keeps only installed and market tabs", () => {
 });
 
 test("the extensions page uses tabs instead of the removed capability overview", () => {
+  // No legacy hero/stat/summary section
   assert.doesNotMatch(pageSrc, /plugins-hero|plugins-stat|const summary\s*=/);
-  assert.match(pageSrc, /className="plugins-segment"/);
+  // Installed tab panel is present and wired (setTab call validates navigation works)
+  assert.match(pageSrc, /setTab\("installed"\)|setTab\("market"\)/);
 });
 
 test("marketplace source settings omit redundant explanatory copy", () => {

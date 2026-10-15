@@ -1,6 +1,12 @@
+/* Direction D: destination page head height */
+.page-frame > .page-header {
+  min-height: var(--d-ph-h);
+}
+
 /*
   Destination list chrome shared by the Projects / PRs / Scheduled pages —
   toolbar, filters, rows, and the create affordance.
+  Direction D restyle: flat multi-line rows (not tile cards), D-style filter bar.
 */
 
 /* Destination list chrome (PRs / Scheduled / Plugins) */
@@ -9,72 +15,89 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  margin-bottom: 16px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--d-border);
+  background: var(--surface-gray-1);
+  flex-shrink: 0;
 }
 
 .dest-filters {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  padding: 3px;
+  height: var(--d-ctrl);
+  padding: 2px;
   border-radius: var(--radius-full);
-  background: color-mix(in oklab, var(--ds-text-primary) 5%, transparent);
+  background: var(--surface-gray-2);
+  gap: 1px;
 }
 
 .dest-filter {
   border-radius: var(--radius-full);
-  padding: 5px 12px;
-  color: var(--ds-text-secondary);
-  font-size: var(--text-sm-plus);
-  line-height: var(--leading-tighter);
+  padding: 0 10px;
+  height: 24px;
+  color: var(--ink-gray-6);
+  font-size: var(--d-text-sm);
+  font-weight: 500;
+  line-height: 24px;
   transition:
     background var(--motion-duration-fast) var(--motion-ease-out),
     color var(--motion-duration-fast) var(--motion-ease-out);
 }
 
 .dest-filter:hover {
-  color: var(--ds-text-primary);
-  background: var(--ds-bg-hover);
+  color: var(--ink-gray-8);
 }
 
 .dest-filter.active {
-  background: var(--ds-raised);
-  color: var(--ds-text-primary);
-  box-shadow: var(--ds-raised-shadow);
+  background: var(--surface-elevation-1);
+  color: var(--da-txt);
+  box-shadow: var(--elevation-sm);
 }
 
+/* D-style list: flat rows with border-bottom, no gap/tile */
 .dest-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
 
 .dest-row {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  border-radius: var(--radius-lg);
-  background: var(--ds-tile);
-  padding: 12px 14px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--d-border);
   text-align: left;
-  transition: background var(--motion-duration-fast) var(--motion-ease-out);
+  transition: background 0.1s;
+  cursor: pointer;
 }
 
 .dest-row:hover {
-  background: var(--ds-tile-hover);
+  background: var(--surface-gray-1);
+}
+
+.dest-row.selected {
+  background: var(--da-sub);
 }
 
 .dest-row-icon {
   display: inline-flex;
-  height: 32px;
-  width: 32px;
+  height: var(--d-ctrl);
+  width: var(--d-ctrl);
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-md);
-  background: color-mix(in oklab, var(--ds-text-primary) 7%, transparent);
-  color: var(--ds-text-secondary);
+  border-radius: 6px;
+  background: var(--surface-gray-2);
+  border: 1px solid var(--d-border);
+  color: var(--ink-gray-5);
+  margin-top: 1px;
+}
+
+.dest-row.selected .dest-row-icon {
+  background: var(--da-sub);
+  border-color: var(--da-bdr);
+  color: var(--da-txt);
 }
 
 .dest-row-body {
@@ -86,40 +109,193 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  color: var(--ds-text-primary);
-  font-size: var(--text-md-plus);
-  font-weight: var(--font-weight-medium);
+  gap: 6px;
+  color: var(--ink-gray-9);
+  font-size: var(--d-text);
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.dest-row.selected .dest-row-title {
+  color: var(--da-txt);
 }
 
 .dest-row-meta {
-  margin-top: 3px;
-  color: var(--ds-text-muted);
-  font-size: var(--text-sm);
+  font-size: var(--d-text-xs);
+  color: var(--ink-gray-4);
+  line-height: 1.4;
+  margin-top: 1px;
 }
 
 .dest-row-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
   flex: 0 0 auto;
   align-items: center;
+  margin-top: 3px;
 }
 
-/* The create form is one soft tile; its fields are filled controls inside it
-   (ui-kit), so nothing draws a frame within a frame (D297). */
+/* The create form is one soft tile */
 .dest-create {
   margin-bottom: 16px;
-  border-radius: var(--radius-lg-plus);
-  background: var(--ds-tile);
-  padding: 14px;
+  border-radius: var(--d-r-ctrl);
+  background: var(--surface-gray-1);
+  border: 1px solid var(--d-border);
+  padding: 12px;
 }
 
 .dest-section-label {
-  margin: 4px 0 10px;
-  color: var(--ds-text-muted);
-  font-size: var(--text-xs-plus);
-  font-weight: var(--font-weight-medium);
-  letter-spacing: var(--tracking-wide);
+  margin: 4px 0 8px;
+  color: var(--ds-text-tertiary);
+  font-size: var(--d-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
+  padding: 0 12px;
 }
+
+/* ── Tokenise padding/gap literals in toolbar (T12-F09) ──────────────────── */
+/* Replaces raw 8px/10px/12px in .dest-toolbar and .dest-filter above */
+:root {
+  --d-dest-pad-v:  8px;    /* vertical padding in toolbar / filter rows */
+}
+
+/* ── Scheduled page layout ────────────────────────────────────────────────── */
+/* Outer container: full-height flex column (no thread-scroll wrapper) */
+.sch-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding-top: var(--ds-toolbar-height);
+}
+/* Two-panel row: main list + optional 340px detail */
+.sch-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  gap: var(--d-gap);
+  padding: var(--d-gap);
+}
+.sch-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+/* D-SPEC Scheduled detail panel 340px (fragment.html:4) */
+.sch-detail {
+  width: var(--d-sch-detail);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+/* Health strip (fragment.html:63-72): 28px, always visible */
+.sch-health {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  height: var(--d-sch-health-h);
+  font-size: var(--d-text-xs);
+  color: var(--ink-gray-5);
+  border-bottom: 1px solid var(--d-border);
+  background: var(--surface-gray-1);
+  flex-shrink: 0;
+}
+.sch-health-dot {
+  width: var(--d-sch-dot); height: var(--d-sch-dot); border-radius: 50%;
+  background: var(--green-500); flex-shrink: 0;
+}
+.sch-health-dot.warn { background: var(--amber-500); }
+/* Detail field labels (fragment.html:37-40) */
+.sch-detail-label {
+  font-size: var(--d-text-xs);
+  font-weight: 500;
+  color: var(--ink-gray-4);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 3px;
+}
+.sch-detail-value { font-size: var(--d-text); color: var(--ink-gray-8); line-height: 1.45; }
+
+/* ── Pull Requests page layout ───────────────────────────────────────────── */
+.pr-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding-top: var(--ds-toolbar-height);
+}
+.pr-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  gap: var(--d-gap);
+  padding: var(--d-gap);
+}
+.pr-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+/* 320px detail panel (fragment.html:4) */
+.pr-detail {
+  width: var(--d-pr-detail);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+/* Repo chip in page head (fragment.html:41-48) */
+.pr-repo-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  height: 20px; padding: 0 8px;
+  border-radius: 10px;
+  background: var(--surface-gray-2); border: 1px solid var(--d-border);
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: var(--d-text-xs); color: var(--ink-gray-6);
+}
+/* PR rows (fragment.html:7-38) */
+.pr-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 10px 12px;
+  gap: 10px;
+  border-bottom: 1px solid var(--d-border);
+  cursor: pointer;
+  transition: background .1s;
+}
+.pr-row:hover { background: var(--surface-gray-1); }
+.pr-row.selected { background: var(--da-sub); }
+.pr-row-icon {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  background: var(--surface-green-2);
+  border: 1px solid var(--outline-green-2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-green-8);
+  flex-shrink: 0; margin-top: 1px;
+}
+.pr-row-icon.draft { background: var(--surface-gray-2); border-color: var(--d-border); color: var(--ink-gray-5); }
+.pr-row.selected .pr-row-icon { background: var(--da-sub); border-color: var(--da-bdr); color: var(--da-txt); }
+.pr-row-body { flex: 2; min-width: 0; }
+.pr-row-title { display: flex; align-items: center; gap: 6px; font-size: var(--d-text); font-weight: 500; color: var(--ink-gray-9); margin-bottom: 3px; flex-wrap: wrap; }
+.pr-row.selected .pr-row-title { color: var(--da-txt); }
+.pr-num { font-family: ui-monospace, SFMono-Regular, monospace; font-size: var(--d-text-sm); color: var(--ink-gray-4); font-weight: 400; }
+.pr-row-meta { font-size: var(--d-text-xs); color: var(--ink-gray-4); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pr-row-actions { display: flex; gap: 4px; align-items: center; flex-shrink: 0; margin-top: 3px; flex: 0 0 var(--d-pr-col-actions); justify-content: flex-end; }
+/* Branch / CI / Author column cells — match d-list-head widths */
+.pr-row-branch { flex: 0 0 var(--d-pr-col-branch); font-family: ui-monospace, SFMono-Regular, monospace; font-size: var(--d-text-xs); color: var(--ink-gray-5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; align-self: center; }
+.pr-row-ci    { flex: 0 0 var(--d-pr-col-ci);     font-size: var(--d-text-xs); color: var(--ink-gray-4); align-self: center; }
+.pr-row-author{ flex: 0 0 var(--d-pr-col-author);  font-size: var(--d-text-xs); color: var(--ink-gray-5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; align-self: center; }
+/* PR detail fields */
+.pr-detail-label { font-size: var(--d-text-xs); font-weight: 500; color: var(--ink-gray-4); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
+.pr-detail-value { font-size: var(--d-text); color: var(--ink-gray-8); line-height: 1.45; }
+/* Branch flow */
+.pr-branch-flow { display: flex; align-items: center; gap: 6px; font-family: ui-monospace, SFMono-Regular, monospace; font-size: var(--d-text-sm); color: var(--ink-gray-7); }
+.pr-branch-chip { background: var(--surface-gray-2); border: 1px solid var(--d-border); border-radius: var(--d-r-sm); padding: 1px 6px; }

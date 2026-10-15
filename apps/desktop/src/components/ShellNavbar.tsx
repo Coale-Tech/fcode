@@ -26,19 +26,20 @@ import { NavTabs } from "./NavTabs";
 import { NotificationCenter } from "./NotificationCenter";
 import { TooltipButton } from "./ui";
 import { useBenchContext } from "../hooks/use-bench-context";
+import { SETTINGS_NAV } from "../lib/settings-search";
 import type { AppState } from "../stores/app-state";
-
 const PAGE_LABEL_KEY: Record<AppState["page"], string> = {
-  chat:         "nav.chat",
-  build:        "nav.build",
-  bench:        "nav.bench",
-  raven:        "raven.title",
-  filebird:     "fileBird.title",
-  kanban:       "kanban.title",
-  scheduled:    "scheduled.title",
-  plugins:      "plugins.title",
-  pulls:        "pulls.title",
-  settings:     "nav.settings",
+  chat:          "nav.chat",
+  build:         "nav.build",
+  bench:         "nav.bench",
+  raven:         "raven.title",
+  filebird:      "fileBird.title",
+  kanban:        "kanban.title",
+  scheduled:     "scheduled.title",
+  plugins:       "plugins.title",
+  pulls:         "pulls.title",
+  settings:      "nav.settings",
+  notifications: "notifications.title",
 };
 
 export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
@@ -46,8 +47,14 @@ export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
   const layout  = resolveNavLayout(useAppStore((s) => s.settings?.navLayout));
   const page    = useAppStore((s) => s.page);
   const setPage = useAppStore((s) => s.setPage);
-  const isMac   = (window.piDesktop?.platform ?? "darwin") === "darwin";
-  const bench   = useBenchContext();
+  const settingsTab = useAppStore((s) => s.settingsTab);
+  const isMac  = (window.piDesktop?.platform ?? "darwin") === "darwin";
+  const bench  = useBenchContext();
+  // T13-L03: nested breadcrumb label for settings tabs
+  const settingsTabLabel = page === "settings"
+    ? t(SETTINGS_NAV.find((e) => e.id === settingsTab)?.labelKey ?? "nav.settings")
+    : null;
+
 
   return (
     <header className="shell-navbar drag" data-nav-layout={layout}>
@@ -69,6 +76,12 @@ export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
             <span className="shell-navbar-crumb-root">{t("app.shellName")}</span>
             <span className="shell-navbar-crumb-sep" aria-hidden="true">/</span>
             <span className="shell-navbar-crumb-page">{t(PAGE_LABEL_KEY[page])}</span>
+            {settingsTabLabel && (
+              <>
+                <span className="shell-navbar-crumb-sep" aria-hidden="true">/</span>
+                <span className="shell-navbar-crumb-page">{settingsTabLabel}</span>
+              </>
+            )}
           </nav>
         )}
       </div>
@@ -116,8 +129,8 @@ export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
             </button>
           )}
 
-          {/* Notification bell — anchor below for top navbar (F02) */}
-          <NotificationCenter anchor="below" />
+          {/* Notification bell */}
+          <NotificationCenter />
 
           {/* Settings button */}
           <TooltipButton

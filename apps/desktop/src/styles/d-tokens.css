@@ -36,6 +36,15 @@
   --d-rail-item-gap: 2px;          /* expanded icon→label gap (D.css:413) */
   --d-rail-divider-gap: 4px;       /* divider vertical margin (D.css:364) */
   --d-rail-label-max: 160px;       /* expanded label max-width (D.css:413) */
+  --d-rail-dot-inset: 4px;          /* memory-status dot top/right offset inside the button */
+  /* Island (D3) rail — D3-shell.html */
+  --d-rail-island-label: calc(10px * var(--font-scale)); /* D3-shell.html:99 label size */
+  --d-rail-island-item-w: 52px;    /* D3-shell.html:75 item width */
+  --d-rail-island-item-h: 46px;    /* D3-shell.html:76 item min-height */
+  --d-rail-island-item-gap: 3px;   /* D3-shell.html:78 icon→label gap */
+  --d-rail-island-item-pb: 5px;    /* D3-shell.html:77 bottom padding */
+  --d-rail-island-icon: 20px;      /* D3-shell.html:95-96 icon box size */
+  --d-island-sb: 256px;            /* D3-shell.html:119 context sidebar */
   --d-ctrl: 28px;
   --d-ctrl-lg: 32px;
   --d-row-h: 30px;
@@ -144,6 +153,29 @@
   --d-dialog-body-pad: 16px;  /* dialog-body padding (D.css:1051) */
   --d-dialog-foot-pad: 10px 16px; /* dialog-foot padding (D.css:1059) */
   --d-dialog-foot-gap:  6px;  /* dialog-foot action gap (D.css:1059) */
+  /* T10: chat/composer/activity metric tokens (F06 tokenise) */
+  --d-composer-input-min-h: 56px;   /* D.css:1482 textarea min-height */
+  --d-composer-outer-pt:    9px;    /* D.css:1449 .d-composer padding-top */
+  --d-composer-outer-px:   14px;    /* D.css:1449 .d-composer padding left/right */
+  --d-tool-node-size:  30px;         /* D.css:1383 .d-tool-node w/h */
+  --d-tool-icon-size:  12px;         /* D.css:1396 .d-tool-node svg w/h */
+  --d-tool-conn-left:  14px;         /* D.css:1373 connector: left = node-size/2 */
+  --d-perm-menu-w:    260px;         /* state-perm-menu.html:39 .cf-perm-menu */
+  --d-model-menu-w:   300px;         /* state-model-picker.html:33 .cf-model-menu */
+  --d-chip-h:          24px;         /* state-perm-menu.html:77 .cf-mode-chip h */
+  --d-chip-r:           6px;         /* state-perm-menu.html:78 .cf-mode-chip r */
+  --d-act-lpad:        10px;         /* cf-act-scroll side padding */
+  --d-act-label-pt:     8px;         /* .cf-act-sec padding-top */
+  --d-act-label-pb:     4px;         /* .cf-act-sec padding-bottom */
+  /* C07: bench detail 3-column widths (D2 bench: 224px | flex | 252px) */
+  --d-bfd-left-w:     224px;
+  --d-bfd-right-w:    252px;
+}
+
+/* ── Terminal palette (bench log, code panels; always-dark) */
+:root {
+  --d-terminal-bg: #181818;  /* near-black background */
+  --d-terminal-fg: #d4d4d4;  /* light-gray foreground */
 }
 
 /* Dark theme: remap violet to FileBird dark blues */
@@ -169,6 +201,8 @@
   --ds-sidebar-glass-tint:         color-mix(in oklab, var(--ds-bg-sidebar) 40%, transparent);
   --ds-sidebar-glass-sheen-top:    color-mix(in oklab, var(--white) 7%, transparent);
   --ds-sidebar-glass-sheen-bottom: color-mix(in oklab, var(--white) 4%, transparent);
+  /* T13 approved deviation: dark on-accent text = very dark navy (task-13-brief.md) */
+  --da-txt: #0a1f2e;
 }
 
 /* Light theme: blue ramp + switch tokens (each appears exactly once per theme) */
@@ -191,4 +225,47 @@
   --ds-sidebar-glass-tint:         color-mix(in oklab, var(--ds-bg-sidebar) 40%, transparent);
   --ds-sidebar-glass-sheen-top:    color-mix(in oklab, var(--white) 7%, transparent);
   --ds-sidebar-glass-sheen-bottom: color-mix(in oklab, var(--white) 4%, transparent);
+}
+
+/* lane T12 — kanban + notifications page dimensions */
+:root {
+  --d-kd-col-w:        210px;                             /* kanban column width */
+  --d-kd-board-gap:    10px;                              /* kanban board column gap */
+  --d-kd-col-h:        32px;                              /* kanban column header height */
+  --d-kd-chip-font:    calc(10px * var(--font-scale));    /* kanban card chip font-size */
+  --d-kd-drawer-w:     420px;                             /* kanban drawer width */
+  --d-notif-icon:      28px;                              /* notification row icon size */
+  --d-notif-dot:        7px;                              /* notification unread dot */
+}
+
+/* lane T12 — page layout dimensions (tokenised per F09) */
+:root {
+  --d-sch-detail:      340px;   /* Scheduled right detail panel width */
+  --d-pr-detail:       320px;   /* Pull Requests right detail panel width */
+  --d-plg-nav:         220px;   /* Plugins left nav width */
+  --d-sch-health-h:     28px;   /* Scheduled health strip height */
+  --d-sch-dot:           6px;   /* health strip live dot */
+  --d-pr-col-branch:   170px;   /* PR Branch column width */
+  --d-pr-col-ci:        70px;   /* PR CI column width */
+  --d-pr-col-author:    80px;   /* PR Author column width */
+  --d-pr-col-actions:  140px;   /* PR Actions column width */
+  --d-tab-h:            34px;   /* panel tab underline height (D.css:565) */
+}
+/* lane t13: settings nav D-metrics, command palette */
+:root {
+  /* Settings nav rail width (fragment-d1.html: 240px panel) */
+  --ds-settings-nav-width:  240px;
+  /* Nav item border-radius (sn-item: 6px from fragment) */
+  --ds-settings-radius-item: 6px;
+  /* Settings nav item/group font dimensions (fragment-d1.html:13-18) */
+  --d-sn-item-h:    28px;
+  --d-sn-icon:      13px;
+  --d-sn-grp-label: 10px;
+  /* Command palette card width: fragment.html:55 overrides D.css generic 560px → 580px */
+  --d-cmdpal-w: 580px;
+}
+
+/* lane t13: overlay/scrim token (D.css:1159) */
+:root {
+  --d-overlay-scrim: rgba(0, 0, 0, .42);
 }

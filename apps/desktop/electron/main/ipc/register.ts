@@ -462,6 +462,7 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     pane: dependencies.ravenPane,
     getMainWindow,
     sendChanged: () => sendToRenderer(IPC.event.ravenChanged, {}),
+    sendToRenderer,
   });
   registerFileBirdIpc({ registrar, dataDir, getMainWindow, sendToRenderer });
 

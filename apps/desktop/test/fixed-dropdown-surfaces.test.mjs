@@ -33,7 +33,7 @@ const dropdownSurfaces = [
   "model-default-menu",
   "provider-model-multi-menu",
   "provider-model-menu",
-  "notification-popover",
+  // notification-popover removed: notifications promoted to full inbox page (T12 D-design)
   "sidebar-row-menu",
   "sidebar-popover",
   "projects-menu",

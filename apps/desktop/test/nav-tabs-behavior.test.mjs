@@ -6,11 +6,10 @@
  *  2. NavTabs renders only primary tabs as pills + a "···" More button
  *  3. Overflow button has aria-haspopup + aria-expanded wiring
  *  4. Long German/Turkish labels cannot force overflow: nav-tab-label uses text-overflow:ellipsis
- *  5. ShellNavbar source: tabs layout mounts NotificationCenter with anchor="below"
- *  6. ShellNavbar source: tabs layout mounts brand + bench chip + avatar
- *  7. NotificationCenter accepts anchor prop and switches positioning logic
- *  8. nav.tabsLabel i18n key exists in all 9 locales
- *  9. nav.userMenu i18n key exists in all 9 locales
+ *  5. ShellNavbar tabs layout mounts NotificationCenter bell (navigates to page, R11g)
+ *  6. ShellNavbar tabs layout mounts brand + bench chip + avatar
+ *  7. nav.tabsLabel i18n key exists in all 9 locales
+ *  8. nav.userMenu i18n key exists in all 9 locales
  */
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -74,8 +73,9 @@ test("nav-tab-label uses ellipsis truncation — long de/tr labels cannot break 
   assert.match(shellCss, /\.nav-tab[^-][^}]*white-space:\s*nowrap/);
 });
 
-test("ShellNavbar passes anchor=below to NotificationCenter in tabs layout", () => {
-  assert.match(shellNavbarSource, /anchor="below"/);
+test("ShellNavbar tabs layout mounts NotificationCenter bell", () => {
+  // Direction D: NotificationCenter is a bell trigger (no popover, navigates to page)
+  assert.match(shellNavbarSource, /NotificationCenter/);
 });
 
 test("ShellNavbar tabs layout mounts brand logo", () => {
@@ -92,11 +92,10 @@ test("ShellNavbar tabs layout mounts avatar placeholder", () => {
   assert.match(shellNavbarSource, /shell-navbar-avatar/);
 });
 
-test("NotificationCenter supports anchor prop with above/below positioning", () => {
-  assert.match(notifCenterSource, /anchor.*above.*below|above.*below.*anchor/);
-  assert.match(notifCenterSource, /anchor === "below"/);
-  assert.match(notifCenterSource, /top: rect\.bottom/);
-  assert.match(notifCenterSource, /bottom:.*innerHeight.*rect\.top/);
+test("NotificationCenter bell navigates to notifications page (Direction D R11g)", () => {
+  // Architectural: bell is a nav trigger; full inbox is a routed page.
+  assert.match(notifCenterSource, /setPage.*notifications|notifications.*setPage/);
+  assert.match(notifCenterSource, /inboxUnreadCount|unreadNotificationCount/);
 });
 
 test("nav.tabsLabel i18n key exists in all 9 locales", () => {

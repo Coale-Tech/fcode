@@ -34,7 +34,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { IPC, type Result } from "@pi-desktop/shared";
 import { buildChecks, checksFor, failing } from "../lib/build-checks";
 import { useAppStore } from "../stores/app-store";
-import { Button } from "../components/ui";
+import { Button, SegmentedControl } from "../components/ui";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -406,41 +406,85 @@ export function BuildPage() {
 
   return (
     <main className="wb-page build-page" aria-label="Build">
-      {/* Context sidebar: the apps installed on the supervised bench */}
+      {/* Direction D: Left sidebar — bench hero card + Studio Apps / Other Apps list */}
       <aside className="context-sidebar">
-        <div className="wb-sidebar-nav">
-          {listAppsStatus === "loaded" ? (
-            <ul className="wb-list">
-              {(["studio", "builder"] as const).map((app) => (
-                <li key={app} className="wb-row is-static">
-                  <span className="wb-row-top">
-                    <span className={`wb-dot wb-dot-${installedApps.includes(app) ? "green" : "gray"}`} aria-hidden="true" />
-                    <span className="wb-row-name">{app}</span>
-                    {!installedApps.includes(app) && <span className="wb-muted">not installed</span>}
-                  </span>
-                </li>
-              ))}
+        {/* Bench hero card */}
+        <div className="wb-panel d-panel" style={{ flexShrink: 0 }}>
+          <div className="wb-island-hd" style={{ height: 32, padding: "0 8px 0 10px" }}>
+            <span className="wb-island-title wb-truncate" style={{ fontSize: 13 }}>
+              {benchName ?? "No bench"}
+            </span>
+          </div>
+          <div className="wb-build-hero-body">
+            <div className="wb-build-hero-row">
+              <span className={`wb-dot wb-dot-${benchBadge.hue}`} aria-hidden="true" />
+              <span className="wb-build-hero-name">{site ?? benchName ?? "—"}</span>
+              <span className={`wb-badge wb-badge-${benchBadge.hue}`} style={{ flexShrink: 0 }}>
+                {benchBadge.label}
+              </span>
+            </div>
+            <div className="wb-build-meta">
+              {benchStatus === "running" && (
+                <span className="wb-build-meta-row">
+                  <span aria-hidden="true">↕</span>
+                  Port :{webserverPort ?? 8000}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* App list: Studio Apps + Other Apps */}
+        <div className="wb-panel d-panel" style={{ flex: 1, overflow: "hidden" }}>
+          <div className="wb-app-section">Studio Apps</div>
+          {(["studio", "builder"] as const).map((app) => {
+            const installed = installedApps.includes(app);
+            return (
+              <button
+                key={app}
+                type="button"
+                className={`wb-app-row${canvas === app && installed ? " is-selected" : ""}${!installed ? " is-muted" : ""}`}
+                onClick={() => { if (installed) setCanvas(app as Canvas); }}
+                disabled={!installed || listAppsStatus !== "loaded"}
+                title={!installed ? `${app} not installed` : undefined}
+              >
+                <span className={`wb-dot wb-dot-${installed ? "green" : "gray"}`} aria-hidden="true" />
+                {app}
+                {!installed && <span className="wb-muted" style={{ marginLeft: "auto", fontSize: 11 }}>not installed</span>}
+              </button>
+            );
+          })}
+          {otherApps.length > 0 && (
+            <>
+              <div className="wb-app-section is-sep">Other Apps</div>
               {otherApps.map((app) => (
-                <li key={app} className="wb-row is-static build-app-other">
-                  <span className="wb-row-name wb-muted">{app}</span>
-                </li>
+                <div key={app} className="wb-app-row is-muted">
+                  <span className="wb-dot wb-dot-gray" aria-hidden="true" />
+                  {app}
+                </div>
               ))}
-            </ul>
-          ) : (
-            <p className="wb-sidebar-note">
-              {benchStatus !== "running" ? "Bench not running" : listAppsStatus === "error" ? "Could not read installed apps." : "Checking installed apps…"}
+            </>
+          )}
+          {listAppsStatus === "loading" && (
+            <p className="wb-sidebar-note" style={{ padding: "8px 10px", fontSize: 11, color: "var(--ink-gray-5)" }}>
+              {benchStatus !== "running" ? "Bench not running" : "Checking installed apps…"}
+            </p>
+          )}
+          {listAppsStatus === "error" && (
+            <p className="wb-sidebar-note" style={{ padding: "8px 10px", fontSize: 11, color: "var(--ink-red-8)" }}>
+              Could not read installed apps.
             </p>
           )}
         </div>
       </aside>
 
       <section className="island">
-        {/* Header: bench context + the one action that fits the current state */}
+        {/* Direction D: "Build" title header (not bench name) */}
         <div className="build-hd">
-          <span className="build-bench" title={benchPath ?? undefined}>{benchName ?? "No bench"}</span>
-          {site && <span className="wb-note wb-muted">on {site}</span>}
-          {benchStatus === "running" && listAppsStatus === "loaded" && (
-            <span className="wb-note wb-muted">:{webserverPort}</span>
+          <span className="build-title">Build</span>
+          {site && <span className="wb-note wb-muted" style={{ fontSize: 11 }}>{site}</span>}
+          {benchStatus === "running" && (
+            <span className="wb-note wb-muted" style={{ fontSize: 11 }}>:{webserverPort}</span>
           )}
           <span className={`wb-badge wb-badge-${benchBadge.hue}`}>
             <span className={`wb-dot wb-dot-${benchBadge.hue}`} aria-hidden="true" />
@@ -468,30 +512,29 @@ export function BuildPage() {
           ) : null}
         </div>
 
-        {/* Studio / Builder underline tabs */}
+        {/* Direction D: SegmentedControl (Studio | Builder) + Reload */}
         <div className="wb-tabs">
-          <div role="group" aria-label="Canvas" className="wb-tab-group">
-            <button
-              type="button"
-              className={`wb-tab${canvas === "studio" ? " is-active" : ""}${!studioInstalled && listAppsStatus === "loaded" ? " is-dimmed" : ""}`}
-              aria-pressed={canvas === "studio"}
-              disabled={listAppsStatus === "loading"}
-              onClick={() => setCanvas("studio")}
-              title={!studioInstalled && listAppsStatus === "loaded" ? "Studio not installed" : undefined}
-            >
-              Studio
-            </button>
-            <button
-              type="button"
-              className={`wb-tab${canvas === "builder" ? " is-active" : ""}${!builderInstalled && listAppsStatus === "loaded" ? " is-dimmed" : ""}`}
-              aria-pressed={canvas === "builder"}
-              disabled={listAppsStatus === "loading"}
-              onClick={() => setCanvas("builder")}
-              title={!builderInstalled && listAppsStatus === "loaded" ? "Builder not installed" : undefined}
-            >
-              Builder
-            </button>
-          </div>
+          <SegmentedControl
+            value={canvas}
+            onChange={(v) => setCanvas(v as Canvas)}
+            options={[
+              {
+                value: "studio",
+                label: "Studio",
+                id: "canvas-tab-studio",
+                controls: "canvas-region",
+              },
+              {
+                value: "builder",
+                label: "Builder",
+                id: "canvas-tab-builder",
+                controls: "canvas-region",
+              },
+            ]}
+            label="Canvas"
+            role="tablist"
+            disabled={listAppsStatus === "loading"}
+          />
           <span className="wb-spacer" />
 
           {/* Agent is actively driving the shared canvas (E13) */}
@@ -506,11 +549,7 @@ export function BuildPage() {
             <span className="wb-note wb-text-amber" aria-live="polite">
               Still loading — the site may not be running.{" "}
               {benchStatus !== "running" && (
-                <button
-                  type="button"
-                  className="wb-link-btn"
-                  onClick={() => setPage("bench")}
-                >
+                <button type="button" className="wb-link-btn" onClick={() => setPage("bench")}>
                   Start bench
                 </button>
               )}
@@ -533,7 +572,7 @@ export function BuildPage() {
           </Button>
         </div>
 
-        {/* Problem banner: the first failing check, with its fix */}
+        {/* Problem banner: framed inset block per design .d-banner */}
         {showBanner && (
           <div className={`build-banner ${firstProblem.key === "bench" ? "is-red" : "is-amber"}`} role="alert">
             <strong>{firstProblem.problem}</strong>
@@ -571,6 +610,7 @@ export function BuildPage() {
             builderInstalled={builderInstalled}
             syncDimmed={syncStatus === "loading"}
             onRetryApps={() => void loadApps()}
+            onGoBench={goBench}
           />
         </div>
 
@@ -648,6 +688,7 @@ function CanvasOverlay({
   builderInstalled,
   syncDimmed,
   onRetryApps,
+  onGoBench,
 }: {
   canvas: Canvas;
   benchStatus: BenchStatus;
@@ -657,15 +698,30 @@ function CanvasOverlay({
   builderInstalled: boolean;
   syncDimmed: boolean;
   onRetryApps: () => void;
+  /** Navigate to bench page so user can start the bench. */
+  onGoBench: () => void;
 }) {
-  // Bench not running → the header action and banner carry the CTA
+  // Bench not running → Direction D: icon + help text + Start bench CTA
   if (benchStatus !== "running") {
     return (
       <div className="wb-overlay">
-        <p className="wb-empty-title">Bench not running</p>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--ink-gray-3)" strokeWidth="1.5" aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <path d="m10 8 6 4-6 4V8z"/>
+        </svg>
+        <p className="wb-empty-title" style={{ marginTop: 8 }}>
+          {canvas === "studio" ? "Studio" : "Builder"} canvas
+        </p>
+        <p className="wb-muted" style={{ fontSize: 13, maxWidth: 280, textAlign: "center" }}>
+          Start the bench to launch the {canvas === "studio" ? "Studio" : "Builder"} canvas.
+        </p>
+        <Button variant="primary" size="sm" onClick={onGoBench} style={{ marginTop: 12 }}>
+          Start bench
+        </Button>
       </div>
     );
   }
+
 
   // list-apps loading
   if (listAppsStatus === "loading") {

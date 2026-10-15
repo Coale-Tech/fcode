@@ -92,10 +92,13 @@ export function AllBenches({
           </button>
         ))}
       </div>
+      {/* Direction D: amber warning banner when a bench is running (only one at a time) */}
       {blocker && (
-        <p className="wb-note wb-all-note">
-          {baseName(blocker)} is running — one bench at a time. {startBlockedCue(blocker)} to start another.
-        </p>
+        <div className="build-banner is-amber" role="status" style={{ margin: "8px 0 0", padding: "7px 12px" }}>
+          <span aria-hidden="true">⚠</span>
+          <strong>{baseName(blocker)}</strong> is running — only one bench at a time.{" "}
+          <span className="wb-muted">{startBlockedCue(blocker)} to start another.</span>
+        </div>
       )}
       <div className="wb-all-scroll">
         {rows.length === 0 ? (
@@ -105,7 +108,9 @@ export function AllBenches({
             <thead>
               <tr>
                 <th scope="col">Bench</th>
+                <th scope="col">Path</th>
                 <th scope="col">Version</th>
+                <th scope="col">Apps</th>
                 <th scope="col">Sites</th>
                 <th scope="col">State</th>
                 <th scope="col">
@@ -133,8 +138,18 @@ export function AllBenches({
                         <span className="wb-truncate">{name}</span>
                       </button>
                     </td>
+                    <td className="wb-table-path">
+                      <code className="wb-mono wb-truncate" title={bench.path}
+                        style={{ fontSize: 11, color: "var(--ink-gray-5)", maxWidth: 180, display: "inline-block" }}>
+                        {bench.path}
+                      </code>
+                    </td>
                     <td>
                       <VersionBadge version={bench.version} />
+                    </td>
+                    <td className="wb-table-apps">
+                      {/* No apps field on BenchSummary — omit rather than guess */}
+                      <span className="wb-muted" style={{ fontSize: 11 }}>—</span>
                     </td>
                     <td className="wb-table-sites">
                       <span className="wb-truncate">{siteSummary(bench)}</span>
@@ -175,6 +190,22 @@ export function AllBenches({
           </table>
         )}
       </div>
+      {/* Direction D: footer with total count + Finder link */}
+      {benches.length > 0 && (
+        <div className="wb-all-footer">
+          <span>
+            Showing {rows.length} of {benches.length} bench{benches.length !== 1 ? "es" : ""}
+          </span>
+          <button
+            type="button"
+            className="wb-link-btn"
+            onClick={() => void window.open(`file://${roots[0] ?? ""}`, "_blank")}
+            style={{ marginLeft: "auto", fontSize: 11 }}
+          >
+            Browse all in Finder
+          </button>
+        </div>
+      )}
     </div>
   );
 }

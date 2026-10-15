@@ -1,5 +1,6 @@
 import { api } from "../../lib/api";
 import {
+  ACTIVITY_TAB,
   activateWorkPanelTabState,
   browserPluginTab,
   closeWorkPanelTabState,
@@ -133,6 +134,11 @@ export function createWorkPanelSlice({
       return;
     }
     const context = currentWorkPanelContext(state);
+    // Direction D: an empty chat panel opens on Activity, not the launcher.
+    if (context.tabs.length === 0) {
+      state.openWorkPanelTabForSession(sessionId, ACTIVITY_TAB);
+      return;
+    }
     set({
       workPanelOpen: true,
       workPanelContexts: {

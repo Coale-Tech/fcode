@@ -67,8 +67,7 @@ test("terminal notifications flow from host completion to the renderer", () => {
   assert.match(storeSource, /receiveNotification:/);
   assert.match(storeSource, /unreadNotificationCount/);
   assert.match(appSource, /api\.onNotificationChanged/);
-  // Behavioral: NotificationCenter derives its badge from the store's unread-count slice
-  // (not a hardcoded value or prop-drilled counter).
+  // Behavioral: NotificationCenter/NotificationsPage derives badge from store's unread slice
   assert.match(notifCenterSource, /unreadNotificationCount/);
   // Structural: NavRail mounts NotificationCenter so rail/island layouts expose the bell.
   assert.match(railSource, /NotificationCenter/);
