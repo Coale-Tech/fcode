@@ -7,7 +7,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { ErrorCodes, IPC } from "@pi-desktop/shared";
-import { defaultRoots, discoverBenches } from "../bench/discovery";
+import { defaultRoots, discoverBenches, readBenchApps, readProcfileEntries } from "../bench/discovery";
 import { shouldAutoApproveVerb } from "@pi-desktop/host-runtime";
 import { benchSupervisor } from "../bench/supervisor";
 import type { IpcRegistrar } from "./types";
@@ -221,4 +221,30 @@ export function registerBenchIpc({
       return result;
     },
   );
+
+  // Bench detail: real installed apps + Procfile entries + port + main PID
+  handle(IPC.invoke.benchDetail, async (input: { benchPath?: string } = {}) => {
+    const benchPath = String(input.benchPath ?? "").trim();
+    if (!benchPath) {
+      throw Object.assign(new Error("benchPath is required"), {
+        errorCode: ErrorCodes.INVALID_ARGUMENT,
+      });
+    }
+    const apps = readBenchApps(benchPath);
+    const procfileEntries = readProcfileEntries(benchPath);
+    const mainPid = benchSupervisor.activeBenchPath === benchPath
+      ? benchSupervisor.getMainPid()
+      : null;
+    // Port from common_site_config.json (same as discovery)
+    let port: number | null = null;
+    try {
+      const cfg = JSON.parse(
+        readFileSync(join(benchPath, "sites", "common_site_config.json"), "utf8"),
+      ) as Record<string, unknown>;
+      port = typeof cfg.webserver_port === "number" ? cfg.webserver_port : 8000;
+    } catch {
+      port = null;
+    }
+    return { apps, procfileEntries, port, mainPid };
+  });
 }

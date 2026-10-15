@@ -3457,6 +3457,11 @@ importConfirm: "Imported extensions run inside the agent process with the same a
     copyCmdAria: "Copy {{label}} command",
     copied: "Copied!",
     restart: "Restart",
+    apps: "Apps",
+    workers: "Workers",
+    processes: "processes",
+    benches: "Benches",
+    addFolder: "Add folder",
   },
   terminal: {
     title: "Terminal",

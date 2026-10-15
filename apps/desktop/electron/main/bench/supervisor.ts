@@ -294,6 +294,11 @@ export class BenchSupervisor extends EventEmitter {
     return this.processes.get(processName)?.buffer.all() ?? [];
   }
 
+  /** PID of the `bench start` child process, or null when not running. */
+  getMainPid(): number | null {
+    return this.processes.get("start")?.child?.pid ?? null;
+  }
+
   /**
    * Start `bench start` in the active bench (E4: argv spawn, shell:false).
    */

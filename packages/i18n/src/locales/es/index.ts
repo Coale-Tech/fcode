@@ -3408,6 +3408,11 @@ sklm: {
     "copyCmdAria": "Copiar comando {{label}}",
     "copied": "¡Copiado!",
     restart: "Restart",
+    apps: "Apps",
+    workers: "Trabajadores",
+    processes: "procesos",
+    benches: "Benches",
+    addFolder: "Agregar carpeta",
   },
   "terminal": {
     "title": "Terminal",

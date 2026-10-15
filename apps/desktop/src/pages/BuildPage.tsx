@@ -378,7 +378,9 @@ export function BuildPage() {
   const checks = checksFor(canvas, allChecks);
   const problems = failing(checks);
   const firstProblem = problems[0];
-  const showBanner = firstProblem !== undefined && !dismissed.includes(firstProblem.key);
+  // Bench-down is communicated through the canvas empty-state overlay (Start bench CTA).
+  // Suppressing the "bench" key banner avoids a redundant red banner in stopped state.
+  const showBanner = firstProblem !== undefined && !dismissed.includes(firstProblem.key) && firstProblem.key !== "bench";
   const benchDown = allChecks[0].state === "fail";
   const benchName = benchPath?.split(/[\\/]/).filter(Boolean).pop() ?? null;
   const problemKeys = problems.map((p) => p.key).join(",");

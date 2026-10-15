@@ -441,6 +441,8 @@ export const IPC = {
     benchStop: "pi-desktop/bench/stop",
     benchStatus: "pi-desktop/bench/status",
     benchRun: "pi-desktop/bench/run",
+    /** Bench detail: installed apps, procfile process names, port, main PID for a bench path. */
+    benchDetail: "pi-desktop/bench/detail",
     /** Build tab: query installed apps on the active bench/site. */
     buildListApps: "pi-desktop/build/listApps",
     /** Build tab canvas — acquire exclusive ownership of the shared BrowserPane. */

@@ -1,0 +1,486 @@
+# Review package: c73c8ac00..HEAD
+
+## Commits
+b82b441ba feat(settings): navigation layout picker
+
+## Files changed
+ .../src/components/settings/NavLayoutRow.tsx       | 75 ++++++++++++++++++++++
+ .../desktop/src/features/settings/SettingsPage.tsx |  2 +
+ apps/desktop/src/lib/settings-search.ts            |  5 ++
+ apps/desktop/src/styles/settings.css               | 20 ++++++
+ packages/i18n/src/locales/de/index.ts              |  5 ++
+ packages/i18n/src/locales/en/index.ts              |  5 ++
+ packages/i18n/src/locales/es/index.ts              |  5 ++
+ packages/i18n/src/locales/fr/index.ts              |  5 ++
+ packages/i18n/src/locales/ko/index.ts              |  5 ++
+ packages/i18n/src/locales/pt-BR/index.ts           |  5 ++
+ packages/i18n/src/locales/tr/index.ts              |  5 ++
+ packages/i18n/src/locales/zh-CN/index.ts           |  5 ++
+ packages/i18n/src/locales/zh-TW/index.ts           |  5 ++
+ 13 files changed, 147 insertions(+)
+
+## Diff
+diff --git a/apps/desktop/src/components/settings/NavLayoutRow.tsx b/apps/desktop/src/components/settings/NavLayoutRow.tsx
+new file mode 100644
+index 000000000..96ce85684
+--- /dev/null
++++ b/apps/desktop/src/components/settings/NavLayoutRow.tsx
+@@ -0,0 +1,75 @@
++import { useTranslation } from "react-i18next";
++import type { AppSettings } from "@pi-desktop/shared";
++import { SettingsRow } from "../../features/settings/primitives";
++import { NAV_LAYOUTS, type NavLayout } from "@pi-desktop/shared";
++import { resolveNavLayout } from "../../lib/nav-layout";
++
++const LABEL = {
++  tabs: "settings.navLayoutTabs",
++  rail: "settings.navLayoutRail",
++  island: "settings.navLayoutIsland",
++} as const satisfies Record<NavLayout, string>;
++
++/** 64×44 wireframe: navbar band, then the layout's nav chrome, then the canvas. */
++function Thumb({ layout }: { layout: NavLayout }) {
++  return (
++    <svg className="nav-layout-thumb" viewBox="0 0 64 44" aria-hidden>
++      <rect x=".5" y=".5" width="63" height="43" rx="5" fill="none" stroke="currentColor" opacity=".35" />
++      <rect x="1" y="1" width="62" height="7" fill="currentColor" opacity=".12" />
++      {layout === "tabs" && (
++        <>
++          <rect x="6" y="3" width="9" height="3" rx="1.5" fill="currentColor" />
++          <rect x="17" y="3" width="9" height="3" rx="1.5" fill="currentColor" opacity=".4" />
++          <rect x="28" y="3" width="9" height="3" rx="1.5" fill="currentColor" opacity=".4" />
++        </>
++      )}
++      {layout === "rail" && <rect x="1" y="8" width="7" height="35" fill="currentColor" opacity=".12" />}
++      {layout === "island" && (
++        <>
++          <rect x="1" y="8" width="10" height="35" fill="currentColor" opacity=".12" />
++          <rect x="12" y="8" width="14" height="35" fill="currentColor" opacity=".08" />
++        </>
++      )}
++      <rect
++        x={layout === "tabs" ? 4 : layout === "rail" ? 11 : 29}
++        y="11"
++        width={layout === "tabs" ? 56 : layout === "rail" ? 49 : 31}
++        height="29"
++        rx="3"
++        fill="currentColor"
++        opacity=".18"
++      />
++    </svg>
++  );
++}
++
++export function NavLayoutRow({
++  settings,
++  saveSettings,
++}: {
++  settings: AppSettings;
++  saveSettings: (patch: Partial<AppSettings>) => Promise<void>;
++}) {
++  const { t } = useTranslation();
++  const current = resolveNavLayout(settings.navLayout);
++  return (
++    <SettingsRow title={t("settings.navLayout")} description={t("settings.navLayoutDesc")}>
++      <div className="nav-layout-picker" role="radiogroup" aria-label={t("settings.navLayout")}>
++        {NAV_LAYOUTS.map((id) => (
++          <button
++            key={id}
++            type="button"
++            role="radio"
++            aria-checked={current === id}
++            data-nav-layout-option={id}
++            className={cx("nav-layout-card", current === id && "is-selected")}
++            onClick={() => void saveSettings({ navLayout: id })}
++          >
++            <Thumb layout={id} />
++            <span className="nav-layout-card-label">{t(LABEL[id])}</span>
++          </button>
++        ))}
++      </div>
++    </SettingsRow>
++  );
++}
+diff --git a/apps/desktop/src/features/settings/SettingsPage.tsx b/apps/desktop/src/features/settings/SettingsPage.tsx
+index 462bc41bc..0661c927e 100644
+--- a/apps/desktop/src/features/settings/SettingsPage.tsx
++++ b/apps/desktop/src/features/settings/SettingsPage.tsx
+@@ -39,20 +39,21 @@ import {
+   IconKanban as IconColumns,
+   IconRaven,
+   IconTerminal,
+ } from "../../components/icons";
+ import { Badge, Button, cx, SegmentedControl, SettingsToggle } from "../../components/ui";
+ import { ModelConfigPage } from "../../components/settings/ModelConfigPage";
+ import { KeyboardShortcutsSection } from "../../components/settings/KeyboardShortcutsSection";
+ import { FontFamilyRow } from "../../components/settings/FontFamilyRow";
+ import { ThinkingDisplayModeRow } from "../../components/settings/ThinkingDisplayModeRow";
+ import { FontSizeRow } from "../../components/settings/FontSizeRow";
++import { NavLayoutRow } from "../../components/settings/NavLayoutRow";
+ import { LanguageRow } from "../../components/settings/LanguageRow";
+ import { MemoryTab, memoryHealth } from "./MemoryTab";
+ import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect";
+ import { ThemeRow } from "../../components/settings/ThemeRow";
+ import { NetworkProxySection } from "../../components/settings/NetworkProxySection";
+ import { ProjectsPage } from "../../pages/ProjectsPage";
+ import { RemoteHostsPage } from "../../components/settings/RemoteHostsPage";
+ import { VoiceSettingsSection } from "./voice/VoiceSettingsSection";
+ import {
+   CommandShellRow,
+@@ -430,20 +431,21 @@ export function SettingsPage() {
+             </div>
+           ) : null}
+ 
+           {tab === "general" && settings && (
+             <div className="settings-stack">
+               <SettingsCard title={t("settings.appearance")}>
+                 <ThemeRow settings={settings} saveSettings={saveSettings} />
+                 <LanguageRow settings={settings} saveSettings={saveSettings} />
+                 <FontFamilyRow settings={settings} saveSettings={saveSettings} />
+                 <FontSizeRow settings={settings} saveSettings={saveSettings} />
++                <NavLayoutRow settings={settings} saveSettings={saveSettings} />
+               </SettingsCard>
+ 
+               <NetworkProxySection settings={settings} saveSettings={saveSettings} />
+ 
+               <SettingsCard title={t("settings.power")}>
+                 <SettingsRow
+                   title={t("settings.keepAwakeWhileRunning")}
+                   description={t("settings.keepAwakeWhileRunningDesc")}
+                 >
+                   <SettingsToggle
+diff --git a/apps/desktop/src/lib/settings-search.ts b/apps/desktop/src/lib/settings-search.ts
+index ed7c6519d..90a572b5f 100644
+--- a/apps/desktop/src/lib/settings-search.ts
++++ b/apps/desktop/src/lib/settings-search.ts
+@@ -64,20 +64,25 @@ export const SETTINGS_NAV: SettingsNavEntry[] = [
+     labelKey: "settings.nav.general",
+     titleKey: "settings.general",
+     group: "preferences",
+     keywordKeys: [
+       "settings.appearance",
+       "settings.theme",
+       "settings.language",
+       "settings.languageAuto",
+       "settings.font",
+       "settings.fontSize",
++      "settings.navLayout",
++      "settings.navLayoutDesc",
++      "settings.navLayoutTabs",
++      "settings.navLayoutRail",
++      "settings.navLayoutIsland",
+       "settings.closeBehaviorTitle",
+       "settings.closeBehaviorTray",
+       "settings.closeBehaviorQuit",
+       "settings.power",
+       "settings.keepAwakeWhileRunning",
+       "settings.keepAwakeWhileRunningDesc",
+       "settings.network",
+       "settings.proxy",
+       "settings.proxySystem",
+       "settings.proxyDirect",
+diff --git a/apps/desktop/src/styles/settings.css b/apps/desktop/src/styles/settings.css
+index 0643c7f5a..b77b315c6 100644
+--- a/apps/desktop/src/styles/settings.css
++++ b/apps/desktop/src/styles/settings.css
+@@ -3653,10 +3653,30 @@
+   width: 64px;
+   height: 30px;
+   padding: 0 8px;
+   text-align: center;
+   border-radius: var(--radius-full);
+ }
+ 
+ .sklm-page-jump::placeholder {
+   color: var(--ds-text-muted);
+ }
++
++.nav-layout-picker { display: flex; gap: 8px; }
++.nav-layout-card {
++  display: flex; flex-direction: column; align-items: center; gap: 6px;
++  padding: 8px; min-width: 88px;
++  color: var(--ds-text-secondary);
++  background: var(--ds-bg-primary);
++  border: 1px solid var(--ds-border-default);
++  border-radius: var(--d-r-ctrl);
++  cursor: pointer;
++}
++.nav-layout-card:hover { border-color: var(--ds-text-tertiary); }
++.nav-layout-card:focus-visible { outline: var(--focus-outline-default); outline-offset: 2px; }
++.nav-layout-card.is-selected {
++  color: var(--ds-accent);
++  border-color: var(--ds-accent);
++  box-shadow: 0 0 0 1px var(--ds-accent);
++}
++.nav-layout-thumb { width: 64px; height: 44px; }
++.nav-layout-card-label { font-size: var(--d-text-sm); color: var(--ds-text-primary); }
+diff --git a/packages/i18n/src/locales/de/index.ts b/packages/i18n/src/locales/de/index.ts
+index a182b9e47..4ea298614 100644
+--- a/packages/i18n/src/locales/de/index.ts
++++ b/packages/i18n/src/locales/de/index.ts
+@@ -1507,20 +1507,25 @@ sklm: {
+     "smoothStreamingDesc": "Gibt gestreamten Text zeichenweise aus, um einen Schreibmaschineneffekt zu erzeugen. Wird automatisch deaktiviert, wenn das System reduzierte Bewegung bevorzugt.",
+     "preventScreenSleep": "Bildschirmsperre verhindern",
+     "preventScreenSleepDesc": "Hält das Display wach, solange die App läuft. Nutzt plattformübergreifend die System-Energieverwaltung.",
+     "linkOpenTarget": "Ziel für Link-Öffnung",
+     "linkOpenTargetWorkpanel": "Arbeitsbereich-Browser",
+     "linkOpenTargetExternal": "Standard-Betriebssystem-Browser",
+     "thinkingDisplayMode": "Denkprozess anzeigen",
+     "thinkingDisplayModeDesc": "Der Modus Detailliert zeigt den Fortschritt in einem ausklappbaren Prozess mit verschachtelten Tool-Gruppen und dem Denkprozess. Der Modus Kompakt startet mit eingeklapptem Prozess und blendet den Denkprozess aus.",
+     "thinkingDisplayDetailed": "Detailliert",
+     "thinkingDisplayCompact": "Kompakt",
++    "navLayout": "Navigationslayout",
++    "navLayoutDesc": "Wo die Hauptziele liegen. Wirkt sofort und wird für dein Konto gespeichert.",
++    "navLayoutTabs": "Tabs",
++    "navLayoutRail": "Symbolleiste",
++    "navLayoutIsland": "Seitenleiste",
+     "contextUsageDisplay": "Kontextnutzung-Anzeige",
+     "contextUsageDisplayRemaining": "Verbleibend",
+     "contextUsageDisplayUsed": "Verwendet",
+     "linkContextMenuOpenExternal": "Im Standard-Browser öffnen",
+     "linkContextMenuOpenWorkpanel": "Im Arbeitsbereich öffnen",
+     "linkContextMenuCopy": "Link-Adresse kopieren",
+     "linkCopied": "Link in die Zwischenablage kopiert",
+     "linkCopyFailed": "Die Link-Adresse konnte nicht kopiert werden.",
+     "largePasteThreshold": "Großer Einfügeschwellenwert",
+     "largePasteThresholdDesc": "Nur-Text-Einfügungen, die länger als diese Anzahl von Zeichen sind, werden zu einer temporären Sitzungsdatei.",
+diff --git a/packages/i18n/src/locales/en/index.ts b/packages/i18n/src/locales/en/index.ts
+index 4c277caf0..e9298244c 100644
+--- a/packages/i18n/src/locales/en/index.ts
++++ b/packages/i18n/src/locales/en/index.ts
+@@ -1519,20 +1519,25 @@ sklm: {
+     smoothStreamingDesc: "Release streamed text character by character for a typewriter effect. Automatically disabled when the system prefers reduced motion.",
+     preventScreenSleep: "Prevent screen sleep",
+     preventScreenSleepDesc: "Keep the display awake while the app is running. Uses system power management APIs on all platforms.",
+     linkOpenTarget: "Link open destination",
+     linkOpenTargetWorkpanel: "Work panel browser",
+     linkOpenTargetExternal: "Default OS browser",
+     thinkingDisplayMode: "Thinking display mode",
+     thinkingDisplayModeDesc: "Detailed shows progress in an expandable process with nested tool groups and reasoning. Compact starts the process collapsed and hides reasoning.",
+     thinkingDisplayDetailed: "Detailed",
+     thinkingDisplayCompact: "Compact",
++    navLayout: "Navigation layout",
++    navLayoutDesc: "Where the main destinations live. Applies instantly and is saved for your account.",
++    navLayoutTabs: "Tabs",
++    navLayoutRail: "Icon rail",
++    navLayoutIsland: "Sidebar",
+     contextUsageDisplay: "Context usage readout",
+     contextUsageDisplayRemaining: "Remaining",
+     contextUsageDisplayUsed: "Used",
+     linkContextMenuOpenExternal: "Open in default browser",
+     linkContextMenuOpenWorkpanel: "Open in work panel",
+     linkContextMenuCopy: "Copy link address",
+     linkCopied: "Link copied to clipboard",
+     linkCopyFailed: "Couldn't copy link address",
+     largePasteThreshold: "Large paste threshold",
+     largePasteThresholdDesc:
+diff --git a/packages/i18n/src/locales/es/index.ts b/packages/i18n/src/locales/es/index.ts
+index 32a144764..5938a6fd6 100644
+--- a/packages/i18n/src/locales/es/index.ts
++++ b/packages/i18n/src/locales/es/index.ts
+@@ -1507,20 +1507,25 @@ sklm: {
+     "smoothStreamingDesc": "Libera el texto transmitido carácter por carácter para un efecto de máquina de escribir. Se desactiva automáticamente cuando el sistema prefiere movimiento reducido.",
+     "preventScreenSleep": "Evitar suspensión de pantalla",
+     "preventScreenSleepDesc": "Mantiene la pantalla encendida mientras la aplicación está en ejecución. Usa las API de gestión de energía del sistema en todas las plataformas.",
+     "linkOpenTarget": "Destino al abrir enlaces",
+     "linkOpenTargetWorkpanel": "Navegador del panel de trabajo",
+     "linkOpenTargetExternal": "Navegador predeterminado del sistema",
+     "thinkingDisplayMode": "Visualización del razonamiento",
+     "thinkingDisplayModeDesc": "Detallado muestra el progreso en un proceso expandible con grupos de herramientas anidados y razonamiento. Compacto inicia el proceso contraído y oculta el razonamiento.",
+     "thinkingDisplayDetailed": "Detallado",
+     "thinkingDisplayCompact": "Compacto",
++    "navLayout": "Diseño de navegación",
++    "navLayoutDesc": "Dónde están los destinos principales. Se aplica al instante y se guarda en tu cuenta.",
++    "navLayoutTabs": "Pestañas",
++    "navLayoutRail": "Barra de iconos",
++    "navLayoutIsland": "Barra lateral",
+     "contextUsageDisplay": "Lectura del uso del contexto",
+     "contextUsageDisplayRemaining": "Restante",
+     "contextUsageDisplayUsed": "Usado",
+     "linkContextMenuOpenExternal": "Abrir en el navegador predeterminado",
+     "linkContextMenuOpenWorkpanel": "Abrir en el panel de trabajo",
+     "linkContextMenuCopy": "Copiar dirección del enlace",
+     "linkCopied": "Enlace copiado al portapapeles",
+     "linkCopyFailed": "No se pudo copiar la dirección del enlace.",
+     "largePasteThreshold": "Umbral de pegado grande",
+     "largePasteThresholdDesc": "Los pegados de solo texto de más de esta cantidad de caracteres se convierten en un archivo de sesión temporal.",
+diff --git a/packages/i18n/src/locales/fr/index.ts b/packages/i18n/src/locales/fr/index.ts
+index 629ef97d4..71edc1bdb 100644
+--- a/packages/i18n/src/locales/fr/index.ts
++++ b/packages/i18n/src/locales/fr/index.ts
+@@ -1507,20 +1507,25 @@ sklm: {
+     "smoothStreamingDesc": "Libère le texte diffusé caractère par caractère pour un effet machine à écrire. Automatiquement désactivé lorsque le système préfère un mouvement réduit.",
+     "preventScreenSleep": "Empêcher la mise en veille",
+     "preventScreenSleepDesc": "Garde l'écran allumé tant que l'application est ouverte. Utilise les API de gestion d'énergie du système sur toutes les plateformes.",
+     "linkOpenTarget": "Destination d'ouverture des liens",
+     "linkOpenTargetWorkpanel": "Navigateur du panneau de travail",
+     "linkOpenTargetExternal": "Navigateur par défaut du système",
+     "thinkingDisplayMode": "Affichage du raisonnement",
+     "thinkingDisplayModeDesc": "Le mode détaillé affiche la progression dans un processus dépliable avec des groupes d'outils imbriqués et le raisonnement. Le mode compact démarre avec le processus replié et masque le raisonnement.",
+     "thinkingDisplayDetailed": "Détaillé",
+     "thinkingDisplayCompact": "Compact",
++    "navLayout": "Disposition de navigation",
++    "navLayoutDesc": "Où se trouvent les destinations principales. S'applique immédiatement et est enregistré pour votre compte.",
++    "navLayoutTabs": "Onglets",
++    "navLayoutRail": "Barre d'icônes",
++    "navLayoutIsland": "Barre latérale",
+     "contextUsageDisplay": "Affichage de l'usage du contexte",
+     "contextUsageDisplayRemaining": "Restant",
+     "contextUsageDisplayUsed": "Utilisé",
+     "linkContextMenuOpenExternal": "Ouvrir dans le navigateur par défaut",
+     "linkContextMenuOpenWorkpanel": "Ouvrir dans le panneau de travail",
+     "linkContextMenuCopy": "Copier l'adresse du lien",
+     "linkCopied": "Lien copié dans le presse-papiers",
+     "linkCopyFailed": "Impossible de copier l'adresse du lien.",
+     "largePasteThreshold": "Seuil de collage élevé",
+     "largePasteThresholdDesc": "Les collages de texte uniquement dépassant ce nombre de caractères deviennent un fichier de session temporaire.",
+diff --git a/packages/i18n/src/locales/ko/index.ts b/packages/i18n/src/locales/ko/index.ts
+index 668c6dd9a..71d450f90 100644
+--- a/packages/i18n/src/locales/ko/index.ts
++++ b/packages/i18n/src/locales/ko/index.ts
+@@ -1517,20 +1517,25 @@ sklm: {
+     smoothStreamingDesc: "스트리밍 텍스트를 한 글자씩 타자기 효과로 표시합니다. 시스템에서 동작 줄이기를 선호하면 자동으로 비활성화됩니다.",
+     preventScreenSleep: "화면 절전 방지",
+     preventScreenSleepDesc: "앱이 실행되는 동안 화면이 꺼지지 않도록 합니다. 모든 플랫폼에서 시스템 전원 관리 API를 사용합니다.",
+     linkOpenTarget: "링크 열기 위치",
+     linkOpenTargetWorkpanel: "작업 패널 브라우저",
+     linkOpenTargetExternal: "시스템 기본 브라우저",
+     thinkingDisplayMode: "사고 과정 표시 모드",
+     thinkingDisplayModeDesc: "상세 모드는 중첩된 도구 그룹과 사고 과정을 포함한 진행 상황을 펼칠 수 있는 처리 과정에 표시합니다. 간결 모드는 처리 과정을 접힌 상태로 시작하고 사고 과정을 숨깁니다.",
+     thinkingDisplayDetailed: "상세",
+     thinkingDisplayCompact: "간결",
++    navLayout: "내비게이션 레이아웃",
++    navLayoutDesc: "주요 이동 항목의 위치입니다. 즉시 적용되며 계정에 저장됩니다.",
++    navLayoutTabs: "탭",
++    navLayoutRail: "아이콘 레일",
++    navLayoutIsland: "사이드바",
+     contextUsageDisplay: "컨텍스트 사용량 표시",
+     contextUsageDisplayRemaining: "남음",
+     contextUsageDisplayUsed: "사용됨",
+     linkContextMenuOpenExternal: "기본 브라우저에서 열기",
+     linkContextMenuOpenWorkpanel: "작업 패널에서 열기",
+     linkContextMenuCopy: "링크 주소 복사",
+     linkCopied: "링크가 클립보드에 복사되었습니다",
+     linkCopyFailed: "링크 주소를 복사하지 못했습니다.",
+     largePasteThreshold: "대용량 붙여넣기 기준",
+     largePasteThresholdDesc:
+diff --git a/packages/i18n/src/locales/pt-BR/index.ts b/packages/i18n/src/locales/pt-BR/index.ts
+index ee25f11db..e36a2e3b9 100644
+--- a/packages/i18n/src/locales/pt-BR/index.ts
++++ b/packages/i18n/src/locales/pt-BR/index.ts
+@@ -1472,20 +1472,25 @@ export const ptBR = {
+     smoothStreamingDesc: "Exibe o texto recebido caractere por caractere, criando um efeito de máquina de escrever. É desativada automaticamente quando o sistema está configurado para reduzir animações.",
+     preventScreenSleep: "Impedir suspensão da tela",
+     preventScreenSleepDesc: "Mantém a tela ligada enquanto o app está em execução. Usa as APIs de gerenciamento de energia do sistema em todas as plataformas.",
+     linkOpenTarget: "Destino ao abrir links",
+     linkOpenTargetWorkpanel: "Navegador do painel de trabalho",
+     linkOpenTargetExternal: "Navegador padrão do sistema",
+     thinkingDisplayMode: "Exibição do raciocínio",
+     thinkingDisplayModeDesc: "Controla como o processo de raciocínio do modelo é exibido na conversa.",
+     thinkingDisplayDetailed: "Detalhado",
+     thinkingDisplayCompact: "Compacto",
++    navLayout: "Layout de navegação",
++    navLayoutDesc: "Onde ficam os destinos principais. Aplica na hora e é salvo na sua conta.",
++    navLayoutTabs: "Abas",
++    navLayoutRail: "Barra de ícones",
++    navLayoutIsland: "Barra lateral",
+     contextUsageDisplay: "Indicador de uso do contexto",
+     contextUsageDisplayRemaining: "Restante",
+     contextUsageDisplayUsed: "Usado",
+     linkContextMenuOpenExternal: "Abrir no navegador padrão",
+     linkContextMenuOpenWorkpanel: "Abrir no painel de trabalho",
+     linkContextMenuCopy: "Copiar endereço do link",
+     linkCopied: "Link copiado para a área de transferência",
+     linkCopyFailed: "Não foi possível copiar o link",
+     largePasteThreshold: "Limite para colagem de textos longos",
+     largePasteThresholdDesc: "Textos colados que ultrapassarem este limite de caracteres serão salvos como um arquivo temporário da sessão.",
+diff --git a/packages/i18n/src/locales/tr/index.ts b/packages/i18n/src/locales/tr/index.ts
+index 02fb038fc..5d63bce55 100644
+--- a/packages/i18n/src/locales/tr/index.ts
++++ b/packages/i18n/src/locales/tr/index.ts
+@@ -1507,20 +1507,25 @@ sklm: {
+     smoothStreamingDesc: "Akan metni daktilo efekti için karakter karakter gösterir. Sistem hareket azaltmayı tercih ettiğinde otomatik devre dışı kalır.",
+     preventScreenSleep: "Ekran uykusunu engelle",
+     preventScreenSleepDesc: "Uygulama çalışırken ekranı açık tutar. Tüm platformlarda sistem güç yönetimi API'lerini kullanır.",
+     linkOpenTarget: "Bağlantı açma hedefi",
+     linkOpenTargetWorkpanel: "Çalışma paneli tarayıcısı",
+     linkOpenTargetExternal: "Varsayılan sistem tarayıcısı",
+     thinkingDisplayMode: "Düşünme görünümü",
+     thinkingDisplayModeDesc: "Ayrıntılı mod ilerlemeyi, iç içe araç grupları ve düşünmeyle birlikte genişletilebilir bir işlemde gösterir. Sade mod işlemi daraltılmış olarak başlatır ve düşünmeyi gizler.",
+     thinkingDisplayDetailed: "Ayrıntılı",
+     thinkingDisplayCompact: "Sade",
++    navLayout: "Gezinme düzeni",
++    navLayoutDesc: "Ana hedeflerin nerede durduğunu belirler. Anında uygulanır ve hesabınız için kaydedilir.",
++    navLayoutTabs: "Sekmeler",
++    navLayoutRail: "Simge çubuğu",
++    navLayoutIsland: "Kenar çubuğu",
+     contextUsageDisplay: "Bağlam kullanımı göstergesi",
+     contextUsageDisplayRemaining: "Kalan",
+     contextUsageDisplayUsed: "Kullanılan",
+     linkContextMenuOpenExternal: "Varsayılan tarayıcıda aç",
+     linkContextMenuOpenWorkpanel: "Çalışma panelinde aç",
+     linkContextMenuCopy: "Bağlantı adresini kopyala",
+     linkCopied: "Bağlantı panoya kopyalandı",
+     linkCopyFailed: "Bağlantı adresi kopyalanamadı",
+     largePasteThreshold: "Uzun yapıştırma eşiği",
+     largePasteThresholdDesc:
+diff --git a/packages/i18n/src/locales/zh-CN/index.ts b/packages/i18n/src/locales/zh-CN/index.ts
+index 43ed06607..ace7acb87 100644
+--- a/packages/i18n/src/locales/zh-CN/index.ts
++++ b/packages/i18n/src/locales/zh-CN/index.ts
+@@ -1493,20 +1493,25 @@ sklm: {
+     smoothStreamingDesc: "将流式文本逐字释放，产生打字机效果。系统开启“减少动态效果”时自动禁用。",
+     preventScreenSleep: "阻止屏幕休眠",
+     preventScreenSleepDesc: "应用运行时保持屏幕常亮，跨平台使用系统电源管理接口。",
+     linkOpenTarget: "链接打开位置",
+     linkOpenTargetWorkpanel: "工作区浏览器",
+     linkOpenTargetExternal: "系统默认浏览器",
+     thinkingDisplayMode: "思考过程展示模式",
+     thinkingDisplayModeDesc: "详细模式在可展开的处理过程中显示进度、嵌套工具分组和思考内容。精简模式默认折叠处理过程并隐藏思考内容。",
+     thinkingDisplayDetailed: "详细",
+     thinkingDisplayCompact: "精简",
++    navLayout: "导航布局",
++    navLayoutDesc: "主要入口的位置。立即生效，并保存到你的账户。",
++    navLayoutTabs: "标签页",
++    navLayoutRail: "图标栏",
++    navLayoutIsland: "侧边栏",
+     contextUsageDisplay: "上下文用量读数",
+     contextUsageDisplayRemaining: "剩余",
+     contextUsageDisplayUsed: "已用",
+     linkContextMenuOpenExternal: "在系统默认浏览器中打开",
+     linkContextMenuOpenWorkpanel: "在工作区浏览器中打开",
+     linkContextMenuCopy: "复制链接地址",
+     linkCopied: "链接地址已复制到剪贴板",
+     linkCopyFailed: "链接地址复制失败",
+     largePasteThreshold: "大段文本粘贴阈值",
+     largePasteThresholdDesc:
+diff --git a/packages/i18n/src/locales/zh-TW/index.ts b/packages/i18n/src/locales/zh-TW/index.ts
+index 548394b4b..5cb503f45 100644
+--- a/packages/i18n/src/locales/zh-TW/index.ts
++++ b/packages/i18n/src/locales/zh-TW/index.ts
+@@ -1493,20 +1493,25 @@ sklm: {
+     smoothStreamingDesc: "將串流文字逐字釋放，產生打字機效果。系統開啟「減少動態效果」時自動停用。",
+     preventScreenSleep: "防止螢幕休眠",
+     preventScreenSleepDesc: "應用程式執行時保持螢幕常亮，跨平台使用系統電源管理介面。",
+     linkOpenTarget: "連結開啟位置",
+     linkOpenTargetWorkpanel: "工作區瀏覽器",
+     linkOpenTargetExternal: "系統預設瀏覽器",
+     thinkingDisplayMode: "思考過程顯示模式",
+     thinkingDisplayModeDesc: "詳細模式在可展開的處理過程中顯示進度、巢狀工具群組和思考內容。精簡模式預設摺疊處理過程並隱藏思考內容。",
+     thinkingDisplayDetailed: "詳細",
+     thinkingDisplayCompact: "精簡",
++    navLayout: "導覽版面",
++    navLayoutDesc: "主要入口的位置。立即生效，並儲存到你的帳戶。",
++    navLayoutTabs: "分頁",
++    navLayoutRail: "圖示列",
++    navLayoutIsland: "側邊欄",
+     contextUsageDisplay: "上下文用量讀數",
+     contextUsageDisplayRemaining: "剩餘",
+     contextUsageDisplayUsed: "已用",
+     linkContextMenuOpenExternal: "在系統預設瀏覽器中開啟",
+     linkContextMenuOpenWorkpanel: "在工作區瀏覽器中開啟",
+     linkContextMenuCopy: "複製連結位址",
+     linkCopied: "連結位址已複製到剪貼簿",
+     linkCopyFailed: "連結位址複製失敗",
+     largePasteThreshold: "大段文本貼上閾值",
+     largePasteThresholdDesc:

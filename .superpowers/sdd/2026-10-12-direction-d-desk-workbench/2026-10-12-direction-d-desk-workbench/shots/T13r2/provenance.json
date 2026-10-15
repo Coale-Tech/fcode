@@ -1,0 +1,167 @@
+{
+  "settings-general-light-rail": {
+    "label": "Settings General - light rail",
+    "commit": "c8a08e28e",
+    "buildTime": "2026-10-14T14:40",
+    "viewport": "1200x1200@2x",
+    "captureTime": "2026-10-14T15:01:12.315Z",
+    "dataTheme": "light",
+    "dataNavLayout": "rail",
+    "savedTheme": "light",
+    "savedNavLayout": "rail"
+  },
+  "settings-general-dark-rail": {
+    "label": "Settings General - dark rail",
+    "commit": "c8a08e28e",
+    "buildTime": "2026-10-14T14:40",
+    "viewport": "1200x1200@2x",
+    "captureTime": "2026-10-14T15:01:14.007Z",
+    "dataTheme": "dark",
+    "dataNavLayout": "rail",
+    "savedTheme": "dark",
+    "savedNavLayout": "rail"
+  },
+  "settings-general-light-tabs": {
+    "label": "Settings General - light tabs",
+    "commit": "c8a08e28e",
+    "buildTime": "2026-10-14T14:40",
+    "viewport": "1200x1200@2x",
+    "captureTime": "2026-10-14T15:01:17.140Z",
+    "dataTheme": "light",
+    "dataNavLayout": "tabs",
+    "savedTheme": "light",
+    "savedNavLayout": "tabs"
+  },
+  "settings-general-light-island": {
+    "label": "Settings General - light island",
+    "commit": "c8a08e28e",
+    "buildTime": "2026-10-14T14:40",
+    "viewport": "1200x1200@2x",
+    "captureTime": "2026-10-14T15:01:18.749Z",
+    "dataTheme": "light",
+    "dataNavLayout": "island",
+    "savedTheme": "light",
+    "savedNavLayout": "island"
+  },
+  "settings-ai-light-rail": {
+    "label": "Settings AI agents - light rail",
+    "commit": "c8a08e28e",
+    "buildTime": "2026-10-14T14:40",
+    "viewport": "1200x1200@2x",
+    "captureTime": "2026-10-14T15:01:46.195Z",
+    "dataTheme": "light",
+    "dataNavLayout": "rail",
+    "savedTheme": "light",
+    "savedNavLayout": "rail"
+  },
+  "settings-ai-dark-rail": {
+    "label": "Settings AI agents - dark rail",
+    "commit": "c8a08e28e",
+    "buildTime": "2026-10-14T14:40",
+    "viewport": "1200x1200@2x",
+    "captureTime": "2026-10-14T15:01:49.478Z",
+    "dataTheme": "dark",
+    "dataNavLayout": "rail",
+    "savedTheme": "dark",
+    "savedNavLayout": "rail"
+  },
+  "settings-permissions-light-rail": {
+    "label": "Settings Permissions - light rail",
+    "commit": "c8a08e28e",
+    "buildTime": "2026-10-14T14:40",
+    "viewport": "1200x1200@2x",
+    "captureTime": "2026-10-14T15:01:54.201Z",
+    "dataTheme": "light",
+    "dataNavLayout": "rail",
+    "savedTheme": "light",
+    "savedNavLayout": "rail"
+  },
+  "settings-permissions-dark-rail": {
+    "label": "Settings Permissions - dark rail",
+    "commit": "c8a08e28e",
+    "buildTime": "2026-10-14T14:40",
+    "viewport": "1200x1200@2x",
+    "captureTime": "2026-10-14T15:01:58.013Z",
+    "dataTheme": "dark",
+    "dataNavLayout": "rail",
+    "savedTheme": "dark",
+    "savedNavLayout": "rail"
+  },
+  "command-palette-light-rail": {
+    "label": "Command Palette - light rail",
+    "commit": "c8a08e28e",
+    "buildTime": "2026-10-14T14:40",
+    "viewport": "1200x1200@2x",
+    "captureTime": "2026-10-14T15:02:07.590Z",
+    "dataTheme": "light",
+    "dataNavLayout": "rail",
+    "savedTheme": "light",
+    "savedNavLayout": "rail"
+  },
+  "command-palette-dark-rail": {
+    "label": "Command Palette - dark rail",
+    "commit": "c8a08e28e",
+    "buildTime": "2026-10-14T14:40",
+    "viewport": "1200x1200@2x",
+    "captureTime": "2026-10-14T15:02:14.379Z",
+    "dataTheme": "dark",
+    "dataNavLayout": "rail",
+    "savedTheme": "dark",
+    "savedNavLayout": "rail"
+  },
+  "onboarding-step1-light-rail": {
+    "label": "Onboarding Wizard step 1 - light rail",
+    "commit": "c8a08e28e",
+    "buildTime": "2026-10-14T14:40",
+    "viewport": "1200x1200@2x",
+    "captureTime": "2026-10-14T15:02:18.653Z",
+    "dataTheme": "light",
+    "dataNavLayout": "rail",
+    "savedTheme": "light",
+    "savedNavLayout": "rail"
+  },
+  "raven-light-rail": {
+    "label": "Raven - light rail (disconnected)",
+    "commit": "c8a08e28e",
+    "buildTime": "2026-10-14T14:40",
+    "viewport": "1200x1200@2x",
+    "captureTime": "2026-10-14T15:02:22.640Z",
+    "dataTheme": "light",
+    "dataNavLayout": "rail",
+    "savedTheme": "light",
+    "savedNavLayout": "rail"
+  },
+  "raven-dark-rail": {
+    "label": "Raven - dark rail (disconnected)",
+    "commit": "c8a08e28e",
+    "buildTime": "2026-10-14T14:40",
+    "viewport": "1200x1200@2x",
+    "captureTime": "2026-10-14T15:02:24.995Z",
+    "dataTheme": "dark",
+    "dataNavLayout": "rail",
+    "savedTheme": "dark",
+    "savedNavLayout": "rail"
+  },
+  "filebird-light-rail": {
+    "label": "FileBird - light rail (not connected)",
+    "commit": "c8a08e28e",
+    "buildTime": "2026-10-14T14:40",
+    "viewport": "1200x1200@2x",
+    "captureTime": "2026-10-14T15:02:28.208Z",
+    "dataTheme": "light",
+    "dataNavLayout": "rail",
+    "savedTheme": "light",
+    "savedNavLayout": "rail"
+  },
+  "filebird-dark-rail": {
+    "label": "FileBird - dark rail (not connected)",
+    "commit": "c8a08e28e",
+    "buildTime": "2026-10-14T14:40",
+    "viewport": "1200x1200@2x",
+    "captureTime": "2026-10-14T15:02:30.850Z",
+    "dataTheme": "dark",
+    "dataNavLayout": "rail",
+    "savedTheme": "dark",
+    "savedNavLayout": "rail"
+  }
+}

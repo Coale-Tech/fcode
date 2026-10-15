@@ -1098,6 +1098,33 @@
 }
 .wb-worker-chip.is-stopped { background: var(--surface-gray-2); color: var(--ink-gray-5); }
 
+/* ── T14: worker chip dot (inline 5px circle matching design .bfd-chip-dot) ── */
+.wb-worker-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: currentColor; flex-shrink: 0;
+}
+
+/* ── T14: app detail row in bench detail left column (matching .bfd-app) ── */
+.wb-app-detail-row {
+  display: flex; align-items: center; gap: 7px;
+  height: 26px; font-size: 12px; color: var(--ink-gray-7);
+}
+.wb-app-detail-icon {
+  width: 16px; height: 16px; border-radius: 4px;
+  background: var(--surface-gray-2); border: 1px solid var(--d-border);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+}
+
+/* ── T14: app tags in AllBenches table (matching design .bf-app-tag) ── */
+.wb-app-tags {
+  display: flex; gap: 3px; flex-wrap: wrap; align-items: center;
+}
+.wb-app-tag {
+  font-size: 10px; height: 16px; line-height: 16px; padding: 0 5px;
+  background: var(--surface-gray-2); border-radius: 4px; color: var(--ink-gray-5);
+  white-space: nowrap;
+}
+
 /* ── lane T11-r2: Build page "Build" title in header ── */
 .build-hd .build-title {
   font-size: var(--text-lg); font-weight: var(--font-weight-semibold); color: var(--ink-gray-9);

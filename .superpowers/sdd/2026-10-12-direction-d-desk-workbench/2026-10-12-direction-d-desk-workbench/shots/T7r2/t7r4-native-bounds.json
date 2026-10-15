@@ -1,0 +1,38 @@
+{
+  "note": "Renderer DOM rects via CDP. WebContentsView.getBounds is main-process-only; renderer ResizeObserver feeds api.buildCanvasSetBounds/fileBirdSetBounds/ravenSetBounds with these rects.",
+  "build": {
+    "isWorkbench": true,
+    "paneRect": {
+      "x": 50,
+      "y": 48,
+      "w": 1150,
+      "h": 752
+    },
+    "paneMargin": "0px",
+    "paneShadow": "none"
+  },
+  "filebird": {
+    "surfaceFound": true,
+    "rect": {
+      "x": 319,
+      "y": 61,
+      "w": 868,
+      "h": 698
+    }
+  },
+  "raven": {
+    "surfaceFound": false,
+    "rect": {
+      "x": 318,
+      "y": 60,
+      "w": 870,
+      "h": 728
+    }
+  },
+  "budget": {
+    "beforeExpandPaneX": 318,
+    "afterExpandPaneX": 488,
+    "deltaPx": 170,
+    "expected170": true
+  }
+}

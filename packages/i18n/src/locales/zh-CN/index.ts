@@ -3380,6 +3380,8 @@ sklm: {
     noSites: "未找到站点",
     defaultBadge: "默认",
     processes: "进程",
+    benches: "Benches",
+    addFolder: "添加文件夹",
     cause: "原因:",
     fix: "修复:",
     docs: "文档 ↗",
@@ -3398,6 +3400,9 @@ sklm: {
     copyCmdAria: "复制 {{label}} 命令",
     copied: "已复制!",
     restart: "Restart",
+    apps: "应用",
+    workers: "工作进程",
+    processes: "进程",
   },
   "terminal": {
     "title": "终端",

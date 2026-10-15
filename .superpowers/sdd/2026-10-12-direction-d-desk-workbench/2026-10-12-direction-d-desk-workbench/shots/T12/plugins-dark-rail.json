@@ -1,0 +1,11 @@
+{
+  "page": "plugins",
+  "file": "plugins-dark-rail.png",
+  "dataNavLayout": "rail",
+  "dataTheme": "dark",
+  "persistedNavLayout": "rail",
+  "persistedTheme": "dark",
+  "captureTime": "2026-10-14T14:29:00.000Z",
+  "source": "direction-d-t12 build ab824b690, tab.run Puppeteer CDP capture",
+  "viewport": "2400x1600 @2x DPR"
+}

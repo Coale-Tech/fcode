@@ -3429,6 +3429,8 @@ importConfirm: "가져온 확장은 에이전트 프로세스 안에서 에이�
     noSites: "사이트를 찾을 수 없습니다",
     defaultBadge: "기본",
     processes: "프로세스",
+    benches: "Benches",
+    addFolder: "폴더 추가",
     cause: "원인:",
     fix: "해결:",
     docs: "문서 ↗",
@@ -3447,6 +3449,9 @@ importConfirm: "가져온 확장은 에이전트 프로세스 안에서 에이�
     copyCmdAria: "{{label}} 명령 복사",
     copied: "복사됨!",
     restart: "Restart",
+    apps: "앱",
+    workers: "워커",
+    processes: "프로세스",
   },
   "terminal": {
     "title": "터미널",

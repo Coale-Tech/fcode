@@ -34,6 +34,8 @@ export type BenchSummary = {
   path: string;
   version: BenchVersion;
   sites: BenchSite[];
+  /** Installed app names from the bench's apps/ directory (real filesystem read). */
+  apps: string[];
 };
 
 /**
@@ -153,6 +155,38 @@ function isBench(dir: string): boolean {
 }
 
 /**
+ * Read installed app names from a bench's apps/ directory.
+ * Exported so bench-ipc.ts can call it without re-importing discovery.
+ */
+export function readBenchApps(benchPath: string): string[] {
+  try {
+    return readdirSync(join(benchPath, "apps"), { withFileTypes: true })
+      .filter((e) => e.isDirectory() && !e.name.startsWith("."))
+      .map((e) => e.name)
+      .sort();
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Parse Procfile process names from a bench directory (definition order).
+ * Exported so bench-ipc.ts can include them in the detail response.
+ */
+export function readProcfileEntries(benchPath: string): string[] {
+  try {
+    const content = readFileSync(join(benchPath, "Procfile"), "utf8");
+    return content
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith("#") && line.includes(":"))
+      .map((line) => line.split(":")[0].trim());
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Discover all Frappe benches under the given roots.
  *
  * Returns `{ benches, failedRoots }`.  `failedRoots` lists every root that
@@ -241,6 +275,7 @@ async function scanRoot(
       path: fullPath,
       version,
       sites,
+      apps: readBenchApps(fullPath),
     });
   }
 

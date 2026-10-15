@@ -1,0 +1,30 @@
+{
+  "dataNavLayout": "rail",
+  "dataTheme": "light",
+  "lang": "en",
+  "innerWidth": 1200,
+  "devicePixelRatio": 2,
+  "shellClientWidth": 1200,
+  "shellChromeW": 74,
+  "usableWidth": 1126,
+  "workPanelVisible": true,
+  "captureTime": "2026-10-14T14:35:08.828Z",
+  "commit": "9037715c0",
+  "branch": "feat/direction-d-t10",
+  "build": "pnpm build (apps/desktop), out/renderer/, built 2026-10-14 after d10837300+composer-revert",
+  "viewport": "1200x800 CSS px, DPR 2 -> 2400x1600 png",
+  "sessionSeeding": "ensureVisualFixtures() + seedRunRows(3)",
+  "settingsReadback": {
+    "theme": "light",
+    "navLayout": "rail",
+    "ok": true
+  },
+  "rootAttrs": {
+    "data-theme": "light",
+    "data-nav-layout": "rail"
+  },
+  "workPanelActiveTab": "activity",
+  "shotFile": "T10-wp-activity-light.png",
+  "matchAssessment": "MATCH",
+  "matchDetail": "WorkPanel Activity tab open with Todos/Timeline/Changes sub-tabs visible; Todos (active) shows OPEN TODOS + RECENT ACTIVITY events (Bash pnpm test, Bash git log, Bash pnpm build running); SESSION section with OmpTuiPanel+OmpCollabPanel; transcript shows tool rows with circle icons and Done/Working status; framed composer with permission+model chips in toolbar; rail layout with session sidebar."
+}

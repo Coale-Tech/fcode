@@ -3344,6 +3344,8 @@ export const ptBR = {
     noSites: "Nenhum site encontrado",
     defaultBadge: "padrão",
     processes: "Processos",
+    benches: "Benches",
+    addFolder: "Adicionar pasta",
     cause: "Causa:",
     fix: "Correção:",
     docs: "Documentação ↗",
@@ -3362,6 +3364,9 @@ export const ptBR = {
     copyCmdAria: "Copiar comando {{label}}",
     copied: "Copiado!",
     restart: "Restart",
+    apps: "Apps",
+    workers: "Trabalhadores",
+    processes: "processos",
   },
   "terminal": {
     "title": "Terminal",

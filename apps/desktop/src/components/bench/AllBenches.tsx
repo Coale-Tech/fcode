@@ -148,8 +148,18 @@ export function AllBenches({
                       <VersionBadge version={bench.version} />
                     </td>
                     <td className="wb-table-apps">
-                      {/* No apps field on BenchSummary — omit rather than guess */}
-                      <span className="wb-muted" style={{ fontSize: 11 }}>—</span>
+                      {bench.apps.length > 0 ? (
+                        <div className="wb-app-tags">
+                          {bench.apps.slice(0, 4).map((app) => (
+                            <span key={app} className="wb-app-tag">{app}</span>
+                          ))}
+                          {bench.apps.length > 4 && (
+                            <span className="wb-app-tag wb-muted">+{bench.apps.length - 4}</span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="wb-muted" style={{ fontSize: 11 }}>—</span>
+                      )}
                     </td>
                     <td className="wb-table-sites">
                       <span className="wb-truncate">{siteSummary(bench)}</span>

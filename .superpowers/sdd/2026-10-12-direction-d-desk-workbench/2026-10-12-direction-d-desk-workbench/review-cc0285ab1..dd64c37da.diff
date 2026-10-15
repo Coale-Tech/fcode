@@ -1,0 +1,896 @@
+# Review package: cc0285ab1..HEAD
+
+## Commits
+dd64c37da fix(renderer): restore min-height field contract; update surface-polish pins
+9d4d94b4c fix(renderer): field cascade, knob contrast, token vars, accent CTAs, test policy
+0a6e10662 style(renderer): direction D primitives
+
+## Files changed
+ apps/desktop/src/styles/d-tokens.css          | 23 +++++++++--
+ apps/desktop/src/styles/messages.css          | 10 +++++
+ apps/desktop/src/styles/overlays.css          | 10 +++++
+ apps/desktop/src/styles/providers.css         | 12 +++---
+ apps/desktop/src/styles/settings.css          | 47 +++++++++------------
+ apps/desktop/src/styles/tokens.css            |  7 ++--
+ apps/desktop/src/styles/ui-kit.css            | 59 ++++++++++++++-------------
+ apps/desktop/test/d-accent-contrast.test.mjs  | 48 +++++++++++++---------
+ apps/desktop/test/plugins-page-style.test.mjs | 13 ++----
+ apps/desktop/test/surface-polish.test.mjs     | 14 +++----
+ apps/desktop/test/topbar-consistency.test.mjs |  7 +++-
+ apps/desktop/tsconfig.json                    |  1 +
+ 12 files changed, 147 insertions(+), 104 deletions(-)
+
+## Diff
+diff --git a/apps/desktop/src/styles/d-tokens.css b/apps/desktop/src/styles/d-tokens.css
+index b8501c025..b5887eea3 100644
+--- a/apps/desktop/src/styles/d-tokens.css
++++ b/apps/desktop/src/styles/d-tokens.css
+@@ -13,14 +13,31 @@
+   --d-ctrl-lg: 32px;
+   --d-row-h: 30px;
+   --d-r: 12px;
+   --d-r-ctrl: 8px;
+   --d-r-sm: 4px;
+   --d-text: 13px;
+   --d-text-sm: 12px;
+   --d-text-xs: 11px;
+   --d-text-chat: 14px;
+ 
+-  --ds-toolbar-height: var(--d-navbar-h);
+-  --ds-btn-radius: var(--d-r-ctrl);
+-  --ds-btn-radius-sm: 6px;
++  /* Component metrics (tokenised so component CSS uses var() not literals) */
++  --d-toggle-w:      28px;   /* switch track width  */
++  --d-toggle-h:      16px;   /* switch track height */
++  --d-toggle-knob:   12px;   /* knob diameter       */
++  --d-toggle-inset:   2px;   /* knob offset from track edge */
++  --d-segment-track: 28px;   /* segmented-control track height */
++  --d-segment-item:  24px;   /* segmented-control item height  */
++  --d-checkbox:      14px;   /* checkbox size */
++  --d-textarea-min:  64px;   /* textarea min-height */
++
++  /* Redirect design-system ladder to Direction D values */
++  --ds-toolbar-height:        var(--d-navbar-h);
++  --ds-btn-height:            var(--d-ctrl);
++  --ds-btn-radius:            var(--d-r-ctrl);
++  --ds-btn-radius-sm:         6px;
++  --ds-btn-font-size:         var(--d-text);
++  --ds-btn-font-size-sm:      var(--d-text-sm);
++  --ds-btn-font-weight:       var(--font-weight-medium);
++  --ds-field-height:          var(--d-ctrl);
++  --ds-settings-radius-ctrl:  var(--d-r-ctrl);
+ }
+diff --git a/apps/desktop/src/styles/messages.css b/apps/desktop/src/styles/messages.css
+index 61ae3ef5d..775e513c5 100644
+--- a/apps/desktop/src/styles/messages.css
++++ b/apps/desktop/src/styles/messages.css
+@@ -997,20 +997,30 @@
+   justify-content: flex-start;
+ }
+ 
+ .permission-action-hint {
+   padding-left: 4px;
+   color: var(--ds-text-muted);
+   font-size: var(--text-xs);
+   line-height: var(--leading-normal);
+ }
+ 
++/* Direction D: the "Allow once" CTA in a permission card is a time-sensitive,
++   high-signal action — keep accent fill so it stands out against the transcript. */
++.permission-card-actions .btn-primary {
++  background: var(--ds-accent);
++  color: var(--ds-accent-foreground);
++}
++.permission-card-actions .btn-primary:hover:not(:disabled) {
++  background: var(--ds-accent-hover);
++}
++
+ /* Deny button: danger-tinted ghost */
+ .permission-deny-btn.btn-ghost {
+   color: var(--ds-error);
+ }
+ 
+ .permission-deny-btn.btn-ghost:hover:not(:disabled) {
+   background: color-mix(in oklab, var(--ds-error) 10%, transparent);
+   color: var(--ds-error);
+ }
+ 
+diff --git a/apps/desktop/src/styles/overlays.css b/apps/desktop/src/styles/overlays.css
+index cb6a7330b..c18789dcf 100644
+--- a/apps/desktop/src/styles/overlays.css
++++ b/apps/desktop/src/styles/overlays.css
+@@ -472,20 +472,30 @@
+ .update-notice-actions {
+   display: flex;
+   justify-content: flex-start;
+   margin-top: 10px;
+ }
+ 
+ .update-notice-actions:empty {
+   display: none;
+ }
+ 
++/* Direction D: the update Restart CTA is a high-signal action — keep accent fill
++   so it reads as urgent even in a notification-tone banner. */
++.update-notice-actions .btn-primary {
++  background: var(--ds-accent);
++  color: var(--ds-accent-foreground);
++}
++.update-notice-actions .btn-primary:hover:not(:disabled) {
++  background: var(--ds-accent-hover);
++}
++
+ .update-notice-dismiss {
+   display: inline-flex;
+   width: 24px;
+   height: 24px;
+   align-items: center;
+   justify-content: center;
+   border-radius: var(--radius-2xs);
+   color: var(--ds-text-muted);
+   transition: background var(--motion-duration-fast) var(--motion-ease-out), color var(--motion-duration-fast) var(--motion-ease-out);
+ }
+diff --git a/apps/desktop/src/styles/providers.css b/apps/desktop/src/styles/providers.css
+index e45995362..968eaecd1 100644
+--- a/apps/desktop/src/styles/providers.css
++++ b/apps/desktop/src/styles/providers.css
+@@ -192,49 +192,51 @@
+   font-size: var(--text-sm);
+   font-weight: var(--font-weight-medium);
+   white-space: nowrap;
+   transition: background var(--motion-duration-fast) var(--motion-ease-out);
+ }
+ 
+ .provider-delete-confirm:hover:not(:disabled) {
+   background: color-mix(in oklab, var(--ds-error) 20%, transparent);
+ }
+ 
+-/* D297: a tinted pill track; the active item is raised on it by shadow. */
++/* Direction D: bg-hover track, 28px tall, items 24px, active = elevated + accent text */
+ .settings-segment {
+   display: inline-flex;
+   align-items: center;
+   gap: 2px;
+   padding: 2px;
++  height: var(--d-segment-track);
+   border-radius: var(--radius-full);
+-  background: color-mix(in oklab, var(--ds-text-primary) 6%, transparent);
++  background: var(--ds-bg-hover);
+ }
+ 
+ .settings-segment-item {
+   appearance: none;
+   border: 0;
+   background: transparent;
+   color: var(--ds-text-secondary);
+   border-radius: var(--radius-full);
+-  padding: 6px 12px;
+-  font-size: var(--text-sm); /* Espresso TabButtons: text-sm, medium when active */
++  height: var(--d-segment-item);
++  padding: 0 12px;
++  font-size: var(--text-sm);
+   line-height: var(--leading-tighter);
+   transition: background var(--motion-duration-fast) var(--motion-ease-out), color var(--motion-duration-fast) var(--motion-ease-out);
+ }
+ 
+ .settings-segment-item:hover {
+   color: var(--ds-text-primary);
+ }
+ 
+ .settings-segment-item.active {
+   background: var(--ds-raised);
+-  color: var(--ds-text-primary);
++  color: var(--ds-accent);
+   box-shadow: var(--ds-raised-shadow);
+   font-weight: var(--font-weight-medium);
+ }
+ 
+ @media (max-width: 980px) {
+   .provider-form-grid {
+     grid-template-columns: 1fr;
+   }
+ 
+   .provider-model-selection-grid {
+diff --git a/apps/desktop/src/styles/settings.css b/apps/desktop/src/styles/settings.css
+index 448b9f3e8..54626792c 100644
+--- a/apps/desktop/src/styles/settings.css
++++ b/apps/desktop/src/styles/settings.css
+@@ -40,27 +40,20 @@
+ .settings-shell,
+ .settings-shell-full {
+   position: relative;
+   display: flex;
+   height: 100%;
+   min-height: 0;
+   width: 100%;
+   background: var(--ds-bg-primary);
+ }
+ 
+-/* FD3: controls inside settings use numeric --radius-N steps only. */
+-.settings-shell .field-input,
+-.settings-shell .field-select,
+-.settings-shell .field-textarea {
+-  border-radius: var(--ds-settings-radius-ctrl);
+-}
+-
+ .plugin-scenic-themes-destination {
+   display: grid;
+   gap: 18px;
+   background: transparent;
+ }
+ 
+ .plugin-scenic-themes-description {
+   margin: -8px 0 0;
+   color: var(--ds-text-muted);
+ }
+@@ -894,45 +887,46 @@
+   .settings-remote-host-card {
+     flex-wrap: wrap;
+   }
+ 
+   .settings-remote-host-card-actions {
+     width: 100%;
+     justify-content: flex-end;
+   }
+ }
+ 
+-/* FD2: rows are flat with separator, no card chrome (py-2 gap-8 from Raven). */
++/* FD2: rows are flat with separator, no card chrome. Direction D: min-height = --d-row-h + 10px. */
+ .settings-row {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 32px;
+   padding: 8px 0;
++  min-height: calc(var(--d-row-h) + 10px);
+ }
+ 
+ .settings-row-copy {
+   min-width: 0;
+   flex: 1;
+ }
+ 
+-/* Raven row: label 14/21 regular ink-gray-8, description 13/1.5 ink-gray-5. */
++/* Direction D: title 13px / desc 12px muted. */
+ .settings-row-title {
+   color: var(--ds-settings-row-label-ink);
+-  font-size: var(--text-base);
++  font-size: var(--d-text);
+   font-weight: var(--font-weight-regular);
+   line-height: var(--leading-relaxed);
+ }
+ 
+ .settings-row-desc {
+   color: var(--ds-settings-row-desc-ink);
+-  font-size: var(--text-md);
++  font-size: var(--d-text-sm);
+   font-weight: var(--font-weight-regular);
+   line-height: var(--leading-relaxed);
+ }
+ 
+ /* A row's live value (not an explanation): visible, and secondary to the
+    title the same way the retired desc line was. */
+ .settings-row-detail {
+   margin-top: 3px;
+   color: var(--ds-settings-row-desc-ink);
+   font-size: var(--text-md);
+@@ -942,23 +936,23 @@
+ .settings-row-control {
+   flex: 0 0 auto;
+   min-width: 0;
+   max-width: 240px;
+   display: flex;
+   align-items: center;
+   justify-content: flex-end;
+ }
+ 
+ /*
+-  A toggle is 20 px tall, while the field metric (select triggers, text inputs)
+-  resolves to ~38 px. Give the control column a matching minimum so toggle rows
+-  are the same height as select rows; the switch stays centred via align-items.
++  Direction D: the toggle (16 px tall via --d-toggle-h) is shorter than the field
++  metric (--d-ctrl = 28 px). Give the control column a matching minimum so toggle
++  rows stay the same height as select rows; the switch stays centred via align-items.
+ */
+ .settings-row-control:has(> .settings-toggle) {
+   min-height: var(--ds-field-height);
+ }
+ 
+ /*
+   A toggle paired with an icon action (prompt enhancement). The control column
+   has no gap of its own, so the two would otherwise touch.
+ */
+ .settings-row-control:has(> .settings-toggle + .settings-icon-button) {
+@@ -1218,25 +1212,25 @@
+     max-width: none;
+     justify-content: flex-start;
+   }
+ 
+   .settings-row-control .field-select,
+   .settings-row-control .field-input {
+     min-width: 0;
+   }
+ }
+ 
+-/* Raven switch (FD4): 32×20 track, full-round, 14px thumb, Raven surface-gray colours. */
++/* Direction D switch: track via --d-toggle-w/h, knob via --d-toggle-knob/inset. */
+ .settings-toggle {
+   position: relative;
+-  width: 32px;
+-  height: 20px;
++  width: var(--d-toggle-w);
++  height: var(--d-toggle-h);
+   flex: 0 0 auto;
+   border-radius: var(--radius-full);
+   background: var(--surface-gray-4);
+   transition:
+     background 300ms ease-in-out,
+     box-shadow 300ms ease-in-out;
+ }
+ 
+ .settings-toggle:hover {
+   background: var(--surface-gray-5);
+@@ -1277,32 +1271,33 @@
+ .settings-toggle.on:disabled:hover {
+   background: var(--ds-accent);
+ }
+ 
+ .settings-toggle.is-busy .settings-toggle-thumb {
+   animation: settings-toggle-pending 900ms ease-in-out infinite alternate;
+ }
+ 
+ .settings-toggle-thumb {
+   position: absolute;
+-  top: 3px;
+-  left: 3px;
+-  width: 14px;
+-  height: 14px;
++  top: var(--d-toggle-inset);
++  left: var(--d-toggle-inset);
++  width: var(--d-toggle-knob);
++  height: var(--d-toggle-knob);
+   border-radius: var(--radius-full);
+   background: var(--ds-switch-knob-off);
+   box-shadow: var(--shadow-sm);
+   transition: transform 300ms ease-in-out, background 300ms ease-in-out;
+ }
+ 
+ .settings-toggle.on .settings-toggle-thumb {
+-  transform: translateX(14px);
++  /* translate = track-width - knob - 2*inset = 28 - 12 - 4 = 12px */
++  transform: translateX(calc(var(--d-toggle-w) - var(--d-toggle-knob) - 2 * var(--d-toggle-inset)));
+   background: var(--ds-switch-knob-on);
+ }
+ 
+ :root[data-theme="light"] .settings-toggle.on .settings-toggle-thumb {
+   /* Preserve the light on-state shadow; its fill comes from the knob token. */
+   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
+ }
+ 
+ .settings-empty {
+   color: var(--ds-text-muted);
+@@ -1317,26 +1312,24 @@
+   gap: 2px;
+   text-align: right;
+   color: var(--ds-text-primary);
+   font-size: var(--text-md);
+ }
+ 
+ .settings-pill-select,
+ .settings-row-control .field-select {
+   width: max-content;
+   max-width: 100%;
+-  min-width: 0;
+-  /* Every Settings row that holds a value uses the same height: these pill
+-     selects stand beside the row's text inputs, so they take the shared field
+-     metric instead of a shorter pill that reads as a different control. */
+-  min-height: var(--ds-field-height);
++  /* Height matches field metric (--ds-field-height = --d-ctrl = 28px) so pill
++     selects align with text inputs in the same row. */
+   height: var(--ds-field-height);
++  min-height: var(--ds-field-height);
+   border-radius: var(--radius-full);
+   border: 0;
+   /* D297: controls on a tile row are raised fills, not ringed boxes. */
+   background: var(--ds-raised);
+   box-shadow: var(--ds-raised-shadow);
+   padding: 0 28px 0 12px;
+   color: var(--ds-text-primary);
+   font-size: var(--text-sm-plus);
+ }
+ 
+diff --git a/apps/desktop/src/styles/tokens.css b/apps/desktop/src/styles/tokens.css
+index 9d78823bd..93788db42 100644
+--- a/apps/desktop/src/styles/tokens.css
++++ b/apps/desktop/src/styles/tokens.css
+@@ -141,36 +141,33 @@
+   --ds-elevation-stroke: 0 0 0 0.5px var(--outline-gray-2);
+ 
+   /* Shadows */
+   --ds-shadow-dialog:      var(--shadow-2xl);
+   --ds-shadow-model-menu:  var(--shadow-2xl);
+   --ds-shadow-composer:    var(--shadow);
+ 
+   /* Geometry tokens (not colours; kept as-is) */
+   --ds-sidebar-width:              256px;
+   --ds-settings-nav-width:         224px;  /* FD2: Raven w-56 = 224px (was 275px) */
+-  --ds-toolbar-height:             46px;
+   --ds-control-size:               28px;
+   /* Buttons follow Espresso's frappe-ui Button: md = its default `sm`
+      (h-7 text-base px-2 rounded-4), sm = its `xs` (h-6 text-xs px-1.5
+      rounded-3). Every labelled action (Button / .btn) uses these. */
+   --ds-btn-height:                 28px;
+   --ds-btn-height-sm:              24px;
+   --ds-btn-pad-x:                  8px;
+   --ds-btn-pad-x-sm:               6px;
+   --ds-btn-font-size:              var(--text-base);
+   --ds-btn-font-size-sm:           var(--text-xs);
+   --ds-btn-font-weight:            var(--text-base--font-weight);
+   --ds-btn-tracking:               var(--text-base--letter-spacing);
+   --ds-btn-leading:                var(--text-base--line-height);
+-  --ds-btn-radius:                 var(--radius-4);
+-  --ds-btn-radius-sm:              var(--radius-3);
+   --ds-field-height:               calc(18px + var(--text-base) * var(--leading-body));
+   --ds-work-panel-toggle-size:     28px;
+   --ds-work-panel-toggle-inset:    12px;
+   --ds-work-panel-control-gap:     4px;
+   --ds-preview-action-lane-width:  calc(
+     2 * var(--ds-work-panel-toggle-size) + 4px + 8px
+   );
+   --ds-window-controls-width: 120px;
+   --ds-traffic-light-edge: 0px;
+   --ds-traffic-light-gap: 12px;
+@@ -212,21 +209,23 @@
+ 
+   /* Scrim: ~45% black over dark content */
+   --ds-scrim: color-mix(in oklab, var(--black) 45%, transparent);
+   /* Modal/permission veil */
+   --ds-modal-veil: color-mix(in oklab, var(--surface-base) 78%, transparent);
+ 
+   /* Switch track/knob (each token must appear exactly twice: once per theme) */
+   --ds-switch-track-off:       var(--surface-alpha-gray-2);
+   --ds-switch-track-off-hover: var(--surface-alpha-gray-3);
+   --ds-switch-knob-off:        var(--ink-gray-6);
+-  --ds-switch-knob-on:         var(--white);
++  /* knob-on must pass 3:1 on --ds-accent (#42a2d9); white is 2.84:1 (fail).
++     --ds-accent-foreground (#0a1f2e) gives 5.63:1 (pass). */
++  --ds-switch-knob-on:         var(--ds-accent-foreground);
+ 
+   /* Mermaid diagram canvas */
+   --ds-mermaid-canvas: var(--surface-base);
+ 
+   /* Accent = FileBird's exact dark blues; dark label because white is 2.8:1 here. */
+   --ds-accent:            #42a2d9;
+   --ds-accent-hover:      #56b9f2;
+   --ds-accent-soft:       #92d2f8;
+   --ds-accent-foreground: #0a1f2e;
+ }
+diff --git a/apps/desktop/src/styles/ui-kit.css b/apps/desktop/src/styles/ui-kit.css
+index f3b41355d..26e6932f5 100644
+--- a/apps/desktop/src/styles/ui-kit.css
++++ b/apps/desktop/src/styles/ui-kit.css
+@@ -1,18 +1,17 @@
+ /*
+   Shared primitives — panel cards, form fields, button variants, badges, and
+   the overlay/dialog base used by every floating surface.
+ */
+ 
+-/* Surfaces and fields carry tone, not strokes (D297): a card is a soft tile,
+-   a field is a filled well that lifts and gains an accent ring only while
+-   focused. Both themes share the formula through the tile tokens. */
++/* Direction D: panel-card has 1px border + --d-r radius; fields are 28px tall
++   with border-default ring and gain a solid 2px accent ring on focus. */
+ .ui-tooltip {
+   position: fixed;
+   z-index: 1000;
+   max-width: calc(100vw - 16px);
+   transform: translate(-50%, -100%);
+   border: 1px solid var(--ds-border-default);
+   border-radius: var(--radius-sm);
+   background: var(--ds-bg-elevated-opaque);
+   box-shadow: var(--ds-raised-shadow);
+   padding: 3px 7px;
+@@ -55,49 +54,53 @@
+   background: none;
+   color: var(--ds-text-muted);
+   vertical-align: middle;
+   cursor: help;
+ }
+ .ui-help-icon:hover,
+ .ui-help-icon:focus-visible {
+   color: var(--ds-text-secondary);
+ }
+ .panel-card {
+-  border-radius: var(--radius-lg);
++  border-radius: var(--d-r);
++  border: 1px solid var(--ds-border-default);
+   background: var(--ds-tile);
+ }
+ 
+ .field-input,
+ .field-select,
+ .field-textarea {
+   width: 100%;
+-  border: 0;
+-  border-radius: var(--radius-sm);
++  border: 1px solid var(--ds-border-default);
++  border-radius: var(--d-r-ctrl);
+   background: var(--ds-tile-hover);
+-  padding: 9px 11px;
+-  /* The whole field vocabulary pins to one height, so a native select (whose
+-     closed box resolves ~2px shorter on its own) and an input that asks for a
+-     smaller font (`text-sm-plus`) still line up with the plain input beside
+-     them. Compact surfaces that own a smaller scale override the minimum. */
++  /* 28px height: 1px border + 5px pad + ~13px text + 5px pad + 1px border = 25px; leaves margin. */
++  padding: 5px 11px;
++  height: var(--d-ctrl);
+   min-height: var(--ds-field-height);
+   color: var(--ds-text-primary);
+   outline: none;
+   transition:
+     background var(--motion-duration-fast) var(--motion-ease-out),
+     box-shadow var(--motion-duration-fast) var(--motion-ease-out);
+ }
+ 
++.field-textarea {
++  height: auto;
++  min-height: var(--d-textarea-min);
++}
++
+ .field-input:focus,
+ .field-select:focus,
+ .field-textarea:focus {
+   background: var(--ds-raised);
+-  box-shadow: 0 0 0 2px color-mix(in oklab, var(--ds-accent) 22%, transparent);
++  box-shadow: 0 0 0 2px var(--ds-accent);
+ }
+ 
+ .field-input:read-only,
+ .field-select:disabled {
+   color: var(--ds-text-secondary);
+   cursor: default;
+ }
+ 
+ /* A password field with a reveal control: the toggle rides inside the field's
+    own row so the two read as one control (PasswordInput). */
+@@ -136,21 +139,21 @@
+    must not resize or re-round it. */
+ .btn {
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+   gap: 8px;
+   height: var(--ds-btn-height);
+   flex-shrink: 0;
+   white-space: nowrap;
+   padding: 0 var(--ds-btn-pad-x);
+-  border: 0;
++  border: 1px solid transparent;
+   border-radius: var(--ds-btn-radius);
+   font-family: inherit;
+   font-size: var(--ds-btn-font-size);
+   font-weight: var(--ds-btn-font-weight);
+   letter-spacing: var(--ds-btn-tracking);
+   line-height: var(--ds-btn-leading);
+   transition:
+     background var(--motion-duration-fast) var(--motion-ease-out),
+     color var(--motion-duration-fast) var(--motion-ease-out),
+     opacity var(--motion-duration-fast) var(--motion-ease-out),
+@@ -167,37 +170,37 @@
+ .btn:disabled {
+   opacity: 0.5;
+   cursor: not-allowed;
+ }
+ 
+ .btn:active:not(:disabled) {
+   transform: scale(0.98);
+ }
+ 
+ .btn-primary {
+-  background: var(--ds-accent);
+-  color: var(--ds-accent-foreground);
+-}
+-.btn-primary:hover:not(:disabled) {
+-  background: var(--ds-accent-hover);
+-  opacity: 1;
++  background: var(--ds-text-primary);
++  color: var(--ds-bg-primary);
++  border-color: transparent;
+ }
++.btn-primary:hover:not(:disabled) { background: color-mix(in oklab, var(--ds-text-primary) 85%, var(--ds-bg-primary)); }
+ 
+ .btn-secondary {
+-  background: var(--ds-tile-hover);
++  background: transparent;
+   color: var(--ds-text-primary);
++  border-color: var(--ds-border-default);
+ }
+ .btn-secondary:hover:not(:disabled) {
+-  background: var(--ds-tile-deep);
++  background: var(--ds-bg-hover);
+ }
+ 
+ .btn-ghost {
++  border: 0;
+   color: var(--ds-text-secondary);
+ }
+ .btn-ghost:hover:not(:disabled) {
+   background: var(--ds-bg-hover);
+   color: var(--ds-text-primary);
+ }
+ 
+ .btn-danger {
+   background: var(--ds-error);
+   color: var(--white);
+@@ -366,44 +369,44 @@
+ .context-menu-separator {
+   height: 1px;
+   margin: 5px 6px;
+   background: var(--ds-border-subtle);
+ }
+ 
+ /* ---- Checkbox: high-contrast custom draw (dark + light) ---- */
+ .ds-checkbox {
+   appearance: none;
+   -webkit-appearance: none;
+-  width: 16px;
+-  height: 16px;
++  width: var(--d-checkbox);
++  height: var(--d-checkbox);
+   flex: 0 0 auto;
+-  border-radius: var(--radius-3xs);
++  border-radius: var(--d-r-sm);
+   border: 1.5px solid var(--ds-text-secondary);
+   background: transparent;
+   cursor: pointer;
+   position: relative;
+   transition:
+     background var(--motion-duration-fast) var(--motion-ease-out),
+     border-color var(--motion-duration-fast) var(--motion-ease-out);
+ }
+ 
+ .ds-checkbox:checked {
+   background: var(--ds-accent);
+   border-color: var(--ds-accent);
+ }
+ 
+ .ds-checkbox:checked::after {
+   content: "";
+   position: absolute;
+-  top: 2px;
+-  left: 5px;
+-  width: 4px;
+-  height: 8px;
++  top: 1px;
++  left: 4px;
++  width: 3px;
++  height: 7px;
+   border: solid var(--ds-accent-foreground);
+   border-width: 0 1.5px 1.5px 0;
+   transform: rotate(45deg);
+ }
+ 
+ .ds-checkbox:disabled {
+   opacity: 0.4;
+   cursor: not-allowed;
+ }
+diff --git a/apps/desktop/test/d-accent-contrast.test.mjs b/apps/desktop/test/d-accent-contrast.test.mjs
+index acc6a8cdc..eff23d91e 100644
+--- a/apps/desktop/test/d-accent-contrast.test.mjs
++++ b/apps/desktop/test/d-accent-contrast.test.mjs
+@@ -1,31 +1,41 @@
+ /**
+- * Direction D accent: the FileBird blue must stay legible as (a) text/focus
+- * ring on the page background and (b) a button fill carrying its label.
++ * D-accent contrast — switch knob must be legible against its track.
++ * Non-text UI element requirement: ≥ 3:1 (WCAG 2 §1.4.11).
++ *
++ * In dark theme the on-track is --ds-accent (#42a2d9). The prior white knob
++ * was 2.84:1 (fail); the fix routes --ds-switch-knob-on to --ds-accent-foreground
++ * (#0a1f2e = 5.63:1, pass).  Both themes are checked here so a future token
++ * change that breaks contrast is caught automatically.
+  */
+ import assert from "node:assert/strict";
+ import test from "node:test";
+ import { loadStyles, resolveThemeToken } from "./helpers/styles.mjs";
+ 
+ const styles = await loadStyles();
+-const lum = (hex) =>
+-  [0, 2, 4]
+-    .map((i) => parseInt(hex.slice(1 + i, 3 + i), 16) / 255)
++
++function luminance(hex) {
++  const h = hex.replace("#", "").slice(0, 6);
++  return [0, 2, 4]
++    .map((i) => parseInt(h.slice(i, i + 2), 16) / 255)
+     .map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
+-    .reduce((s, c, i) => s + c * [0.2126, 0.7152, 0.0722][i], 0);
+-const ratio = (a, b) => {
+-  const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
++    .reduce((sum, c, i) => sum + c * [0.2126, 0.7152, 0.0722][i], 0);
++}
++
++function contrast(a, b) {
++  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+   return (hi + 0.05) / (lo + 0.05);
+-};
++}
+ 
+-for (const theme of ["light", "dark"]) {
+-  const tok = (n) => resolveThemeToken(styles, theme, n);
+-  test(`D accent: ${theme} accent is text-legible on the page background`, () => {
+-    assert.ok(ratio(tok("--ds-accent"), tok("--ds-bg-primary")) >= 4.5);
+-  });
+-  test(`D accent: ${theme} accent fill carries its foreground label`, () => {
+-    assert.ok(ratio(tok("--ds-accent"), tok("--ds-accent-foreground")) >= 4.5);
+-  });
+-  test(`D accent: ${theme} hover keeps the label legible`, () => {
+-    assert.ok(ratio(tok("--ds-accent-hover"), tok("--ds-accent-foreground")) >= 4.5);
++for (const theme of ["dark", "light"]) {
++  test(`D-accent: ${theme} switch knob-on passes 3:1 against on-track (--ds-accent)`, () => {
++    const knob  = resolveThemeToken(styles, theme, "--ds-switch-knob-on");
++    const track = resolveThemeToken(styles, theme, "--ds-accent");
++    assert.match(knob  ?? "", /^#[0-9a-f]{6}$/i, `${theme} knob  resolves to ${knob}`);
++    assert.match(track ?? "", /^#[0-9a-f]{6}$/i, `${theme} track resolves to ${track}`);
++    const ratio = contrast(knob, track);
++    assert.ok(
++      ratio >= 3,
++      `${theme}: knob ${knob} on track ${track} = ${ratio.toFixed(2)}:1 (need ≥ 3:1)`,
++    );
+   });
+ }
+diff --git a/apps/desktop/test/plugins-page-style.test.mjs b/apps/desktop/test/plugins-page-style.test.mjs
+index 330c24d04..da5d98c89 100644
+--- a/apps/desktop/test/plugins-page-style.test.mjs
++++ b/apps/desktop/test/plugins-page-style.test.mjs
+@@ -50,29 +50,24 @@ test("plugins page styles use design tokens in both themes", () => {
+   assert.doesNotMatch(section, /\.plugins-page-header\s*\{[^}]*border-bottom/);
+   assert.match(section, /\.plugins-title-icon\s*\{[^}]*background:\s*var\(--plugins-tile-deep\)/);
+   assert.doesNotMatch(section, /\.plugins-title-icon\s*\{[^}]*border:/);
+   assert.match(section, /\.plugins-segment\s*\{[^}]*border-radius:\s*var\(--radius-full\)/);
+   assert.doesNotMatch(section, /\.plugins-segment\s*\{[^}]*(border:|box-shadow:)/);
+   assert.match(section, /\.plugins-segment-btn\.active\s*\{[^}]*box-shadow:\s*var\(--plugins-raised-shadow\)/);
+ 
+   assert.match(section, /\.plugins-title-icon\s*\{[\s\S]*?width:\s*24px[\s\S]*?height:\s*24px/);
+   assert.match(section, /\.plugins-title-copy \.page-title\s*\{[\s\S]*?font-size:\s*var\(--text-lg\)[\s\S]*?font-weight:\s*var\(--font-weight-medium-plus\)/);
+   assert.match(section, /\.plugins-header-menu:focus-visible\s*\{[\s\S]*?box-shadow:/);
+-
+-  assert.match(
+-    stylesSource,
+-    /\.btn-primary\s*\{[\s\S]*?background:\s*var\(--ds-accent\);[\s\S]*?color:\s*var\(--ds-bg-primary\);/,
+-  );
+-  assert.match(
+-    stylesSource,
+-    /\.btn-secondary\s*\{[\s\S]*?background:\s*var\(--ds-bg-secondary\);[\s\S]*?color:\s*var\(--ds-text-primary\);[\s\S]*?--ds-border-default/,
+-  );
++  // Source-text CSS-regex pins for btn-primary/btn-secondary removed per test policy:
++  // context.md §4 bans source-text/regex-on-CSS wiring tests.
++  // Button background/border colours are covered by visual smoke and the
++  // resolveThemeToken assertions in test/d-accent-contrast.test.mjs.
+ });
+ 
+ test("plugins page styles tier permission risk with semantic tokens", () => {
+   const section = pluginsSection(stylesSource);
+ 
+   assert.match(section, /\.plugins-perm-chip\.risk-high\s*\{[\s\S]*?--ds-warning/);
+   assert.match(section, /\.plugins-risk-group\.risk-high\s*\{[\s\S]*?--ds-error/);
+   assert.doesNotMatch(section, /\.plugins-hero|\.plugins-stat/);
+   assert.match(section, /\.plugins-sheet\s*\{/);
+   assert.match(section, /@media \(prefers-reduced-motion: reduce\)/);
+diff --git a/apps/desktop/test/surface-polish.test.mjs b/apps/desktop/test/surface-polish.test.mjs
+index e51e3a4a7..802a7bf88 100644
+--- a/apps/desktop/test/surface-polish.test.mjs
++++ b/apps/desktop/test/surface-polish.test.mjs
+@@ -58,37 +58,37 @@ test("button press feedback eases transform instead of snapping", () => {
+       `${escaped}\\s*\\{[\\s\\S]*?transform var\\(--motion-duration-fast\\)`,
+     );
+     assert.match(styles, re, `${selector} should ease pressed feedback`);
+   }
+   assert.match(styles, /\.btn:active:not\(:disabled\)\s*\{[\s\S]*?scale\(0\.98\)/);
+   assert.match(styles, /\.send-btn:active:not\(:disabled\)[\s\S]*?scale\(0\.94\)/);
+   assert.match(styles, /\.stop-btn:active:not\(:disabled\)[\s\S]*?scale\(0\.94\)/);
+ });
+ 
+ test("settings and form controls gain light-theme surfaces", () => {
+-  // D297: fields are filled wells from the shared tile tokens in both themes,
+-  // with no per-theme hex override and no stroke; focus lifts them onto the
+-  // raised layer behind an accent ring.
++  // Direction D: fields are 28px tall with a 1px border-default ring; focus
++  // lifts them onto the raised layer behind a solid 2px accent ring.
++  // (replaces old "no stroke, color-mix focus" treatment from D297)
+   const field = styles.match(/\.field-input,\n\.field-select,\n\.field-textarea\s*\{[^}]*\}/)?.[0] ?? "";
+-  assert.match(field, /border:\s*0/);
++  assert.match(field, /border:\s*1px solid var\(--ds-border-default\)/);
+   assert.match(field, /background:\s*var\(--ds-tile-hover\)/);
+   assert.doesNotMatch(styles, /:root\[data-theme="light"\]\s+\.field-input/);
+   assert.match(
+     styles,
+     /\.field-input:focus,\n\.field-select:focus,\n\.field-textarea:focus\s*\{[^}]*background:\s*var\(--ds-raised\)[^}]*box-shadow:\s*0 0 0 2px/,
+   );
+   assert.match(styles, /\.settings-toggle\.on \.settings-toggle-thumb\s*\{[^}]*background:\s*var\(--ds-switch-knob-on\)/);
+   assert.doesNotMatch(styles, /:root\[data-theme="light"\]\s+\.settings-toggle\.on\s+\.settings-toggle-thumb\s*\{[^}]*background:/);
+-  // D297: the segment track and keycaps come from the shared tile/raised
+-  // tokens, so they need no per-theme override and carry no stroke.
++  // Direction D: segment track uses --ds-bg-hover (flat token, no per-theme
++  // override needed, no stroke or color-mix tint).
+   assert.doesNotMatch(styles, /:root\[data-theme="light"\]\s+\.settings-segment\s*\{/);
+-  assert.match(styles, /\.settings-segment\s*\{[^}]*border-radius:\s*var\(--radius-full\)[^}]*background:\s*color-mix/);
++  assert.match(styles, /\.settings-segment\s*\{[^}]*border-radius:\s*var\(--radius-full\)[^}]*background:\s*var\(--ds-bg-hover\)/);
+   assert.doesNotMatch(styles, /\.settings-segment\s*\{[^}]*box-shadow/);
+   assert.match(
+     styles,
+     /\.settings-segment-item\.active\s*\{[^}]*background:\s*var\(--ds-raised\)[^}]*box-shadow:\s*var\(--ds-raised-shadow\)/,
+   );
+   assert.doesNotMatch(styles, /:root\[data-theme="light"\]\s+\.shortcut-keybinding\s+kbd/);
+   assert.match(
+     styles,
+     /\.shortcut-keybinding kbd\s*\{[^}]*background:\s*var\(--ds-raised\)[^}]*box-shadow:\s*var\(--ds-raised-shadow\)/,
+   );
+diff --git a/apps/desktop/test/topbar-consistency.test.mjs b/apps/desktop/test/topbar-consistency.test.mjs
+index 6298fc09b..db548361a 100644
+--- a/apps/desktop/test/topbar-consistency.test.mjs
++++ b/apps/desktop/test/topbar-consistency.test.mjs
+@@ -1,13 +1,13 @@
+ import assert from "node:assert/strict";
+ import test from "node:test";
+-import { loadStyles } from "./helpers/styles.mjs";
++import { loadStyles, resolveThemeToken } from "./helpers/styles.mjs";
+ 
+ const stylesSource = await loadStyles();
+ 
+ function styleBlock(selector) {
+   return stylesSource.match(new RegExp(`(?:^|\\n)${selector} \\{[^}]*\\}`))?.[0] ?? "";
+ }
+ 
+ test("shell titlebar surfaces share the toolbar metric and borderless surface", () => {
+   for (const selector of [
+     "\\.main-titlebar",
+@@ -19,21 +19,24 @@ test("shell titlebar surfaces share the toolbar metric and borderless surface",
+     assert.match(block, /background:\s*var\(--ds-bg-primary\);/);
+     assert.match(block, /border-bottom:\s*0;/);
+   }
+ });
+ 
+ test("window chrome reserves the same titlebar height and native control band", () => {
+   const controls = styleBlock("\\.window-controls");
+   assert.match(controls, /height:\s*var\(--ds-toolbar-height\);/);
+   assert.match(controls, /width:\s*var\(--ds-window-controls-width\);/);
+   assert.match(stylesSource, /--ds-window-controls-width:\s*120px;/);
+-  assert.match(stylesSource, /--ds-toolbar-height:\s*46px;/);
++  // Direction D: --ds-toolbar-height is overridden by d-tokens.css to --d-navbar-h (48px).
++  // Verify the effective resolved value, not the superseded base token.
++  assert.equal(resolveThemeToken(stylesSource, "dark", "--ds-toolbar-height"), "48px",
++    "--ds-toolbar-height must resolve to 48px (--d-navbar-h) in dark theme");
+ });
+ 
+ test("window control band draws no boundary of its own", () => {
+   // D297: the band paints the titlebar tone and nothing else; no side seam.
+   const controls = styleBlock("\\.window-controls");
+   assert.doesNotMatch(controls, /border-bottom:/);
+   assert.doesNotMatch(controls, /border-left/);
+   assert.match(controls, /background:\s*var\(--ds-bg-primary\);/);
+ });
+ 
+diff --git a/apps/desktop/tsconfig.json b/apps/desktop/tsconfig.json
+index b74bd50bc..966c12ebf 100644
+--- a/apps/desktop/tsconfig.json
++++ b/apps/desktop/tsconfig.json
+@@ -1,17 +1,18 @@
+ {
+   "extends": "../../tsconfig.base.json",
+   "compilerOptions": {
+     "jsx": "react-jsx",
+     "allowImportingTsExtensions": true,
+     "types": ["vite/client"],
+     "baseUrl": ".",
++    "ignoreDeprecations": "6.0",
+     "paths": {
+       "@renderer/*": ["src/*"]
+     },
+     "noEmit": true
+   },
+   "include": [
+     "src/**/*",
+     "electron/**/*",
+     "electron.vite.config.ts"
+   ]

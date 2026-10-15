@@ -3378,6 +3378,8 @@ sklm: {
     noSites: "找不到站點",
     defaultBadge: "預設",
     processes: "程序",
+    benches: "Benches",
+    addFolder: "新增資料夾",
     cause: "原因:",
     fix: "修復:",
     docs: "文件 ↗",
@@ -3396,6 +3398,9 @@ sklm: {
     copyCmdAria: "複製 {{label}} 指令",
     copied: "已複製!",
     restart: "Restart",
+    apps: "應用程式",
+    workers: "工作程序",
+    processes: "程序",
   },
   "terminal": {
     "title": "終端機",

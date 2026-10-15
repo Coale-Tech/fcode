@@ -608,10 +608,18 @@ export function BenchPage() {
             )}
           </div>
         ) : (
-          /* Direction D: 48px Benches overview header */
+          /* Direction D: 48px Benches overview header with actions (design fragment.html:47-63) */
           <div className="wb-all-hd">
-            <span className="wb-all-title">{t("bench.tabAll", "All benches")}</span>
-            {!loading && <span className="wb-badge wb-badge-gray">{benches.length}</span>}
+            <span className="wb-all-title">{t("bench.benches", "Benches")}</span>
+            {!loading && (
+              <span className="wb-badge wb-badge-gray" style={{ fontSize: 10, height: 16, padding: "0 5px", lineHeight: "16px" }}>
+                {benches.length}
+              </span>
+            )}
+            <span className="wb-spacer" />
+            <Button variant="secondary" size="sm" onClick={() => void pickRoot()}>
+              {t("bench.addFolder", "Add folder")}
+            </Button>
           </div>
         )}
 
@@ -817,9 +825,30 @@ function BenchDetail({
   onInstallAppNameChange: (name: string) => void;
 }) {
   const { t } = useTranslation();
-  const canStart = status === "stopped" || status === "failed";
   // Nothing streams for a bench that is not running: collapse the empty log.
   const logCollapsed = logLines.length === 0 && (status === "stopped" || status === "failed");
+
+  // T14: fetch real apps + procfile entries + port for this bench
+  const [detail, setDetail] = useState<{
+    apps: string[];
+    procfileEntries: string[];
+    port: number | null;
+  } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    invoke<{ apps: string[]; procfileEntries: string[]; port: number | null; mainPid: number | null }>(
+      IPC.invoke.benchDetail,
+      { benchPath: bench.path },
+    )
+      .then((d) => {
+        if (!cancelled) setDetail(d);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [bench.path]);
+
   return (
     <>
       {/* Direction D: no embedded BenchSwitcher in detail (notes: tabs handle selection).
@@ -828,9 +857,15 @@ function BenchDetail({
       {/* lane T11: 3-column detail body (224px | flex | 252px per design) */}
       <div className="wb-detail-body">
 
-        {/* LEFT (224px): Sites (apps/workers omitted — no real data on BenchSummary) */}
+        {/* LEFT (224px): Sites + real Apps + Workers (T14: real data via benchDetail IPC) */}
         <div className="wb-bfd-left">
           <SiteList sites={bench.sites} />
+          {detail && detail.apps.length > 0 && (
+            <AppsSection apps={detail.apps} />
+          )}
+          {detail && detail.procfileEntries.length > 0 && (
+            <WorkersSection entries={detail.procfileEntries} running={status === "running"} />
+          )}
         </div>
 
 
@@ -844,6 +879,8 @@ function BenchDetail({
             elapsedLabel={elapsedLabel}
             startFailure={startFailure}
             warnings={warnings}
+            procCount={detail?.procfileEntries.length ?? null}
+            port={detail?.port ?? null}
           />
           {logCollapsed ? (
             <div className="wb-log-collapsed">
@@ -998,6 +1035,47 @@ function SiteList({ sites }: { sites: BenchSite[] }) {
   );
 }
 
+/** T14: real installed apps from bench apps/ directory. */
+function AppsSection({ apps }: { apps: string[] }) {
+  const { t } = useTranslation();
+  return (
+    <div className="wb-panel">
+      <div className="wb-sec-lbl">{t("bench.apps", "Apps")}</div>
+      <ul className="wb-plain-list">
+        {apps.map((app) => (
+          <li key={app} className="wb-app-detail-row">
+            <span className="wb-app-detail-icon" aria-hidden="true">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <polyline points="4 17 10 11 4 5"/>
+                <line x1="12" x2="20" y1="19" y2="19"/>
+              </svg>
+            </span>
+            <span className="wb-truncate">{app}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** T14: Procfile process names; green chips when running, gray when stopped. */
+function WorkersSection({ entries, running }: { entries: string[]; running: boolean }) {
+  const { t } = useTranslation();
+  return (
+    <div className="wb-panel">
+      <div className="wb-sec-lbl">{t("bench.workers", "Workers")}</div>
+      <div className="wb-workers">
+        {entries.map((name) => (
+          <span key={name} className={`wb-worker-chip${running ? "" : " is-stopped"}`}>
+            <span className="wb-worker-dot" aria-hidden="true" />
+            {name}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 
 
 
@@ -1012,6 +1090,8 @@ export function ProcessPanel({
   elapsedLabel,
   startFailure,
   warnings,
+  procCount,
+  port,
 }: {
   status: BenchStatus;
   /** Path of the bench that blocks Retry, or null. */
@@ -1022,13 +1102,17 @@ export function ProcessPanel({
   elapsedLabel: string;
   startFailure: StartFailureState | null;
   warnings: string[];
+  /** Number of Procfile processes; null if detail not loaded yet. */
+  procCount: number | null;
+  /** Webserver port from common_site_config.json; null if not loaded. */
+  port: number | null;
 }) {
   const { t } = useTranslation();
   const running = status === "running";
   const starting = status === "starting";
   return (
     <div className="wb-panel">
-      {/* Direction D: process card (running · elapsed · Restart) */}
+      {/* Direction D: process card (running · N procs · port · elapsed · Restart) */}
       <div className="wb-proc-card">
         <div className="wb-proc-card-row">
           <StatusBadge status={status} />
@@ -1041,6 +1125,18 @@ export function ProcessPanel({
             </Button>
           )}
         </div>
+        {(running || starting) && (procCount !== null || port !== null) && (
+          <div className="wb-proc-card-meta">
+            {procCount !== null && procCount > 0 && (
+              <span className="wb-proc-card-meta-item">
+                {procCount} {t("bench.processes", "processes")}
+              </span>
+            )}
+            {port !== null && (
+              <span className="wb-proc-card-meta-item">Port :{port}</span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Gap 5 / T6: port-conflict warnings */}

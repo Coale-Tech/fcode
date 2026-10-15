@@ -3419,6 +3419,8 @@ importConfirm: "İçe aktarılan uzantılar ajan sürecinde, ajanın kendi araç
     noSites: "Site bulunamadı",
     defaultBadge: "varsayılan",
     processes: "Süreçler",
+    benches: "Benches",
+    addFolder: "Klasör ekle",
     cause: "Neden:",
     fix: "Çözüm:",
     docs: "Belgeler ↗",
@@ -3437,6 +3439,9 @@ importConfirm: "İçe aktarılan uzantılar ajan sürecinde, ajanın kendi araç
     copyCmdAria: "{{label}} komutunu kopyala",
     copied: "Kopyalandı!",
     restart: "Restart",
+    apps: "Uygulamalar",
+    workers: "Çalışanlar",
+    processes: "işlemler",
   },
   "terminal": {
     "title": "Terminal",

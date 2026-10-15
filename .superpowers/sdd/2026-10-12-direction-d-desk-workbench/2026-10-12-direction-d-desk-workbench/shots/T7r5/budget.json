@@ -1,0 +1,18 @@
+{
+  "commit": "c3e85ffae",
+  "cleanTree": true,
+  "captureMethod": "real Settings UI picker (settings-theme-option click), CDP Page.captureScreenshot",
+  "viewport": "1200x800 DPR=1",
+  "locale": "en",
+  "collapsed": {
+    "railW": 50,
+    "shellChromeW": 74,
+    "note": "rail(50)+2*12=74"
+  },
+  "expanded": {
+    "railW": 220,
+    "shellChromeW": 244,
+    "note": "rail(220)+2*12=244"
+  },
+  "savedRootAgreement": "all 4 shots: savedTheme===rootTheme, verified via settings/get IPC"
+}
