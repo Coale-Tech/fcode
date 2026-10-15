@@ -1,0 +1,16 @@
+{
+  "commit": "dc33fc5d1",
+  "build": "2026-10-15 t14-found",
+  "navLayout": "rail",
+  "theme": "light",
+  "savedTheme": null,
+  "navbarH": 48,
+  "shellNavbar": true,
+  "navRail": true,
+  "awesomebar": true,
+  "statusBar": true,
+  "pickerPresent": false,
+  "pickerCards": 0,
+  "railWidth": 50,
+  "appShellFlex": "column"
+}
