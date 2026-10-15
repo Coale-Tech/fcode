@@ -75,6 +75,8 @@ export function createInitialState(): AppStateData {
     planCheckpoints: {},
     page: "bench",
     benchLogFollowTail: true,
+    viewedBenchPath: null,
+    viewedBenchSiteCount: 0,
     settingsTab: "general",
     settingsAnchor: null,
     settingsTabNonce: 0,

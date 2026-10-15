@@ -322,6 +322,9 @@
   text-align: center;
   letter-spacing: 0.01em;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* Rail items: vertical column 52×46px, 4px inset in 60px rail (D3-shell.html:70-82) */

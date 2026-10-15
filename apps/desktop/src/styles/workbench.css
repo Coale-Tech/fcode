@@ -213,6 +213,15 @@
   text-transform: uppercase;
 }
 
+.wb-sec-sub {
+  margin-left: 6px;
+  color: var(--ink-gray-3);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-normal);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 .wb-site {
   display: flex;
   align-items: center;

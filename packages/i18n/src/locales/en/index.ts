@@ -213,6 +213,11 @@ export const en = {
     chooseBench: "Choose bench",
     running: "running",
     stopped: "stopped",
+    benchRunning: "bench running",
+    benchStopped: "bench stopped",
+    site: "site",
+    sites: "sites",
+    openBenchLog: "Open bench log",
   },
   sessionCollaboration: {
     statusIdle: "Idle",
@@ -3465,6 +3470,8 @@ importConfirm: "Imported extensions run inside the agent process with the same a
     live: "Live",
     installApp: "Install app",
     waitingForLogs: "Waiting for log output…",
+    appSingular: "app",
+    appPluralLabel: "apps",
   },
   terminal: {
     title: "Terminal",

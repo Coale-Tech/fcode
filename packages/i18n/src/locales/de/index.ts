@@ -205,7 +205,17 @@ export const de = {
     "noBench": "Keine Bench ausgewählt",
     "chooseBench": "Bench auswählen",
     "running": "läuft",
-    "stopped": "gestoppt"
+    "stopped": "gestoppt",
+    benchRunning: "Bench läuft",
+    benchStopped: "Bench gestoppt",
+    site: "Site",
+    sites: "Sites",
+    openBenchLog: "Bench-Log öffnen",
+    "benchRunning": "Bench läuft",
+    "benchStopped": "Bench gestoppt",
+    "site": "Site",
+    "sites": "Sites",
+    "openBenchLog": "Bench-Log öffnen"
   },
   "sessionCollaboration": {
     "statusIdle": "Inaktiv",
@@ -3416,6 +3426,10 @@ sklm: {
     live: "Live",
     installApp: "App installieren",
     waitingForLogs: "Warte auf Log-Ausgabe…",
+    appSingular: "App",
+    appPluralLabel: "Apps",
+    appSingular: "App",
+    appPluralLabel: "Apps",
   },
   "terminal": {
     "title": "Terminal",

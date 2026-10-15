@@ -134,6 +134,23 @@
   background: var(--surface-green-6);
 }
 
+/* Standalone dot (not inside run-state) */
+.workspace-bar-dot.is-running {
+  background: var(--surface-green-6);
+}
+
+/* Vertical pipe separator between status info and action links */
+.workspace-bar-vsep {
+  width: 1px;
+  height: 12px;
+  background: var(--outline-gray-2);
+  flex-shrink: 0;
+}
+
+.workspace-bar-site {
+  color: var(--ink-gray-5);
+}
+
 .workspace-bar-choose-btn {
   padding: 0 6px;
   height: 18px;

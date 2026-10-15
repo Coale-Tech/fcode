@@ -120,6 +120,7 @@ export function BenchPage() {
   // must reach it from useAppShellRuntime, outside this component).
   const followTail = useAppStore((s) => s.benchLogFollowTail);
   const setFollowTail = useAppStore((s) => s.setBenchLogFollowTail);
+  const setViewedBench = useAppStore((s) => s.setViewedBench);
 
   // Gap 1 / T6: bench-start failure from supervisor
   const [startFailure, setStartFailure] = useState<StartFailureState | null>(null);
@@ -327,6 +328,13 @@ export function BenchPage() {
     setMigrateSite(selectedBench.sites.length === 1 ? selectedBench.sites[0].name : null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBench?.id]);
+
+  // Update global viewedBenchPath so WorkspaceBar shows bench name even when stopped.
+  useEffect(() => {
+    setViewedBench(selectedBench?.path ?? null, selectedBench?.sites.length ?? 0);
+    return () => { setViewedBench(null, 0); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBench?.path, selectedBench?.sites.length]);
 
   // A bench's process status only describes the bench the supervisor is
   // actually running; showing it for any other selected bench would let that
@@ -934,7 +942,7 @@ function BenchDetail({
               return (
                 <Button key={verb} variant="secondary" size="sm"
                   onClick={(e) => onRun(verb, e.currentTarget)}
-                  disabled={status !== "running" || busy || (verb === "migrate" && !migrateSite)}
+                  disabled={busy || (verb === "migrate" && !migrateSite)}
                   title={verb} className="wb-cmd-grid-btn">
                   {busy ? `${verb} …` : verb}
                 </Button>
@@ -968,7 +976,7 @@ function BenchDetail({
             return (
               <Button variant="secondary" size="sm" className="wb-cmd-full"
                 onClick={(e) => onRun("build-studio-app", e.currentTarget)}
-                disabled={status !== "running" || vs?.status === "running"}
+                disabled={vs?.status === "running"}
                 title="build-studio-app">
                 {vs?.status === "running" ? "build-studio-app …" : "build-studio-app"}
               </Button>
@@ -988,7 +996,7 @@ function BenchDetail({
               return (
                 <Button variant="secondary" size="sm" className="wb-cmd-full"
                   onClick={(e) => onRun("install-app", e.currentTarget)}
-                  disabled={status !== "running" || !installAppName.trim() || vs?.status === "running"}>
+                  disabled={!installAppName.trim() || vs?.status === "running"}>
                   {vs?.status === "running" ? "install-app …" : "install-app"}
                 </Button>
               );
@@ -996,7 +1004,15 @@ function BenchDetail({
           </div>
           {/* DocTypes panel — browse-only */}
           <div className="wb-doctypes">
-            <div className="wb-sec-lbl">DocTypes</div>
+            <div className="wb-sec-lbl">
+              DocTypes
+              {bench.apps.length > 0 && (
+                <span className="wb-sec-sub">
+                  {bench.apps.length} {bench.apps.length === 1 ? t("bench.appSingular", "app") : t("bench.appPluralLabel", "apps")}
+                  {bench.sites.length > 0 ? ` · ${bench.sites[0].name}` : ""}
+                </span>
+              )}
+            </div>
             <DocTypeTree bench={bench} onOpen={onOpenDocTypeFile} onMigrate={onMigrateDocTypes} />
           </div>
         </div>

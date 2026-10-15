@@ -151,11 +151,22 @@ export function BuildPage() {
   useEffect(() => {
     if (benchStatus === "running") {
       void loadApps();
+    } else if (benchPath) {
+      // Bench stopped but known: read app names from disk so the sidebar shows real apps.
+      invoke<{ apps: Array<{ name: string; version: string }> }>(IPC.invoke.benchDetail, { benchPath })
+        .then(({ apps }) => {
+          setInstalledApps(apps.map((a) => a.name));
+          setListAppsStatus("loaded");
+        })
+        .catch(() => {
+          setInstalledApps([]);
+          setListAppsStatus("loading");
+        });
     } else {
       setListAppsStatus("loading");
       setInstalledApps([]);
     }
-  }, [benchStatus, loadApps]);
+  }, [benchStatus, benchPath, loadApps]);
 
   // ── Studio preconditions ─────────────────────────────────────────────────
 
