@@ -156,6 +156,8 @@ export const tr = {
     toggleSidebar: "Kenar çubuğunu aç/kapat",
     toggleWorkPanel: "Yan paneli aç/kapat",
     sessions: "Oturumlar",
+    filterSessions: "Oturumları filtrele…",
+    pinnedPages: "Sabitlenmiş sayfalar",
     collapseSidebar: "Kenar çubuğunu daralt",
     expandSidebar: "Kenar çubuğunu genişlet",
     resizeSidebar: "Kenar çubuğu genişliğini ayarla",
@@ -205,6 +207,7 @@ export const tr = {
     hoverCardUpdatedAt: "Güncellendi {{when}}",
     hoverCardTemporarySpace: "Geçici",
     hoverCardBranchAria: "Dal {{name}}",
+    workspace: "Çalışma",
   },
   workspaceBar: {
     noBench: "Bench seçilmedi",
@@ -2267,6 +2270,7 @@ sklm: {
   },
   pulls: {
     title: "Çekme istekleri",
+    short: "PRs",
     refresh: "Yenile",
     emptyTitle: "Çekme isteği yok",
     review: "Ajanla incele",
@@ -3083,6 +3087,7 @@ importConfirm: "İçe aktarılan uzantılar ajan sürecinde, ajanın kendi araç
   },
   notifications: {
     title: "Bildirimler",
+    short: "Gelen",
     open: "Bildirimleri aç",
     openUnread: "Bildirimleri aç, {{count}} okunmamış",
     all: "Tümü",

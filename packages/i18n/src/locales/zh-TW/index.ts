@@ -149,6 +149,8 @@ export const zhTW = {
     toggleSidebar: "切換側邊欄",
     toggleWorkPanel: "切換側邊面板",
     sessions: "會話",
+    filterSessions: "篩選會話…",
+    pinnedPages: "固定頁面",
     collapseSidebar: "收起側邊欄",
     expandSidebar: "展開側邊欄",
     resizeSidebar: "調整側邊欄寬度",
@@ -198,6 +200,7 @@ export const zhTW = {
     hoverCardUpdatedAt: "更新於 {{when}}",
     hoverCardTemporarySpace: "臨時對話",
     hoverCardBranchAria: "分支 {{name}}",
+    workspace: "工作區",
   },
   workspaceBar: {
     noBench: "未選擇 bench",
@@ -2247,6 +2250,7 @@ sklm: {
   },
   pulls: {
     title: "拉取請求",
+    short: "PRs",
     refresh: "重新整理",
     emptyTitle: "暫無拉取請求",
     review: "讓智慧體審閱",
@@ -3043,6 +3047,7 @@ sklm: {
   },
   notifications: {
     title: "通知",
+    short: "收件匣",
     open: "開啟通知中心",
     openUnread: "開啟通知中心，{{count}} 條未讀",
     all: "全部",

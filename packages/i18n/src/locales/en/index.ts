@@ -154,6 +154,8 @@ export const en = {
     toggleSidebar: "Toggle sidebar",
     toggleWorkPanel: "Toggle side panel",
     sessions: "Sessions",
+    filterSessions: "Filter sessions…",
+    pinnedPages: "Pinned pages",
     collapseSidebar: "Collapse sidebar",
     expandSidebar: "Expand sidebar",
     resizeSidebar: "Resize sidebar",
@@ -203,6 +205,7 @@ export const en = {
     hoverCardUpdatedAt: "Updated {{when}}",
     hoverCardTemporarySpace: "Temporary",
     hoverCardBranchAria: "Branch {{name}}",
+    workspace: "Workspace",
   },
   workspaceBar: {
     noBench: "No bench selected",
@@ -2282,6 +2285,7 @@ sklm: {
   },
   pulls: {
     title: "Pull requests",
+    short: "PRs",
     refresh: "Refresh",
     emptyTitle: "No pull requests",
     review: "Review with agent",
@@ -3100,6 +3104,7 @@ importConfirm: "Imported extensions run inside the agent process with the same a
   },
   notifications: {
     title: "Notifications",
+    short: "Inbox",
     open: "Open notifications",
     openUnread: "Open notifications, {{count}} unread",
     all: "All",

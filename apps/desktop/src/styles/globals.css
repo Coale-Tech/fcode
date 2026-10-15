@@ -24,6 +24,7 @@
 @import "./overlays.css";
 @import "./session-search.css";
 @import "./theme-overrides.css";
+@import "./d-shell-overrides.css";
 @import "./composer-menus.css";
 @import "./settings.css";
 @import "./destinations.css";

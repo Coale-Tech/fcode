@@ -156,6 +156,8 @@ export const ko = {
     toggleSidebar: "사이드바 전환",
     toggleWorkPanel: "사이드 패널 전환",
     sessions: "세션",
+    filterSessions: "세션 필터…",
+    pinnedPages: "고정된 페이지",
     collapseSidebar: "사이드바 접기",
     expandSidebar: "사이드바 펼치기",
     resizeSidebar: "사이드바 크기 조절",
@@ -205,6 +207,7 @@ export const ko = {
     hoverCardUpdatedAt: "{{when}} 업데이트됨",
     hoverCardTemporarySpace: "임시",
     hoverCardBranchAria: "브랜치 {{name}}",
+    workspace: "작업공간",
   },
   workspaceBar: {
     noBench: "선택된 bench 없음",
@@ -2277,6 +2280,7 @@ sklm: {
   },
   pulls: {
     title: "풀 리퀘스트",
+    short: "PRs",
     refresh: "새로 고침",
     emptyTitle: "풀 리퀘스트 없음",
     review: "에이전트로 검토",
@@ -3093,6 +3097,7 @@ importConfirm: "가져온 확장은 에이전트 프로세스 안에서 에이�
   },
   notifications: {
     title: "알림",
+    short: "받은함",
     open: "알림 열기",
     openUnread: "알림 열기, 읽지 않은 알림 {{count}}개",
     all: "모두",

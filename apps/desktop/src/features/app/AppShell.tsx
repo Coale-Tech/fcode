@@ -26,6 +26,7 @@ import { PortalVisibilityProvider } from "../../lib/portal-visibility";
 import { CollapsedTitlebarActions, RoutePending } from "./chrome";
 import { useAppShellRuntime } from "./useAppShellRuntime";
 import { useMemoryHealthPoller } from "../../hooks/use-memory-health-poller";
+import { islandSidebarProps } from "../../lib/nav-layout";
 
 const SettingsPage = lazy(() =>
   import("../../pages/SettingsPage").then((module) => ({
@@ -115,6 +116,7 @@ export function AppShell() {
     sidebarToggleShortcut,
     workPanelToggleTooltip,
     onRailExpandChange,
+    navLayout,
   } = useAppShellRuntime();
   useCopyTex();
   useMemoryHealthPoller();
@@ -136,6 +138,8 @@ export function AppShell() {
   // Bench and Build own their context sidebar and islands (E frame), so the
   // sessions dock stays out and the pane is a transparent host.
   const workbench = page === "bench" || page === "build";
+  // Sidebar is mounted during its exit animation (D2/tabs) or always in island (permanent sidebar).
+  const mountSidebar = !workbench && (!sidebarCollapsed || sidebarExiting) ? true : navLayout === "island";
 
   let shell: ReactNode = null;
   if (ready) {
@@ -144,15 +148,16 @@ export function AppShell() {
         {/* ShellNavbar: outside the inert/hidden subtree; stays usable in settings mode
             (Review Focus 4). Drag region + Cmd-K awesomebar for all pages. */}
         <ShellNavbar onOpenSearch={() => setSearchOpen(true)} />
-        <PortalVisibilityProvider visible={page !== "settings"}>
+        <PortalVisibilityProvider visible={page !== "settings" || navLayout === "island"}>
           <div
             className="app-chat-shell"
-            hidden={page === "settings"}
-            inert={page === "settings" ? true : undefined}
-            aria-hidden={page === "settings" ? true : undefined}
+            hidden={page === "settings" && navLayout !== "island"}
+            inert={page === "settings" && navLayout !== "island" ? true : undefined}
+            aria-hidden={page === "settings" && navLayout !== "island" ? true : undefined}
           >
             <NavRail onExpandChange={onRailExpandChange} />
-            {!workbench && (!sidebarCollapsed || sidebarExiting) ? (
+            {/* D3 island: permanent sidebar (shown even on workbench, always open) */}
+            {mountSidebar ? (
               <Sidebar
                 className={cx(sidebarEntering && "is-entering", sidebarExiting && "is-exiting")}
                 onAnimationEnd={handleSidebarAnimationEnd}
@@ -172,7 +177,7 @@ export function AppShell() {
               <div
                 className={cx(
                   "window-chrome-row",
-                  !sidebarCollapsed && !workbench && "sidebar-expanded",
+                  !sidebarCollapsed && (navLayout === "island" || !workbench) && "sidebar-expanded",
                 )}
               >
                 {sidebarCollapsed && (
@@ -226,7 +231,7 @@ export function AppShell() {
                     )}
                   </div>
                 )}
-                {page !== "settings" ? <UpdateBanner /> : null}
+                {(page !== "settings" || navLayout === "island") ? <UpdateBanner /> : null}
 
                 {backendDown && (
                   <div
@@ -284,7 +289,11 @@ export function AppShell() {
                 )}
 
                 <Suspense fallback={<RoutePending />}>
-                  {page === "pulls" ? (
+                  {page === "settings" && navLayout === "island" ? (
+                    <div className="route-surface route-page">
+                      <SettingsPage />
+                    </div>
+                  ) : page === "pulls" ? (
                     <div className="route-surface route-page">
                       <PullRequestsPage />
                     </div>
@@ -333,8 +342,7 @@ export function AppShell() {
                   finishWorkPanelExit(workPanelExitGeneration.current)
                 }
                 containerWidth={shellWidth}
-                sidebarWidth={sidebarWidth}
-                sidebarCollapsed={sidebarCollapsed}
+                {...islandSidebarProps(navLayout, sidebarCollapsed, sidebarWidth)}
                 sidebarExiting={sidebarExiting}
                 onAutoCollapseSidebar={autoCollapseSidebar}
                 maximized={workPanelMaximized}
@@ -362,7 +370,7 @@ export function AppShell() {
             </TooltipButton>
           </div>
         </PortalVisibilityProvider>
-        {page === "settings" ? (
+        {page === "settings" && navLayout !== "island" ? (
           <Suspense fallback={<RoutePending />}>
             <SettingsPage />
           </Suspense>
@@ -370,7 +378,7 @@ export function AppShell() {
         <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
         <ToastHost />
         <ExtensionPromptHost />
-        {page === "settings" ? <UpdateBanner /> : null}
+        {page === "settings" && navLayout !== "island" ? <UpdateBanner /> : null}
       </>
     );
   }
@@ -381,7 +389,7 @@ export function AppShell() {
       className={cx(
         "app-shell",
         !ready && "app-shell-boot",
-        page === "settings" && ready && "settings-mode",
+        page === "settings" && ready && navLayout !== "island" && "settings-mode",
         sidebarCollapsed && "sidebar-collapsed",
         workPanelMaximized && "work-panel-maximized",
         showSplash && "is-booting",

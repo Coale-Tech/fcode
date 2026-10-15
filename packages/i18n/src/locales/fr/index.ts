@@ -147,6 +147,8 @@ export const fr = {
     "toggleSidebar": "Basculer la barre latérale",
     "toggleWorkPanel": "Basculer le panneau latéral",
     "sessions": "Sessions",
+    "filterSessions": "Filtrer les sessions…",
+    "pinnedPages": "Pages épinglées",
     "collapseSidebar": "Réduire la barre latérale",
     "expandSidebar": "Développer la barre latérale",
     "resizeSidebar": "Redimensionner la barre latérale",
@@ -196,6 +198,7 @@ export const fr = {
     "hoverCardUpdatedAt": "{{when}} mis à jour",
     "hoverCardTemporarySpace": "Temporaire",
     "hoverCardBranchAria": "Branche {{name}}",
+    "workspace": "Espace",
   },
   "workspaceBar": {
     "noBench": "Aucun bench sélectionné",
@@ -2261,6 +2264,7 @@ sklm: {
   },
   "pulls": {
     "title": "Demandes d'extraction",
+    "short": "PRs",
     "refresh": "Actualiser",
     "emptyTitle": "Aucune demande d'extraction",
     "review": "Révision avec l'agent",
@@ -3056,6 +3060,7 @@ sklm: {
   },
   "notifications": {
     "title": "Notifications",
+    "short": "Boîte",
     "open": "Notifications ouvertes",
     "openUnread": "Notifications ouvertes, {{count}} non lues",
     "all": "Toutes",

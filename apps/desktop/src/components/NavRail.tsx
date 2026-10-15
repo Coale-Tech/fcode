@@ -19,6 +19,7 @@ import {
 } from "./icons";
 import { NotificationCenter } from "./NotificationCenter";
 import { TooltipButton, cx } from "./ui";
+import { resolveNavLayout } from "../lib/nav-layout";
 import { navItems } from "./nav-items";
 import type { NavItemId, NavItem } from "./nav-items";
 
@@ -65,6 +66,7 @@ export function NavRail({ onExpandChange }: NavRailProps = {}) {
   const navBack = useAppStore((s) => s.navBack);
   const canNavBack = useAppStore((s) => s.canNavBack);
   const memStatus = useAppStore((s) => s.memoryStatus);
+  const navLayout = resolveNavLayout(useAppStore((s) => s.settings?.navLayout));
   const [expanded, setExpanded] = useState(false);
 
   const mHealth = memoryHealth(memStatus);
@@ -114,25 +116,33 @@ export function NavRail({ onExpandChange }: NavRailProps = {}) {
       item.id === "plugins"
         ? () => (page === "plugins" ? (canNavBack() ? navBack() : setPage("chat")) : setPage("plugins"))
         : () => setPage(item.page);
+    const fullLabel = t(item.labelKey);
+    const visibleLabel = navLayout === "island" && item.shortLabelKey ? t(item.shortLabelKey) : fullLabel;
     return (
       <TooltipButton
         key={item.id}
         type="button"
         className={cx("nav-rail-btn nav-rail-labeled", page === item.page && "active")}
         data-nav={item.dataNav}
-        tooltip={t(item.labelKey)}
-        ariaLabel={t(item.labelKey)}
+        tooltip={fullLabel}
+        ariaLabel={fullLabel}
         onClick={handleClick}
         aria-pressed={page === item.page}
       >
         <span className="nav-rail-icon"><Icon size={16} aria-hidden /></span>
-        <span className="nav-rail-label">{t(item.labelKey)}</span>
+        <span className="nav-rail-label">{visibleLabel}</span>
       </TooltipButton>
     );
   }
 
   return (
     <nav className={cx("nav-rail", expanded && "expanded")} aria-label="Primary">
+      {/* D3 island: Fcode logo mark above the scroll (D3-shell.html:351-354) */}
+      {navLayout === "island" && (
+        <div className="nav-rail-logo" aria-hidden>
+          <div className="nav-rail-logo-mark">fc</div>
+        </div>
+      )}
       {/* Upper scrollable section: all page destinations with dividers */}
       <div id="nav-rail-scroll" className="nav-rail-scroll no-drag">
         {primary.map(renderItem)}
@@ -142,9 +152,10 @@ export function NavRail({ onExpandChange }: NavRailProps = {}) {
         {developer.map(renderItem)}
       </div>
 
-      {/* Footer: notifications + settings + expand toggle (D2-shell.html:167-181) */}
+      {/* Footer: notifications + settings + expand toggle (D2-shell.html:167-181)
+           In island (D3) mode: no expand toggle (hidden via CSS nav-rail-toggle). */}
       <div className="nav-rail-foot no-drag">
-        <NotificationCenter navRailLabel={t("notifications.title")} />
+        <NotificationCenter navRailLabel={navLayout === "island" ? t("notifications.short") : t("notifications.title")} />
         <TooltipButton
           type="button"
           className={cx("nav-rail-btn nav-rail-labeled", page === "settings" && "active")}

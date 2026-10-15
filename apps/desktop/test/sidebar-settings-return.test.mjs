@@ -12,18 +12,24 @@ test("Settings hides the mounted chat shell and keeps its portal layers out of v
     loadStyles(),
     readFile(new URL("../src/lib/portal-visibility.tsx", import.meta.url), "utf8"),
   ]);
-  assert.match(appShell, /<PortalVisibilityProvider visible=\{page !== "settings"\}>/);
-  assert.match(appShell, /className="app-chat-shell"[\s\S]*?hidden=\{page === "settings"\}/);
-  assert.match(appShell, /inert=\{page === "settings" \? true : undefined\}/);
-  assert.match(appShell, /aria-hidden=\{page === "settings" \? true : undefined\}/);
-  assert.match(appShell, /className="app-chat-shell"[\s\S]*?<ChatSurface visible=\{page === "chat"\} \/>/);
-  assert.match(appShell, /\{page === "settings" \? \([\s\S]*?<SettingsPage \/>/);
+  // Portal layers stay active outside settings and in island mode during settings,
+  // so NavRail and Sidebar tooltips remain interactive when the user navigates
+  // to Settings from the rail without leaving the island shell.
+  assert.match(appShell, /<PortalVisibilityProvider visible=\{page !== "settings" \|\| navLayout === "island"\}>/);
+  // Non-island (D1/D2): the chat shell is hidden and inert when settings is open.
+  assert.match(appShell, /hidden=\{page === "settings" && navLayout !== "island"\}/);
+  assert.match(appShell, /inert=\{page === "settings" && navLayout !== "island" \? true : undefined\}/);
+  assert.match(appShell, /aria-hidden=\{page === "settings" && navLayout !== "island" \? true : undefined\}/);
+  // Island (D3): SettingsPage is rendered inside the chat shell alongside NavRail+Sidebar.
+  assert.match(appShell, /page === "settings" && navLayout === "island"[\s\S]*?<SettingsPage/);
+  // Non-island: SettingsPage is rendered outside the chat shell (full-screen take-over).
+  assert.match(appShell, /page === "settings" && navLayout !== "island"[\s\S]*?<SettingsPage/);
   assert.match(appShell, /<ChatSurface visible=\{page === "chat"\} \/>/);
   assert.match(appShell, /<SearchDialog open=\{searchOpen\}/);
-  assert.match(styles, /\.app-chat-shell\s*\{\s*display:\s*contents;/);
-  assert.match(styles, /\.app-chat-shell\[hidden\]\s*\{\s*display:\s*none;/);
+  // Portal mechanism: render nothing when invisible; use createPortal when visible.
   assert.match(portalVisibility, /<PortalVisibilityContext\.Consumer>[\s\S]*visible \? node : null/);
   assert.match(portalVisibility, /createPortal\(visiblePortalContent\(node\), document\.body\)/);
+  assert.match(styles, /\.app-chat-shell\[hidden\]\s*\{\s*display:\s*none;/);
 });
 
 test("initial shell presentation and settings return never play sidebar entrance", () => {
