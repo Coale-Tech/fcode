@@ -134,6 +134,17 @@ export function registerFileBirdIpc({ registrar, dataDir, getMainWindow, sendToR
       height: Math.max(0, Math.min(Math.round(next.height), content.height - y)),
     };
     view?.setBounds(bounds);
+    /* Capture-gated bounds diagnostics: compare host rect vs view.getBounds()
+     * to confirm native view tracks the renderer's surfaceRef within 1px. */
+    if (process.env.PI_DESKTOP_CAPTURE && view && !view.webContents.isDestroyed()) {
+      const vb = view.getBounds();
+      const dx = Math.abs(vb.x - bounds.x);
+      const dy = Math.abs(vb.y - bounds.y);
+      const dw = Math.abs(vb.width - bounds.width);
+      const dh = Math.abs(vb.height - bounds.height);
+      console.log("[filebird-bounds] host=", bounds, "view=", vb, "delta=", { dx, dy, dw, dh });
+      if (Math.max(dx, dy, dw, dh) > 1) console.warn("[filebird-bounds] >1px delta — view drifted from host div");
+    }
     return { ok: true };
   });
 
