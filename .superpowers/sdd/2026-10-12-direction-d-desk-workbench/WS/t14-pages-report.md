@@ -61,10 +61,20 @@ tsc --noEmit -p .  →  0 errors  ✓
 pnpm --filter @pi-desktop/i18n test  →  27/27 passed  ✓
 ```
 
-### Full Suite
-Running in background at `/tmp/t14-suite-run.log`.
-Known-flaky allowlist: hindsight fast-exit, npm-install-recovery:89, remote-host-ssh-transport, npm-executable family, codesign/macos-signing, terminal notifications, raceWithTimeout under load.
-
+### Full Suite Results
+```
+i18n (packages/i18n):  27/27  ✓
+shared (packages/shared):  526/526  ✓
+docs (docs):  11/11  ✓  (+ ADR index fix commit e31ba5e8a)
+desktop (apps/desktop):  3586/3606  ✓  (20 failures: all allowlisted)
+  - hindsight fast-exit (1)
+  - codesign/macos-signing (2)
+  - npm-executable family (5)
+  - npm-install-recovery:89 (1)
+  - remote-host-ssh-transport (11)
+plugin-sdk: pre-existing env failure (~/vite.config.ts from unrelated Frappe project;
+            confirmed identical failure on direction-d base commit dc33fc5d1)
+```
 ---
 
 ## 32 Shots — Capture Provenance
