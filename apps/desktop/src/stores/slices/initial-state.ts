@@ -94,6 +94,7 @@ export function createInitialState(): AppStateData {
     showKanbanSessions: false,
     kanbanEnabled: false,
     ravenEnabled: false,
+    userInitials: undefined,
     terminalOpen: false,
     pendingTuiCommand: null,
   };

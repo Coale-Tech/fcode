@@ -48,6 +48,7 @@ export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
   const page    = useAppStore((s) => s.page);
   const setPage = useAppStore((s) => s.setPage);
   const settingsTab = useAppStore((s) => s.settingsTab);
+  const userInitials = useAppStore((s) => s.userInitials);
   const isMac  = (window.piDesktop?.platform ?? "darwin") === "darwin";
   const bench  = useBenchContext();
   // T13-L03: nested breadcrumb label for settings tabs
@@ -154,7 +155,11 @@ export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
           aria-label={t("nav.userMenu", { defaultValue: "User menu" })}
           title={t("nav.userMenu", { defaultValue: "User menu" })}
         >
-          <IconTerminal size={12} aria-hidden />
+          {userInitials ? (
+            <span className="shell-navbar-avatar-initials" aria-hidden>{userInitials}</span>
+          ) : (
+            <IconTerminal size={12} aria-hidden />
+          )}
         </button>
       </div>
     </header>

@@ -183,6 +183,8 @@ export type AppState = {
   kanbanEnabled: boolean;
   /** Whether the Raven destination is enabled (mirrored from RavenSettings.enabled). */
   ravenEnabled: boolean;
+  /** User initials for the navbar avatar; undefined shows the placeholder icon. Seeded by capture rig in __PI_CAPTURE__ mode. */
+  userInitials?: string;
   /** Integrated terminal panel under chat; Ctrl+` and the workspace bar toggle it. */
   terminalOpen: boolean;
   /** Pending command to run in a new integrated-terminal tab; consumed by TerminalPanel. */
