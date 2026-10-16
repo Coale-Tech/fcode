@@ -64,6 +64,8 @@ export type CaptureRigMethods = {
   clearPendingPermissions: () => void;
   seedEmptyHome: () => void;
   seedOnboardingChecklist: () => void;
+  /** Seed capture-only extras for the command palette: FILES and BENCHES sections. */
+  seedCommandPaletteExtras: () => void;
 };
 
 export type CaptureRig = CaptureRigMethods & {
@@ -1333,18 +1335,30 @@ export function installCaptureRig(): CaptureRig {
         openProjectPaths: [],
         page: "chat",
       });
-      const cur = useAppStore.getState().onboarding;
-      if (cur) {
-        useAppStore.setState({ onboarding: { ...cur, showChecklist: true } });
-      }
+      const curOnb = useAppStore.getState().onboarding;
+      useAppStore.setState({
+        onboarding: { showChecklist: true, steps: [], ...(curOnb ?? {}) },
+      });
     },
     seedOnboardingChecklist: () => {
       // Force onboarding checklist visible regardless of backend state.
       if (!window.__PI_CAPTURE__) return;
       const cur = useAppStore.getState().onboarding;
-      if (cur) {
-        useAppStore.setState({ onboarding: { ...cur, showChecklist: true } });
-      }
+      useAppStore.setState({
+        onboarding: { showChecklist: true, steps: [], ...(cur ?? {}) },
+      });
+    },
+    seedCommandPaletteExtras: () => {
+      // Seed capture-only FILES and BENCHES data for command palette shots.
+      if (!window.__PI_CAPTURE__) return;
+      window.__PI_PALETTE_FILES__ = [
+        { path: "apps/frappe_agent/frappe_agent/migrate_dialog.py", appRoot: "frappe-agent" },
+        { path: "apps/frappe/frappe/migrate.py", appRoot: "frappe" },
+      ];
+      window.__PI_PALETTE_BENCHES__ = [
+        { id: "coale_v16", path: "/bench/coale_v16", status: "running" },
+        { id: "coale_dev", path: "/bench/coale_dev", status: "stopped" },
+      ];
     },
     seedBenchStatus: (opts) => {
       if (!window.__PI_CAPTURE__) return;

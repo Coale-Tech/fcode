@@ -48,6 +48,10 @@ declare global {
     __PI_CAPTURE__?: unknown;
     /** Overrides live IPC bench-status polling for capture screenshots. */
     __PI_BENCH_OVERRIDE__?: BenchStatusOverride;
+    /** Capture-only: file entries seeded for the command-palette FILES section. */
+    __PI_PALETTE_FILES__?: Array<{ path: string; appRoot: string }>;
+    /** Capture-only: bench entries seeded for the command-palette BENCHES section. */
+    __PI_PALETTE_BENCHES__?: Array<{ id: string; path: string; status: "running" | "stopped" }>;
   }
 }
 
@@ -75,6 +79,7 @@ const CAPTURE_RIG_METHODS = [
   "clearPendingPermissions",
   "seedEmptyHome",
   "seedOnboardingChecklist",
+  "seedCommandPaletteExtras",
 ] as const satisfies readonly CaptureRigMethod[];
 
 export function installRendererApi(): () => void {

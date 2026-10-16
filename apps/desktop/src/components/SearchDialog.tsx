@@ -9,6 +9,7 @@ import { useSessionSearch, useSessionSearchState } from "../hooks/use-session-se
 import { SearchHighlight } from "./SearchHighlight";
 import { SearchSessionResults, type SearchRow } from "./SearchSessionResults";
 import type { SessionSummary, CommandItem } from "@pi-desktop/shared";
+import { IPC } from "@pi-desktop/shared";
 import type { SessionMeta } from "../lib/sidebar-preferences";
 import {
   IconAt,
@@ -106,6 +107,39 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   }>({ query: "", hits: [] });
   const commandHits = commandResult.query === query ? commandResult.hits : [];
 
+  type PaletteBench = { id: string; path: string; status: "running" | "stopped" };
+
+  const [paletteBenches, setPaletteBenches] = useState<PaletteBench[]>([]);
+
+  // Load bench list when palette opens. Capture mode reads rig-seeded global;
+  // normal mode fetches real bench list from IPC.
+  useEffect(() => {
+    if (!open) return;
+    if (window.__PI_CAPTURE__) {
+      setPaletteBenches(window.__PI_PALETTE_BENCHES__ ?? []);
+      return;
+    }
+    // Normal mode: load real bench list from IPC.
+    const bridge = window.piDesktop;
+    if (!bridge) return;
+    type BenchItem = { id: string; path: string };
+    type BenchListResult = { benches: BenchItem[] };
+    bridge
+      .invoke<BenchListResult>(IPC.invoke.benchList)
+      .then((res) => {
+        if (!res?.ok) return;
+        const running = window.__PI_BENCH_OVERRIDE__?.benchPath ?? null;
+        setPaletteBenches(
+          (res.data as BenchListResult).benches.map((b: BenchItem) => ({
+            id: b.id,
+            path: b.path,
+            status: (running === b.path ? "running" : "stopped") as "running" | "stopped",
+          })),
+        );
+      })
+      .catch(() => undefined);
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     setActive(0);
@@ -151,7 +185,11 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   const rows = useMemo<SearchRow[]>(() => {
     const q = query.trim().toLowerCase();
     const candidates: Omit<SearchRow, "optionIndex">[] = [];
-    const source = q ? search.hits.map((hit) => hit.session) : sessions;
+    const source = q
+      ? (search.error
+        ? sessions.filter((s) => (s.title ?? "").toLowerCase().includes(q))
+        : search.hits.map((hit) => hit.session))
+      : sessions;
     const hits = new Map(search.hits.map((hit) => [hit.session.id, hit]));
     for (const session of source) {
       // Untitled drafts carry no searchable signal; they stay sidebar-only.
@@ -180,7 +218,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
       index += 1 + (row.hit?.matches.length ?? 0);
       return { ...row, optionIndex };
     });
-  }, [sessions, sessionMeta, projectNames, query, search.hits, t]);
+  }, [sessions, sessionMeta, projectNames, query, search.hits, search.error, t]);
 
   const groups = useMemo(() => {
     const now = new Date();
@@ -203,7 +241,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   }, [rows]);
 
   // Pages and settings rows join the listbox after the session results;
-  // flat option order is: new-task, sessions, pages, settings.
+  // flat option order is: new-task, sessions, files, pages, settings, commands, benches.
   const pageHits = useMemo<PageEntry[]>(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
@@ -215,6 +253,10 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
     [query, t, developerMode],
   );
 
+  // BENCHES: always show all benches — they are a persistent context switcher,
+  // not a filtered search result.
+  const benchHits = useMemo<PaletteBench[]>(() => paletteBenches, [paletteBenches]);
+
   const sessionOptionCount = rows.reduce(
     (count, row) => count + 1 + (row.hit?.matches.length ?? 0),
     0,
@@ -223,7 +265,8 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   const pageBase = moreIndex + (query.trim() && search.nextOffset !== null ? 1 : 0);
   const settingsBase = pageBase + pageHits.length;
   const commandsBase = settingsBase + settingsHits.length;
-  const optionCount = commandsBase + commandHits.length;
+  const benchBase = commandsBase + commandHits.length;
+  const optionCount = benchBase + benchHits.length;
 
   useEffect(() => {
     setActive(0);
@@ -314,6 +357,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
     if (commandIndex >= 0 && commandIndex < commandHits.length) {
       return void runCommand(commandHits[commandIndex]);
     }
+    // Bench hits: switch bench context (TODO: wire to IPC when bench-switch lands).
   };
 
   return (
@@ -389,6 +433,14 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
             <IconNewSession size={15} className="search-item-icon" />
             <span className="search-item-title">{t("nav.newTask")}</span>
           </button>
+          {/* Sessions group: show flat "Sessions" header when query matches sessions */}
+          {query.trim() && groups.length > 0 ? (
+            <div role="presentation">
+              <div className="search-group-label" role="presentation">
+                {t("search.sessions")}
+              </div>
+            </div>
+          ) : null}
           <SearchSessionResults
             groups={groups}
             query={query}
@@ -402,7 +454,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
               {t("search.loading")}
             </div>
           ) : null}
-          {query.trim() && search.error ? (
+          {query.trim() && search.error && rows.length === 0 ? (
             <div className="search-empty" role="alert">
               {t("search.failed")}
               <button type="button" className="btn btn-secondary" onClick={search.retry}>
@@ -514,10 +566,44 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
               })}
             </div>
           ) : null}
+          {/* BENCHES section — real bench list (or capture-mode seeded benches) */}
+          {benchHits.length > 0 ? (
+            <div role="presentation">
+              <div className="search-group-label" role="presentation">
+                {t("search.benches")}
+              </div>
+              {benchHits.map((bench, index) => {
+                const optionIndex = benchBase + index;
+                const benchName = bench.path.split(/[\\/]/).filter(Boolean).pop() ?? bench.id;
+                return (
+                  <button
+                    key={bench.id}
+                    id={`global-search-option-${optionIndex}`}
+                    type="button"
+                    role="option"
+                    aria-selected={active === optionIndex}
+                    className={`search-item ${active === optionIndex ? "active" : ""}`}
+                    onMouseEnter={() => setActive(optionIndex)}
+                    onClick={() => {}}
+                  >
+                    <span
+                      className={`search-bench-dot ${bench.status === "running" ? "on" : "off"}`}
+                      aria-hidden
+                    />
+                    <span className="search-item-title">{benchName}</span>
+                    <span className="search-item-meta">
+                      <span className="search-item-project">{bench.status}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
           {rows.length === 0 &&
           pageHits.length === 0 &&
           settingsHits.length === 0 &&
           commandHits.length === 0 &&
+          benchHits.length === 0 &&
           query.trim() &&
           !search.loading &&
           !search.error ? (

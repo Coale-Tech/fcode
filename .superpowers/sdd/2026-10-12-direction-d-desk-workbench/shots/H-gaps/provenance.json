@@ -1,0 +1,22 @@
+{
+  "capturedAt": "2026-10-16T14:24:14.541Z",
+  "worktree": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-gaps",
+  "branch": "feat/direction-d-t14h-gaps",
+  "layouts": [
+    "tabs",
+    "rail",
+    "island"
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "pages": [
+    "cmdpal",
+    "onboarding-step1",
+    "settings-ai",
+    "settings-advanced",
+    "settings-permissions",
+    "filebird"
+  ]
+}
