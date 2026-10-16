@@ -180,8 +180,24 @@ export async function launch({ browser, dataDir, name = "pi-desktop" } = {}) {
     },
 
     /** Screenshot to path */
+    /** Screenshot to path: tab.screenshot() returns a temp webp path; copy+convert to PNG via sips */
     async screenshot(path) {
-      await tab.screenshot({ path });
+      const tmpSrc = await tab.screenshot({});
+      if (!tmpSrc || typeof tmpSrc !== "string") {
+        // Fallback: old OMP versions wrote to path directly
+        await tab.screenshot({ path });
+        return;
+      }
+      // Use macOS sips to convert webp → png at the target path
+      const result = await Bun.spawn(
+        ["sips", "-s", "format", "png", tmpSrc, "--out", path],
+        { stdout: "ignore", stderr: "ignore" }
+      ).exited;
+      if (result !== 0) {
+        // sips failed (e.g. tmp file gone) — copy raw bytes as fallback
+        const bytes = await Bun.file(tmpSrc).bytes().catch(() => null);
+        if (bytes) await Bun.write(path, bytes);
+      }
     },
 
     /**

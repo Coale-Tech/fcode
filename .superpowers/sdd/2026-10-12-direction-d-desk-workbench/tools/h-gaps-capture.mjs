@@ -26,7 +26,7 @@ export async function runHGapsCapture({ browser }) {
   );
 
   log("Launching Electron from gaps worktree…");
-  const h = await launch({ browser, name: "hgaps" });
+  const h = await launch({ browser, name: "hgaps3" });
   log("App ready. Enabling capture rig…");
 
   // Enable rig methods without requiring PI_DESKTOP_CAPTURE env.
@@ -157,7 +157,42 @@ export async function runHGapsCapture({ browser }) {
     await setTheme("light");
   }
 
-  log("All 30 H-gaps shots taken. Closing app…");
+  // ── FileBird: connected (mock IPC → ok:true) + unavailable (real IPC → ok:false) ─────
+  // Mock window.piDesktop.invoke so fileBirdSetVisible returns {ok:true} → !failed state.
+  await h.evalPage(`
+    (function() {
+      const orig = window.piDesktop?.invoke?.bind(window.piDesktop);
+      if (!orig) return;
+      window.__origPiInvoke = orig;
+      window.piDesktop.invoke = function(channel, ...args) {
+        if (typeof channel === 'string' && channel.includes('fileBird')) {
+          return Promise.resolve({ ok: true });
+        }
+        return orig(channel, ...args);
+      };
+    })()
+  `);
+  await setLayout("tabs");
+  await setPage("filebird");
+  await sleep(1000);
+  await setTheme("light"); await sleep(300); await shot("d-filebird-connected-D1-light");
+  await setTheme("dark");  await sleep(300); await shot("d-filebird-connected-D1-dark");
+  await setTheme("light");
+  // Restore real invoke (IIFE required — bare if is a statement, not expression) → ok:false → unavailable.
+  await h.evalPage(`(function() {
+    if (window.__origPiInvoke) {
+      window.piDesktop.invoke = window.__origPiInvoke;
+      delete window.__origPiInvoke;
+    }
+  })()`);
+  await setPage("chat"); await sleep(300);
+  await setPage("filebird");
+  await sleep(1200);
+  await setTheme("light"); await sleep(300); await shot("d-filebird-unavailable-D1-light");
+  await setTheme("dark");  await sleep(300); await shot("d-filebird-unavailable-D1-dark");
+  await setTheme("light");
+
+  log("All 34 H-gaps shots taken. Closing app…");
   await h.close();
   return HSHOTS;
 }
