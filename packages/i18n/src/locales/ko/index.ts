@@ -3404,6 +3404,8 @@ importConfirm: "가져온 확장은 에이전트 프로세스 안에서 에이�
     openInBrowser: "브라우저에서 열기",
     reload: "새로 고침",
     openExternal: "브라우저에서 열기",
+    retry: "다시 시도",
+    signInDesc: "Raven을 로드하려면 {{site}}에 로그인해야 합니다. 브라우저에서 사이트를 열고 로그인한 후 여기로 돌아오세요.",
     settings: {
       title: "Raven",
       enabled: "사이드바에 Raven 표시",

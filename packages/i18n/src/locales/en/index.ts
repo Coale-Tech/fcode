@@ -3414,6 +3414,8 @@ importConfirm: "Imported extensions run inside the agent process with the same a
     openInBrowser: "Open in browser",
     reload: "Reload",
     openExternal: "Open in browser",
+    retry: "Retry",
+    signInDesc: "You need to sign in to {{site}} before Raven can load. Open the site in your browser and log in, then return here.",
     settings: {
       title: "Raven",
       enabled: "Show Raven in the sidebar",

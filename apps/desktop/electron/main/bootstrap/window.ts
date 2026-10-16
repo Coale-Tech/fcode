@@ -1,6 +1,6 @@
 import { app, BrowserWindow, nativeTheme, screen, type Tray } from "electron";
-import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { execFileSync, spawn } from "node:child_process";
+import { existsSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   APP_NAME,
@@ -1029,7 +1029,6 @@ export async function createWindow({
         void (async () => {
           try {
             if (!windowState.mainWindow) return;
-            const { writeFileSync } = await import("node:fs");
             const shot = async (name: string) => {
               const img = await windowState.mainWindow!.webContents.capturePage();
               writeFileSync(`/tmp/codex-screens/${name}.png`, img.toPNG());
@@ -2377,6 +2376,197 @@ export async function createWindow({
             await new Promise((r) => setTimeout(r, 400));
             await shot("pi-toasts-dark");
             await setTheme("light");
+            // ── T14g: Direction-D Bench / Build / Raven / FileBird shots ───
+            {
+              // spawn is statically imported at top of file
+              // Set up fake bench env for discovery (reads process.env.FCODE_BENCH_ROOTS)
+              process.env.FCODE_BENCH_ROOTS = "/tmp/t14g-fake-bench";
+              benchSupervisor.activeBenchPath = "/tmp/t14g-fake-bench/coale_v16";
+              benchSupervisor.activeSite = "coale_v16.localhost";
+              (benchSupervisor as unknown as Record<string, unknown>).status = "running";
+              // Patch runOneShot: fake bench bin can't be first on PATH before real bench
+              const _origRunOneShot = benchSupervisor.runOneShot.bind(benchSupervisor);
+              (benchSupervisor as unknown as Record<string, unknown>).runOneShot = async (
+                rArgs: { benchPath: string; site: string | null; verb: string; args?: string[] },
+              ) => {
+                if (rArgs.verb === "list-apps") {
+                  const sk = rArgs.site || "coale_v16.localhost";
+                  return { exitCode: 0, output: JSON.stringify({ [sk]: ["frappe", "erpnext", "hrms", "raven", "studio", "builder"] }) };
+                }
+                return _origRunOneShot(rArgs);
+              };
+              // Write raven settings (enabled + URL) so renderer sees disconnected state
+              if (dataDir) {
+                writeFileSync(join(dataDir, "raven-settings.json"), JSON.stringify({ enabled: true, url: "http://coale.frappe.cloud" }));
+              }
+              // Start fake studio server on port 8000 (for build canvas)
+              const studioProc = spawn(process.execPath, ["/tmp/t14g-fake-bench/studio-server.mjs"], {
+                detached: true,
+                stdio: "ignore",
+              });
+              studioProc.unref();
+              await sleep(1200); // wait for server to start
+
+              // Ensure supervisor poll updates renderer (bench chip + status bar)
+              await sleep(3500);
+              windowState.mainWindow!.focus();
+              windowState.mainWindow!.moveTop();
+              await sleep(200);
+              // Hide backend banner during these shots
+              await windowState.mainWindow!.webContents.executeJavaScript(
+                `document.querySelectorAll('.backend-banner').forEach(el => { el.style.display = 'none'; })`,
+              );
+
+              const t14gShot = async (name: string) => {
+                await flush();
+                await windowState.mainWindow!.webContents.executeJavaScript(
+                  `document.querySelectorAll('.backend-banner').forEach(el => { el.style.display = 'none'; })`,
+                );
+                await flush();
+                const img = await windowState.mainWindow!.capturePage();
+                writeFileSync(`/tmp/codex-screens/${name}.png`, img.toPNG());
+                console.log("T14G_CAPTURE", name, img.getSize());
+              };
+
+              // ── Bench list shots: D1/D2/D3 × light/dark ──────────────────
+              await setTheme("light");
+              await clickPicker("tabs"); // D1
+              await setPage("bench");
+              await sleep(2500); // discovery
+              await t14gShot("d-bench-D1-light");
+              await setTheme("dark");
+              await sleep(300);
+              await t14gShot("d-bench-D1-dark");
+
+              await setTheme("light");
+              await clickPicker("rail"); // D2
+              await sleep(300);
+              await t14gShot("d-bench-D2-light");
+              await setTheme("dark");
+              await sleep(300);
+              await t14gShot("d-bench-D2-dark");
+
+              await setTheme("light");
+              await clickPicker("island"); // D3
+              await sleep(300);
+              await t14gShot("d-bench-D3-light");
+              await setTheme("dark");
+              await sleep(300);
+              await t14gShot("d-bench-D3-dark");
+
+              // ── Bench detail shots: click first bench row ─────────────────
+              await setTheme("light");
+              await clickPicker("tabs"); // D1 detail
+              await windowState.mainWindow!.webContents.executeJavaScript(
+                `document.querySelector('.wb-link-btn.wb-table-name')?.click()`,
+              );
+              await sleep(2000); // wait for benchDetail IPC
+              await t14gShot("d-bench-D1-detail-light");
+              await setTheme("dark");
+              await sleep(300);
+              await t14gShot("d-bench-D1-detail-dark");
+
+              await setTheme("light");
+              await clickPicker("island"); // D3 detail
+              await sleep(300);
+              await t14gShot("d-bench-D3-detail-light");
+              await setTheme("dark");
+              await sleep(300);
+              await t14gShot("d-bench-D3-detail-dark");
+
+              // ── Build running shots: D1/D2/D3 × light/dark ───────────────
+              await setTheme("light");
+              await clickPicker("tabs"); // D1
+              await setPage("build");
+              await sleep(3000); // list-apps + developer_mode + watchdog
+              await t14gShot("d-build-running-D1-light");
+              await setTheme("dark");
+              await sleep(300);
+              await t14gShot("d-build-running-D1-dark");
+
+              await setTheme("light");
+              await clickPicker("rail"); // D2
+              await sleep(300);
+              await t14gShot("d-build-running-D2-light");
+              await setTheme("dark");
+              await sleep(300);
+              await t14gShot("d-build-running-D2-dark");
+
+              await setTheme("light");
+              await clickPicker("island"); // D3
+              await sleep(300);
+              await t14gShot("d-build-running-D3-light");
+              await setTheme("dark");
+              await sleep(300);
+              await t14gShot("d-build-running-D3-dark");
+
+              // ── Raven disconnected shots: D1/D2/D3 × light/dark ──────────
+              await setTheme("light");
+              await clickPicker("tabs"); // D1
+              await setPage("raven");
+              // Trigger ravenChanged so renderer re-fetches settings
+              windowState.mainWindow!.webContents.send(IPC.event.ravenChanged);
+              await sleep(1500);
+              await t14gShot("d-raven-disconnected-D1-light");
+              await setTheme("dark");
+              await sleep(300);
+              await t14gShot("d-raven-disconnected-D1-dark");
+
+              await setTheme("light");
+              await clickPicker("rail"); // D2
+              await sleep(300);
+              await t14gShot("d-raven-disconnected-D2-light");
+              await setTheme("dark");
+              await sleep(300);
+              await t14gShot("d-raven-disconnected-D2-dark");
+
+              await setTheme("light");
+              await clickPicker("island"); // D3
+              await sleep(300);
+              await t14gShot("d-raven-disconnected-D3-light");
+              await setTheme("dark");
+              await sleep(300);
+              await t14gShot("d-raven-disconnected-D3-dark");
+
+              // ── FileBird shots: D1/D2/D3 × light/dark ────────────────────
+              await setTheme("light");
+              await clickPicker("tabs"); // D1
+              await setPage("filebird");
+              await sleep(1000);
+              await t14gShot("d-filebird-D1-light");
+              await setTheme("dark");
+              await sleep(300);
+              await t14gShot("d-filebird-D1-dark");
+
+              await setTheme("light");
+              await clickPicker("rail"); // D2
+              await sleep(300);
+              await t14gShot("d-filebird-D2-light");
+              await setTheme("dark");
+              await sleep(300);
+              await t14gShot("d-filebird-D2-dark");
+
+              await setTheme("light");
+              await clickPicker("island"); // D3
+              await sleep(300);
+              await t14gShot("d-filebird-D3-light");
+              await setTheme("dark");
+              await sleep(300);
+              await t14gShot("d-filebird-D3-dark");
+
+              // ── Cleanup ─────────────────────────────────────────────────
+              try { studioProc.kill(); } catch { /* already gone */ }
+              benchSupervisor.activeBenchPath = null;
+              benchSupervisor.activeSite = null;
+              (benchSupervisor as unknown as Record<string, unknown>).status = "stopped";
+              (benchSupervisor as unknown as Record<string, unknown>).runOneShot = _origRunOneShot;
+              delete process.env.FCODE_BENCH_ROOTS;
+              // Restore rail for subsequent shots
+              await setTheme("light");
+              await clickPicker("rail");
+              await setPage("chat");
+              await sleep(300);
+            }
             console.log("CAPTURE_DONE");
             await windowState.mainWindow!.webContents.executeJavaScript(`
               document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
