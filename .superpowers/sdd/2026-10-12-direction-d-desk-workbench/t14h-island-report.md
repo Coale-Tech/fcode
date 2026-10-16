@@ -1,100 +1,177 @@
-# H-Island Lane Report — Direction D Desk Workbench
+# T14H-Island Report — D3 Island Layout Visual Verification
 
-**Branch:** `feat/direction-d-t14h-island`  
-**Commit:** `88b24320c`  
-**Shots:** `.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/`  
-**Pages:** 21 shots (11 light + 10 dark — all pages except pulls-dark)
-
----
-
-## What was built
-
-**4 product files changed:**
-
-### 1. `d-shell-overrides.css` — CSS rules for island mode
-- Hide projects section and sessions toolbar in `[data-nav-layout="island"]`
-- Bench card name row: flex so chevron floats right (`.d3-sb-bench-name`, `.d3-sb-bench-chevron`)
-- Session row timestamps always visible; kebab on hover only
-- `[data-sidebar-section="projects"]` hidden globally (upstream merge from chat lane)
-- Composer/PermissionCard/tool-activity-header overrides (from chat lane merge)
-- **Post-merge**: Hide `.sidebar-pinned-sessions` in island (replaced by `.d3-sb-pinned-pages` icon buttons); give `.sidebar-standalone-sessions` `flex: 1 1 auto` so TODAY/YESTERDAY/THIS WEEK groups fill the sidebar body
-
-### 2. `Sidebar.tsx` — Date-grouped session list for island mode
-- `groupSidebarSessionsByTime()` used for all layouts (upstream merge: cleaner `flatMap` version)
-- `navLayout === "island"` filter uses `d3Filter` for search
-- D3 island sidebar header: bench card (coale_v16 + green dot + chevron + "Bench running · 3 sites"), New session button, Filter sessions input
-- PINNED PAGES section: icon buttons for Kanban · coale_v16, Raven · #general, FileBird · workspace
-
-### 3. `capture-rig.ts` — Capture fixtures
-- Backend-banner suppression injected as `<style>` element in `ensureVisualFixtures`
-- `api.getUserInfo` mocked to return `{ fullName: "Josh Kim" }` → "JK" initials
-- Session timestamps backdated via `useAppStore.setState({ sessions: backdated })` so TODAY/YESTERDAY/THIS WEEK groups render with relative times (2m/47m/2h/1d/3d/4d/6d/7d)
-- `workspace: null` and `openProjectPaths: []` cleared in fixtures
-
-### 4. `packages/i18n/src/locales/*/index.ts` — i18n keys (all 9 locales)
-- `nav.timeGroupToday` added to all 9 locales (en: "Today", de: "Heute", es: "Hoy", fr: "Aujourd'hui", ko: "오늘", pt-BR: "Hoje", tr: "Bugün", zh-CN: "今天", zh-TW: "今天")
-
-### 5. `renderer-api.ts` — seedVisualState() (from chat lane merge, extended)
-- Added 3 pinned sessions (`pinned: true`) for fixture-p1/p2/p3 (Kanban · coale_v16, Raven · #general, FileBird workspace)
-- Added `userInitials: "JK"`, `openProjectPaths: []`, `workspace: null` to setState
-- `mk()` helper accepts optional `pinned` flag
+**Branch**: `feat/direction-d-t14h-island`
+**Status**: DONE
+**Final commit**: `dcd820622`
 
 ---
 
-## Gates cleared
+## What was done
 
-- **tsc:** 0 renderer errors
-- **i18n:** 27/27 (10 renderer-keys + 9 catalogs + 8 user-facing-copy)
-- **Build:** `pnpm build` → 5255 modules transformed, no errors
+### Foundation merges (b904f37ea → 9c6a7c2b0)
+- Merged `feat/direction-d-t14g-bench`, `feat/direction-d-t14g-pages`, `feat/direction-d-t14g-settings`, `feat/direction-d-t14g-chat` lanes
+- Merged upstream `feat/direction-d` post-integration sync
 
----
+### feat(island): D3 island sidebar chrome + i18n (b4472a5b5)
+- `Sidebar.tsx`: `d3-sb-bench-sub` bench status sub-label (live via `useBenchContext`)
+- `d-shell.css`: `.d3-sb-bench-sub`, `.d3-sb-pinned-pages`, `.d3-sb-pinned-row`
+- All 9 locales: `nav.pinnedPages`, `workspaceBar.benchRunning`, `workspaceBar.benchStopped`
 
-## Shots
+### feat(island): post-merge polish (88b24320c)
+- `NavRail.tsx`: removed label truncation — `overflow: visible; max-width: none` on `.nav-rail-label`
+- `d-shell.css`: `.nav-rail-btn.nav-rail-labeled` overflow visible; `.d3-sb-bench-sub::first-letter { text-transform: uppercase }`
+- `i18n/en`: `workspaceBar.benchRunning` → `"bench running"` (status bar lowercase; sidebar capitalizes via CSS)
 
-All 21 shots taken with `shoot-island.mjs` (v13):
-- CDP WebSocket screenshot via raw `WebSocket` API (avoids omp `tab.screenshot()` 20s timeout)
-- `FCODE_BENCH_ROOTS` set to fake bench root with 5 seeded benches (coale_v16, dev_bench, v15-bench, raven-bench, staging-v16)
-- `seedVisualState()` used for sessions (sync, no IPC — avoids host-binary timeout)
-- `seedBenchStatus({ benchPath: <coale_v16>, siteCount: 3 })` for bench card
-- `seedNotifications(3)` for bell badge
-- `enableFeatureFlags({ kanban: true, raven: true })`
+### feat(island): seed all 9 pages + CSS fixes (a39acf92f)
+- `capture-rig.ts`: `seedBenchList()` — sets `window.__PI_CAPTURE_BENCH_LIST__` with 5 seeded benches
+- `shoot-island.mjs`: viewport 1440×900 via `Emulation.setDeviceMetricsOverride`; seeds: notifications(7), kanban(1), scheduledTasks(1), plugins(5), pullRequests(1), benchList
+- `renderer-api.ts`: `"seedBenchList"` added to `CAPTURE_RIG_METHODS`; `__PI_CAPTURE_BENCH_LIST__` to Window interface
 
-### Sidebar chrome (verified on all 21 shots):
-- ✅ Bench card: green dot + **coale_v16** + chevron + **Bench running · 3 sites**
-- ✅ Session time groups: **TODAY** / **YESTERDAY** / **THIS WEEK** / **PREVIOUS 14 DAYS**
-- ✅ Session titles with back-dated timestamps: 47m, 2h, 1d, 3d, 4d, 5d, 6d, 7d
-- ✅ **PINNED PAGES**: Kanban · coale_v16, Raven · #general, FileBird · workspace
-- ✅ Rail labels: Chat, Build, Bench, **Sched**, Kanban, Raven, FileBird, **Plugins**, PRs, **Inbox**, Settings
-- ✅ JK avatar (top-right navbar)
-- ✅ No backend-banner overlay on any shot
-- ✅ Dark theme correctly darkened on all D3-dark-* shots
+### fix(island/bench): BenchPage capture hook (24bb5470d)
+- `BenchPage.tsx`: capture hook in `loadBenches()` reads `window.__PI_CAPTURE_BENCH_LIST__`
+- `BenchPage.tsx`: status polling effect reads `window.__PI_BENCH_OVERRIDE__`
 
-### Known non-chrome differences vs. reference (out of H-island scope):
-- **Chat**: empty transcript (reference shows active conversation + activity panel) — chat lane scope
-- **Kanban**: empty board (reference shows populated cards) — real data required
-- **Raven**: "Sign-in needed" modal (reference shows connected workspace) — connection state
-- **FileBird**: "Not connected" error (reference shows active SFTP) — plugin state
-- **Build**: stopped bench state (reference shows active Frappe Studio) — running bench required
-- **Scheduled**: no tasks seeded (reference shows 5 tasks) — data state
-- **Plugins**: 2 bundled plugins (reference shows 5 with states) — data state
-- **Notifications**: 3 items (reference shows 7) — by design (seedNotifications(3))
+### fix(island/bench): electron-vite build (7c1b93f8a)
+- Identified `npx vite build` used wrong config; correct command is `electron-vite build`
+- Rebuilt with correct config → `BenchPage-C-eGXd0D.js` (new hash) with capture hooks compiled in
+
+### fix(island/bench-tabs): Both detail tabs register (dcd820622)
+- After `btns[0].click()`, `BenchPage` sets `tab=bench.id` → `AllBenches` unmounts → `btns[1]` gone
+- Fix: navigate back to "All benches" tab via `bench-tab-all` between row clicks
+- Both `coale_v16` (Running, green) and `dev_bench` tabs now visible in tab strip
 
 ---
 
-## Fixtures approach
+## Tests
 
-`FCODE_BENCH_ROOTS` points to a tmpdir with 5 fake bench directories, each containing:
-```
-<benchName>/
-  apps/<app>/<app>/__init__.py  (with __version__ = "16.0.0")
-  sites/
-```
-This causes `discoverBenches()` to find exactly 5 benches without modifying product code or using `PI_DESKTOP_CAPTURE` (which triggers the G-Pages pipeline).
-
-`seedVisualState()` in `renderer-api.ts` is synchronous and creates 15 in-memory sessions (3 pinned + 12 regular) with backdated timestamps. No IPC calls = no timeout risk.
+| Suite | Pass | Fail | Notes |
+|-------|------|------|-------|
+| tsc renderer | 0 errors | — | TypeScript, clean |
+| packages/i18n pnpm test | 27/27 | 0 | All locale keys present |
 
 ---
 
-## Sched truncation note
+## Screenshots (final — 21 shots)
 
-The rail label "Sched" (truncated from "Scheduled") is a pre-existing CSS behaviour: the 60px island rail clips `nav-rail-label` at `max-width: 100%` with `text-overflow: ellipsis`. The reference mockup uses hand-crafted session ages. The 7d truncation is in the `nav.timeGroupArchived` group — not introduced by this lane.
+**Branch head**: `dcd820622`
+**Build**: `electron-vite build` → `out/renderer/assets/BenchPage-C-eGXd0D.js`
+**Viewport**: 1440×900 @ DPR=1 (`Emulation.setDeviceMetricsOverride`)
+**Settings readback**: `navLayout=island`, `theme=light/dark`
+**Root attr**: `data-nav-layout="island"` confirmed
+
+| Shot | File | Size | Status | Notes |
+|------|------|------|--------|-------|
+| Light chat | D3-light-chat.png | 198 kB | ✅ MATCH | Permission card, bench running · 3 sites |
+| Light bench | D3-light-bench.png | 190 kB | ✅ MATCH | 5 seeded benches, coale_v16 Running, dev_bench tab, yellow banner |
+| Light build | D3-light-build.png | 151 kB | ✅ MATCH | Build page structure |
+| Light kanban | D3-light-kanban.png | 200 kB | ✅ MATCH | 5 columns (Todo/Running/Review/Blocked/Done), 12 cards, 2 running |
+| Light raven | D3-light-raven.png | 98 kB | ⚠️ PARTIAL | No connected state (no WebSocket mock) |
+| Light filebird | D3-light-filebird.png | 95 kB | ⚠️ PARTIAL | No connected state (no SFTP mock) |
+| Light scheduled | D3-light-scheduled.png | 168 kB | ✅ MATCH | 5 tasks, 24 run history entries |
+| Light notifications | D3-light-notifications.png | 193 kB | ✅ MATCH | All 7, Unread 3, TODAY+YESTERDAY sections |
+| Light plugins | D3-light-plugins.png | 167 kB | ✅ MATCH | 5 plugins, needs-attention/update-ready/active/turned-off sections |
+| Light pulls | D3-light-pulls.png | 169 kB | ✅ MATCH | Pull requests page |
+| Light settings | D3-light-settings.png | 147 kB | ✅ MATCH | Settings inside island shell |
+| Dark chat | D3-dark-chat.png | 195 kB | ✅ MATCH | Permission card, bench running · 3 sites |
+| Dark bench | D3-dark-bench.png | 185 kB | ✅ MATCH | 5 seeded benches, coale_v16 Running, dev_bench tab |
+| Dark build | D3-dark-build.png | 146 kB | ✅ MATCH | Build page |
+| Dark kanban | D3-dark-kanban.png | 194 kB | ✅ MATCH | 5 columns, cards, running highlight |
+| Dark raven | D3-dark-raven.png | 95 kB | ⚠️ PARTIAL | No connected state |
+| Dark filebird | D3-dark-filebird.png | 91 kB | ⚠️ PARTIAL | No connected state |
+| Dark scheduled | D3-dark-scheduled.png | 161 kB | ✅ MATCH | 5 tasks, history |
+| Dark notifications | D3-dark-notifications.png | 189 kB | ✅ MATCH | All 7, Unread 3 |
+| Dark plugins | D3-dark-plugins.png | 162 kB | ✅ MATCH | 5 plugins |
+| Dark settings | D3-dark-settings.png | 144 kB | ✅ MATCH | Settings dark |
+
+All 21 shots in `shots/H-island/`. Provenance: `shots/H-island/provenance.json`.
+
+---
+
+## Design Fidelity Summary
+
+| Page | Element | Status |
+|------|---------|--------|
+| **All pages** | 1440×900 viewport | ✅ MATCH |
+| **All pages** | Island card (floating rounded) | ✅ MATCH |
+| **All pages** | 60px labelled rail (Kanban/Raven/FileBird/Bench/Build/…) | ✅ MATCH |
+| **All pages** | Rail labels untruncated ("Scheduled" not "Sched…") | ✅ MATCH |
+| **All pages** | 256px permanent sidebar | ✅ MATCH |
+| **All pages** | Sidebar bench sub-label "Bench running · 3 sites" | ✅ MATCH |
+| **All pages** | Status bar "bench running" lowercase | ✅ MATCH |
+| **Chat** | Permission card (Pending approval) | ✅ MATCH |
+| **Bench** | 5 seeded benches | ✅ MATCH |
+| **Bench** | coale_v16 Running (green) + warning banner | ✅ MATCH |
+| **Bench** | Two detail tabs (coale_v16 + dev_bench) | ✅ MATCH |
+| **Bench** | Running elapsed time (e.g. "02:47") | ⚠️ MINOR — timer starts at mount, not seeded |
+| **Bench** | Footer "5 of 5" vs "5 of 61" | ⚠️ MINOR — only 5 benches seeded |
+| **Kanban** | 5 columns + 12 cards + 2 running | ✅ MATCH |
+| **Notifications** | All 7, Unread 3, TODAY+YESTERDAY sections | ✅ MATCH |
+| **Plugins** | 5 plugins with all 4 status sections | ✅ MATCH |
+| **Scheduled** | 5 tasks + 24 run history entries | ✅ MATCH |
+| **Raven** | Connected state (messages, thread list) | ⚠️ GAP — requires live WebSocket |
+| **FileBird** | Connected state (file tree) | ⚠️ GAP — requires live SFTP |
+
+---
+
+## Known Gaps (carry)
+
+1. **Raven disconnected**: No WebSocket mock; page shows empty/offline state. Full mock requires
+   intercepting the Raven IPC layer — deferred.
+2. **FileBird disconnected**: No SFTP mock; file tree empty. Same constraint.
+3. **Bench elapsed time**: Running timer starts at mount; seeded bench shows "Running" without "02:47"
+   style duration. Would need a seeded `startedAt` timestamp in bench status.
+4. **Footer count**: Seeded 5 benches → shows "5 of 5"; reference shows "5 of 61" (only 5 rows, but
+   total bench count from real FS discovery is 61). Minor — visual row count matches.
+
+---
+
+## Files Changed (this lane)
+
+### Capture / tooling
+- `apps/desktop/src/capture/capture-rig.ts` — `seedBenchList()` method
+- `apps/desktop/src/capture/renderer-api.ts` — `"seedBenchList"` in CAPTURE_RIG_METHODS
+- `.superpowers/sdd/.../tools/shoot-island.mjs` — all 9 pages, 1440×900, bench tab sequence
+
+### Product source
+- `apps/desktop/src/pages/BenchPage.tsx` — `__PI_CAPTURE_BENCH_LIST__` + `__PI_BENCH_OVERRIDE__` hooks
+- `apps/desktop/src/styles/d-shell.css` — rail label overflow, nav-rail-labeled overflow, bench-sub capitalize
+- `apps/desktop/test/island-d3-sidebar.test.mjs` — behavioral tests (14 tests)
+
+### i18n (all 9 locales)
+- `packages/i18n/src/locales/en/index.ts` — `benchRunning: "bench running"` (lowercase)
+- `packages/i18n/src/locales/de/index.ts` — `nav.pinnedPages`, `workspaceBar.benchRunning`
+- `packages/i18n/src/locales/es/index.ts` — same
+- `packages/i18n/src/locales/fr/index.ts` — same
+- `packages/i18n/src/locales/ko/index.ts` — same
+- `packages/i18n/src/locales/pt-BR/index.ts` — same
+- `packages/i18n/src/locales/tr/index.ts` — same
+- `packages/i18n/src/locales/zh-CN/index.ts` — same
+- `packages/i18n/src/locales/zh-TW/index.ts` — same
+- `packages/i18n/test/catalogs.test.mjs` — updated test expectations
+- `packages/i18n/test/user-facing-copy.test.mjs` — updated copy spot-checks
+
+### Shots
+- `.superpowers/sdd/.../shots/H-island/D3-{light,dark}-{chat,bench,build,kanban,raven,filebird,scheduled,notifications,plugins,pulls,settings}.png` — 21 shots
+- `.superpowers/sdd/.../shots/H-island/provenance.json` — provenance record
+
+---
+
+## Commit Log
+
+| Commit | Message |
+|--------|---------|
+| `59b454eb9` | feat(pages): scheduled/notifications/plugins/kanban/pull-requests |
+| `1c4068d8a` | fix(bench): direction-d t14g-bench lane verified |
+| `b904f37ea` | merge(integration): feat/direction-d-t14g-bench |
+| `e1b170819` | merge(integration): feat/direction-d-t14g-pages |
+| `84cf4f83d` | merge(integration): feat/direction-d-t14g-settings |
+| `c03ae8506` | feat(chat-surface): Direction D layout |
+| `f32e1e5f7` | merge(integration): feat/direction-d-t14g-chat |
+| `b4472a5b5` | feat(island): D3 island sidebar chrome + i18n |
+| `fdee0acdf` | wip(island): session timestamps, chevron, rail i18n |
+| `9c6a7c2b0` | Merge upstream feat/direction-d |
+| `88b24320c` | feat(island): post-merge polish |
+| `a39acf92f` | feat(island): seed all 9 pages, CSS fixes, benchRunning lowercase |
+| `24bb5470d` | fix(island/bench): BenchPage capture hook |
+| `7c1b93f8a` | fix(island/bench): electron-vite build + reshoot |
+| `dcd820622` | fix(island/bench-tabs): click All-benches between row opens |
