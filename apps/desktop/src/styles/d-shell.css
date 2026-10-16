@@ -487,7 +487,10 @@
   color: var(--ink-gray-9);
 }
 
-/* Rail labels: always visible in island, 10px line-height:1 (D3-shell.html:98-102) */
+/* Rail labels: always visible in island, 10px line-height:1 (D3-shell.html:98-102)
+ * No overflow:hidden/ellipsis — reference label is unconstrained (D3-shell.html:100).
+ * Text (e.g. "Scheduled" ≈47px) centers within the 52px button; button overflow:visible
+ * keeps the badge and label visible without clipping. */
 :root[data-nav-layout="island"] .nav-rail-label {
   display: block;
   font-size: var(--d-rail-island-label);
@@ -496,12 +499,14 @@
   text-align: center;
   letter-spacing: 0.01em;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
+  overflow: visible;
+  max-width: none;
+  text-overflow: clip;
 }
 
-/* Rail items: vertical column 52×46px, 4px inset in 60px rail (D3-shell.html:70-82) */
+/* Rail items: vertical column 52×46px, 4px inset in 60px rail (D3-shell.html:70-82)
+ * overflow:visible overrides chrome.css:1089 so the badge (top:-5px right:-6px)
+ * is not clipped by the button's box. */
 :root[data-nav-layout="island"] .nav-rail-btn.nav-rail-labeled,
 :root[data-nav-layout="island"] .nav-rail .notification-trigger.nav-rail-labeled {
   flex-direction: column;
@@ -512,6 +517,7 @@
   height: auto;
   flex: 0 0 auto;
   margin: 0;
+  overflow: visible;
   padding: 6px 4px var(--d-rail-island-item-pb); /* top:6 sides:4px bottom:5px */
   gap: var(--d-rail-island-item-gap);   /* 3px */
 }
@@ -570,6 +576,11 @@
 }
 :root[data-nav-layout="island"] .d3-sb-bench-sub {
   font-size: 11px; color: var(--ink-gray-4); margin-top: 3px;
+}
+/* Capitalize first letter so "bench running · N sites" renders as "Bench running · N sites"
+ * (i18n key is lowercase; status bar keeps lowercase, sidebar capitalizes). */
+:root[data-nav-layout="island"] .d3-sb-bench-sub::first-letter {
+  text-transform: uppercase;
 }
 :root[data-nav-layout="island"] .d3-sb-new-btn {
   margin: 0 10px 8px;
