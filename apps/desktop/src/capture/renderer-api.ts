@@ -79,6 +79,7 @@ const CAPTURE_RIG_METHODS = [
   "clearPendingPermissions",
   "seedEmptyHome",
   "seedOnboardingChecklist",
+  "seedBenchList",
 ] as const satisfies readonly CaptureRigMethod[];
 
 export function installRendererApi(): () => void {

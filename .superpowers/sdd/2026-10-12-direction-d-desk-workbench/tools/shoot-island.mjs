@@ -1,20 +1,22 @@
 /**
  * shoot-island.mjs — capture all variant-D3 pages via raw CDP WebSocket.
- * Uses seedVisualState() (sync, in-memory) instead of ensureVisualFixtures()
- * (async IPC calls that timeout without a running host binary).
- * Creates fake bench dirs so BenchPage shows 5 seeded benches.
+ * v14: Uses seedVisualState() + individual seed methods (no ensureVisualFixtures).
+ *      Viewport forced to 1440×900 via Emulation.setDeviceMetricsOverride.
+ *      No FCODE_BENCH_ROOTS (fake dirs). Uses seedBenchList() for bench page.
  */
-import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createServer } from "node:net";
 import { createHash } from "node:crypto";
+import { mkdtempSync } from "node:fs";
 
 const WORKTREE  = "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-island";
 const ELECTRON  = `${WORKTREE}/apps/desktop/node_modules/.bin/electron`;
 const APP_DIR   = `${WORKTREE}/apps/desktop`;
 const SHOTS_DIR = `${WORKTREE}/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island`;
+
+const COALE_BENCH_PATH = "/Users/mac/ERPNext/frappe_agent/coale_v16";
 
 const freePort = () => new Promise((res, rej) => {
   const s = createServer(); s.unref();
@@ -76,48 +78,22 @@ function openCDP(wsUrl) {
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-/**
- * Create fake bench directory tree so BenchPage discovers exactly 5 benches.
- * Each bench has apps/<name>/<name>/__init__.py (version) + sites/.
- */
-async function createFakeBenchRoot() {
-  const root = await mkdtemp(join(tmpdir(), "pi-bench-"));
-  const benches = [
-    { name: "coale_v16",   apps: ["frappe","erpnext","hrms","raven"], ver: 16 },
-    { name: "dev_bench",   apps: ["frappe","erpnext"],                ver: 16 },
-    { name: "v15-bench",   apps: ["frappe","hrms"],                   ver: 15 },
-    { name: "raven-bench", apps: ["frappe","raven"],                  ver: 16 },
-    { name: "staging-v16", apps: ["frappe","erpnext","hrms"],         ver: 16 },
-  ];
-  for (const { name, apps, ver } of benches) {
-    const base = join(root, name);
-    mkdirSync(join(base, "sites"), { recursive: true });
-    for (const app of apps) {
-      mkdirSync(join(base, "apps", app, app), { recursive: true });
-      writeFileSync(join(base, "apps", app, app, "__init__.py"),
-        `__version__ = "${ver}.0.0"\n`);
-    }
-  }
-  return root;
-}
-
 export async function shoot({ browser: _browser }) {
   await mkdir(SHOTS_DIR, { recursive: true });
 
-  const dataDir     = await mkdtemp(join(tmpdir(), "pi-island-"));
-  const chromiumDir = await mkdtemp(join(tmpdir(), "pi-chrome-"));
-  const benchRoot   = await createFakeBenchRoot();
+  const dataDir     = mkdtempSync(join(tmpdir(), "pi-island-"));
+  const chromiumDir = mkdtempSync(join(tmpdir(), "pi-chrome-"));
   const port        = await freePort();
 
   const env = {
     ...process.env,
     PI_DESKTOP_DATA_DIR: dataDir,
-    FCODE_BENCH_ROOTS: benchRoot,       // feed 5 seeded benches to BenchPage
   };
   delete env.PI_DESKTOP_CAPTURE;
   delete env.ELECTRON_RENDERER_URL;
+  delete env.FCODE_BENCH_ROOTS;
 
-  display(`[shoot] port=${port}  benchRoot=${benchRoot}`);
+  display(`[shoot] port=${port}`);
   const proc = Bun.spawn(
     [ELECTRON, ".", `--remote-debugging-port=${port}`, `--user-data-dir=${chromiumDir}`],
     { cwd: APP_DIR, env, stdout: "ignore", stderr: "ignore" },
@@ -142,6 +118,11 @@ export async function shoot({ browser: _browser }) {
     }
     return r?.result?.value;
   };
+
+  // Force 1440×900 viewport to match reference screenshots.
+  await cdp.send("Emulation.setDeviceMetricsOverride", {
+    width: 1440, height: 900, deviceScaleFactor: 1, mobile: false,
+  });
 
   // Wait for app to initialise: __PI_DESKTOP__ + settings IPC.
   display("[shoot] Waiting for renderer…");
@@ -189,20 +170,33 @@ export async function shoot({ browser: _browser }) {
 
   await sleep(400);
 
-  // 6. Seed bench card status (sidebar) — rig method, lazy-loads capture-rig.
-  //    benchPath last segment = "coale_v16" → shown as bench name.
-  const benchCoalePath = join(benchRoot, "coale_v16");
+  // 6. Seed bench card status (sidebar) — sets __PI_BENCH_OVERRIDE__ for useBenchContext.
   await eval_(`(async () => {
     await window.__PI_DESKTOP__?.seedBenchStatus?.({
-      benchPath: ${JSON.stringify(benchCoalePath)},
-      siteCount: 3,
+      benchPath: ${JSON.stringify(COALE_BENCH_PATH)},
+      siteCount: 2,
     });
   })()`);
 
-  // 7. Seed 3 notifications for bell badge.
-  await eval_(`(async () => { await window.__PI_DESKTOP__?.seedNotifications?.(3); })()`);
+  // 7. Seed bench IPC intercept — makes BenchPage show 5 seeded benches + coale_v16 running.
+  await eval_(`(async () => { await window.__PI_DESKTOP__?.seedBenchList?.(); })()`);
 
-  // 8. Seed OMP settings (for settings page).
+  // 8. Seed 7 notifications (3 unread TODAY + 4 read: 3 TODAY + 2 YESTERDAY).
+  await eval_(`(async () => { await window.__PI_DESKTOP__?.seedNotifications?.(7); })()`);
+
+  // 9. Seed kanban board (5 columns, 12 tasks, 2 running).
+  await eval_(`(async () => { await window.__PI_DESKTOP__?.seedKanbanBoard?.(1); })()`);
+
+  // 10. Seed scheduled tasks (5 tasks + 24 run history).
+  await eval_(`(async () => { await window.__PI_DESKTOP__?.seedScheduledTasks?.(1); })()`);
+
+  // 11. Seed plugins (5 plugins: 2 active, 1 turned off, 1 needs attention, 1 update).
+  await eval_(`(async () => { await window.__PI_DESKTOP__?.seedPlugins?.(5); })()`);
+
+  // 12. Seed pull requests (5 PRs with check states).
+  await eval_(`(async () => { await window.__PI_DESKTOP__?.seedPullRequests?.(1); })()`);
+
+  // 13. Seed OMP settings (for settings page).
   await eval_(`(async () => { await window.__PI_DESKTOP__?.seedOmpSettings?.(); })()`);
 
   await sleep(800);
@@ -220,6 +214,10 @@ export async function shoot({ browser: _browser }) {
     avatar:    document.querySelector(".shell-navbar-avatar-initials")?.textContent ?? "none",
   })`);
   display("[shoot] DOM: " + domCheck);
+
+  // Seed approval card for the chat shot (pending permission card must be visible).
+  await eval_(`(async () => { await window.__PI_DESKTOP__?.seedApprovalCard?.(); })()`);
+  await sleep(600);
 
   const prov = [];
   async function shot(name, beforeFn, extraWait = 0) {
@@ -239,8 +237,44 @@ export async function shoot({ browser: _browser }) {
   // ── LIGHT ────────────────────────────────────────────────────────────────
   await theme("light"); await sleep(400);
 
+  // Assert .permission-card is in DOM before chat shot.
+  const hasPermCard = await eval_(`!!document.querySelector(".permission-card")`);
+  if (!hasPermCard) {
+    display("[shoot] WARN: .permission-card not found for chat shot; re-seeding…");
+    await eval_(`(async () => { await window.__PI_DESKTOP__?.seedApprovalCard?.(); })()`);
+    await sleep(800);
+  }
+
   await shot("D3-light-chat");
-  await shot("D3-light-bench",         () => goto("bench"),         2400); // bench discovery takes ~2s
+
+  // Bench: seed bench list, wait for discovery, then open first 2 bench detail tabs.
+  await shot("D3-light-bench", async () => {
+    await goto("bench");
+    await sleep(2400); // wait for bench discovery IPC
+    // Open coale_v16 and dev_bench as detail tabs.
+    await eval_(`
+      (() => {
+        const btns = document.querySelectorAll(".wb-link-btn.wb-table-name");
+        if (btns[0]) btns[0].click();
+      })()
+    `);
+    await sleep(400);
+    await eval_(`
+      (() => {
+        const btns = document.querySelectorAll(".wb-link-btn.wb-table-name");
+        if (btns[1]) btns[1].click();
+      })()
+    `);
+    await sleep(400);
+    // Navigate back to "All benches" tab to show the table.
+    await eval_(`
+      (() => {
+        const allTab = document.getElementById("bench-tab-all");
+        if (allTab) allTab.click();
+      })()
+    `);
+  }, 400);
+
   await shot("D3-light-build",         () => goto("build"));
   await shot("D3-light-kanban",        () => goto("kanban"));
   await shot("D3-light-raven",         () => goto("raven"));
@@ -257,8 +291,35 @@ export async function shoot({ browser: _browser }) {
   // ── DARK ─────────────────────────────────────────────────────────────────
   await theme("dark"); await sleep(400);
 
-  await shot("D3-dark-chat",           () => goto("chat"));
-  await shot("D3-dark-bench",          () => goto("bench"),         2400);
+  await shot("D3-dark-chat",           async () => {
+    await goto("chat");
+    // Re-seed approval card for dark theme shot.
+    await eval_(`(async () => { await window.__PI_DESKTOP__?.seedApprovalCard?.(); })()`);
+  });
+  await shot("D3-dark-bench",          async () => {
+    await goto("bench");
+    await sleep(2400);
+    await eval_(`
+      (() => {
+        const btns = document.querySelectorAll(".wb-link-btn.wb-table-name");
+        if (btns[0]) btns[0].click();
+      })()
+    `);
+    await sleep(300);
+    await eval_(`
+      (() => {
+        const btns = document.querySelectorAll(".wb-link-btn.wb-table-name");
+        if (btns[1]) btns[1].click();
+      })()
+    `);
+    await sleep(300);
+    await eval_(`
+      (() => {
+        const allTab = document.getElementById("bench-tab-all");
+        if (allTab) allTab.click();
+      })()
+    `);
+  }, 400);
   await shot("D3-dark-build",          () => goto("build"));
   await shot("D3-dark-kanban",         () => goto("kanban"));
   await shot("D3-dark-raven",          () => goto("raven"));

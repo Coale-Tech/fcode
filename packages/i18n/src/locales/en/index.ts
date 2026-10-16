@@ -218,7 +218,7 @@ export const en = {
     chooseBench: "Choose bench",
     running: "running",
     stopped: "stopped",
-    benchRunning: "Bench running",
+    benchRunning: "bench running",
     benchStopped: "bench stopped",
     site: "site",
     sites: "sites",

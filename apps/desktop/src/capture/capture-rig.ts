@@ -69,6 +69,9 @@ export type CaptureRigMethods = {
   clearPendingPermissions: () => void;
   seedEmptyHome: () => void;
   seedOnboardingChecklist: () => void;
+  /** Intercept window.piDesktop.invoke for bench IPC channels so BenchPage shows
+   *  seeded data (5 specific benches, coale_v16 running) without needing a host binary. */
+  seedBenchList: () => void;
 };
 
 export type CaptureRig = CaptureRigMethods & {
@@ -1231,13 +1234,12 @@ export function installCaptureRig(): CaptureRig {
       useAppStore.setState({ userInitials: "JK" });
       // Mock getUserInfo so the avatar always shows "JK" (not the OS login name).
       api.getUserInfo = async () => ({ fullName: "Josh Kim" });
-      // NOTE: window.piDesktop is a contextBridge sealed proxy; cannot intercept bench/list here.
-      // Bench page will show real filesystem data. Sidebar chrome is the island-lane deliverable.
+      // NOTE: Use seedBenchList() to intercept window.piDesktop.invoke for bench IPC channels.
       // Enable kanban and raven so rail + sidebar show all feature items.
       // Patch the IPC fetch so NavRail's useEffect cannot overwrite the enabled state.
       useAppStore.setState({ kanbanEnabled: true, ravenEnabled: true });
       api.kanbanSettingsGet = async () => ({ settings: { enabled: true, maxInProgress: 3, maxRuntimeSeconds: 3600, maxAgentCardsPerSession: 10, maxDailySpawns: 20 } });
-      api.ravenSettingsGet = async () => ({ settings: { enabled: true, url: "" } });
+      api.ravenSettingsGet = async () => ({ settings: { enabled: true, url: "https://coale.frappe.cloud/raven" } });
       // Seed 3 notifications for bell badge.
       methods.seedNotifications(3);
       // Seed English session titles matching the reference design (variant-D1/D2/D3).
@@ -1533,6 +1535,62 @@ export function installCaptureRig(): CaptureRig {
         viewedBenchPath: benchPath,
         viewedBenchSiteCount: siteCount,
         ...(settings ? { settings: { ...settings, defaultModelId: "claude-sonnet-5" } } : {}),
+      });
+    },
+    seedBenchList: () => {
+      if (!window.__PI_CAPTURE__) return;
+      const COALE_PATH = "/Users/mac/ERPNext/frappe_agent/coale_v16";
+      // Reference bench data (pages-d/bench/variant-D3.png): 5 benches, coale_v16 running.
+      const benches = [
+        { id: "cap-bench-coale-v16", path: COALE_PATH,
+          version: 16 as const,
+          sites: [{ name: "coale.frappe.cloud", isDefault: true }, { name: "test.frappe.cloud", isDefault: false }],
+          apps: ["frappe", "erpnext", "hrms", "raven"] },
+        { id: "cap-bench-dev",  path: "/Users/mac/ERPNext/dev_bench",
+          version: 16 as const,
+          sites: [{ name: "dev.localhost", isDefault: true }],
+          apps: ["frappe", "erpnext"] },
+        { id: "cap-bench-v15",  path: "/Users/mac/ERPNext/v15-bench",
+          version: 15 as const,
+          sites: [{ name: "v15.localhost", isDefault: true }],
+          apps: ["frappe", "hrms"] },
+        { id: "cap-bench-staging", path: "/Users/mac/ERPNext/staging_v16",
+          version: 16 as const,
+          sites: [{ name: "staging-1.frappe.cloud", isDefault: true },
+                  { name: "staging-2.frappe.cloud", isDefault: false },
+                  { name: "staging-3.frappe.cloud", isDefault: false }],
+          apps: ["frappe", "erpnext", "hrms"] },
+        { id: "cap-bench-test",  path: "/Users/mac/ERPNext/test_v16",
+          version: 16 as const,
+          sites: [{ name: "test.localhost", isDefault: true }],
+          apps: ["frappe"] },
+      ];
+      const listData = { benches, failedRoots: [] as Array<{ root: string; reason: string }>, roots: ["/Users/mac/ERPNext"] };
+      const statusData = { status: "running" as const, benchPath: COALE_PATH, logs: [] as Array<{ ts: number; text: string }> };
+      // Intercept window.piDesktop.invoke for bench IPC channels.
+      // contextBridge exposes piDesktop as configurable, so we can redefine the getter.
+      const origDesktop = window.piDesktop;
+      if (!origDesktop) return;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const proxy = new Proxy(origDesktop as unknown as Record<string, unknown>, {
+        get(target, prop) {
+          if (prop === "invoke") {
+            return (channel: string, ...args: unknown[]) => {
+              if (channel === "pi-desktop/bench/list")
+                return Promise.resolve({ ok: true as const, data: listData });
+              if (channel === "pi-desktop/bench/status")
+                return Promise.resolve({ ok: true as const, data: statusData });
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              return (target[prop as string] as (...a: unknown[]) => unknown).call(target, channel, ...args);
+            };
+          }
+          const val = target[prop as string];
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return typeof val === "function" ? (val as (...a: unknown[]) => unknown).bind(target) : val;
+        },
+      });
+      Object.defineProperty(window, "piDesktop", {
+        configurable: true, enumerable: true, get: () => proxy,
       });
     },
   };
