@@ -2311,7 +2311,8 @@ sklm: {
     "open": "Ouvrir",
     "draft": "Brouillon",
     "status": "Statut",
-    "actions": "Actions"
+    "actions": "Actions",
+    "updatedAgo": "Mis à jour {{ago}}"
   },
   "git": {
     "branch": "Branche",
@@ -2370,6 +2371,7 @@ sklm: {
     "cadenceMonthly": "Mensuel",
     "enabled": "Activé",
     "disabled": "Désactivé",
+    "lastFailed": "Dernier: échoué",
     "runNow": "Exécuter maintenant",
     "delete": "Supprimer",
     "lastRun": "Dernière exécution",

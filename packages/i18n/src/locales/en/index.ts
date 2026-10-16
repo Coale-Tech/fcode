@@ -2335,6 +2335,7 @@ sklm: {
     draft: "Draft",
     status: "Status",
     actions: "Actions",
+    updatedAgo: "Updated {{ago}}",
   },
   git: {
     branch: "Branch",
@@ -2393,6 +2394,7 @@ sklm: {
     cadenceMonthly: "Monthly",
     enabled: "Enabled",
     disabled: "Disabled",
+    lastFailed: "Last: failed",
     runNow: "Run now",
     delete: "Delete",
     lastRun: "Last run",

@@ -2267,6 +2267,7 @@ export const ptBR = {
     draft: "Rascunho",
     status: "Status",
     actions: "Ações",
+    updatedAgo: "Atualizado {{ago}}",
   },
   git: {
     branch: "Branch",
@@ -2325,6 +2326,7 @@ export const ptBR = {
     cadenceMonthly: "Mensal",
     enabled: "Ativada",
     disabled: "Desativada",
+    lastFailed: "Último: falhou",
     runNow: "Executar agora",
     delete: "Excluir",
     lastRun: "Última execução",

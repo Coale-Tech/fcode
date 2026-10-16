@@ -13,9 +13,13 @@ import type {
   KanbanBoard,
   McpServerRecord,
   McpServerStatus,
+  OmpAgentEntry,
+  OmpModelsListResult,
+  OmpWorktreeEntry,
   PluginSummary,
   PluginTheme,
   ProjectRecord,
+  PullRequestCheck,
   PullRequestSummary,
   ScheduledTask,
   ScheduledTaskRun,
@@ -52,6 +56,7 @@ export type CaptureRigMethods = {
     failed: string;
   } | null;
   ensureVisualFixtures: () => Promise<void>;
+  seedOmpSettings: () => void;
 };
 
 export type CaptureRig = CaptureRigMethods & {
@@ -72,6 +77,8 @@ export function installCaptureRig(): CaptureRig {
   const originalListScheduled = api.listScheduled;
   const originalListScheduledRuns = api.listScheduledRuns;
   const originalListPullRequests = api.listPullRequests;
+  const originalOmpModelsList = api.ompModelsList;
+  const originalOmpWorktreeList = api.ompWorktreeList;
   const methods: CaptureRigMethods = {
     openWorkPanelArtifact: (
       kind: "review" | "browser" | "file",
@@ -958,6 +965,7 @@ export function installCaptureRig(): CaptureRig {
         { id: "sr-3", taskId: "st-4", sessionId: null, status: "error", errorCode: "PROVIDER_TIMEOUT", startedAt: new Date(Date.now() - 86_400_000).toISOString(), endedAt: new Date(Date.now() - 86_380_000).toISOString() },
         { id: "sr-4", taskId: "st-1", sessionId: "sess-c-3", status: "completed", errorCode: null, startedAt: new Date(Date.now() - 90_000_000).toISOString(), endedAt: new Date(Date.now() - 89_940_000).toISOString() },
         { id: "sr-5", taskId: "st-2", sessionId: "sess-c-4", status: "aborted", errorCode: null, startedAt: new Date(Date.now() - 7_800_000).toISOString(), endedAt: new Date(Date.now() - 7_740_000).toISOString() },
+        { id: "sr-6", taskId: "st-1", sessionId: "sess-c-run", status: "running", errorCode: null, startedAt: new Date(Date.now() - 120_000).toISOString(), endedAt: null },
       ];
       api.listScheduled = async () => ({ tasks, health });
       api.listScheduledRuns = async () => ({ runs });
@@ -968,12 +976,66 @@ export function installCaptureRig(): CaptureRig {
         api.listPullRequests = originalListPullRequests;
         return;
       }
+      const p247checks: PullRequestCheck[] = [
+        { name: "frappe-tests", state: "success", durationSeconds: 82 },
+        { name: "type-check",   state: "success", durationSeconds: 48 },
+        { name: "lint",         state: "success", durationSeconds: 14 },
+      ];
+      const p243checks: PullRequestCheck[] = [
+        { name: "frappe-tests", state: "success", durationSeconds: 74 },
+        { name: "type-check",   state: "pending" },
+        { name: "lint",         state: "success", durationSeconds: 11 },
+      ];
+      const p239checks: PullRequestCheck[] = [
+        { name: "frappe-tests", state: "success", durationSeconds: 68 },
+        { name: "type-check",   state: "success", durationSeconds: 39 },
+        { name: "lint",         state: "success", durationSeconds: 9  },
+        { name: "audit",        state: "success", durationSeconds: 5  },
+      ];
       const pulls: PullRequestSummary[] = [
-        { number: 247, title: "feat(etims): VSCU receipt batch submission", url: "https://github.com/Coale-Tech/frappe-agent/pull/247", author: "mac", headRefName: "feat/etims-vscu", baseRefName: "main", updatedAt: new Date(Date.now() - 900_000).toISOString(), isDraft: false },
-        { number: 243, title: "fix(accounting): multi-currency exchange rate caching", url: "https://github.com/Coale-Tech/frappe-agent/pull/243", author: "agent", headRefName: "fix/multi-currency", baseRefName: "main", updatedAt: new Date(Date.now() - 7_200_000).toISOString(), isDraft: false },
-        { number: 239, title: "chore: bump dependencies (pnpm audit fix)", url: "https://github.com/Coale-Tech/frappe-agent/pull/239", author: "mac", headRefName: "chore/deps-bump", baseRefName: "main", updatedAt: new Date(Date.now() - 86_400_000).toISOString(), isDraft: false },
-        { number: 237, title: "feat(hrms): payroll summary PDF export", url: "https://github.com/Coale-Tech/frappe-agent/pull/237", author: "agent", headRefName: "feat/payroll-pdf", baseRefName: "main", updatedAt: new Date(Date.now() - 172_800_000).toISOString(), isDraft: true },
-        { number: 231, title: "docs: update AGENTS.md with new directives", url: "https://github.com/Coale-Tech/frappe-agent/pull/231", author: "mac", headRefName: "docs/agents-md", baseRefName: "main", updatedAt: new Date(Date.now() - 259_200_000).toISOString(), isDraft: false },
+        {
+          number: 247, title: "feat(etims): VSCU receipt batch submission",
+          url: "https://github.com/Coale-Tech/frappe-agent/pull/247",
+          author: "mac", headRefName: "feat/etims-vscu", baseRefName: "main",
+          updatedAt: new Date(Date.now() - 900_000).toISOString(), isDraft: false,
+          body: "Implements KRA eTIMS receipt signing via the `vscu` device. Adds `etims_sign_receipt()` to `TaxReceiptController`. Includes sandbox test coverage and XML schema validation.",
+          changedFiles: 12, additions: 382, deletions: 28,
+          checks: p247checks,
+        },
+        {
+          number: 243, title: "fix(accounting): multi-currency exchange rate caching",
+          url: "https://github.com/Coale-Tech/frappe-agent/pull/243",
+          author: "agent", headRefName: "fix/multi-currency", baseRefName: "main",
+          updatedAt: new Date(Date.now() - 7_200_000).toISOString(), isDraft: false,
+          body: "Fixes stale exchange rates in multi-currency Journal Entries. Adds a 1-hour TTL cache keyed by currency pair and date.",
+          changedFiles: 5, additions: 67, deletions: 14,
+          checks: p243checks,
+        },
+        {
+          number: 239, title: "chore: bump dependencies (pnpm audit fix)",
+          url: "https://github.com/Coale-Tech/frappe-agent/pull/239",
+          author: "mac", headRefName: "chore/deps-bump", baseRefName: "main",
+          updatedAt: new Date(Date.now() - 86_400_000).toISOString(), isDraft: false,
+          body: "Bumps pnpm lockfile to resolve 2 moderate audit findings in transitive deps.",
+          changedFiles: 2, additions: 18, deletions: 18,
+          checks: p239checks,
+        },
+        {
+          number: 237, title: "feat(hrms): payroll summary PDF export",
+          url: "https://github.com/Coale-Tech/frappe-agent/pull/237",
+          author: "agent", headRefName: "feat/payroll-pdf", baseRefName: "main",
+          updatedAt: new Date(Date.now() - 172_800_000).toISOString(), isDraft: true,
+          body: "Adds PDF export for monthly payroll summaries using WeasyPrint.",
+          changedFiles: 8, additions: 211, deletions: 4,
+        },
+        {
+          number: 231, title: "docs: update AGENTS.md with new directives",
+          url: "https://github.com/Coale-Tech/frappe-agent/pull/231",
+          author: "mac", headRefName: "docs/agents-md", baseRefName: "main",
+          updatedAt: new Date(Date.now() - 259_200_000).toISOString(), isDraft: true,
+          body: "Updates AGENTS.md with the new frappe-bench-ops and raven-pm agent specifications.",
+          changedFiles: 1, additions: 43, deletions: 7,
+        },
       ];
       api.listPullRequests = async () => ({ pulls });
     },
@@ -998,6 +1060,26 @@ export function installCaptureRig(): CaptureRig {
         completed: completed.id,
         failed: failed.id,
       };
+    },
+    seedOmpSettings: () => {
+      if (!window.__PI_CAPTURE__) return;
+      // Mock ompModelsList — the only sidecar-gated call in OmpSettingsSections.
+      // ompSettingsGet reads disk (works without sidecar); ompAgentList reads agent dirs.
+      const fakeModels: OmpModelsListResult = {
+        models: [
+          { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6", provider: { id: "anthropic", name: "Anthropic" } },
+          { id: "claude-opus-4-5",   name: "Claude Opus 4.5",   provider: { id: "anthropic", name: "Anthropic" } },
+          { id: "gpt-4.1",           name: "GPT-4.1",           provider: { id: "openai",    name: "OpenAI"    } },
+        ],
+      };
+      api.ompModelsList = async () => fakeModels;
+      // Mock ompWorktreeList with 3 realistic entries (badge count = 3).
+      const fakeWorktrees: OmpWorktreeEntry[] = [
+        { path: "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-feat-etims", kind: "pr-checkout", branch: "feat/etims-vscu", parentRepo: "/Users/mac/ERPNext/frappe_agent/PI-Desktop" },
+        { path: "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-fix-currency", kind: "pr-checkout", branch: "fix/multi-currency", parentRepo: "/Users/mac/ERPNext/frappe_agent/PI-Desktop" },
+        { path: "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-task-iso-abc123", kind: "task-isolation", parentRepo: "/Users/mac/ERPNext/frappe_agent/PI-Desktop" },
+      ];
+      api.ompWorktreeList = async () => ({ worktrees: fakeWorktrees });
     },
     ensureVisualFixtures: async () => {
       // Destructive fixture seeding is capture-rig only; the rig sets
@@ -1096,6 +1178,8 @@ export function installCaptureRig(): CaptureRig {
       api.listScheduled = originalListScheduled;
       api.listScheduledRuns = originalListScheduledRuns;
       api.listPullRequests = originalListPullRequests;
+      api.ompModelsList = originalOmpModelsList;
+      api.ompWorktreeList = originalOmpWorktreeList;
     },
   };
 }

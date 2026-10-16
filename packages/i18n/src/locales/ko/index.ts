@@ -2328,6 +2328,7 @@ sklm: {
     draft: "초안",
     status: "상태",
     actions: "작업",
+    updatedAgo: "{{ago}} 업데이트됨",
   },
   git: {
     branch: "브랜치",
@@ -2386,6 +2387,7 @@ sklm: {
     cadenceMonthly: "매월",
     enabled: "활성화됨",
     disabled: "비활성화됨",
+    lastFailed: "마지막: 실패",
     runNow: "지금 실행",
     delete: "삭제",
     lastRun: "마지막 실행",
