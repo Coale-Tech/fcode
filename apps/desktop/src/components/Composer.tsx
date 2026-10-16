@@ -576,7 +576,7 @@ export function Composer({
           </div>
         ) : null}
         <ExtWidget sessionId={activeSessionId ?? undefined} />
-        <GitControlBar disabled={sendBlocked} />
+        {/* D design: git bar removed — branch/pull/push live in the navbar menu (notes.md) */}
         <ComposerStatus
           t={t}
           queuedPrompts={queuedPrompts}

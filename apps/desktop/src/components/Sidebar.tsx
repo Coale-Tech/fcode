@@ -310,6 +310,8 @@ export function Sidebar({
   const [windowFocused, setWindowFocused] = useState(true);
   // D3 island filter (scoped to island mode; cleared on layout change via key)
   const [d3Filter, setD3Filter] = useState("");
+  // D1/D2 sessions panel filter (non-island layouts)
+  const [sessionFilter, setSessionFilter] = useState("");
 
   const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
   const menuFirstItemRef = useRef<HTMLButtonElement | null>(null);
@@ -2332,7 +2334,8 @@ export function Sidebar({
               {bench.kind !== "empty" ? (
                 <>
                   <span className={`d3-bench-dot ${bench.kind === "running" ? "is-on" : "is-off"}`} aria-hidden />
-                  {workspace?.name ?? bench.benchName}
+                  {/* D design: show bench name (coale_v16), not workspace project name */}
+                  {bench.benchName ?? workspace?.name}
                 </>
               ) : (
                 workspace?.name ?? t("workspaceBar.noBench")
@@ -2340,14 +2343,11 @@ export function Sidebar({
             </div>
             <div className="d3-sb-bench-sub">
               {bench.kind === "running"
-                ? (() => {
-                    const sc = bench.siteCount != null ? bench.siteCount : bench.site ? 1 : 0;
-                    return sc > 0
-                      ? `${t("workspaceBar.benchRunning")} · ${sc} ${sc === 1 ? t("workspaceBar.site", { defaultValue: "site" }) : t("workspaceBar.sites", { defaultValue: "sites" })}`
-                      : t("workspaceBar.benchRunning", { defaultValue: "bench running" });
-                  })()
+                ? bench.siteCount > 0
+                  ? `${t("workspaceBar.benchRunning")} · ${bench.siteCount} ${bench.siteCount === 1 ? t("workspaceBar.site") : t("workspaceBar.sites")}`
+                  : t("workspaceBar.benchRunning")
                 : bench.kind === "stopped"
-                ? t("workspaceBar.stopped")
+                ? t("workspaceBar.benchStopped")
                 : t("workspaceBar.chooseBench")}
             </div>
           </button>
@@ -2357,7 +2357,7 @@ export function Sidebar({
             onClick={() => void createSession({ projectPath: null })}
           >
             <IconNewSession size={12} aria-hidden />
-            {t("nav.newSession")}
+            {t("nav.newSession", { defaultValue: "New session" })}
           </button>
           <div className="d3-sb-search no-drag">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -2445,6 +2445,9 @@ export function Sidebar({
           >
             <span id="sidebar-standalone-sessions-label" className="sidebar-list-label">
               {t("nav.sessions", { defaultValue: "Sessions" })}
+              {temporarySessions.length > 0 && (
+                <span className="sidebar-session-count">{temporarySessions.length}</span>
+              )}
             </span>
             <div className="sidebar-toolbar-actions">
               <div className="sidebar-menu-wrap">
@@ -2484,6 +2487,19 @@ export function Sidebar({
               </TooltipButton>
             </div>
           </div>
+          {navLayout !== "island" && (
+            <div className="sidebar-session-search">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input
+                type="search"
+                className="sidebar-session-search-input"
+                placeholder={t("nav.filterSessions")}
+                value={sessionFilter}
+                onChange={(e) => setSessionFilter(e.target.value)}
+                aria-label={t("nav.filterSessions")}
+              />
+            </div>
+          )}
           <div
             className="sidebar-session-group-body standalone"
             onScroll={() => {
@@ -2497,10 +2513,21 @@ export function Sidebar({
             }}
           >
             {temporarySessionHistory.length > 0 ? (
-              renderSessionRows(temporarySessionHistory.filter(
-                (s) => !d3Filter || navLayout !== "island" ||
-                  s.title?.toLowerCase().includes(d3Filter.toLowerCase())
-              ), { temporary: true })
+              groupSidebarSessionsByTime(temporarySessionHistory.filter((s) => {
+                const f = navLayout === "island" ? d3Filter : sessionFilter;
+                return !f || s.title?.toLowerCase().includes(f.toLowerCase());
+              })).flatMap(({ group, sessions: gs }) => [
+                <div key={`tmp-th-${group}`} className="sidebar-time-group-header">
+                  {t(
+                    group === "today" ? "nav.timeGroupToday" :
+                    group === "yesterday" ? "nav.timeGroupYesterday" :
+                    group === "thisWeek" ? "nav.timeGroupThisWeek" :
+                    group === "older14d" ? "nav.timeGroupOlder14d" :
+                    "nav.timeGroupArchived"
+                  )}
+                </div>,
+                ...renderSessionRows(gs, { temporary: true }),
+              ])
             ) : temporarySessions.length === 0 ? (
               <div className="sidebar-session-empty">{t("nav.noTemporarySessions")}</div>
             ) : null}

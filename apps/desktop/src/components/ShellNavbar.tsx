@@ -49,12 +49,17 @@ export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
   const setPage = useAppStore((s) => s.setPage);
   const settingsTab = useAppStore((s) => s.settingsTab);
   const userInitials = useAppStore((s) => s.userInitials);
+  const chatUserName = useAppStore((s) => s.chatUserName);
   const pageCrumb = useAppStore((s) => s.pageCrumb);
   const isMac  = (window.piDesktop?.platform ?? "darwin") === "darwin";
   const bench  = useBenchContext();
   // T13-L03: nested breadcrumb label for settings tabs
   const settingsTabLabel = page === "settings"
     ? t(SETTINGS_NAV.find((e) => e.id === settingsTab)?.labelKey ?? "nav.settings")
+    : null;
+  // D design: show user initials in avatar (max 2 chars from first + last name word)
+  const avatarInitials = chatUserName
+    ? chatUserName.trim().split(/\s+/).map((w) => w[0]?.toUpperCase() ?? "").join("").slice(0, 2)
     : null;
 
 
@@ -155,15 +160,15 @@ export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
           <IconSettings size={16} aria-hidden />
         </TooltipButton>
 
-        {/* Avatar placeholder — D1-shell.html:133 */}
+        {/* Avatar — D1-shell.html:133, D.css:307-320 */}
         <button
           type="button"
-          className="shell-navbar-avatar"
+          className={`shell-navbar-avatar${(userInitials ?? avatarInitials) ? " has-initials" : ""}`}
           aria-label={t("nav.userMenu", { defaultValue: "User menu" })}
-          title={t("nav.userMenu", { defaultValue: "User menu" })}
+          title={chatUserName ?? t("nav.userMenu", { defaultValue: "User menu" })}
         >
-          {userInitials ? (
-            <span className="shell-navbar-avatar-initials" aria-hidden>{userInitials}</span>
+          {(userInitials ?? avatarInitials) ? (
+            <span className="shell-navbar-avatar-initials" aria-hidden>{userInitials ?? avatarInitials}</span>
           ) : (
             <IconTerminal size={12} aria-hidden />
           )}

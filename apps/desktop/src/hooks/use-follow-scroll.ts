@@ -52,6 +52,11 @@ export function useFollowScroll(): FollowScroll {
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "auto") => {
     const el = scrollRef.current;
     if (!el) return;
+    // In capture mode with PI_CAPTURE_SCROLL_TOP set, keep the scroller pinned at 0.
+    if ((window as unknown as Record<string, unknown>).__PI_CAPTURE_SCROLL_TOP__) {
+      el.scrollTop = 0;
+      return;
+    }
     const targetTop = Math.max(0, el.scrollHeight - el.clientHeight);
     el.scrollTo({ top: targetTop, behavior });
     // Record the position the scroller actually reached, not the one that was

@@ -47,11 +47,18 @@ export const MessageRow = memo(function MessageRow({
   const editUserMessage = useAppStore((s) => s.editUserMessage);
   const activateMessageRevision = useAppStore((s) => s.activateMessageRevision);
   const deleteMessage = useAppStore((s) => s.deleteMessage);
+  const chatUserName = useAppStore((s) => s.chatUserName);
   const isUser = message.role === "user";
   const isSessionMessage = Boolean(message.sessionMessage);
   const editableUserMessage = isUser && !isSessionMessage;
   const workspaceRoot = useAppStore((s) => s.workspace?.path);
   const openFileRef = useOpenChatFileRef();
+  // D design: initials from chat user name (e.g. "Josh Kim" → "JK")
+  const userInitials = chatUserName
+    ? chatUserName.trim().split(/\s+/).map((w) => w[0].toUpperCase()).join("").slice(0, 2)
+    : null;
+  // D design user row: use avatar + left-align layout when chatUserName is set.
+  const isDRow = isUser && !isSessionMessage && Boolean(chatUserName);
   // Slash prompts are stored expanded; editing works on the typed form so the
   // resent turn re-expands the template (D123).
   const editSeed =
@@ -153,7 +160,7 @@ export const MessageRow = memo(function MessageRow({
   };
   return (
     <div
-      className={`message-row ${isSessionMessage ? "session-message" : isUser ? "user" : message.role}`}
+      className={`message-row ${isSessionMessage ? "session-message" : isUser ? "user" : message.role}${isDRow ? " d-msg-row" : ""}`}
       data-minimap-id={message.id}
       data-message-id={message.id}
       data-row-role={isSessionMessage ? undefined : "user"}
@@ -162,119 +169,170 @@ export const MessageRow = memo(function MessageRow({
       aria-label={isSessionMessage ? t("sessionCollaboration.agentMessage") : isUser ? t("chat.userMessage") : t("chat.assistantMessage")}
     >
       <div className="message-col">
-        {message.sessionMessage ? <SessionMessageOrigin origin={message.sessionMessage} /> : null}
-        {isUser || displayed ? (
-          <div className="message-bubble">
-            {editing && editableUserMessage ? (
-              <form
-                className="message-edit"
-                aria-busy={retryingEdit || undefined}
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  void retryEdit();
-                }}
-              >
-                <textarea
-                  className="message-edit-input selectable"
-                  value={editValue}
-                  rows={Math.min(12, Math.max(3, editValue.split("\n").length))}
-                  aria-label={editLabel}
-                  autoFocus
-                  spellCheck={false}
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  disabled={retryingEdit}
-                  onChange={(event) => setEditValue(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.nativeEvent.isComposing || event.keyCode === 229) return;
-                    if (event.key === "Escape") {
-                      cancelEdit();
-                    } else if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+        {isDRow ? (
+          // D design: avatar on the left, then content column with meta + bubble
+          <>
+            <div className="d-msg-avatar user" aria-hidden>{userInitials}</div>
+            <div className="d-msg-content">
+              <div className="d-msg-meta">
+                <span className="d-msg-sender">{chatUserName}</span>
+                {message.createdAt && (
+                  <span className="d-msg-time">
+                    {new Date(message.createdAt).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true })}
+                  </span>
+                )}
+              </div>
+              {message.sessionMessage ? <SessionMessageOrigin origin={message.sessionMessage} /> : null}
+              <div className="message-bubble">
+                {editing && editableUserMessage ? (
+                  <form
+                    className="message-edit"
+                    aria-busy={retryingEdit || undefined}
+                    onSubmit={(event) => {
                       event.preventDefault();
                       void retryEdit();
-                    }
-                  }}
-                />
-                <div className="message-edit-actions">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="message-edit-cancel"
-                    disabled={retryingEdit}
-                    onClick={cancelEdit}
+                    }}
                   >
-                    {t("chat.cancelEdit")}
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="sm"
-                    className="message-edit-submit"
-                    disabled={retryingEdit || (!editValue.trim() && !message.attachments?.length)}
-                  >
-                    {retryingEdit ? t("chat.retryingEdit") : t("chat.retryEdit")}
-                  </Button>
-                </div>
-              </form>
-            ) : isUser ? (
-              <>
-                {extraAttachments.length ? (
-                  <div
-                    className="message-attachments"
-                    role="list"
-                    aria-label={t("chat.messageAttachments")}
-                  >
-                    {extraAttachments.map((attachment) =>
-                      attachment.kind === "image" ? (
-                        <MessageAttachmentImage
-                          key={`${attachment.ref}:${attachment.name}`}
-                          attachment={attachment}
-                          onOpenFile={openFileRef}
-                        />
-                      ) : (
-                        <span
-                          key={`${attachment.ref}:${attachment.name}`}
-                          role="listitem"
-                        >
-                          <FileRefChip
-                            name={attachment.name}
-                            path={attachment.ref}
-                            kind={attachment.kind}
-                            onOpen={openFileRef}
-                          />
-                        </span>
-                      ),
-                    )}
-                  </div>
-                ) : null}
-                {message.content ? (
-                  <div className="message-user-text selectable">
-                    {editableUserMessage && message.command ? (
-                      // Slash invocations show the typed form as a chip; the
-                      // expanded template body lives in `content` (hover reveals
-                      // it) and is what regenerate/reseed replay (D123).
-                      <code
-                        className="chat-command-chip"
-                        data-source-start={0}
-                        data-source-end={message.content.length}
-                        title={String(message.content || "")}
-                      >
-                        {message.command}
-                      </code>
-                    ) : (
-                      <LinkifiedText text={String(message.content || "")} attachments={message.attachments} />
-                    )}
-                  </div>
-                ) : null}
-              </>
-            ) : (
-              <div className="prose-chat">
-                <Markdown source={displayed} />
+                    <textarea
+                      className="message-edit-input selectable"
+                      value={editValue}
+                      rows={Math.min(12, Math.max(3, editValue.split("\n").length))}
+                      aria-label={editLabel}
+                      autoFocus
+                      spellCheck={false}
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      disabled={retryingEdit}
+                      onChange={(event) => setEditValue(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.nativeEvent.isComposing || event.keyCode === 229) return;
+                        if (event.key === "Escape") { cancelEdit(); }
+                        else if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+                          event.preventDefault();
+                          void retryEdit();
+                        }
+                      }}
+                    />
+                    <div className="message-edit-actions">
+                      <Button type="button" variant="ghost" size="sm" className="message-edit-cancel" disabled={retryingEdit} onClick={cancelEdit}>
+                        {t("chat.cancelEdit")}
+                      </Button>
+                      <Button type="submit" variant="primary" size="sm" className="message-edit-submit" disabled={retryingEdit || (!editValue.trim() && !message.attachments?.length)}>
+                        {retryingEdit ? t("chat.retryingEdit") : t("chat.retryEdit")}
+                      </Button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    {extraAttachments.length ? (
+                      <div className="message-attachments" role="list" aria-label={t("chat.messageAttachments")}>
+                        {extraAttachments.map((attachment) =>
+                          attachment.kind === "image" ? (
+                            <MessageAttachmentImage key={`${attachment.ref}:${attachment.name}`} attachment={attachment} onOpenFile={openFileRef} />
+                          ) : (
+                            <span key={`${attachment.ref}:${attachment.name}`} role="listitem">
+                              <FileRefChip name={attachment.name} path={attachment.ref} kind={attachment.kind} onOpen={openFileRef} />
+                            </span>
+                          ),
+                        )}
+                      </div>
+                    ) : null}
+                    {message.content ? (
+                      <div className="message-user-text selectable">
+                        {editableUserMessage && message.command ? (
+                          <code className="chat-command-chip" data-source-start={0} data-source-end={message.content.length} title={String(message.content || "")}>
+                            {message.command}
+                          </code>
+                        ) : (
+                          <LinkifiedText text={String(message.content || "")} attachments={message.attachments} />
+                        )}
+                      </div>
+                    ) : null}
+                  </>
+                )}
               </div>
-            )}
-          </div>
-        ) : null}
+            </div>
+          </>
+        ) : (
+          // Legacy layout: right-aligned bubble for sessions without chatUserName
+          <>
+            {message.sessionMessage ? <SessionMessageOrigin origin={message.sessionMessage} /> : null}
+            {isUser || displayed ? (
+              <div className="message-bubble">
+                {editing && editableUserMessage ? (
+                  <form
+                    className="message-edit"
+                    aria-busy={retryingEdit || undefined}
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void retryEdit();
+                    }}
+                  >
+                    <textarea
+                      className="message-edit-input selectable"
+                      value={editValue}
+                      rows={Math.min(12, Math.max(3, editValue.split("\n").length))}
+                      aria-label={editLabel}
+                      autoFocus
+                      spellCheck={false}
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      disabled={retryingEdit}
+                      onChange={(event) => setEditValue(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.nativeEvent.isComposing || event.keyCode === 229) return;
+                        if (event.key === "Escape") { cancelEdit(); }
+                        else if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+                          event.preventDefault();
+                          void retryEdit();
+                        }
+                      }}
+                    />
+                    <div className="message-edit-actions">
+                      <Button type="button" variant="ghost" size="sm" className="message-edit-cancel" disabled={retryingEdit} onClick={cancelEdit}>
+                        {t("chat.cancelEdit")}
+                      </Button>
+                      <Button type="submit" variant="primary" size="sm" className="message-edit-submit" disabled={retryingEdit || (!editValue.trim() && !message.attachments?.length)}>
+                        {retryingEdit ? t("chat.retryingEdit") : t("chat.retryEdit")}
+                      </Button>
+                    </div>
+                  </form>
+                ) : isUser ? (
+                  <>
+                    {extraAttachments.length ? (
+                      <div className="message-attachments" role="list" aria-label={t("chat.messageAttachments")}>
+                        {extraAttachments.map((attachment) =>
+                          attachment.kind === "image" ? (
+                            <MessageAttachmentImage key={`${attachment.ref}:${attachment.name}`} attachment={attachment} onOpenFile={openFileRef} />
+                          ) : (
+                            <span key={`${attachment.ref}:${attachment.name}`} role="listitem">
+                              <FileRefChip name={attachment.name} path={attachment.ref} kind={attachment.kind} onOpen={openFileRef} />
+                            </span>
+                          ),
+                        )}
+                      </div>
+                    ) : null}
+                    {message.content ? (
+                      <div className="message-user-text selectable">
+                        {editableUserMessage && message.command ? (
+                          <code className="chat-command-chip" data-source-start={0} data-source-end={message.content.length} title={String(message.content || "")}>
+                            {message.command}
+                          </code>
+                        ) : (
+                          <LinkifiedText text={String(message.content || "")} attachments={message.attachments} />
+                        )}
+                      </div>
+                    ) : null}
+                  </>
+                ) : (
+                  <div className="prose-chat">
+                    <Markdown source={displayed} />
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </>
+        )}
         {!editing && (hasAnswer || showRevisionPager) ? (
           <div className="message-actions">
             <MessageTimestamp createdAt={message.createdAt} />

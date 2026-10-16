@@ -318,14 +318,15 @@
 .shell-navbar-bench-dot[data-bench-status="starting"] { background: #ca8a04; }
 .shell-navbar-bench-dot[data-bench-status="failed"]   { background: #dc2626; }
 
-/* ── Avatar placeholder — D1-shell.html:133 ── */
+/* ── Avatar — D1-shell.html:133, D.css:307-320 ── */
 .shell-navbar-avatar {
   width: 24px; height: 24px; border-radius: 50%;
-  background: var(--surface-gray-4); color: var(--ink-gray-7);
+  background: var(--surface-gray-10); color: var(--ink-base);
   border: none; display: flex; align-items: center; justify-content: center;
   cursor: pointer; flex-shrink: 0; transition: background .12s;
 }
-.shell-navbar-avatar:hover { background: var(--surface-gray-5); }
+.shell-navbar-avatar:hover { background: var(--surface-gray-9); }
+.shell-navbar-avatar.has-initials { background: var(--surface-gray-10); }
 .shell-navbar-avatar-initials {
   font-size: 10px; font-weight: 600; line-height: 1;
   color: var(--ink-base); user-select: none; pointer-events: none;
@@ -693,3 +694,8 @@
   right: 1px;
   border: none;
 }
+
+/* ── Direction D: PermissionCard + Composer + Sidebar overrides ──
+ * IMPORTANT: These rules must override messages.css / composer.css / theme-overrides.css
+ * which are all imported AFTER d-shell.css. Effective overrides are in d-shell-overrides.css
+ * (imported last). The rules below are kept only as documentation anchors. */
