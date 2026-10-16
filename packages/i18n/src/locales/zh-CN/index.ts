@@ -196,6 +196,7 @@ export const zhCN = {
     batchDeleteConfirm: "确认删除 {{count}} 个会话？",
     copyConversationId: "复制对话 ID",
     openSessionPath: "打开会话路径",
+    timeGroupToday: "今天",
     timeGroupYesterday: "昨天",
     timeGroupThisWeek: "近 7 天",
     timeGroupOlder14d: "近 14 天",

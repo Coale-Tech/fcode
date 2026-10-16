@@ -25,3 +25,9 @@
 :root[data-nav-layout="island"] .sidebar-header { display: none; }
 /* Hide version footer — bench card is the footer in island */
 :root[data-nav-layout="island"] .sidebar-footer { display: none; }
+
+/* D3 island: no projects section (D3-shell.html shows date-grouped session list only) */
+:root[data-nav-layout="island"] [data-sidebar-section="projects"],
+:root[data-nav-layout="island"] .sidebar-session-groups { display: none; }
+/* D3 island: hide the "Sessions" toolbar header — bench card + filter replaces it */
+:root[data-nav-layout="island"] .sidebar-list-toolbar[data-sidebar-section="sessions"] { display: none; }

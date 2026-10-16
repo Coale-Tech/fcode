@@ -201,6 +201,7 @@ export const en = {
     batchDeleteConfirm: "Delete {{count}} sessions?",
     copyConversationId: "Copy conversation ID",
     openSessionPath: "Open session path",
+    timeGroupToday: "Today",
     timeGroupYesterday: "Yesterday",
     timeGroupThisWeek: "Previous 7 days",
     timeGroupOlder14d: "Previous 14 days",

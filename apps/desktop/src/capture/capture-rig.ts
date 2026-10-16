@@ -1207,6 +1207,13 @@ export function installCaptureRig(): CaptureRig {
     },
     ensureVisualFixtures: async () => {
       if (!window.__PI_CAPTURE__) return;
+      // Suppress backend-down banner: no host binary runs during captures.
+      if (!document.getElementById("pi-capture-overrides")) {
+        const style = document.createElement("style");
+        style.id = "pi-capture-overrides";
+        style.textContent = ".backend-banner { display: none !important; }";
+        document.head.appendChild(style);
+      }
       const ws = useAppStore.getState().workspace;
       if (ws?.path) {
         const base = (ws.name || ws.path.split(/[/]/).filter(Boolean).pop() || "").trim();
@@ -1311,7 +1318,7 @@ export function installCaptureRig(): CaptureRig {
         } catch { /* non-fatal if settings IPC unavailable */ }
       // Remove the PROJECTS section from the D3 sidebar: the open workspace path
       // causes an "apps" project group to appear. Hide it in capture mode.
-      useAppStore.setState({ openProjectPaths: [] });
+      useAppStore.setState({ openProjectPaths: [], workspace: null });
       } catch { /* optional capture-only fixture */ }
     },
     clearPendingPermissions: () => {

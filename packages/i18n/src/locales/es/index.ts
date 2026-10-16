@@ -194,6 +194,7 @@ export const es = {
     batchDeleteConfirm: "¿Eliminar {{count}} sesiones?",
     "copyConversationId": "Copiar ID de conversación",
     "openSessionPath": "Abrir ruta de sesión",
+    "timeGroupToday": "Hoy",
     "timeGroupYesterday": "Ayer",
     "timeGroupThisWeek": "Anterior 7 días",
     "timeGroupOlder14d": "Anterior 14 dias",

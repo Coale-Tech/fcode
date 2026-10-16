@@ -1,4 +1,5 @@
 import {
+  Fragment,
   useCallback,
   useEffect,
   useMemo,
@@ -2496,14 +2497,35 @@ export function Sidebar({
               openSectionMenu("sessions", event.clientX, event.clientY);
             }}
           >
-            {temporarySessionHistory.length > 0 ? (
-              renderSessionRows(temporarySessionHistory.filter(
+            {(() => {
+              const filtered = temporarySessionHistory.filter(
                 (s) => !d3Filter || navLayout !== "island" ||
                   s.title?.toLowerCase().includes(d3Filter.toLowerCase())
-              ), { temporary: true })
-            ) : temporarySessions.length === 0 ? (
-              <div className="sidebar-session-empty">{t("nav.noTemporarySessions")}</div>
-            ) : null}
+              );
+              if (filtered.length === 0) {
+                return temporarySessions.length === 0
+                  ? <div className="sidebar-session-empty">{t("nav.noTemporarySessions")}</div>
+                  : null;
+              }
+              if (navLayout === "island") {
+                // D3 island: render sessions with Today/Yesterday date group headers
+                return groupSidebarSessionsByTime(filtered).map(({ group, sessions: gs }) => {
+                  const labelKey =
+                    group === "today"     ? "nav.timeGroupToday" :
+                    group === "yesterday" ? "nav.timeGroupYesterday" :
+                    group === "thisWeek"  ? "nav.timeGroupThisWeek" :
+                    group === "older14d"  ? "nav.timeGroupOlder14d" :
+                    "nav.timeGroupArchived";
+                  return (
+                    <Fragment key={group}>
+                      <div className="sidebar-time-group-header">{t(labelKey)}</div>
+                      {renderSessionRows(gs, { temporary: true })}
+                    </Fragment>
+                  );
+                });
+              }
+              return renderSessionRows(filtered, { temporary: true });
+            })()}
           </div>
         </section>
 
@@ -2536,6 +2558,7 @@ export function Sidebar({
                 >
                   <IconRaven size={12} aria-hidden />
                   <span className="d3-sb-pinned-name">{t("raven.title")}</span>
+                  <span className="d3-sb-pinned-sub">· #general</span>
                 </button>
               )}
               <button
@@ -2546,6 +2569,7 @@ export function Sidebar({
               >
                 <IconFileBird size={12} aria-hidden />
                 <span className="d3-sb-pinned-name">{t("fileBird.title")}</span>
+                <span className="d3-sb-pinned-sub">workspace</span>
               </button>
             </div>
           </section>
