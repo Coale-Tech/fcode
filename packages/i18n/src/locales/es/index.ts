@@ -129,6 +129,7 @@ export const es = {
     "build": "Build",
     "bench": "Bench",
     "newTask": "Nueva tarea",
+    "newSession": "Nueva sesión",
     "newProject": "Nuevo proyecto",
     "projects": "Proyectos",
     "plugins": "Extensiones",

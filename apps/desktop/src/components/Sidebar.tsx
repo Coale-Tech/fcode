@@ -2354,7 +2354,7 @@ export function Sidebar({
             onClick={() => void createSession({ projectPath: null })}
           >
             <IconNewSession size={12} aria-hidden />
-            {t("nav.newTask")}
+            {t("nav.newSession")}
           </button>
           <div className="d3-sb-search no-drag">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>

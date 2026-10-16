@@ -128,6 +128,7 @@ export const ptBR = {
     build: "Build",
     bench: "Bench",
     newTask: "Nova tarefa",
+    newSession: "Nova sessão",
     newProject: "Novo projeto",
     projects: "Projetos",
     plugins: "Extensões",

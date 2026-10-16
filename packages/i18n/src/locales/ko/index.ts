@@ -138,6 +138,7 @@ export const ko = {
     build: "빌드",
     bench: "Bench",
     newTask: "새 작업",
+    newSession: "새 세션",
     newProject: "새 프로젝트",
     projects: "프로젝트",
     plugins: "확장 기능",
