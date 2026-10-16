@@ -208,7 +208,9 @@ export function usePluginsPage() {
   // The marketplace query drives a debounced provider search: typing is the only
   // control, so there is no separate Search button that can fall out of sync.
   useEffect(() => {
-    if (tab !== "market") return;
+    // The installed view still shows the catalog size on its Marketplace
+    // segment, so the list is read once even before that tab is opened.
+    if (tab !== "market" && market.length > 0) return;
     const delay = query.trim() ? 240 : 0;
     const handle = window.setTimeout(() => void refreshMarket(query), delay);
     return () => window.clearTimeout(handle);
@@ -329,7 +331,13 @@ export function usePluginsPage() {
     return GROUP_ORDER.flatMap((id) => {
       const rows = buckets.get(id);
       if (!rows?.length) return [];
-      rows.sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
+      // Plugins the application ships lead their group; the rest read by name.
+      rows.sort(
+        (a, b) =>
+          Number(!!b.bundled) - Number(!!a.bundled) ||
+          a.name.localeCompare(b.name) ||
+          a.id.localeCompare(b.id),
+      );
       return [{ id, rows }];
     });
   }, [filteredInstalled]);

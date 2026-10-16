@@ -22,6 +22,7 @@ import {
   ChevronRight,
   CircleAlert,
   CircleCheck,
+  CircleX,
   CircleHelp,
   ClipboardPaste,
   Clock,
@@ -61,6 +62,8 @@ import {
   Moon,
   MoreHorizontal,
   Music,
+  Package,
+  Pause,
   Palette,
   PanelLeft,
   PanelRight,
@@ -86,6 +89,8 @@ import {
   Smile,
   Sparkles,
   Square,
+  SquareCheck,
+  SquarePen,
   Star,
   Sun,
   Target,
@@ -95,6 +100,7 @@ import {
   TriangleAlert,
   UserRound,
   Undo2,
+  Upload,
   Video,
   Webhook,
   Workflow,
@@ -207,6 +213,9 @@ export const IconArrowUpRight = icon(ArrowUpRight);
 export const IconUndo2 = icon(Undo2);
 export const IconCloudDown = icon(CloudDownload);
 export const IconDownload = icon(Download);
+export const IconUpload = icon(Upload);
+/* D kit `ic-edit`: square with pencil, the row/detail "Edit task" glyph. */
+export const IconSquarePen = icon(SquarePen);
 export const IconImage = icon(Image);
 export const IconCamera = icon(Camera);
 /* Composer attachment chips: one glyph per file family. */
@@ -249,11 +258,15 @@ export const IconStar = icon(Star);
 /* Toast status glyphs (see ToastHost) */
 export const IconCircleCheck = icon(CircleCheck);
 export const IconCircleAlert = icon(CircleAlert);
+export const IconCircleX = icon(CircleX);
 export const IconTriangleAlert = icon(TriangleAlert);
 /* Password field reveal toggle (see PasswordInput). */
 export const IconEye = icon(Eye);
 export const IconEyeOff = icon(EyeOff);
 export const IconKanban = icon(Columns);
+export const IconPackage = icon(Package);
+export const IconPause = icon(Pause);
+export const IconSquareCheck = icon(SquareCheck);
 /** Raven team chat destination (nav rail + settings). */
 export const IconRaven = icon(MessagesSquare);
 /** FileBird SFTP file manager destination (nav rail). */

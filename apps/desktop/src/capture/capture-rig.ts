@@ -11,6 +11,7 @@
 import type {
   AppNotificationKind,
   KanbanBoard,
+  KanbanTask,
   McpServerRecord,
   McpServerStatus,
   OmpAgentEntry,
@@ -57,6 +58,9 @@ export type CaptureRigMethods = {
   } | null;
   ensureVisualFixtures: () => Promise<void>;
   seedOmpSettings: () => void;
+  /** Seed a fake running bench in the status bar and navbar bench chip.
+   *  benchPath defaults to "/bench/coale_v16", siteCount to 3. */
+  seedBenchStatus: (opts?: { benchPath?: string; siteCount?: number }) => void;
 };
 
 export type CaptureRig = CaptureRigMethods & {
@@ -67,6 +71,7 @@ export type CaptureRig = CaptureRigMethods & {
 export function installCaptureRig(): CaptureRig {
   const originalRefreshNotifications =
     useAppStore.getState().refreshNotifications;
+  const originalRefreshPlugins = useAppStore.getState().refreshPlugins;
   const originalListPluginServices = api.listPluginServices;
   const originalMarketSearch = api.marketSearch;
   const originalMarketDetail = api.marketGetDetail;
@@ -455,13 +460,13 @@ export function installCaptureRig(): CaptureRig {
       ];
       useAppStore.setState({ messages: messages as any });
     },
-    seedPlugins: (count = 4) => {
+    seedPlugins: (count = 5) => {
       // Capture-only plugins fixture (plugins index scenes); count 0 clears.
-      // One sample per row group so the D169 bands are all exercised, and one
-      // sample per new contribution kind so the capability/service chips do.
+      // The set mirrors pages-d/plugins/fragment.html: one plugin per row group
+      // (attention, update, active ×2, turned off) and a 24-entry catalog.
       if (!window.__PI_CAPTURE__) return;
       if (count <= 0) {
-        useAppStore.setState({ plugins: [] });
+        useAppStore.setState({ plugins: [], refreshPlugins: originalRefreshPlugins });
         (api as any).listPluginServices = originalListPluginServices;
         (api as any).marketSearch = originalMarketSearch;
         (api as any).marketGetDetail = originalMarketDetail;
@@ -510,151 +515,143 @@ export function installCaptureRig(): CaptureRig {
         },
       });
       // The marketplace tab searches the catalog over IPC, which is offline
-      // in the capture rig; stand in with a card per trust tier and state.
-      (api as any).marketSearch = async () => ({
-        plugins: [
-          {
-            id: "pi.git-insights",
-            name: "Git Insights",
-            description: "Summarizes repository activity into a review panel.",
-            author: "Pi Labs",
-            latestVersion: "1.5.0",
-            downloads: 12840,
-            updatedAt: "2026-08-21T09:00:00.000Z",
-            categories: ["productivity"],
-            permissionSummary: ["fs.read", "fs.write", "ui.panel"],
-            verified: true,
-            trust: "verified",
-            installed: true,
-            installedVersion: "1.4.2",
-            updateAvailable: true,
-            installable: true,
-          },
-          {
-            id: "pi.markdown-tools",
-            name: "Markdown Tools",
-            description: "Formats tables and normalizes headings on demand.",
-            author: "Community",
-            latestVersion: "0.9.0",
-            downloads: 3210,
-            updatedAt: "2026-07-30T09:00:00.000Z",
-            categories: ["editing"],
-            permissionSummary: ["clipboard.read", "clipboard.write"],
-            trust: "community",
-            installed: true,
-            installedVersion: "0.9.0",
-            installable: true,
-          },
-          {
-            id: "pi.deploy-preview",
-            name: "Deploy Preview",
-            description:
-              "Builds a preview deployment for the current branch and links it in the transcript.",
-            author: "Pi Labs",
-            latestVersion: "0.4.1",
-            downloads: 980,
-            updatedAt: "2026-08-02T09:00:00.000Z",
-            categories: ["productivity"],
-            permissionSummary: ["net.fetch", "ui.panel"],
-            verified: true,
-            trust: "verified",
-            installable: true,
-          },
-          {
-            id: "pi.sql-explorer",
-            name: "SQL Explorer",
-            description: "Browse local databases and paste query results into chat.",
-            author: "Data Tools",
-            latestVersion: "2.1.0",
-            downloads: 5602,
-            updatedAt: "2026-08-15T09:00:00.000Z",
-            categories: ["data"],
-            permissionSummary: ["fs.read", "process.spawn"],
-            trust: "community",
-            installable: false,
-          },
-        ],
+      // in the capture rig; stand in with the catalog from fragment-market.html.
+      const catalog: Array<[string, string, string, string]> = [
+        ["frappe-erpnext-connector", "CoaleTech", "Bridge Frappe DocTypes to Claude Code tools — read, create, and submit documents via natural language.", "database"],
+        ["server-postgres", "@modelcontextprotocol", "Run SQL queries and inspect database schemas directly in Claude conversations.", "database"],
+        ["server-filesystem", "@modelcontextprotocol", "Secure file read/write with configurable root paths. Supports recursive listing.", "files"],
+        ["server-brave-search", "@modelcontextprotocol", "Web and local search using the Brave Search API. Privacy-preserving results.", "web"],
+        ["server-github", "@modelcontextprotocol", "Manage repos, issues, PRs, and code search on GitHub.", "dev-tools"],
+        ["server-memory", "@modelcontextprotocol", "Knowledge graph for persisting entities and relations across conversations.", "database"],
+        ["server-puppeteer", "@modelcontextprotocol", "Browser automation and web scraping with Puppeteer.", "web"],
+        ["server-sqlite", "@modelcontextprotocol", "SQLite database operations — query, insert, and schema inspection.", "database"],
+        ["etims-mcp-server", "KRA Kenya", "eTIMS compliance tools — submit receipts, check OSCU status, and validate VAT invoices.", "security"],
+        ["server-slack", "@modelcontextprotocol", "Read channels and post messages to a Slack workspace.", "communication"],
+        ["server-gitlab", "@modelcontextprotocol", "Projects, merge requests and pipelines on GitLab.", "dev-tools"],
+        ["server-google-drive", "@modelcontextprotocol", "Search and read files from Google Drive.", "files"],
+        ["server-fetch", "@modelcontextprotocol", "Fetch web pages and convert them to Markdown for the model.", "web"],
+        ["server-time", "@modelcontextprotocol", "Time and timezone conversion helpers.", "utilities"],
+        ["server-sentry", "@modelcontextprotocol", "Inspect Sentry issues and stack traces.", "dev-tools"],
+        ["server-redis", "@modelcontextprotocol", "Read and write Redis keys and inspect streams.", "database"],
+        ["server-everything", "@modelcontextprotocol", "Reference server exercising every MCP feature.", "dev-tools"],
+        ["server-sequential-thinking", "@modelcontextprotocol", "Structured step-by-step reasoning tool.", "utilities"],
+        ["mpesa-daraja-mcp", "CoaleTech", "M-Pesa Daraja STK push, C2B and transaction status lookups.", "finance"],
+        ["frappe-print-designer", "CoaleTech", "Design and preview Frappe print formats from chat.", "productivity"],
+        ["git-commit-helper", "CoaleTech", "Drafts conventional commit messages from the staged diff.", "dev-tools"],
+        ["csv-importer", "CoaleTech", "Maps CSV columns to DocType fields and runs Data Import.", "data"],
+        ["slack-notify", "CoaleTech", "Posts session summaries to a Slack channel.", "communication"],
+        ["kra-pin-checker", "KRA Kenya", "Validates KRA PINs against the iTax lookup service.", "security"],
+      ];
+      api.marketSearch = async () => ({
+        plugins: catalog.map(([name, author, description, category], index) => ({
+          id: `market.${name}`,
+          name,
+          description,
+          author,
+          latestVersion: "1.0.0",
+          downloads: 24_000 - index * 830,
+          updatedAt: "2026-10-01T09:00:00.000Z",
+          categories: [category],
+          permissionSummary: ["net.fetch"],
+          trust: author === "@modelcontextprotocol" ? "verified" : "community",
+          verified: author === "@modelcontextprotocol",
+          installed: index === 0,
+          installedVersion: index === 0 ? "1.8.2" : undefined,
+          installable: true,
+        })),
+        providerId: "npm",
+        sourceUrl: "",
       });
       // The rows read service state straight from IPC, which reports nothing
       // for a fixture plugin; stand in for the supervisor here.
-      (api as any).listPluginServices = async () => [
+      api.listPluginServices = async () => [
         {
-          pluginId: "pi.git-insights",
-          serviceId: "indexer",
-          label: "Repository indexer",
+          pluginId: "ke.kra.etims-reporter",
+          serviceId: "etims-sync",
+          label: "etims-sync",
           state: "running",
           restarts: 0,
-        },
-        {
-          pluginId: "pi.markdown-tools",
-          serviceId: "watcher",
-          label: "Document watcher",
-          state: "failed",
-          restarts: 3,
-          message: "start() threw: ENOENT",
+          updatedAt: Date.now(),
         },
       ];
+      const npm = { providerId: "npm" };
       const samples: PluginSummary[] = [
         {
-          id: "pi.deploy-preview",
-          name: "Deploy Preview",
-          version: "0.4.1",
+          id: "frappe.erpnext-connector",
+          name: "frappe-erpnext-connector",
+          version: "1.8.2",
           enabled: true,
-          source: "installed",
+          source: "marketplace",
+          marketplace: npm,
           status: "load_error",
-          errorMessage: "Manifest declares net.fetch but the grant is missing.",
-          permissions: ["net.fetch", "ui.panel"],
-          capabilities: ["panel", "tools", "mcp"],
-          author: "Pi Labs",
-          description: "Builds a preview deployment for the current branch.",
+          errorMessage:
+            "Permission denied\n`exec_shell` permission was denied. Update to v2.0.0+ or remove the grant in **Settings › Extensions › Permission Grants**.",
+          permissions: ["exec_shell", "net.fetch"],
+          capabilities: ["tools", "mcp"],
+          author: "CoaleTech",
+          description: "Bridge Frappe DocTypes to Claude Code tools.",
         },
         {
-          id: "pi.git-insights",
-          name: "Git Insights",
-          version: "1.4.2",
+          id: "com.coaletech.git-commit",
+          name: "git-commit-helper",
+          version: "1.2.0",
           enabled: true,
           source: "marketplace",
+          marketplace: npm,
           status: "ready",
-          permissions: ["fs.read", "fs.write", "ui.panel", "notify"],
-          fs: {
-            read: { root: "workspace", scope: ["**/*"] },
-            write: { root: "workspace", scope: ["docs/**", "*.md"] },
-          },
-          capabilities: ["panel", "commands", "skills", "services", "bus"],
-          author: "Pi Labs",
-          description: "Summarizes repository activity into a review panel.",
+          permissions: ["fs.read"],
+          capabilities: ["commands"],
+          author: "CoaleTech",
+          description: "Drafts conventional commit messages from the staged diff.",
           updateAvailable: {
-            version: "1.5.0",
+            version: "1.3.1",
             shasum: "capture",
-            url: "https://example.invalid/git-insights-1.5.0.piplug",
+            url: "https://example.invalid/git-commit-helper-1.3.1.tgz",
+            permissionDiff: ["fs.write", "process.spawn", "notify"],
           },
         },
         {
-          id: "pi.markdown-tools",
-          name: "Markdown Tools",
-          version: "0.9.0",
+          id: "ke.kra.etims-reporter",
+          name: "kra-etims-reporter",
+          version: "2.1.0",
           enabled: true,
-          source: "marketplace",
+          source: "builtin",
+          bundled: true,
           status: "ready",
-          permissions: ["clipboard.read", "clipboard.write", "ui.panel"],
-          capabilities: ["commands", "themes", "services"],
-          author: "Community",
-          description: "Formats tables and normalizes headings on demand.",
-          autoUpdate: true,
+          permissions: ["exec_process", "net:outbound", "fs:read", "ui.panel", "notify"],
+          fs: { read: { scope: ["~/ERPNext/coale_v16/sites/"] } },
+          capabilities: ["tools", "services"],
+          author: "CoaleTech",
+          description: "Files eTIMS sales reports with KRA from the bench.",
         },
         {
-          id: "pi.scratchpad",
-          name: "Scratchpad",
-          version: "dev",
+          id: "com.coaletech.csv-importer",
+          name: "csv-importer",
+          version: "1.0.4",
+          enabled: true,
+          source: "marketplace",
+          marketplace: npm,
+          status: "ready",
+          permissions: ["fs.read"],
+          capabilities: ["commands"],
+          author: "CoaleTech",
+          description: "Maps CSV columns to DocType fields and runs Data Import.",
+        },
+        {
+          id: "com.coaletech.slack-notify",
+          name: "slack-notify",
+          version: "0.9.1",
           enabled: false,
-          source: "dev",
+          source: "marketplace",
+          marketplace: npm,
           status: "disabled",
-          permissions: ["ui.panel"],
-          author: "Local build",
-          description: "A local panel for quick notes beside the transcript.",
+          permissions: ["net.fetch"],
+          author: "CoaleTech",
+          description: "Posts session summaries to a Slack channel.",
         },
       ];
-      useAppStore.setState({ plugins: samples.slice(0, count) });
+      // The page refreshes the installed list on mount; keep the fixture in place.
+      useAppStore.setState({ plugins: samples.slice(0, count), refreshPlugins: async () => undefined });
     },
     seedExtensions: (count = 3) => {
       // Capture-only fixture for the Settings > Agent capability pages. Those
@@ -874,74 +871,157 @@ export function installCaptureRig(): CaptureRig {
         return;
       }
       const now = Date.now();
-      const completedTitles = [
-        "重新设计设置页面插件板块手机端 UI 布局并验证所有断点",
-        "同步代码",
-        "Weekly HRMS payroll report generation",
+      const yesterdayAt = (hours: number, minutes: number) => {
+        const d = new Date(now);
+        d.setDate(d.getDate() - 1);
+        d.setHours(hours, minutes, 0, 0);
+        return d.toISOString();
+      };
+      // Reference design: 7 notifications (5 today, 2 yesterday); 3 unread (indices 0,1,2).
+      const entries = [
+        { kind: "task.completed" as AppNotificationKind, sessionTitle: "Daily ERPNext Digest",
+          body: "Session finished in 12 s · coale_v16 bench",
+          createdAt: new Date(now - 10_000).toISOString(), readAt: null },
+        { kind: "task.failed" as AppNotificationKind, sessionTitle: "Stock Reconciliation Snapshot",
+          body: "Error: EACCES permission denied at /tmp/stock-snapshot · exit code 1",
+          createdAt: new Date(now - 120_000).toISOString(), readAt: null },
+        { kind: "task.completed" as AppNotificationKind, sessionTitle: "Hourly CI Health Check",
+          body: "All test suites passing · frappe, erpnext, hrms, raven",
+          createdAt: new Date(now - 3_480_000).toISOString(), readAt: null },
+        { kind: "task.completed" as AppNotificationKind, sessionTitle: "Hourly CI Health Check",
+          body: "All test suites passing",
+          createdAt: new Date(now - 7_200_000).toISOString(), readAt: new Date(now - 3_600_000).toISOString() },
+        { kind: "task.completed" as AppNotificationKind, sessionTitle: "Daily ERPNext Digest",
+          body: "Session finished in 9 s · coale_v16 bench",
+          createdAt: new Date(now - 28_800_000).toISOString(), readAt: new Date(now - 7_200_000).toISOString() },
+        { kind: "task.failed" as AppNotificationKind, sessionTitle: "Weekly HRMS Payroll Review",
+          body: "Error: Connection refused to hrms-bench MySQL · timeout after 30 s",
+          createdAt: yesterdayAt(7, 30), readAt: new Date(now - 3_600_000).toISOString() },
+        { kind: "task.completed" as AppNotificationKind, sessionTitle: "Daily ERPNext Digest",
+          body: "Session finished in 14 s · coale_v16 bench",
+          createdAt: yesterdayAt(8, 0), readAt: new Date(now - 3_600_000).toISOString() },
       ];
-      const failedTitles = [
-        "修复 host-core 启动失败并补充错误恢复测试",
-        "eTIMS VSCU integration — submit receipt batch",
-      ];
-      // Mix completed and failed so the inbox shows kind-aware rendering.
-      const notifications = Array.from({ length: Math.min(count, 7) }, (_, index) => {
-        const isFailed = index === 1 || index === 3;
-        return {
-          id: `capture-notification-${index}`,
-          kind: (isFailed ? "task.failed" : "task.completed") as AppNotificationKind,
-          sessionId: `capture-session-${index}`,
-          sessionTitle: isFailed
-            ? failedTitles[index % failedTitles.length]
-            : completedTitles[index % completedTitles.length],
-          turnId: `capture-turn-${index}`,
-          ...(isFailed && index % 2 === 1 ? { errorCode: "MODEL_REQUEST_TIMEOUT" } : {}),
-          createdAt: new Date(now - (index + 1) * 3_600_000).toISOString(),
-          readAt: index >= 3 ? new Date(now - (index - 2) * 1_800_000).toISOString() : null,
-        };
-      });
+      const notifications = entries.slice(0, Math.min(count, 7)).map((e, i) => ({
+        id: `capture-notification-${i}`,
+        kind: e.kind,
+        sessionId: `capture-session-${i}`,
+        sessionTitle: e.sessionTitle,
+        turnId: `capture-turn-${i}`,
+        body: e.body,
+        createdAt: e.createdAt,
+        readAt: e.readAt,
+      }));
       useAppStore.setState({
         notifications,
-        unreadNotificationCount: notifications.reduce(
-          (total, notification) => total + (notification.readAt ? 0 : 1),
-          0,
-        ),
+        unreadNotificationCount: notifications.filter((n) => !n.readAt).length,
         refreshNotifications: async () => undefined,
       });
     },
     seedKanbanBoard: (count = 1) => {
       if (!window.__PI_CAPTURE__) return;
-      const now = Date.now();
+      const approvalSession = "capture-kanban-e5a7";
+      const withoutApproval = () => {
+        const { [approvalSession]: _seeded, ...rest } = useAppStore.getState().pendingPermissions;
+        return rest;
+      };
       if (count <= 0) {
         api.kanbanList = originalKanbanList;
+        useAppStore.setState({ pendingPermissions: withoutApproval() });
         return;
       }
+      // pages-d/kanban/fragment.html board; count=2 adds the drawer's T_7E42 → T_3D5E link
+      // (fragment-drawer.html), which the board fragment does not draw as a progress chip.
+      const now = Date.now();
+      const m = 60_000;
+      const h = 60 * m;
+      const d = 24 * h;
+      const id = (hex: string) => `${hex}e0a1-7c2b-4d10-9a00-${hex}0000000`;
+      const root = "/Users/mac/ERPNext/coale_v16";
+      const app = (name: string) => `${root}/apps/${name}`;
+      const task = (hex: string, over: Partial<KanbanTask> & Pick<KanbanTask, "title" | "status" | "createdAt">): KanbanTask => ({
+        id: id(hex), body: "", priority: 0, createdBy: "user", projectPath: root,
+        archived: false, consecutiveFailures: 0, ...over,
+      });
+      const tasks: KanbanTask[] = [
+        task("2a1f", { title: "Implement purchase order auto-approval workflow", status: "triage", createdAt: now - 2 * h - 5 * m }),
+        task("8c3d", { title: "Fix payroll slips missing employee cost center", status: "triage", priority: 1, createdBy: "agent", projectPath: app("hrms"), createdAt: now - 5 * h - 5 * m }),
+        task("f01b", { title: "Review custom DocType print format template", status: "triage", projectPath: app("frappe"), createdAt: now - d - 2 * h }),
+        task("9e7c", { title: "Add custom fields to Sales Invoice for KRA tax breakdown", status: "todo", priority: 2, projectPath: app("erpnext"), createdAt: now - 3 * h - 5 * m }),
+        task("3d5e", { title: "Migrate customer records to new account structure", status: "todo", createdAt: now - 6 * h - 5 * m }),
+        task("a4b1", { title: "Configure leave policy for operations department", status: "todo", projectPath: app("hrms"), createdAt: now - d - 3 * h }),
+        task("c7d2", { title: "Set up Raven channel for finance team notifications", status: "todo", projectPath: app("raven"), createdAt: now - 2 * d - 2 * h }),
+        task("b2e9", { title: "Write test suite for Stock Reconciliation controller", status: "ready", priority: 1, projectPath: app("erpnext"), createdAt: now - h - 5 * m }),
+        task("d8f3", { title: "Refactor purchase requisition approval hooks", status: "ready", createdAt: now - 4 * h - 5 * m }),
+        task("e5a7", { title: "Generate payroll for April 2026 — all employees", status: "running", createdBy: "agent", projectPath: app("hrms"), sessionId: approvalSession, createdAt: now - 12 * m - 20_000, startedAt: now - 10 * m }),
+        task("f9b4", { title: "Add KRA eTIMS integration for stock entries", status: "running", priority: 1, sessionId: "capture-kanban-f9b4", createdAt: now - 38 * m - 20_000, startedAt: now - 30 * m }),
+        task("1c6d", { title: "Fix warehouse bin valuation on negative stock", status: "blocked", createdBy: "agent", projectPath: app("erpnext"), blockKind: "gave_up", blockReason: "Gave up after 3 failed runs.", consecutiveFailures: 3, createdAt: now - 2 * h - 5 * m }),
+        task("7e42", {
+          title: "Fix Customer Ledger Summary report date filter",
+          status: "done",
+          sessionId: "capture-kanban-7e42",
+          body: "The date filter on the **Customer Ledger Summary** report was ignoring the `from_date` parameter when the posting date field was null. Added a `COALESCE` fallback in the report query.\n\nAll test records verified in coale_v16 bench.",
+          result: "Report now correctly filters entries by date range. Verified against 2025 Q4 ledger data — 847 rows returned (was 0 with date filter applied).",
+          createdAt: now - 3 * h - 5 * m,
+          startedAt: now - 3 * h - 4 * m,
+          completedAt: now - 3 * h,
+        }),
+        task("0a3b", { title: "Install HRMS attendance integration hooks", status: "done", projectPath: app("hrms"), createdAt: now - d - 4 * h, completedAt: now - d }),
+        task("5f2c", { title: "Patch stock ledger entry for backdated corrections", status: "done", createdBy: "agent", projectPath: app("erpnext"), createdAt: now - 2 * d - 3 * h, completedAt: now - 2 * d }),
+        task("6b10", { title: "Map attendance device IDs to employees", status: "done", projectPath: app("hrms"), createdAt: now - 3 * d, completedAt: now - 3 * d + h }),
+        task("6b11", { title: "Add shift-type check-in grace window", status: "done", projectPath: app("hrms"), createdAt: now - 3 * d - h, completedAt: now - 3 * d + 2 * h }),
+        task("6b12", { title: "Sync biometric logs every 15 minutes", status: "done", createdBy: "agent", projectPath: app("hrms"), createdAt: now - 3 * d - 2 * h, completedAt: now - 3 * d + 3 * h }),
+        task("6b13", { title: "Backfill attendance for March", status: "done", projectPath: app("hrms"), createdAt: now - 3 * d - 3 * h, completedAt: now - 3 * d + 4 * h }),
+        task("4c20", { title: "Split customer master by territory", status: "done", createdAt: now - 4 * d, completedAt: now - 4 * d + h }),
+      ];
+      const link = (parent: string, child: string) => ({ parentId: id(parent), childId: id(child) });
+      const links = [
+        link("0a3b", "6b10"), link("0a3b", "6b11"), link("0a3b", "6b12"), link("0a3b", "6b13"),
+        link("3d5e", "4c20"), link("3d5e", "5f2c"), link("3d5e", "a4b1"), link("3d5e", "c7d2"),
+        ...(count >= 2 ? [link("7e42", "3d5e")] : []),
+      ];
+      const comment = (hex: string, n: number, author: string, body: string, ago: number) => ({
+        id: `kc-${hex}-${n}`, taskId: id(hex), author, body, createdAt: now - ago,
+      });
       const board: KanbanBoard = {
-        tasks: [
-          { id: "kt-1", title: "eTIMS VSCU: receipt submit batch", body: "Submit daily receipt batch to KRA eTIMS sandbox.", status: "triage", priority: 3, createdBy: "agent", projectPath: "/apps", sessionId: undefined, archived: false, consecutiveFailures: 0, createdAt: now - 7_200_000 },
-          { id: "kt-2", title: "Fix multi-currency exchange rate caching", body: "Cache is stale after currency update.", status: "todo", priority: 2, createdBy: "user", projectPath: "/apps", archived: false, consecutiveFailures: 0, createdAt: now - 5_400_000 },
-          { id: "kt-3", title: "Generate weekly HRMS payroll report", body: "Produce PDF report for HR review.", status: "ready", priority: 1, createdBy: "agent", projectPath: "/apps", archived: false, consecutiveFailures: 0, createdAt: now - 3_600_000 },
-          { id: "kt-4", title: "Sync frappe-agent dependencies", body: "npm audit fix + upgrade pinned packages.", status: "running", priority: 2, createdBy: "agent", projectPath: "/apps", sessionId: "sess-capture-1", archived: false, consecutiveFailures: 0, createdAt: now - 1_800_000, startedAt: now - 900_000 },
-          { id: "kt-5", title: "Stock reconciliation snapshot", body: "Snapshot stock levels before month-end close.", status: "blocked", priority: 2, createdBy: "user", projectPath: "/apps", blockKind: "gave_up", blockReason: "Provider timed out after 3 retries.", archived: false, consecutiveFailures: 3, createdAt: now - 86_400_000 },
-          { id: "kt-6", title: "Update ERPNext branch to v16.35", body: "Merge upstream v16.35 hotfixes.", status: "done", priority: 1, createdBy: "user", projectPath: "/apps", archived: false, consecutiveFailures: 0, createdAt: now - 172_800_000, completedAt: now - 43_200_000 },
-          { id: "kt-7", title: "Add BOM cost rollup validation", body: "Validate BOM before production order creation.", status: "done", priority: 2, createdBy: "agent", projectPath: "/apps", archived: false, consecutiveFailures: 0, createdAt: now - 259_200_000, completedAt: now - 86_400_000 },
-        ],
-        links: [{ parentId: "kt-2", childId: "kt-3" }],
+        tasks,
+        links,
         comments: [
-          { id: "kc-1", taskId: "kt-4", author: "mac", body: "Checking pnpm audit output.", createdAt: now - 600_000 },
-          { id: "kc-2", taskId: "kt-4", author: "agent", body: "Found 3 moderate vulnerabilities.", createdAt: now - 300_000 },
+          comment("3d5e", 1, "mac", "Old account heads exported to CSV.", 5 * h),
+          comment("3d5e", 2, "agent", "Territory split is done; mapping party accounts next.", 4 * h),
+          comment("3d5e", 3, "mac", "Keep the legacy heads disabled, not deleted.", 2 * h),
+          comment("1c6d", 1, "agent", "Valuation goes negative before the repost job runs.", 2 * h),
         ],
         runs: [
-          { id: "kr-1", taskId: "kt-4", sessionId: "sess-capture-1", status: "running", startedAt: now - 900_000, nudgeCount: 0 },
-          { id: "kr-2", taskId: "kt-6", sessionId: "sess-old-1", status: "done", summary: "Merged 12 commits.", startedAt: now - 46_800_000, endedAt: now - 43_200_000, nudgeCount: 1 },
+          { id: "kr-7e42-0", taskId: id("7e42"), sessionId: "capture-kanban-7e42-0", status: "crashed", error: "Worker exited before claiming the card.", startedAt: now - 5 * h, endedAt: now - 5 * h + 20_000, nudgeCount: 0 },
+          { id: "kr-7e42-1", taskId: id("7e42"), sessionId: "capture-kanban-7e42-a", status: "done", summary: "Initial investigation — reproduced the filter bug.", startedAt: now - 4 * h - m, endedAt: now - 4 * h, nudgeCount: 0 },
+          { id: "kr-7e42-2", taskId: id("7e42"), sessionId: "capture-kanban-7e42", status: "done", summary: "Added COALESCE fallback; updated report query; committed changes.", startedAt: now - 3 * h - 4 * m, endedAt: now - 3 * h, nudgeCount: 0 },
+          { id: "kr-e5a7-1", taskId: id("e5a7"), sessionId: approvalSession, status: "running", startedAt: now - 10 * m, nudgeCount: 0 },
+          { id: "kr-f9b4-1", taskId: id("f9b4"), sessionId: "capture-kanban-f9b4", status: "running", startedAt: now - 30 * m, nudgeCount: 0 },
         ],
-        events: [],
-        dailyStats: [
-          { date: new Date(now - 172_800_000).toISOString().slice(0, 10), spawned: 3 },
-          { date: new Date(now - 86_400_000).toISOString().slice(0, 10), spawned: 2 },
-          { date: new Date(now).toISOString().slice(0, 10), spawned: 1 },
+        events: [
+          { id: "ke-7e42-1", taskId: id("7e42"), kind: "moved", payload: { from: "ready", to: "running" }, ts: now - 4 * h - 2 * m },
+          { id: "ke-7e42-2", taskId: id("7e42"), kind: "claimed", ts: now - 3 * h - 4 * m },
+          { id: "ke-7e42-3", taskId: id("7e42"), kind: "moved", payload: { from: "running", to: "done" }, ts: now - 3 * h },
         ],
+        dailyStats: [{ date: new Date(now).toISOString().slice(0, 10), spawned: 2 }],
       };
       api.kanbanList = async () => ({ board, paused: false });
+      // The running payroll card waits on a tool approval (fragment.html:365).
+      useAppStore.setState({
+        pendingPermissions: {
+          ...withoutApproval(),
+          [approvalSession]: [{
+            requestId: "capture-kanban-perm-1",
+            sessionId: approvalSession,
+            toolCallId: "capture-kanban-tool-1",
+            toolName: "bash",
+            argsPreview: { command: "bench --site coale_v16 execute hrms.payroll.run" },
+            risk: "high",
+            reason: "Runs payroll for every employee.",
+            receivedAt: now - 2 * m,
+          }],
+        },
+      });
     },
     seedScheduledTasks: (count = 1) => {
       if (!window.__PI_CAPTURE__) return;
@@ -951,22 +1031,45 @@ export function installCaptureRig(): CaptureRig {
         return;
       }
       const now = new Date().toISOString();
+      /** Local wall-clock time `dayOffset` days from today. */
+      const at = (dayOffset: number, hour: number, minute: number) => {
+        const d = new Date();
+        d.setDate(d.getDate() + dayOffset);
+        d.setHours(hour, minute, 0, 0);
+        return d;
+      };
+      const next = (hour: number, minute: number) => {
+        const today = at(0, hour, minute);
+        return (today.getTime() > Date.now() ? today : at(1, hour, minute)).toISOString();
+      };
+      const nextHour = new Date();
+      nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0);
+      const daysToMonday = ((7 - ((new Date().getDay() + 6) % 7)) % 7) || 7;
+      const bench = "/Users/mac/ERPNext/frappe-bench";
       const tasks: ScheduledTask[] = [
-        { id: "st-1", title: "Daily ERPNext Digest", prompt: "Summarise ERPNext activity from the last 24 h and post to Raven.", cadence: "daily", mode: "agent", enabled: true, createdAt: now, updatedAt: now, lastRunAt: new Date(Date.now() - 3_600_000).toISOString(), workspacePath: "/apps" },
-        { id: "st-2", title: "Hourly CI Health Check", prompt: "Run pnpm test and report failures.", cadence: "hourly", mode: "agent", enabled: true, createdAt: now, updatedAt: now, lastRunAt: new Date(Date.now() - 600_000).toISOString(), workspacePath: "/apps" },
-        { id: "st-3", title: "Weekly HRMS Payroll Review", prompt: "Generate payroll summary for HR.", cadence: "weekly", mode: "agent", enabled: true, createdAt: now, updatedAt: now, workspacePath: "/apps" },
-        { id: "st-4", title: "Stock Reconciliation Snapshot", prompt: "Snapshot stock levels before month-end.", cadence: "monthly", mode: "agent", enabled: true, createdAt: now, updatedAt: now, lastRunAt: new Date(Date.now() - 86_400_000).toISOString(), workspacePath: "/apps" },
-        { id: "st-5", title: "Monthly Accounts Ageing", prompt: "Run accounts ageing report and email finance team.", cadence: "monthly", mode: "agent", enabled: false, createdAt: now, updatedAt: now, workspacePath: "/apps" },
+        { id: "st-1", title: "Daily ERPNext Digest", prompt: "Summarise all outstanding Sales Orders, Purchase Orders, and Stock movements from the last 24 h. List top 5 overdue items.", cadence: "daily", mode: "agent", enabled: true, createdAt: now, updatedAt: now, schedule: { hour: 8, minute: 0, weekday: 0, weekdays: [0, 1, 2, 3, 4] }, nextRunAt: next(8, 0), workspacePath: bench, modelId: "claude-sonnet-4-6" },
+        { id: "st-2", title: "Hourly CI Health Check", prompt: "Check frappe-bench CI status across all apps. Alert if any test suite has been failing for 2+ runs.", cadence: "hourly", mode: "agent", enabled: true, createdAt: now, updatedAt: now, schedule: { hour: 0, minute: 0, weekday: 0 }, nextRunAt: nextHour.toISOString(), workspacePath: bench, modelId: "claude-sonnet-4-6" },
+        { id: "st-3", title: "Weekly HRMS Payroll Review", prompt: "Review pending payroll entries in HRMS. Flag employees with missing attendance or salary revision approvals.", cadence: "weekly", mode: "agent", enabled: true, createdAt: now, updatedAt: now, schedule: { hour: 7, minute: 30, weekday: 0, weekdays: [0] }, nextRunAt: at(daysToMonday, 7, 30).toISOString(), workspacePath: "/Users/mac/ERPNext/hrms-bench", modelId: "claude-sonnet-4-6" },
+        { id: "st-4", title: "Stock Reconciliation Snapshot", prompt: "Take a full stock reconciliation snapshot across all warehouses and export as CSV to /tmp/stock-snapshot.", cadence: "monthly", mode: "agent", enabled: true, createdAt: now, updatedAt: now, schedule: { hour: 2, minute: 0, weekday: 0 }, nextRunAt: at(1, 2, 0).toISOString(), workspacePath: bench, modelId: "claude-sonnet-4-6" },
+        { id: "st-5", title: "Monthly Accounts Ageing", prompt: "Generate accounts receivable ageing report for month-end and post summary to Raven #finance channel.", cadence: "monthly", mode: "agent", enabled: false, createdAt: now, updatedAt: now, schedule: { hour: 9, minute: 0, weekday: 0 }, workspacePath: bench, modelId: "claude-sonnet-4-6" },
       ];
-      const health = { lastTickAt: Date.now() - 30_000, lastError: undefined, hostAvailable: true };
+      const health = { lastTickAt: Date.now() - 28_000, lastError: undefined, hostAvailable: true };
+      const run = (id: string, taskId: string, start: Date, seconds: number | null, status: ScheduledTaskRun["status"] = "completed"): ScheduledTaskRun => ({
+        id, taskId, sessionId: `sess-${id}`, status, errorCode: status === "error" ? "PROVIDER_TIMEOUT" : null,
+        startedAt: start.toISOString(),
+        endedAt: seconds === null ? null : new Date(start.getTime() + seconds * 1000).toISOString(),
+      });
+      // 24 runs: the live digest, three finished digests, the failed snapshot,
+      // one payroll review and an hourly CI history filling the rest.
       const runs: ScheduledTaskRun[] = [
-        { id: "sr-1", taskId: "st-1", sessionId: "sess-c-1", status: "completed", errorCode: null, startedAt: new Date(Date.now() - 3_600_000).toISOString(), endedAt: new Date(Date.now() - 3_540_000).toISOString() },
-        { id: "sr-2", taskId: "st-2", sessionId: "sess-c-2", status: "completed", errorCode: null, startedAt: new Date(Date.now() - 600_000).toISOString(), endedAt: new Date(Date.now() - 570_000).toISOString() },
-        { id: "sr-3", taskId: "st-4", sessionId: null, status: "error", errorCode: "PROVIDER_TIMEOUT", startedAt: new Date(Date.now() - 86_400_000).toISOString(), endedAt: new Date(Date.now() - 86_380_000).toISOString() },
-        { id: "sr-4", taskId: "st-1", sessionId: "sess-c-3", status: "completed", errorCode: null, startedAt: new Date(Date.now() - 90_000_000).toISOString(), endedAt: new Date(Date.now() - 89_940_000).toISOString() },
-        { id: "sr-5", taskId: "st-2", sessionId: "sess-c-4", status: "aborted", errorCode: null, startedAt: new Date(Date.now() - 7_800_000).toISOString(), endedAt: new Date(Date.now() - 7_740_000).toISOString() },
-        { id: "sr-6", taskId: "st-1", sessionId: "sess-c-run", status: "running", errorCode: null, startedAt: new Date(Date.now() - 120_000).toISOString(), endedAt: null },
-      ];
+        run("sr-live", "st-1", new Date(Date.now() - 120_000), null, "running"),
+        run("sr-d1", "st-1", at(0, 8, 0), 12),
+        run("sr-d2", "st-1", at(-1, 8, 0), 9),
+        run("sr-d3", "st-1", at(-3, 8, 0), 14),
+        run("sr-s1", "st-4", at(-1, 2, 0), 20, "error"),
+        run("sr-p1", "st-3", at(-((new Date().getDay() + 6) % 7) || -7, 7, 30), 41),
+        ...Array.from({ length: 18 }, (_, i) => run(`sr-ci${i + 1}`, "st-2", new Date(nextHour.getTime() - (i + 1) * 3_600_000), 30 + (i % 5) * 7, i === 4 ? "aborted" : "completed")),
+      ].sort((a, b) => (b.startedAt > a.startedAt ? 1 : -1));
       api.listScheduled = async () => ({ tasks, health });
       api.listScheduledRuns = async () => ({ runs });
     },
@@ -976,8 +1079,14 @@ export function installCaptureRig(): CaptureRig {
         api.listPullRequests = originalListPullRequests;
         return;
       }
+      // Ensure workspace is set so the PR page renders data (not the empty state).
+      if (!useAppStore.getState().workspace?.path) {
+        useAppStore.setState({
+          workspace: { path: "/Users/mac/CoaleTech/frappe-agent", name: "frappe-agent", branch: "main" },
+        });
+      }
       const p247checks: PullRequestCheck[] = [
-        { name: "frappe-tests", state: "success", durationSeconds: 82 },
+        { name: "frappe-tests", state: "success", durationSeconds: 82, details: "142 passed" },
         { name: "type-check",   state: "success", durationSeconds: 48 },
         { name: "lint",         state: "success", durationSeconds: 14 },
       ];
@@ -994,28 +1103,40 @@ export function installCaptureRig(): CaptureRig {
       ];
       const pulls: PullRequestSummary[] = [
         {
-          number: 247, title: "feat(etims): VSCU receipt batch submission",
+          number: 247,
+          title: "feat: Add eTIMS KRA receipt signing via VSCU integration",
           url: "https://github.com/Coale-Tech/frappe-agent/pull/247",
-          author: "mac", headRefName: "feat/etims-vscu", baseRefName: "main",
-          updatedAt: new Date(Date.now() - 900_000).toISOString(), isDraft: false,
+          author: "wanjiru@coaletech.com",
+          headRefName: "feature/etims-vscu", baseRefName: "main",
+          openedAt: new Date(Date.now() - 172_800_000).toISOString(),
+          updatedAt: new Date(Date.now() - 900_000).toISOString(),
+          isDraft: false,
           body: "Implements KRA eTIMS receipt signing via the `vscu` device. Adds `etims_sign_receipt()` to `TaxReceiptController`. Includes sandbox test coverage and XML schema validation.",
           changedFiles: 12, additions: 382, deletions: 28,
           checks: p247checks,
         },
         {
-          number: 243, title: "fix(accounting): multi-currency exchange rate caching",
+          number: 243,
+          title: "fix: Resolve duplicate Payment Entry on multi-currency reconciliation",
           url: "https://github.com/Coale-Tech/frappe-agent/pull/243",
-          author: "agent", headRefName: "fix/multi-currency", baseRefName: "main",
-          updatedAt: new Date(Date.now() - 7_200_000).toISOString(), isDraft: false,
+          author: "moha@coaletech.com",
+          headRefName: "fix/multi-currency-rec", baseRefName: "main",
+          openedAt: new Date(Date.now() - 259_200_000).toISOString(),
+          updatedAt: new Date(Date.now() - 7_200_000).toISOString(),
+          isDraft: false,
           body: "Fixes stale exchange rates in multi-currency Journal Entries. Adds a 1-hour TTL cache keyed by currency pair and date.",
           changedFiles: 5, additions: 67, deletions: 14,
           checks: p243checks,
         },
         {
-          number: 239, title: "chore: bump dependencies (pnpm audit fix)",
+          number: 239,
+          title: "chore: Bump frappe to v16.3.2 and erpnext to v16.2.8",
           url: "https://github.com/Coale-Tech/frappe-agent/pull/239",
-          author: "mac", headRefName: "chore/deps-bump", baseRefName: "main",
-          updatedAt: new Date(Date.now() - 86_400_000).toISOString(), isDraft: false,
+          author: "mac@coaletech.com",
+          headRefName: "chore/deps-bump", baseRefName: "main",
+          openedAt: new Date(Date.now() - 86_400_000).toISOString(),
+          updatedAt: new Date(Date.now() - 86_400_000).toISOString(),
+          isDraft: false,
           body: "Bumps pnpm lockfile to resolve 2 moderate audit findings in transitive deps.",
           changedFiles: 2, additions: 18, deletions: 18,
           checks: p239checks,
@@ -1023,7 +1144,7 @@ export function installCaptureRig(): CaptureRig {
         {
           number: 237, title: "feat(hrms): payroll summary PDF export",
           url: "https://github.com/Coale-Tech/frappe-agent/pull/237",
-          author: "agent", headRefName: "feat/payroll-pdf", baseRefName: "main",
+          author: "agent@coaletech.com", headRefName: "feat/payroll-pdf", baseRefName: "main",
           updatedAt: new Date(Date.now() - 172_800_000).toISOString(), isDraft: true,
           body: "Adds PDF export for monthly payroll summaries using WeasyPrint.",
           changedFiles: 8, additions: 211, deletions: 4,
@@ -1031,7 +1152,7 @@ export function installCaptureRig(): CaptureRig {
         {
           number: 231, title: "docs: update AGENTS.md with new directives",
           url: "https://github.com/Coale-Tech/frappe-agent/pull/231",
-          author: "mac", headRefName: "docs/agents-md", baseRefName: "main",
+          author: "mac@coaletech.com", headRefName: "docs/agents-md", baseRefName: "main",
           updatedAt: new Date(Date.now() - 259_200_000).toISOString(), isDraft: true,
           body: "Updates AGENTS.md with the new frappe-bench-ops and raven-pm agent specifications.",
           changedFiles: 1, additions: 43, deletions: 7,
@@ -1161,12 +1282,32 @@ export function installCaptureRig(): CaptureRig {
         // optional capture-only fixture
       }
     },
+    seedBenchStatus: (opts) => {
+      if (!window.__PI_CAPTURE__) return;
+      const benchPath = opts?.benchPath ?? "/bench/coale_v16";
+      const siteCount = opts?.siteCount ?? 3;
+      // Inject mock into use-bench-context poll hook so bench chip + status bar show running state.
+      (window as unknown as Record<string, unknown>).__PI_BENCH_MOCK__ = {
+        status: "running",
+        benchPath,
+        site: null,
+      };
+      // Also seed viewedBenchSiteCount so WorkspaceBar shows "N sites", and the
+      // design's default model so the status bar's right side matches the references.
+      const settings = useAppStore.getState().settings;
+      useAppStore.setState({
+        viewedBenchPath: benchPath,
+        viewedBenchSiteCount: siteCount,
+        ...(settings ? { settings: { ...settings, defaultModelId: "claude-sonnet-5" } } : {}),
+      });
+    },
   };
   return {
     ...methods,
     dispose: () => {
       useAppStore.setState({
         refreshNotifications: originalRefreshNotifications,
+        refreshPlugins: originalRefreshPlugins,
       });
       api.listPluginServices = originalListPluginServices;
       api.marketSearch = originalMarketSearch;

@@ -89,3 +89,55 @@ export function formatDuration(ms: number): string {
   if (m < 60) return `${m}m`;
   return `${Math.floor(m / 60)}h ${m % 60}m`;
 }
+
+export type AgoKey = "agoNow" | "agoMinutes" | "agoHours" | "agoDays";
+
+/** Compact age for card meta and drawer props ("12m ago"): catalog key and count. */
+export function agoParts(ts: number, now: number): { key: AgoKey; count: number } {
+  const minutes = Math.floor(Math.max(0, now - ts) / 60_000);
+  if (minutes < 1) return { key: "agoNow", count: 0 };
+  if (minutes < 60) return { key: "agoMinutes", count: minutes };
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return { key: "agoHours", count: hours };
+  return { key: "agoDays", count: Math.floor(hours / 24) };
+}
+
+/** Live (non-archived) counts for the page pill and the dispatcher footer. */
+export function boardSummary(tasks: KanbanTask[]): {
+  open: number;
+  running: number;
+  blocked: number;
+  done: number;
+} {
+  let open = 0;
+  let running = 0;
+  let blocked = 0;
+  let done = 0;
+  for (const t of tasks) {
+    if (t.archived) continue;
+    if (t.status === "done") done += 1;
+    else open += 1;
+    if (t.status === "running") running += 1;
+    if (t.status === "blocked") blocked += 1;
+  }
+  return { open, running, blocked, done };
+}
+
+/** Column order on the board: newest card first. */
+export function sortForColumn(tasks: KanbanTask[]): KanbanTask[] {
+  return [...tasks].sort((a, b) => b.createdAt - a.createdAt);
+}
+
+/** Status an event moved the card to, when its payload records one. */
+export function eventTarget(payload: unknown): KanbanStatus | undefined {
+  if (!payload || typeof payload !== "object") return undefined;
+  const to = "to" in payload ? payload.to : "newStatus" in payload ? payload.newStatus : undefined;
+  return KANBAN_COLUMNS.find((status) => status === to);
+}
+
+/** Event dot tone: completions read green, failures red, the rest neutral. */
+export function eventTone(kind: string, payload: unknown): "ok" | "bad" | "neutral" {
+  if (kind === "completed" || eventTarget(payload) === "done") return "ok";
+  if (kind === "crashed" || kind === "timed_out" || kind === "blocked") return "bad";
+  return "neutral";
+}

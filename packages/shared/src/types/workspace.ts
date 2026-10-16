@@ -10,6 +10,8 @@ export type AppNotification = {
   sessionTitle: string;
   turnId: string;
   errorCode?: string;
+  /** Optional rich body text for the notification row (capture-rig can supply it). */
+  body?: string;
   createdAt: string;
   readAt?: string | null;
 };
@@ -67,6 +69,8 @@ export type PullRequestCheck = {
   name: string;
   state: "success" | "failure" | "pending" | "skipped";
   durationSeconds?: number;
+  /** Optional short detail text shown after the check name (e.g. "142 passed"). */
+  details?: string;
 };
 
 export type PullRequestSummary = {
@@ -76,7 +80,10 @@ export type PullRequestSummary = {
   author?: string;
   headRefName?: string;
   baseRefName?: string;
+  /** ISO timestamp of last update. */
   updatedAt?: string;
+  /** ISO timestamp when the PR was originally opened (distinct from updatedAt). */
+  openedAt?: string;
   isDraft?: boolean;
   /** PR body / description text */
   body?: string;

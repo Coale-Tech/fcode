@@ -13,6 +13,12 @@ export function useBenchContext(): WorkspaceBarState {
 
     const poll = async () => {
       if (document.hidden || cancelled) return;
+      // Capture-rig override: skip IPC and use injected mock state.
+      const mock = (window as unknown as Record<string, unknown>).__PI_BENCH_MOCK__ as Parameters<typeof formatWorkspaceBarState>[0] | undefined;
+      if (mock) {
+        if (!cancelled) setState(formatWorkspaceBarState(mock));
+        return;
+      }
       const bridge = window.piDesktop;
       if (!bridge?.invoke) return;
       try {

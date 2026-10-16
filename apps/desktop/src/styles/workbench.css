@@ -1720,36 +1720,44 @@
 
 /* ── Notifications page (Direction D full-inbox; R11g) ────────────────────── */
 
+/* The page is the canvas (D.css .d-canvas) holding one elevated inbox card;
+ * AppShell renders the pane as a transparent host with no titlebar band. */
 .notifications-page {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  background: var(--surface-base);
+  padding: var(--d-gap);
 }
-
-.notifications-page-head {
+:root[data-nav-layout="tabs"] .notifications-page {
+  background: var(--d-canvas-bg);
+}
+/* D3: the island already pads its gray mini-canvas by --d-gap. */
+:root[data-nav-layout="island"] .notifications-page {
+  padding: 0;
+}
+.notifications-card {
   display: flex;
-  align-items: center;
-  height: var(--d-ph-h);
-  flex-shrink: 0;
-  padding: 0 14px;
-  gap: 8px;
-  border-bottom: 1px solid var(--d-border);
-  background: var(--surface-gray-1);
-}
-
-.notifications-page-title {
-  font-size: var(--d-text-chat);
-  font-weight: 600;
-  color: var(--ink-gray-9);
+  flex-direction: column;
   flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--surface-elevation-1);
+  border: 1px solid var(--outline-elevation-1);
+  border-radius: var(--d-r);
+  box-shadow: var(--elevation-base);
 }
-
-.notifications-page-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+:root[data-theme="dark"] .notifications-card {
+  border-color: var(--outline-gray-2);
+}
+.notifications-page-bell {
+  color: var(--ink-gray-5);
+  flex-shrink: 0;
+}
+.notifications-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .notifications-filter-bar {
@@ -1760,6 +1768,16 @@
   background: var(--surface-gray-1);
   flex-shrink: 0;
   gap: 8px;
+}
+/* fragment.html:110-111: bare count after the label, accent ink when active */
+.notifications-filter-count {
+  font-size: var(--d-text-2xs);
+  color: var(--ink-gray-4);
+  margin-left: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.settings-segment-item.active .notifications-filter-count {
+  color: var(--ink-violet-8);
 }
 
 .notifications-body {
@@ -1772,11 +1790,11 @@
   position: sticky;
   top: 0;
   z-index: 5;
-  padding: 6px 14px;
+  padding: 8px 14px 4px;
   font-size: var(--d-text-xs);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   color: var(--ink-gray-4);
   background: var(--surface-gray-1);
   border-bottom: 1px solid var(--d-border);
@@ -1799,13 +1817,13 @@
   background: var(--surface-gray-1);
 }
 
+/* fragment.html: unread rows take the lightest accent tint, deepening on hover */
 .notifications-page-row.unread {
-  background: var(--da-sub);
+  background: var(--surface-violet-1);
 }
 
 .notifications-page-row.unread:hover {
   background: var(--da-sub);
-  filter: brightness(0.98);
 }
 
 .notifications-page-row:disabled {
@@ -1863,6 +1881,17 @@
   margin-top: 2px;
   font-variant-numeric: tabular-nums;
 }
+/* External link icon per notification row: kit .d-btn.ghost.sm.icon-btn (24px square) */
+.notif-page-link {
+  flex-shrink: 0;
+  color: var(--ink-gray-7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ds-btn-height-sm);
+  height: var(--ds-btn-height-sm);
+  margin-top: 1px;
+}
 
 .notif-page-unread-dot {
   width: var(--d-notif-dot);
@@ -1870,14 +1899,14 @@
   border-radius: 50%;
   background: var(--da);
   position: absolute;
-  right: 14px;
+  right: 12px;
   top: 50%;
   transform: translateY(-50%);
   flex-shrink: 0;
 }
 /* Design: unread dot is violet for completed, red for failed */
 .notifications-page-row[data-kind="task.failed"] .notif-page-unread-dot {
-  background: var(--ink-red-6);
+  background: var(--red-500);
 }
 
 

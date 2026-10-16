@@ -143,6 +143,16 @@ export function AppShell() {
   // Bench and Build own their context sidebar and islands (E frame), so the
   // sessions dock stays out and the pane is a transparent host.
   const workbench = page === "bench" || page === "build";
+  // Pull Requests, Scheduled, Notifications, Plugins and Kanban compose their
+  // own cards directly on the canvas (D.css .d-canvas > .d-panel), so the pane
+  // is a transparent host there too and needs no titlebar band — ShellNavbar
+  // already owns window dragging.
+  const canvasPage =
+    page === "pulls" ||
+    page === "scheduled" ||
+    page === "notifications" ||
+    page === "plugins" ||
+    page === "kanban";
   // D2 rail: sidebar only appears on chat page (list pages are full-width per variant-D2 refs).
   // D3 island: permanent sidebar always mounted regardless of page.
   // Tabs: sidebar mounts when not collapsed (or during exit animation).
@@ -212,7 +222,7 @@ export function AppShell() {
             )}
 
             {!workPanelMaximized && (
-              <section className={cx("main-pane", workbench && "is-workbench")}>
+              <section className={cx("main-pane", (workbench || canvasPage) && "is-workbench")}>
                 {page === "chat" ? (
                   <ConversationTopbar
                     sidebarCollapsed={sidebarCollapsed}
@@ -221,7 +231,7 @@ export function AppShell() {
                     onNewTask={() => void runMenuCommand("newTask")}
                     onOpenSearch={() => setSearchOpen(true)}
                   />
-                ) : (
+                ) : canvasPage ? null : (
                   <div
                     className={cx(
                       "main-titlebar",
@@ -333,7 +343,6 @@ export function AppShell() {
                   )}
                 </Suspense>
                 <TerminalPanel visible={page === "chat"} />
-                <WorkspaceBar />
               </section>
             )}
 
@@ -378,6 +387,8 @@ export function AppShell() {
             <SettingsPage />
           </Suspense>
         ) : null}
+        {/* D.css .d-statusbar: full-width app foot below rail, sidebar and canvas. */}
+        <WorkspaceBar />
         <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
         <ToastHost />
         <ExtensionPromptHost />

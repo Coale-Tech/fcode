@@ -63,6 +63,7 @@ const CAPTURE_RIG_METHODS = [
   "seedSidebarStatuses",
   "seedOmpSettings",
   "ensureVisualFixtures",
+  "seedBenchStatus",
 ] as const satisfies readonly CaptureRigMethod[];
 
 export function installRendererApi(): () => void {

@@ -1,7 +1,14 @@
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { TooltipButton, cx } from "../../components/ui";
-import { IconChevronDown, IconSearch, IconX } from "../../components/icons";
+import {
+  IconChevronDown,
+  IconChevronRight,
+  IconSearch,
+  IconTerminal,
+  IconWrench,
+  IconX,
+} from "../../components/icons";
 import type {
   PluginAgentExtensionStatus,
   PluginCapability,
@@ -22,9 +29,12 @@ import {
 export function PermissionChips({
   permissions,
   limit = INLINE_PERMISSION_LIMIT,
+  keys = false,
 }: {
   permissions: readonly string[] | undefined;
   limit?: number;
+  /** Show the manifest key itself (the description moves to the tooltip). */
+  keys?: boolean;
 }) {
   const { t } = useTranslation();
   const ordered = orderPermissions(permissions);
@@ -39,9 +49,9 @@ export function PermissionChips({
         <span
           key={permission}
           className={cx("plugins-perm-chip", `risk-${permissionRisk(permission)}`)}
-          title={t(`plugins.permissionHelp.${permission}`, { defaultValue: permission })}
+          title={keys ? permissionLabel(permission, t) : t(`plugins.permissionHelp.${permission}`, { defaultValue: permission })}
         >
-          {permissionLabel(permission, t)}
+          {keys ? permission : permissionLabel(permission, t)}
         </span>
       ))}
       {hidden > 0 ? (
@@ -75,7 +85,8 @@ export function FsScopeChips({ policy }: { policy: PluginFsPolicy | undefined })
     if (rule.own) parts.push(t("plugins.fsOwnFiles"));
     // No standing reach at all: every access stops at a confirmation.
     if (!parts.length) parts.push(t("plugins.fsAsksEachTime"));
-    return [{ mode, text: `${t(`plugins.fsMode.${mode}`)} · ${parts.join(" · ")}` }];
+    const modeLabel = t(`plugins.fsMode.${mode}`);
+    return [{ mode, reach: parts.join(" · "), modeLabel, text: `${modeLabel} · ${parts.join(" · ")}` }];
   });
   if (!chips.length) return null;
   return (
@@ -83,28 +94,47 @@ export function FsScopeChips({ policy }: { policy: PluginFsPolicy | undefined })
       {chips.map((chip) => (
         <span
           key={chip.mode}
-          className={cx("plugins-perm-chip", `risk-${permissionRisk(`fs.${chip.mode}`)}`)}
+          className={cx(
+            "plugins-perm-chip",
+            "plugins-fs-chip",
+            `risk-${permissionRisk(`fs.${chip.mode}`)}`,
+          )}
           title={chip.text}
         >
-          {chip.text}
+          {chip.reach} <span className="plugins-fs-mode">{chip.modeLabel}</span>
         </span>
       ))}
     </span>
   );
 }
 
-/** What the plugin contributes, in a fixed order so rows stay comparable. */
+/** Glyphs for the capabilities that run code on the user's behalf. */
+const CAPABILITY_ICONS: Partial<Record<PluginCapability, typeof IconWrench>> = {
+  tools: IconWrench,
+  services: IconTerminal,
+};
+
+/** What the plugin contributes, in a fixed order so rows stay comparable; the
+ * chip is the short noun and its tooltip the full description. */
 export function CapabilityChips({ capabilities }: { capabilities: readonly PluginCapability[] | undefined }) {
   const { t } = useTranslation();
   const ordered = CAPABILITY_ORDER.filter((cap) => capabilities?.includes(cap));
   if (ordered.length === 0) return null;
   return (
     <span className="plugins-cap-chips">
-      {ordered.map((cap) => (
-        <span key={cap} className="plugins-cap-chip">
-          {t(`plugins.capabilities.${cap}`, { defaultValue: cap })}
-        </span>
-      ))}
+      {ordered.map((cap) => {
+        const Icon = CAPABILITY_ICONS[cap];
+        return (
+          <span
+            key={cap}
+            className="plugins-cap-chip"
+            title={t(`plugins.capabilities.${cap}`, { defaultValue: cap })}
+          >
+            {Icon ? <Icon size={10} aria-hidden="true" /> : null}
+            {t(`plugins.capabilityShort.${cap}`, { defaultValue: cap })}
+          </span>
+        );
+      })}
     </span>
   );
 }
@@ -130,11 +160,9 @@ export function ServiceChips({ statuses }: { statuses: readonly PluginServiceSta
           <span className="plugins-service-state">
             {t(`plugins.serviceState.${status.state}`)}
           </span>
-          {status.restarts > 0 ? (
-            <span className="plugins-service-restarts">
-              {t("plugins.serviceRestarts", { count: status.restarts })}
-            </span>
-          ) : null}
+          <span className="plugins-service-restarts">
+            {t("plugins.serviceRestarts", { count: status.restarts })}
+          </span>
         </span>
       ))}
     </span>
@@ -200,9 +228,14 @@ export function AgentExtensionDetails({ status }: { status: PluginAgentExtension
 export function PluginRowDetails({
   plugin,
   services,
+  open,
+  onToggle,
 }: {
   plugin: PluginSummary;
   services: readonly PluginServiceStatus[] | undefined;
+  /** Controlled disclosure, so the row can mark itself as the one inspected. */
+  open?: boolean;
+  onToggle?: (open: boolean) => void;
 }) {
   const { t } = useTranslation();
   const hasCapabilities = (plugin.capabilities?.length ?? 0) > 0;
@@ -217,12 +250,16 @@ export function PluginRowDetails({
   if (!hasCapabilities && !hasServices && !hasPermissions && !hasAgentExtension) return null;
 
   return (
-    <details className="plugins-row-details">
+    <details
+      className="plugins-row-details"
+      open={open}
+      onToggle={(event) => onToggle?.(event.currentTarget.open)}
+    >
       <summary
         className="plugins-row-details-toggle"
         aria-label={t("plugins.viewDetailsOf", { name: plugin.name })}
       >
-        <IconChevronDown size={13} aria-hidden="true" />
+        <IconChevronRight size={11} aria-hidden="true" />
         <span>{t("plugins.details")}</span>
       </summary>
       <div className="plugins-row-details-body">
@@ -253,7 +290,7 @@ export function PluginRowDetails({
             <span className="plugins-row-detail-label">
               {t("plugins.permissionsTitle")}
             </span>
-            <PermissionChips permissions={plugin.permissions} />
+            <PermissionChips permissions={plugin.permissions} keys />
           </div>
         ) : null}
         {hasFsScope ? (

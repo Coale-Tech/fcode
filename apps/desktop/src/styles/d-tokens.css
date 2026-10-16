@@ -234,6 +234,7 @@
   --d-kd-drawer-w:     420px;                             /* kanban drawer width */
   --d-notif-icon:      28px;                              /* notification row icon size */
   --d-notif-dot:        7px;                              /* notification unread dot */
+  --d-text-2xs:        calc(10px * var(--font-scale));    /* fragment 10px counts and durations */
 }
 
 /* lane T12 — page layout dimensions (tokenised per F09) */
@@ -247,6 +248,11 @@
   --d-pr-col-ci:        70px;   /* PR CI column width */
   --d-pr-col-author:    80px;   /* PR Author column width */
   --d-pr-col-actions:  140px;   /* PR Actions column width */
+  --d-pill-sm-h:        16px;   /* inline status pill: PR rows, scheduled runs (fragment.html:169, :301) */
+  --d-pill-sm-text:     var(--d-text-2xs);
+  --d-pr-icon:          22px;   /* PR row status tile (fragment.html:161) */
+  --d-pr-icon-r:         5px;
+  --d-pr-icon-col:      28px;   /* icon column the tile sits in */
   --d-tab-h:            34px;   /* panel tab underline height (D.css:565) */
 }
 /* lane t13: settings nav D-metrics, command palette */
