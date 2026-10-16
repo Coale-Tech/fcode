@@ -69,6 +69,9 @@ export type CaptureRigMethods = {
   clearPendingPermissions: () => void;
   seedEmptyHome: () => void;
   seedOnboardingChecklist: () => void;
+  /** Intercept window.piDesktop.invoke for bench IPC channels so BenchPage shows
+   *  seeded data (5 specific benches, coale_v16 running) without needing a host binary. */
+  seedBenchList: () => void;
 };
 
 export type CaptureRig = CaptureRigMethods & {
@@ -1061,7 +1064,7 @@ export function installCaptureRig(): CaptureRig {
         { id: "st-4", title: "Stock Reconciliation Snapshot", prompt: "Take a full stock reconciliation snapshot across all warehouses and export as CSV to /tmp/stock-snapshot.", cadence: "monthly", mode: "agent", enabled: true, createdAt: now, updatedAt: now, schedule: { hour: 2, minute: 0, weekday: 0 }, nextRunAt: at(1, 2, 0).toISOString(), workspacePath: bench, modelId: "claude-sonnet-4-6" },
         { id: "st-5", title: "Monthly Accounts Ageing", prompt: "Generate accounts receivable ageing report for month-end and post summary to Raven #finance channel.", cadence: "monthly", mode: "agent", enabled: false, createdAt: now, updatedAt: now, schedule: { hour: 9, minute: 0, weekday: 0 }, workspacePath: bench, modelId: "claude-sonnet-4-6" },
       ];
-      const health = { lastTickAt: Date.now() - 28_000, lastError: undefined, hostAvailable: true };
+      // health is computed at call-time (not seed-time) so lastTickAt stays within 90s window
       const run = (id: string, taskId: string, start: Date, seconds: number | null, status: ScheduledTaskRun["status"] = "completed"): ScheduledTaskRun => ({
         id, taskId, sessionId: `sess-${id}`, status, errorCode: status === "error" ? "PROVIDER_TIMEOUT" : null,
         startedAt: start.toISOString(),
@@ -1078,7 +1081,7 @@ export function installCaptureRig(): CaptureRig {
         run("sr-p1", "st-3", at(-((new Date().getDay() + 6) % 7) || -7, 7, 30), 41),
         ...Array.from({ length: 18 }, (_, i) => run(`sr-ci${i + 1}`, "st-2", new Date(nextHour.getTime() - (i + 1) * 3_600_000), 30 + (i % 5) * 7, i === 4 ? "aborted" : "completed")),
       ].sort((a, b) => (b.startedAt > a.startedAt ? 1 : -1));
-      api.listScheduled = async () => ({ tasks, health });
+      api.listScheduled = async () => ({ tasks, health: { lastTickAt: Date.now() - 28_000, lastError: undefined, hostAvailable: true } });
       api.listScheduledRuns = async () => ({ runs });
     },
     seedPullRequests: (count = 1) => {
@@ -1209,9 +1212,24 @@ export function installCaptureRig(): CaptureRig {
         { path: "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-task-iso-abc123", kind: "task-isolation", parentRepo: "/Users/mac/ERPNext/frappe_agent/PI-Desktop" },
       ];
       api.ompWorktreeList = async () => ({ worktrees: fakeWorktrees });
+      // Also update the Zustand store settings directly so FontFamilyRow shows
+      // "InterVariable" instead of "System default" in the screenshot.
+      // ensureVisualFixtures already sets fontFamily via IPC (updates the settings file),
+      // but the store state needs a direct patch so the UI re-renders with the new value.
+      const storeSettings = useAppStore.getState().settings;
+      if (storeSettings) {
+        useAppStore.setState({ settings: { ...storeSettings, fontFamily: "InterVariable" } });
+      }
     },
     ensureVisualFixtures: async () => {
       if (!window.__PI_CAPTURE__) return;
+      // Suppress backend-down banner: no host binary runs during captures.
+      if (!document.getElementById("pi-capture-overrides")) {
+        const style = document.createElement("style");
+        style.id = "pi-capture-overrides";
+        style.textContent = ".backend-banner { display: none !important; }";
+        document.head.appendChild(style);
+      }
       const ws = useAppStore.getState().workspace;
       if (ws?.path) {
         const base = (ws.name || ws.path.split(/[/]/).filter(Boolean).pop() || "").trim();
@@ -1222,11 +1240,14 @@ export function installCaptureRig(): CaptureRig {
       // Seed user initials for avatar (matches reference "JK").
       // Also store displayName so the useEffect in useAppShellRuntime derives "JK".
       useAppStore.setState({ userInitials: "JK" });
+      // Mock getUserInfo so the avatar always shows "JK" (not the OS login name).
+      api.getUserInfo = async () => ({ fullName: "Josh Kim" });
+      // NOTE: Use seedBenchList() to intercept window.piDesktop.invoke for bench IPC channels.
       // Enable kanban and raven so rail + sidebar show all feature items.
       // Patch the IPC fetch so NavRail's useEffect cannot overwrite the enabled state.
       useAppStore.setState({ kanbanEnabled: true, ravenEnabled: true });
       api.kanbanSettingsGet = async () => ({ settings: { enabled: true, maxInProgress: 3, maxRuntimeSeconds: 3600, maxAgentCardsPerSession: 10, maxDailySpawns: 20 } });
-      api.ravenSettingsGet = async () => ({ settings: { enabled: true, url: "" } });
+      api.ravenSettingsGet = async () => ({ settings: { enabled: true, url: "https://coale.frappe.cloud/raven" } });
       // Seed 3 notifications for bell badge.
       methods.seedNotifications(3);
       // Seed English session titles matching the reference design (variant-D1/D2/D3).
@@ -1262,10 +1283,7 @@ export function installCaptureRig(): CaptureRig {
         const regularTitles = [
           // Created oldest-first so most-recently-created = Sync ERPNext (appears at TOP
           // of the session list sorted by createdAt DESC).
-          "Debug bench worker crash",
-          "Install hrms on coale_staging",
-          "Refactor payment_entry hooks",
-          "Frappe UI modal refactor",
+          // Matches reference exactly: 8 sessions across THIS WEEK / YESTERDAY / TODAY.
           "Debug slow stock valuation query",   // THIS WEEK
           "Set up coale_v16 from scratch",      // THIS WEEK
           "ERPNext payroll period config",      // YESTERDAY
@@ -1275,13 +1293,65 @@ export function installCaptureRig(): CaptureRig {
           "Redesign settings plugin section",   // TODAY
           "Sync ERPNext code module",           // TODAY — selected (created LAST = most recent)
         ];
-        for (const title of [...pinnedTitles, ...regularTitles]) {
-          if (existing.has(title)) continue;
-          if ((useAppStore.getState().sessions?.length ?? 0) >= 16) break;
-          await api.createSession({ title });
-          existing.add(title);
+        // Delete sessions NOT in the expected keep set to remove stale/dup entries
+        // from previous runs (prevents "Review PR #224" appearing twice, etc.).
+        const keepTitles = new Set([...pinnedTitles, ...regularTitles]);
+        for (const s of useAppStore.getState().sessions || []) {
+          const t = (s.title || "").trim();
+          if (!keepTitles.has(t)) {
+            try { await api.deleteSession(s.id); } catch { /* ignore */ }
+          }
+        }
+        // Dedup: keep only the first occurrence per title (delete extras).
+        const seenTitles = new Set<string>();
+        for (const s of [...(useAppStore.getState().sessions || [])]) {
+          const t = (s.title || "").trim();
+          if (seenTitles.has(t)) {
+            try { await api.deleteSession(s.id); } catch { /* ignore */ }
+          } else {
+            seenTitles.add(t);
+          }
         }
         await useAppStore.getState().refreshSessions();
+        // Recreate any missing sessions.
+        const existing2 = new Set(
+          (useAppStore.getState().sessions || []).map((s) => (s.title || "").trim()),
+        );
+        for (const title of [...pinnedTitles, ...regularTitles]) {
+          if (existing2.has(title)) continue;
+          if ((useAppStore.getState().sessions?.length ?? 0) >= 16) break;
+          await api.createSession({ title });
+          existing2.add(title);
+        }
+        await useAppStore.getState().refreshSessions();
+        // Backdate session updatedAt to produce correct TODAY/YESTERDAY/THIS WEEK groups
+        // using midnight-relative anchors so groups are stable regardless of capture time.
+        const now = Date.now();
+        const M = 60_000, H = 3_600_000, D = 86_400_000;
+        const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
+        const S = startOfToday.getTime(); // midnight start of current calendar day
+        // todayTs: ensure session is within today's calendar window; clamped to S+slot if
+        // the rolling-offset would cross midnight (e.g. when capturing just after midnight).
+        const todayTs = (offset: number, slotMin: number): number =>
+          Math.max(S + slotMin * M, now - offset);
+        const sessionAges: Record<string, number> = {
+          // TODAY — slots 1/2/3 min past midnight as fallbacks at very early captures
+          "Sync ERPNext code module":          todayTs(2 * M, 3),
+          "Redesign settings plugin section":  todayTs(47 * M, 2),
+          "Fix duplicate bench start bug":     todayTs(2 * H, 1),
+          // YESTERDAY — anchored within yesterday's calendar window (10:00–14:00 yesterday)
+          "Migrate Raven to frappe-ui v2":     S - D + 14 * H,
+          "Review PR #224 leave approvals":    S - D + 12 * H,
+          "ERPNext payroll period config":     S - D + 10 * H,
+          // THIS WEEK
+          "Debug slow stock valuation query":  S - 3 * D,
+          "Set up coale_v16 from scratch":     S - 4 * D,
+        };
+        const backdated = (useAppStore.getState().sessions ?? []).map((s) => {
+          const ts = sessionAges[(s.title || "").trim()];
+          return ts ? { ...s, updatedAt: new Date(ts).toISOString(), createdAt: new Date(ts).toISOString() } : s;
+        });
+        useAppStore.setState({ sessions: backdated });
         // Pin the pinned-page sessions in localStorage.
         const allSessions = useAppStore.getState().sessions ?? [];
         try {
@@ -1316,7 +1386,7 @@ export function installCaptureRig(): CaptureRig {
         } catch { /* non-fatal if settings IPC unavailable */ }
       // Remove the PROJECTS section from the D3 sidebar: the open workspace path
       // causes an "apps" project group to appear. Hide it in capture mode.
-      useAppStore.setState({ openProjectPaths: [] });
+      useAppStore.setState({ openProjectPaths: [], workspace: null });
       } catch { /* optional capture-only fixture */ }
     },
     seedApprovalCard: () => {
@@ -1490,7 +1560,9 @@ export function installCaptureRig(): CaptureRig {
       const benchPath = opts?.benchPath ?? "/bench/coale_v16";
       const siteCount = opts?.siteCount ?? 3;
       // Inject the override read by use-bench-context so the bench chip + status bar show running state.
-      window.__PI_BENCH_OVERRIDE__ = { status: "running", benchPath, site: null, siteCount };
+      // startedAtMs is 2m47s ago so the BenchPage elapsed timer (startMsRef) shows "02:47".
+      const startedAtMs = Date.now() - 2 * 60_000 - 47_000;
+      window.__PI_BENCH_OVERRIDE__ = { status: "running", benchPath, site: null, siteCount, startedAtMs };
       document.dispatchEvent(new Event("pi:bench-update"));
       // Also seed viewedBenchSiteCount so WorkspaceBar shows "N sites", and the
       // design's default model so the status bar's right side matches the references.
@@ -1500,6 +1572,37 @@ export function installCaptureRig(): CaptureRig {
         viewedBenchSiteCount: siteCount,
         ...(settings ? { settings: { ...settings, defaultModelId: "claude-sonnet-5" } } : {}),
       });
+    },
+    seedBenchList: () => {
+      if (!window.__PI_CAPTURE__) return;
+      const COALE_PATH = "/Users/mac/ERPNext/frappe_agent/coale_v16";
+      // Reference bench data (pages-d/bench/variant-D3.png): 5 benches, coale_v16 running.
+      // BenchPage.tsx reads window.__PI_CAPTURE_BENCH_LIST__ in loadBenches() when in
+      // capture mode — avoids requiring contextBridge interception (which is not possible).
+      const benches = [
+        { id: "cap-bench-coale-v16", path: COALE_PATH,
+          version: 16,
+          startedAtMs: Date.now() - 167_000,           // 2m47s ago → "02:47" elapsed
+          sites: [{ name: "coale.frappe.cloud", isDefault: true },
+                  { name: "demo.frappe.cloud", isDefault: false }],
+          apps: ["frappe", "erpnext", "hrms", "raven"] },
+        { id: "cap-bench-dev",     path: "/Users/mac/ERPNext/dev_bench",
+          version: 16, sites: [{ name: "dev.localhost", isDefault: true }],
+          apps: ["frappe", "erpnext"] },
+        { id: "cap-bench-v15",     path: "/Users/mac/ERPNext/v15-bench",
+          version: 15, sites: [{ name: "v15.localhost", isDefault: true }],
+          apps: ["frappe", "hrms"] },
+        { id: "cap-bench-staging", path: "/Users/mac/ERPNext/staging_v16",
+          version: 16,
+          sites: [{ name: "staging-1.frappe.cloud", isDefault: true },
+                  { name: "staging-2.frappe.cloud", isDefault: false },
+                  { name: "staging-3.frappe.cloud", isDefault: false }],
+          apps: ["frappe", "erpnext", "hrms"] },
+        { id: "cap-bench-test",    path: "/Users/mac/ERPNext/test_v16",
+          version: 16, sites: [{ name: "test.localhost", isDefault: true }],
+          apps: ["frappe"] },
+      ];
+      window.__PI_CAPTURE_BENCH_LIST__ = { benches, failedRoots: [], roots: ["/Users/mac/ERPNext"] };
     },
   };
   return {
