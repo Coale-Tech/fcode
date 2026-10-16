@@ -33,13 +33,19 @@ export type RendererApi = {
   getSettings: () => AppSettings | null;
   clearProject: () => Promise<void>;
   showToast: (message: string, opts?: ToastOptions) => void;
+  seedBenchStatus: (data: BenchStatusOverride) => void;
 } & (CaptureRigStubs | CaptureRigMethods);
+
+/** Shape accepted by seedBenchStatus and read by useBenchContext. */
+export type BenchStatusOverride = { status: string; benchPath: string | null; site: string | null } | null;
 
 declare global {
   interface Window {
     __PI_DESKTOP__?: RendererApi;
     /** Set by the capture suite before it calls any fixture method. */
     __PI_CAPTURE__?: unknown;
+    /** Overrides live IPC bench-status polling for capture screenshots. */
+    __PI_BENCH_OVERRIDE__?: BenchStatusOverride;
   }
 }
 
@@ -130,6 +136,7 @@ export function installRendererApi(): () => void {
     clearProject: () => useAppStore.getState().clearProject(),
     getSettings: () => useAppStore.getState().settings ?? null,
     showToast: (message, opts) => useAppStore.getState().showToast(message, opts),
+    seedBenchStatus: (data) => { window.__PI_BENCH_OVERRIDE__ = data; },
     ...stubs,
   };
   window.__PI_DESKTOP__ = surface;

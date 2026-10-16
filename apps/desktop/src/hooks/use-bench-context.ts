@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { IPC } from "@pi-desktop/shared";
 import { formatWorkspaceBarState, type WorkspaceBarState } from "../lib/workspace-bar-state";
+// BenchStatusOverride is declared on Window in renderer-api; re-import the type for guard use.
+import type { BenchStatusOverride } from "../capture/renderer-api";
 
 type BenchStatus = "stopped" | "starting" | "running" | "failed";
 
@@ -13,6 +15,12 @@ export function useBenchContext(): WorkspaceBarState {
 
     const poll = async () => {
       if (document.hidden || cancelled) return;
+      // Capture-rig override: skip real IPC and use seeded data directly.
+      const override: BenchStatusOverride = window.__PI_BENCH_OVERRIDE__ ?? null;
+      if (override !== null && !cancelled) {
+        setState(formatWorkspaceBarState(override));
+        return;
+      }
       const bridge = window.piDesktop;
       if (!bridge?.invoke) return;
       try {

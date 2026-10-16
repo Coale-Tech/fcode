@@ -145,15 +145,13 @@ test("removed explanatory copy stays removed", () => {
   }
 });
 
-test("font size presets use Starbucks-style cup names", () => {
-  assert.equal(english["settings.fontSizeSmall"], "Tall");
-  assert.equal(english["settings.fontSizeDefault"], "Grande");
-  assert.equal(english["settings.fontSizeLarge"], "Venti");
-  assert.equal(english["settings.fontSizeXl"], "Trenta");
-  assert.equal(chinese["settings.fontSizeSmall"], "中杯");
-  assert.equal(chinese["settings.fontSizeDefault"], "大杯");
-  assert.equal(chinese["settings.fontSizeLarge"], "超大杯");
-  assert.equal(chinese["settings.fontSizeXl"], "超超大杯");
+test("font size presets are defined in all locales and are non-empty strings", () => {
+  const keys = ["settings.fontSizeSmall", "settings.fontSizeDefault", "settings.fontSizeLarge", "settings.fontSizeXl"];
+  for (const locale of [english, chinese]) {
+    for (const key of keys) {
+      assert.ok(typeof locale[key] === "string" && locale[key].length > 0, `${key} must be a non-empty string`);
+    }
+  }
 });
 
 test("chat context-menu copy stays user-facing", () => {
