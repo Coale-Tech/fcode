@@ -885,7 +885,7 @@ export function WorkPanel({
       <div className="work-panel-main">
         {/* Direction D: mini-head (title + actions) */}
         <div className="wp-mini-head">
-          <span className="wp-mini-title">{t("panel.title", "Work Panel")}</span>
+          <span className="wp-mini-title">{activeLabel}</span>
           <div className="wp-mini-acts no-drag">
             <TooltipButton
               ref={newTabButtonRef}

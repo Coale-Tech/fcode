@@ -263,10 +263,10 @@ export const ptBR = {
       retry: "Tentar novamente",
       position: "{{current}} de {{total}}"
     },
-    emptyTitle: "Como posso ajudar você a construir?",
+    emptyTitle: "Como posso ajudar você hoje?",
     emptyTitleInProject: "O que podemos construir em {{project}}?",
     emptyTitleTemporary: "O que você gostaria de explorar temporariamente?",
-    placeholder: "Peça ajuda ao Fcode para qualquer tarefa",
+    placeholder: "Mensagem para Claude — ⌘Enter para enviar…",
     placeholderHome: "Pergunte qualquer coisa",
     placeholderHint: "Digite / para comandos · @ para arquivos",
     placeholderHomeHint: "Digite / para comandos · @ para arquivos",
@@ -2360,9 +2360,10 @@ export const ptBR = {
   },
   permission: {
     title: "Permissão necessária",
+    approveEdit: "Aprovar edição de arquivo",
     allowPrompt: "Permitir a execução de <highlight>{{tool}}</highlight>?",
-    allowOnce: "Permitir esta vez",
-    allowSession: "Permitir para esta sessão",
+    allowOnce: "Permitir uma vez",
+    allowSession: "Permitir sessão",
     allowOnceHint: "Executa agora. Você será perguntado novamente na próxima vez.",
     allowSessionHint: "Esta ferramenta é executada sem perguntar pelo restante desta tarefa.",
     denyHint: "Para aqui. O agente é informado de que foi recusado.",
@@ -2487,7 +2488,7 @@ export const ptBR = {
       tooLarge: "O arquivo é grande demais para pré-visualização"
     },
     activity: {
-      decisionNeeded: "Precisa da sua decisão",
+      decisionNeeded: "Aprovação pendente",
       reviewRequest: "Solicitação de revisão",
       todo: "Tarefa {{done}} de {{total}}",
       toolsRun: "Ferramentas executadas",

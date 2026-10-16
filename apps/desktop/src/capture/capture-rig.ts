@@ -23,11 +23,14 @@ import type {
   PullRequestSummary,
   ScheduledTask,
   ScheduledTaskRun,
+  UiMessage,
   UserSkillRecord,
 } from "@pi-desktop/shared";
 import { useAppStore } from "../stores/app-store";
 import { api } from "../lib/api";
-import { browserPluginTab, toolWorkPanelTab } from "../lib/work-panel-tabs";
+import { browserPluginTab, toolWorkPanelTab, ACTIVITY_TAB } from "../lib/work-panel-tabs";
+import type { PendingPermission } from "../lib/pending-permissions";
+import { enqueuePermission } from "../lib/pending-permissions";
 
 export type CaptureRigMethods = {
   openWorkPanelArtifact: (
@@ -57,6 +60,10 @@ export type CaptureRigMethods = {
   } | null;
   ensureVisualFixtures: () => Promise<void>;
   seedOmpSettings: () => void;
+  seedApprovalCard: () => void;
+  clearPendingPermissions: () => void;
+  seedEmptyHome: () => void;
+  seedOnboardingChecklist: () => void;
 };
 
 export type CaptureRig = CaptureRigMethods & {
@@ -1082,54 +1089,51 @@ export function installCaptureRig(): CaptureRig {
       api.ompWorktreeList = async () => ({ worktrees: fakeWorktrees });
     },
     ensureVisualFixtures: async () => {
-      // Destructive fixture seeding is capture-rig only; the rig sets
-      // __PI_CAPTURE__ before invoking (see electron/main capture suite).
       if (!window.__PI_CAPTURE__) return;
-      // Optical hero title length: short folder basenames under-ink vs Codex gold.
       const ws = useAppStore.getState().workspace;
       if (ws?.path) {
-        const base = (ws.name || ws.path.split(/[\/]/).filter(Boolean).pop() || "").trim();
+        const base = (ws.name || ws.path.split(/[/]/).filter(Boolean).pop() || "").trim();
         if (base.length > 0 && base.length < 12) {
-          useAppStore.setState({
-            workspace: { ...ws, name: "PI-Desktop" },
-          });
+          useAppStore.setState({ workspace: { ...ws, name: "PI-Desktop" } });
         }
       }
-      // Seed representative session titles for capture residuals (data band).
+      // Seed English session titles matching the reference design (variant-D1/D2/D3).
       try {
         await useAppStore.getState().refreshSessions();
-        const englishNoise = new Set([
-          "Review open pull requests",
-          "Tighten composer elevation",
-          "Dark theme night plate",
-          "Sidebar recents density",
-          "Settings appearance polish",
-          "Plugins empty state",
-          "Fix TypeScript build errors",
-          "Exploring repository structure",
-        ]);
+        // Remove stale Chinese/legacy fixture titles so they don't pollute the list.
+        const legacyNoise: Record<string, true> = {
+          "同步代码": true, "你好": true, "终止进程里面有一个注册机的": true, "加一下": true,
+          "帮我彻底卸载比特浏览器": true, "帮我配置一下这个项目并启动": true,
+          "重新设计设置页面插件板块手机端ui布局": true, "制作台的布局重新设计，需要现代化简": true,
+          "Review open pull requests": true, "Tighten composer elevation": true,
+          "Dark theme night plate": true, "Sidebar recents density": true,
+          "Settings appearance polish": true, "Plugins empty state": true,
+          "Fix TypeScript build errors": true, "Exploring repository structure": true,
+        };
         for (const s of useAppStore.getState().sessions || []) {
-          if (englishNoise.has((s.title || "").trim())) {
-            try {
-              await api.deleteSession(s.id);
-            } catch {
-              // ignore
-            }
+          if (legacyNoise[(s.title || "").trim()]) {
+            try { await api.deleteSession(s.id); } catch { /* ignore */ }
           }
         }
         await useAppStore.getState().refreshSessions();
+        // Dynamic set: grows as sessions are created during seeding.
         const existing = new Set(
           (useAppStore.getState().sessions || []).map((s) => (s.title || "").trim()),
         );
+        // English titles matching variant-D1/D2/D3 reference (8 visible + extras for count 12).
         const titles = [
-          "同步代码",
-          "你好",
-          "终止进程里面有一个注册机的",
-          "加一下",
-          "帮我彻底卸载比特浏览器",
-          "帮我配置一下这个项目并启动",
-          "重新设计设置页面插件板块手机端ui布局",
-          "制作台的布局重新设计，需要现代化简",
+          "Sync ERPNext code module",        // TODAY — selected
+          "Redesign settings plugin section", // TODAY
+          "Fix duplicate bench start bug",    // TODAY
+          "Migrate Raven to frappe-ui v2",    // YESTERDAY
+          "Review PR #224 leave approvals",   // YESTERDAY
+          "ERPNext payroll period config",    // YESTERDAY
+          "Set up coale_v16 from scratch",    // THIS WEEK
+          "Debug slow stock valuation query", // THIS WEEK
+          "Frappe UI modal refactor",         // THIS WEEK (empty-state extra)
+          "Refactor payment_entry hooks",     // extra for count
+          "Install hrms on coale_staging",    // extra for count (running state)
+          "Debug bench worker crash",         // extra for count
         ];
         for (const title of titles) {
           if (existing.has(title)) continue;
@@ -1140,25 +1144,163 @@ export function installCaptureRig(): CaptureRig {
         await useAppStore.getState().refreshSessions();
         const preferred = useAppStore
           .getState()
-          .sessions.find((s) => (s.title || "").trim() === "同步代码");
+          .sessions.find((s) => (s.title || "").trim() === "Sync ERPNext code module");
         if (preferred) {
           try {
             const raw = localStorage.getItem("pi.desktop.pinnedSessions");
             const parsed = raw ? JSON.parse(raw) : [];
-            const pins = Array.isArray(parsed) ? parsed.filter((x) => typeof x === "string") : [];
+            const pins = Array.isArray(parsed)
+              ? parsed.filter((x) => typeof x === "string")
+              : [];
             if (!pins.includes(preferred.id)) {
               localStorage.setItem(
                 "pi.desktop.pinnedSessions",
                 JSON.stringify([preferred.id, ...pins].slice(0, 40)),
               );
             }
-          } catch {
-            // ignore
-          }
+          } catch { /* ignore */ }
           await useAppStore.getState().selectSession(preferred.id);
         }
-      } catch {
-        // optional capture-only fixture
+      } catch { /* optional capture-only fixture */ }
+    },
+    seedApprovalCard: () => {
+      // Seeds transcript with Bash/Read/Edit tool rows and a ToolPermissionRequest
+      // so the inline "Approve file edit" card renders above the composer.
+      // Matches variant-D1/D2/D3 reference exactly.
+      if (!window.__PI_CAPTURE__) return;
+      const state0 = useAppStore.getState();
+      let sessionId = state0.retainedSessionIds[0] ?? state0.activeSessionId;
+      if (!sessionId && state0.sessions.length > 0) {
+        sessionId = state0.sessions[0].id;
+        useAppStore.setState({
+          activeSessionId: sessionId,
+          retainedSessionIds: [sessionId],
+          retainedTranscripts: { [sessionId]: [] },
+          page: "chat",
+        });
+      }
+      if (!sessionId) return;
+      const activeSessionId = sessionId;
+      const base = Date.parse("2026-10-09T10:42:00Z");
+      const messages: UiMessage[] = [
+        {
+          id: "cap-perm-user-0",
+          role: "user",
+          content:
+            "Can you sync the `erpnext.accounts.doctype.payment_entry` module from the coale_v16 bench into a local dev copy? Use `bench get-app` logic and then verify the module loads correctly.",
+          createdAt: new Date(base).toISOString(),
+          status: "complete",
+        },
+        {
+          id: "cap-perm-asst-0",
+          role: "assistant",
+          content:
+            "I'll sync the `payment_entry` module from coale_v16. Starting by reading the bench config and module state.",
+          createdAt: new Date(base + 30_000).toISOString(),
+          status: "complete",
+        },
+        {
+          id: "cap-perm-tool-bash",
+          role: "tool",
+          content: "",
+          createdAt: new Date(base + 60_000).toISOString(),
+          toolName: "Bash",
+          toolStatus: "success",
+          toolArgs: { command: "bench --site coale_v16.localhost list-apps" },
+          toolResult: {
+            details: {
+              exitCode: 0,
+              stdout:
+                "Apps installed on coale_v16.localhost:\n  frappe          15.42.1\n  erpnext         15.32.0 ✓\n  hrms            2.4.1\n  raven           2.1.0\n\nModule payment_entry: 847 lines · last modified 2026-10-09",
+              stderr: "",
+            },
+          },
+        },
+        {
+          id: "cap-perm-tool-read",
+          role: "tool",
+          content: "",
+          createdAt: new Date(base + 90_000).toISOString(),
+          toolName: "Read",
+          toolStatus: "success",
+          toolArgs: {
+            path: "apps/erpnext/erpnext/accounts/doctype/payment_entry/__init__.py",
+          },
+          toolResult: { details: { exitCode: 0, stdout: "" } },
+        },
+        {
+          id: "cap-perm-tool-edit",
+          role: "tool",
+          content: "",
+          createdAt: new Date(base + 120_000).toISOString(),
+          toolName: "Edit",
+          toolStatus: "running",
+          toolArgs: {
+            path: "apps/erpnext/erpnext/accounts/doctype/payment_entry/payment_entry.py",
+          },
+        },
+      ];
+      useAppStore.setState({ messages, runningSessions: { [activeSessionId]: true } });
+      const permRequest: PendingPermission = {
+        requestId: "cap-perm-req-0",
+        sessionId: activeSessionId,
+        toolCallId: "cap-perm-tool-edit",
+        toolName: "Edit",
+        argsPreview: {
+          path: "apps/erpnext/erpnext/accounts/doctype/payment_entry/payment_entry.py",
+        },
+        risk: "medium",
+        reason:
+          "Edit payment_entry.py — 12 lines. Adds remote sync helper via bench socket.",
+        receivedAt: Date.now(), // fresh timestamp so auto-deny timer doesn't fire during capture
+      };
+      // Open Activity tab so the right panel shows Pending approval box.
+      useAppStore.setState({
+        workPanelContexts: {
+          ...useAppStore.getState().workPanelContexts,
+          [activeSessionId]: {
+            open: true,
+            tabs: [ACTIVITY_TAB],
+            activeTabId: ACTIVITY_TAB.id,
+            fileRequest: null,
+          },
+        },
+        workPanelOpen: true,
+        workPanelTabs: [ACTIVITY_TAB],
+        activeWorkPanelTabId: ACTIVITY_TAB.id,
+        workPanelFileRequest: null,
+      });
+      useAppStore.setState({
+        pendingPermissions: enqueuePermission({}, permRequest),
+      });
+    },
+    clearPendingPermissions: () => {
+      if (!window.__PI_CAPTURE__) return;
+      useAppStore.setState({ pendingPermissions: {} });
+    },
+    seedEmptyHome: () => {
+      // Clears active session so emptyTitle shows and onboarding checklist is visible.
+      if (!window.__PI_CAPTURE__) return;
+      useAppStore.setState({
+        messages: [],
+        activeSessionId: undefined,
+        retainedSessionIds: [],
+        retainedTranscripts: {},
+        pendingPermissions: {},
+        runningSessions: {},
+        workPanelOpen: false,
+        page: "chat",
+      });
+      const cur = useAppStore.getState().onboarding;
+      if (cur) {
+        useAppStore.setState({ onboarding: { ...cur, showChecklist: true } });
+      }
+    },
+    seedOnboardingChecklist: () => {
+      if (!window.__PI_CAPTURE__) return;
+      const cur = useAppStore.getState().onboarding;
+      if (cur) {
+        useAppStore.setState({ onboarding: { ...cur, showChecklist: true } });
       }
     },
   };
