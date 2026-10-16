@@ -27,6 +27,7 @@ import { CollapsedTitlebarActions, RoutePending } from "./chrome";
 import { useAppShellRuntime } from "./useAppShellRuntime";
 import { useMemoryHealthPoller } from "../../hooks/use-memory-health-poller";
 import { islandSidebarProps } from "../../lib/nav-layout";
+import { useAppStore } from "../../stores/app-store";
 
 const SettingsPage = lazy(() =>
   import("../../pages/SettingsPage").then((module) => ({
@@ -125,6 +126,14 @@ export function AppShell() {
   } = useAppShellRuntime();
   useCopyTex();
   useMemoryHealthPoller();
+  // D1 onboarding: "Welcome to Fcode" header replaces ConversationTopbar while checklist is active.
+  const showChecklist = useAppStore((s) => Boolean(s.onboarding?.showChecklist));
+  const handleSkipSetup = () => {
+    void api.dismissOnboarding().catch(() => undefined).finally(() => {
+      const cur = useAppStore.getState().onboarding;
+      if (cur) useAppStore.setState({ onboarding: { ...cur, showChecklist: false } });
+    });
+  };
 
   // A boot that never reaches the shell gets a surface it can act on instead of
   // a window that only knows how to wait (issue #831). Rendered as a direct child
@@ -153,10 +162,10 @@ export function AppShell() {
     page === "notifications" ||
     page === "plugins" ||
     page === "kanban";
-  // D2 rail: sidebar only appears on chat page (list pages are full-width per variant-D2 refs).
-  // D3 island: permanent sidebar always mounted regardless of page.
-  // D1 tabs: sessions sidebar only on chat page — non-chat pages are full-width (variant-D1 refs).
-  const sidebarAllowedForLayout = navLayout === "island" || page === "chat";
+  // D1 tabs: sessions sidebar on chat page (onboarding wizard also renders on chat page);
+  // hidden on list/tool pages. D2 rail: sidebar only on chat. D3 island: sidebar always.
+  const sidebarAllowedForLayout =
+    navLayout === "island" || page === "chat";
   const mountSidebar = !workbench && (!sidebarCollapsed || sidebarExiting) ? sidebarAllowedForLayout : navLayout === "island";
 
   let shell: ReactNode = null;
@@ -223,7 +232,7 @@ export function AppShell() {
 
             {!workPanelMaximized && (
               <section className={cx("main-pane", (workbench || canvasPage) && "is-workbench")}>
-                {page === "chat" ? (
+                {page === "chat" && !showChecklist ? (
                   <ConversationTopbar
                     sidebarCollapsed={sidebarCollapsed}
                     workPanelOpen={presentedWorkPanelOpen}
@@ -231,6 +240,13 @@ export function AppShell() {
                     onNewTask={() => void runMenuCommand("newTask")}
                     onOpenSearch={() => setSearchOpen(true)}
                   />
+                ) : page === "chat" && showChecklist ? (
+                  <div className={cx("main-titlebar", "onboarding-topbar", presentedWorkPanelOpen && "work-panel-open")}>
+                    <span className="onboarding-topbar-title">{t("onboarding.welcomeTitle")}</span>
+                    <button type="button" className="onboarding-topbar-skip" onClick={handleSkipSetup}>
+                      {t("onboarding.dismiss")}
+                    </button>
+                  </div>
                 ) : canvasPage ? null : (
                   <div
                     className={cx(

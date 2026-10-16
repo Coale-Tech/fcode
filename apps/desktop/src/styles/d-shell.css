@@ -699,3 +699,35 @@
  * IMPORTANT: These rules must override messages.css / composer.css / theme-overrides.css
  * which are all imported AFTER d-shell.css. Effective overrides are in d-shell-overrides.css
  * (imported last). The rules below are kept only as documentation anchors. */
+
+/* ── D1 onboarding topbar: replaces ConversationTopbar when wizard is active ── */
+.main-titlebar.onboarding-topbar {
+  pointer-events: auto;
+  -webkit-app-region: drag;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+.onboarding-topbar-title {
+  -webkit-app-region: no-drag;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-gray-9);
+  pointer-events: none;
+}
+.onboarding-topbar-skip {
+  -webkit-app-region: no-drag;
+  pointer-events: auto;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  color: var(--ink-gray-7);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.onboarding-topbar-skip:hover {
+  background: var(--surface-gray-2);
+  color: var(--ink-gray-9);
+}

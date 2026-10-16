@@ -741,6 +741,7 @@ export const tr = {
     continue: "Devam →",
     back: "Geri",
     stepOf: "{{step}} / {{total}}. adım",
+    welcomeTitle: "Welcome to Fcode",
   },
   settings: {
     memoryTitle: "Memory",

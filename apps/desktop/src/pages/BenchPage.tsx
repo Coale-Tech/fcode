@@ -201,6 +201,13 @@ export function BenchPage() {
     let cancelled = false;
     const poll = async () => {
       if (cancelled) return;
+      // Capture-rig override: skip live IPC when bench state is seeded.
+      const override = window.__PI_BENCH_OVERRIDE__;
+      if (override !== undefined && override !== null) {
+        setStatus(override.status as BenchStatus);
+        setActiveBenchPath(override.benchPath);
+        return;
+      }
       try {
         const s = await invoke<{ status: BenchStatus; benchPath: string | null; logs?: LogLine[] }>(IPC.invoke.benchStatus);
         setStatus(s.status);
@@ -213,11 +220,15 @@ export function BenchPage() {
         }
       } catch { /* ignore */ }
     };
+    // Also respond to bench-update events from the capture rig.
+    const onBenchUpdate = () => { void poll(); };
+    document.addEventListener("pi:bench-update", onBenchUpdate);
     poll();
     const id = setInterval(poll, 2000);
     return () => {
       cancelled = true;
       clearInterval(id);
+      document.removeEventListener("pi:bench-update", onBenchUpdate);
     };
   }, []);
 

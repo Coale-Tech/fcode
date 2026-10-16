@@ -1479,18 +1479,21 @@ export function installCaptureRig(): CaptureRig {
         openProjectPaths: [],
         page: "chat",
       });
-      const cur = useAppStore.getState().onboarding;
-      if (cur) {
-        useAppStore.setState({ onboarding: { ...cur, showChecklist: true } });
-      }
+      // Initialize onboarding state if null (seedVisualState clears it).
+      const cur = useAppStore.getState().onboarding ?? {
+        showChecklist: false,
+        steps: [],
+      };
+      useAppStore.setState({ onboarding: { ...cur, showChecklist: true } });
     },
     seedOnboardingChecklist: () => {
       // Force onboarding checklist visible regardless of backend state.
       if (!window.__PI_CAPTURE__) return;
-      const cur = useAppStore.getState().onboarding;
-      if (cur) {
-        useAppStore.setState({ onboarding: { ...cur, showChecklist: true } });
-      }
+      const cur = useAppStore.getState().onboarding ?? {
+        showChecklist: false,
+        steps: [],
+      };
+      useAppStore.setState({ onboarding: { ...cur, showChecklist: true } });
     },
     seedBenchStatus: (opts) => {
       if (!window.__PI_CAPTURE__) return;

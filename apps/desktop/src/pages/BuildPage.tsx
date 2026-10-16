@@ -105,6 +105,16 @@ export function BuildPage() {
     let cancelled = false;
     const poll = async () => {
       if (cancelled) return;
+      // Capture-rig override: mirrors the same pattern as BenchPage/use-bench-context.
+      const override = window.__PI_BENCH_OVERRIDE__;
+      if (override !== undefined && override !== null) {
+        if (!cancelled) {
+          setBenchStatus(override.status as BenchStatus);
+          setBenchPath(override.benchPath);
+          setSite(override.site);
+        }
+        return;
+      }
       try {
         const s = await invoke<{ status: BenchStatus; benchPath: string | null; site: string | null }>(IPC.invoke.benchStatus);
         if (!cancelled) {
@@ -114,11 +124,14 @@ export function BuildPage() {
         }
       } catch { /* ignore */ }
     };
+    const onBenchUpdate = () => { void poll(); };
+    document.addEventListener("pi:bench-update", onBenchUpdate);
     poll();
     const id = setInterval(poll, 2_000);
     return () => {
       cancelled = true;
       clearInterval(id);
+      document.removeEventListener("pi:bench-update", onBenchUpdate);
     };
   }, []);
 

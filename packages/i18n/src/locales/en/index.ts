@@ -740,6 +740,7 @@ export const en = {
     continue: "Continue \u2192",
     back: "Back",
     stepOf: "Step {{step}} of {{total}}",
+    welcomeTitle: "Welcome to Fcode",
   },
   settings: {
     memoryTitle: "Memory",

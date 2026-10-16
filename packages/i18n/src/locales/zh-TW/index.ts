@@ -736,6 +736,7 @@ export const zhTW = {
     continue: "繼續 →",
     back: "返回",
     stepOf: "第 {{step}} / {{total}} 步",
+    welcomeTitle: "Welcome to Fcode",
   },
   settings: {
     memoryTitle: "Memory",
