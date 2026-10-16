@@ -155,8 +155,8 @@ export function AppShell() {
     page === "kanban";
   // D2 rail: sidebar only appears on chat page (list pages are full-width per variant-D2 refs).
   // D3 island: permanent sidebar always mounted regardless of page.
-  // Tabs: sidebar mounts when not collapsed (or during exit animation).
-  const sidebarAllowedForLayout = navLayout === "island" || navLayout === "tabs" || page === "chat";
+  // D1 tabs: sessions sidebar only on chat page — non-chat pages are full-width (variant-D1 refs).
+  const sidebarAllowedForLayout = navLayout === "island" || page === "chat";
   const mountSidebar = !workbench && (!sidebarCollapsed || sidebarExiting) ? sidebarAllowedForLayout : navLayout === "island";
 
   let shell: ReactNode = null;
