@@ -629,3 +629,45 @@
 /* Dark mode overrides */
 :root[data-theme="dark"][data-nav-layout="island"] .d3-sb-pinned-row:hover  { background: var(--surface-gray-2); }
 :root[data-theme="dark"][data-nav-layout="island"] .d3-sb-pinned-row.active { background: var(--surface-gray-3); }
+
+/* ── D1 tabs dark: opaque sidebar surface (no canvas backdrop unlike rail/island) ──
+ * In rail/island, .app-chat-shell gets background:var(--d-canvas-bg) so the
+ * transparent sidebar renders correctly. In tabs layout there is no canvas bg,
+ * so the sidebar must be explicitly opaque in dark mode.
+ * Override darwin glass tint (1-attr specificity) with 3-attr rule. */
+:root[data-theme="dark"][data-nav-layout="tabs"] .sidebar-surface,
+:root[data-platform="darwin"][data-theme="dark"][data-nav-layout="tabs"] .sidebar-surface {
+  background-color: var(--surface-elevation-1);
+  background-image: none;
+}
+:root[data-theme="dark"][data-nav-layout="tabs"] .sidebar-rail,
+:root[data-platform="darwin"][data-theme="dark"][data-nav-layout="tabs"] .sidebar-rail {
+  background-color: var(--surface-elevation-1);
+  background-image: none;
+}
+
+/* ── Navbar right cluster in rail/island: 28px icon size to match design ──
+ * D.css:247-263: .d-nav-icon-btn is 28px — same in all layouts.
+ * The tabs-only override in d-shell.css already sizes bell in tabs correctly;
+ * for rail/island the general shell-navbar-icon-btn rule applies. */
+:root[data-nav-layout="rail"] .shell-navbar-end .footer-notification,
+:root[data-nav-layout="island"] .shell-navbar-end .footer-notification {
+  height: 28px;
+  width: 28px;
+  min-width: 28px;
+  padding: 0;
+}
+:root[data-nav-layout="rail"] .shell-navbar-end .footer-notification svg,
+:root[data-nav-layout="island"] .shell-navbar-end .footer-notification svg {
+  width: 16px;
+  height: 16px;
+}
+:root[data-nav-layout="rail"] .shell-navbar-end .notification-badge,
+:root[data-nav-layout="island"] .shell-navbar-end .notification-badge {
+  width: 14px;
+  height: 14px;
+  font-size: 9px;
+  top: 1px;
+  right: 1px;
+  border: none;
+}
