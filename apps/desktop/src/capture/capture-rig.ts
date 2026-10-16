@@ -1350,12 +1350,9 @@ export function installCaptureRig(): CaptureRig {
       if (!window.__PI_CAPTURE__) return;
       const benchPath = opts?.benchPath ?? "/bench/coale_v16";
       const siteCount = opts?.siteCount ?? 3;
-      // Inject mock into use-bench-context poll hook so bench chip + status bar show running state.
-      (window as unknown as Record<string, unknown>).__PI_BENCH_MOCK__ = {
-        status: "running",
-        benchPath,
-        site: null,
-      };
+      // Inject the override read by use-bench-context so the bench chip + status bar show running state.
+      window.__PI_BENCH_OVERRIDE__ = { status: "running", benchPath, site: null, siteCount };
+      document.dispatchEvent(new Event("pi:bench-update"));
       // Also seed viewedBenchSiteCount so WorkspaceBar shows "N sites", and the
       // design's default model so the status bar's right side matches the references.
       const settings = useAppStore.getState().settings;

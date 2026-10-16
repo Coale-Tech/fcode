@@ -36,7 +36,6 @@ export type RendererApi = {
   clearProject: () => Promise<void>;
   clearOpenProjects: () => void;
   showToast: (message: string, opts?: ToastOptions) => void;
-  seedBenchStatus: (data: BenchStatusOverride) => void;
 } & (CaptureRigStubs | CaptureRigMethods);
 
 /** Shape accepted by seedBenchStatus and read by useBenchContext. */
@@ -151,10 +150,6 @@ export function installRendererApi(): () => void {
       const s = useAppStore.getState().settings;
       const base = s ?? ({ theme: "system", defaultMode: "plan", enterToSend: true, onboardingDismissed: false } as unknown as NonNullable<typeof s>);
       useAppStore.setState({ settings: { ...base, fontFamily: family } });
-    },
-    seedBenchStatus: (data) => {
-      window.__PI_BENCH_OVERRIDE__ = data;
-      document.dispatchEvent(new Event("pi:bench-update"));
     },
     ...stubs,
   };
