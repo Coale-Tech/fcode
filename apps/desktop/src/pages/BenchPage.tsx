@@ -295,7 +295,10 @@ export function BenchPage() {
   // Gap 3 / T6: prime startMs when status becomes starting/running (e.g. after restart)
   useEffect(() => {
     if ((status === "starting" || status === "running") && startMsRef.current === null) {
-      startMsRef.current = Date.now();
+      // Capture mode: use seeded startedAtMs so elapsed timer shows a realistic "02:47"
+      // rather than 0s (which is what happens when the bench was just seeded as running).
+      const captureStart = window.__PI_CAPTURE__ && window.__PI_BENCH_OVERRIDE__?.startedAtMs;
+      startMsRef.current = captureStart ? captureStart : Date.now();
     } else if (status === "stopped") {
       startMsRef.current = null;
       setElapsedLabel("");

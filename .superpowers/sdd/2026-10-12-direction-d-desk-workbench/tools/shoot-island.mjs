@@ -58,7 +58,7 @@ function openCDP(wsUrl) {
       return new Promise((res, rej) => {
         pending.set(msgId, { res, rej, timer: setTimeout(() => {
           pending.delete(msgId); rej(new Error(`CDP ${method} timeout`));
-        }, 25000) });
+        }, 60000) });
         ws.send(JSON.stringify({ id: msgId, method, params }));
       });
     };
@@ -235,7 +235,7 @@ export async function shoot({ browser: _browser }) {
   const theme = (t) => eval_(`window.__PI_DESKTOP__?.setThemeAttr(${JSON.stringify(t)})`);
 
   // ── LIGHT ────────────────────────────────────────────────────────────────
-  await theme("light"); await sleep(400);
+  await theme("light"); await sleep(1200); // extra settle time after large seeding
 
   // Assert .permission-card is in DOM before chat shot.
   const hasPermCard = await eval_(`!!document.querySelector(".permission-card")`);
@@ -247,10 +247,16 @@ export async function shoot({ browser: _browser }) {
 
   await shot("D3-light-chat");
 
+  // Helper: collapse the Activity/Todos work panel before every non-chat shot.
+  const closePanel = () => eval_(`
+    (() => { window.__PI_DESKTOP__?.collapseWorkPanel?.(); })()
+  `);
+
   // Bench: open first 2 bench detail tabs then show "All benches" table.
   // After clicking btns[0], tab changes to coale_v16 detail (AllBenches unmounts).
   // Must return to "All benches" before clicking btns[1].
   await shot("D3-light-bench", async () => {
+    await closePanel();
     await goto("bench");
     await sleep(2400); // wait for seeded bench list to load
     const openBenchTab = async (idx) => {
@@ -281,15 +287,27 @@ export async function shoot({ browser: _browser }) {
     `);
   }, 400);
 
-  await shot("D3-light-build",         () => goto("build"));
-  await shot("D3-light-kanban",        () => goto("kanban"));
-  await shot("D3-light-raven",         () => goto("raven"));
-  await shot("D3-light-filebird",      () => goto("filebird"));
-  await shot("D3-light-scheduled",     () => goto("scheduled"));
-  await shot("D3-light-notifications", () => goto("notifications"));
-  await shot("D3-light-plugins",       () => goto("plugins"));
-  await shot("D3-light-pulls",         () => goto("pulls"));
-  await shot("D3-light-settings",      async () => {
+  await shot("D3-light-build",         async () => { await closePanel(); await goto("build"); });
+  await shot("D3-light-kanban",        async () => { await closePanel(); await goto("kanban"); });
+  await shot("D3-light-raven",         async () => { await closePanel(); await goto("raven"); });
+  await shot("D3-light-filebird",      async () => { await closePanel(); await goto("filebird"); });
+  await shot("D3-light-scheduled",     async () => { await closePanel(); await goto("scheduled"); });
+  await shot("D3-light-notifications", async () => { await closePanel(); await goto("notifications"); });
+  await shot("D3-light-plugins",       async () => { await closePanel(); await goto("plugins"); });
+  // Pulls: close panel, navigate, then click PR #247 row to show detail panel.
+  await shot("D3-light-pulls", async () => {
+    await closePanel();
+    await goto("pulls");
+    await sleep(800); // wait for PR list to load
+    await eval_(`
+      (() => {
+        const row = document.querySelector(".pr-row");
+        if (row) row.click();
+      })()
+    `);
+  }, 400);
+  await shot("D3-light-settings", async () => {
+    await closePanel();
     await goto("settings"); await sleep(400);
     await eval_(`(async () => { await window.__PI_DESKTOP__?.seedOmpSettings?.(); })()`);
   });
@@ -303,6 +321,7 @@ export async function shoot({ browser: _browser }) {
     await eval_(`(async () => { await window.__PI_DESKTOP__?.seedApprovalCard?.(); })()`);
   });
   await shot("D3-dark-bench", async () => {
+    await closePanel();
     await goto("bench");
     await sleep(2400);
     const openBenchTabD = async (idx) => {
@@ -330,14 +349,26 @@ export async function shoot({ browser: _browser }) {
       })()
     `);
   }, 400);
-  await shot("D3-dark-build",          () => goto("build"));
-  await shot("D3-dark-kanban",         () => goto("kanban"));
-  await shot("D3-dark-raven",          () => goto("raven"));
-  await shot("D3-dark-filebird",       () => goto("filebird"));
-  await shot("D3-dark-scheduled",      () => goto("scheduled"));
-  await shot("D3-dark-notifications",  () => goto("notifications"));
-  await shot("D3-dark-plugins",        () => goto("plugins"));
-  await shot("D3-dark-settings",       () => goto("settings"));
+  await shot("D3-dark-build",          async () => { await closePanel(); await goto("build"); });
+  await shot("D3-dark-kanban",         async () => { await closePanel(); await goto("kanban"); });
+  await shot("D3-dark-raven",          async () => { await closePanel(); await goto("raven"); });
+  await shot("D3-dark-filebird",       async () => { await closePanel(); await goto("filebird"); });
+  await shot("D3-dark-scheduled",      async () => { await closePanel(); await goto("scheduled"); });
+  await shot("D3-dark-notifications",  async () => { await closePanel(); await goto("notifications"); });
+  await shot("D3-dark-plugins",        async () => { await closePanel(); await goto("plugins"); });
+  // Pulls: close panel + select PR #247 row for detail panel.
+  await shot("D3-dark-pulls", async () => {
+    await closePanel();
+    await goto("pulls");
+    await sleep(800);
+    await eval_(`
+      (() => {
+        const row = document.querySelector(".pr-row");
+        if (row) row.click();
+      })()
+    `);
+  }, 400);
+  await shot("D3-dark-settings", async () => { await closePanel(); await goto("settings"); });
 
   await writeFile(join(SHOTS_DIR, "provenance.json"),
     JSON.stringify({ lane: "H-island", shots: prov }, null, 2));

@@ -96,8 +96,8 @@ export function AllBenches({
       {blocker && (
         <div className="build-banner is-amber" role="status" style={{ margin: "8px 0 0", padding: "7px 12px" }}>
           <span aria-hidden="true">⚠</span>
-          <strong>{baseName(blocker)}</strong> is running — only one bench at a time.{" "}
-          <span className="wb-muted">{startBlockedCue(blocker)} to start another.</span>
+          Only one bench can run at a time.{" "}
+          <span className="wb-muted">Stop <strong>{baseName(blocker)}</strong> before starting another.</span>
         </div>
       )}
       <div className="wb-all-scroll">
@@ -217,8 +217,6 @@ export function AllBenches({
 }
 
 function siteSummary(bench: BenchSummary): string {
-  if (bench.sites.length === 0) return "No sites";
-  if (bench.sites.length === 1) return bench.sites[0].name;
-  const def = bench.sites.find((s) => s.isDefault)?.name ?? bench.sites[0].name;
-  return `${def} +${bench.sites.length - 1}`;
+  // Show site count as a number (e.g. 3) — matches D3 reference design.
+  return bench.sites.length === 0 ? "0" : String(bench.sites.length);
 }
