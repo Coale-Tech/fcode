@@ -30,7 +30,7 @@ import { enqueuePermission, type PendingPermission } from "../lib/pending-permis
 
 export type CaptureRigMethods = {
   openWorkPanelArtifact: (
-    kind: "review" | "browser" | "file",
+    kind: "review" | "browser" | "file" | "activity",
     resource?: string,
   ) => void;
   collapseWorkPanel: () => void;
@@ -49,6 +49,9 @@ export type CaptureRigMethods = {
   seedScheduledTasks: (count?: number) => void;
   seedPullRequests: (count?: number) => void;
   seedApprovalCard: () => void;
+  clearPendingPermissions: () => void;
+  seedEmptyHome: () => void;
+  seedOnboardingChecklist: () => void;
   seedSidebarStatuses: () => {
     selected: string;
     running: string;
@@ -78,7 +81,7 @@ export function installCaptureRig(): CaptureRig {
   const originalListPullRequests = api.listPullRequests;
   const methods: CaptureRigMethods = {
     openWorkPanelArtifact: (
-      kind: "review" | "browser" | "file",
+      kind: "review" | "browser" | "file" | "activity",
       resource?: string,
     ) => {
       if (!window.__PI_CAPTURE__) return;
@@ -88,6 +91,10 @@ export function installCaptureRig(): CaptureRig {
       }
       if (kind === "browser") {
         useAppStore.getState().openWorkPanelTab(browserPluginTab(resource));
+        return;
+      }
+      if (kind === "activity") {
+        useAppStore.getState().openWorkPanelTab(ACTIVITY_TAB);
         return;
       }
       if (kind === "review") {
@@ -990,7 +997,17 @@ export function installCaptureRig(): CaptureRig {
       // retainedSessionIds[0] is always the session whose pane renders on screen, which
       // may differ from activeSessionId during async state transitions.
       const state0 = useAppStore.getState();
-      const sessionId = state0.retainedSessionIds[0] ?? state0.activeSessionId;
+      let sessionId = state0.retainedSessionIds[0] ?? state0.activeSessionId;
+      // If seedEmptyHome cleared the active session, pick the first available session
+      if (!sessionId && state0.sessions.length > 0) {
+        sessionId = state0.sessions[0].id;
+        useAppStore.setState({
+          activeSessionId: sessionId,
+          retainedSessionIds: [sessionId],
+          retainedTranscripts: { [sessionId]: [] },
+          page: "chat",
+        });
+      }
       if (!sessionId) return;
       const activeSessionId = sessionId;
       const base = Date.parse("2026-10-09T10:42:00Z");
@@ -1067,22 +1084,54 @@ export function installCaptureRig(): CaptureRig {
         risk: "medium",
         reason:
           "Edit payment_entry.py — 12 lines. Adds remote sync helper via bench socket.",
-        receivedAt: Date.parse("2026-10-09T10:44:00Z"),
+        receivedAt: Date.now(),
       };
-      // Pre-set workPanelContexts so neverOpened=false → SessionPane.useEffect won't
-      // auto-open the WorkPanel when pendingPermission is set.
-      const existing = useAppStore.getState().workPanelContexts[activeSessionId];
-      if (!existing || existing.tabs.length === 0) {
-        useAppStore.setState({
-          workPanelContexts: {
-            ...useAppStore.getState().workPanelContexts,
-            [activeSessionId]: { open: false, tabs: [ACTIVITY_TAB], activeTabId: ACTIVITY_TAB.id, fileRequest: null },
-          },
-        });
-      }
+      // Open the Activity tab so chat-activity-* shots show it without a separate openWorkPanelArtifact call.
+      useAppStore.setState({
+        workPanelContexts: {
+          ...useAppStore.getState().workPanelContexts,
+          [activeSessionId]: { open: true, tabs: [ACTIVITY_TAB], activeTabId: ACTIVITY_TAB.id, fileRequest: null },
+        },
+        workPanelOpen: true,
+        workPanelTabs: [ACTIVITY_TAB],
+        activeWorkPanelTabId: ACTIVITY_TAB.id,
+        workPanelFileRequest: null,
+      });
       useAppStore.setState({
         pendingPermissions: enqueuePermission({}, permRequest),
       });
+    },
+    clearPendingPermissions: () => {
+      if (!window.__PI_CAPTURE__) return;
+      useAppStore.setState({ pendingPermissions: {} });
+    },
+    seedEmptyHome: () => {
+      // Capture fixture: clear active session so isTemporarySession=false and
+      // the empty-hero shows "What can I help you build?" (chat.emptyTitle).
+      // Also ensures onboarding checklist is visible (showChecklist=true).
+      if (!window.__PI_CAPTURE__) return;
+      useAppStore.setState({
+        messages: [],
+        activeSessionId: undefined,
+        retainedSessionIds: [],
+        retainedTranscripts: {},
+        pendingPermissions: {},
+        runningSessions: {},
+        workPanelOpen: false,
+        page: "chat",
+      });
+      const cur = useAppStore.getState().onboarding;
+      if (cur) {
+        useAppStore.setState({ onboarding: { ...cur, showChecklist: true } });
+      }
+    },
+    seedOnboardingChecklist: () => {
+      // Force onboarding checklist visible regardless of backend state.
+      if (!window.__PI_CAPTURE__) return;
+      const cur = useAppStore.getState().onboarding;
+      if (cur) {
+        useAppStore.setState({ onboarding: { ...cur, showChecklist: true } });
+      }
     },
     seedSidebarStatuses: () => {
       if (!window.__PI_CAPTURE__) return null;
