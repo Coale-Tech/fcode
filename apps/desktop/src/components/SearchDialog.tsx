@@ -96,6 +96,8 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   const query = useSessionSearchState((state) => state.query);
   const setQuery = useSessionSearchState((state) => state.setQuery);
   const search = useSessionSearch(open, query);
+  // "New task" slot occupies option 0 only when no active query; hidden during search.
+  const hasNewTask = !query.trim();
   const selectionRequest = useRef(0);
   useEffect(() => {
     selectionRequest.current += 1;
@@ -110,6 +112,16 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   type PaletteBench = { id: string; path: string; status: "running" | "stopped" };
 
   const [paletteBenches, setPaletteBenches] = useState<PaletteBench[]>([]);
+
+  type PaletteFile = { path: string; appRoot: string };
+  const [paletteFiles, setPaletteFiles] = useState<PaletteFile[]>([]);
+
+  // Capture mode: load rig-seeded file entries for the FILES palette section.
+  // In production __PI_PALETTE_FILES__ is undefined so this section stays hidden.
+  useEffect(() => {
+    if (!open) return;
+    setPaletteFiles(window.__PI_PALETTE_FILES__ ?? []);
+  }, [open]);
 
   // Load bench list when palette opens. Capture mode reads rig-seeded global;
   // normal mode fetches real bench list from IPC.
@@ -153,6 +165,15 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
+    // Capture mode: use rig-seeded __PI_PALETTE_COMMANDS__ instead of IPC search.
+    if (window.__PI_CAPTURE__ && window.__PI_PALETTE_COMMANDS__) {
+      const q = query.trim().toLowerCase();
+      const hits = (window.__PI_PALETTE_COMMANDS__).filter(
+        (c) => !q || c.title.toLowerCase().includes(q),
+      );
+      setCommandResult({ query, hits });
+      return;
+    }
     const handle = window.setTimeout(() => {
       void api
         .searchCommands(query)
@@ -212,7 +233,8 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
       const bTs = Date.parse(b.session.updatedAt || "") || 0;
       return bTs - aTs || a.session.id.localeCompare(b.session.id);
     });
-    let index = 1;
+    // Sessions start at slot 0 when "New task" is hidden (active query), else slot 1.
+    let index = q ? 0 : 1;
     return (q ? candidates : candidates.slice(0, 30)).map((row) => {
       const optionIndex = index;
       index += 1 + (row.hit?.matches.length ?? 0);
@@ -253,6 +275,14 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
     [query, t, developerMode],
   );
 
+  // FILES: capture-mode-only file search results (from __PI_PALETTE_FILES__ rig seed).
+  // Filtered by query substring; invisible in production (empty paletteFiles).
+  const fileHits = useMemo<PaletteFile[]>(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    return paletteFiles.filter((f) => f.path.toLowerCase().includes(q));
+  }, [paletteFiles, query]);
+
   // BENCHES: always show all benches — they are a persistent context switcher,
   // not a filtered search result.
   const benchHits = useMemo<PaletteBench[]>(() => paletteBenches, [paletteBenches]);
@@ -261,8 +291,11 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
     (count, row) => count + 1 + (row.hit?.matches.length ?? 0),
     0,
   );
-  const moreIndex = sessionOptionCount + 1;
-  const pageBase = moreIndex + (query.trim() && search.nextOffset !== null ? 1 : 0);
+  // "New task" occupies slot 0 only when no query; adjust base indices accordingly.
+  const moreIndex = sessionOptionCount + (hasNewTask ? 1 : 0);
+  // flat option order: [new-task(0) when no query], sessions, [loadMore], files, pages, settings, commands, benches.
+  const filesBase = moreIndex + (query.trim() && search.nextOffset !== null ? 1 : 0);
+  const pageBase = filesBase + fileHits.length;
   const settingsBase = pageBase + pageHits.length;
   const commandsBase = settingsBase + settingsHits.length;
   const benchBase = commandsBase + commandHits.length;
@@ -339,7 +372,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   };
 
   const runActive = () => {
-    if (active === 0) return void run(null);
+    if (active === 0 && hasNewTask) return void run(null);
     for (const row of rows) {
       if (active === row.optionIndex) return void run(row);
       const match = row.hit?.matches[active - row.optionIndex - 1];
@@ -421,18 +454,20 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
           role="listbox"
           aria-label={t("nav.search")}
         >
-          <button
-            id="global-search-option-0"
-            type="button"
-            role="option"
-            aria-selected={active === 0}
-            className={`search-item ${active === 0 ? "active" : ""}`}
-            onMouseEnter={() => setActive(0)}
-            onClick={() => void run(null)}
-          >
-            <IconNewSession size={15} className="search-item-icon" />
-            <span className="search-item-title">{t("nav.newTask")}</span>
-          </button>
+          {hasNewTask ? (
+            <button
+              id="global-search-option-0"
+              type="button"
+              role="option"
+              aria-selected={active === 0}
+              className={`search-item ${active === 0 ? "active" : ""}`}
+              onMouseEnter={() => setActive(0)}
+              onClick={() => void run(null)}
+            >
+              <IconNewSession size={15} className="search-item-icon" />
+              <span className="search-item-title">{t("nav.newTask")}</span>
+            </button>
+          ) : null}
           {/* Sessions group: show flat "Sessions" header when query matches sessions */}
           {query.trim() && groups.length > 0 ? (
             <div role="presentation">
@@ -448,6 +483,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
             runningSessions={runningSessions}
             onActivate={setActive}
             onSelect={(row, messageId) => void run(row, messageId)}
+            showGroupLabels={!query.trim()}
           />
           {query.trim() && search.loading ? (
             <div className="search-empty" role="status">
@@ -475,6 +511,36 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
             >
               {t("search.loadMore")}
             </button>
+          ) : null}
+          {fileHits.length > 0 ? (
+            <div role="presentation">
+              <div className="search-group-label" role="presentation">
+                {t("search.files")}
+              </div>
+              {fileHits.map((file, index) => {
+                const optionIndex = filesBase + index;
+                return (
+                  <button
+                    key={file.path}
+                    id={`global-search-option-${optionIndex}`}
+                    type="button"
+                    role="option"
+                    aria-selected={active === optionIndex}
+                    className={`search-item ${active === optionIndex ? "active" : ""}`}
+                    onMouseEnter={() => setActive(optionIndex)}
+                    onClick={() => {}}
+                  >
+                    <IconSearch size={15} className="search-item-icon" />
+                    <span className="search-item-title">
+                      {highlightMatch(file.path, query)}
+                    </span>
+                    <span className="search-item-meta">
+                      <span className="search-item-project">{file.appRoot}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           ) : null}
           {pageHits.length > 0 ? (
             <div role="presentation">
@@ -575,6 +641,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
               {benchHits.map((bench, index) => {
                 const optionIndex = benchBase + index;
                 const benchName = bench.path.split(/[\\/]/).filter(Boolean).pop() ?? bench.id;
+                const tildePath = bench.path.replace(/^\/(?:Users|home)\/[^/]+/, "~");
                 return (
                   <button
                     key={bench.id}
@@ -590,7 +657,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
                       className={`search-bench-dot ${bench.status === "running" ? "on" : "off"}`}
                       aria-hidden
                     />
-                    <span className="search-item-title">{benchName}</span>
+                    <span className="search-item-title">{`${benchName} — ${tildePath}`}</span>
                     <span className="search-item-meta">
                       <span className="search-item-project">{bench.status}</span>
                     </span>
@@ -600,6 +667,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
             </div>
           ) : null}
           {rows.length === 0 &&
+          fileHits.length === 0 &&
           pageHits.length === 0 &&
           settingsHits.length === 0 &&
           commandHits.length === 0 &&
@@ -610,10 +678,11 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
             <div className="search-empty">{t("search.empty")}</div>
           ) : null}
         </div>
-        {/* lane t13: keyboard-legend footer (D.css d-cmdpal-foot); Tab preview removed — no Tab handler */}
+        {/* keyboard-legend footer (D.css d-cmdpal-foot) */}
         <div className="d-cmdpal-foot" aria-hidden>
           <span><span className="d-kbd">↑</span><span className="d-kbd">↓</span>{" "}{t("search.legendNavigate")}</span>
           <span><span className="d-kbd">↵</span>{" "}{t("search.legendOpen")}</span>
+          <span><span className="d-kbd">Tab</span>{" "}{t("search.legendPreview")}</span>
           <span><span className="d-kbd">Esc</span>{" "}{t("search.legendClose")}</span>
           <span><span className="d-kbd">⌘</span><span className="d-kbd">K</span>{" "}{t("search.legendToOpen")}</span>
         </div>

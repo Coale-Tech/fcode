@@ -741,6 +741,7 @@ export const ko = {
     continue: "계속 →",
     back: "뒤로",
     stepOf: "{{step}} / {{total}} 단계",
+    welcomeTitle: "Welcome to Fcode",
   },
   settings: {
     memoryTitle: "Memory",
@@ -2638,6 +2639,7 @@ sklm: {
     legendOpen: "열기",
     legendClose: "닫기",
     legendToOpen: "열기 위해",
+    legendPreview: "미리보기",
   },
   plugins: {
     title: "확장 기능",

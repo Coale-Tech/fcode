@@ -736,6 +736,7 @@ export const zhTW = {
     continue: "繼續 →",
     back: "返回",
     stepOf: "第 {{step}} / {{total}} 步",
+    welcomeTitle: "Welcome to Fcode",
   },
   settings: {
     memoryTitle: "Memory",
@@ -2608,6 +2609,7 @@ sklm: {
     legendOpen: "開啟",
     legendClose: "關閉",
     legendToOpen: "開啟方式",
+    legendPreview: "預覽",
   },
   plugins: {
     title: "擴充套件",

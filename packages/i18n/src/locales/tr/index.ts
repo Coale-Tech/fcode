@@ -741,6 +741,7 @@ export const tr = {
     continue: "Devam →",
     back: "Geri",
     stepOf: "{{step}} / {{total}}. adım",
+    welcomeTitle: "Welcome to Fcode",
   },
   settings: {
     memoryTitle: "Memory",
@@ -2628,6 +2629,7 @@ sklm: {
     legendOpen: "aç",
     legendClose: "kapat",
     legendToOpen: "açmak için",
+    legendPreview: "önizleme",
   },
   plugins: {
     title: "Uzantılar",

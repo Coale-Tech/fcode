@@ -740,6 +740,7 @@ export const en = {
     continue: "Continue \u2192",
     back: "Back",
     stepOf: "Step {{step}} of {{total}}",
+    welcomeTitle: "Welcome to Fcode",
   },
   settings: {
     memoryTitle: "Memory",
@@ -2645,6 +2646,7 @@ sklm: {
     legendOpen: "open",
     legendClose: "close",
     legendToOpen: "to open",
+    legendPreview: "preview",
   },
   plugins: {
     title: "Plugins",

@@ -1,12 +1,13 @@
 /**
- * H-Gaps capture script — run from an eval cell:
- *
- *   const { runHGapsCapture } = await import('.../h-gaps-capture.mjs');
- *   await runHGapsCapture({ browser });
- *
- * Uses drive.mjs launch() with FCODE_WORKTREE pointing at the gaps worktree.
- * Sets window.__PI_CAPTURE__ = 1 via CDP to enable rig methods without
- * building with PI_DESKTOP_CAPTURE env.
+ * H-Gaps capture script — v6
+ * Fixes from v5:
+ * 1. clickNavLayout now navigates to general settings tab first (drive.mjs fix)
+ * 2. seedVisualState() used for sessions (client-side fixture) so palette shows
+ *    sessions even when search backend fails — avoids "Search failed" message.
+ *    seedVisualState also sets userInitials:"JK" (renderer-api.ts fix).
+ * 3. seedNotifications(3) called correctly for bell badge.
+ * 4. seedOnboardingChecklist() re-called before each onboarding shot batch.
+ * 5. setLayout loop handles settings tab navigation correctly.
  */
 
 import { mkdir } from "node:fs/promises";
@@ -14,187 +15,266 @@ import { existsSync } from "node:fs";
 
 const WT = "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-gaps";
 const HSHOTS = `${WT}/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-gaps`;
-const REFS   = "/Users/mac/.gstack/projects/Coale-Tech-fcode/designs/all-pages-20261012/pages-d";
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 export async function runHGapsCapture({ browser }) {
   await mkdir(HSHOTS, { recursive: true });
 
-  // Override worktree so drive.mjs uses the gaps branch build.
   process.env.FCODE_WORKTREE = WT;
   const { launch } = await import(
     `${WT}/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/tools/drive.mjs?t=${Date.now()}`
   );
 
-  log("Launching Electron from gaps worktree…");
-  const h = await launch({ browser, name: "hgaps3" });
-  log("App ready. Enabling capture rig…");
+  console.log("[hgaps] Launching Electron…");
+  const h = await launch({ browser, name: "hgaps-v6" });
+  console.log("[hgaps] App ready.");
 
-  // Enable rig methods without requiring PI_DESKTOP_CAPTURE env.
+  // 1. Enable capture rig
   await h.evalPage(`window.__PI_CAPTURE__ = 1`);
-  await sleep(200);
+  await sleep(300);
 
-  // Seed sessions + kanban/raven toggles.
-  await h.evalPage(`window.__PI_DESKTOP__?.ensureVisualFixtures?.()`);
-  await sleep(3000); // wait for session creation IPC
+  // 2. Seed visual state (sessions, userInitials "JK", kanban/raven) — client-side, no IPC
+  //    This also clears onboarding; re-seeded per group below.
+  await h.evalPage(`window.__PI_DESKTOP__?.seedVisualState?.()`);
+  await sleep(400);
 
-  // Seed FILES + BENCHES globals for command palette.
+  // 3. Seed bench status (needs __PI_CAPTURE__)
+  await h.evalPage(`window.__PI_DESKTOP__?.seedBenchStatus?.()`);
+  await sleep(400);
+
+  // 4. Seed notifications — 3 unread for bell badge (needs __PI_CAPTURE__)
+  await h.evalPage(`window.__PI_DESKTOP__?.seedNotifications?.(3)`);
+  await sleep(400);
+
+  // 5. Seed command palette benches (needs __PI_CAPTURE__)
   await h.evalPage(`window.__PI_DESKTOP__?.seedCommandPaletteExtras?.()`);
+  await sleep(300);
+
+  // 6. Seed onboarding checklist (needs __PI_CAPTURE__)
+  await h.evalPage(`window.__PI_DESKTOP__?.seedOnboardingChecklist?.()`);
   await sleep(300);
 
   // Helpers
   const setTheme = async (theme) => {
     await h.evalPage(`window.__PI_DESKTOP__?.setThemeAttr?.(${JSON.stringify(theme)})`);
-    await sleep(250);
-  };
-  const setLayout = async (layout) => {
-    await h.evalPage(`window.__PI_DESKTOP__?.setNavLayout?.(${JSON.stringify(layout)})`);
-    await sleep(500);
-  };
-  const setPage = async (page) => {
-    await h.evalPage(`window.__PI_DESKTOP__?.setPage?.(${JSON.stringify(page)})`);
-    await sleep(400);
-  };
-  const setSettingsTab = async (tab) => {
-    await h.evalPage(`window.__PI_DESKTOP__?.setSettingsTab?.(${JSON.stringify(tab)})`);
-    await sleep(600);
-  };
-  const shot = async (name) => {
-    // Hide backend-unavailable banner and omp-not-found overlay so they don't obscure shots.
-    await h.evalPage(
-      `document.querySelectorAll('.backend-banner,.backend-warning,.chat-sidecar-fatal').forEach(el => el.style.setProperty('display','none','important'))`
-    );
-    await sleep(100);
-    await h.screenshot(`${HSHOTS}/${name}.png`);
-    log(`SHOT ${name}`);
+    await sleep(350);
   };
 
-  // Open command palette with Cmd+K via CDP
-  const openCmdPal = async () => {
+  /**
+   * clickNavLayout navigates to settings/general, clicks the layout picker, returns to chat.
+   * Persists to disk via real settings save path.
+   * drive.mjs now ensures general tab is shown before clicking.
+   */
+  const setLayout = async (layout) => {
+    console.log(`[hgaps] Layout → ${layout}`);
+    await h.clickNavLayout(layout);
+    const s = await h.rootState();
+    console.log(`[hgaps]   navLayout=${s.dataNavLayout} theme=${s.dataTheme} persisted=${s.persistedNavLayout}`);
+    if (s.dataNavLayout !== layout) {
+      // Fallback: volatile store set (non-persisted but visible)
+      await h.evalPage(`window.__PI_DESKTOP__?.setNavLayout?.(${JSON.stringify(layout)})`);
+      await sleep(500);
+      const s2 = await h.rootState();
+      if (s2.dataNavLayout !== layout) throw new Error(`Layout stuck at ${s2.dataNavLayout}, expected ${layout}`);
+    }
+  };
+
+  const goTo = async (page, ms = 450) => {
+    await h.evalPage(`window.__PI_DESKTOP__?.setPage?.(${JSON.stringify(page)})`);
+    await sleep(ms);
+  };
+
+  const goToSettingsTab = async (tabId) => {
+    await goTo("settings", 400);
+    await h.evalPage(`window.__PI_DESKTOP__?.setSettingsTab?.(${JSON.stringify(tabId)})`);
+    await sleep(600);
+  };
+
+  /** Re-seed everything after a layout/page navigation to keep header cluster intact. */
+  const reSeed = async () => {
+    await h.evalPage(`window.__PI_DESKTOP__?.seedBenchStatus?.()`);
+    await sleep(200);
+    await h.evalPage(`window.__PI_DESKTOP__?.seedNotifications?.(3)`);
+    await sleep(200);
+  };
+
+  const shot = async (name) => {
+    // Hide backend banners (not page content)
+    await h.evalPage(
+      `document.querySelectorAll('.backend-banner,.backend-warning').forEach(function(el){ el.style.setProperty('display','none','important'); })`
+    );
+    await sleep(150);
+    // Re-seed bench/notifications after banner hide
+    await reSeed();
+    const path = `${HSHOTS}/${name}.png`;
+    await h.screenshot(path);
+    if (!existsSync(path)) throw new Error(`Shot not saved: ${path}`);
+    console.log(`[shot] ${name} ✓`);
+  };
+
+  const openPalette = async (query) => {
     await h.evalPage(
       `document.dispatchEvent(new KeyboardEvent('keydown',{key:'k',metaKey:true,bubbles:true}))`
     );
+    await sleep(700);
+    await h.evalPage(`(function(){
+      var input = document.querySelector('.search-input');
+      if (!input) return;
+      var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;
+      setter.call(input, ${JSON.stringify(query)});
+      input.dispatchEvent(new Event('input',{bubbles:true}));
+    })()`);
     await sleep(600);
+    const isOpen = await h.evalPage(`!!document.querySelector('.search-input')`);
+    if (!isOpen) console.warn("[hgaps] WARNING: palette not open");
   };
-  const typeCmdPal = async (q) => {
-    await h.evalPage(`
-      (function() {
-        const input = document.querySelector('.search-input');
-        if (!input) return;
-        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;
-        setter.call(input, ${JSON.stringify(q)});
-        input.dispatchEvent(new Event('input',{bubbles:true}));
-      })()
-    `);
-    await sleep(500);
-  };
-  const closeCmdPal = async () => {
+
+  const closePalette = async () => {
     await h.evalPage(
       `(document.querySelector('.search-input')??document).dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`
     );
-    await sleep(300);
+    await sleep(350);
   };
 
-  // ── Command palette D1/D2/D3 × light/dark ──────────────────────────────
-  for (const [layout, code] of [["tabs","D1"],["rail","D2"],["island","D3"]]) {
-    await setLayout(layout);
-    await setPage("chat");
-    await sleep(400);
-    await setTheme("light");
-    await openCmdPal();
-    await typeCmdPal("migrate");
-    await shot(`d-cmdpal-${code}-light`);
-    await closeCmdPal();
-    await setTheme("dark");
-    await openCmdPal();
-    await typeCmdPal("migrate");
-    await shot(`d-cmdpal-${code}-dark`);
-    await closeCmdPal();
-    await setTheme("light");
-  }
-
-  // ── Onboarding step 1 D1/D2/D3 × light/dark ───────────────────────────
-  await h.evalPage(`window.__PI_DESKTOP__?.seedOnboardingChecklist?.()`);
-  await sleep(400);
-  for (const [layout, code] of [["tabs","D1"],["rail","D2"],["island","D3"]]) {
-    await setLayout(layout);
-    await setPage("chat");
-    await sleep(500);
-    await setTheme("light"); await sleep(200); await shot(`d-onboarding-step1-${code}-light`);
-    await setTheme("dark");  await sleep(200); await shot(`d-onboarding-step1-${code}-dark`);
-    await setTheme("light");
-  }
-
-  // ── Settings-AI (aiAgents tab) D1/D2/D3 × light/dark ──────────────────
-  for (const [layout, code] of [["tabs","D1"],["rail","D2"],["island","D3"]]) {
-    await setLayout(layout);
-    await setPage("settings");
-    await setSettingsTab("aiAgents");
-    await sleep(400);
-    await setTheme("light"); await sleep(200); await shot(`d-settings-ai-${code}-light`);
-    await setTheme("dark");  await sleep(200); await shot(`d-settings-ai-${code}-dark`);
-    await setTheme("light");
-  }
-
-  // ── Settings-Advanced (ompAdvanced tab) D1/D2/D3 × light/dark ──────────
-  for (const [layout, code] of [["tabs","D1"],["rail","D2"],["island","D3"]]) {
-    await setLayout(layout);
-    await setPage("settings");
-    await setSettingsTab("ompAdvanced");
-    await sleep(400);
-    await setTheme("light"); await sleep(200); await shot(`d-settings-advanced-${code}-light`);
-    await setTheme("dark");  await sleep(200); await shot(`d-settings-advanced-${code}-dark`);
-    await setTheme("light");
-  }
-
-  // ── Settings-Permissions (ai tab) D1/D2/D3 × light/dark ──────────────
-  for (const [layout, code] of [["tabs","D1"],["rail","D2"],["island","D3"]]) {
-    await setLayout(layout);
-    await setPage("settings");
-    await setSettingsTab("ai");
-    await sleep(400);
-    await setTheme("light"); await sleep(200); await shot(`d-settings-permissions-${code}-light`);
-    await setTheme("dark");  await sleep(200); await shot(`d-settings-permissions-${code}-dark`);
-    await setTheme("light");
-  }
-
-  // ── FileBird: connected (mock IPC → ok:true) + unavailable (real IPC → ok:false) ─────
-  // Mock window.piDesktop.invoke so fileBirdSetVisible returns {ok:true} → !failed state.
-  await h.evalPage(`
-    (function() {
-      const orig = window.piDesktop?.invoke?.bind(window.piDesktop);
-      if (!orig) return;
-      window.__origPiInvoke = orig;
-      window.piDesktop.invoke = function(channel, ...args) {
-        if (typeof channel === 'string' && channel.includes('fileBird')) {
-          return Promise.resolve({ ok: true });
-        }
-        return orig(channel, ...args);
-      };
-    })()
-  `);
+  // Start in tabs layout, light theme
   await setLayout("tabs");
-  await setPage("filebird");
-  await sleep(1000);
-  await setTheme("light"); await sleep(300); await shot("d-filebird-connected-D1-light");
-  await setTheme("dark");  await sleep(300); await shot("d-filebird-connected-D1-dark");
   await setTheme("light");
-  // Restore real invoke (IIFE required — bare if is a statement, not expression) → ok:false → unavailable.
-  await h.evalPage(`(function() {
-    if (window.__origPiInvoke) {
-      window.piDesktop.invoke = window.__origPiInvoke;
-      delete window.__origPiInvoke;
-    }
-  })()`);
-  await setPage("chat"); await sleep(300);
-  await setPage("filebird");
-  await sleep(1200);
-  await setTheme("light"); await sleep(300); await shot("d-filebird-unavailable-D1-light");
-  await setTheme("dark");  await sleep(300); await shot("d-filebird-unavailable-D1-dark");
+  await sleep(300);
+
+  // ── COMMAND PALETTE D1/D2/D3 × light/dark ───────────────────────────────
+  console.log("[hgaps] === COMMAND PALETTE ===");
+  for (const [layout, code] of [["tabs","D1"],["rail","D2"],["island","D3"]]) {
+    await setLayout(layout);
+    await goTo("chat", 400);
+    // Re-seed so sessions + bench status are fresh for this layout iteration
+    await h.evalPage(`window.__PI_DESKTOP__?.seedVisualState?.()`);
+    await sleep(300);
+    await h.evalPage(`window.__PI_DESKTOP__?.seedBenchStatus?.()`);
+    await sleep(200);
+    await h.evalPage(`window.__PI_DESKTOP__?.seedNotifications?.(3)`);
+    await sleep(200);
+    await h.evalPage(`window.__PI_DESKTOP__?.seedCommandPaletteExtras?.()`);
+    await sleep(200);
+
+    await setTheme("light");
+    await openPalette("migrate");
+    await shot(`d-cmdpal-${code}-light`);
+    await closePalette();
+
+    await setTheme("dark");
+    await openPalette("migrate");
+    await shot(`d-cmdpal-${code}-dark`);
+    await closePalette();
+
+    await setTheme("light");
+  }
+
+  // ── ONBOARDING STEP 1 D1/D2/D3 × light/dark ────────────────────────────
+  console.log("[hgaps] === ONBOARDING ===");
+  for (const [layout, code] of [["tabs","D1"],["rail","D2"],["island","D3"]]) {
+    await setLayout(layout);
+    await goTo("chat", 400);
+    // Seed header cluster (bench chip, initials "JK") WITHOUT sessions — first-run
+    // onboarding state shows Sessions=0 (empty panel) matching reference design.
+    await h.evalPage(`window.__PI_DESKTOP__?.seedHeaderCluster?.()`);
+    await sleep(300);
+    // seedHeaderCluster clears onboarding; re-seed it
+    await h.evalPage(`window.__PI_DESKTOP__?.seedOnboardingChecklist?.()`);
+    await sleep(300);
+    await h.evalPage(`window.__PI_DESKTOP__?.seedBenchStatus?.()`);
+    await sleep(200);
+    await h.evalPage(`window.__PI_DESKTOP__?.seedNotifications?.(3)`);
+    await sleep(200);
+
+    await setTheme("light");
+    await shot(`d-onboarding-step1-${code}-light`);
+
+    await setTheme("dark");
+    await shot(`d-onboarding-step1-${code}-dark`);
+
+    await setTheme("light");
+  }
+
+  // ── SETTINGS-AI D1/D2/D3 × light/dark ──────────────────────────────────
+  console.log("[hgaps] === SETTINGS-AI ===");
+  for (const [layout, code] of [["tabs","D1"],["rail","D2"],["island","D3"]]) {
+    await setLayout(layout);  // goes to general settings first, clicks picker, returns to chat
+    await goToSettingsTab("aiAgents");
+    await reSeed();
+
+    await setTheme("light");
+    await shot(`d-settings-ai-${code}-light`);
+
+    await setTheme("dark");
+    await shot(`d-settings-ai-${code}-dark`);
+
+    await setTheme("light");
+  }
+
+  // ── SETTINGS-ADVANCED D1/D2/D3 × light/dark ─────────────────────────────
+  console.log("[hgaps] === SETTINGS-ADVANCED ===");
+  for (const [layout, code] of [["tabs","D1"],["rail","D2"],["island","D3"]]) {
+    await setLayout(layout);
+    await goToSettingsTab("ompAdvanced");
+    await reSeed();
+
+    await setTheme("light");
+    await shot(`d-settings-advanced-${code}-light`);
+
+    await setTheme("dark");
+    await shot(`d-settings-advanced-${code}-dark`);
+
+    await setTheme("light");
+  }
+
+  // ── SETTINGS-PERMISSIONS D1/D2/D3 × light/dark ──────────────────────────
+  console.log("[hgaps] === SETTINGS-PERMISSIONS ===");
+  for (const [layout, code] of [["tabs","D1"],["rail","D2"],["island","D3"]]) {
+    await setLayout(layout);
+    await goToSettingsTab("ai");
+    await reSeed();
+
+    await setTheme("light");
+    await shot(`d-settings-permissions-${code}-light`);
+
+    await setTheme("dark");
+    await shot(`d-settings-permissions-${code}-dark`);
+
+    await setTheme("light");
+  }
+
+  // ── FILEBIRD unavailable + connected D1 × light/dark ────────────────────
+  console.log("[hgaps] === FILEBIRD ===");
+  await setLayout("tabs");
+  await goTo("filebird", 1200);
+  await reSeed();
+
+  await setTheme("light");
+  await shot("d-filebird-unavailable-D1-light");
+  await setTheme("dark");
+  await shot("d-filebird-unavailable-D1-dark");
   await setTheme("light");
 
-  log("All 34 H-gaps shots taken. Closing app…");
+  // Mock invoke for "connected" state
+  await h.evalPage(`(function(){
+    var pd = window.piDesktop;
+    if (!pd || !pd.invoke) return;
+    var orig = pd.invoke.bind(pd);
+    pd.invoke = function(ch){ if (typeof ch === 'string' && ch.indexOf('fileBird') >= 0) return Promise.resolve({ ok: true }); return orig.apply(pd, arguments); };
+  })()`);
+  await sleep(200);
+  await goTo("chat", 300);
+  await goTo("filebird", 1500);
+  await reSeed();
+
+  await setTheme("light");
+  await shot("d-filebird-connected-D1-light");
+  await setTheme("dark");
+  await shot("d-filebird-connected-D1-dark");
+  await setTheme("light");
+
+  console.log("[hgaps] All 34 shots done.");
   await h.close();
   return HSHOTS;
 }
-
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }

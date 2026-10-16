@@ -732,6 +732,7 @@ export const fr = {
     "continue": "Continuer →",
     "back": "Retour",
     "stepOf": "Étape {{step}} sur {{total}}",
+    "welcomeTitle": "Welcome to Fcode",
   },
   "settings": {
     "memoryTitle": "Memory",
@@ -2622,6 +2623,7 @@ sklm: {
     "legendOpen": "ouvrir",
     "legendClose": "fermer",
     "legendToOpen": "pour ouvrir",
+    "legendPreview": "aperçu",
   },
   "plugins": {
     "title": "Extensions",

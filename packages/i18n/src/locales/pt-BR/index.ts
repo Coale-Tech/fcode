@@ -730,6 +730,7 @@ export const ptBR = {
     continue: "Continuar →",
     back: "Voltar",
     stepOf: "Passo {{step}} de {{total}}",
+    welcomeTitle: "Welcome to Fcode",
   },
   settings: {
     memoryTitle: "Memory",
@@ -2573,6 +2574,7 @@ export const ptBR = {
     legendOpen: "abrir",
     legendClose: "fechar",
     legendToOpen: "para abrir",
+    legendPreview: "visualizar",
   },
   plugins: {
     title: "Extensões",

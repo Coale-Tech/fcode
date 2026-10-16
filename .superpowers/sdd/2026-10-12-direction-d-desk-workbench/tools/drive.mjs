@@ -70,6 +70,33 @@ async function waitForTarget(port, timeout = 70000) {
 }
 
 /**
+ * Stamp a URL hash fragment on a CDP target via raw WebSocket.
+ * The hash (#sentinel) appears in page.url() so browser.open(target: sentinel)
+ * matches exactly the right Electron window — unlike document.title which React
+ * rewrites immediately.
+ */
+function stampTargetHash(wsUrl, sentinel) {
+  return new Promise((resolve, reject) => {
+    const ws = new WebSocket(wsUrl);
+    const timer = setTimeout(() => { try { ws.close(); } catch {} reject(new Error("CDP WS hash stamp timed out")); }, 5000);
+    ws.onopen = () => {
+      // Use replaceState so there's no history entry and no navigation event.
+      ws.send(JSON.stringify({
+        id: 1, method: "Runtime.evaluate",
+        params: { expression: `window.location.hash=${JSON.stringify("#" + sentinel)}` },
+      }));
+    };
+    ws.onmessage = (evt) => {
+      try {
+        const msg = JSON.parse(evt.data);
+        if (msg.id === 1) { clearTimeout(timer); ws.close(); resolve(); }
+      } catch {}
+    };
+    ws.onerror = (err) => { clearTimeout(timer); reject(new Error(`CDP WS error: ${err.message ?? err}`)); };
+  });
+}
+
+/**
  * Launch the PI Desktop Electron app in non-capture mode and attach via CDP.
  *
  * @param {object} opts
@@ -104,13 +131,27 @@ export async function launch({ browser, dataDir, name = "pi-desktop" } = {}) {
     throw e;
   }
 
-  // Connect to the main App renderer. Use the exact URL returned by waitForTarget
-  // (which filters out ?surface= targets) to avoid matching the plugin-launcher window.
+  // Stamp a unique hash fragment on the main window URL so browser.open's
+  // target matcher can distinguish it from the plugin-launcher (which shares
+  // the same URL prefix). page.url() includes the hash; document.title does not.
+  const SENTINEL = `pi-desktop-main-${port}`;
+  try {
+    await stampTargetHash(target.webSocketDebuggerUrl, SENTINEL);
+  } catch (e) {
+    console.warn("[drive] Hash stamp failed (non-fatal):", e.message);
+  }
+
+  // Connect to the main App renderer using the stamped hash as the target matcher.
   const tab = await browser.open({
     name,
-    app: { cdp_url: `http://127.0.0.1:${port}`, target: target.url },
+    app: { cdp_url: `http://127.0.0.1:${port}`, target: SENTINEL },
     timeout: 20000,
   });
+  // Remove the sentinel hash silently via replaceState (no hashchange event,
+  // no navigation, no React re-render) so the app URL is clean afterwards.
+  await tab.evaluate(`history.replaceState(null, "", location.pathname + location.search)`).catch(() => undefined);
+  await new Promise((r) => setTimeout(r, 300));
+
 
   // Wait for renderer to expose its IPC bridge and load settings from disk.
   // data-nav-layout is set at first paint (before settings load) so cannot
@@ -234,6 +275,10 @@ export async function launch({ browser, dataDir, name = "pi-desktop" } = {}) {
      */
     async clickNavLayout(layout) {
       await this.goToPage("settings");
+      // Always switch to the General tab first: [data-nav-layout-option] lives
+      // in NavLayoutRow which is only rendered under the general tab.
+      await tab.evaluate(`window.__PI_DESKTOP__?.setSettingsTab?.("general")`);
+      await new Promise((r) => setTimeout(r, 500));
       await tab.click(`[data-nav-layout-option="${layout}"]`);
       await new Promise((r) => setTimeout(r, 500));
       await this.goToPage("chat");
@@ -260,8 +305,8 @@ export async function launch({ browser, dataDir, name = "pi-desktop" } = {}) {
     async rootState() {
       // Shell chrome widths: keep in sync with nav-layout.ts (RAIL_WIDTH + 2 × CANVAS_GAP).
       // rail: 50+24=74, island: 60+24=84, tabs: 0+24=24
-      const [dom, settings] = await Promise.all([
-        tab.evaluate(`(() => {
+      // NOTE: sequential evaluates — OMP browser tool disallows concurrent tab.evaluate()
+      const dom = await tab.evaluate(`(() => {
           const el = document.documentElement;
           const cs = getComputedStyle(el);
           const navLayout = el.dataset.navLayout ?? "rail";
@@ -281,11 +326,10 @@ export async function launch({ browser, dataDir, name = "pi-desktop" } = {}) {
             shellChromeW: chromeW,
             usableWidth: shellClientWidth - chromeW,
           };
-        })()`),
-        tab.evaluate(
-          `(async () => window.piDesktop?.invoke("pi-desktop/settings/get"))()`
-        ),
-      ]);
+        })()`);
+      const settings = await tab.evaluate(
+        `(async () => window.piDesktop?.invoke("pi-desktop/settings/get"))()`
+      );
       return {
         ...dom,
         persistedNavLayout: settings?.navLayout ?? null,

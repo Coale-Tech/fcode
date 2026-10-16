@@ -10,6 +10,7 @@
  */
 import type {
   AppNotificationKind,
+  CommandItem,
   KanbanBoard,
   KanbanTask,
   McpServerRecord,
@@ -1558,16 +1559,20 @@ export function installCaptureRig(): CaptureRig {
       });
     },
     seedCommandPaletteExtras: () => {
-      // Seed capture-only FILES and BENCHES data for command palette shots.
+      // Seed capture-only FILES, BENCHES and COMMANDS data for command palette shots.
       if (!window.__PI_CAPTURE__) return;
       window.__PI_PALETTE_FILES__ = [
-        { path: "apps/frappe_agent/frappe_agent/migrate_dialog.py", appRoot: "frappe-agent" },
-        { path: "apps/frappe/frappe/migrate.py", appRoot: "frappe" },
+        { path: "patches/migrate_payment_entry_v15_to_v16.py", appRoot: "apps/erpnext" },
+        { path: "migrate_leave_allocation.py", appRoot: "apps/hrms" },
       ];
       window.__PI_PALETTE_BENCHES__ = [
-        { id: "coale_v16", path: "/bench/coale_v16", status: "running" },
-        { id: "coale_dev", path: "/bench/coale_dev", status: "stopped" },
+        { id: "coale_v16", path: "/Users/mac/ERPNext/coale_v16", status: "running" },
+        { id: "frappe-bench", path: "/Users/mac/ERPNext/frappe-bench", status: "stopped" },
       ];
+      window.__PI_PALETTE_COMMANDS__ = [
+        { id: "bench-migrate-run", title: "Run bench migrate", source: "builtin" as const },
+        { id: "bench-migrate-skip", title: "bench migrate --skip-failing", source: "builtin" as const },
+      ] satisfies CommandItem[];
     },
     seedBenchStatus: (opts) => {
       if (!window.__PI_CAPTURE__) return;
