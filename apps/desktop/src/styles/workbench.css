@@ -1114,6 +1114,11 @@
   display: inline-block; width: 5px; height: 5px; border-radius: 50%;
   background: currentColor; flex-shrink: 0; vertical-align: middle;
 }
+/* per-process PID label (right side of worker row, green tint when running) */
+.wb-worker-pid {
+  font-family: ui-monospace, Menlo, monospace; font-size: 10px;
+  color: var(--ink-green-6); opacity: 0.8; flex-shrink: 0;
+}
 
 /* ── T14: app detail row (design .bfd-app) ── */
 .wb-app-detail-row {

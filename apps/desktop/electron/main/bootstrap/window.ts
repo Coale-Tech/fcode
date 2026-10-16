@@ -1,6 +1,7 @@
 import { app, BrowserWindow, nativeTheme, screen, type Tray } from "electron";
 import { execFileSync, spawn } from "node:child_process";
 import { existsSync, writeFileSync } from "node:fs";
+import { createServer, type Server as HttpServer } from "node:http";
 import { join } from "node:path";
 import {
   APP_NAME,
@@ -2397,33 +2398,112 @@ export async function createWindow({
               );
               await sleep(500);
             };
-            // ── T14g: Direction-D bench/build/raven/filebird minimal seeds ──
-            // ── Fake bench shim for buildListApps ─────────────────────────
-            // The build page calls `bench list-apps -f json`; create a minimal
-            // shell shim so it returns realistic installed-apps data.
-            // Shim lives in /tmp (never touches /usr/local) and is cleaned up
-            // after capture; PATH is prepended so spawn finds it first.
-            execFileSync("mkdir", ["-p", "/tmp/t14g-bin"]);
-            writeFileSync(
-              "/tmp/t14g-bin/bench",
-              "#!/bin/sh\n" +
-              "# t14g fake bench — list-apps only\n" +
-              "case \"$*\" in *list-apps*)\n" +
-              "  printf '{\"coale_v16.localhost\":[\"frappe\",\"erpnext\",\"hrms\",\"raven\",\"studio\",\"builder\"]}'\n" +
-              "  exit 0;;\n" +
-              "esac\n" +
-              "exit 0\n",
-              { mode: 0o755 },
-            );
-            process.env.PATH = "/tmp/t14g-bin:" + (process.env.PATH ?? "");
-            // Seed supervisor so bench chip + status bar reflect a running bench.
-            // Discovery uses FCODE_BENCH_ROOTS to find the fake bench in /tmp.
-            // Raven settings written so RavenPage shows the disconnected card.
-            // Shots for these pages are driven inline (same pattern as T8 shots above).
+            // ── T14g: Direction-D bench/build/raven/filebird seeds ────────
+            // Monkey-patch benchSupervisor for capture-only fake data.
+            // All patches are reverted after the shots are taken.
             process.env.FCODE_BENCH_ROOTS = "/tmp/t14g-fake-bench";
             benchSupervisor.activeBenchPath = "/tmp/t14g-fake-bench/coale_v16";
-            benchSupervisor.activeSite = "coale_v16.localhost";
+            benchSupervisor.activeSite = "coale.localhost";
             (benchSupervisor as unknown as Record<string, unknown>).status = "running";
+            benchSupervisor.startedAt = Date.now() - 167000; // ~02:47 ago
+
+            // Patch 1: list-apps → return studio+builder without spawning bench CLI
+            const _origRunOneShot = (benchSupervisor as unknown as Record<string, Function>).runOneShot;
+            (benchSupervisor as unknown as Record<string, Function>).runOneShot = async (args: Record<string, unknown>) => {
+              if (args.verb === "list-apps") {
+                return { exitCode: 0, output: JSON.stringify({ "coale.localhost": ["frappe","erpnext","hrms","raven","frappe_assistant","studio","builder"] }) };
+              }
+              return _origRunOneShot.call(benchSupervisor, args);
+            };
+
+            // Patch 2: getLog("start") → realistic timestamped log lines
+            const _origGetLog = (benchSupervisor as unknown as Record<string, Function>).getLog;
+            const _fakeLogBase = Date.now() - 180000;
+            (benchSupervisor as unknown as Record<string, Function>).getLog = (processName: string) => {
+              if (processName === "start") {
+                const d = (off: number) => new Date(_fakeLogBase + off * 1000).toLocaleTimeString();
+                return [
+                  { ts: _fakeLogBase + 0, text: `${d(0)} redis.1\t 89190:M 12 Oct 2026 ${d(0)}.832 * Ready to accept connections tcp` },
+                  { ts: _fakeLogBase + 1000, text: `${d(1)} web.1  \t * Running on http://0.0.0.0:8000 (Press CTRL+C to quit)` },
+                  { ts: _fakeLogBase + 1100, text: `${d(1)} web.1  \t * Restarting with inotify reloader` },
+                  { ts: _fakeLogBase + 2000, text: `${d(2)} web.1  \t * Debugger is active!` },
+                  { ts: _fakeLogBase + 4000, text: `${d(4)} worker.1\t [${new Date(_fakeLogBase + 4000).toISOString()}] INFO in worker: Starting long job worker` },
+                  { ts: _fakeLogBase + 4100, text: `${d(4)} worker.2\t [${new Date(_fakeLogBase + 4100).toISOString()}] INFO in worker: Starting short job worker` },
+                  { ts: _fakeLogBase + 8000, text: `${d(8)} schedule.1\t[${new Date(_fakeLogBase + 8000).toISOString()}] INFO in schedule: Scheduler started` },
+                  { ts: _fakeLogBase + 60000, text: `${d(60)} web.1  \t 127.0.0.1 -- [12/Oct/2026 ${d(60)}] "GET /api/method/frappe.auth.get_logged_user HTTP/1.1" 200 -` },
+                  { ts: _fakeLogBase + 81000, text: `${d(81)} web.1  \t 127.0.0.1 -- [12/Oct/2026 ${d(81)}] "GET /app/sales-invoice HTTP/1.1" 200 -` },
+                  { ts: _fakeLogBase + 142000, text: `${d(142)} worker.1\t [${new Date(_fakeLogBase + 142000).toISOString()}] INFO in worker: Executing scheduled job: frappe.email.queue.flush` },
+                  { ts: _fakeLogBase + 164000, text: `${d(164)} web.1  \t 127.0.0.1 -- [12/Oct/2026 ${d(164)}] "POST /api/method/frappe.desk.form.save.savedocs HTTP/1.1" 200 -` },
+                ];
+              }
+              return _origGetLog.call(benchSupervisor, processName);
+            };
+
+            // Patch 3: startWatcher → emit "watching" + "synced" directly (no bench spawn)
+            const _origStartWatcher = (benchSupervisor as unknown as Record<string, Function>).startWatcher;
+            (benchSupervisor as unknown as Record<string, Function>).startWatcher = (_benchPath: string, _site: string) => {
+              setTimeout(() => {
+                benchSupervisor.emit("log", {
+                  process: "watch-studio",
+                  line: { ts: Date.now(), text: "[00:00:01.000] watching 3 studio folder(s) for changes..." },
+                });
+                setTimeout(() => {
+                  benchSupervisor.emit("log", {
+                    process: "watch-studio",
+                    line: { ts: Date.now(), text: "[00:00:01.500] synced Customer Portal from /apps/studio/studio/pages/customer_portal.json" },
+                  });
+                }, 600);
+              }, 500);
+            };
+
+            // Patch 4: HTTP server at :8765 serves Studio simulation for the Build canvas
+            const _studioHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,sans-serif;}
+body{background:#f4f4f5;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+.st-bar{height:40px;flex-shrink:0;display:flex;align-items:center;padding:0 14px;gap:10px;border-bottom:1px solid #e2e2e2;background:#fff;}
+.st-title{font-size:14px;font-weight:700;color:#1a1a1a;letter-spacing:-.01em;margin-right:4px;}
+.st-tab{padding:3px 10px;border-radius:5px;font-size:12px;background:#f2f2f2;color:#555;border:none;cursor:default;}
+.st-tab.act{background:#ede9fe;color:#5b21b6;}
+.st-body{flex:1;display:flex;overflow:hidden;}
+.st-tree{width:170px;flex-shrink:0;background:#fafafa;border-right:1px solid #e2e2e2;padding:6px 0;font-size:12px;overflow:hidden;}
+.st-th{padding:5px 10px 2px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#aaa;}
+.st-ti{padding:4px 14px;color:#555;cursor:default;}
+.st-ti.act{background:#ede9fe;color:#5b21b6;border-left:2px solid #7c3aed;}
+.st-canvas{flex:1;background:#f4f4f5;padding:14px 16px;display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;overflow:hidden;}
+.st-wgt{background:#fff;border-radius:6px;padding:11px 12px;box-shadow:0 1px 4px rgba(0,0,0,.05);border:1px solid #e2e2e2;flex-shrink:0;}
+.st-wl{font-size:10px;color:#aaa;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;}
+.st-wh{height:28px;background:#ede9fe;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:13px;color:#5b21b6;font-weight:500;}
+.st-krow{display:flex;gap:7px;margin-top:5px;}
+.st-kpi{flex:1;background:#fafafa;padding:7px 8px;border-radius:4px;border:1px solid #e2e2e2;}
+.st-kl{font-size:10px;color:#aaa;}.st-kv{font-size:16px;font-weight:600;color:#1a1a1a;}
+.st-tbl{width:100%;border-collapse:collapse;font-size:11px;}
+.st-tbl th{padding:4px 6px;color:#aaa;font-weight:500;text-align:left;border-bottom:1px solid #e2e2e2;}
+.st-tbl td{padding:4px 6px;color:#333;border-bottom:1px solid #f0f0f0;}
+.t14g-dark .st-bar{background:#1e1e20;border-color:#2e2e32;}.t14g-dark .st-title{color:#e5e5e5;}
+.t14g-dark .st-tab{background:#2a2a2e;color:#aaa;}.t14g-dark .st-tab.act{background:#3b2f6e;color:#c4b5fd;}
+.t14g-dark .st-body,.t14g-dark .st-canvas{background:#141417;}.t14g-dark .st-tree{background:#1a1a1d;border-color:#2e2e32;}
+.t14g-dark .st-ti{color:#aaa;}.t14g-dark .st-ti.act{background:#3b2f6e;color:#c4b5fd;border-color:#7c3aed;}
+.t14g-dark .st-th{color:#555;}.t14g-dark .st-wgt{background:#1e1e20;border-color:#2e2e32;box-shadow:none;}
+.t14g-dark .st-wl{color:#555;}.t14g-dark .st-wh{background:#3b2f6e;color:#c4b5fd;}
+.t14g-dark .st-kpi{background:#141417;border-color:#2e2e32;}.t14g-dark .st-kl{color:#555;}.t14g-dark .st-kv{color:#e5e5e5;}
+.t14g-dark .st-tbl th{color:#555;border-color:#2e2e32;}.t14g-dark .st-tbl td{color:#ccc;border-color:#1e1e20;}
+</style></head><body>
+<div class="st-bar"><span class="st-title">Frappe Studio</span><button class="st-tab act">Page</button><button class="st-tab">Form</button><button class="st-tab">Dashboard</button><span style="flex:1"></span><div style="width:26px;height:26px;background:#ede9fe;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#5b21b6;">C</div></div>
+<div class="st-body"><div class="st-tree"><div class="st-th">Pages</div><div class="st-ti act">Customer Portal</div><div class="st-ti">Invoice View</div><div class="st-ti">Employee Self-Service</div><div class="st-ti">Stock Dashboard</div><div class="st-th" style="margin-top:4px;">Components</div><div class="st-ti">KPI Card</div><div class="st-ti">DataTable</div><div class="st-ti">NavBar</div></div>
+<div class="st-canvas"><div class="st-wgt" style="width:230px;"><div class="st-wl">Header</div><div class="st-wh">Customer Portal</div></div>
+<div class="st-wgt" style="width:320px;"><div class="st-wl">Stats Row</div><div class="st-krow"><div class="st-kpi"><div class="st-kl">Total Orders</div><div class="st-kv">1,247</div></div><div class="st-kpi"><div class="st-kl">Pending</div><div class="st-kv">34</div></div><div class="st-kpi"><div class="st-kl">Revenue</div><div class="st-kv">&#x20B9;4.2M</div></div></div></div>
+<div class="st-wgt" style="width:280px;"><div class="st-wl">Data Table</div><table class="st-tbl"><thead><tr><th>Customer</th><th>Status</th><th>Amount</th></tr></thead><tbody><tr><td>Coale Technologies</td><td style="color:#16a34a">Active</td><td>&#x20B9;1.2M</td></tr><tr><td>Frappe Cloud</td><td style="color:#16a34a">Active</td><td>&#x20B9;840K</td></tr><tr><td>ERPNext Inc.</td><td style="color:#d97706">Pending</td><td>&#x20B9;560K</td></tr></tbody></table></div>
+</div></div></body></html>`;
+            let _studioServer: HttpServer | null = null;
+            await new Promise<void>((resolveServer) => {
+              const srv = createServer((_req, res) => {
+                res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+                res.end(_studioHtml);
+              });
+              srv.on("error", () => { resolveServer(); }); // EADDRINUSE or other — skip
+              srv.listen(8765, "127.0.0.1", () => { _studioServer = srv; resolveServer(); });
+            });
+
             if (dataDir) {
               writeFileSync(join(dataDir, "raven-settings.json"), JSON.stringify({ enabled: true, url: "http://coale.frappe.cloud" }));
             }
@@ -2454,97 +2534,151 @@ export async function createWindow({
               writeFileSync(`/tmp/codex-screens/${name}.png`, img.toPNG());
               console.log("T14G_SHOT", name, img.getSize());
             };
-            // switchLayout: persist navLayout to disk (best-effort via IPC) and
-            // update Zustand + DOM directly via setNavLayout.  Does NOT call
-            // saveSettings/refreshProviders, so the current theme is never reset
-            // by a round-trip read from SQLite.
+            // switchLayout: use the settings general-tab picker (proven to persist to disk +
+            // update Zustand in one shot, immune to refreshProviders race).
+            // We briefly navigate to settings, click the card, then restore the page.
             const switchLayout = async (layout: string) => {
-              // Step 1: update navLayout in Zustand + DOM (synchronous, no IPC).
               const before = await windowState.mainWindow!.webContents.executeJavaScript(
                 `document.documentElement.dataset.navLayout`,
+              ) as string;
+              if (before === layout) {
+                // Already correct — just settle.
+                await sleep(200);
+                console.log(`T14G_LAYOUT before=${before} after=${layout} wanted=${layout} (skip)`);
+                return;
+              }
+              // Step 1: go to settings general tab (may be hidden; show it via setPage first).
+              await windowState.mainWindow!.webContents.executeJavaScript(
+                `window.__PI_DESKTOP__?.setPage?.("settings")`,
               );
               await windowState.mainWindow!.webContents.executeJavaScript(
-                `window.__PI_DESKTOP__?.setNavLayout?.(${JSON.stringify(layout)})`,
+                `window.__PI_DESKTOP__?.setSettingsTab?.("general")`,
               );
-              await sleep(200);
+              await sleep(500);
+              // Step 2: click the nav-layout-option card — triggers saveSettings + refreshProviders.
+              await windowState.mainWindow!.webContents.executeJavaScript(
+                `document.querySelector('[data-nav-layout-option="${layout}"]')?.dispatchEvent(new MouseEvent("click",{bubbles:true}))`,
+              );
+              await sleep(800); // wait for saveSettings + refreshProviders round-trip
               const after = await windowState.mainWindow!.webContents.executeJavaScript(
                 `document.documentElement.dataset.navLayout`,
               );
-              console.log(`T14G_LAYOUT before=${String(before)} after=${String(after)} wanted=${layout}`);
-              // Step 2: collapse the sidebar for tabs/rail so non-chat pages are full-width.
-              if (layout !== "island") {
-                await windowState.mainWindow!.webContents.executeJavaScript(
-                  `document.querySelector('[data-nav="toggle-sidebar"]')?.click()`,
-                );
-                await sleep(400);
-              } else {
-                await sleep(400);
-              }
+              console.log(`T14G_LAYOUT before=${before} after=${String(after)} wanted=${layout}`);
+              await sleep(400);
             };
 
-            // ── Bench list D1(tabs)/D2(rail)/D3(island) × light/dark ──────
+            // ── Pre-seed viewedBenchSiteCount=3 so status bar shows "3 sites" ──
+            // Click the bench row to navigate to detail (triggers setViewedBench),
+            // then navigate back to the list before taking the list shots.
             await setTheme("light");
-            await switchLayout("tabs");
+            await switchLayout("tabs"); // ~1.1s after setNavLayout
             await setPage("bench");
-            await sleep(2500);
+            await sleep(3000); // extra time for bench page to settle after any refreshProviders
+            await windowState.mainWindow!.webContents.executeJavaScript(
+              `document.querySelector('.wb-link-btn.wb-table-name')?.click()`,
+            );
+            await sleep(1500); // setViewedBench(path, 3) fires here
+            await windowState.mainWindow!.webContents.executeJavaScript(
+              `document.querySelector('.wb-btab')?.click()`,
+            );
+            await sleep(800);
+
+            // ── Bench list D1(tabs)/D2(rail)/D3(island) × light/dark ──────
+            // Re-navigate to bench each time to ensure we're on the right page.
+            await setPage("bench"); await sleep(500);
             await t14gShot("d-bench-D1-light");
-            await setTheme("dark"); await sleep(350); await t14gShot("d-bench-D1-dark");
+            await setTheme("dark"); await sleep(500); await t14gShot("d-bench-D1-dark");
 
             await setTheme("light");
             await switchLayout("rail");
             await setPage("bench");
-            await sleep(1200);
+            await sleep(1500);
             await t14gShot("d-bench-D2-light");
-            await setTheme("dark"); await sleep(350); await t14gShot("d-bench-D2-dark");
+            await setTheme("dark"); await sleep(500); await t14gShot("d-bench-D2-dark");
 
             await setTheme("light");
             await switchLayout("island");
             await setPage("bench");
             await sleep(1500);
             await t14gShot("d-bench-D3-light");
-            await setTheme("dark"); await sleep(350); await t14gShot("d-bench-D3-dark");
+            await setTheme("dark"); await sleep(500); await t14gShot("d-bench-D3-dark");
 
             // ── Bench detail (click first row) D1/D3 × light/dark ────────
             await setTheme("light");
             await switchLayout("tabs");
             await setPage("bench");
-            await sleep(500);
+            await sleep(1500); // increased for layout to settle
             await windowState.mainWindow!.webContents.executeJavaScript(
               `document.querySelector('.wb-link-btn.wb-table-name')?.click()`,
             );
             await sleep(2000);
             await t14gShot("d-bench-D1-detail-light");
-            await setTheme("dark"); await sleep(350); await t14gShot("d-bench-D1-detail-dark");
+            await setTheme("dark"); await sleep(500); await t14gShot("d-bench-D1-detail-dark");
             await setTheme("light");
             await switchLayout("island");
             await setPage("bench");
-            await sleep(500);
+            await sleep(1500); // increased for layout to settle
             await windowState.mainWindow!.webContents.executeJavaScript(
               `document.querySelector('.wb-link-btn.wb-table-name')?.click()`,
             );
             await sleep(2000);
             await t14gShot("d-bench-D3-detail-light");
-            await setTheme("dark"); await sleep(350); await t14gShot("d-bench-D3-detail-dark");
+            await setTheme("dark"); await sleep(500); await t14gShot("d-bench-D3-detail-dark");
 
             // ── Build running D1/D2/D3 × light/dark ──────────────────────
+            // injectStudio: overlay Studio simulation HTML into .wb-canvas so
+            // capturePage() (which misses WebContentsView) still shows content.
+            const injectStudio = async () => {
+              // Extract <style> and <body> content separately so styles are preserved.
+              const _styleBlock = (_studioHtml.match(/<style>([\s\S]*?)<\/style>/i) ?? ["", ""])[1];
+              const _bodyBlock  = (_studioHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i) ?? ["", ""])[1];
+              const innerHtml   = (_styleBlock ? `<style>${_styleBlock}</style>` : "") + _bodyBlock;
+              await windowState.mainWindow!.webContents.executeJavaScript(`
+                (function() {
+                  const c = document.querySelector('.wb-canvas');
+                  if (!c) return;
+                  let el = c.querySelector('.t14g-studio-sim');
+                  if (!el) { el = document.createElement('div'); el.className = 't14g-studio-sim'; c.appendChild(el); }
+                  const isDark = document.documentElement.dataset.theme === 'dark';
+                  const bg = isDark ? '#141417' : '#f4f4f5';
+                  el.style.cssText = \`position:absolute;inset:0;overflow:hidden;z-index:5;background:\${bg};font-family:-apple-system,sans-serif;\`;
+                  el.className = 't14g-studio-sim' + (isDark ? ' t14g-dark' : '');
+                  el.innerHTML = ${JSON.stringify(innerHtml)};
+                })();
+              `);
+              await sleep(300);
+            };
+
             await setTheme("light");
             await switchLayout("tabs");
             await setPage("build");
-            await sleep(3500); // list-apps + dev mode + watchdog
+            await sleep(6000); // list-apps + dev mode + watchdog + watcher emit
+            await injectStudio();
             await t14gShot("d-build-running-D1-light");
-            await setTheme("dark"); await sleep(350); await t14gShot("d-build-running-D1-dark");
+            await setTheme("dark"); await sleep(600); await injectStudio(); await t14gShot("d-build-running-D1-dark");
             await setTheme("light");
             await switchLayout("rail");
             await setPage("build");
-            await sleep(1000);
+            await sleep(1500);
+            await injectStudio();
             await t14gShot("d-build-running-D2-light");
-            await setTheme("dark"); await sleep(350); await t14gShot("d-build-running-D2-dark");
+            await setTheme("dark"); await sleep(600); await injectStudio(); await t14gShot("d-build-running-D2-dark");
             await setTheme("light");
             await switchLayout("island");
             await setPage("build");
             await sleep(1500);
+            await injectStudio();
             await t14gShot("d-build-running-D3-light");
-            await setTheme("dark"); await sleep(350); await t14gShot("d-build-running-D3-dark");
+            await setTheme("dark"); await sleep(600); await injectStudio(); await t14gShot("d-build-running-D3-dark");
+
+            // collapseSidebar: close the sessions sidebar if it's open (non-workbench
+            // pages like raven/filebird show it open by default; reference has it collapsed).
+            const collapseSidebar = async () => {
+              await windowState.mainWindow!.webContents.executeJavaScript(
+                `document.querySelector('[data-nav="toggle-sidebar"][aria-expanded="true"]')?.click()`,
+              );
+              await sleep(300);
+            };
 
             // ── Raven disconnected D1/D2/D3 × light/dark ─────────────────
             await setTheme("light");
@@ -2553,49 +2687,58 @@ export async function createWindow({
             // Re-send ravenChanged so renderer re-fetches the raven-settings.json we seeded
             windowState.mainWindow!.webContents.send(IPC.event.ravenChanged);
             await sleep(1500);
+            await collapseSidebar();
             await t14gShot("d-raven-disconnected-D1-light");
-            await setTheme("dark"); await sleep(350); await t14gShot("d-raven-disconnected-D1-dark");
+            await setTheme("dark"); await sleep(500); await t14gShot("d-raven-disconnected-D1-dark");
             await setTheme("light");
             await switchLayout("rail");
             await setPage("raven");
             await sleep(1000);
+            await collapseSidebar();
             await t14gShot("d-raven-disconnected-D2-light");
-            await setTheme("dark"); await sleep(350); await t14gShot("d-raven-disconnected-D2-dark");
+            await setTheme("dark"); await sleep(500); await t14gShot("d-raven-disconnected-D2-dark");
             await setTheme("light");
             await switchLayout("island");
             await setPage("raven");
             await sleep(1500);
+            // Island layout: sidebar is always visible — no collapse
             await t14gShot("d-raven-disconnected-D3-light");
-            await setTheme("dark"); await sleep(350); await t14gShot("d-raven-disconnected-D3-dark");
+            await setTheme("dark"); await sleep(500); await t14gShot("d-raven-disconnected-D3-dark");
 
             // ── FileBird D1/D2/D3 × light/dark ───────────────────────────
             await setTheme("light");
             await switchLayout("tabs");
             await setPage("filebird");
             await sleep(1000);
+            await collapseSidebar();
             await t14gShot("d-filebird-D1-light");
-            await setTheme("dark"); await sleep(350); await t14gShot("d-filebird-D1-dark");
+            await setTheme("dark"); await sleep(500); await t14gShot("d-filebird-D1-dark");
             await setTheme("light");
             await switchLayout("rail");
             await setPage("filebird");
             await sleep(800);
+            await collapseSidebar();
             await t14gShot("d-filebird-D2-light");
-            await setTheme("dark"); await sleep(350); await t14gShot("d-filebird-D2-dark");
+            await setTheme("dark"); await sleep(500); await t14gShot("d-filebird-D2-dark");
             await setTheme("light");
             await switchLayout("island");
             await setPage("filebird");
             await sleep(1200);
+            // Island: sidebar always visible
             await t14gShot("d-filebird-D3-light");
-            await setTheme("dark"); await sleep(350); await t14gShot("d-filebird-D3-dark");
+            await setTheme("dark"); await sleep(500); await t14gShot("d-filebird-D3-dark");
 
             // ── Restore state ─────────────────────────────────────────────
+            // Revert all monkey-patches so the supervisor behaves normally.
+            (benchSupervisor as unknown as Record<string, Function>).runOneShot = _origRunOneShot;
+            (benchSupervisor as unknown as Record<string, Function>).getLog = _origGetLog;
+            (benchSupervisor as unknown as Record<string, Function>).startWatcher = _origStartWatcher;
+            (_studioServer as HttpServer | null)?.close();
             benchSupervisor.activeBenchPath = null;
             benchSupervisor.activeSite = null;
+            benchSupervisor.startedAt = null;
             (benchSupervisor as unknown as Record<string, unknown>).status = "stopped";
             delete process.env.FCODE_BENCH_ROOTS;
-            // Remove the fake bench shim we injected into PATH.
-            process.env.PATH = (process.env.PATH ?? "").replace("/tmp/t14g-bin:", "");
-            try { execFileSync("rm", ["-rf", "/tmp/t14g-bin"]); } catch {}
             await switchLayout("rail");
             await setPage("chat");
             await sleep(300);

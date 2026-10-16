@@ -856,10 +856,11 @@ function BenchDetail({
     apps: AppWithVersion[];
     procfileEntries: string[];
     port: number | null;
+    workerPids: Record<string, number | null>;
   } | null>(null);
   useEffect(() => {
     let cancelled = false;
-    invoke<{ apps: AppWithVersion[]; procfileEntries: string[]; port: number | null; mainPid: number | null }>(
+    invoke<{ apps: AppWithVersion[]; procfileEntries: string[]; port: number | null; mainPid: number | null; workerPids: Record<string, number | null> }>(
       IPC.invoke.benchDetail,
       { benchPath: bench.path },
     )
@@ -884,7 +885,7 @@ function BenchDetail({
         <div className="wb-bfd-left">
           <SiteList sites={bench.sites} />
           <AppsSection apps={detail?.apps ?? null} />
-          <WorkersSection entries={detail?.procfileEntries ?? []} running={status === "running"} />
+          <WorkersSection entries={detail?.procfileEntries ?? []} running={status === "running"} workerPids={detail?.workerPids ?? {}} />
         </div>
 
 
@@ -1093,7 +1094,7 @@ function AppsSection({ apps }: { apps: AppWithVersion[] | null }) {
 }
 
 /** T14: Procfile workers — vertical column rows matching design .bfd-chip layout. */
-function WorkersSection({ entries, running }: { entries: string[]; running: boolean }) {
+function WorkersSection({ entries, running, workerPids = {} }: { entries: string[]; running: boolean; workerPids?: Record<string, number | null> }) {
   const { t } = useTranslation();
   if (entries.length === 0) return null;
   return (
@@ -1106,7 +1107,12 @@ function WorkersSection({ entries, running }: { entries: string[]; running: bool
               <span className="wb-worker-dot" aria-hidden="true" />
               {" "}{name}
             </span>
-            {running && <span className="wb-worker-pid-placeholder" />}
+            {running && workerPids[name] != null && (
+              <span className="wb-worker-pid">pid {workerPids[name]}</span>
+            )}
+            {running && workerPids[name] == null && (
+              <span className="wb-worker-pid-placeholder" />
+            )}
           </div>
         ))}
       </div>

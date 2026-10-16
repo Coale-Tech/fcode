@@ -33,8 +33,11 @@ export function WorkspaceBar() {
       ? baseName(viewedBenchPath)
       : null;
   const isLiveRunning = bench.kind === "running";
-  // Use supervisor site if running; otherwise viewed bench site count.
-  const siteCount = hasLiveBench ? (bench.site ? 1 : 0) : viewedBenchSiteCount;
+  // viewedBenchSiteCount is set from discovery when user navigates to a bench;
+  // it's more accurate (reflects all sites) than the supervisor's single activeSite.
+  const siteCount = viewedBenchSiteCount > 0
+    ? viewedBenchSiteCount
+    : (hasLiveBench ? (bench.site ? 1 : 0) : 0);
 
   return (
     <div className="workspace-bar" role="status" aria-label="Workspace context">
