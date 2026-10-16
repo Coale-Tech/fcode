@@ -1,0 +1,243 @@
+{
+  "lane": "H-Rail",
+  "shots": [
+    {
+      "name": "light-chat",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/light-chat.png",
+      "md5": "a61ff8ce7c5c5772bcada86a4d647758",
+      "size": 186258,
+      "ts": "2026-10-16T22:44:44.331Z"
+    },
+    {
+      "name": "light-bench",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/light-bench.png",
+      "md5": "400eee48f898c88fb46892202b24eba2",
+      "size": 243012,
+      "ts": "2026-10-16T22:44:51.592Z"
+    },
+    {
+      "name": "light-build",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/light-build.png",
+      "md5": "a9cd7f506c47749d4b485f554c02ebab",
+      "size": 109751,
+      "ts": "2026-10-16T22:44:54.361Z"
+    },
+    {
+      "name": "light-kanban",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/light-kanban.png",
+      "md5": "49675cc70ecf033e1c2162ef6f9cd33b",
+      "size": 156020,
+      "ts": "2026-10-16T22:44:57.031Z"
+    },
+    {
+      "name": "light-raven",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/light-raven.png",
+      "md5": "6c24a42dc480b1a0307fc8a05d25cf57",
+      "size": 39161,
+      "ts": "2026-10-16T22:45:00.439Z"
+    },
+    {
+      "name": "light-filebird",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/light-filebird.png",
+      "md5": "d65dfc930466485023b8d0d8b81c7593",
+      "size": 27190,
+      "ts": "2026-10-16T22:45:03.710Z"
+    },
+    {
+      "name": "light-scheduled",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/light-scheduled.png",
+      "md5": "1c4da8503da0d408be86a20633cc34bc",
+      "size": 113558,
+      "ts": "2026-10-16T22:45:06.601Z"
+    },
+    {
+      "name": "light-notifications",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/light-notifications.png",
+      "md5": "9ccff9382746027b55c3847489a0851a",
+      "size": 138314,
+      "ts": "2026-10-16T22:45:09.539Z"
+    },
+    {
+      "name": "light-plugins",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/light-plugins.png",
+      "md5": "eed5a141e80b846a5da9712bfbc2d7d2",
+      "size": 110356,
+      "ts": "2026-10-16T22:45:12.764Z"
+    },
+    {
+      "name": "light-pull-requests",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/light-pull-requests.png",
+      "md5": "15b9960051749cde3cc95cb0c1c84993",
+      "size": 152075,
+      "ts": "2026-10-16T22:45:17.412Z"
+    },
+    {
+      "name": "light-settings-general-appearance",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/light-settings-general-appearance.png",
+      "md5": "31c6613370414f2b145795cae8806352",
+      "size": 87407,
+      "ts": "2026-10-16T22:45:22.927Z"
+    },
+    {
+      "name": "light-settings-ai",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/light-settings-ai.png",
+      "md5": "ee109f80a091dc05a4278aa01a8e5a27",
+      "size": 187387,
+      "ts": "2026-10-16T22:45:27.393Z"
+    },
+    {
+      "name": "light-settings-permissions",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/light-settings-permissions.png",
+      "md5": "52423f1208f86d2415f57ddef120dc89",
+      "size": 151340,
+      "ts": "2026-10-16T22:45:30.891Z"
+    },
+    {
+      "name": "light-settings-advanced",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/light-settings-advanced.png",
+      "md5": "41415d057dea2afcf324045b62d46d60",
+      "size": 155565,
+      "ts": "2026-10-16T22:45:35.203Z"
+    },
+    {
+      "name": "light-chat-workpanel",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/light-chat-workpanel.png",
+      "md5": "24c77f5cac4985bccb54e25d5c0f272c",
+      "size": 189311,
+      "ts": "2026-10-16T22:45:47.487Z"
+    },
+    {
+      "name": "light-onboarding",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/light-onboarding.png",
+      "md5": "076023af6f43a11e54fd2587e6da0eab",
+      "size": 89391,
+      "ts": "2026-10-16T22:45:55.504Z"
+    },
+    {
+      "name": "light-command-palette",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/light-command-palette.png",
+      "md5": "878496be6d85afa188561d8bb8e1f81a",
+      "size": 228125,
+      "ts": "2026-10-16T22:46:06.099Z"
+    },
+    {
+      "name": "dark-chat",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/dark-chat.png",
+      "md5": "260a22a258836eac29eef3370fbc9f65",
+      "size": 184101,
+      "ts": "2026-10-16T22:46:12.052Z"
+    },
+    {
+      "name": "dark-bench",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/dark-bench.png",
+      "md5": "6eca74fb78e3ee9abaa91d5cf176a317",
+      "size": 234613,
+      "ts": "2026-10-16T22:46:20.148Z"
+    },
+    {
+      "name": "dark-build",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/dark-build.png",
+      "md5": "4e8950c71d50301c1332db32983db777",
+      "size": 106676,
+      "ts": "2026-10-16T22:46:23.775Z"
+    },
+    {
+      "name": "dark-kanban",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/dark-kanban.png",
+      "md5": "d031593d70212a438131e1f729c36703",
+      "size": 152120,
+      "ts": "2026-10-16T22:46:26.468Z"
+    },
+    {
+      "name": "dark-raven",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/dark-raven.png",
+      "md5": "1756e7f943ecfb48b3b3d6384b1a380e",
+      "size": 38161,
+      "ts": "2026-10-16T22:46:28.681Z"
+    },
+    {
+      "name": "dark-filebird",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/dark-filebird.png",
+      "md5": "ff4ff910da8f2cb4ee1f5cc7a6cf2969",
+      "size": 26630,
+      "ts": "2026-10-16T22:46:31.530Z"
+    },
+    {
+      "name": "dark-scheduled",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/dark-scheduled.png",
+      "md5": "8843379b2a07a22cb205ca9e81af6b51",
+      "size": 108174,
+      "ts": "2026-10-16T22:46:33.113Z"
+    },
+    {
+      "name": "dark-notifications",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/dark-notifications.png",
+      "md5": "cb5e7d00d413def3e95b634cffa75528",
+      "size": 136027,
+      "ts": "2026-10-16T22:46:38.226Z"
+    },
+    {
+      "name": "dark-plugins",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/dark-plugins.png",
+      "md5": "70dc0205f591e72cdc98859e98d6e1bf",
+      "size": 107921,
+      "ts": "2026-10-16T22:46:41.341Z"
+    },
+    {
+      "name": "dark-pull-requests",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/dark-pull-requests.png",
+      "md5": "19dadf7cc476ac6508f10583b7fbead0",
+      "size": 147425,
+      "ts": "2026-10-16T22:46:44.843Z"
+    },
+    {
+      "name": "dark-settings-general-appearance",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/dark-settings-general-appearance.png",
+      "md5": "db560ae9c47edf683441f385f5628ddc",
+      "size": 85828,
+      "ts": "2026-10-16T22:46:49.359Z"
+    },
+    {
+      "name": "dark-settings-ai",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/dark-settings-ai.png",
+      "md5": "2a807d7e45ff4c81fa8d91fd72089778",
+      "size": 181098,
+      "ts": "2026-10-16T22:46:52.167Z"
+    },
+    {
+      "name": "dark-settings-permissions",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/dark-settings-permissions.png",
+      "md5": "6e92bc3fd97575df0212be99092dfaf1",
+      "size": 147880,
+      "ts": "2026-10-16T22:46:54.148Z"
+    },
+    {
+      "name": "dark-settings-advanced",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/dark-settings-advanced.png",
+      "md5": "3ad9767594589730b2c72f41c5c90ef9",
+      "size": 151358,
+      "ts": "2026-10-16T22:46:57.496Z"
+    },
+    {
+      "name": "dark-chat-workpanel",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/dark-chat-workpanel.png",
+      "md5": "0747707cf64823a42965c829634cdb82",
+      "size": 186422,
+      "ts": "2026-10-16T22:47:08.795Z"
+    },
+    {
+      "name": "dark-onboarding",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/dark-onboarding.png",
+      "md5": "80b8cad7270cfd8ce1b1c84a091abe0c",
+      "size": 91108,
+      "ts": "2026-10-16T22:47:19.868Z"
+    },
+    {
+      "name": "dark-command-palette",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-rail/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-Rail/dark-command-palette.png",
+      "md5": "67a3e152d099ea89d5a387a84c5dfbcc",
+      "size": 212858,
+      "ts": "2026-10-16T22:47:39.942Z"
+    }
+  ]
+}

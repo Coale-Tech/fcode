@@ -1091,12 +1091,11 @@ export function installCaptureRig(): CaptureRig {
         api.listPullRequests = originalListPullRequests;
         return;
       }
-      // Ensure workspace is set so the PR page renders data (not the empty state).
-      if (!useAppStore.getState().workspace?.path) {
-        useAppStore.setState({
-          workspace: { path: "/Users/mac/CoaleTech/frappe-agent", name: "frappe-agent", branch: "main" },
-        });
-      }
+      // Always set workspace so PR page shows "CoaleTech/frappe-agent" in header.
+      // The path's last 2 components are displayed: slice(-2) → "CoaleTech/frappe-agent".
+      useAppStore.setState({
+        workspace: { path: "/Users/mac/CoaleTech/frappe-agent", name: "frappe-agent", branch: "main" },
+      });
       const p247checks: PullRequestCheck[] = [
         { name: "frappe-tests", state: "success", durationSeconds: 82, details: "142 passed" },
         { name: "type-check",   state: "success", durationSeconds: 48 },
@@ -1213,6 +1212,15 @@ export function installCaptureRig(): CaptureRig {
         { path: "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-task-iso-abc123", kind: "task-isolation", parentRepo: "/Users/mac/ERPNext/frappe_agent/PI-Desktop" },
       ];
       api.ompWorktreeList = async () => ({ worktrees: fakeWorktrees });
+      // Mock ompAgentList — reads from agent dirs which contain all fcode agents;
+      // reference design shows only 4 omp-source agents in AGENT MODEL OVERRIDES.
+      const fakeAgents: OmpAgentEntry[] = [
+        { name: "frappe-dev",      description: "Frappe/ERPNext implementation", tools: Array(21).fill("t"), source: "omp" },
+        { name: "frappe-reviewer", description: "Code review specialist · read-only",  tools: [], source: "omp" },
+        { name: "frappe-scout",    description: "Read-only codebase scout · fast queries", tools: [], source: "omp" },
+        { name: "sonic",           description: "Low-reasoning agent · mechanical tasks", tools: [], source: "omp" },
+      ];
+      api.ompAgentList = async () => ({ agents: fakeAgents });
       // Also update the Zustand store settings directly so FontFamilyRow shows
       // "InterVariable" instead of "System default" in the screenshot.
       // ensureVisualFixtures already sets fontFamily via IPC (updates the settings file),

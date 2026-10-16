@@ -3975,3 +3975,14 @@
   border: 1px solid var(--d-border);
   letter-spacing: 0.01em;
 }
+
+.settings-agent-overrides-head {
+  padding: 8px 12px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ds-settings-row-desc-ink);
+  border-top: 1px solid var(--d-border);
+  margin-top: 4px;
+}
