@@ -1,6 +1,6 @@
 import { app, BrowserWindow, nativeTheme, screen, type Tray } from "electron";
 import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import {
   APP_NAME,
@@ -1029,10 +1029,17 @@ export async function createWindow({
         void (async () => {
           try {
             if (!windowState.mainWindow) return;
-            const { writeFileSync } = await import("node:fs");
+            // G-Pages lane: write to lane shots dir AND shared /tmp/codex-screens
+            const GSHOTS = "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14g-pages/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/G-Pages";
+            try { mkdirSync(GSHOTS, { recursive: true }); } catch { /**/ }
             const shot = async (name: string) => {
               const img = await windowState.mainWindow!.webContents.capturePage();
-              writeFileSync(`/tmp/codex-screens/${name}.png`, img.toPNG());
+              const buf = img.toPNG();
+              writeFileSync(`/tmp/codex-screens/${name}.png`, buf);
+              writeFileSync(`${GSHOTS}/${name}.png`, buf);
+              // Provenance JSON
+              const prov = { shot: name, captureTime: new Date().toISOString(), size: img.getSize() };
+              writeFileSync(`${GSHOTS}/${name}.json`, JSON.stringify(prov, null, 2));
               console.log("CAPTURE", name, img.getSize());
             };
             const clickNav = async (nav: string) => {
@@ -1375,11 +1382,11 @@ export async function createWindow({
             );
             await new Promise((r) => setTimeout(r, 350));
             await shot("pi-panel-new");
-            await probeWorkPanelNewPage("new-page");
+            await probeWorkPanelNewPage("new-page").catch((e: unknown) => console.warn("PROBE_WARN", String(e)));
             await setTheme("dark");
             await new Promise((r) => setTimeout(r, 300));
             await shot("pi-panel-new-dark");
-            await probeWorkPanelNewPage("new-page-dark");
+            await probeWorkPanelNewPage("new-page-dark").catch((e: unknown) => console.warn("PROBE_WARN", String(e)));
             await setTheme("light");
             await new Promise((r) => setTimeout(r, 250));
             await windowState.mainWindow!.webContents.executeJavaScript(`
@@ -2011,8 +2018,16 @@ export async function createWindow({
                 `(() => { const { promise, resolve } = Promise.withResolvers(); document.body.getBoundingClientRect(); requestAnimationFrame(() => { document.body.getBoundingClientRect(); requestAnimationFrame(resolve); }); return promise; })()`,
               );
             };
+            // Resize to 1440x900 for direction-d page shots (matches reference viewport)
+            const pagesOrigSize = windowState.mainWindow!.getContentSize();
+            windowState.mainWindow!.setContentSize(1440, 900);
+            await sleep(300);
             // Seed page data for direction-d pages shots (PRs, notifications, scheduled, kanban, plugins)
             try {
+              await windowState.mainWindow!.webContents.executeJavaScript(
+                `void window.__PI_DESKTOP__?.seedBenchStatus?.()`,
+              );
+              await sleep(3500); // allow bench poll to pick up the mock
               await windowState.mainWindow!.webContents.executeJavaScript(
                 `void window.__PI_DESKTOP__?.seedPullRequests?.()`,
               );
@@ -2029,85 +2044,109 @@ export async function createWindow({
                 `void window.__PI_DESKTOP__?.seedPlugins?.()`,
               );
             } catch { /* seeds optional */ }
+            // (backend-banner already hidden at line 2012; re-hide in case seedBenchStatus caused a re-render)
+            await windowState.mainWindow!.webContents.executeJavaScript(
+              `document.querySelectorAll('.backend-banner').forEach(el => { el.style.display = 'none'; })`,
+            );
             const execJS = (js: string) => windowState.mainWindow!.webContents.executeJavaScript(js);
             const setNavLayout = async (layout: string) => {
               await execJS(`window.__PI_DESKTOP__?.setNavLayout?.(${JSON.stringify(layout)})`);
               await sleep(400);
             };
             // T8 pages: tabs layout light/dark for direction-d pages (PR, notifications, scheduled, kanban, plugins)
+            // Collapse sessions sidebar — reference designs show no sidebar on workbench pages
+            const closeSidebar = async () => {
+              const isOpen = await execJS(`!document.querySelector('.app-chat-shell')?.classList.contains('sidebar-collapsed') && !!document.querySelector('.sidebar')`);
+              if (isOpen) {
+                await execJS(`document.querySelector('[data-nav="toggle-sidebar"]')?.dispatchEvent(new MouseEvent('click',{bubbles:true}))`);
+                await sleep(400);
+              }
+            };
+            const openSidebar = async () => {
+              const isClosed = await execJS(`document.querySelector('.app-chat-shell')?.classList.contains('sidebar-collapsed') ?? false`);
+              if (isClosed) {
+                // ct-icon-btn in .ct-lead is only mounted when page=chat (ConversationTopbar)
+                await setPage("chat");
+                await sleep(300);
+                await execJS(`document.querySelector('.ct-lead .ct-icon-btn')?.dispatchEvent(new MouseEvent('click',{bubbles:true}))`);
+                await sleep(400);
+              }
+            };
             await setTheme("light");
             await setNavLayout("tabs");
-            // Pull Requests (tabs, light) — click first PR row to open detail panel
-            await setPage("pulls");
-            await sleep(600);
-            await flush();
-            await shot("pi-tabs-pulls-light");
-            await execJS(`document.querySelector('.pr-row')?.dispatchEvent(new MouseEvent('click',{bubbles:true}))`);
-            await sleep(500);
-            await flush();
-            await shot("pi-tabs-pulls-light-detail");
-            // Notifications (tabs, light)
-            await setPage("notifications");
+            await setPage("pulls"); // navigate first so sidebar toggle is available
             await sleep(400);
-            await flush();
-            await shot("pi-tabs-notifications-light");
-            // Plugins (tabs, light)
-            await setPage("plugins");
-            await sleep(600);
-            await flush();
-            await shot("pi-tabs-plugins-light");
-            // Scheduled (tabs, light) — already captured above but re-shoot with seeds
-            await setPage("scheduled");
-            await sleep(400);
-            await flush();
-            await shot("pi-tabs-scheduled-light-seeded");
-            // Kanban (tabs, light) + drawer
-            await setPage("kanban");
-            await sleep(600);
-            await flush();
-            await shot("pi-tabs-kanban-light");
-            await execJS(`document.querySelector('.kanban-card')?.dispatchEvent(new MouseEvent('click',{bubbles:true}))`);
-            await sleep(600);
-            await flush();
-            await shot("pi-tabs-kanban-light-drawer");
-            // Rail layout shots (D2)
+            await closeSidebar();
+            // G-Pages matrix: every owned page in tabs (D1), rail (D2) and island (D3), light + dark.
+            // Selection-driven pages open their first row so the detail card matches the references.
+            const clickIfAbsent = async (row: string, detail: string) => {
+              await execJS(`(() => { if (!document.querySelector(${JSON.stringify(detail)})) document.querySelector(${JSON.stringify(row)})?.dispatchEvent(new MouseEvent('click',{bubbles:true})); })()`);
+              await sleep(500);
+            };
+            const shootPages = async (prefix: string, theme: string) => {
+              await setPage("pulls");
+              await sleep(600);
+              await clickIfAbsent(".pr-row", ".pr-detail");
+              await flush();
+              await shot(`${prefix}-pulls-${theme}`);
+              await setPage("scheduled");
+              await sleep(600);
+              await clickIfAbsent(".sch-row", ".sch-detail");
+              await flush();
+              await shot(`${prefix}-scheduled-${theme}`);
+              await setPage("notifications");
+              await sleep(500);
+              await flush();
+              await shot(`${prefix}-notifications-${theme}`);
+              await setPage("plugins");
+              await sleep(700);
+              // The reference shows the bundled eTIMS reporter with its details expanded.
+              await execJS(`(() => { const row = [...document.querySelectorAll('.plg-row')].find((r) => r.textContent?.includes('kra-etims')); if (row && !row.classList.contains('is-open')) row.querySelector('.plugins-row-details-toggle')?.click(); })()`);
+              await sleep(300);
+              await flush();
+              await shot(`${prefix}-plugins-${theme}`);
+              await setPage("kanban");
+              await sleep(700);
+              await flush();
+              await shot(`${prefix}-kanban-${theme}`);
+            };
+            // The drawer references open the done card T_7E42; seed variant 2 adds its
+            // T_3D5E child link, and a page round-trip remounts the board on it.
+            const shootDrawer = async (name: string) => {
+              await execJS(`void window.__PI_DESKTOP__?.seedKanbanBoard?.(2)`);
+              await setPage("notifications");
+              await sleep(300);
+              await setPage("kanban");
+              await sleep(700);
+              await execJS(`[...document.querySelectorAll('.kanban-card')].find((c) => c.textContent?.includes('T_7E42'))?.dispatchEvent(new MouseEvent('click',{bubbles:true}))`);
+              await sleep(600);
+              await flush();
+              await shot(name);
+              await execJS(`document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`);
+              await sleep(300);
+              await execJS(`void window.__PI_DESKTOP__?.seedKanbanBoard?.(1)`);
+            };
+            // gp- prefix: the T8 block below reuses pi-tabs-* names at the original window size.
+            await shootPages("gp-tabs", "light");
+            await shootDrawer("gp-tabs-kanban-light-drawer");
             await setNavLayout("rail");
-            await setPage("pulls");
-            await sleep(600);
-            await flush();
-            await shot("pi-rail-pulls-light");
-            await setPage("notifications");
-            await sleep(400);
-            await flush();
-            await shot("pi-rail-notifications-light");
-            await setPage("scheduled");
-            await sleep(400);
-            await flush();
-            await shot("pi-rail-scheduled-light");
-            // Island layout shots (D3)
+            await shootPages("gp-rail", "light");
             await setNavLayout("island");
-            await setPage("pulls");
-            await sleep(600);
-            await flush();
-            await shot("pi-island-pulls-light");
-            await execJS(`document.querySelector('.pr-row')?.dispatchEvent(new MouseEvent('click',{bubbles:true}))`);
-            await sleep(500);
-            await flush();
-            await shot("pi-island-pulls-light-detail");
-            // T8 pages dark shots
+            await shootPages("gp-island", "light");
+            await shootDrawer("gp-island-kanban-light-drawer");
             await setTheme("dark");
             await setNavLayout("tabs");
-            await setPage("pulls");
-            await sleep(600);
-            await flush();
-            await shot("pi-tabs-pulls-dark-detail");
+            await shootPages("gp-tabs", "dark");
+            await setNavLayout("rail");
+            await shootPages("gp-rail", "dark");
             await setNavLayout("island");
-            await setPage("pulls");
-            await sleep(600);
-            await flush();
-            await shot("pi-island-pulls-dark-detail");
-            // Restore tabs layout for remaining T8 shots
+            await shootPages("gp-island", "dark");
+            await setTheme("light");
+            // Restore tabs layout, original window size and reopen sidebar for remaining T8 shots
             await setNavLayout("tabs");
+            windowState.mainWindow!.setContentSize(pagesOrigSize[0], pagesOrigSize[1]);
+            await sleep(300);
+            await openSidebar();
 
             // T8: tabs layout page shots (light)
             await setTheme("light");

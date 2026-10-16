@@ -411,13 +411,8 @@
 :root[data-nav-layout="island"] .main-pane:not(.is-workbench) .main-titlebar {
   display: none;
 }
-/* Remove the toolbar-height clearance padding on pages that clear the (now-hidden) titlebar */
-:root[data-nav-layout="rail"] .sch-page,
-:root[data-nav-layout="island"] .sch-page,
-:root[data-nav-layout="rail"] .pr-page,
-:root[data-nav-layout="island"] .pr-page,
-:root[data-nav-layout="rail"] .notifications-page,
-:root[data-nav-layout="island"] .notifications-page,
+/* Remove the toolbar-height clearance padding on pages that clear the (now-hidden) titlebar.
+ * Pull Requests, Scheduled and Notifications are canvas pages (no titlebar, own padding). */
 :root[data-nav-layout="rail"] .plg-host,
 :root[data-nav-layout="island"] .plg-host,
 :root[data-nav-layout="rail"] .raven-page-wrap,

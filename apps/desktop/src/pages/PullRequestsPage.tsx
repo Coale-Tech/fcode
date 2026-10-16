@@ -3,9 +3,12 @@ import { useTranslation } from "react-i18next";
 import type { PullRequestCheck, PullRequestSummary } from "@pi-desktop/shared";
 import { useAppStore } from "../stores/app-store";
 import { api } from "../lib/api";
-import { Badge, Button, TooltipButton, Panel } from "../components/ui";
+import { formatUpdated } from "../lib/project-archive";
+import { Button, TooltipButton, Panel } from "../components/ui";
+import { ContextMenu, useContextMenu } from "../components/ContextMenu";
 import {
   IconChat,
+  IconCopy,
   IconExternal,
   IconMore,
   IconPullRequest,
@@ -49,7 +52,8 @@ function AuthorAvatar({ email }: { email: string }) {
 }
 
 export function PullRequestsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { contextMenu, openContextMenu, closeContextMenu } = useContextMenu();
   const workspace = useAppStore((s) => s.workspace);
   const openProject = useAppStore((s) => s.openProject);
   const newSession = useAppStore((s) => s.newSession);
@@ -194,7 +198,7 @@ export function PullRequestsPage() {
             <div className="d-list-head">
               <div className="d-col" style={{ flex: "0 0 28px" }} />
               <div className="d-col" style={{ flex: 2 }}>
-                # {t("pulls.title")}
+                # {t("pulls.colTitle")}
               </div>
               <div className="d-col" style={{ flex: "0 0 var(--d-pr-col-branch)" }}>
                 {t("git.branch")}
@@ -238,15 +242,15 @@ export function PullRequestsPage() {
                     onClick={() => setSelectedPr(selectedPr?.number === pr.number ? null : pr)}
                   >
                     <div className={`pr-row-icon${pr.isDraft ? " draft" : ""}`}>
-                      <IconPullRequest size={14} />
+                      <IconPullRequest size={12} />
                     </div>
                     <div className="pr-row-body">
                       <div className="pr-row-title">
                         <span className="pr-num">#{pr.number}</span>
                         <span className="pr-row-title-text">{pr.title}</span>
-                        {pr.isDraft
-                          ? <Badge tone="warning">{t("pulls.draft")}</Badge>
-                          : <Badge tone="success">{t("pulls.open")}</Badge>}
+                        <span className={`d-pill pr-row-pill ${pr.isDraft ? "amber" : "green"}`}>
+                          {t(pr.isDraft ? "pulls.draft" : "pulls.open")}
+                        </span>
                       </div>
                       {(pr.headRefName || pr.author) && (
                         <div className="pr-row-sub">
@@ -296,7 +300,7 @@ export function PullRequestsPage() {
                         variant="secondary"
                         onClick={() => void startReview(pr)}
                       >
-                        <IconChat size={12} aria-hidden />
+                        <IconChat size={11} aria-hidden />
                         {t("pulls.review")}
                       </Button>
                       <TooltipButton
@@ -335,10 +339,28 @@ export function PullRequestsPage() {
                 </TooltipButton>
                 <TooltipButton
                   type="button"
-                  tooltip="More"
-                  ariaLabel="More options"
+                  tooltip={t("pulls.moreActions")}
+                  ariaLabel={t("pulls.moreActions")}
                   className="icon-btn icon-btn-square"
-                  onClick={() => {/* kebab placeholder */}}
+                  onClick={(event) =>
+                    openContextMenu(event, {
+                      label: t("pulls.moreActions"),
+                      items: [
+                        {
+                          id: "copy-link",
+                          label: t("pulls.copyLink"),
+                          icon: <IconCopy size={13} />,
+                          onSelect: () => void navigator.clipboard.writeText(selectedPr.url),
+                        },
+                        {
+                          id: "refresh",
+                          label: t("pulls.refresh"),
+                          icon: <IconRefresh size={13} />,
+                          onSelect: () => void refresh(),
+                        },
+                      ],
+                    })
+                  }
                 >
                   <IconMore size={13} />
                 </TooltipButton>
@@ -349,13 +371,17 @@ export function PullRequestsPage() {
               <div className="pr-detail-section">
                 <div className="pr-detail-label">{t("pulls.status")}</div>
                 <div className="pr-detail-status-row">
-                  <Badge tone={selectedPr.isDraft ? "warning" : "success"}>
+                  <span className={`d-pill ${selectedPr.isDraft ? "amber" : "green"}`}>
+                    <span className="d-pill-dot" aria-hidden />
                     {t(selectedPr.isDraft ? "pulls.draft" : "pulls.open")}
-                  </Badge>
+                  </span>
                   {(selectedPr.openedAt ?? selectedPr.updatedAt) && (
                     <span className="pr-detail-meta">
                       {t("pulls.openedAgo", {
-                        ago: fmtAgo(new Date(selectedPr.openedAt ?? selectedPr.updatedAt!)),
+                        ago: formatUpdated(
+                          Date.parse(selectedPr.openedAt ?? selectedPr.updatedAt!),
+                          i18n.language,
+                        ),
                       })}
                     </span>
                   )}
@@ -464,6 +490,7 @@ export function PullRequestsPage() {
         )}
 
       </div>
+      <ContextMenu state={contextMenu} onClose={closeContextMenu} />
     </div>
   );
 }

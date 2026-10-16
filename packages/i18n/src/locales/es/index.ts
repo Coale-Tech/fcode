@@ -213,7 +213,10 @@ export const es = {
     benchStopped: "bench detenido",
     site: "sitio",
     sites: "sitios",
-    openBenchLog: "Abrir log de bench"
+    openBenchLog: "Abrir log de bench",
+    modeAsk: "Supervisado",
+    modeAcceptEdits: "Aceptar ediciones",
+    modeAuto: "Automático total",
   },
   "sessionCollaboration": {
     "statusIdle": "Inactivo",
@@ -2305,6 +2308,7 @@ sklm: {
     "review": "Revisar",
     "aiReview": "Revisión IA",
     "aiReviewAll": "Revisar todo con IA",
+    "colTitle": "Título",
     "openGitHub": "Abrir en GitHub",
     "openedAgo": "Abierto {{ago}}",
     "ciChecks": "Comprobaciones CI",
@@ -2319,6 +2323,8 @@ sklm: {
     "draft": "Borrador",
     "status": "Estado",
     "actions": "Acciones",
+    "moreActions": "Más acciones",
+    "copyLink": "Copiar enlace",
     "updatedAgo": "Actualizado {{ago}}"
   },
   "git": {
@@ -2399,6 +2405,7 @@ sklm: {
     "healthTick": "Último ciclo hace {{seconds}}s",
     "detailStatus": "Estado",
     "detailSchedule": "Horario",
+    "detailPrompt": "Prompt",
     "detailWorkspace": "Espacio de trabajo",
     "detailModel": "Modelo",
     "recentRuns": "Ejecuciones recientes",
@@ -2409,6 +2416,19 @@ sklm: {
     "import": "Importar",
     "exportDone": "{{count}} tareas exportadas",
     "importDone": "{{count}} tareas importadas",
+    "pageTitle": "Tareas programadas",
+    "newTask": "Nueva tarea",
+    "statusRunningShort": "En ejecución",
+    "runningEllipsis": "Ejecutando…",
+    "runDone": "Hecho",
+    "healthTickBench": "Último tic hace {{seconds}} s · programador del bench {{bench}} en ejecución",
+    "moreActions": "Más acciones",
+    "pausedNoRun": "Sin próxima ejecución (en pausa)",
+    "today": "Hoy {{time}}",
+    "tomorrow": "Mañana {{time}}",
+    "yesterday": "Ayer {{time}}",
+    "scheduleAt": "{{cadence}} a las <strong>{{time}}</strong>",
+    "durationSeconds": "{{seconds}} s",
   },
   "permission": {
     "title": "Permiso necesario",
@@ -2668,7 +2688,8 @@ sklm: {
     "checkUpdates": "Buscar actualizaciones",
     "applyAutoUpdates": "Aplicar actualizaciones automáticas",
     "updatesFound": "{{count}} actualizaciones disponibles",
-    "updatesReady": "{{count}} actualizaciones listas",
+    "updatesReady_one": "{{count}} actualización lista",
+    "updatesReady_other": "{{count}} actualizaciones listas",
     "autoUpdatesApplied": "Aplicadas {{count}} actualizaciones automáticas",
     "groupAttention": "Necesita atención",
     "groupUpdates": "Actualizaciones disponibles",
@@ -2676,6 +2697,23 @@ sklm: {
     "groupDisabled": "Desactivada",
     "tagLocal": "Local",
     "tagBundled": "Incluido",
+    "tagMarketplace": "Marketplace",
+    "tagPackage": "Paquete",
+    "navAll": "Todos los instalados",
+    "navUpdates": "Actualizaciones",
+    "navMcpMarket": "Marketplace MCP",
+    "navNpm": "Registro npm",
+    "installFromNpm": "Instalar desde npm",
+    "npmSpecPlaceholder": "Paquete npm, p. ej. @anthropic-ai/claude-code-mcp@latest",
+    "pluginCount_one": "{{count}} plugin",
+    "pluginCount_other": "{{count}} plugins",
+    "updateDetail": "{{name}} v{{from}} → v{{to}}",
+    "newPermissions_one": "{{count}} permiso nuevo",
+    "newPermissions_other": "{{count}} permisos nuevos",
+    "applyUpdates": "Aplicar actualizaciones",
+    "statusLoadError": "Error al cargar",
+    "statusError": "Error",
+    "toggleEnabled": "Activar o desactivar {{name}}",
     "rowActions": "Acciones para {{name}}",
     "details": "Detalles",
     "capabilitiesTitle": "Capacidades",
@@ -2800,13 +2838,26 @@ sklm: {
       "services": "Servicio en segundo plano",
       "bus": "Mensajes de complemento"
     },
+    "capabilityShort": {
+      "panel": "panel",
+      "views": "vista",
+      "commands": "comando",
+      "tools": "herramienta",
+      "agentExtension": "extensión de agente",
+      "skills": "skill",
+      "themes": "tema",
+      "mcp": "mcp",
+      "services": "servicio",
+      "bus": "bus"
+    },
     "serviceState": {
       "starting": "Iniciando",
       "running": "Ejecutando",
       "stopped": "Detenido",
       "failed": "Fallido"
     },
-    "serviceRestarts": "reiniciado {{count}}x",
+    "serviceRestarts_one": "{{count}} reinicio",
+    "serviceRestarts_other": "{{count}} reinicios",
     "fileAccessTitle": "Archivos",
     "fsMode": {
       "read": "Leer",
@@ -3146,7 +3197,7 @@ sklm: {
     "emptyUnreadBody": "No hay notificaciones no leídas.",
     "completedTitle": "{{sessionTitle}} finalizado",
     "completedBody": "El chat finalizó exitosamente.",
-    "failedTitle": "{{sessionTitle}} necesita atención",
+    "failedTitle": "{{sessionTitle}} falló",
     "failedBody": "El chat no finalizó exitosamente.",
     "failedBodyWithCode": "El chat se detuvo con el error {{code}}.",
     "askTitle": "{{sessionTitle}} necesita su respuesta",
@@ -3158,6 +3209,9 @@ sklm: {
     "planApprovalBody": "El plan propuesto está listo para su revisión.",
     "actionFailed": "No se pudieron actualizar las notificaciones.",
     "justNow": "Justo ahora",
+    "minutesAgo": "hace {{minutes}} min",
+    "hoursAgo": "hace {{hours}} h",
+    "yesterdayAt": "Ayer {{time}}",
     "today": "Hoy",
     "yesterday": "Ayer",
     "unreadCount": "{{count}} no leídas",
@@ -3217,6 +3271,8 @@ sklm: {
   },
   "kanban": {
     "title": "Kanban",
+    "runningCount": "{{count}} en curso",
+    "pausedPill": "En pausa",
     "newCard": "Nueva tarjeta",
     "addCard": "Agregar tarjeta",
     "columns": {
@@ -3239,7 +3295,10 @@ sklm: {
       "add": "Crear tarjeta en {{column}}",
       "count": "{{count}} tarjetas en esta columna",
       "empty": "— sin tarjetas —",
-      "selectAll": "Seleccionar todo en {{column}}"
+      "selectAll": "Seleccionar todo en {{column}}",
+      "drop": "Suelta tarjetas aquí",
+      "more": "+ {{count}} más",
+      "showArchived": "mostrar archivadas"
     },
     "filter": {
       "search": "Buscar",
@@ -3290,7 +3349,11 @@ sklm: {
       "comments": "{{count}} comentarios",
       "links": "{{parents}} padres, {{children}} hijos. Los hijos esperan hasta que el padre esté listo.",
       "byUser": "por ti",
-      "byAgent": "por agente"
+      "byAgent": "por agente",
+      "agoNow": "ahora mismo",
+      "agoMinutes": "hace {{count}} min",
+      "agoHours": "hace {{count}} h",
+      "agoDays": "hace {{count}} d"
     },
     "drawer": {
       "close": "Cerrar (Esc)",
@@ -3320,15 +3383,29 @@ sklm: {
       "result": "Resultado",
       "comments": "Comentarios ({{count}})",
       "noComments": "— sin comentarios —",
-      "events": "Eventos ({{count}})",
+      "events": "Eventos",
       "worker": "Sesión de worker",
       "openWorker": "Abrir sesión de worker",
       "noWorker": "— sin sesión de worker aún —",
       "runs": "Historial de ejecuciones ({{count}})",
-      "earlier": "+{{count}} anteriores",
+      "earlier": "Mostrar anteriores",
       "fewer": "Mostrar menos",
       "commentPlaceholder": "Agregar comentario… (Enter para enviar)",
-      "commentSubmit": "Comentar"
+      "commentSubmit": "Comentar",
+      "actions": "Acciones"
+    },
+    "event": {
+      "created": "Creada",
+      "ready": "Dependencias cumplidas",
+      "claimed": "Ejecución iniciada",
+      "completed": "Completada",
+      "blocked": "Bloqueada",
+      "crashed": "La ejecución falló",
+      "reclaimed": "Recuperada",
+      "timed_out": "Tiempo agotado",
+      "linked": "Vinculada",
+      "unlinked": "Desvinculada",
+      "moved": "Estado cambiado"
     },
     "run": {
       "running": "En ejecución",
@@ -3341,7 +3418,10 @@ sklm: {
     "dispatcher": {
       "pause": "Pausar despachador",
       "resume": "Reanudar despachador",
-      "paused": "Despachador pausado"
+      "paused": "Despachador pausado",
+      "footerRunning": "Despachador: activo · {{count}} en curso",
+      "footerPaused": "Despachador: en pausa",
+      "summary": "{{open}} tareas · {{blocked}} bloqueadas · {{done}} hechas"
     },
     "settings": {
       "title": "Configuración de Kanban",

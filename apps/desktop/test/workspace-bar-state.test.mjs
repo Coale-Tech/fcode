@@ -4,7 +4,7 @@
  */
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatWorkspaceBarState } from "../src/lib/workspace-bar-state.ts";
+import { formatWorkspaceBarState, resolveStatusAgent } from "../src/lib/workspace-bar-state.ts";
 
 test("no bench → empty state", () => {
   assert.deepEqual(
@@ -61,4 +61,47 @@ test("starting and failed status → stopped state (not running)", () => {
     const result = formatWorkspaceBarState({ benchPath: "/bench", site: null, status });
     assert.equal(result.kind, "stopped", `expected stopped for status=${status}`);
   }
+});
+
+const providers = [
+  { id: "anthropic", defaultModelId: "claude-opus-4", models: [{ id: "claude-sonnet-5" }] },
+  { id: "openai", models: [], defaultModelId: "gpt-5" },
+];
+
+test("status agent: session model and mode win over defaults", () => {
+  assert.deepEqual(
+    resolveStatusAgent({
+      session: { modelId: "gpt-5", providerId: "openai", permissionMode: "auto" },
+      draft: { modelId: "ignored", permissionMode: "accept-edits" },
+      settings: { defaultModelId: "claude-sonnet-5", defaultProviderId: "anthropic", defaultPermissionMode: "ask" },
+      providers,
+    }),
+    { modelId: "gpt-5", mode: "auto" },
+  );
+});
+
+test("status agent: inherited session mode falls back to the global default", () => {
+  assert.deepEqual(
+    resolveStatusAgent({
+      session: { permissionMode: "inherit" },
+      settings: { defaultModelId: "claude-sonnet-5", defaultPermissionMode: "accept-edits" },
+      providers,
+    }),
+    { modelId: "claude-sonnet-5", mode: "accept-edits" },
+  );
+});
+
+test("status agent: no session uses the draft, then the provider's first model", () => {
+  assert.deepEqual(
+    resolveStatusAgent({ draft: { providerId: "anthropic" }, settings: {}, providers }),
+    { modelId: "claude-sonnet-5", mode: "ask" },
+  );
+  assert.deepEqual(
+    resolveStatusAgent({ settings: { defaultProviderId: "openai" }, providers }),
+    { modelId: "gpt-5", mode: "ask" },
+  );
+});
+
+test("status agent: nothing configured yields no model and supervised mode", () => {
+  assert.deepEqual(resolveStatusAgent({ settings: null, providers: [] }), { modelId: null, mode: "ask" });
 });

@@ -88,23 +88,27 @@
   min-width: 0;
 }
 
-/* Workspace context strip: the quiet status row at the pane's foot. */
+/* App status bar (D.css `.d-statusbar`): full-width 28px row at the window foot,
+ * a direct child of the column-flex `.app-shell` below rail, sidebar and canvas. */
 .workspace-bar {
+  position: relative;
+  z-index: 1;
   display: flex;
   height: var(--d-status-h);
   flex: 0 0 var(--d-status-h);
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   padding: 0 12px;
-  border-top: 1px solid var(--outline-gray-1);
+  border-top: 1px solid var(--d-border);
+  background: var(--surface-elevation-1);
   color: var(--ink-gray-5);
-  font-size: var(--text-xs);
+  font-size: var(--d-text-xs);
   white-space: nowrap;
   overflow: hidden;
 }
 
-.main-pane.is-workbench > .workspace-bar {
-  border-top: 0;
+.app-shell.settings-mode > .workspace-bar {
+  display: none;
 }
 
 .workspace-bar-bench {
@@ -139,12 +143,47 @@
   background: var(--surface-green-6);
 }
 
-/* Vertical pipe separator between status info and action links */
+/* Vertical pipe separator between status info and action links (D.css .d-status-sep) */
 .workspace-bar-vsep {
   width: 1px;
-  height: 12px;
-  background: var(--outline-gray-2);
+  height: 14px;
+  background: var(--d-border);
   flex-shrink: 0;
+}
+
+/* "Open bench log": accent text link (D.css `.d-statusbar a`) */
+.workspace-bar-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--da);
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.workspace-bar-link:hover {
+  text-decoration: underline;
+}
+
+/* Right cluster: effective model + permission-mode badge (D.css .d-status-end/.d-status-mode) */
+.workspace-bar-end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.workspace-bar-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: var(--radius-full);
+  background: var(--da-sub);
+  color: var(--ink-violet-8);
+  font-size: var(--d-text-xs);
+  font-weight: var(--font-weight-semibold);
 }
 
 .workspace-bar-site {
@@ -166,10 +205,6 @@
 .workspace-bar-choose-btn:hover {
   background: var(--surface-gray-2);
   color: var(--ink-gray-8);
-}
-
-.workspace-bar-terminal-btn {
-  margin-left: auto;
 }
 
 .workspace-bar-terminal-btn[aria-pressed="true"] {
