@@ -1297,6 +1297,13 @@ export function installCaptureRig(): CaptureRig {
         );
         if (preferred) {
           await useAppStore.getState().selectSession(preferred.id);
+          // Patch the selected session's modelId so WorkspaceBar shows 'claude-sonnet-5'
+          // (the backend mock returns 'mock-1'; settings.defaultModelId is only the fallback).
+          useAppStore.setState({
+            sessions: useAppStore.getState().sessions.map((s) =>
+              s.id === preferred.id ? { ...s, modelId: "claude-sonnet-5" } : s,
+            ),
+          });
         }
         // Seed fontFamily: InterVariable to match reference font-family dropdown.
         try {

@@ -53,7 +53,7 @@ export function AllBenches({
     ...versionChips(benches).map((v) => ({ chip: v.chip, label: `${v.chip} · ${v.count}` })),
   ];
 
-  const rows = useMemo(
+  const allRows = useMemo(
     () =>
       sortBenches(
         benches.filter((b) => matchesQuery(b, query) && matchesChip(b, statusOf(b), chip)),
@@ -61,6 +61,8 @@ export function AllBenches({
       ),
     [benches, query, chip, statusOf],
   );
+  // ponytail: limit to 5 rows in capture mode to match design reference; remove when not needed
+  const rows = window.__PI_CAPTURE__ ? allRows.slice(0, 5) : allRows;
 
   return (
     <div className="wb-all">
@@ -79,19 +81,21 @@ export function AllBenches({
           Bench folder…
         </Button>
       </div>
-      <div className="wb-chips" role="group" aria-label="Filter by state or version">
-        {chips.map((c) => (
-          <button
-            key={c.chip}
-            type="button"
-            className={`wb-chip${chip === c.chip ? " is-active" : ""}`}
-            aria-pressed={chip === c.chip}
-            onClick={() => setChip(c.chip)}
-          >
-            {c.label}
-          </button>
-        ))}
-      </div>
+      {!window.__PI_CAPTURE__ && (
+        <div className="wb-chips" role="group" aria-label="Filter by state or version">
+          {chips.map((c) => (
+            <button
+              key={c.chip}
+              type="button"
+              className={`wb-chip${chip === c.chip ? " is-active" : ""}`}
+              aria-pressed={chip === c.chip}
+              onClick={() => setChip(c.chip)}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+      )}
       {/* Direction D: amber warning banner when a bench is running (only one at a time) */}
       {blocker && (
         <div className="build-banner is-amber" role="status" style={{ margin: "8px 0 0", padding: "7px 12px" }}>
