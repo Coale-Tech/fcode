@@ -172,6 +172,11 @@ export function BenchPage() {
   const loadBenches = useCallback(async () => {
     setLoading(true);
     try {
+      // Capture mode: use seeded bench list if set (avoids contextBridge IPC which can't be mocked).
+      if (window.__PI_CAPTURE__ && window.__PI_CAPTURE_BENCH_LIST__) {
+        applyBenchList(window.__PI_CAPTURE_BENCH_LIST__ as BenchListResult);
+        return;
+      }
       applyBenchList(await invoke<BenchListResult>(IPC.invoke.benchList));
     } catch {
       // discovery error: show empty state
@@ -201,6 +206,13 @@ export function BenchPage() {
     let cancelled = false;
     const poll = async () => {
       if (cancelled) return;
+      // Capture mode: read bench-status override set by seedBenchStatus() (mirrors use-bench-context).
+      if (window.__PI_CAPTURE__ && window.__PI_BENCH_OVERRIDE__) {
+        const ov = window.__PI_BENCH_OVERRIDE__;
+        setStatus(ov.status as BenchStatus);
+        setActiveBenchPath(ov.benchPath ?? null);
+        return;
+      }
       try {
         const s = await invoke<{ status: BenchStatus; benchPath: string | null; logs?: LogLine[] }>(IPC.invoke.benchStatus);
         setStatus(s.status);

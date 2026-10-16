@@ -174,7 +174,7 @@ export async function shoot({ browser: _browser }) {
   await eval_(`(async () => {
     await window.__PI_DESKTOP__?.seedBenchStatus?.({
       benchPath: ${JSON.stringify(COALE_BENCH_PATH)},
-      siteCount: 2,
+      siteCount: 3,
     });
   })()`);
 

@@ -51,6 +51,12 @@ declare global {
     __PI_CAPTURE__?: unknown;
     /** Overrides live IPC bench-status polling for capture screenshots. */
     __PI_BENCH_OVERRIDE__?: BenchStatusOverride;
+    /** Capture-only seeded bench list; BenchPage.loadBenches reads this instead of IPC. */
+    __PI_CAPTURE_BENCH_LIST__?: {
+      benches: Array<{ id: string; path: string; version: number | "unknown"; sites: Array<{ name: string; isDefault: boolean }>; apps: string[] }>;
+      failedRoots: Array<{ root: string; reason: string }>;
+      roots: string[];
+    };
   }
 }
 

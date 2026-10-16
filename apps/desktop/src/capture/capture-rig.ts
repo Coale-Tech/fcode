@@ -1541,57 +1541,32 @@ export function installCaptureRig(): CaptureRig {
       if (!window.__PI_CAPTURE__) return;
       const COALE_PATH = "/Users/mac/ERPNext/frappe_agent/coale_v16";
       // Reference bench data (pages-d/bench/variant-D3.png): 5 benches, coale_v16 running.
+      // BenchPage.tsx reads window.__PI_CAPTURE_BENCH_LIST__ in loadBenches() when in
+      // capture mode — avoids requiring contextBridge interception (which is not possible).
       const benches = [
         { id: "cap-bench-coale-v16", path: COALE_PATH,
-          version: 16 as const,
-          sites: [{ name: "coale.frappe.cloud", isDefault: true }, { name: "test.frappe.cloud", isDefault: false }],
+          version: 16,
+          sites: [{ name: "coale.frappe.cloud", isDefault: true },
+                  { name: "test.frappe.cloud", isDefault: false },
+                  { name: "demo.frappe.cloud", isDefault: false }],
           apps: ["frappe", "erpnext", "hrms", "raven"] },
-        { id: "cap-bench-dev",  path: "/Users/mac/ERPNext/dev_bench",
-          version: 16 as const,
-          sites: [{ name: "dev.localhost", isDefault: true }],
+        { id: "cap-bench-dev",     path: "/Users/mac/ERPNext/dev_bench",
+          version: 16, sites: [{ name: "dev.localhost", isDefault: true }],
           apps: ["frappe", "erpnext"] },
-        { id: "cap-bench-v15",  path: "/Users/mac/ERPNext/v15-bench",
-          version: 15 as const,
-          sites: [{ name: "v15.localhost", isDefault: true }],
+        { id: "cap-bench-v15",     path: "/Users/mac/ERPNext/v15-bench",
+          version: 15, sites: [{ name: "v15.localhost", isDefault: true }],
           apps: ["frappe", "hrms"] },
         { id: "cap-bench-staging", path: "/Users/mac/ERPNext/staging_v16",
-          version: 16 as const,
+          version: 16,
           sites: [{ name: "staging-1.frappe.cloud", isDefault: true },
                   { name: "staging-2.frappe.cloud", isDefault: false },
                   { name: "staging-3.frappe.cloud", isDefault: false }],
           apps: ["frappe", "erpnext", "hrms"] },
-        { id: "cap-bench-test",  path: "/Users/mac/ERPNext/test_v16",
-          version: 16 as const,
-          sites: [{ name: "test.localhost", isDefault: true }],
+        { id: "cap-bench-test",    path: "/Users/mac/ERPNext/test_v16",
+          version: 16, sites: [{ name: "test.localhost", isDefault: true }],
           apps: ["frappe"] },
       ];
-      const listData = { benches, failedRoots: [] as Array<{ root: string; reason: string }>, roots: ["/Users/mac/ERPNext"] };
-      const statusData = { status: "running" as const, benchPath: COALE_PATH, logs: [] as Array<{ ts: number; text: string }> };
-      // Intercept window.piDesktop.invoke for bench IPC channels.
-      // contextBridge exposes piDesktop as configurable, so we can redefine the getter.
-      const origDesktop = window.piDesktop;
-      if (!origDesktop) return;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const proxy = new Proxy(origDesktop as unknown as Record<string, unknown>, {
-        get(target, prop) {
-          if (prop === "invoke") {
-            return (channel: string, ...args: unknown[]) => {
-              if (channel === "pi-desktop/bench/list")
-                return Promise.resolve({ ok: true as const, data: listData });
-              if (channel === "pi-desktop/bench/status")
-                return Promise.resolve({ ok: true as const, data: statusData });
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              return (target[prop as string] as (...a: unknown[]) => unknown).call(target, channel, ...args);
-            };
-          }
-          const val = target[prop as string];
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          return typeof val === "function" ? (val as (...a: unknown[]) => unknown).bind(target) : val;
-        },
-      });
-      Object.defineProperty(window, "piDesktop", {
-        configurable: true, enumerable: true, get: () => proxy,
-      });
+      window.__PI_CAPTURE_BENCH_LIST__ = { benches, failedRoots: [], roots: ["/Users/mac/ERPNext"] };
     },
   };
   return {
