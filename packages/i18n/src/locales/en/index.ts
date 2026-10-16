@@ -1542,7 +1542,7 @@ sklm: {
     importModelsNoKey: "No API key",
     importModelsSelectAll: "Select all providers",
     importModelsSelectGroup: "Select all providers in {{name}}",
-    backToApp: "Back to app",
+    backToApp: "Back to App",
     marketProviderTitle: "Extension marketplace",
     marketProvider: "Marketplace source",
     marketProviderOfficial: "Official channel",

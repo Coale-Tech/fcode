@@ -1094,9 +1094,13 @@ export function installCaptureRig(): CaptureRig {
         }
       }
       // Seed user initials for avatar (matches reference "JK").
+      // Also store displayName so the useEffect in useAppShellRuntime derives "JK".
       useAppStore.setState({ userInitials: "JK" });
       // Enable kanban and raven so rail + sidebar show all feature items.
+      // Patch the IPC fetch so NavRail's useEffect cannot overwrite the enabled state.
       useAppStore.setState({ kanbanEnabled: true, ravenEnabled: true });
+      api.kanbanSettingsGet = async () => ({ settings: { enabled: true, maxInProgress: 3, maxRuntimeSeconds: 3600, maxAgentCardsPerSession: 10, maxDailySpawns: 20 } });
+      api.ravenSettingsGet = async () => ({ settings: { enabled: true, url: "" } });
       // Seed 3 notifications for bell badge.
       methods.seedNotifications(3);
       // Seed English session titles matching the reference design (variant-D1/D2/D3).
@@ -1130,18 +1134,20 @@ export function installCaptureRig(): CaptureRig {
         ];
         // Main session titles matching variant-D1/D2/D3 reference.
         const regularTitles = [
-          "Sync ERPNext code module",          // TODAY — selected
-          "Redesign settings plugin section",   // TODAY
-          "Fix duplicate bench start bug",      // TODAY
-          "Migrate Raven to frappe-ui v2",      // YESTERDAY
-          "Review PR #224 leave approvals",     // YESTERDAY
-          "ERPNext payroll period config",      // YESTERDAY
-          "Set up coale_v16 from scratch",      // THIS WEEK
-          "Debug slow stock valuation query",   // THIS WEEK
-          "Frappe UI modal refactor",           // THIS WEEK
-          "Refactor payment_entry hooks",
-          "Install hrms on coale_staging",
+          // Created oldest-first so most-recently-created = Sync ERPNext (appears at TOP
+          // of the session list sorted by createdAt DESC).
           "Debug bench worker crash",
+          "Install hrms on coale_staging",
+          "Refactor payment_entry hooks",
+          "Frappe UI modal refactor",
+          "Debug slow stock valuation query",   // THIS WEEK
+          "Set up coale_v16 from scratch",      // THIS WEEK
+          "ERPNext payroll period config",      // YESTERDAY
+          "Review PR #224 leave approvals",     // YESTERDAY
+          "Migrate Raven to frappe-ui v2",      // YESTERDAY
+          "Fix duplicate bench start bug",      // TODAY
+          "Redesign settings plugin section",   // TODAY
+          "Sync ERPNext code module",           // TODAY — selected (created LAST = most recent)
         ];
         for (const title of [...pinnedTitles, ...regularTitles]) {
           if (existing.has(title)) continue;
@@ -1178,9 +1184,13 @@ export function installCaptureRig(): CaptureRig {
             await window.piDesktop?.invoke("pi-desktop/settings/set", {
               ...currentSettings,
               fontFamily: "InterVariable",
+              displayName: "Josh Kim",
             });
           }
         } catch { /* non-fatal if settings IPC unavailable */ }
+      // Remove the PROJECTS section from the D3 sidebar: the open workspace path
+      // causes an "apps" project group to appear. Hide it in capture mode.
+      useAppStore.setState({ openProjectPaths: [] });
       } catch { /* optional capture-only fixture */ }
     },
     clearPendingPermissions: () => {
@@ -1192,12 +1202,14 @@ export function installCaptureRig(): CaptureRig {
       if (!window.__PI_CAPTURE__) return;
       useAppStore.setState({
         messages: [],
+        sessions: [],
         activeSessionId: undefined,
         retainedSessionIds: [],
         retainedTranscripts: {},
         pendingPermissions: {},
         runningSessions: {},
         workPanelOpen: false,
+        openProjectPaths: [],
         page: "chat",
       });
       const cur = useAppStore.getState().onboarding;

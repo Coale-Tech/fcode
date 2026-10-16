@@ -14,16 +14,17 @@ export function useBenchContext(): WorkspaceBarState {
     let cancelled = false;
 
     const poll = async () => {
-      if (document.hidden || cancelled) return;
-      // Capture-rig override (active only when __PI_CAPTURE__ is set by the
-      // capture suite): skip real IPC and use seeded data from seedBenchStatus.
+      if (cancelled) return;
+      // Capture-rig override: runs even when document.hidden so CDP-driven
+      // screenshots always see bench state regardless of OS window visibility.
       if (window.__PI_CAPTURE__) {
         const override: BenchStatusOverride = window.__PI_BENCH_OVERRIDE__ ?? null;
-        if (override !== null && !cancelled) {
+        if (override !== null) {
           setState(formatWorkspaceBarState(override));
           return;
         }
       }
+      if (document.hidden) return;
       const bridge = window.piDesktop;
       if (!bridge?.invoke) return;
       try {
@@ -41,12 +42,15 @@ export function useBenchContext(): WorkspaceBarState {
     void poll();
     const id = setInterval(() => void poll(), 3000);
     const onVisible = () => { if (!document.hidden) void poll(); };
+    const onBenchUpdate = () => { void poll(); };
     document.addEventListener("visibilitychange", onVisible);
+    document.addEventListener("pi:bench-update", onBenchUpdate);
 
     return () => {
       cancelled = true;
       clearInterval(id);
       document.removeEventListener("visibilitychange", onVisible);
+      document.removeEventListener("pi:bench-update", onBenchUpdate);
     };
   }, []);
 

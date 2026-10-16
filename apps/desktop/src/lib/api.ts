@@ -595,6 +595,7 @@ function normalizePlansChangedEvent(value: unknown): PlanningStateEvent {
 export const api = {
   getVersion: () => invoke<AppVersionInfo>(IPC.invoke.appGetVersion),
   health: () => invoke<HostHealth>(IPC.invoke.appHealth),
+  getUserInfo: () => invoke<{ fullName: string }>(IPC.invoke.appGetUserInfo),
   getOnboarding: () => invoke<OnboardingState>(IPC.invoke.appGetOnboarding),
   dismissOnboarding: () => invoke(IPC.invoke.appDismissOnboarding),
   updatesGetState: () => invoke<UpdateState>(IPC.invoke.updatesGetState),

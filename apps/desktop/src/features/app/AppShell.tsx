@@ -374,9 +374,15 @@ export function AppShell() {
           </div>
         </PortalVisibilityProvider>
         {page === "settings" && navLayout !== "island" ? (
-          <Suspense fallback={<RoutePending />}>
-            <SettingsPage />
-          </Suspense>
+          <>
+            <div className="settings-mode-body">
+              {navLayout === "rail" ? <NavRail onExpandChange={onRailExpandChange} /> : null}
+              <Suspense fallback={<RoutePending />}>
+                <SettingsPage />
+              </Suspense>
+            </div>
+            <WorkspaceBar />
+          </>
         ) : null}
         <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
         <ToastHost />

@@ -201,6 +201,8 @@ export type AppState = {
   settingsAnchor: string | null;
   /** Bumped by every setSettingsTab so a same-tab navigation is observable. */
   settingsTabNonce: number;
+  /** Sub-page breadcrumb label (e.g. Kanban card short-ID). Null means none shown. */
+  pageCrumb?: string | null;
   /** Latest polled omp memory status; null when agent is not running or not yet polled. */
   memoryStatus: OmpMemoryStatusResult | null;
   /** Current todo phases per session, driven by todo_reminder / todo_auto_clear / todo tool events. */

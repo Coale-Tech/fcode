@@ -2340,9 +2340,12 @@ export function Sidebar({
             </div>
             <div className="d3-sb-bench-sub">
               {bench.kind === "running"
-                ? bench.site
-                  ? `${t("workspaceBar.running")} · ${bench.site}`
-                  : t("workspaceBar.running")
+                ? (() => {
+                    const sc = bench.siteCount != null ? bench.siteCount : bench.site ? 1 : 0;
+                    return sc > 0
+                      ? `${t("workspaceBar.benchRunning")} · ${sc} ${sc === 1 ? t("workspaceBar.site", { defaultValue: "site" }) : t("workspaceBar.sites", { defaultValue: "sites" })}`
+                      : t("workspaceBar.benchRunning", { defaultValue: "bench running" });
+                  })()
                 : bench.kind === "stopped"
                 ? t("workspaceBar.stopped")
                 : t("workspaceBar.chooseBench")}

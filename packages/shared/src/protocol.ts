@@ -53,6 +53,8 @@ export const IPC = {
     appGetVersion: "pi-desktop/app/getVersion",
     appOpenFeedback: "pi-desktop/app/openFeedback",
     appHealth: "pi-desktop/app/health",
+    /** OS user full name (gecos) or username; used to derive avatar initials. */
+    appGetUserInfo: "pi-desktop/app/getUserInfo",
     appGetOnboarding: "pi-desktop/app/getOnboarding",
     appDismissOnboarding: "pi-desktop/app/dismissOnboarding",
     /**

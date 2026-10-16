@@ -30,8 +30,11 @@ export type RendererApi = {
   setThemeAttr: (theme: "light" | "dark") => void;
   setTheme: (theme: "light" | "dark" | "system") => void;
   setNavLayout: (layout: NavLayout) => void;
+  setFontFamily: (family: string) => void;
+  setKanbanRaven: (enabled: boolean) => void;
   getSettings: () => AppSettings | null;
   clearProject: () => Promise<void>;
+  clearOpenProjects: () => void;
   showToast: (message: string, opts?: ToastOptions) => void;
   seedBenchStatus: (data: BenchStatusOverride) => void;
 } & (CaptureRigStubs | CaptureRigMethods);
@@ -136,10 +139,22 @@ export function installRendererApi(): () => void {
       useAppStore.setState({ settings: { ...base, navLayout: layout } });
       document.documentElement.dataset.navLayout = layout;
     },
+    setKanbanRaven: (enabled) => {
+      useAppStore.setState({ kanbanEnabled: enabled, ravenEnabled: enabled });
+    },
     clearProject: () => useAppStore.getState().clearProject(),
+    clearOpenProjects: () => useAppStore.setState({ openProjectPaths: [] }),
     getSettings: () => useAppStore.getState().settings ?? null,
     showToast: (message, opts) => useAppStore.getState().showToast(message, opts),
-    seedBenchStatus: (data) => { window.__PI_BENCH_OVERRIDE__ = data; },
+    setFontFamily: (family) => {
+      const s = useAppStore.getState().settings;
+      const base = s ?? ({ theme: "system", defaultMode: "plan", enterToSend: true, onboardingDismissed: false } as unknown as NonNullable<typeof s>);
+      useAppStore.setState({ settings: { ...base, fontFamily: family } });
+    },
+    seedBenchStatus: (data) => {
+      window.__PI_BENCH_OVERRIDE__ = data;
+      document.dispatchEvent(new Event("pi:bench-update"));
+    },
     ...stubs,
   };
   window.__PI_DESKTOP__ = surface;
