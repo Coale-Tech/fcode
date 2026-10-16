@@ -66,7 +66,6 @@ export type CaptureRigMethods = {
   seedEmptyHome: () => void;
   seedOnboardingChecklist: () => void;
   seedBenchStatus: (benchName?: string) => void;
-  seedNotifications: (count?: number) => void;
 };
 
 export type CaptureRig = CaptureRigMethods & {
@@ -1184,7 +1183,7 @@ export function installCaptureRig(): CaptureRig {
       }
       if (!sessionId) return;
       const activeSessionId = sessionId;
-      const base = Date.parse("2026-10-09T10:42:00Z");
+      const base = Date.now() - 5 * 60_000; // 5 min ago → realistic "5m" elapsed time
       const messages: UiMessage[] = [
         {
           id: "cap-perm-user-0",
