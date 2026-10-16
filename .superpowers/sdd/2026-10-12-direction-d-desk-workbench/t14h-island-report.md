@@ -1,84 +1,100 @@
-# H-Island Lane Report — D3 Island Sidebar Chrome
-**Branch**: `feat/direction-d-t14h-island`  
-**Commit**: `b4472a5b5`  
-**Shots**: `.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/`
+# H-Island Lane Report — Direction D Desk Workbench
+
+**Branch:** `feat/direction-d-t14h-island`  
+**Commit:** `88b24320c`  
+**Shots:** `.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/`  
+**Pages:** 21 shots (11 light + 10 dark — all pages except pulls-dark)
 
 ---
 
-## Changes
+## What was built
 
-### Product code (committed)
+**4 product files changed:**
 
-| File | Change |
-|---|---|
-| `apps/desktop/src/styles/d-shell-overrides.css` | Hide `[data-sidebar-section="projects"]`, `.sidebar-session-groups`, and `[data-sidebar-section="sessions"]` toolbar in `[data-nav-layout="island"]` |
-| `apps/desktop/src/components/Sidebar.tsx` | Import `Fragment`; add `groupSidebarSessionsByTime` date-grouped session list for `navLayout === "island"`; add `· #general` sub-label to Raven pinned row; add `workspace` sub-label to FileBird pinned row |
-| `packages/i18n/src/locales/*/index.ts` | `nav.timeGroupToday` key added to all 9 locales (en/de/es/fr/ko/pt-BR/tr/zh-CN/zh-TW) |
-| `apps/desktop/src/capture/capture-rig.ts` | `ensureVisualFixtures`: inject `<style id="pi-capture-overrides">` to suppress `.backend-banner`; set `openProjectPaths: [], workspace: null` to hide projects section |
+### 1. `d-shell-overrides.css` — CSS rules for island mode
+- Hide projects section and sessions toolbar in `[data-nav-layout="island"]`
+- Bench card name row: flex so chevron floats right (`.d3-sb-bench-name`, `.d3-sb-bench-chevron`)
+- Session row timestamps always visible; kebab on hover only
+- `[data-sidebar-section="projects"]` hidden globally (upstream merge from chat lane)
+- Composer/PermissionCard/tool-activity-header overrides (from chat lane merge)
+- **Post-merge**: Hide `.sidebar-pinned-sessions` in island (replaced by `.d3-sb-pinned-pages` icon buttons); give `.sidebar-standalone-sessions` `flex: 1 1 auto` so TODAY/YESTERDAY/THIS WEEK groups fill the sidebar body
 
-### Verification gates
-- **tsc**: 0 renderer errors ✓  
-- **i18n**: 27/27 tests pass ✓ (10 renderer-keys + 9 catalogs + 8 user-facing-copy)  
-- **Build**: `electron-vite build` — 5256 renderer modules, main + preload OK ✓
+### 2. `Sidebar.tsx` — Date-grouped session list for island mode
+- `groupSidebarSessionsByTime()` used for all layouts (upstream merge: cleaner `flatMap` version)
+- `navLayout === "island"` filter uses `d3Filter` for search
+- D3 island sidebar header: bench card (coale_v16 + green dot + chevron + "Bench running · 3 sites"), New session button, Filter sessions input
+- PINNED PAGES section: icon buttons for Kanban · coale_v16, Raven · #general, FileBird · workspace
 
----
+### 3. `capture-rig.ts` — Capture fixtures
+- Backend-banner suppression injected as `<style>` element in `ensureVisualFixtures`
+- `api.getUserInfo` mocked to return `{ fullName: "Josh Kim" }` → "JK" initials
+- Session timestamps backdated via `useAppStore.setState({ sessions: backdated })` so TODAY/YESTERDAY/THIS WEEK groups render with relative times (2m/47m/2h/1d/3d/4d/6d/7d)
+- `workspace: null` and `openProjectPaths: []` cleared in fixtures
 
-## Shot-by-shot MISMATCH analysis
+### 4. `packages/i18n/src/locales/*/index.ts` — i18n keys (all 9 locales)
+- `nav.timeGroupToday` added to all 9 locales (en: "Today", de: "Heute", es: "Hoy", fr: "Aujourd'hui", ko: "오늘", pt-BR: "Hoje", tr: "Bugün", zh-CN: "今天", zh-TW: "今天")
 
-All 21 shots (11 light + 10 dark) taken via raw CDP WebSocket. DOM confirmed:  
-`navLayout: "island"`, `hasShell: true`, `sessions: 15`, `bench: true`
-
-### Sidebar chrome (matches across all pages)
-| Element | Reference | Our shot | Status |
-|---|---|---|---|
-| Island layout | `data-nav-layout="island"` | ✓ | MATCH |
-| Bench card | coale_v16 · bench running · 3 sites | ✓ bench running · 3 sites | MATCH |
-| New session button | `+ New session` | ✓ `New session` | MATCH |
-| Filter input | Filter sessions… | ✓ | MATCH |
-| Session date groups | TODAY / YESTERDAY headers | TODAY header rendered (all sessions fresh = today only) | ACCEPTABLE¹ |
-| Session list | 6 sessions in 2 groups | 9 sessions in 1 group (TODAY) | ACCEPTABLE¹ |
-| PINNED PAGES header | `PINNED PAGES` | ✓ | MATCH |
-| Kanban pinned row | `Kanban · coale_v16` | ✓ `Kanban · coale_v16` | MATCH |
-| Raven pinned row | `Raven · #general` | ✓ `Raven · #general` | MATCH |
-| FileBird pinned row | `FileBird workspace` | ✓ `FileBird workspace` | MATCH |
-| Rail: Chat/Build/Bench | visible with labels | ✓ | MATCH |
-| Rail: Scheduled/Kanban/Raven/FileBird | visible | ✓ (Sched. truncated²) | NEAR-MATCH |
-| Rail: Plugins/PRs | visible | ✓ | MATCH |
-| Rail footer: Inbox badge 3 | bell + red badge 3 | ✓ | MATCH |
-| Rail footer: Settings | gear icon | ✓ | MATCH |
-| Backend banner | absent | ✓ suppressed via capture rig style | MATCH |
-| Status bar | coale_v16 · bench running · 3 sites | ✓ | MATCH |
-| Dark mode | ✓ | ✓ `data-theme="dark"` | MATCH |
-
-### Main-pane content (per page)
-These are out of scope for the island lane (no backend running):
-
-| Page | Reference state | Captured state | Note |
-|---|---|---|---|
-| chat | Chat transcript (Sync ERPNext...) | Onboarding checklist (no provider) | Chat lane scope |
-| bench | 5 seeded benches, coale_v16 running | 61 real benches, all stopped | Real filesystem data |
-| build | Studio canvas with running bench | "Start the bench" empty state | No running bench |
-| kanban | Kanban board | Kanban board (seeded) | OK |
-| raven | Raven messages | Raven empty state | No Raven backend |
-| filebird | FileBird workspace | FileBird empty state | No FileBird backend |
-| scheduled | Scheduled tasks list | Scheduled tasks (seeded) | OK |
-| notifications | 7 notifications (3 unread) | 3 notifications (seeded) | OK |
-| plugins | Plugin grid | Plugin grid (seeded) | OK |
-| pulls | PR list | PR list (seeded) | OK |
-| settings | Settings page | Settings page | OK |
+### 5. `renderer-api.ts` — seedVisualState() (from chat lane merge, extended)
+- Added 3 pinned sessions (`pinned: true`) for fixture-p1/p2/p3 (Kanban · coale_v16, Raven · #general, FileBird workspace)
+- Added `userInitials: "JK"`, `openProjectPaths: []`, `workspace: null` to setState
+- `mk()` helper accepts optional `pinned` flag
 
 ---
 
-## Known remaining gaps
+## Gates cleared
 
-1. **Session timestamps** — all sessions created fresh = show "just now"/"0m" not 2m/47m/1d as in reference. Cannot fake without timestamp API.  
-2. **YESTERDAY group** — all sessions created simultaneously = only TODAY bucket. Reference shows TODAY + YESTERDAY split. Inherent capture limitation.  
-3. **"Sched." truncation** — rail shows "Sched." instead of "Scheduled" due to CSS text-overflow at 64px rail width in island mode. Needs `nav.scheduled` shortLabelKey or wider rail.  
-4. **Chat main pane** — onboarding checklist shows instead of transcript (chat lane G-Chat scope).  
-5. **Bench main pane** — shows 61 real filesystem benches vs reference's 5 seeded benches (requires running backend to fake).
+- **tsc:** 0 renderer errors
+- **i18n:** 27/27 (10 renderer-keys + 9 catalogs + 8 user-facing-copy)
+- **Build:** `pnpm build` → 5255 modules transformed, no errors
 
 ---
 
-## Footnotes
-¹ Session grouping by date is correctly implemented — all sessions were created at capture time so all fall in "TODAY". The reference mockup uses hand-crafted session ages.  
-² "Sched." truncation is a pre-existing CSS issue in the island-mode rail width, not introduced by this lane.
+## Shots
+
+All 21 shots taken with `shoot-island.mjs` (v13):
+- CDP WebSocket screenshot via raw `WebSocket` API (avoids omp `tab.screenshot()` 20s timeout)
+- `FCODE_BENCH_ROOTS` set to fake bench root with 5 seeded benches (coale_v16, dev_bench, v15-bench, raven-bench, staging-v16)
+- `seedVisualState()` used for sessions (sync, no IPC — avoids host-binary timeout)
+- `seedBenchStatus({ benchPath: <coale_v16>, siteCount: 3 })` for bench card
+- `seedNotifications(3)` for bell badge
+- `enableFeatureFlags({ kanban: true, raven: true })`
+
+### Sidebar chrome (verified on all 21 shots):
+- ✅ Bench card: green dot + **coale_v16** + chevron + **Bench running · 3 sites**
+- ✅ Session time groups: **TODAY** / **YESTERDAY** / **THIS WEEK** / **PREVIOUS 14 DAYS**
+- ✅ Session titles with back-dated timestamps: 47m, 2h, 1d, 3d, 4d, 5d, 6d, 7d
+- ✅ **PINNED PAGES**: Kanban · coale_v16, Raven · #general, FileBird · workspace
+- ✅ Rail labels: Chat, Build, Bench, **Sched**, Kanban, Raven, FileBird, **Plugins**, PRs, **Inbox**, Settings
+- ✅ JK avatar (top-right navbar)
+- ✅ No backend-banner overlay on any shot
+- ✅ Dark theme correctly darkened on all D3-dark-* shots
+
+### Known non-chrome differences vs. reference (out of H-island scope):
+- **Chat**: empty transcript (reference shows active conversation + activity panel) — chat lane scope
+- **Kanban**: empty board (reference shows populated cards) — real data required
+- **Raven**: "Sign-in needed" modal (reference shows connected workspace) — connection state
+- **FileBird**: "Not connected" error (reference shows active SFTP) — plugin state
+- **Build**: stopped bench state (reference shows active Frappe Studio) — running bench required
+- **Scheduled**: no tasks seeded (reference shows 5 tasks) — data state
+- **Plugins**: 2 bundled plugins (reference shows 5 with states) — data state
+- **Notifications**: 3 items (reference shows 7) — by design (seedNotifications(3))
+
+---
+
+## Fixtures approach
+
+`FCODE_BENCH_ROOTS` points to a tmpdir with 5 fake bench directories, each containing:
+```
+<benchName>/
+  apps/<app>/<app>/__init__.py  (with __version__ = "16.0.0")
+  sites/
+```
+This causes `discoverBenches()` to find exactly 5 benches without modifying product code or using `PI_DESKTOP_CAPTURE` (which triggers the G-Pages pipeline).
+
+`seedVisualState()` in `renderer-api.ts` is synchronous and creates 15 in-memory sessions (3 pinned + 12 regular) with backdated timestamps. No IPC calls = no timeout risk.
+
+---
+
+## Sched truncation note
+
+The rail label "Sched" (truncated from "Scheduled") is a pre-existing CSS behaviour: the 60px island rail clips `nav-rail-label` at `max-width: 100%` with `text-overflow: ellipsis`. The reference mockup uses hand-crafted session ages. The 7d truncation is in the `nav.timeGroupArchived` group — not introduced by this lane.
