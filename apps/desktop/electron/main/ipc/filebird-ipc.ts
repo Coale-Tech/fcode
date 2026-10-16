@@ -156,6 +156,8 @@ export function registerFileBirdIpc({ registrar, dataDir, getMainWindow, sendToR
       return { ok: true };
     }
     if (!fileBird) return { ok: false };
+    // Renderer not built → show the unavailable card rather than a blank WCV hole.
+    if (!existsSync(join(fileBirdOut(), "renderer/index.html"))) return { ok: false };
     const pane = ensureView();
     // Re-adding moves the view to the top, above any plugin view attached since.
     window.contentView.addChildView(pane);

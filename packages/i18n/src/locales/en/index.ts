@@ -3406,14 +3406,16 @@ importConfirm: "Imported extensions run inside the agent process with the same a
   raven: {
     title: "Raven",
     empty: "Add your Raven site URL in Settings to start chatting.",
-    openSettings: "Open Raven settings",
+    openSettings: "Raven Settings",
     connected: "Connected",
     connecting: "Connecting\u2026",
     signInNeeded: "Sign-in needed",
     signInTitle: "Sign in to Raven",
-    openInBrowser: "Open in browser",
+    openInBrowser: "Open in Browser to Sign In",
     reload: "Reload",
     openExternal: "Open in browser",
+    retry: "Retry",
+    signInDesc: "You need to sign in to {{site}} before Raven can load. Open the site in your browser and log in, then return here.",
     settings: {
       title: "Raven",
       enabled: "Show Raven in the sidebar",

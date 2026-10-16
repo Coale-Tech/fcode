@@ -3394,6 +3394,8 @@ importConfirm: "İçe aktarılan uzantılar ajan sürecinde, ajanın kendi araç
     openInBrowser: "Tarayıcıda aç",
     reload: "Yenile",
     openExternal: "Tarayıcıda aç",
+    retry: "Yeniden dene",
+    signInDesc: "Raven yüklenebilmesi için {{site}}'ye giriş yapmanız gerekiyor. Tarayıcınızda siteyi açın, giriş yapın ve buraya geri dönün.",
     settings: {
       title: "Raven",
       enabled: "Raven'ı kenar çubuğunda göster",

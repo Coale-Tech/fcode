@@ -5,7 +5,7 @@ import { api } from "../lib/api";
 import { useBlockingOverlayActive } from "../lib/blocking-overlay";
 import { useAppStore } from "../stores/app-store";
 import { Button } from "../components/ui";
-import { IconRaven, IconRefresh, IconExternal } from "../components/icons";
+import { IconRaven, IconRefresh, IconExternal, IconTriangleAlert } from "../components/icons";
 
 /**
  * Raven team chat (`<site>/raven`) in a main-owned `persist:raven`
@@ -51,11 +51,11 @@ export function RavenPage({ blocked }: { blocked: boolean }) {
 
   useEffect(() => {
     if (!ready) return;
-    void api.ravenSetVisible(!blocked && !overlayActive);
+    void api.ravenSetVisible(!blocked && !overlayActive && connected);
     return () => {
       void api.ravenSetVisible(false);
     };
-  }, [ready, blocked, overlayActive]);
+  }, [ready, blocked, overlayActive, connected]);
 
   useEffect(() => {
     const surface = surfaceRef.current;
@@ -77,7 +77,7 @@ export function RavenPage({ blocked }: { blocked: boolean }) {
       window.removeEventListener("resize", report);
       cancelAnimationFrame(frame);
     };
-  }, [ready]);
+  }, [ready, connected]);
 
   if (!settings) return null;
 
@@ -97,18 +97,11 @@ export function RavenPage({ blocked }: { blocked: boolean }) {
           {t("raven.title")}
         </span>
         {url && <span className="raven-url-chip">{url}</span>}
-        {ready ? (
-          connected ? (
-            <span className="d-pill green">
-              <span className="d-pill-dot" />
-              {t("raven.connected")}
-            </span>
-          ) : (
-            <span className="d-pill gray">
-              <span className="d-pill-dot" />
-              {t("raven.connecting")}
-            </span>
-          )
+        {ready && connected ? (
+          <span className="d-pill green">
+            <span className="d-pill-dot" />
+            {t("raven.connected")}
+          </span>
         ) : (
           <span className="d-pill amber">
             <span className="d-pill-dot" />
@@ -149,14 +142,42 @@ export function RavenPage({ blocked }: { blocked: boolean }) {
         </div>
       </div>
 
-      {ready ? (
+      {ready && connected ? (
         /* WebContentsView hole: fills the remaining space below the chrome bar */
         <div ref={surfaceRef} className="min-h-0 flex-1" data-raven-surface />
-      ) : (
-        /* Disconnected: sign-in card (fragment-disconnected.html) */
+      ) : ready ? (
+        /* Ready but not connected: sign-in card with Retry (fragment-disconnected.html) */
         <div className="rv-disconnected">
           <div className="rv-signin-card">
-            <div className="rv-signin-icon">
+            <div className="rv-signin-icon amber">
+              <IconTriangleAlert size={22} />
+            </div>
+            <p className="rv-signin-title">{t("raven.signInTitle")}</p>
+            <p className="rv-signin-desc">{t("raven.signInDesc", { site: url || settings.url || "" })}</p>
+            {url && <p className="rv-signin-url">{url}</p>}
+            <div className="rv-signin-actions">
+              <Button
+                variant="primary"
+                onClick={() => settings.url && void api.browserOpenExternal(new URL("/raven", settings.url).toString())}
+              >
+                <IconExternal size={13} style={{ marginRight: 6 }} />
+                {t("raven.openInBrowser")}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => void api.ravenReload().catch(() => {})}
+              >
+                <IconRefresh size={13} style={{ marginRight: 6 }} />
+                {t("raven.retry")}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Not configured: sign-in card with Settings (not-enabled state) */
+        <div className="rv-disconnected">
+          <div className="rv-signin-card">
+            <div className="rv-signin-icon gray">
               <IconRaven size={24} />
             </div>
             <p className="rv-signin-title">{t("raven.signInTitle")}</p>

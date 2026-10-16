@@ -3365,6 +3365,8 @@ sklm: {
     "openInBrowser": "Ouvrir dans le navigateur",
     "reload": "Recharger",
     "openExternal": "Ouvrir dans le navigateur",
+    "retry": "Réessayer",
+    "signInDesc": "Vous devez vous connecter à {{site}} avant que Raven puisse se charger. Ouvrez le site dans votre navigateur, connectez-vous, puis revenez ici.",
     "settings": {
       "title": "Raven",
       "enabled": "Afficher Raven dans la barre latérale",

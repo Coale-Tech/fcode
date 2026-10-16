@@ -3355,6 +3355,8 @@ sklm: {
     openInBrowser: "在浏览器中打开",
     reload: "重新加载",
     openExternal: "在浏览器中打开",
+    retry: "重试",
+    signInDesc: "需要先登录 {{site}} 才能加载 Raven。请在浏览器中打开该站点并登录，然后返回此处。",
     settings: {
       title: "Raven",
       enabled: "在侧边栏显示 Raven",

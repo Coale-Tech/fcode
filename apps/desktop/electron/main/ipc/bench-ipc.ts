@@ -245,6 +245,17 @@ export function registerBenchIpc({
     } catch {
       port = null;
     }
-    return { apps, procfileEntries, port, mainPid };
+    // Per-process PIDs from config/pids/<name>.pid (created by foreman/honcho)
+    const workerPids: Record<string, number | null> = {};
+    for (const entry of procfileEntries) {
+      try {
+        const raw = readFileSync(join(benchPath, "config", "pids", `${entry}.pid`), "utf8").trim();
+        const pid = parseInt(raw, 10);
+        workerPids[entry] = Number.isFinite(pid) ? pid : null;
+      } catch {
+        workerPids[entry] = null;
+      }
+    }
+    return { apps, procfileEntries, port, mainPid, workerPids };
   });
 }

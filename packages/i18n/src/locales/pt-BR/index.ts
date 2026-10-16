@@ -3319,6 +3319,8 @@ export const ptBR = {
     openInBrowser: "Abrir no navegador",
     reload: "Recarregar",
     openExternal: "Abrir no navegador",
+    retry: "Tentar novamente",
+    signInDesc: "Você precisa entrar em {{site}} antes que o Raven possa carregar. Abra o site no seu navegador, faça login e retorne aqui.",
     settings: {
       title: "Raven",
       enabled: "Mostrar Raven na barra lateral",
