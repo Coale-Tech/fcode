@@ -17,6 +17,7 @@ import type {
   OmpAgentEntry,
   OmpModelsListResult,
   OmpWorktreeEntry,
+  OnboardingState,
   PluginSummary,
   PluginTheme,
   ProjectRecord,
@@ -69,6 +70,8 @@ export type CaptureRigMethods = {
   clearPendingPermissions: () => void;
   seedEmptyHome: () => void;
   seedOnboardingChecklist: () => void;
+  /** Seed `window.__PI_CAPTURE_BENCH_LIST__` for BenchPage discovery (5 benches). */
+  seedBenchList: () => void;
 };
 
 export type CaptureRig = CaptureRigMethods & {
@@ -1481,9 +1484,13 @@ export function installCaptureRig(): CaptureRig {
       // Force onboarding checklist visible regardless of backend state.
       if (!window.__PI_CAPTURE__) return;
       const cur = useAppStore.getState().onboarding;
-      if (cur) {
-        useAppStore.setState({ onboarding: { ...cur, showChecklist: true } });
-      }
+      const steps = cur?.steps ?? [
+        { id: "connect-provider", title: "Connect provider", done: false },
+        { id: "pick-a-bench", title: "Pick a bench", done: false },
+        { id: "permissions-mode", title: "Permissions mode", done: false },
+        { id: "youre-ready", title: "You're ready", done: false },
+      ];
+      useAppStore.setState({ onboarding: { ...(cur ?? {}), showChecklist: true, steps } as OnboardingState });
     },
     seedBenchStatus: (opts) => {
       if (!window.__PI_CAPTURE__) return;
@@ -1500,6 +1507,33 @@ export function installCaptureRig(): CaptureRig {
         viewedBenchSiteCount: siteCount,
         ...(settings ? { settings: { ...settings, defaultModelId: "claude-sonnet-5" } } : {}),
       });
+    },
+    seedBenchList: () => {
+      if (!window.__PI_CAPTURE__) return;
+      const COALE_PATH = "/Users/mac/ERPNext/frappe_agent/coale_v16";
+      const benches = [
+        { id: "cap-bench-coale-v16", path: COALE_PATH, version: 16,
+          sites: [{ name: "coale.frappe.cloud", isDefault: true },
+                  { name: "test.frappe.cloud", isDefault: false },
+                  { name: "demo.frappe.cloud", isDefault: false }],
+          apps: ["frappe", "erpnext", "hrms", "raven"] },
+        { id: "cap-bench-dev", path: "/Users/mac/ERPNext/dev_bench", version: 16,
+          sites: [{ name: "dev.localhost", isDefault: true }],
+          apps: ["frappe", "erpnext"] },
+        { id: "cap-bench-v15", path: "/Users/mac/ERPNext/v15-bench", version: 15,
+          sites: [{ name: "v15.localhost", isDefault: true }],
+          apps: ["frappe", "hrms"] },
+        { id: "cap-bench-staging", path: "/Users/mac/ERPNext/staging_v16", version: 16,
+          sites: [{ name: "staging-1.frappe.cloud", isDefault: true },
+                  { name: "staging-2.frappe.cloud", isDefault: false }],
+          apps: ["frappe", "erpnext", "hrms"] },
+        { id: "cap-bench-test", path: "/Users/mac/ERPNext/test_v16", version: 16,
+          sites: [{ name: "test.localhost", isDefault: true }],
+          apps: ["frappe"] },
+      ];
+      window.__PI_CAPTURE_BENCH_LIST__ = {
+        benches, failedRoots: [], roots: ["/Users/mac/ERPNext"],
+      };
     },
   };
   return {

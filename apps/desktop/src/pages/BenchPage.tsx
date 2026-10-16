@@ -172,6 +172,11 @@ export function BenchPage() {
   const loadBenches = useCallback(async () => {
     setLoading(true);
     try {
+      // Capture mode: use seeded bench list if set (avoids contextBridge IPC which can't be mocked).
+      if (window.__PI_CAPTURE__ && window.__PI_CAPTURE_BENCH_LIST__) {
+        applyBenchList(window.__PI_CAPTURE_BENCH_LIST__ as BenchListResult);
+        return;
+      }
       applyBenchList(await invoke<BenchListResult>(IPC.invoke.benchList));
     } catch {
       // discovery error: show empty state
