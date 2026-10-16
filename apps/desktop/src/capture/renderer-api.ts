@@ -163,15 +163,22 @@ export function installRendererApi(): () => void {
       const now = Date.now();
       const H = 3_600_000;
       const D = 86_400_000;
-      const mk = (id: string, title: string, ageMs: number) => ({
+      const mk = (id: string, title: string, ageMs: number, pinned = false) => ({
         id, title, source: "desktop" as const, modelId: "claude-sonnet-5",
         mode: "plan" as const, thinkingLevel: "off" as const, permissionMode: "ask" as const,
         messageCount: 0,
         updatedAt: new Date(now - ageMs).toISOString(),
         createdAt: new Date(now - ageMs).toISOString(),
-        pinned: false, archived: false,
+        pinned, archived: false,
       });
+      // Pinned page sessions first (sidebar PINNED PAGES section).
+      const pinnedSessions = [
+        mk("fixture-p1", "Kanban · coale_v16",  5 * D, true),
+        mk("fixture-p2", "Raven · #general",    5 * D, true),
+        mk("fixture-p3", "FileBird workspace",  5 * D, true),
+      ];
       const sessions = [
+        ...pinnedSessions,
         mk("fixture-s1",  "Sync ERPNext code module",           2 * 60_000),
         mk("fixture-s2",  "Redesign settings plugin section",   47 * 60_000),
         mk("fixture-s3",  "Fix duplicate bench start bug",      2 * H),
@@ -194,9 +201,12 @@ export function installRendererApi(): () => void {
         runningSessions: { "fixture-s1": true },
         page: "chat",
         chatUserName: "Josh Kim",
+        userInitials: "JK",
         kanbanEnabled: true,
         ravenEnabled: true,
         onboarding: undefined,
+        openProjectPaths: [],
+        workspace: null,
       });
     },
     showToast: (message, opts) => useAppStore.getState().showToast(message, opts),
