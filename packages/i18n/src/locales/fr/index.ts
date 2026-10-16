@@ -578,7 +578,7 @@ export const fr = {
     "reasoningLevel": "Niveau de raisonnement",
     "reasoningSupportedBy": "Le modèle actuel {{model}} prend en charge ces niveaux de raisonnement",
     "permissionInherit": "Par défaut",
-    "permissionAsk": "Demander à chaque fois",
+    "permissionAsk": "Supervised",
     "permissionAcceptEdits": "Accepter les modifications",
     "permissionAuto": "Auto",
     "permissionAskDesc": "Demander avant chaque appel d'outil",

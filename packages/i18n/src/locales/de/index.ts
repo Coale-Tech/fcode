@@ -578,7 +578,7 @@ export const de = {
     "reasoningLevel": "Argumentationsebene",
     "reasoningSupportedBy": "Aktuelles Modell {{model}} unterstützt diese Argumentationsebenen",
     "permissionInherit": "Standard",
-    "permissionAsk": "Immer nachfragen",
+    "permissionAsk": "Supervised",
     "permissionAcceptEdits": "Änderungen akzeptieren",
     "permissionAuto": "Auto",
     "permissionAskDesc": "Vor jedem Tool-Aufruf nachfragen",
