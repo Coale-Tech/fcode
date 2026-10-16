@@ -185,6 +185,8 @@ export function installRendererApi(): () => void {
         kanbanEnabled: true,
         ravenEnabled: true,
         onboardingDismissed: true,
+        // Clear project workspaces so the sidebar PROJECTS section shows nothing.
+        openProjects: [] as unknown as AppState["openProjects"],
       });
     },
     showToast: (message, opts) => useAppStore.getState().showToast(message, opts),
