@@ -15,11 +15,14 @@ export function useBenchContext(): WorkspaceBarState {
 
     const poll = async () => {
       if (document.hidden || cancelled) return;
-      // Capture-rig override: skip real IPC and use seeded data directly.
-      const override: BenchStatusOverride = window.__PI_BENCH_OVERRIDE__ ?? null;
-      if (override !== null && !cancelled) {
-        setState(formatWorkspaceBarState(override));
-        return;
+      // Capture-rig override (active only when __PI_CAPTURE__ is set by the
+      // capture suite): skip real IPC and use seeded data from seedBenchStatus.
+      if (window.__PI_CAPTURE__) {
+        const override: BenchStatusOverride = window.__PI_BENCH_OVERRIDE__ ?? null;
+        if (override !== null && !cancelled) {
+          setState(formatWorkspaceBarState(override));
+          return;
+        }
       }
       const bridge = window.piDesktop;
       if (!bridge?.invoke) return;
