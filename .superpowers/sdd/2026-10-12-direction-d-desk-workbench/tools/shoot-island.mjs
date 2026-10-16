@@ -291,9 +291,37 @@ export async function shoot({ browser: _browser }) {
   await shot("D3-light-kanban",        async () => { await closePanel(); await goto("kanban"); });
   await shot("D3-light-raven",         async () => { await closePanel(); await goto("raven"); });
   await shot("D3-light-filebird",      async () => { await closePanel(); await goto("filebird"); });
-  await shot("D3-light-scheduled",     async () => { await closePanel(); await goto("scheduled"); });
+  await shot("D3-light-scheduled", async () => {
+    await closePanel();
+    await goto("scheduled");
+    await sleep(2000); // wait for IPC data + health to load (first mount needs more time)
+    // Click first task row to open detail panel (matches reference with Daily ERPNext Digest selected)
+    await eval_(`
+      (() => {
+        const row = document.querySelector(".dest-row.sch-row");
+        if (row) row.click();
+      })()
+    `);
+  }, 400);
   await shot("D3-light-notifications", async () => { await closePanel(); await goto("notifications"); });
-  await shot("D3-light-plugins",       async () => { await closePanel(); await goto("plugins"); });
+  await shot("D3-light-plugins", async () => {
+    await closePanel();
+    await goto("plugins");
+    await sleep(800); // wait for plugin list to load
+    // Expand kra-etims-reporter Details section (matches reference showing capabilities/services/etc.)
+    await eval_(`
+      (() => {
+        const rows = document.querySelectorAll(".plg-row");
+        for (const row of rows) {
+          if (row.querySelector(".plg-name")?.textContent === "kra-etims-reporter") {
+            const toggle = row.querySelector(".plugins-row-details-toggle");
+            if (toggle) toggle.click();
+            break;
+          }
+        }
+      })()
+    `);
+  }, 400);
   // Pulls: close panel, navigate, then click PR #247 row to show detail panel.
   await shot("D3-light-pulls", async () => {
     await closePanel();
@@ -353,9 +381,35 @@ export async function shoot({ browser: _browser }) {
   await shot("D3-dark-kanban",         async () => { await closePanel(); await goto("kanban"); });
   await shot("D3-dark-raven",          async () => { await closePanel(); await goto("raven"); });
   await shot("D3-dark-filebird",       async () => { await closePanel(); await goto("filebird"); });
-  await shot("D3-dark-scheduled",      async () => { await closePanel(); await goto("scheduled"); });
+  await shot("D3-dark-scheduled", async () => {
+    await closePanel();
+    await goto("scheduled");
+    await sleep(1000);
+    await eval_(`
+      (() => {
+        const row = document.querySelector(".dest-row.sch-row");
+        if (row) row.click();
+      })()
+    `);
+  }, 400);
   await shot("D3-dark-notifications",  async () => { await closePanel(); await goto("notifications"); });
-  await shot("D3-dark-plugins",        async () => { await closePanel(); await goto("plugins"); });
+  await shot("D3-dark-plugins", async () => {
+    await closePanel();
+    await goto("plugins");
+    await sleep(800);
+    await eval_(`
+      (() => {
+        const rows = document.querySelectorAll(".plg-row");
+        for (const row of rows) {
+          if (row.querySelector(".plg-name")?.textContent === "kra-etims-reporter") {
+            const toggle = row.querySelector(".plugins-row-details-toggle");
+            if (toggle) toggle.click();
+            break;
+          }
+        }
+      })()
+    `);
+  }, 400);
   // Pulls: close panel + select PR #247 row for detail panel.
   await shot("D3-dark-pulls", async () => {
     await closePanel();

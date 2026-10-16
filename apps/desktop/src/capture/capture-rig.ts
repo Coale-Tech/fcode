@@ -1064,7 +1064,7 @@ export function installCaptureRig(): CaptureRig {
         { id: "st-4", title: "Stock Reconciliation Snapshot", prompt: "Take a full stock reconciliation snapshot across all warehouses and export as CSV to /tmp/stock-snapshot.", cadence: "monthly", mode: "agent", enabled: true, createdAt: now, updatedAt: now, schedule: { hour: 2, minute: 0, weekday: 0 }, nextRunAt: at(1, 2, 0).toISOString(), workspacePath: bench, modelId: "claude-sonnet-4-6" },
         { id: "st-5", title: "Monthly Accounts Ageing", prompt: "Generate accounts receivable ageing report for month-end and post summary to Raven #finance channel.", cadence: "monthly", mode: "agent", enabled: false, createdAt: now, updatedAt: now, schedule: { hour: 9, minute: 0, weekday: 0 }, workspacePath: bench, modelId: "claude-sonnet-4-6" },
       ];
-      const health = { lastTickAt: Date.now() - 28_000, lastError: undefined, hostAvailable: true };
+      // health is computed at call-time (not seed-time) so lastTickAt stays within 90s window
       const run = (id: string, taskId: string, start: Date, seconds: number | null, status: ScheduledTaskRun["status"] = "completed"): ScheduledTaskRun => ({
         id, taskId, sessionId: `sess-${id}`, status, errorCode: status === "error" ? "PROVIDER_TIMEOUT" : null,
         startedAt: start.toISOString(),
@@ -1081,7 +1081,7 @@ export function installCaptureRig(): CaptureRig {
         run("sr-p1", "st-3", at(-((new Date().getDay() + 6) % 7) || -7, 7, 30), 41),
         ...Array.from({ length: 18 }, (_, i) => run(`sr-ci${i + 1}`, "st-2", new Date(nextHour.getTime() - (i + 1) * 3_600_000), 30 + (i % 5) * 7, i === 4 ? "aborted" : "completed")),
       ].sort((a, b) => (b.startedAt > a.startedAt ? 1 : -1));
-      api.listScheduled = async () => ({ tasks, health });
+      api.listScheduled = async () => ({ tasks, health: { lastTickAt: Date.now() - 28_000, lastError: undefined, hostAvailable: true } });
       api.listScheduledRuns = async () => ({ runs });
     },
     seedPullRequests: (count = 1) => {
@@ -1582,8 +1582,8 @@ export function installCaptureRig(): CaptureRig {
       const benches = [
         { id: "cap-bench-coale-v16", path: COALE_PATH,
           version: 16,
+          startedAtMs: Date.now() - 167_000,           // 2m47s ago → "02:47" elapsed
           sites: [{ name: "coale.frappe.cloud", isDefault: true },
-                  { name: "test.frappe.cloud", isDefault: false },
                   { name: "demo.frappe.cloud", isDefault: false }],
           apps: ["frappe", "erpnext", "hrms", "raven"] },
         { id: "cap-bench-dev",     path: "/Users/mac/ERPNext/dev_bench",
