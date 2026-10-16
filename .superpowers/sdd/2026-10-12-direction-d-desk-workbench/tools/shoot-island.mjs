@@ -247,26 +247,32 @@ export async function shoot({ browser: _browser }) {
 
   await shot("D3-light-chat");
 
-  // Bench: seed bench list, wait for discovery, then open first 2 bench detail tabs.
+  // Bench: open first 2 bench detail tabs then show "All benches" table.
+  // After clicking btns[0], tab changes to coale_v16 detail (AllBenches unmounts).
+  // Must return to "All benches" before clicking btns[1].
   await shot("D3-light-bench", async () => {
     await goto("bench");
-    await sleep(2400); // wait for bench discovery IPC
-    // Open coale_v16 and dev_bench as detail tabs.
-    await eval_(`
-      (() => {
-        const btns = document.querySelectorAll(".wb-link-btn.wb-table-name");
-        if (btns[0]) btns[0].click();
-      })()
-    `);
-    await sleep(400);
-    await eval_(`
-      (() => {
-        const btns = document.querySelectorAll(".wb-link-btn.wb-table-name");
-        if (btns[1]) btns[1].click();
-      })()
-    `);
-    await sleep(400);
-    // Navigate back to "All benches" tab to show the table.
+    await sleep(2400); // wait for seeded bench list to load
+    const openBenchTab = async (idx) => {
+      // Ensure All benches table is visible, then click row[idx].
+      await eval_(`
+        (() => {
+          const allTab = document.getElementById("bench-tab-all");
+          if (allTab && !allTab.classList.contains("is-active")) allTab.click();
+        })()
+      `);
+      await sleep(200);
+      await eval_(`
+        (() => {
+          const btns = document.querySelectorAll(".wb-link-btn.wb-table-name");
+          if (btns[${idx}]) btns[${idx}].click();
+        })()
+      `);
+      await sleep(300);
+    };
+    await openBenchTab(0); // opens coale_v16 detail tab
+    await openBenchTab(1); // opens dev_bench detail tab
+    // Final: show "All benches" table with both tabs in the tab strip.
     await eval_(`
       (() => {
         const allTab = document.getElementById("bench-tab-all");
@@ -296,23 +302,27 @@ export async function shoot({ browser: _browser }) {
     // Re-seed approval card for dark theme shot.
     await eval_(`(async () => { await window.__PI_DESKTOP__?.seedApprovalCard?.(); })()`);
   });
-  await shot("D3-dark-bench",          async () => {
+  await shot("D3-dark-bench", async () => {
     await goto("bench");
     await sleep(2400);
-    await eval_(`
-      (() => {
-        const btns = document.querySelectorAll(".wb-link-btn.wb-table-name");
-        if (btns[0]) btns[0].click();
-      })()
-    `);
-    await sleep(300);
-    await eval_(`
-      (() => {
-        const btns = document.querySelectorAll(".wb-link-btn.wb-table-name");
-        if (btns[1]) btns[1].click();
-      })()
-    `);
-    await sleep(300);
+    const openBenchTabD = async (idx) => {
+      await eval_(`
+        (() => {
+          const allTab = document.getElementById("bench-tab-all");
+          if (allTab && !allTab.classList.contains("is-active")) allTab.click();
+        })()
+      `);
+      await sleep(200);
+      await eval_(`
+        (() => {
+          const btns = document.querySelectorAll(".wb-link-btn.wb-table-name");
+          if (btns[${idx}]) btns[${idx}].click();
+        })()
+      `);
+      await sleep(300);
+    };
+    await openBenchTabD(0);
+    await openBenchTabD(1);
     await eval_(`
       (() => {
         const allTab = document.getElementById("bench-tab-all");
