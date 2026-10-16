@@ -42,7 +42,7 @@ export type RendererApi = {
 } & (CaptureRigStubs | CaptureRigMethods);
 
 /** Shape accepted by seedBenchStatus and read by useBenchContext. */
-export type BenchStatusOverride = { status: string; benchPath: string | null; site: string | null; siteCount?: number } | null;
+export type BenchStatusOverride = { status: string; benchPath: string | null; site: string | null; siteCount?: number; startedAtMs?: number } | null;
 
 declare global {
   interface Window {
@@ -85,6 +85,7 @@ const CAPTURE_RIG_METHODS = [
   "clearPendingPermissions",
   "seedEmptyHome",
   "seedOnboardingChecklist",
+  "seedBenchList",
 ] as const satisfies readonly CaptureRigMethod[];
 
 export function installRendererApi(): () => void {
@@ -167,29 +168,41 @@ export function installRendererApi(): () => void {
      *  Unlike ensureVisualFixtures this is a direct sync call — no dynamic import needed. */
     seedVisualState: () => {
       const now = Date.now();
-      const H = 3_600_000;
-      const D = 86_400_000;
-      const mk = (id: string, title: string, ageMs: number) => ({
+      const M = 60_000, H = 3_600_000, D = 86_400_000;
+      // Anchor TODAY sessions to the start of the current calendar day so the
+      // groupSidebarSessionsByTime calendar-day boundary is always respected,
+      // regardless of what time the screenshot is taken.
+      const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
+      const S = startOfToday.getTime();
+      // todayTs: use rolling offset when it's within today; else clamp to S+slotMin.
+      const todayTs = (offset: number, slotMin: number): number =>
+        Math.max(S + slotMin * M, now - offset);
+      const mk = (id: string, title: string, ts: number, pinned = false) => ({
         id, title, source: "desktop" as const, modelId: "claude-sonnet-5",
         mode: "plan" as const, thinkingLevel: "off" as const, permissionMode: "ask" as const,
         messageCount: 0,
-        updatedAt: new Date(now - ageMs).toISOString(),
-        createdAt: new Date(now - ageMs).toISOString(),
-        pinned: false, archived: false,
+        updatedAt: new Date(ts).toISOString(),
+        createdAt: new Date(ts).toISOString(),
+        pinned, archived: false,
       });
+      // Pinned page sessions (sidebar PINNED PAGES section; not grouped by time).
+      const pinnedSessions = [
+        mk("fixture-p1", "Kanban · coale_v16",  S - 5 * D, true),
+        mk("fixture-p2", "Raven · #general",    S - 5 * D, true),
+        mk("fixture-p3", "FileBird workspace",  S - 5 * D, true),
+      ];
+      // 8 reference sessions matching pages-d sidebar:
+      // TODAY (group by calendar day), YESTERDAY (yesterday's window), THIS WEEK.
       const sessions = [
-        mk("fixture-s1",  "Sync ERPNext code module",           2 * 60_000),
-        mk("fixture-s2",  "Redesign settings plugin section",   47 * 60_000),
-        mk("fixture-s3",  "Fix duplicate bench start bug",      2 * H),
-        mk("fixture-s4",  "Migrate Raven to frappe-ui v2",      25 * H),
-        mk("fixture-s5",  "Review PR #224 leave approvals",     26 * H),
-        mk("fixture-s6",  "ERPNext payroll period config",      27 * H),
-        mk("fixture-s7",  "Set up coale_v16 from scratch",      3 * D),
-        mk("fixture-s8",  "Debug slow stock valuation query",   4 * D),
-        mk("fixture-s9",  "Frappe UI modal refactor",           5 * D),
-        mk("fixture-s10", "Refactor payment_entry hooks",       6 * D),
-        mk("fixture-s11", "Install hrms on coale_staging",      6.5 * D),
-        mk("fixture-s12", "Debug bench worker crash",           7 * D),
+        ...pinnedSessions,
+        mk("fixture-s1",  "Sync ERPNext code module",          todayTs(2 * M, 3)),
+        mk("fixture-s2",  "Redesign settings plugin section",  todayTs(47 * M, 2)),
+        mk("fixture-s3",  "Fix duplicate bench start bug",     todayTs(2 * H, 1)),
+        mk("fixture-s4",  "Migrate Raven to frappe-ui v2",     S - D + 14 * H),
+        mk("fixture-s5",  "Review PR #224 leave approvals",    S - D + 12 * H),
+        mk("fixture-s6",  "ERPNext payroll period config",     S - D + 10 * H),
+        mk("fixture-s7",  "Set up coale_v16 from scratch",     S - 4 * D),
+        mk("fixture-s8",  "Debug slow stock valuation query",  S - 3 * D),
       ] as unknown as SessionSummary[];
       useAppStore.setState({
         sessions,
@@ -204,6 +217,8 @@ export function installRendererApi(): () => void {
         kanbanEnabled: true,
         ravenEnabled: true,
         onboarding: undefined,
+        openProjectPaths: [],
+        workspace: null,
       });
     },
     showToast: (message, opts) => useAppStore.getState().showToast(message, opts),

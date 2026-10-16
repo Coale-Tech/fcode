@@ -21,6 +21,8 @@ export type BenchSummary = {
   sites: BenchSite[];
   /** Installed app names from the bench's apps/ directory. */
   apps: string[];
+  /** Running bench: ms since epoch when process started (for elapsed display). */
+  startedAtMs?: number;
 };
 
 export type BenchStatus = "stopped" | "starting" | "running" | "failed";
