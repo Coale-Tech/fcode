@@ -874,37 +874,44 @@ export function installCaptureRig(): CaptureRig {
         return;
       }
       const now = Date.now();
-      const completedTitles = [
-        "重新设计设置页面插件板块手机端 UI 布局并验证所有断点",
-        "同步代码",
-        "Weekly HRMS payroll report generation",
+      const DAY = 86_400_000;
+      // Reference design: 7 notifications (5 today, 2 yesterday); 3 unread (indices 0,1,2).
+      const entries = [
+        { kind: "task.completed" as AppNotificationKind, sessionTitle: "Daily ERPNext Digest",
+          body: "Session finished in 12 s · coale_v16 bench",
+          createdAt: new Date(now - 120_000).toISOString(), readAt: null },
+        { kind: "task.failed" as AppNotificationKind, sessionTitle: "Stock Reconciliation Snapshot",
+          body: "Error: EACCES permission denied at /tmp/stock-snapshot · exit code 1",
+          createdAt: new Date(now - 120_000).toISOString(), readAt: null },
+        { kind: "task.completed" as AppNotificationKind, sessionTitle: "Hourly CI Health Check",
+          body: "All test suites passing · frappe, erpnext, hrms, raven",
+          createdAt: new Date(now - 3_480_000).toISOString(), readAt: null },
+        { kind: "task.completed" as AppNotificationKind, sessionTitle: "Hourly CI Health Check",
+          body: "All test suites passing",
+          createdAt: new Date(now - 7_200_000).toISOString(), readAt: new Date(now - 3_600_000).toISOString() },
+        { kind: "task.completed" as AppNotificationKind, sessionTitle: "Daily ERPNext Digest",
+          body: "Session finished in 9 s · coale_v16 bench",
+          createdAt: new Date(now - 28_800_000).toISOString(), readAt: new Date(now - 7_200_000).toISOString() },
+        { kind: "task.failed" as AppNotificationKind, sessionTitle: "Weekly HRMS Payroll Review",
+          body: "Error: Connection refused to hrms-bench MySQL · timeout after 30 s",
+          createdAt: new Date(now - DAY - 58_200_000).toISOString(), readAt: new Date(now - DAY).toISOString() },
+        { kind: "task.completed" as AppNotificationKind, sessionTitle: "Daily ERPNext Digest",
+          body: "Session finished in 14 s · coale_v16 bench",
+          createdAt: new Date(now - DAY - 57_600_000).toISOString(), readAt: new Date(now - DAY).toISOString() },
       ];
-      const failedTitles = [
-        "修复 host-core 启动失败并补充错误恢复测试",
-        "eTIMS VSCU integration — submit receipt batch",
-      ];
-      // Mix completed and failed so the inbox shows kind-aware rendering.
-      const notifications = Array.from({ length: Math.min(count, 7) }, (_, index) => {
-        const isFailed = index === 1 || index === 3;
-        return {
-          id: `capture-notification-${index}`,
-          kind: (isFailed ? "task.failed" : "task.completed") as AppNotificationKind,
-          sessionId: `capture-session-${index}`,
-          sessionTitle: isFailed
-            ? failedTitles[index % failedTitles.length]
-            : completedTitles[index % completedTitles.length],
-          turnId: `capture-turn-${index}`,
-          ...(isFailed && index % 2 === 1 ? { errorCode: "MODEL_REQUEST_TIMEOUT" } : {}),
-          createdAt: new Date(now - (index + 1) * 3_600_000).toISOString(),
-          readAt: index >= 3 ? new Date(now - (index - 2) * 1_800_000).toISOString() : null,
-        };
-      });
+      const notifications = entries.slice(0, Math.min(count, 7)).map((e, i) => ({
+        id: `capture-notification-${i}`,
+        kind: e.kind,
+        sessionId: `capture-session-${i}`,
+        sessionTitle: e.sessionTitle,
+        turnId: `capture-turn-${i}`,
+        body: e.body,
+        createdAt: e.createdAt,
+        readAt: e.readAt,
+      }));
       useAppStore.setState({
         notifications,
-        unreadNotificationCount: notifications.reduce(
-          (total, notification) => total + (notification.readAt ? 0 : 1),
-          0,
-        ),
+        unreadNotificationCount: notifications.filter((n) => !n.readAt).length,
         refreshNotifications: async () => undefined,
       });
     },
@@ -976,8 +983,14 @@ export function installCaptureRig(): CaptureRig {
         api.listPullRequests = originalListPullRequests;
         return;
       }
+      // Ensure workspace is set so the PR page renders data (not the empty state).
+      if (!useAppStore.getState().workspace?.path) {
+        useAppStore.setState({
+          workspace: { path: "/Users/mac/CoaleTech/frappe-agent", name: "frappe-agent", branch: "main" },
+        });
+      }
       const p247checks: PullRequestCheck[] = [
-        { name: "frappe-tests", state: "success", durationSeconds: 82 },
+        { name: "frappe-tests", state: "success", durationSeconds: 82, details: "142 passed" },
         { name: "type-check",   state: "success", durationSeconds: 48 },
         { name: "lint",         state: "success", durationSeconds: 14 },
       ];
@@ -994,28 +1007,40 @@ export function installCaptureRig(): CaptureRig {
       ];
       const pulls: PullRequestSummary[] = [
         {
-          number: 247, title: "feat(etims): VSCU receipt batch submission",
+          number: 247,
+          title: "feat: Add eTIMS KRA receipt signing via VSCU integration",
           url: "https://github.com/Coale-Tech/frappe-agent/pull/247",
-          author: "mac", headRefName: "feat/etims-vscu", baseRefName: "main",
-          updatedAt: new Date(Date.now() - 900_000).toISOString(), isDraft: false,
+          author: "wanjiru@coaletech.com",
+          headRefName: "feature/etims-vscu", baseRefName: "main",
+          openedAt: new Date(Date.now() - 172_800_000).toISOString(),
+          updatedAt: new Date(Date.now() - 900_000).toISOString(),
+          isDraft: false,
           body: "Implements KRA eTIMS receipt signing via the `vscu` device. Adds `etims_sign_receipt()` to `TaxReceiptController`. Includes sandbox test coverage and XML schema validation.",
           changedFiles: 12, additions: 382, deletions: 28,
           checks: p247checks,
         },
         {
-          number: 243, title: "fix(accounting): multi-currency exchange rate caching",
+          number: 243,
+          title: "fix: Resolve duplicate Payment Entry on multi-currency reconciliation",
           url: "https://github.com/Coale-Tech/frappe-agent/pull/243",
-          author: "agent", headRefName: "fix/multi-currency", baseRefName: "main",
-          updatedAt: new Date(Date.now() - 7_200_000).toISOString(), isDraft: false,
+          author: "moha@coaletech.com",
+          headRefName: "fix/multi-currency-rec", baseRefName: "main",
+          openedAt: new Date(Date.now() - 259_200_000).toISOString(),
+          updatedAt: new Date(Date.now() - 7_200_000).toISOString(),
+          isDraft: false,
           body: "Fixes stale exchange rates in multi-currency Journal Entries. Adds a 1-hour TTL cache keyed by currency pair and date.",
           changedFiles: 5, additions: 67, deletions: 14,
           checks: p243checks,
         },
         {
-          number: 239, title: "chore: bump dependencies (pnpm audit fix)",
+          number: 239,
+          title: "chore: Bump frappe to v16.3.2 and erpnext to v16.2.8",
           url: "https://github.com/Coale-Tech/frappe-agent/pull/239",
-          author: "mac", headRefName: "chore/deps-bump", baseRefName: "main",
-          updatedAt: new Date(Date.now() - 86_400_000).toISOString(), isDraft: false,
+          author: "mac@coaletech.com",
+          headRefName: "chore/deps-bump", baseRefName: "main",
+          openedAt: new Date(Date.now() - 86_400_000).toISOString(),
+          updatedAt: new Date(Date.now() - 86_400_000).toISOString(),
+          isDraft: false,
           body: "Bumps pnpm lockfile to resolve 2 moderate audit findings in transitive deps.",
           changedFiles: 2, additions: 18, deletions: 18,
           checks: p239checks,
@@ -1023,7 +1048,7 @@ export function installCaptureRig(): CaptureRig {
         {
           number: 237, title: "feat(hrms): payroll summary PDF export",
           url: "https://github.com/Coale-Tech/frappe-agent/pull/237",
-          author: "agent", headRefName: "feat/payroll-pdf", baseRefName: "main",
+          author: "agent@coaletech.com", headRefName: "feat/payroll-pdf", baseRefName: "main",
           updatedAt: new Date(Date.now() - 172_800_000).toISOString(), isDraft: true,
           body: "Adds PDF export for monthly payroll summaries using WeasyPrint.",
           changedFiles: 8, additions: 211, deletions: 4,
@@ -1031,7 +1056,7 @@ export function installCaptureRig(): CaptureRig {
         {
           number: 231, title: "docs: update AGENTS.md with new directives",
           url: "https://github.com/Coale-Tech/frappe-agent/pull/231",
-          author: "mac", headRefName: "docs/agents-md", baseRefName: "main",
+          author: "mac@coaletech.com", headRefName: "docs/agents-md", baseRefName: "main",
           updatedAt: new Date(Date.now() - 259_200_000).toISOString(), isDraft: true,
           body: "Updates AGENTS.md with the new frappe-bench-ops and raven-pm agent specifications.",
           changedFiles: 1, additions: 43, deletions: 7,

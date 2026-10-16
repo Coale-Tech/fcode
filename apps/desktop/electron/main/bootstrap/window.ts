@@ -2011,6 +2011,104 @@ export async function createWindow({
                 `(() => { const { promise, resolve } = Promise.withResolvers(); document.body.getBoundingClientRect(); requestAnimationFrame(() => { document.body.getBoundingClientRect(); requestAnimationFrame(resolve); }); return promise; })()`,
               );
             };
+            // Seed page data for direction-d pages shots (PRs, notifications, scheduled, kanban, plugins)
+            try {
+              await windowState.mainWindow!.webContents.executeJavaScript(
+                `void window.__PI_DESKTOP__?.seedPullRequests?.()`,
+              );
+              await windowState.mainWindow!.webContents.executeJavaScript(
+                `void window.__PI_DESKTOP__?.seedNotifications?.()`,
+              );
+              await windowState.mainWindow!.webContents.executeJavaScript(
+                `void window.__PI_DESKTOP__?.seedScheduledTasks?.()`,
+              );
+              await windowState.mainWindow!.webContents.executeJavaScript(
+                `void window.__PI_DESKTOP__?.seedKanbanBoard?.()`,
+              );
+              await windowState.mainWindow!.webContents.executeJavaScript(
+                `void window.__PI_DESKTOP__?.seedPlugins?.()`,
+              );
+            } catch { /* seeds optional */ }
+            const execJS = (js: string) => windowState.mainWindow!.webContents.executeJavaScript(js);
+            const setNavLayout = async (layout: string) => {
+              await execJS(`window.__PI_DESKTOP__?.setNavLayout?.(${JSON.stringify(layout)})`);
+              await sleep(400);
+            };
+            // T8 pages: tabs layout light/dark for direction-d pages (PR, notifications, scheduled, kanban, plugins)
+            await setTheme("light");
+            await setNavLayout("tabs");
+            // Pull Requests (tabs, light) — click first PR row to open detail panel
+            await setPage("pulls");
+            await sleep(600);
+            await flush();
+            await shot("pi-tabs-pulls-light");
+            await execJS(`document.querySelector('.pr-row')?.dispatchEvent(new MouseEvent('click',{bubbles:true}))`);
+            await sleep(500);
+            await flush();
+            await shot("pi-tabs-pulls-light-detail");
+            // Notifications (tabs, light)
+            await setPage("notifications");
+            await sleep(400);
+            await flush();
+            await shot("pi-tabs-notifications-light");
+            // Plugins (tabs, light)
+            await setPage("plugins");
+            await sleep(600);
+            await flush();
+            await shot("pi-tabs-plugins-light");
+            // Scheduled (tabs, light) — already captured above but re-shoot with seeds
+            await setPage("scheduled");
+            await sleep(400);
+            await flush();
+            await shot("pi-tabs-scheduled-light-seeded");
+            // Kanban (tabs, light) + drawer
+            await setPage("kanban");
+            await sleep(600);
+            await flush();
+            await shot("pi-tabs-kanban-light");
+            await execJS(`document.querySelector('.kanban-card')?.dispatchEvent(new MouseEvent('click',{bubbles:true}))`);
+            await sleep(600);
+            await flush();
+            await shot("pi-tabs-kanban-light-drawer");
+            // Rail layout shots (D2)
+            await setNavLayout("rail");
+            await setPage("pulls");
+            await sleep(600);
+            await flush();
+            await shot("pi-rail-pulls-light");
+            await setPage("notifications");
+            await sleep(400);
+            await flush();
+            await shot("pi-rail-notifications-light");
+            await setPage("scheduled");
+            await sleep(400);
+            await flush();
+            await shot("pi-rail-scheduled-light");
+            // Island layout shots (D3)
+            await setNavLayout("island");
+            await setPage("pulls");
+            await sleep(600);
+            await flush();
+            await shot("pi-island-pulls-light");
+            await execJS(`document.querySelector('.pr-row')?.dispatchEvent(new MouseEvent('click',{bubbles:true}))`);
+            await sleep(500);
+            await flush();
+            await shot("pi-island-pulls-light-detail");
+            // T8 pages dark shots
+            await setTheme("dark");
+            await setNavLayout("tabs");
+            await setPage("pulls");
+            await sleep(600);
+            await flush();
+            await shot("pi-tabs-pulls-dark-detail");
+            await setNavLayout("island");
+            await setPage("pulls");
+            await sleep(600);
+            await flush();
+            await shot("pi-island-pulls-dark-detail");
+            // Restore tabs layout for remaining T8 shots
+            await setNavLayout("tabs");
+
             // T8: tabs layout page shots (light)
             await setTheme("light");
             await setPage("chat");

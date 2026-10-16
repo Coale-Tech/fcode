@@ -11,6 +11,7 @@ import {
   IconCircleAlert,
   IconCircleCheck,
   IconCheckCheck,
+  IconExternal,
   IconTrash,
 } from "./icons";
 import { Button, TooltipButton } from "./ui";
@@ -262,11 +263,11 @@ export function NotificationsPage() {
                   const title = failed
                     ? t("notifications.failedTitle", { sessionTitle })
                     : t("notifications.completedTitle", { sessionTitle });
-                  const body = failed
+                  const body = notification.body ?? (failed
                     ? (notification.errorCode
                         ? t("notifications.failedBodyWithCode", { code: notification.errorCode })
                         : t("notifications.failedBody"))
-                    : t("notifications.completedBody");
+                    : t("notifications.completedBody"));
 
 
                   return (
@@ -289,6 +290,9 @@ export function NotificationsPage() {
                         <time className="notif-page-time" dateTime={notification.createdAt}>
                           {formatRelativeTime(notification.createdAt, locale, t("notifications.justNow"))}
                         </time>
+                        <span className="notif-page-link" aria-hidden>
+                          <IconExternal size={12} />
+                        </span>
                         {!notification.readAt && <span className="notif-page-unread-dot" aria-hidden />}
                       </button>
                     </li>

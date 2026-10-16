@@ -326,3 +326,49 @@
 .pr-row.selected .pr-row-sub { color: var(--da-txt); opacity: .7; }
 /* "Updated just now" timestamp in filter bar */
 .pr-updated-meta { margin-left: auto; font-size: var(--d-text-xs); color: var(--ink-gray-4); white-space: nowrap; }
+/* Branch pill next to repo chip in page head */
+.pr-branch-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  height: 20px; padding: 0 8px;
+  border-radius: 10px;
+  background: var(--surface-gray-2); border: 1px solid var(--d-border);
+  font-size: var(--d-text-xs); color: var(--ink-gray-6);
+}
+.pr-branch-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--ink-green-8);
+}
+/* PR title text (ellipsis) inside row */
+.pr-row-title-text { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* PR detail section spacing */
+.pr-detail-section { margin-bottom: 14px; }
+.pr-detail-status-row { display: flex; align-items: center; gap: 8px; }
+.pr-detail-meta { font-size: var(--d-text-xs); color: var(--ink-gray-4); }
+.pr-branch-arrow { color: var(--ink-gray-4); }
+/* Author row with letter avatar */
+.pr-author-row { display: flex; align-items: center; gap: 8px; }
+.pr-author-avatar {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--ds-accent); color: var(--ds-accent-foreground);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; flex-shrink: 0;
+}
+/* Inline code in PR description */
+.pr-inline-code {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: var(--d-text-xs);
+  background: var(--surface-gray-2); border: 1px solid var(--d-border);
+  border-radius: 3px; padding: 1px 4px;
+  color: var(--ink-gray-8);
+}
+/* Changes row: file icon alignment */
+.pr-changes-files { display: inline-flex; align-items: center; gap: 3px; color: var(--ink-gray-6); }
+/* Detail actions pinned at bottom */
+.pr-detail-actions { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
+/* "AI Review all" header button — black/filled per design */
+.pr-ai-review-all-btn { background: var(--ink-gray-9) !important; color: var(--ds-bg-primary) !important; border-color: var(--ink-gray-9) !important; }
+[data-theme="dark"] .pr-ai-review-all-btn { background: var(--ink-gray-2) !important; color: var(--ds-bg-primary) !important; border-color: var(--ink-gray-2) !important; }
+/* Detail panel scroll area */
+.pr-detail-body-scroll { padding: var(--d-gap); }
+/* dest-filter count badge */
+.dest-filter-count { margin-left: 4px; color: var(--ink-gray-4); font-size: var(--d-text-xs); }

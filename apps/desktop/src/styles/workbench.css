@@ -1838,6 +1838,14 @@
   margin-top: 2px;
   font-variant-numeric: tabular-nums;
 }
+/* External link icon per notification row (right of timestamp) */
+.notif-page-link {
+  flex-shrink: 0;
+  color: var(--ink-gray-4);
+  display: flex;
+  align-items: center;
+  margin-right: 6px;
+}
 
 .notif-page-unread-dot {
   width: var(--d-notif-dot);
