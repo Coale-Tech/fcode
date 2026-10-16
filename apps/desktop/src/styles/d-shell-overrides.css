@@ -31,3 +31,22 @@
 :root[data-nav-layout="island"] .sidebar-session-groups { display: none; }
 /* D3 island: hide the "Sessions" toolbar header — bench card + filter replaces it */
 :root[data-nav-layout="island"] .sidebar-list-toolbar[data-sidebar-section="sessions"] { display: none; }
+
+/* D3 island: bench card name row — flex so chevron floats right */
+:root[data-nav-layout="island"] .d3-sb-bench-name {
+  display: flex; align-items: center; gap: 4px;
+}
+:root[data-nav-layout="island"] .d3-sb-bench-chevron {
+  margin-left: auto; color: var(--ink-gray-4); flex-shrink: 0;
+}
+
+/* D3 island: session row timestamps — always visible; kebab hidden until hover */
+:root[data-nav-layout="island"] .thread-item-time {
+  font-size: 11px;
+  color: var(--ink-gray-4);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+:root[data-nav-layout="island"] .thread-item .thread-item-more { display: none; }
+:root[data-nav-layout="island"] .thread-item:hover .thread-item-more { display: flex; }
+:root[data-nav-layout="island"] .thread-item:hover .thread-item-time { display: none; }

@@ -1791,6 +1791,19 @@ export function Sidebar({
                 : t("nav.sessionPermissionLabel", { defaultValue: "Needs approval" })}
             </span>
           ) : null}
+          {navLayout === "island" && !sessionStatusLabel(status) && session.updatedAt && (
+            <span className="thread-item-time" aria-hidden>
+              {(() => {
+                const diff = Math.max(0, Date.now() - Date.parse(session.updatedAt));
+                const min = Math.floor(diff / 60000);
+                if (min < 1) return "now";
+                if (min < 60) return `${min}m`;
+                const h = Math.floor(min / 60);
+                if (h < 24) return `${h}h`;
+                return `${Math.floor(h / 24)}d`;
+              })()}
+            </span>
+          )}
           <TooltipButton
             type="button"
             className="thread-item-more"
@@ -2338,6 +2351,7 @@ export function Sidebar({
               ) : (
                 workspace?.name ?? t("workspaceBar.noBench")
               )}
+              <IconChevronDown size={10} className="d3-sb-bench-chevron" aria-hidden />
             </div>
             <div className="d3-sb-bench-sub">
               {bench.kind === "running"

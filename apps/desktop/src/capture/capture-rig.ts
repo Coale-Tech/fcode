@@ -1224,6 +1224,10 @@ export function installCaptureRig(): CaptureRig {
       // Seed user initials for avatar (matches reference "JK").
       // Also store displayName so the useEffect in useAppShellRuntime derives "JK".
       useAppStore.setState({ userInitials: "JK" });
+      // Mock getUserInfo so the avatar always shows "JK" (not the OS login name).
+      api.getUserInfo = async () => ({ fullName: "Josh Kim" });
+      // NOTE: window.piDesktop is a contextBridge sealed proxy; cannot intercept bench/list here.
+      // Bench page will show real filesystem data. Sidebar chrome is the island-lane deliverable.
       // Enable kanban and raven so rail + sidebar show all feature items.
       // Patch the IPC fetch so NavRail's useEffect cannot overwrite the enabled state.
       useAppStore.setState({ kanbanEnabled: true, ravenEnabled: true });
@@ -1284,6 +1288,29 @@ export function installCaptureRig(): CaptureRig {
           existing.add(title);
         }
         await useAppStore.getState().refreshSessions();
+        // Backdate session updatedAt to produce realistic TODAY/YESTERDAY groups
+        // and right-aligned timestamps matching the D3 reference sidebar.
+        const now = Date.now();
+        const M = 60_000, H = 3_600_000, D = 86_400_000;
+        const sessionAges: Record<string, number> = {
+          "Sync ERPNext code module":          now - 2 * M,
+          "Redesign settings plugin section":  now - 47 * M,
+          "Fix duplicate bench start bug":     now - 2 * H,
+          "Migrate Raven to frappe-ui v2":     now - 1 * D,
+          "Review PR #224 leave approvals":    now - 1 * D - H,
+          "ERPNext payroll period config":     now - 1 * D - 2 * H,
+          "Debug slow stock valuation query":  now - 3 * D,
+          "Set up coale_v16 from scratch":     now - 4 * D,
+          "Frappe UI modal refactor":          now - 5 * D,
+          "Refactor payment_entry hooks":      now - 6 * D,
+          "Install hrms on coale_staging":     now - 7 * D,
+          "Debug bench worker crash":          now - 8 * D,
+        };
+        const backdated = (useAppStore.getState().sessions ?? []).map((s) => {
+          const ts = sessionAges[(s.title || "").trim()];
+          return ts ? { ...s, updatedAt: new Date(ts).toISOString(), createdAt: new Date(ts).toISOString() } : s;
+        });
+        useAppStore.setState({ sessions: backdated });
         // Pin the pinned-page sessions in localStorage.
         const allSessions = useAppStore.getState().sessions ?? [];
         try {

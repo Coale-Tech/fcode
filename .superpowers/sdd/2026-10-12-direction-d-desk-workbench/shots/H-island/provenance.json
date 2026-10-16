@@ -1,0 +1,152 @@
+{
+  "lane": "H-island",
+  "shots": [
+    {
+      "name": "D3-light-chat",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-island/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/D3-light-chat.png",
+      "md5": "6ad268a7a3d1decffc694de49c447f76",
+      "size": 252680,
+      "ts": "2026-10-16T15:00:27.660Z"
+    },
+    {
+      "name": "D3-light-bench",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-island/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/D3-light-bench.png",
+      "md5": "c1fcbcff4177d47370cf1514b4443fee",
+      "size": 386627,
+      "ts": "2026-10-16T15:00:29.437Z"
+    },
+    {
+      "name": "D3-light-build",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-island/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/D3-light-build.png",
+      "md5": "6f854a53b2e12cfa1c3a8c9b43aa6b70",
+      "size": 135598,
+      "ts": "2026-10-16T15:00:36.589Z"
+    },
+    {
+      "name": "D3-light-kanban",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-island/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/D3-light-kanban.png",
+      "md5": "0aea26851b0e6dd1ac0cf78b44070449",
+      "size": 137545,
+      "ts": "2026-10-16T15:00:40.288Z"
+    },
+    {
+      "name": "D3-light-raven",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-island/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/D3-light-raven.png",
+      "md5": "d971ce97d1f12df8fbe5129cf91b170b",
+      "size": 186000,
+      "ts": "2026-10-16T15:00:41.552Z"
+    },
+    {
+      "name": "D3-light-filebird",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-island/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/D3-light-filebird.png",
+      "md5": "a49333a0d0b1f77f232df40d1b05ef89",
+      "size": 158247,
+      "ts": "2026-10-16T15:00:42.767Z"
+    },
+    {
+      "name": "D3-light-scheduled",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-island/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/D3-light-scheduled.png",
+      "md5": "8508e6f0c623a2be818d3729ac7094df",
+      "size": 181015,
+      "ts": "2026-10-16T15:00:43.982Z"
+    },
+    {
+      "name": "D3-light-notifications",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-island/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/D3-light-notifications.png",
+      "md5": "ff9eeca2f61130bee12ca62669b7d668",
+      "size": 218940,
+      "ts": "2026-10-16T15:00:45.275Z"
+    },
+    {
+      "name": "D3-light-plugins",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-island/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/D3-light-plugins.png",
+      "md5": "9fa479ba18a93bd4d87a8966fda6af32",
+      "size": 135528,
+      "ts": "2026-10-16T15:00:46.476Z"
+    },
+    {
+      "name": "D3-light-pulls",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-island/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/D3-light-pulls.png",
+      "md5": "b8f25e394e7b43c9270b4f796de33dcf",
+      "size": 153352,
+      "ts": "2026-10-16T15:00:47.680Z"
+    },
+    {
+      "name": "D3-light-settings",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-island/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/D3-light-settings.png",
+      "md5": "eededbeea14d13a0cd9b695a37bcecc1",
+      "size": 137923,
+      "ts": "2026-10-16T15:00:49.311Z"
+    },
+    {
+      "name": "D3-dark-chat",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-island/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/D3-dark-chat.png",
+      "md5": "9628e45eeac1e6615e49d2b54c04e53a",
+      "size": 251211,
+      "ts": "2026-10-16T15:00:52.324Z"
+    },
+    {
+      "name": "D3-dark-bench",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-island/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/D3-dark-bench.png",
+      "md5": "fa80a32b413a5db3448808ac67800fae",
+      "size": 380643,
+      "ts": "2026-10-16T15:00:54.041Z"
+    },
+    {
+      "name": "D3-dark-build",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-island/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/D3-dark-build.png",
+      "md5": "f9d83cbb00f9de5109505b9589975c16",
+      "size": 188440,
+      "ts": "2026-10-16T15:00:55.364Z"
+    },
+    {
+      "name": "D3-dark-kanban",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-island/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/D3-dark-kanban.png",
+      "md5": "fcfdc588f67876a57fd987c78409aa02",
+      "size": 179658,
+      "ts": "2026-10-16T15:00:56.754Z"
+    },
+    {
+      "name": "D3-dark-raven",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-island/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/D3-dark-raven.png",
+      "md5": "82e41b81a7a6946947147e7fa315fdbe",
+      "size": 178385,
+      "ts": "2026-10-16T15:00:58.001Z"
+    },
+    {
+      "name": "D3-dark-filebird",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-island/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/D3-dark-filebird.png",
+      "md5": "56d29773b714af32f6b5814dec11f248",
+      "size": 151691,
+      "ts": "2026-10-16T15:00:59.189Z"
+    },
+    {
+      "name": "D3-dark-scheduled",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-island/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/D3-dark-scheduled.png",
+      "md5": "9d8dfc634de81331f71a31f0cf7f20b3",
+      "size": 174592,
+      "ts": "2026-10-16T15:01:00.473Z"
+    },
+    {
+      "name": "D3-dark-notifications",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-island/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/D3-dark-notifications.png",
+      "md5": "7e380340e87ec072a2841819337f6596",
+      "size": 214922,
+      "ts": "2026-10-16T15:01:01.733Z"
+    },
+    {
+      "name": "D3-dark-plugins",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-island/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/D3-dark-plugins.png",
+      "md5": "d695d47f6eb5b1c5a6b2623a7d4642e4",
+      "size": 202424,
+      "ts": "2026-10-16T15:01:03.037Z"
+    },
+    {
+      "name": "D3-dark-settings",
+      "path": "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14h-island/.superpowers/sdd/2026-10-12-direction-d-desk-workbench/shots/H-island/D3-dark-settings.png",
+      "md5": "2ba9bfcee6a26aedbd13cd40e84f6b84",
+      "size": 281366,
+      "ts": "2026-10-16T15:01:04.465Z"
+    }
+  ]
+}
