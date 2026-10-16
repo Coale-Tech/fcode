@@ -3,8 +3,8 @@ import { useTranslation } from "react-i18next";
 import { useAppStore } from "../stores/app-store";
 import {
   IconSidebar,
-  IconNewSession,
-  IconSearch,
+  IconEye,
+  IconMore,
 } from "./icons";
 import { TooltipButton } from "./ui";
 import { api } from "../lib/api";
@@ -38,6 +38,7 @@ export function ConversationTopbar({
   const { t } = useTranslation();
   const activeSessionId = useAppStore((s) => s.activeSessionId);
   const sessions = useAppStore((s) => s.sessions);
+  const runningSessions = useAppStore((s) => s.runningSessions);
   const workspace = useAppStore((s) => s.workspace);
 
   // omp setTitle override: cleared on session change.
@@ -46,6 +47,7 @@ export function ConversationTopbar({
     setOmpTitle(null);
   }, [activeSessionId]);
   useEffect(() => {
+    if (!activeSessionId) return;
     return api.onSidecarExtUi((event) => {
       if (event.kind !== "title" || event.sessionId !== activeSessionId) return;
       setOmpTitle(event.title || null);
@@ -53,6 +55,7 @@ export function ConversationTopbar({
   }, [activeSessionId]);
 
   const activeSession = sessions.find((session) => session.id === activeSessionId);
+  const isSessionRunning = Boolean(activeSessionId && runningSessions[activeSessionId]);
 
   const fullTaskTitle = ompTitle
     ?? (isDefaultSessionTitle(activeSession?.title)
@@ -91,28 +94,39 @@ export function ConversationTopbar({
           title={project ? `${project} · ${fullTaskTitle}` : fullTaskTitle}
         >
           <span className="ct-title">{fullTaskTitle}</span>
+          {/* D design: amber Running badge when session is active */}
+          {isSessionRunning && (
+            <span className="d-pill amber ct-running-pill">
+              <span className="d-pill-dot" aria-hidden />
+              {t("chat.sessionRunning", { defaultValue: "Running" })}
+            </span>
+          )}
         </div>
       </div>
 
       <div className="ct-right">
         <div className="ct-actions">
+          {/* D design: Context button (opens file/context picker) */}
+          {activeSessionId && (
+            <button
+              type="button"
+              className="ct-btn-secondary"
+              title={t("chat.context", { defaultValue: "Context" })}
+              onClick={onOpenSearch}
+            >
+              <IconEye size={13} aria-hidden />
+              {t("chat.context", { defaultValue: "Context" })}
+            </button>
+          )}
+          {/* D design: kebab overflow menu */}
           <TooltipButton
             type="button"
             className="ct-icon-btn"
-            tooltip={t("nav.newTask")}
-            ariaLabel={t("nav.newTask")}
+            tooltip={t("nav.more", { defaultValue: "More" })}
+            ariaLabel={t("nav.more", { defaultValue: "More" })}
             onClick={onNewTask}
           >
-            <IconNewSession size={15} />
-          </TooltipButton>
-          <TooltipButton
-            type="button"
-            className="ct-icon-btn"
-            tooltip={t("nav.search")}
-            ariaLabel={t("nav.search")}
-            onClick={onOpenSearch}
-          >
-            <IconSearch size={15} />
+            <IconMore size={15} />
           </TooltipButton>
         </div>
       </div>

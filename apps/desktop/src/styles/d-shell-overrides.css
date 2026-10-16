@@ -26,13 +26,26 @@
 /* Hide version footer — bench card is the footer in island */
 :root[data-nav-layout="island"] .sidebar-footer { display: none; }
 
-/* D3 island: no projects section (D3-shell.html shows date-grouped session list only) */
-:root[data-nav-layout="island"] [data-sidebar-section="projects"],
+/* ─────────────────────────────────────────────────────────────────────────────
+ * D-design overrides that must come AFTER messages.css (line 21) and
+ * theme-overrides.css (line 26) in the globals.css import order.
+ * These rules win via cascade position, not specificity.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/* ── Sidebar: hide PROJECTS section + version label ── */
+/* The PROJECTS section container has data-sidebar-section="projects" (Sidebar.tsx:2583).
+ * Individual project items have class .project-group on a nested section. */
+[data-sidebar-section="projects"] { display: none !important; }
+/* Hide the build-version footer for all D layouts (D1/D2 show bench chip in topbar) */
+.sidebar-footer { display: none !important; }
+/* Hide "Running" / "Needs approval" session badges — ref D1/D2/D3 show only timestamps */
+.thread-item-status-label { display: none !important; }
+
+/* ── D3 island: hide session-groups and sessions toolbar (replaced by d3-sb-header) ── */
 :root[data-nav-layout="island"] .sidebar-session-groups { display: none; }
-/* D3 island: hide the "Sessions" toolbar header — bench card + filter replaces it */
 :root[data-nav-layout="island"] .sidebar-list-toolbar[data-sidebar-section="sessions"] { display: none; }
 
-/* D3 island: bench card name row — flex so chevron floats right */
+/* ── D3 island: bench card name row — flex so chevron floats right ── */
 :root[data-nav-layout="island"] .d3-sb-bench-name {
   display: flex; align-items: center; gap: 4px;
 }
@@ -40,7 +53,7 @@
   margin-left: auto; color: var(--ink-gray-4); flex-shrink: 0;
 }
 
-/* D3 island: session row timestamps — always visible; kebab hidden until hover */
+/* ── D3 island: session row timestamps — always visible; kebab on hover only ── */
 :root[data-nav-layout="island"] .thread-item-time {
   font-size: 11px;
   color: var(--ink-gray-4);
@@ -50,3 +63,49 @@
 :root[data-nav-layout="island"] .thread-item .thread-item-more { display: none; }
 :root[data-nav-layout="island"] .thread-item:hover .thread-item-more { display: flex; }
 :root[data-nav-layout="island"] .thread-item:hover .thread-item-time { display: none; }
+
+/* ── Composer: simplified toolbar ── */
+/* Design shows: attach | folder | ○ Supervised · model · bench | send.
+ * Hide Plan mode-chip and sparkle/enhance buttons (not in reference). */
+.composer-mode-chip { display: none !important; }
+.composer-enhance-btn { display: none !important; }
+.composer-enhance-undo { display: none !important; }
+/* Compact the permission picker label so it fits in the toolbar row */
+.composer-permission .mode-chip .text-sm {
+  font-size: 11px;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── PermissionCard: simplified to match d-approval-box reference ──
+ * ref: fragment.html:395-408 .d-approval-box — title + desc + 3 inline buttons.
+ * Hide non-design elements; make action row horizontal. */
+.permission-card-meta { display: none !important; }
+.permission-card-prompt { display: none !important; }
+.permission-card-args { display: none !important; }
+.permission-card-timer-bar { display: none !important; }
+.permission-risk { display: none !important; }
+.permission-action-hint { display: none !important; }
+.permission-card-title { color: var(--ink-amber-7) !important; }
+.permission-card-reason { color: var(--ink-amber-7) !important; }
+.permission-card-actions {
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  margin-top: 10px !important;
+}
+.permission-action-item {
+  flex-direction: row !important;
+}
+.permission-action-item .btn {
+  width: auto !important;
+  text-align: center !important;
+  justify-content: center !important;
+}
+.permission-card { border: 1px solid var(--outline-amber-2) !important; }
+
+/* ── Tool activity header: hide "Processing · Ns · N tools" disclosure header ──
+ * ref: D1/D2/D3 show tool rows directly; no disclosure header in design. */
+.tool-activity-header { display: none !important; }

@@ -568,13 +568,45 @@
 .conversation-topbar .ct-title-wrap {
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: 6px;
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   -webkit-app-region: drag; /* keep the title area draggable */
   app-region: drag;
+}
+
+/* D design: running pill inside the topbar title area */
+.ct-running-pill {
+  flex-shrink: 0;
+  font-size: 11px !important;
+  height: 18px !important;
+  padding: 0 6px !important;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+/* D design: "Context" secondary button in topbar */
+.conversation-topbar .ct-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--d-border);
+  border-radius: var(--d-r-ctrl, 6px);
+  background: transparent;
+  color: var(--ds-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background var(--motion-duration-fast) var(--motion-ease-out);
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+.conversation-topbar .ct-btn-secondary:hover {
+  background: var(--ds-bg-hover);
+  color: var(--ds-text-primary);
 }
 
 .conversation-topbar .ct-title {

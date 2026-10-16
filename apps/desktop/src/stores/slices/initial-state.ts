@@ -85,6 +85,7 @@ export function createInitialState(): AppStateData {
     navStack: [{ page: "bench" }],
     navIndex: 0,
     toasts: [],
+  chatUserName: null,
     notifications: [],
     unreadNotificationCount: 0,
     composerPrefill: null,

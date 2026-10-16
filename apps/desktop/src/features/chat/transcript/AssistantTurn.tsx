@@ -392,7 +392,7 @@ export const AssistantTurn = memo(function AssistantTurn({
 
   return (
     <div
-      className={`message-row assistant assistant-turn${streaming ? " streaming" : ""}`}
+      className={`message-row assistant assistant-turn d-msg-row${streaming ? " streaming" : ""}`}
       data-minimap-id={entry.anchorId}
       data-row-role="assistant"
       onContextMenu={onContextMenu}
@@ -400,50 +400,66 @@ export const AssistantTurn = memo(function AssistantTurn({
       aria-label={t("chat.assistantMessage")}
     >
       <div className="message-col">
-        {groupProcess ? (
-          <>
-            <TurnProcess turnId={entry.id} processParts={process} turnParts={entry.parts} isActive={isActive} delegationStatuses={turnDelegationStatuses}>
-              {process.map(renderPart)}
-            </TurnProcess>
-            {responses.map(renderPart)}
-          </>
-        ) : (
-          entry.parts.map(renderPart)
-        )}
-        {turnAllActivityItems.filter((item) => item.kind === "tool" && item.message.toolName === "GenerateImages").map((item) => (
-          <GeneratedImages key={item.message.id} message={item.message} />
-        ))}
-        {!isActive && metaMessage ? (
-          <MessageMeta
-            modelId={modelId}
-            usage={usage}
-            responseDurationMs={responseDurationMs}
-            responseOutputTokens={responseOutputTokens}
-            items={turnAllActivityItems}
-          />
-        ) : null}
-        {complete && actionMessage ? (
-          <div className="message-actions">
-            <MessageTimestamp createdAt={actionMessage.createdAt} />
-            <CopyButton text={content} label={t("chat.copy")} />
-            <TooltipButton
-              className="copy-btn icon"
-              tooltip={t("chat.forkResponse")}
-              ariaLabel={t("chat.forkResponse")}
-              onClick={() => void forkAssistantMessage(actionMessage.id)}
-            >
-              <IconBranch size={13} />
-            </TooltipButton>
-            <TooltipButton
-              className="copy-btn icon"
-              tooltip={t("chat.retry")}
-              ariaLabel={t("chat.retry")}
-              onClick={() => void retryAssistantMessage(actionMessage.id)}
-            >
-              <IconReview size={13} />
-            </TooltipButton>
+        {/* D design: Claude avatar on the left */}
+        <div className="d-msg-avatar ai" aria-hidden>C</div>
+        <div className="d-msg-content">
+          <div className="d-msg-meta">
+            <span className="d-msg-sender">{t("chat.assistantName", { defaultValue: "Claude" })}</span>
+            {(() => {
+              const firstMsgPart = entry.parts.find((p) => p.kind === "message");
+              const ts = firstMsgPart?.kind === "message" ? firstMsgPart.message.createdAt : undefined;
+              return ts ? (
+                <span className="d-msg-time">
+                  {new Date(ts).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true })}
+                </span>
+              ) : null;
+            })()}
           </div>
-        ) : null}
+          {groupProcess ? (
+            <>
+              <TurnProcess turnId={entry.id} processParts={process} turnParts={entry.parts} isActive={isActive} delegationStatuses={turnDelegationStatuses}>
+                {process.map(renderPart)}
+              </TurnProcess>
+              {responses.map(renderPart)}
+            </>
+          ) : (
+            entry.parts.map(renderPart)
+          )}
+          {turnAllActivityItems.filter((item) => item.kind === "tool" && item.message.toolName === "GenerateImages").map((item) => (
+            <GeneratedImages key={item.message.id} message={item.message} />
+          ))}
+          {!isActive && metaMessage ? (
+            <MessageMeta
+              modelId={modelId}
+              usage={usage}
+              responseDurationMs={responseDurationMs}
+              responseOutputTokens={responseOutputTokens}
+              items={turnAllActivityItems}
+            />
+          ) : null}
+          {complete && actionMessage ? (
+            <div className="message-actions">
+              <MessageTimestamp createdAt={actionMessage.createdAt} />
+              <CopyButton text={content} label={t("chat.copy")} />
+              <TooltipButton
+                className="copy-btn icon"
+                tooltip={t("chat.forkResponse")}
+                ariaLabel={t("chat.forkResponse")}
+                onClick={() => void forkAssistantMessage(actionMessage.id)}
+              >
+                <IconBranch size={13} />
+              </TooltipButton>
+              <TooltipButton
+                className="copy-btn icon"
+                tooltip={t("chat.retry")}
+                ariaLabel={t("chat.retry")}
+                onClick={() => void retryAssistantMessage(actionMessage.id)}
+              >
+                <IconReview size={13} />
+              </TooltipButton>
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );

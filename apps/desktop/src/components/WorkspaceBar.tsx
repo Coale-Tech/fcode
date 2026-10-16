@@ -2,9 +2,8 @@
  * WorkspaceBar — the app-level 28px status bar spanning the window foot (T1, D.css
  * `.d-statusbar`), below the rail, sidebar and canvas in every nav layout.
  *
- * Self-sufficient: polls IPC.invoke.benchStatus every 3 s via useBenchContext.
- * Shows: <dot> bench · bench running|stopped · N sites | Open bench log
- *        …and on the right the effective model plus permission-mode badge.
+ * Left: <dot> bench · bench running|stopped · N sites | Open bench log
+ * Right (D design): model name · Supervised chip
  *
  * When a bench detail tab is open but the bench is not running, we fall back to
  * viewedBenchPath (set by BenchPage) so the bar always names the bench in focus.
@@ -15,35 +14,28 @@ import { useTranslation } from "react-i18next";
 import { useAppStore } from "../stores/app-store";
 import { useBenchContext } from "../hooks/use-bench-context";
 import { baseName } from "../lib/bench-view";
-import { resolveStatusAgent, type StatusPermissionMode } from "../lib/workspace-bar-state";
-import { IconShield } from "./icons";
-
-const MODE_LABEL_KEY: Record<StatusPermissionMode, string> = {
-  ask: "workspaceBar.modeAsk",
-  "accept-edits": "workspaceBar.modeAcceptEdits",
-  auto: "workspaceBar.modeAuto",
-};
+import { resolveStatusAgent } from "../lib/workspace-bar-state";
 
 export function WorkspaceBar() {
   const { t } = useTranslation();
-  const isRunning = useAppStore((s) => s.isRunning);
   const setPage = useAppStore((s) => s.setPage);
   const page = useAppStore((s) => s.page);
-  const terminalOpen = useAppStore((s) => s.terminalOpen);
-  const toggleTerminal = useAppStore((s) => s.toggleTerminal);
   const viewedBenchPath = useAppStore((s) => s.viewedBenchPath);
   const viewedBenchSiteCount = useAppStore((s) => s.viewedBenchSiteCount);
   const bench = useBenchContext();
+
+  // Active session model + permission — use full fallback chain (session → draft → settings → providers).
   const activeSession = useAppStore((s) => s.sessions.find((session) => session.id === s.activeSessionId));
   const draftConfiguration = useAppStore((s) => s.draftConfiguration);
   const settings = useAppStore((s) => s.settings);
   const providers = useAppStore((s) => s.providers);
-  const agent = resolveStatusAgent({
-    session: activeSession,
-    draft: draftConfiguration ?? undefined,
-    settings,
-    providers,
-  });
+  const agent = resolveStatusAgent({ session: activeSession, draft: draftConfiguration ?? undefined, settings, providers });
+  // D design: "Supervised" for ask, "Accept edits" for accept-edits, "Auto" for auto.
+  const permLabel = agent.mode === "ask"
+    ? t("workspaceBar.supervised", { defaultValue: "Supervised" })
+    : agent.mode === "accept-edits"
+      ? t("workspaceBar.acceptEdits", { defaultValue: "Accept edits" })
+      : t("workspaceBar.autonomous", { defaultValue: "Auto" });
 
   // Resolve display values — prefer live supervisor context, fall back to viewed bench.
   const hasLiveBench = bench.kind !== "empty";
@@ -53,14 +45,9 @@ export function WorkspaceBar() {
       ? baseName(viewedBenchPath)
       : null;
   const isLiveRunning = bench.kind === "running";
-  // viewedBenchSiteCount is set from discovery when the user navigates to a bench and is more
-  // accurate (all sites) than the supervisor's single activeSite; a bench-state siteCount
-  // (capture override) wins when provided.
-  const siteCount = hasLiveBench && bench.siteCount != null
-    ? bench.siteCount
-    : viewedBenchSiteCount > 0
-      ? viewedBenchSiteCount
-      : (hasLiveBench ? (bench.site ? 1 : 0) : 0);
+  // siteCount precedence: bench state (already defaults site→1) > viewedBenchSiteCount.
+  // formatWorkspaceBarState always computes bench.siteCount = opts.siteCount ?? (site ? 1 : 0).
+  const siteCount = bench.kind !== "empty" ? bench.siteCount : viewedBenchSiteCount;
 
   return (
     <div className="workspace-bar" role="status" aria-label="Workspace context">
@@ -126,33 +113,20 @@ export function WorkspaceBar() {
         </>
       )}
 
-      {isRunning && (
-        <>
-          <span className="workspace-bar-sep" aria-hidden="true">·</span>
-          <span className="workspace-bar-agent-state" aria-label="Agent working">
-            ◐ agent working
+      {/* D design: right side — model name + permission chip */}
+      {page === "chat" && (
+        <div className="workspace-bar-model-cluster" aria-label={t("workspaceBar.sessionConfig", { defaultValue: "Session config" })}>
+          {agent.modelId && (
+            <span className="workspace-bar-model">{agent.modelId}</span>
+          )}
+          {agent.modelId && (
+            <span className="workspace-bar-sep" aria-hidden="true">·</span>
+          )}
+          <span className="workspace-bar-perm">
+            {permLabel}
           </span>
-        </>
+        </div>
       )}
-
-      <div className="workspace-bar-end">
-        {agent.modelId && <span className="workspace-bar-model">{agent.modelId}</span>}
-        <span className="workspace-bar-mode">
-          <IconShield size={10} aria-hidden />
-          {t(MODE_LABEL_KEY[agent.mode])}
-        </span>
-        {page === "chat" && (
-          <button
-            type="button"
-            className="workspace-bar-choose-btn workspace-bar-terminal-btn no-drag"
-            aria-pressed={terminalOpen}
-            title={t("terminal.toggle")}
-            onClick={toggleTerminal}
-          >
-            {t("terminal.title")}
-          </button>
-        )}
-      </div>
     </div>
   );
 }
