@@ -324,3 +324,32 @@ test("session and page navigation share the latest-intent guard", () => {
   assert.match(storeSource, /activateProject: async \(path, opts\)/);
   assert.match(storeSource, /clearProject: async \(opts\)/);
 });
+
+test("PermissionCard skips auto-deny when the card mounts with an already-expired timer (F01)", () => {
+  // The guard must check mountedExpired.current so a card that was rendered
+  // after the app restarted with a stale receivedAt does not silently deny.
+  assert.match(cardSource, /mountedExpired\.current/);
+  // The useEffect that calls resolve("deny") must bail out when mountedExpired.
+  assert.match(
+    cardSource,
+    /if \(isBenchDestructive \|\| mountedExpired\.current\) return/,
+  );
+  // The ref is initialised from permissionSecondsLeft on first render.
+  assert.match(
+    cardSource,
+    /useRef\(permissionSecondsLeft\(permission\.receivedAt\) === 0\)/,
+  );
+});
+
+test("PermissionCard uses tool-specific title for file-editing tools (F02)", () => {
+  // Edit and Write tools show "Approve file edit" (permission.approveEdit).
+  assert.match(
+    cardSource,
+    /permission\.toolName === "Edit" \|\| permission\.toolName === "Write"/,
+  );
+  // The visible title and aria-label use the derived cardTitle, not the raw key.
+  assert.match(cardSource, /aria-label=\{cardTitle\}/);
+  assert.match(cardSource, /\{cardTitle\}/);
+  // The raw permission.title string is no longer hard-wired into the visible card head.
+  assert.doesNotMatch(cardSource, /permission-card-title[^}]+\{t\("permission\.title"\)\}/);
+});

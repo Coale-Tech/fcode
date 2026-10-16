@@ -10,7 +10,7 @@
  * object, so later capture calls stay synchronous as before.
  */
 import { useAppStore, type AppState, type ToastOptions } from "../stores/app-store";
-import type { AppSettings, NavLayout } from "@pi-desktop/shared";
+import type { AppSettings, NavLayout, SessionSummary } from "@pi-desktop/shared";
 import type { CaptureRig, CaptureRigMethods } from "./capture-rig";
 
 type CaptureRigMethod = keyof CaptureRigMethods;
@@ -36,6 +36,9 @@ export type RendererApi = {
   clearProject: () => Promise<void>;
   clearOpenProjects: () => void;
   showToast: (message: string, opts?: ToastOptions) => void;
+  enableFeatureFlags: (flags: { kanban?: boolean; raven?: boolean }) => void;
+  /** Synchronously seed visual state (sessions + chat page) — call after persistence hydrates. */
+  seedVisualState: () => void;
 } & (CaptureRigStubs | CaptureRigMethods);
 
 /** Shape accepted by seedBenchStatus and read by useBenchContext. */
@@ -76,6 +79,7 @@ const CAPTURE_RIG_METHODS = [
   "seedOmpSettings",
   "ensureVisualFixtures",
   "seedBenchStatus",
+  "seedApprovalCard",
   "clearPendingPermissions",
   "seedEmptyHome",
   "seedOnboardingChecklist",
@@ -150,6 +154,56 @@ export function installRendererApi(): () => void {
     clearProject: () => useAppStore.getState().clearProject(),
     clearOpenProjects: () => useAppStore.setState({ openProjectPaths: [] }),
     getSettings: () => useAppStore.getState().settings ?? null,
+    /** Synchronously enable feature flags so nav rail shows Kanban/Raven in capture. */
+    enableFeatureFlags: (flags: { kanban?: boolean; raven?: boolean }) => {
+      useAppStore.setState({
+        ...(flags.kanban !== undefined && { kanbanEnabled: flags.kanban }),
+        ...(flags.raven !== undefined && { ravenEnabled: flags.raven }),
+      });
+    },
+    /** Synchronously seed chat visual state (sessions, transcript, page).
+     *  Call this AFTER persistence has hydrated (i.e. 2 s+ after app start).
+     *  Unlike ensureVisualFixtures this is a direct sync call — no dynamic import needed. */
+    seedVisualState: () => {
+      const now = Date.now();
+      const H = 3_600_000;
+      const D = 86_400_000;
+      const mk = (id: string, title: string, ageMs: number) => ({
+        id, title, source: "desktop" as const, modelId: "claude-sonnet-5",
+        mode: "plan" as const, thinkingLevel: "off" as const, permissionMode: "ask" as const,
+        messageCount: 0,
+        updatedAt: new Date(now - ageMs).toISOString(),
+        createdAt: new Date(now - ageMs).toISOString(),
+        pinned: false, archived: false,
+      });
+      const sessions = [
+        mk("fixture-s1",  "Sync ERPNext code module",           2 * 60_000),
+        mk("fixture-s2",  "Redesign settings plugin section",   47 * 60_000),
+        mk("fixture-s3",  "Fix duplicate bench start bug",      2 * H),
+        mk("fixture-s4",  "Migrate Raven to frappe-ui v2",      25 * H),
+        mk("fixture-s5",  "Review PR #224 leave approvals",     26 * H),
+        mk("fixture-s6",  "ERPNext payroll period config",      27 * H),
+        mk("fixture-s7",  "Set up coale_v16 from scratch",      3 * D),
+        mk("fixture-s8",  "Debug slow stock valuation query",   4 * D),
+        mk("fixture-s9",  "Frappe UI modal refactor",           5 * D),
+        mk("fixture-s10", "Refactor payment_entry hooks",       6 * D),
+        mk("fixture-s11", "Install hrms on coale_staging",      6.5 * D),
+        mk("fixture-s12", "Debug bench worker crash",           7 * D),
+      ] as unknown as SessionSummary[];
+      useAppStore.setState({
+        sessions,
+        activeSessionId: "fixture-s1",
+        retainedSessionIds: ["fixture-s1"],
+        retainedTranscripts: { "fixture-s1": [] },
+        messages: [],
+        runningSessions: { "fixture-s1": true },
+        page: "chat",
+        chatUserName: "Josh Kim",
+        kanbanEnabled: true,
+        ravenEnabled: true,
+        onboarding: undefined,
+      });
+    },
     showToast: (message, opts) => useAppStore.getState().showToast(message, opts),
     setFontFamily: (family) => {
       const s = useAppStore.getState().settings;

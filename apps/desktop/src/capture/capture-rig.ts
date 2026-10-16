@@ -24,11 +24,15 @@ import type {
   PullRequestSummary,
   ScheduledTask,
   ScheduledTaskRun,
+  SessionSummary,
+  UiMessage,
   UserSkillRecord,
 } from "@pi-desktop/shared";
 import { useAppStore } from "../stores/app-store";
 import { api } from "../lib/api";
-import { browserPluginTab, toolWorkPanelTab } from "../lib/work-panel-tabs";
+import { browserPluginTab, toolWorkPanelTab, ACTIVITY_TAB } from "../lib/work-panel-tabs";
+import type { PendingPermission } from "../lib/pending-permissions";
+import { enqueuePermission } from "../lib/pending-permissions";
 
 export type CaptureRigMethods = {
   openWorkPanelArtifact: (
@@ -61,6 +65,7 @@ export type CaptureRigMethods = {
   /** Seed a fake running bench in the status bar and navbar bench chip.
    *  benchPath defaults to "/bench/coale_v16", siteCount to 3. */
   seedBenchStatus: (opts?: { benchPath?: string; siteCount?: number }) => void;
+  seedApprovalCard: () => void;
   clearPendingPermissions: () => void;
   seedEmptyHome: () => void;
   seedOnboardingChecklist: () => void;
@@ -1315,6 +1320,140 @@ export function installCaptureRig(): CaptureRig {
       // causes an "apps" project group to appear. Hide it in capture mode.
       useAppStore.setState({ openProjectPaths: [] });
       } catch { /* optional capture-only fixture */ }
+    },
+    seedApprovalCard: () => {
+      // Seeds transcript with Bash/Read/Edit tool rows and a ToolPermissionRequest
+      // so the inline "Approve file edit" card renders above the composer.
+      // Matches variant-D1/D2/D3 reference exactly.
+      if (!window.__PI_CAPTURE__) return;
+      const state0 = useAppStore.getState();
+      let sessionId = state0.retainedSessionIds[0] ?? state0.activeSessionId;
+      if (!sessionId && state0.sessions.length > 0) {
+        sessionId = state0.sessions[0].id;
+        useAppStore.setState({
+          activeSessionId: sessionId,
+          retainedSessionIds: [sessionId],
+          retainedTranscripts: { [sessionId]: [] },
+          page: "chat",
+        });
+      }
+      if (!sessionId) return;
+      const activeSessionId = sessionId;
+      const base = Date.now() - 5 * 60_000; // 5 min ago → realistic "5m" elapsed time
+      const messages: UiMessage[] = [
+        {
+          id: "cap-perm-user-0",
+          role: "user",
+          content:
+            "Can you sync the `erpnext.accounts.doctype.payment_entry` module from the coale_v16 bench into a local dev copy? Use `bench get-app` logic and then verify the module loads correctly.",
+          createdAt: new Date(base).toISOString(),
+          status: "complete",
+        },
+        {
+          id: "cap-perm-asst-0",
+          role: "assistant",
+          content:
+            "I'll sync the `payment_entry` module from coale_v16. Starting by reading the bench config and module state.",
+          createdAt: new Date(base + 30_000).toISOString(),
+          status: "complete",
+        },
+        {
+          id: "cap-perm-tool-bash",
+          role: "tool",
+          content: "",
+          createdAt: new Date(base + 60_000).toISOString(),
+          toolName: "Bash",
+          toolStatus: "success",
+          toolArgs: { command: "bench --site coale_v16.localhost list-apps" },
+          toolResult: {
+            details: {
+              exitCode: 0,
+              stdout:
+                "Apps installed on coale_v16.localhost:\n  frappe          15.42.1\n  erpnext         15.32.0 ✓\n  hrms            2.4.1\n  raven           2.1.0\n\nModule payment_entry: 847 lines · last modified 2026-10-09",
+              stderr: "",
+            },
+          },
+        },
+        {
+          id: "cap-perm-tool-read",
+          role: "tool",
+          content: "",
+          createdAt: new Date(base + 90_000).toISOString(),
+          toolName: "Read",
+          toolStatus: "success",
+          toolArgs: {
+            path: "apps/erpnext/erpnext/accounts/doctype/payment_entry/__init__.py",
+          },
+          toolResult: { details: { exitCode: 0, stdout: "" } },
+        },
+        {
+          id: "cap-perm-tool-edit",
+          role: "tool",
+          content: "",
+          createdAt: new Date(base + 120_000).toISOString(),
+          toolName: "Edit",
+          toolStatus: "running",
+          toolArgs: {
+            path: "apps/erpnext/erpnext/accounts/doctype/payment_entry/payment_entry.py",
+          },
+        },
+      ];
+      useAppStore.setState({ messages, runningSessions: { [activeSessionId]: true } });
+      const permRequest: PendingPermission = {
+        requestId: "cap-perm-req-0",
+        sessionId: activeSessionId,
+        toolCallId: "cap-perm-tool-edit",
+        toolName: "Edit",
+        argsPreview: {
+          path: "apps/erpnext/erpnext/accounts/doctype/payment_entry/payment_entry.py",
+        },
+        risk: "medium",
+        reason:
+          "Claude wants to write 12 lines to payment_entry.py — adding a sync helper that calls frappe.get_doc on the remote bench socket. Review the diff before allowing.",
+        receivedAt: Date.now() + 3_600_000, // 1h in future — prevents auto-deny timer during capture
+      };
+      // Open Activity tab so the right panel shows Pending approval box.
+      useAppStore.setState({
+        workPanelContexts: {
+          ...useAppStore.getState().workPanelContexts,
+          [activeSessionId]: {
+            open: true,
+            tabs: [ACTIVITY_TAB],
+            activeTabId: ACTIVITY_TAB.id,
+            fileRequest: null,
+          },
+        },
+        workPanelOpen: true,
+        workPanelTabs: [ACTIVITY_TAB],
+        activeWorkPanelTabId: ACTIVITY_TAB.id,
+        workPanelFileRequest: null,
+      });
+      // Seed todo phases for the Activity panel OPEN TODOS list (ref D1/D2/D3).
+      const fakeTodoPhases = [
+        {
+          id: "cap-phase-0",
+          name: "Payment entry sync",
+          tasks: [
+            {
+              id: "cap-todo-0",
+              content: "Verify payment_entry module loads after sync",
+              status: "completed" as const,
+            },
+            {
+              id: "cap-todo-1",
+              content: "Run bench migrate on coale_v16 after changes",
+              status: "pending" as const,
+            },
+          ],
+        },
+      ];
+      useAppStore.setState({
+        pendingPermissions: enqueuePermission({}, permRequest),
+        sessionTodoPhases: {
+          ...useAppStore.getState().sessionTodoPhases,
+          [activeSessionId]: fakeTodoPhases,
+        },
+      });
     },
     clearPendingPermissions: () => {
       if (!window.__PI_CAPTURE__) return;
