@@ -228,15 +228,6 @@ export function AppShell() {
                       presentedWorkPanelOpen && "work-panel-open",
                     )}
                   >
-                    {sidebarCollapsed && !workbench && (
-                      <div className="main-titlebar-left no-drag">
-                        <CollapsedTitlebarActions
-                          onToggleSidebar={reopenSidebar}
-                          onNewTask={() => void runMenuCommand("newTask")}
-                          sidebarToggleShortcut={sidebarToggleShortcut}
-                        />
-                      </div>
-                    )}
                   </div>
                 )}
                 {(page !== "settings" || navLayout === "island") ? <UpdateBanner /> : null}

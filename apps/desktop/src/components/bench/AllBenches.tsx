@@ -18,7 +18,7 @@ import {
   type BenchSummary,
 } from "../../lib/bench-view";
 import { IconPlay, IconSearch, IconSquare } from "../icons";
-import { StatusBadge, StatusDot, VersionBadge } from "./BenchBadges";
+import { StatusBadge, StatusDot } from "./BenchBadges";
 
 export function AllBenches({
   benches,
@@ -107,12 +107,11 @@ export function AllBenches({
           <table className="wb-table">
             <thead>
               <tr>
-                <th scope="col">Bench</th>
+                <th scope="col">Name</th>
                 <th scope="col">Path</th>
-                <th scope="col">Version</th>
                 <th scope="col">Apps</th>
                 <th scope="col">Sites</th>
-                <th scope="col">State</th>
+                <th scope="col">Status</th>
                 <th scope="col">
                   <span className="wb-sr-only">Action</span>
                 </th>
@@ -143,9 +142,6 @@ export function AllBenches({
                         style={{ fontSize: 11, color: "var(--ink-gray-5)", maxWidth: 180, display: "inline-block" }}>
                         {bench.path}
                       </code>
-                    </td>
-                    <td>
-                      <VersionBadge version={bench.version} />
                     </td>
                     <td className="wb-table-apps">
                       {bench.apps.length > 0 ? (
