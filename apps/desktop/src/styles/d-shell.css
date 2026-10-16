@@ -700,47 +700,7 @@
   border: none;
 }
 
-/* ── Direction D: PermissionCard simplified to match d-approval-box reference ──
- * ref: fragment.html:395-408 .d-approval-box — shows only title + desc + 3 inline btns.
- * All non-design elements hidden; action row becomes horizontal. */
-.permission-card-timer-bar { display: none; }
-.permission-risk { display: none; }
-.permission-card-prompt { display: none; }
-.permission-card-args { display: none; }
-.permission-card-meta { display: none; }
-.permission-action-hint { display: none; }
-.permission-card-title { color: var(--ink-amber-7); }
-.permission-card-reason { color: var(--ink-amber-7); margin-top: 6px; }
-.permission-card-actions {
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-}
-.permission-action-item { flex-direction: row; }
-.permission-action-item .btn { width: auto; }
-/* border matching d-approval-box D.css */
-.permission-card { border: 1px solid var(--outline-amber-2); }
-
-/* ── Direction D: Composer toolbar simplifications ──
- * ref: fragment.html:421-443 .d-composer-foot
- * Design shows: attach icon | folder icon | ○ Supervised · model · bench | send
- * Hide the mode-chip (Plan) and sparkle/enhance btn; compact permission label. */
-.composer-mode-chip { display: none; }
-.composer-enhance-btn { display: none; }
-.composer-enhance-undo { display: none; }
-/* Compact the permission picker label — remove the "Permissions: " prefix visually */
-.composer-permission .mode-chip .text-sm {
-  font-size: 11px;
-  max-width: 140px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* ── Direction D: hide PROJECTS section + sidebar footer (version label) ──
- * ref: D1/D2/D3 all show Sessions-only left panel; no project list, no build version.
- * The sessions list lives in .sidebar-standalone-sessions which is preserved. */
-[data-sidebar-section="projects"] { display: none; }
-.sidebar-session-groups { display: none; }
-.sidebar-footer { display: none; }
+/* ── Direction D: PermissionCard + Composer + Sidebar overrides ──
+ * IMPORTANT: These rules must override messages.css / composer.css / theme-overrides.css
+ * which are all imported AFTER d-shell.css. Effective overrides are in d-shell-overrides.css
+ * (imported last). The rules below are kept only as documentation anchors. */

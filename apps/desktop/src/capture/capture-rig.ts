@@ -1092,30 +1092,10 @@ export function installCaptureRig(): CaptureRig {
     },
     ensureVisualFixtures: async () => {
       if (!window.__PI_CAPTURE__) return;
-      // Workspace name fix
-      const ws = useAppStore.getState().workspace;
-      if (ws?.path) {
-        const base = (ws.name || ws.path.split(/[/]/).filter(Boolean).pop() || "").trim();
-        if (base.length > 0 && base.length < 12) {
-          useAppStore.setState({ workspace: { ...ws, name: "PI-Desktop" } });
-        }
-      }
-      // Try to create/find a real session for the realId. Falls back to a fixture
-      // ID so captures work even when the backend sidecar is not running.
-      let realId = "fixture-s1";
-      try {
-        await useAppStore.getState().refreshSessions();
-        const existing = useAppStore.getState().sessions;
-        const sync = existing.find((s) => (s.title || "").trim() === "Sync ERPNext code module");
-        if (sync) {
-          realId = sync.id;
-        } else {
-          const created = await api.createSession({ title: "Sync ERPNext code module" });
-          realId = created.session.id;
-        }
-      } catch { /* optional — use fixture-s1 fallback */ }
       // Build fake session list with controlled updatedAt timestamps so the sidebar
       // shows TODAY / YESTERDAY / THIS WEEK groups matching variant-D1/D2/D3 reference.
+      // Use "fixture-s1" as the primary session ID; optionally replaced by a real
+      // backend session ID if the API is available (non-blocking, after state is set).
       const now = Date.now();
       const H = 3_600_000;
       const D = 86_400_000;
@@ -1126,8 +1106,7 @@ export function installCaptureRig(): CaptureRig {
       ): SessionSummary & { pinned: boolean; archived: boolean } => ({
         id,
         title,
-        // source: "desktop" → isOmpSession=false → hides SESSION/TUI section in Activity
-        source: "desktop",
+        source: "desktop",       // hides SESSION/TUI section (isOmpSession=false)
         modelId: "claude-sonnet-5",
         mode: "plan",
         thinkingLevel: "off",
@@ -1138,9 +1117,9 @@ export function installCaptureRig(): CaptureRig {
         pinned: false,
         archived: false,
       });
-      const fakeSessions = [
+      const buildSessions = (primaryId: string) => [
         // TODAY (< 24h)
-        fakeSession(realId,        "Sync ERPNext code module",        2 * 60_000),   // 2m
+        fakeSession(primaryId,     "Sync ERPNext code module",        2 * 60_000),   // 2m
         fakeSession("fixture-s2",  "Redesign settings plugin section", 47 * 60_000), // 47m
         fakeSession("fixture-s3",  "Fix duplicate bench start bug",    2 * H),       // 2h
         // YESTERDAY (24h–48h)
@@ -1155,20 +1134,18 @@ export function installCaptureRig(): CaptureRig {
         fakeSession("fixture-s11", "Install hrms on coale_staging",    6.5 * D),
         fakeSession("fixture-s12", "Debug bench worker crash",         7 * D),
       ];
-      const sessionIdToUse = realId;
-      // Set state directly — don't call selectSession() which triggers a backend
-      // transcript load for a freshly-created (empty) session and shows NOT_FOUND.
+      // ── IMMEDIATE STATE SET (no backend dependency) ──────────────────
+      // Set state FIRST so the UI renders correctly even if the backend is
+      // unreachable (avoids a 30s+ hang on refreshSessions/createSession).
       useAppStore.setState({
-        sessions: fakeSessions as unknown as SessionSummary[],
-        activeSessionId: sessionIdToUse,
-        retainedSessionIds: [sessionIdToUse],
-        retainedTranscripts: { [sessionIdToUse]: [] },
+        sessions: buildSessions("fixture-s1") as unknown as SessionSummary[],
+        activeSessionId: "fixture-s1",
+        retainedSessionIds: ["fixture-s1"],
+        retainedTranscripts: { "fixture-s1": [] },
         messages: [],
-        runningSessions: { [sessionIdToUse]: true },
+        runningSessions: { "fixture-s1": true },
         page: "chat",
-        // D design: seed user name so user message avatars render with initials.
         chatUserName: "Josh Kim",
-        // D3 island PINNED PAGES: show Kanban + Raven + FileBird as in ref D3.
         kanbanEnabled: true,
         ravenEnabled: true,
       });

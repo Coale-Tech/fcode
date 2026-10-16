@@ -33,6 +33,7 @@ export type RendererApi = {
   getSettings: () => AppSettings | null;
   clearProject: () => Promise<void>;
   showToast: (message: string, opts?: ToastOptions) => void;
+  enableFeatureFlags: (flags: { kanban?: boolean; raven?: boolean }) => void;
 } & (CaptureRigStubs | CaptureRigMethods);
 
 declare global {
@@ -134,6 +135,13 @@ export function installRendererApi(): () => void {
     },
     clearProject: () => useAppStore.getState().clearProject(),
     getSettings: () => useAppStore.getState().settings ?? null,
+    /** Synchronously enable feature flags so nav rail shows Kanban/Raven in capture. */
+    enableFeatureFlags: (flags: { kanban?: boolean; raven?: boolean }) => {
+      useAppStore.setState({
+        ...(flags.kanban !== undefined && { kanbanEnabled: flags.kanban }),
+        ...(flags.raven !== undefined && { ravenEnabled: flags.raven }),
+      });
+    },
     showToast: (message, opts) => useAppStore.getState().showToast(message, opts),
     ...stubs,
   };
