@@ -76,7 +76,7 @@ export function NotificationCenter({
     <div className="notification-center">
       <TooltipButton
         type="button"
-        className={`footer-notification notification-trigger`}
+        className={`footer-notification notification-trigger${navRailLabel ? " nav-rail-labeled" : ""}`}
         tooltip={unreadLabel}
         ariaLabel={unreadLabel}
         onClick={() => {
@@ -84,12 +84,17 @@ export function NotificationCenter({
           setPage("notifications");
         }}
       >
-        <IconBell size={14} aria-hidden />
+        {navRailLabel ? (
+          <span className="nav-rail-icon"><IconBell size={16} aria-hidden /></span>
+        ) : (
+          <IconBell size={14} aria-hidden />
+        )}
         {unreadCount > 0 ? (
           <span className="notification-badge" aria-hidden>
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         ) : null}
+        {navRailLabel && <span className="nav-rail-label">{navRailLabel}</span>}
       </TooltipButton>
     </div>
   );

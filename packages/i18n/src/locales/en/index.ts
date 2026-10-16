@@ -139,7 +139,7 @@ export const en = {
     newSession: "New session",
     newProject: "New project",
     projects: "Projects",
-    plugins: "Extensions",
+    plugins: "Plugins",
     settings: "Settings",
     checkForUpdates: "Check for updates",
     buildUnknown: "Version unknown",

@@ -41,6 +41,38 @@
 /* Hide "Running" / "Needs approval" session badges — ref D1/D2/D3 show only timestamps */
 .thread-item-status-label { display: none !important; }
 
+/* ── D3 island: hide session-groups and sessions toolbar (replaced by d3-sb-header) ── */
+:root[data-nav-layout="island"] .sidebar-session-groups { display: none; }
+:root[data-nav-layout="island"] .sidebar-list-toolbar[data-sidebar-section="sessions"] { display: none; }
+/* D3 island: pinned thread rows replaced by d3-sb-pinned-pages icon buttons → hide the
+   duplicate .sidebar-pinned-sessions so sessions get the full middle space. */
+:root[data-nav-layout="island"] .sidebar-pinned-sessions { display: none; }
+/* D3 island: standalone session list fills the space between bench card and pinned pages. */
+:root[data-nav-layout="island"] .sidebar-standalone-sessions { flex: 1 1 auto; min-height: 0; }
+:root[data-nav-layout="island"] .sidebar-session-group-body.standalone {
+  max-height: none;
+  flex: 1 1 auto;
+}
+
+/* ── D3 island: bench card name row — flex so chevron floats right ── */
+:root[data-nav-layout="island"] .d3-sb-bench-name {
+  display: flex; align-items: center; gap: 4px;
+}
+:root[data-nav-layout="island"] .d3-sb-bench-chevron {
+  margin-left: auto; color: var(--ink-gray-4); flex-shrink: 0;
+}
+
+/* ── D3 island: session row timestamps — always visible; kebab on hover only ── */
+:root[data-nav-layout="island"] .thread-item-time {
+  font-size: 11px;
+  color: var(--ink-gray-4);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+:root[data-nav-layout="island"] .thread-item .thread-item-more { display: none; }
+:root[data-nav-layout="island"] .thread-item:hover .thread-item-more { display: flex; }
+:root[data-nav-layout="island"] .thread-item:hover .thread-item-time { display: none; }
+
 /* ── Composer: simplified toolbar ── */
 /* Design shows: attach | folder | ○ Supervised · model · bench | send.
  * Hide Plan mode-chip and sparkle/enhance buttons (not in reference). */
