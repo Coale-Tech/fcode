@@ -195,6 +195,7 @@ export const zhTW = {
     batchDeleteConfirm: "確認刪除 {{count}} 個對話？",
     copyConversationId: "複製對話 ID",
     openSessionPath: "開啟會話路徑",
+    timeGroupToday: "今天",
     timeGroupYesterday: "昨天",
     timeGroupThisWeek: "近 7 天",
     timeGroupOlder14d: "近 14 天",

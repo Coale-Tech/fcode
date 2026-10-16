@@ -23,6 +23,7 @@ import type {
   PullRequestSummary,
   ScheduledTask,
   ScheduledTaskRun,
+  SessionSummary,
   UiMessage,
   UserSkillRecord,
 } from "@pi-desktop/shared";
@@ -64,6 +65,8 @@ export type CaptureRigMethods = {
   clearPendingPermissions: () => void;
   seedEmptyHome: () => void;
   seedOnboardingChecklist: () => void;
+  seedBenchStatus: (benchName?: string) => void;
+  seedNotifications: (count?: number) => void;
 };
 
 export type CaptureRig = CaptureRigMethods & {
@@ -1090,6 +1093,7 @@ export function installCaptureRig(): CaptureRig {
     },
     ensureVisualFixtures: async () => {
       if (!window.__PI_CAPTURE__) return;
+      // Workspace name fix
       const ws = useAppStore.getState().workspace;
       if (ws?.path) {
         const base = (ws.name || ws.path.split(/[/]/).filter(Boolean).pop() || "").trim();
@@ -1097,71 +1101,70 @@ export function installCaptureRig(): CaptureRig {
           useAppStore.setState({ workspace: { ...ws, name: "PI-Desktop" } });
         }
       }
-      // Seed English session titles matching the reference design (variant-D1/D2/D3).
+      // Try to create/find a real session for the realId. Falls back to a fixture
+      // ID so captures work even when the backend sidecar is not running.
+      let realId = "fixture-s1";
       try {
         await useAppStore.getState().refreshSessions();
-        // Remove stale Chinese/legacy fixture titles so they don't pollute the list.
-        const legacyNoise: Record<string, true> = {
-          "同步代码": true, "你好": true, "终止进程里面有一个注册机的": true, "加一下": true,
-          "帮我彻底卸载比特浏览器": true, "帮我配置一下这个项目并启动": true,
-          "重新设计设置页面插件板块手机端ui布局": true, "制作台的布局重新设计，需要现代化简": true,
-          "Review open pull requests": true, "Tighten composer elevation": true,
-          "Dark theme night plate": true, "Sidebar recents density": true,
-          "Settings appearance polish": true, "Plugins empty state": true,
-          "Fix TypeScript build errors": true, "Exploring repository structure": true,
-        };
-        for (const s of useAppStore.getState().sessions || []) {
-          if (legacyNoise[(s.title || "").trim()]) {
-            try { await api.deleteSession(s.id); } catch { /* ignore */ }
-          }
+        const existing = useAppStore.getState().sessions;
+        const sync = existing.find((s) => (s.title || "").trim() === "Sync ERPNext code module");
+        if (sync) {
+          realId = sync.id;
+        } else {
+          const created = await api.createSession({ title: "Sync ERPNext code module" });
+          realId = created.session.id;
         }
-        await useAppStore.getState().refreshSessions();
-        // Dynamic set: grows as sessions are created during seeding.
-        const existing = new Set(
-          (useAppStore.getState().sessions || []).map((s) => (s.title || "").trim()),
-        );
-        // English titles matching variant-D1/D2/D3 reference (8 visible + extras for count 12).
-        const titles = [
-          "Sync ERPNext code module",        // TODAY — selected
-          "Redesign settings plugin section", // TODAY
-          "Fix duplicate bench start bug",    // TODAY
-          "Migrate Raven to frappe-ui v2",    // YESTERDAY
-          "Review PR #224 leave approvals",   // YESTERDAY
-          "ERPNext payroll period config",    // YESTERDAY
-          "Set up coale_v16 from scratch",    // THIS WEEK
-          "Debug slow stock valuation query", // THIS WEEK
-          "Frappe UI modal refactor",         // THIS WEEK (empty-state extra)
-          "Refactor payment_entry hooks",     // extra for count
-          "Install hrms on coale_staging",    // extra for count (running state)
-          "Debug bench worker crash",         // extra for count
-        ];
-        for (const title of titles) {
-          if (existing.has(title)) continue;
-          if ((useAppStore.getState().sessions?.length ?? 0) >= 14) break;
-          await api.createSession({ title });
-          existing.add(title);
-        }
-        await useAppStore.getState().refreshSessions();
-        const preferred = useAppStore
-          .getState()
-          .sessions.find((s) => (s.title || "").trim() === "Sync ERPNext code module");
-        if (preferred) {
-          try {
-            const raw = localStorage.getItem("pi.desktop.pinnedSessions");
-            const parsed = raw ? JSON.parse(raw) : [];
-            const pins = Array.isArray(parsed)
-              ? parsed.filter((x) => typeof x === "string")
-              : [];
-            if (!pins.includes(preferred.id)) {
-              localStorage.setItem(
-                "pi.desktop.pinnedSessions",
-                JSON.stringify([preferred.id, ...pins].slice(0, 40)),
-              );
-            }
-          } catch { /* ignore */ }
-          await useAppStore.getState().selectSession(preferred.id);
-        }
-      } catch { /* optional capture-only fixture */ }
+      } catch { /* optional — use fixture-s1 fallback */ }
+      // Build fake session list with controlled updatedAt timestamps so the sidebar
+      // shows TODAY / YESTERDAY / THIS WEEK groups matching variant-D1/D2/D3 reference.
+      const now = Date.now();
+      const H = 3_600_000;
+      const D = 86_400_000;
+      const fakeSession = (
+        id: string,
+        title: string,
+        ageMs: number,
+      ): SessionSummary & { pinned: boolean; archived: boolean } => ({
+        id,
+        title,
+        mode: "plan",
+        thinkingLevel: "off",
+        permissionMode: "inherit",
+        messageCount: 0,
+        updatedAt: new Date(now - ageMs).toISOString(),
+        createdAt: new Date(now - ageMs).toISOString(),
+        pinned: false,
+        archived: false,
+      });
+      const fakeSessions = [
+        // TODAY (< 24h)
+        fakeSession(realId,        "Sync ERPNext code module",        2 * 60_000),   // 2m
+        fakeSession("fixture-s2",  "Redesign settings plugin section", 47 * 60_000), // 47m
+        fakeSession("fixture-s3",  "Fix duplicate bench start bug",    2 * H),       // 2h
+        // YESTERDAY (24h–48h)
+        fakeSession("fixture-s4",  "Migrate Raven to frappe-ui v2",   25 * H),
+        fakeSession("fixture-s5",  "Review PR #224 leave approvals",  26 * H),
+        fakeSession("fixture-s6",  "ERPNext payroll period config",   27 * H),
+        // THIS WEEK (2–7 days)
+        fakeSession("fixture-s7",  "Set up coale_v16 from scratch",   3 * D),
+        fakeSession("fixture-s8",  "Debug slow stock valuation query", 4 * D),
+        fakeSession("fixture-s9",  "Frappe UI modal refactor",         5 * D),
+        fakeSession("fixture-s10", "Refactor payment_entry hooks",     6 * D),
+        fakeSession("fixture-s11", "Install hrms on coale_staging",    6.5 * D),
+        fakeSession("fixture-s12", "Debug bench worker crash",         7 * D),
+      ];
+      const sessionIdToUse = realId;
+      // Set state directly — don't call selectSession() which triggers a backend
+      // transcript load for a freshly-created (empty) session and shows NOT_FOUND.
+      useAppStore.setState({
+        sessions: fakeSessions as unknown as SessionSummary[],
+        activeSessionId: sessionIdToUse,
+        retainedSessionIds: [sessionIdToUse],
+        retainedTranscripts: { [sessionIdToUse]: [] },
+        messages: [],
+        runningSessions: { [sessionIdToUse]: true },
+        page: "chat",
+      });
     },
     seedApprovalCard: () => {
       // Seeds transcript with Bash/Read/Edit tool rows and a ToolPermissionRequest
@@ -1251,8 +1254,8 @@ export function installCaptureRig(): CaptureRig {
         },
         risk: "medium",
         reason:
-          "Edit payment_entry.py — 12 lines. Adds remote sync helper via bench socket.",
-        receivedAt: Date.now(), // fresh timestamp so auto-deny timer doesn't fire during capture
+          "Claude wants to write 12 lines to payment_entry.py — adding a sync helper that calls frappe.get_doc on the remote bench socket. Review the diff before allowing.",
+        receivedAt: Date.now() + 3_600_000, // 1h in future — prevents auto-deny timer during capture
       };
       // Open Activity tab so the right panel shows Pending approval box.
       useAppStore.setState({
@@ -1302,6 +1305,20 @@ export function installCaptureRig(): CaptureRig {
       if (cur) {
         useAppStore.setState({ onboarding: { ...cur, showChecklist: true } });
       }
+    },
+    seedBenchStatus: (benchName = "coale_v16") => {
+      if (!window.__PI_CAPTURE__) return;
+      // Set a global override that useBenchContext reads on its next render.
+      // contextBridge-exposed piDesktop.invoke is read-only, so monkey-patching is impossible.
+      (window as unknown as Record<string, unknown>).__PI_BENCH_OVERRIDE__ = {
+        status: "running",
+        benchPath: `/frappe/benches/${benchName}`,
+        site: `${benchName}.localhost`,
+      };
+    },
+    seedNotifications: (count = 3) => {
+      if (!window.__PI_CAPTURE__) return;
+      useAppStore.setState({ unreadNotificationCount: count });
     },
   };
   return {

@@ -202,6 +202,7 @@ export const ko = {
     batchDeleteConfirm: "{{count}}개 세션을 삭제하시겠습니까?",
     copyConversationId: "대화 ID 복사",
     openSessionPath: "세션 경로 열기",
+    timeGroupToday: "오늘",
     timeGroupYesterday: "어제",
     timeGroupThisWeek: "최근 7일",
     timeGroupOlder14d: "최근 14일",

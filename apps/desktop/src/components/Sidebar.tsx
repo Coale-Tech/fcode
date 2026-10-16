@@ -310,6 +310,8 @@ export function Sidebar({
   const [windowFocused, setWindowFocused] = useState(true);
   // D3 island filter (scoped to island mode; cleared on layout change via key)
   const [d3Filter, setD3Filter] = useState("");
+  // D1/D2 sessions panel filter (non-island layouts)
+  const [sessionFilter, setSessionFilter] = useState("");
 
   const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
   const menuFirstItemRef = useRef<HTMLButtonElement | null>(null);
@@ -2442,6 +2444,9 @@ export function Sidebar({
           >
             <span id="sidebar-standalone-sessions-label" className="sidebar-list-label">
               {t("nav.sessions", { defaultValue: "Sessions" })}
+              {temporarySessions.length > 0 && (
+                <span className="sidebar-session-count">{temporarySessions.length}</span>
+              )}
             </span>
             <div className="sidebar-toolbar-actions">
               <div className="sidebar-menu-wrap">
@@ -2481,6 +2486,19 @@ export function Sidebar({
               </TooltipButton>
             </div>
           </div>
+          {navLayout !== "island" && (
+            <div className="sidebar-session-search">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input
+                type="search"
+                className="sidebar-session-search-input"
+                placeholder={t("nav.filterSessions")}
+                value={sessionFilter}
+                onChange={(e) => setSessionFilter(e.target.value)}
+                aria-label={t("nav.filterSessions")}
+              />
+            </div>
+          )}
           <div
             className="sidebar-session-group-body standalone"
             onScroll={() => {
@@ -2494,10 +2512,21 @@ export function Sidebar({
             }}
           >
             {temporarySessionHistory.length > 0 ? (
-              renderSessionRows(temporarySessionHistory.filter(
-                (s) => !d3Filter || navLayout !== "island" ||
-                  s.title?.toLowerCase().includes(d3Filter.toLowerCase())
-              ), { temporary: true })
+              groupSidebarSessionsByTime(temporarySessionHistory.filter((s) => {
+                const f = navLayout === "island" ? d3Filter : sessionFilter;
+                return !f || s.title?.toLowerCase().includes(f.toLowerCase());
+              })).flatMap(({ group, sessions: gs }) => [
+                <div key={`tmp-th-${group}`} className="sidebar-time-group-header">
+                  {t(
+                    group === "today" ? "nav.timeGroupToday" :
+                    group === "yesterday" ? "nav.timeGroupYesterday" :
+                    group === "thisWeek" ? "nav.timeGroupThisWeek" :
+                    group === "older14d" ? "nav.timeGroupOlder14d" :
+                    "nav.timeGroupArchived"
+                  )}
+                </div>,
+                ...renderSessionRows(gs, { temporary: true }),
+              ])
             ) : temporarySessions.length === 0 ? (
               <div className="sidebar-session-empty">{t("nav.noTemporarySessions")}</div>
             ) : null}

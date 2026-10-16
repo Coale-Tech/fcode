@@ -192,6 +192,7 @@ export const ptBR = {
     batchDeleteConfirm: "Excluir {{count}} sessões?",
     copyConversationId: "Copiar ID da conversa",
     openSessionPath: "Abrir caminho da sessão",
+    timeGroupToday: "Hoje",
     timeGroupYesterday: "Ontem",
     timeGroupThisWeek: "Últimos 7 dias",
     timeGroupOlder14d: "Últimos 14 dias",

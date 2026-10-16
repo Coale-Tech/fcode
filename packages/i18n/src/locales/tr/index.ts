@@ -202,6 +202,7 @@ export const tr = {
     batchDeleteConfirm: "{{count}} oturum silinsin mi?",
     copyConversationId: "Konuşma kimliğini kopyala",
     openSessionPath: "Oturum yolunu aç",
+    timeGroupToday: "Bugün",
     timeGroupYesterday: "Dün",
     timeGroupThisWeek: "Önceki 7 gün",
     timeGroupOlder14d: "Önceki 14 gün",

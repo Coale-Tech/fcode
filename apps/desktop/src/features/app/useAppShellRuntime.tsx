@@ -897,6 +897,14 @@ export function useAppShellRuntime() {
   ]);
 
   useEffect(() => installRendererApi(), []);
+  // Capture-mode: dispatch CustomEvent("pi-backend-clear") from CDP to clear the backend banner.
+  useEffect(() => {
+    const clear = () => setBackendDown(null);
+    window.addEventListener("pi-backend-clear", clear);
+    return () => window.removeEventListener("pi-backend-clear", clear);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   useEffect(() => {
     if (!ready) return;

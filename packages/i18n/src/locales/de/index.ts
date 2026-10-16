@@ -193,6 +193,7 @@ export const de = {
     batchDeleteConfirm: "{{count}} Sitzungen löschen?",
     "copyConversationId": "Gesprächs-ID kopieren",
     "openSessionPath": "Sitzungspfad öffnen",
+    "timeGroupToday": "Heute",
     "timeGroupYesterday": "Gestern",
     "timeGroupThisWeek": "Vorherige 7 Tage",
     "timeGroupOlder14d": "Vorherige 14 Tage",
