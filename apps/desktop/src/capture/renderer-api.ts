@@ -37,7 +37,7 @@ export type RendererApi = {
 } & (CaptureRigStubs | CaptureRigMethods);
 
 /** Shape accepted by seedBenchStatus and read by useBenchContext. */
-export type BenchStatusOverride = { status: string; benchPath: string | null; site: string | null } | null;
+export type BenchStatusOverride = { status: string; benchPath: string | null; site: string | null; siteCount?: number } | null;
 
 declare global {
   interface Window {

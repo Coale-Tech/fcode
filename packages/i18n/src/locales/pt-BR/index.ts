@@ -2105,6 +2105,7 @@ export const ptBR = {
     openDevTools: "Abra a console",
     devToolsDisabledHint: "Ferramentas de desenvolvedor desativadas em compilações de produção.",
     language: "Idioma",
+    languageDesc: "UI language override",
     languageAuto: "Usar idioma do sistema",
     languageAutoDesc: "Atualmente {{state}}",
     languageSearchPlaceholder: "Pesquisar idiomas…",

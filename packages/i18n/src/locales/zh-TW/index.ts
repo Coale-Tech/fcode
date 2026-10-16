@@ -2130,6 +2130,7 @@ sklm: {
     openDevTools: "開啟控制台",
     devToolsDisabledHint: "請先開啟開發者模式。",
     language: "語言",
+    languageDesc: "UI language override",
     languageAuto: "跟隨系統",
     languageAutoDesc: "當前：{{state}}",
     languageSearchPlaceholder: "搜尋語言…",

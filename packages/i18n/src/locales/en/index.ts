@@ -2166,6 +2166,7 @@ sklm: {
     openDevTools: "Open console",
     devToolsDisabledHint: "Turn on developer mode first.",
     language: "Language",
+    languageDesc: "UI language override",
     languageAuto: "Auto (system)",
     languageAutoDesc: "Currently {{state}}",
     languageSearchPlaceholder: "Search languages…",

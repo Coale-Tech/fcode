@@ -2150,6 +2150,7 @@ sklm: {
     openDevTools: "Konsolu aç",
     devToolsDisabledHint: "Önce geliştirici kipini açın.",
     language: "Dil",
+    languageDesc: "UI language override",
     languageAuto: "Sistem dilini kullan",
     languageAutoDesc: "Şu an: {{state}}",
     languageSearchPlaceholder: "Dil ara…",

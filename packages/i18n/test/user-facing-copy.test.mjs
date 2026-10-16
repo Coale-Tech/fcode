@@ -107,7 +107,6 @@ const REMOVED_EXPLANATORY_KEYS = [
   "chat.emptyHint",
   "panel.empty.body",
   "panel.review.noChangesHint",
-  "settings.languageDesc",
   "settings.devToolsDesc",
   "settings.themeLightDesc",
   "settings.themeDarkDesc",

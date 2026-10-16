@@ -2143,6 +2143,7 @@ sklm: {
     "openDevTools": "Ouvrez la console",
     "devToolsDisabledHint": "Activez d'abord le mode développeur.",
     "language": "Langue",
+    languageDesc: "UI language override",
     "languageAuto": "Utiliser la langue du système",
     "languageAutoDesc": "Actuellement {{state}}",
     "languageSearchPlaceholder": "Rechercher des langues…",

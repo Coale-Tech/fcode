@@ -2160,6 +2160,7 @@ sklm: {
     openDevTools: "콘솔 열기",
     devToolsDisabledHint: "먼저 개발자 모드를 켜세요.",
     language: "언어",
+    languageDesc: "UI language override",
     languageAuto: "시스템 언어 사용",
     languageAutoDesc: "현재 {{state}}",
     languageSearchPlaceholder: "언어 검색…",
