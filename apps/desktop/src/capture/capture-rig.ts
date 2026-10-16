@@ -1126,9 +1126,12 @@ export function installCaptureRig(): CaptureRig {
       ): SessionSummary & { pinned: boolean; archived: boolean } => ({
         id,
         title,
+        // source: "desktop" → isOmpSession=false → hides SESSION/TUI section in Activity
+        source: "desktop",
+        modelId: "claude-sonnet-5",
         mode: "plan",
         thinkingLevel: "off",
-        permissionMode: "inherit",
+        permissionMode: "ask",
         messageCount: 0,
         updatedAt: new Date(now - ageMs).toISOString(),
         createdAt: new Date(now - ageMs).toISOString(),
@@ -1163,6 +1166,8 @@ export function installCaptureRig(): CaptureRig {
         messages: [],
         runningSessions: { [sessionIdToUse]: true },
         page: "chat",
+        // D design: seed user name so user message avatars render with initials.
+        chatUserName: "Josh Kim",
       });
     },
     seedApprovalCard: () => {
@@ -1313,6 +1318,7 @@ export function installCaptureRig(): CaptureRig {
         status: "running",
         benchPath: `/frappe/benches/${benchName}`,
         site: `${benchName}.localhost`,
+        siteCount: 3,
       };
     },
   };

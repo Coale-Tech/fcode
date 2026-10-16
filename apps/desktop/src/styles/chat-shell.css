@@ -172,6 +172,29 @@
   margin-left: auto;
 }
 
+/* D design: right side cluster — model name + permission chip */
+.workspace-bar-model-cluster {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-gray-5);
+}
+.workspace-bar-model {
+  font-variant-numeric: tabular-nums;
+}
+.workspace-bar-perm {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: var(--da-sub, rgba(61,78,228,.12));
+  color: var(--da-txt, #2a3b9e);
+  font-size: 10px;
+  font-weight: 600;
+}
+
 .workspace-bar-terminal-btn[aria-pressed="true"] {
   background: var(--surface-gray-3);
   color: var(--ink-gray-8);

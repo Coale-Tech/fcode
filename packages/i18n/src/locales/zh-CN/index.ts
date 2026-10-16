@@ -217,6 +217,10 @@ export const zhCN = {
     site: "站点",
     sites: "站点",
     openBenchLog: "打开 Bench 日志",
+    supervised: "监督中",
+    acceptEdits: "接受编辑",
+    autonomous: "自动",
+    sessionConfig: "会话配置",
   },
   sessionCollaboration: {
     statusIdle: "空闲",
@@ -644,6 +648,9 @@ export const zhCN = {
     turnSummaryRead: "读取了 {{count}} 个",
     turnSummaryFetched: "获取了 {{count}} 条",
     turnSummarySearched: "搜索了 {{count}} 次",
+    sessionRunning: "运行中",
+    context: "上下文",
+    assistantName: "Claude",
   },
   session: {
     renameTitle: "重命名任务",

@@ -21,8 +21,90 @@
   overflow-clip-margin: 8px;
 }
 
+/* D design: user messages left-aligned with avatar + sender meta when chatUserName is set. */
 .message-row.user {
-  justify-content: flex-end;
+  justify-content: flex-start;
+}
+
+/* Legacy: no avatar — keep old shrink-wrap for message-bubble (backward compat) */
+.message-row.user:not(.d-msg-row) .message-col {
+  width: min(max-content, 82%, 600px);
+  max-width: min(82%, 600px);
+  align-items: flex-end;
+  margin-left: auto;
+}
+
+/* D design user row: full-width, left-aligned */
+.message-row.user.d-msg-row {
+  align-items: flex-start;
+}
+.message-row.user.d-msg-row .message-col {
+  width: 100%;
+  max-width: 100%;
+  align-items: flex-start;
+}
+
+/* D design shared: avatar circle */
+.d-msg-avatar {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin-top: 2px;
+}
+.d-msg-avatar.user {
+  background: var(--da, #3d4ee4);
+  color: #fff;
+}
+.d-msg-avatar.ai {
+  background: var(--ink-gray-6, #555);
+  color: #fff;
+}
+
+/* D design: sender meta row (name + time) */
+.d-msg-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+.d-msg-sender {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-gray-8, #1a1a1a);
+}
+.d-msg-time {
+  font-size: 11px;
+  color: var(--ink-gray-4, #888);
+  font-variant-numeric: tabular-nums;
+}
+
+/* D design: message content column (next to avatar) */
+.d-msg-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+/* D design message row: avatar + content side by side */
+.message-row.d-msg-row .message-col {
+  flex-direction: row;
+  gap: 10px;
+}
+
+/* D design: message bubble loses rounded-all style, becomes flat text */
+.message-row.user.d-msg-row .message-bubble {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  max-width: 100%;
 }
 
 .message-col {
@@ -33,20 +115,7 @@
   gap: 4px;
 }
 
-.message-row.user .message-col {
-  /* `min(max-content, …)` is a definite shrink-wrap. `fit-content` includes
-     the stretch size, so a descendant with `max-width: 100%` (file chips)
-     inflated the plate to the 82%/600px cap after a paste. */
-  width: min(max-content, 82%, 600px);
-  max-width: min(82%, 600px);
-  align-items: flex-end;
-}
-
-/* Composer chips use `max-width: min(100%, 240px)` so they shrink in a
-   definite composer. Inside this shrink-to-fit plate the percentage
-   containing block is the available thread width, which stretches the
-   bubble. A definite 240px cap keeps short chip+text prompts compact. */
-.message-row.user .composer-chip {
+.message-row.user:not(.d-msg-row) .composer-chip {
   max-width: 240px;
 }
 
@@ -55,6 +124,21 @@
 .message-row.tool .message-col {
   width: min(100%, var(--chat-prose-max-width, 720px));
   align-items: flex-start;
+}
+
+/* D design assistant message row: full-width with avatar */
+.message-row.assistant.d-msg-row .message-col {
+  width: 100%;
+  max-width: 100%;
+  flex-direction: row;
+  gap: 10px;
+  align-items: flex-start;
+}
+.message-row.assistant.d-msg-row .message-bubble {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  max-width: 100%;
 }
 
 /* Decision cards are soft tiles (D297): risk rides in the tint and the risk

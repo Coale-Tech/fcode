@@ -174,6 +174,8 @@ export type AppState = {
   /** Latest immutable Plan checkpoint/execution snapshot per session. */
   planCheckpoints: Record<string, PlanProposal>;
   toasts: ToastItem[];
+  /** D design: current user display name shown in message avatars (null = no avatar). */
+  chatUserName: string | null;
   notifications: AppNotification[];
   unreadNotificationCount: number;
   page: "chat" | "pulls" | "scheduled" | "plugins" | "settings" | "build" | "bench" | "kanban" | "raven" | "filebird" | "notifications";

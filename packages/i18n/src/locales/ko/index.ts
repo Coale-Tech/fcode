@@ -224,6 +224,10 @@ export const ko = {
     site: "사이트",
     sites: "사이트",
     openBenchLog: "벤치 로그 열기",
+    supervised: "감독됨",
+    acceptEdits: "편집 허용",
+    autonomous: "자동",
+    sessionConfig: "세션 구성",
   },
   sessionCollaboration: {
     statusIdle: "대기",
@@ -649,6 +653,9 @@ export const ko = {
     turnSummaryRead: "{{count}}개 읽기",
     turnSummaryFetched: "{{count}}개 가져옴",
     turnSummarySearched: "{{count}}개 검색",
+    sessionRunning: "실행 중",
+    context: "컨텍스트",
+    assistantName: "Claude",
   },
   session: {
     renameTitle: "작업 이름 바꾸기",

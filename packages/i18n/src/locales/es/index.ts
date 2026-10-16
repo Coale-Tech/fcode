@@ -214,7 +214,11 @@ export const es = {
     benchStopped: "bench detenido",
     site: "sitio",
     sites: "sitios",
-    openBenchLog: "Abrir log de bench"
+    openBenchLog: "Abrir log de bench",
+    supervised: "Supervisado",
+    acceptEdits: "Aceptar ediciones",
+    autonomous: "Auto",
+    sessionConfig: "Config. sesión",
   },
   "sessionCollaboration": {
     "statusIdle": "Inactivo",
@@ -640,6 +644,9 @@ export const es = {
     "turnSummaryRead": "leído {{count}}",
     "turnSummaryFetched": "obtenido {{count}}",
     "turnSummarySearched": "buscado {{count}}",
+    sessionRunning: "Ejecutando",
+    context: "Contexto",
+    assistantName: "Claude",
   },
   "session": {
     "renameTitle": "Cambiar nombre de tarea",

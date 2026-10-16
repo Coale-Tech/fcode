@@ -222,6 +222,10 @@ export const en = {
     site: "site",
     sites: "sites",
     openBenchLog: "Open bench log",
+    supervised: "Supervised",
+    acceptEdits: "Accept edits",
+    autonomous: "Auto",
+    sessionConfig: "Session config",
   },
   sessionCollaboration: {
     statusIdle: "Idle",
@@ -647,6 +651,9 @@ export const en = {
     turnSummaryRead: "read {{count}}",
     turnSummaryFetched: "fetched {{count}}",
     turnSummarySearched: "searched {{count}}",
+    sessionRunning: "Running",
+    context: "Context",
+    assistantName: "Claude",
   },
   session: {
     renameTitle: "Rename task",

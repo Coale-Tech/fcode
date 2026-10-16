@@ -214,7 +214,11 @@ export const fr = {
     benchStopped: "bench arrêté",
     site: "site",
     sites: "sites",
-    openBenchLog: "Ouvrir le journal bench"
+    openBenchLog: "Ouvrir le journal bench",
+    supervised: "Supervisé",
+    acceptEdits: "Accepter les modifications",
+    autonomous: "Auto",
+    sessionConfig: "Config. session",
   },
   "sessionCollaboration": {
     "statusIdle": "Inactif",
@@ -640,6 +644,9 @@ export const fr = {
     "turnSummaryRead": "{{count}} lu(s)",
     "turnSummaryFetched": "{{count}} récupéré(s)",
     "turnSummarySearched": "{{count}} recherché(s)",
+    sessionRunning: "En cours",
+    context: "Contexte",
+    assistantName: "Claude",
   },
   "session": {
     "renameTitle": "Renommer la tâche",

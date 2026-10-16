@@ -214,6 +214,10 @@ export const ptBR = {
     site: "site",
     sites: "sites",
     openBenchLog: "Abrir log do bench",
+    supervised: "Supervisionado",
+    acceptEdits: "Aceitar edições",
+    autonomous: "Auto",
+    sessionConfig: "Config. sessão",
   },
   sessionCollaboration: {
     statusIdle: "Ocioso",
@@ -638,6 +642,9 @@ export const ptBR = {
     turnSummaryRead: "{{count}} lido(s)",
     turnSummaryFetched: "{{count}} obtido(s)",
     turnSummarySearched: "{{count}} pesquisado(s)",
+    sessionRunning: "Executando",
+    context: "Contexto",
+    assistantName: "Claude",
   },
   session: {
     renameTitle: "Renomear tarefa",

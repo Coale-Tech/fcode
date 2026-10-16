@@ -224,6 +224,10 @@ export const tr = {
     site: "site",
     sites: "siteler",
     openBenchLog: "Bench günlüğünü aç",
+    supervised: "Denetimli",
+    acceptEdits: "Düzenlemeleri kabul et",
+    autonomous: "Otomatik",
+    sessionConfig: "Oturum yapılandırması",
   },
   sessionCollaboration: {
     statusIdle: "Boşta",
@@ -649,6 +653,9 @@ export const tr = {
     turnSummaryRead: "{{count}} okundu",
     turnSummaryFetched: "{{count}} alındı",
     turnSummarySearched: "{{count}} arandı",
+    sessionRunning: "Çalışıyor",
+    context: "Bağlam",
+    assistantName: "Claude",
   },
   session: {
     renameTitle: "Görevi yeniden adlandır",

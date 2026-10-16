@@ -217,6 +217,10 @@ export const zhTW = {
     site: "站台",
     sites: "站台",
     openBenchLog: "開啟 Bench 日誌",
+    supervised: "監督中",
+    acceptEdits: "接受編輯",
+    autonomous: "自動",
+    sessionConfig: "工作階段設定",
   },
   sessionCollaboration: {
     statusIdle: "閒置",
@@ -644,6 +648,9 @@ export const zhTW = {
     turnSummaryRead: "讀取了 {{count}} 個",
     turnSummaryFetched: "取得了 {{count}} 條",
     turnSummarySearched: "搜尋了 {{count}} 次",
+    sessionRunning: "執行中",
+    context: "上下文",
+    assistantName: "Claude",
   },
   session: {
     renameTitle: "重新命名任務",

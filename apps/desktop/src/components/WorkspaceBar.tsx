@@ -1,8 +1,8 @@
 /**
  * WorkspaceBar — persistent context strip at the foot of the main pane (T1).
  *
- * Self-sufficient: polls IPC.invoke.benchStatus every 3 s via useBenchContext.
- * Shows: <dot> bench · bench running|stopped · N sites | Open bench log
+ * Left: <dot> bench · bench running|stopped · N sites | Open bench log
+ * Right (D design): model name · Supervised chip
  *
  * When a bench detail tab is open but the bench is not running, we fall back to
  * viewedBenchPath (set by BenchPage) so the bar always names the bench in focus.
@@ -16,14 +16,27 @@ import { baseName } from "../lib/bench-view";
 
 export function WorkspaceBar() {
   const { t } = useTranslation();
-  const isRunning = useAppStore((s) => s.isRunning);
   const setPage = useAppStore((s) => s.setPage);
   const page = useAppStore((s) => s.page);
-  const terminalOpen = useAppStore((s) => s.terminalOpen);
-  const toggleTerminal = useAppStore((s) => s.toggleTerminal);
   const viewedBenchPath = useAppStore((s) => s.viewedBenchPath);
   const viewedBenchSiteCount = useAppStore((s) => s.viewedBenchSiteCount);
   const bench = useBenchContext();
+  // Active session model + permission for the right chip cluster.
+  const activeSessionId = useAppStore((s) => s.activeSessionId);
+  const sessions = useAppStore((s) => s.sessions);
+  const activeSession = sessions.find((s) => s.id === activeSessionId);
+  const modelId = activeSession?.modelId ?? null;
+  const permMode = activeSession?.permissionMode ?? null;
+  // "ask" / "inherit" / null = supervised (default Pi Desktop behavior).
+  // "auto" = fully autonomous. "accept-edits" = mid-tier.
+  const isSupervisedMode =
+    permMode === "ask" || permMode === "inherit" || permMode == null;
+  // D design: show "Supervised" for ask/inherit, "Auto" otherwise.
+  const permLabel = isSupervisedMode
+    ? t("workspaceBar.supervised", { defaultValue: "Supervised" })
+    : permMode === "accept-edits"
+      ? t("workspaceBar.acceptEdits", { defaultValue: "Accept edits" })
+      : t("workspaceBar.autonomous", { defaultValue: "Auto" });
 
   // Resolve display values — prefer live supervisor context, fall back to viewed bench.
   const hasLiveBench = bench.kind !== "empty";
@@ -33,8 +46,10 @@ export function WorkspaceBar() {
       ? baseName(viewedBenchPath)
       : null;
   const isLiveRunning = bench.kind === "running";
-  // Use supervisor site if running; otherwise viewed bench site count.
-  const siteCount = hasLiveBench ? (bench.site ? 1 : 0) : viewedBenchSiteCount;
+  // siteCount: both "running" and "stopped" states carry siteCount (workspace-bar-state.ts).
+  const siteCount = bench.kind === "running" || bench.kind === "stopped"
+    ? bench.siteCount
+    : viewedBenchSiteCount;
 
   return (
     <div className="workspace-bar" role="status" aria-label="Workspace context">
@@ -100,25 +115,21 @@ export function WorkspaceBar() {
         </>
       )}
 
-      {isRunning && (
-        <>
-          <span className="workspace-bar-sep" aria-hidden="true">·</span>
-          <span className="workspace-bar-agent-state" aria-label="Agent working">
-            ◐ agent working
-          </span>
-        </>
-      )}
-
-      {page === "chat" && (
-        <button
-          type="button"
-          className="workspace-bar-choose-btn workspace-bar-terminal-btn no-drag"
-          aria-pressed={terminalOpen}
-          title={t("terminal.toggle")}
-          onClick={toggleTerminal}
-        >
-          {t("terminal.title")}
-        </button>
+      {/* D design: right side — model name + permission chip */}
+      {(modelId || permMode != null) && page === "chat" && (
+        <div className="workspace-bar-model-cluster" aria-label={t("workspaceBar.sessionConfig", { defaultValue: "Session config" })}>
+          {modelId && (
+            <span className="workspace-bar-model">{modelId}</span>
+          )}
+          {(modelId && permMode != null) && (
+            <span className="workspace-bar-sep" aria-hidden="true">·</span>
+          )}
+          {permMode != null && (
+            <span className="workspace-bar-perm">
+              {permLabel}
+            </span>
+          )}
+        </div>
       )}
     </div>
   );

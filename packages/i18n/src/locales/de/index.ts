@@ -215,6 +215,10 @@ export const de = {
     site: "Site",
     sites: "Sites",
     openBenchLog: "Bench-Log öffnen",
+    supervised: "Überwacht",
+    acceptEdits: "Bearbeitungen akzeptieren",
+    autonomous: "Auto",
+    sessionConfig: "Sitzungskonfiguration",
   },
   "sessionCollaboration": {
     "statusIdle": "Inaktiv",
@@ -640,6 +644,9 @@ export const de = {
     "turnSummaryRead": "{{count}} gelesen",
     "turnSummaryFetched": "{{count}} abgerufen",
     "turnSummarySearched": "{{count}} durchsucht",
+    sessionRunning: "Läuft",
+    context: "Kontext",
+    assistantName: "Claude",
   },
   "session": {
     "renameTitle": "Aufgabe umbenennen",
