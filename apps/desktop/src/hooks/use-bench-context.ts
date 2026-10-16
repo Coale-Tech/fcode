@@ -1,46 +1,43 @@
 import { useEffect, useState } from "react";
 import { IPC } from "@pi-desktop/shared";
-import { formatWorkspaceBarState, type WorkspaceBarState } from "../lib/workspace-bar-state";
+import {
+  formatWorkspaceBarState,
+  type BenchStatusInput,
+  type WorkspaceBarState,
+} from "../lib/workspace-bar-state";
 
-type BenchStatus = "stopped" | "starting" | "running" | "failed";
+/** Capture-only bench status set by the capture rig before a shot. */
+function captureBenchOverride(): BenchStatusInput | undefined {
+  return (window as unknown as { __PI_BENCH_OVERRIDE__?: BenchStatusInput }).__PI_BENCH_OVERRIDE__;
+}
 
 /** Poll IPC.invoke.benchStatus every 3 s; pause when tab is hidden.
  * Capture override: set `window.__PI_BENCH_OVERRIDE__` to a bench-status data object. */
 export function useBenchContext(): WorkspaceBarState {
-  const override = (window as unknown as { __PI_BENCH_OVERRIDE__?: { status: string; benchPath: string; site: string } }).__PI_BENCH_OVERRIDE__;
-  const [state, setState] = useState<WorkspaceBarState>(() =>
-    override ? formatWorkspaceBarState(override as Parameters<typeof formatWorkspaceBarState>[0]) : { kind: "empty" }
-  );
+  const [state, setState] = useState<WorkspaceBarState>(() => {
+    const override = captureBenchOverride();
+    return override ? formatWorkspaceBarState(override) : { kind: "empty" };
+  });
 
   useEffect(() => {
-    if (override) {
-      setState(formatWorkspaceBarState(override as Parameters<typeof formatWorkspaceBarState>[0]));
-    }
-
     let cancelled = false;
     let intervalId: number | undefined;
 
-    // Capture override via custom event — dispatched from CDP in capture mode.
-    // Also clears the polling interval so the poll can't reset the override.
+    // Capture rig re-applies the override after a layout remount; the poll
+    // below skips while the override global is set, so it cannot reset it.
     const onOverride = (e: Event) => {
-      setState(formatWorkspaceBarState((e as CustomEvent).detail));
-      clearInterval(intervalId);
-      intervalId = undefined;
+      setState(formatWorkspaceBarState((e as CustomEvent<BenchStatusInput>).detail));
     };
     window.addEventListener("pi-bench-override", onOverride);
 
     const poll = async () => {
       // Skip if cancelled, tab hidden, or a capture override is active.
       if (document.hidden || cancelled) return;
-      if ((window as unknown as { __PI_BENCH_OVERRIDE__?: unknown }).__PI_BENCH_OVERRIDE__) return;
+      if (captureBenchOverride()) return;
       const bridge = window.piDesktop;
       if (!bridge?.invoke) return;
       try {
-        const result = await bridge.invoke<{
-          status: string;
-          benchPath: string | null;
-          site: string | null;
-        }>(IPC.invoke.benchStatus);
+        const result = await bridge.invoke<BenchStatusInput>(IPC.invoke.benchStatus);
         if (!cancelled && result.ok) {
           setState(formatWorkspaceBarState(result.data));
         }
@@ -48,7 +45,7 @@ export function useBenchContext(): WorkspaceBarState {
     };
 
     void poll();
-    intervalId = setInterval(() => void poll(), 3000);
+    intervalId = window.setInterval(() => void poll(), 3000);
     const onVisible = () => { if (!document.hidden) void poll(); };
     document.addEventListener("visibilitychange", onVisible);
 
@@ -58,7 +55,6 @@ export function useBenchContext(): WorkspaceBarState {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("pi-bench-override", onOverride);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return state;

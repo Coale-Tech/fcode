@@ -1315,10 +1315,6 @@ export function installCaptureRig(): CaptureRig {
         site: `${benchName}.localhost`,
       };
     },
-    seedNotifications: (count = 3) => {
-      if (!window.__PI_CAPTURE__) return;
-      useAppStore.setState({ unreadNotificationCount: count });
-    },
   };
   return {
     ...methods,

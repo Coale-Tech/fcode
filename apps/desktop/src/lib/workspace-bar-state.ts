@@ -12,11 +12,13 @@ function lastSegment(path: string): string {
   return path.split(/[\\/]/).filter(Boolean).pop() ?? path;
 }
 
-export function formatWorkspaceBarState(opts: {
+export type BenchStatusInput = {
   benchPath: string | null;
   site: string | null;
   status: string;
-}): WorkspaceBarState {
+};
+
+export function formatWorkspaceBarState(opts: BenchStatusInput): WorkspaceBarState {
   if (!opts.benchPath) return { kind: "empty" };
   const benchName = lastSegment(opts.benchPath);
   if (opts.status === "running") return { kind: "running", benchName, site: opts.site };
