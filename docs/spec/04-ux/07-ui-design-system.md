@@ -1427,3 +1427,106 @@ is reserved for non-Settings contexts where OS-level rendering is acceptable.
   individual tiles. No per-kind scan card, no tinted group band, no second
   copy of the settings row scaffold
 - Light destination cards use white elevated plates (not flat gray fills)
+
+## Direction D — shell chrome and navigation layouts
+
+Direction D replaces the legacy fixed-sidebar layout with three user-selectable
+navigation variants. The choice is persisted as `AppSettings.navLayout` and
+applied at boot by writing `data-nav-layout` on `<html>`.
+
+### D-shell token contract
+
+All Direction D values come from `kit-d/D.css` variables and must not be
+hardcoded in component CSS.
+
+| Token | Light | Dark | Usage |
+|-------|-------|------|-------|
+| `--da` | `#2578ab` *(approved deviation)* | `#2578ab` | Primary accent |
+| `--da-sub` | alpha tint of `--da` | alpha tint | Active-item background fill |
+| `--da-txt` | `#ffffff` | `#0a1f2e` *(approved deviation)* | Text on accent fill |
+| `--da-bdr` | alpha tint | alpha tint | Accent ring / focus outline |
+| `--d-border` | `#e5e7eb` | `#2a2a2a` | Panel/card separator |
+| `--d-border-ctrl` | `#d1d5db` | `#3a3a3a` | Control border (inputs, selects) |
+| `--d-canvas-bg` | `#f0f2f5` | `#111111` | App canvas behind panels |
+| `--d-r-ctrl` | `6px` | `6px` | Control border-radius |
+| `--d-text` | `13px` | `13px` | Base text size in shell chrome |
+| `--d-navbar-h` | `48px` | `48px` | Shell navbar height |
+| `--surface-elevation-1` | `#ffffff` | `#1c1c1c` | Panel / settings card surface |
+| `--surface-gray-1` | `#f8f9fa` | `#242424` | Panel header fill |
+| `--ink-gray-8` | `#1a1a1a` | `#e8e8e8` | Primary label text |
+| `--ink-gray-5` | `#6b7280` | `#8a8a8a` | Secondary / description text |
+| `--ink-gray-4` | `#9ca3af` | `#666666` | Placeholder / icon fill |
+
+> **Approved deviations from kit-d/D.css defaults**: light accent `--da = #2578ab`
+> (instead of default violet `#6d28d9`); dark on-accent `--da-txt = #0a1f2e`
+> (instead of white); dark switch knob colour follows `--da-txt`.
+> All other tokens match kit-d/D.css verbatim.
+
+### Layout variants
+
+Three variants are shipped. The `navLayout` setting selects the active variant
+instantly; the value is written to `data-nav-layout` on `<html>` and read by
+CSS selectors and the `resolveNavLayout()` helper.
+
+| Value | Name | Rail width | Description |
+|-------|------|-----------|-------------|
+| `tabs` | D1 — Top tabs | 0px rail | 48px navbar hosts brand logo, full `<NavTabs>` strip, centred awesomebar, right cluster. No persistent sidebar; pages fill full width. |
+| `rail` | D2 — Icon rail | 50px | 48px navbar shows breadcrumb; 50px icon rail at left edge holds page icons + notification bell at foot. Right cluster (bench chip + bell + settings + avatar) in navbar. |
+| `island` | D3 — Island sidebar | 60px + 256px | Same 50px rail + 256px island panel floated as a card inside the canvas. Settings page renders its own nav inside the island space; content pane shrinks to ~820px. |
+
+#### Shell chrome metrics (from `nav-layout.ts`)
+
+| Layout | Traffic-light reserve | Shell navbar | Rail width | Island width |
+|--------|----------------------|-------------|-----------|-------------|
+| `tabs` | 78px | 48px | — | — |
+| `rail` | 56px | 48px | 50px | — |
+| `island` | 56px | 48px | 60px | 256px |
+
+### Shell navbar right cluster
+
+All three layouts render the same right-end cluster in `ShellNavbar`:
+
+1. **Bench chip** — shown only when `useBenchContext().kind !== "empty"`;
+   displays bench name, running/stopped dot, `IconChevronDown`; navigates to
+   Bench page on click.
+2. **Notification bell** — `<NotificationCenter>` component.
+3. **Settings button** — `IconSettings`, navigates to Settings page.
+4. **Avatar placeholder** — `shell-navbar-avatar` button with `IconTerminal`.
+
+D1 (`tabs`) additionally shows the brand logo and `<NavTabs>` in the start
+slot. D2/D3 (`rail`/`island`) show a breadcrumb: `Fcode / PageName / TabName`.
+
+### Settings nav panel (all layouts)
+
+The Settings page always renders its own 240px navigation panel regardless of
+the active shell layout. In D3 (island), this panel sits alongside the 256px
+global island sidebar.
+
+#### Nav groups and items (Direction D reference)
+
+| Group | Items |
+|-------|-------|
+| **Preferences** | General · Shortcuts · Voice *(Beta)* |
+| **AI** | AI Defaults · Instructions · Models & Providers · Memory · AI Agents · AI Tools · Extensions · Kanban · Raven · Advanced omp · omp Tools |
+| **Workspace** | Import · Projects |
+| **System** | About |
+
+Cloud sync and Remote hosts are `developerOnly` and hidden unless
+`AppSettings.developerMode === true`.
+
+Voice is visible to all users (experimentalBadge: "Beta").
+
+### Font size presets
+
+The Appearance section exposes four font-scale presets via a segmented control.
+Labels match the numeric px values as displayed to the user:
+
+| Key | Value | Scale |
+|-----|-------|-------|
+| `settings.fontSizeSmall` | `"12"` | `FONT_SCALE_PRESETS.small` |
+| `settings.fontSizeDefault` | `"13"` | `FONT_SCALE_PRESETS.default` |
+| `settings.fontSizeLarge` | `"14"` | `FONT_SCALE_PRESETS.large` |
+| `settings.fontSizeXl` | `"15"` | `FONT_SCALE_PRESETS.xl` |
+
+The slider and percentage readout present in pre-D versions are removed; the
+segmented control is the sole font-size control (`FontSizeRow.tsx`).
