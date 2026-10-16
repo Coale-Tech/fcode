@@ -41,8 +41,11 @@ export const OmpActivityTab = memo(function OmpActivityTab() {
   );
   const openWorkPanelTab = useAppStore((s) => s.openWorkPanelTab);
   const resolvePermission = useAppStore((s) => s.resolvePermission);
+  // SESSION panel (OmpTuiPanel + OmpCollabPanel) only for remote-connected sessions.
+  // "desktop" source = plain local session → no TUI launcher needed; hides the
+  // "OPEN IN OMP TUI" / "SHARE SNAPSHOT" sections that do not appear in ref D1-D3.
   const isOmpSession = useAppStore((s) =>
-    sessionId ? s.sessions.find((x) => x.id === sessionId)?.source !== "pi-native" : false,
+    sessionId ? s.sessions.find((x) => x.id === sessionId)?.source === "remote" : false,
   );
   const projectPath = useAppStore((s) => s.workspace?.path ?? undefined);
 

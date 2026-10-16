@@ -913,7 +913,10 @@ export function WorkPanel({
             </TooltipButton>
           </div>
         </div>
-        {/* Direction D: fixed 4-tab strip — Review / Browser / Tools / Files */}
+        {/* Direction D: fixed 4-tab strip — Review / Browser / Tools / Files
+             Hidden when Activity tab is active (OmpActivityTab renders its own
+             Todos / Timeline / Changes sub-tabs in that case, matching ref D1/D2/D3). */}
+        {activeTab?.kind !== "activity" && (
         <div className="wp-d-tabs no-drag" role="tablist" aria-label={t("panel.tabsLabel")}>
           <button
             type="button"
@@ -969,6 +972,7 @@ export function WorkPanel({
             {t("panel.tabs.file", "Files")}
           </button>
         </div>
+        )}
         <div className="work-panel-body">
           {activeTab?.kind === "activity" && (
             <div

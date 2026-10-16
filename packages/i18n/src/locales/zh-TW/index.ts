@@ -131,6 +131,7 @@ export const zhTW = {
     build: "建置",
     bench: "Bench",
     newTask: "新建任務",
+    newSession: "新建會話",
     newProject: "新建專案",
     projects: "專案",
     plugins: "擴充套件",

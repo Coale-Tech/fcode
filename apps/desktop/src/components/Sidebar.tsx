@@ -2334,7 +2334,8 @@ export function Sidebar({
               {bench.kind !== "empty" ? (
                 <>
                   <span className={`d3-bench-dot ${bench.kind === "running" ? "is-on" : "is-off"}`} aria-hidden />
-                  {workspace?.name ?? bench.benchName}
+                  {/* D design: show bench name (coale_v16), not workspace project name */}
+                  {bench.benchName ?? workspace?.name}
                 </>
               ) : (
                 workspace?.name ?? t("workspaceBar.noBench")
@@ -2342,11 +2343,11 @@ export function Sidebar({
             </div>
             <div className="d3-sb-bench-sub">
               {bench.kind === "running"
-                ? bench.site
-                  ? `${t("workspaceBar.running")} · ${bench.site}`
-                  : t("workspaceBar.running")
+                ? bench.siteCount > 0
+                  ? `${t("workspaceBar.benchRunning")} · ${bench.siteCount} ${bench.siteCount === 1 ? t("workspaceBar.site") : t("workspaceBar.sites")}`
+                  : t("workspaceBar.benchRunning")
                 : bench.kind === "stopped"
-                ? t("workspaceBar.stopped")
+                ? t("workspaceBar.benchStopped")
                 : t("workspaceBar.chooseBench")}
             </div>
           </button>
@@ -2356,7 +2357,7 @@ export function Sidebar({
             onClick={() => void createSession({ projectPath: null })}
           >
             <IconNewSession size={12} aria-hidden />
-            {t("nav.newTask")}
+            {t("nav.newSession", { defaultValue: "New session" })}
           </button>
           <div className="d3-sb-search no-drag">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>

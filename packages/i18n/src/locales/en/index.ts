@@ -136,6 +136,7 @@ export const en = {
     build: "Build",
     bench: "Bench",
     newTask: "New task",
+    newSession: "New session",
     newProject: "New project",
     projects: "Projects",
     plugins: "Extensions",

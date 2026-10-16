@@ -131,6 +131,7 @@ export const zhCN = {
     build: "构建",
     bench: "Bench",
     newTask: "新建任务",
+    newSession: "新建会话",
     newProject: "新建项目",
     projects: "项目",
     plugins: "扩展",

@@ -1168,6 +1168,9 @@ export function installCaptureRig(): CaptureRig {
         page: "chat",
         // D design: seed user name so user message avatars render with initials.
         chatUserName: "Josh Kim",
+        // D3 island PINNED PAGES: show Kanban + Raven + FileBird as in ref D3.
+        kanbanEnabled: true,
+        ravenEnabled: true,
       });
     },
     seedApprovalCard: () => {
@@ -1277,8 +1280,31 @@ export function installCaptureRig(): CaptureRig {
         activeWorkPanelTabId: ACTIVITY_TAB.id,
         workPanelFileRequest: null,
       });
+      // Seed todo phases for the Activity panel OPEN TODOS list (ref D1/D2/D3).
+      const fakeTodoPhases = [
+        {
+          id: "cap-phase-0",
+          name: "Payment entry sync",
+          tasks: [
+            {
+              id: "cap-todo-0",
+              content: "Verify payment_entry module loads after sync",
+              status: "completed" as const,
+            },
+            {
+              id: "cap-todo-1",
+              content: "Run bench migrate on coale_v16 after changes",
+              status: "pending" as const,
+            },
+          ],
+        },
+      ];
       useAppStore.setState({
         pendingPermissions: enqueuePermission({}, permRequest),
+        sessionTodoPhases: {
+          ...useAppStore.getState().sessionTodoPhases,
+          [activeSessionId]: fakeTodoPhases,
+        },
       });
     },
     clearPendingPermissions: () => {

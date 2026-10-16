@@ -138,6 +138,7 @@ export const tr = {
     build: "Build",
     bench: "Bench",
     newTask: "Yeni görev",
+    newSession: "Yeni oturum",
     newProject: "Yeni proje",
     projects: "Projeler",
     plugins: "Uzantılar",
