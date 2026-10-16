@@ -5,7 +5,64 @@
 
 /* Codex settings: full-window page (no app sidebar) */
 .app-shell.settings-mode {
+  display: flex;
+  flex-direction: column;
   background: var(--ds-bg-primary);
+}
+/* Flex row: NavRail (D2) | settings shell (D1/D2 settings mode) */
+.settings-mode-body {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  background: var(--d-canvas-bg);
+}
+
+/* D canvas (kit-d/D.css .d-canvas + .d-panel; pages-d/settings-general-appearance):
+ * the settings nav and the form are two elevated panels floating on the gray
+ * canvas. D1/D2 own the canvas gutter here; in D3 the island main-pane already
+ * pads by --d-gap, so only the gap between the two panels is added. */
+.settings-mode-body .settings-shell-full {
+  padding: var(--d-gap);
+  gap: var(--d-gap);
+  background: var(--d-canvas-bg);
+}
+:root[data-nav-layout="island"] .settings-shell-full {
+  gap: var(--d-gap);
+  background: transparent;
+}
+:root[data-nav-layout] .settings-mode-body .settings-shell-full > .settings-nav.sidebar-surface,
+:root[data-nav-layout="island"] .settings-shell-full > .settings-nav.sidebar-surface,
+.settings-mode-body .settings-shell-full > .settings-content,
+:root[data-nav-layout="island"] .settings-shell-full > .settings-content {
+  background-color: var(--surface-elevation-1);
+  background-image: none;
+  border: 1px solid var(--outline-elevation-1);
+  border-radius: var(--d-r);
+  box-shadow: var(--elevation-base);
+  overflow: hidden;
+}
+:root[data-theme="dark"][data-nav-layout] .settings-mode-body .settings-shell-full > .settings-nav.sidebar-surface,
+:root[data-theme="dark"][data-nav-layout="island"] .settings-shell-full > .settings-nav.sidebar-surface,
+:root[data-theme="dark"] .settings-mode-body .settings-shell-full > .settings-content,
+:root[data-theme="dark"][data-nav-layout="island"] .settings-shell-full > .settings-content {
+  border-color: var(--outline-gray-2);
+}
+/* The ShellNavbar above owns the drag band and traffic lights in every layout,
+ * so the panels need no titlebar clearance. */
+.settings-mode-body .settings-titlebar,
+:root[data-nav-layout="island"] .settings-shell-full .settings-titlebar {
+  display: none;
+}
+.settings-mode-body .settings-search-wrap,
+:root[data-nav-layout="island"] .settings-shell-full .settings-search-wrap {
+  padding: var(--d-field-px);
+}
+.settings-mode-body .settings-page-header,
+:root[data-nav-layout="island"] .settings-shell-full .settings-page-header {
+  padding: 0 14px;
+  min-height: var(--d-ph-h, 48px);
 }
 
 :root[data-plugin-theme^="plugin:io.github.akshayxkill.nexus-scenic-themes:"] .app-shell.settings-mode,
@@ -310,18 +367,18 @@
   white-space: nowrap;
 }
 
+/* D: the dot is an attention signal only (settings nav + rail gear carry no
+ * dot in pages-d/settings-general-appearance); healthy, off and unknown stay quiet. */
 .memory-status-dot {
+  display: none;
   width: 6px;
   height: 6px;
   flex: 0 0 auto;
   border-radius: var(--radius-full);
-  background: var(--color-text-muted);
 }
 
-.memory-status-dot[data-health="ok"]       { background: var(--color-success); }
-.memory-status-dot[data-health="degraded"] { background: var(--color-warning); }
-.memory-status-dot[data-health="error"]    { background: var(--color-error); }
-/* off/unknown keep muted color */
+.memory-status-dot[data-health="degraded"] { display: block; background: var(--color-warning); }
+.memory-status-dot[data-health="error"]    { display: block; background: var(--color-error); }
 
 /* D: content column is a d-panel — flex column, no outer scroll */
 .settings-content {
@@ -424,6 +481,13 @@
   font-size: var(--d-text);
   font-weight: 600;
   line-height: 1.4;
+}
+
+/* D: sf-head leading icon (fragment-d1.html sf-head svg) */
+.settings-card-heading-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--ink-gray-5);
 }
 
 /* D: sf-head — full header band (icon + h3 + help mark) */

@@ -54,10 +54,13 @@ export function SettingsRow({
 export function SettingsCard({
   title,
   description,
+  icon,
   children,
 }: {
   title?: string;
   description?: string;
+  /** Leading heading glyph (D sf-head: icon + title). */
+  icon?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -69,6 +72,7 @@ export function SettingsCard({
           list of headings should not read out every explanation.
         */
         <div className="settings-card-heading-help">
+          {icon ? <span className="settings-card-heading-icon" aria-hidden>{icon}</span> : null}
           <h3 className="settings-card-heading">{title}</h3>
           {description ? <HelpIcon label={description} /> : null}
         </div>

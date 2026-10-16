@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { IPC } from "@pi-desktop/shared";
 import { formatWorkspaceBarState, type WorkspaceBarState } from "../lib/workspace-bar-state";
+// BenchStatusOverride is declared on Window in renderer-api; re-import the type for guard use.
+import type { BenchStatusOverride } from "../capture/renderer-api";
 
 type BenchStatus = "stopped" | "starting" | "running" | "failed";
 
@@ -12,13 +14,17 @@ export function useBenchContext(): WorkspaceBarState {
     let cancelled = false;
 
     const poll = async () => {
-      if (document.hidden || cancelled) return;
-      // Capture-rig override: skip IPC and use injected mock state.
-      const mock = (window as unknown as Record<string, unknown>).__PI_BENCH_MOCK__ as Parameters<typeof formatWorkspaceBarState>[0] | undefined;
-      if (mock) {
-        if (!cancelled) setState(formatWorkspaceBarState(mock));
-        return;
+      if (cancelled) return;
+      // Capture-rig override: runs even when document.hidden so CDP-driven
+      // screenshots always see bench state regardless of OS window visibility.
+      if (window.__PI_CAPTURE__) {
+        const override: BenchStatusOverride = window.__PI_BENCH_OVERRIDE__ ?? null;
+        if (override !== null) {
+          setState(formatWorkspaceBarState(override));
+          return;
+        }
       }
+      if (document.hidden) return;
       const bridge = window.piDesktop;
       if (!bridge?.invoke) return;
       try {
@@ -36,12 +42,15 @@ export function useBenchContext(): WorkspaceBarState {
     void poll();
     const id = setInterval(() => void poll(), 3000);
     const onVisible = () => { if (!document.hidden) void poll(); };
+    const onBenchUpdate = () => { void poll(); };
     document.addEventListener("visibilitychange", onVisible);
+    document.addEventListener("pi:bench-update", onBenchUpdate);
 
     return () => {
       cancelled = true;
       clearInterval(id);
       document.removeEventListener("visibilitychange", onVisible);
+      document.removeEventListener("pi:bench-update", onBenchUpdate);
     };
   }, []);
 

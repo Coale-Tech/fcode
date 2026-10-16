@@ -53,11 +53,14 @@ export function WorkspaceBar() {
       ? baseName(viewedBenchPath)
       : null;
   const isLiveRunning = bench.kind === "running";
-  // viewedBenchSiteCount is set from discovery when user navigates to a bench;
-  // it's more accurate (reflects all sites) than the supervisor's single activeSite.
-  const siteCount = viewedBenchSiteCount > 0
-    ? viewedBenchSiteCount
-    : (hasLiveBench ? (bench.site ? 1 : 0) : 0);
+  // viewedBenchSiteCount is set from discovery when the user navigates to a bench and is more
+  // accurate (all sites) than the supervisor's single activeSite; a bench-state siteCount
+  // (capture override) wins when provided.
+  const siteCount = hasLiveBench && bench.siteCount != null
+    ? bench.siteCount
+    : viewedBenchSiteCount > 0
+      ? viewedBenchSiteCount
+      : (hasLiveBench ? (bench.site ? 1 : 0) : 0);
 
   return (
     <div className="workspace-bar" role="status" aria-label="Workspace context">

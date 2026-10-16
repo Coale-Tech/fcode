@@ -61,6 +61,9 @@ export type CaptureRigMethods = {
   /** Seed a fake running bench in the status bar and navbar bench chip.
    *  benchPath defaults to "/bench/coale_v16", siteCount to 3. */
   seedBenchStatus: (opts?: { benchPath?: string; siteCount?: number }) => void;
+  clearPendingPermissions: () => void;
+  seedEmptyHome: () => void;
+  seedOnboardingChecklist: () => void;
 };
 
 export type CaptureRig = CaptureRigMethods & {
@@ -1203,83 +1206,144 @@ export function installCaptureRig(): CaptureRig {
       api.ompWorktreeList = async () => ({ worktrees: fakeWorktrees });
     },
     ensureVisualFixtures: async () => {
-      // Destructive fixture seeding is capture-rig only; the rig sets
-      // __PI_CAPTURE__ before invoking (see electron/main capture suite).
       if (!window.__PI_CAPTURE__) return;
-      // Optical hero title length: short folder basenames under-ink vs Codex gold.
       const ws = useAppStore.getState().workspace;
       if (ws?.path) {
-        const base = (ws.name || ws.path.split(/[\/]/).filter(Boolean).pop() || "").trim();
+        const base = (ws.name || ws.path.split(/[/]/).filter(Boolean).pop() || "").trim();
         if (base.length > 0 && base.length < 12) {
-          useAppStore.setState({
-            workspace: { ...ws, name: "PI-Desktop" },
-          });
+          useAppStore.setState({ workspace: { ...ws, name: "PI-Desktop" } });
         }
       }
-      // Seed representative session titles for capture residuals (data band).
+      // Seed user initials for avatar (matches reference "JK").
+      // Also store displayName so the useEffect in useAppShellRuntime derives "JK".
+      useAppStore.setState({ userInitials: "JK" });
+      // Enable kanban and raven so rail + sidebar show all feature items.
+      // Patch the IPC fetch so NavRail's useEffect cannot overwrite the enabled state.
+      useAppStore.setState({ kanbanEnabled: true, ravenEnabled: true });
+      api.kanbanSettingsGet = async () => ({ settings: { enabled: true, maxInProgress: 3, maxRuntimeSeconds: 3600, maxAgentCardsPerSession: 10, maxDailySpawns: 20 } });
+      api.ravenSettingsGet = async () => ({ settings: { enabled: true, url: "" } });
+      // Seed 3 notifications for bell badge.
+      methods.seedNotifications(3);
+      // Seed English session titles matching the reference design (variant-D1/D2/D3).
       try {
         await useAppStore.getState().refreshSessions();
-        const englishNoise = new Set([
-          "Review open pull requests",
-          "Tighten composer elevation",
-          "Dark theme night plate",
-          "Sidebar recents density",
-          "Settings appearance polish",
-          "Plugins empty state",
-          "Fix TypeScript build errors",
-          "Exploring repository structure",
-        ]);
+        // Remove legacy/noise fixture titles. Record<string, true> for static lookup.
+        const legacyNoise: Record<string, true> = {
+          "同步代码": true, "你好": true, "终止进程里面有一个注册机的": true, "加一下": true,
+          "帮我彻底卸载比特浏览器": true, "帮我配置一下这个项目并启动": true,
+          "重新设计设置页面插件板块手机端ui布局": true, "制作台的布局重新设计，需要现代化简": true,
+          "Review open pull requests": true, "Tighten composer elevation": true,
+          "Dark theme night plate": true, "Sidebar recents density": true,
+          "Settings appearance polish": true, "Plugins empty state": true,
+          "Fix TypeScript build errors": true, "Exploring repository structure": true,
+        };
         for (const s of useAppStore.getState().sessions || []) {
-          if (englishNoise.has((s.title || "").trim())) {
-            try {
-              await api.deleteSession(s.id);
-            } catch {
-              // ignore
-            }
+          if (legacyNoise[(s.title || "").trim()]) {
+            try { await api.deleteSession(s.id); } catch { /* ignore */ }
           }
         }
         await useAppStore.getState().refreshSessions();
+        // Dynamic membership tracking for dedup during session creation.
         const existing = new Set(
           (useAppStore.getState().sessions || []).map((s) => (s.title || "").trim()),
         );
-        const titles = [
-          "同步代码",
-          "你好",
-          "终止进程里面有一个注册机的",
-          "加一下",
-          "帮我彻底卸载比特浏览器",
-          "帮我配置一下这个项目并启动",
-          "重新设计设置页面插件板块手机端ui布局",
-          "制作台的布局重新设计，需要现代化简",
+        // Pinned page sessions (sidebar PINNED section).
+        const pinnedTitles = [
+          "Kanban · coale_v16",
+          "Raven · #general",
+          "FileBird workspace",
         ];
-        for (const title of titles) {
+        // Main session titles matching variant-D1/D2/D3 reference.
+        const regularTitles = [
+          // Created oldest-first so most-recently-created = Sync ERPNext (appears at TOP
+          // of the session list sorted by createdAt DESC).
+          "Debug bench worker crash",
+          "Install hrms on coale_staging",
+          "Refactor payment_entry hooks",
+          "Frappe UI modal refactor",
+          "Debug slow stock valuation query",   // THIS WEEK
+          "Set up coale_v16 from scratch",      // THIS WEEK
+          "ERPNext payroll period config",      // YESTERDAY
+          "Review PR #224 leave approvals",     // YESTERDAY
+          "Migrate Raven to frappe-ui v2",      // YESTERDAY
+          "Fix duplicate bench start bug",      // TODAY
+          "Redesign settings plugin section",   // TODAY
+          "Sync ERPNext code module",           // TODAY — selected (created LAST = most recent)
+        ];
+        for (const title of [...pinnedTitles, ...regularTitles]) {
           if (existing.has(title)) continue;
-          if ((useAppStore.getState().sessions?.length ?? 0) >= 14) break;
+          if ((useAppStore.getState().sessions?.length ?? 0) >= 16) break;
           await api.createSession({ title });
           existing.add(title);
         }
         await useAppStore.getState().refreshSessions();
-        const preferred = useAppStore
-          .getState()
-          .sessions.find((s) => (s.title || "").trim() === "同步代码");
-        if (preferred) {
-          try {
-            const raw = localStorage.getItem("pi.desktop.pinnedSessions");
-            const parsed = raw ? JSON.parse(raw) : [];
-            const pins = Array.isArray(parsed) ? parsed.filter((x) => typeof x === "string") : [];
-            if (!pins.includes(preferred.id)) {
-              localStorage.setItem(
-                "pi.desktop.pinnedSessions",
-                JSON.stringify([preferred.id, ...pins].slice(0, 40)),
-              );
-            }
-          } catch {
-            // ignore
+        // Pin the pinned-page sessions in localStorage.
+        const allSessions = useAppStore.getState().sessions ?? [];
+        try {
+          const raw = localStorage.getItem("pi.desktop.pinnedSessions");
+          const parsed = raw ? JSON.parse(raw) : [];
+          const pins: string[] = Array.isArray(parsed)
+            ? parsed.filter((x) => typeof x === "string")
+            : [];
+          for (const pt of pinnedTitles) {
+            const s = allSessions.find((s2) => (s2.title || "").trim() === pt);
+            if (s && !pins.includes(s.id)) pins.unshift(s.id);
           }
+          localStorage.setItem("pi.desktop.pinnedSessions", JSON.stringify(pins.slice(0, 40)));
+        } catch { /* ignore */ }
+        // Select "Sync ERPNext code module" as the active session.
+        const preferred = allSessions.find(
+          (s) => (s.title || "").trim() === "Sync ERPNext code module",
+        );
+        if (preferred) {
           await useAppStore.getState().selectSession(preferred.id);
         }
-      } catch {
-        // optional capture-only fixture
+        // Seed fontFamily: InterVariable to match reference font-family dropdown.
+        try {
+          const currentSettings = await window.piDesktop?.invoke("pi-desktop/settings/get");
+          if (currentSettings && typeof currentSettings === "object") {
+            await window.piDesktop?.invoke("pi-desktop/settings/set", {
+              ...currentSettings,
+              fontFamily: "InterVariable",
+              displayName: "Josh Kim",
+            });
+          }
+        } catch { /* non-fatal if settings IPC unavailable */ }
+      // Remove the PROJECTS section from the D3 sidebar: the open workspace path
+      // causes an "apps" project group to appear. Hide it in capture mode.
+      useAppStore.setState({ openProjectPaths: [] });
+      } catch { /* optional capture-only fixture */ }
+    },
+    clearPendingPermissions: () => {
+      if (!window.__PI_CAPTURE__) return;
+      useAppStore.setState({ pendingPermissions: {} });
+    },
+    seedEmptyHome: () => {
+      // Clears active session so emptyTitle shows; forces onboarding checklist visible.
+      if (!window.__PI_CAPTURE__) return;
+      useAppStore.setState({
+        messages: [],
+        sessions: [],
+        activeSessionId: undefined,
+        retainedSessionIds: [],
+        retainedTranscripts: {},
+        pendingPermissions: {},
+        runningSessions: {},
+        workPanelOpen: false,
+        openProjectPaths: [],
+        page: "chat",
+      });
+      const cur = useAppStore.getState().onboarding;
+      if (cur) {
+        useAppStore.setState({ onboarding: { ...cur, showChecklist: true } });
+      }
+    },
+    seedOnboardingChecklist: () => {
+      // Force onboarding checklist visible regardless of backend state.
+      if (!window.__PI_CAPTURE__) return;
+      const cur = useAppStore.getState().onboarding;
+      if (cur) {
+        useAppStore.setState({ onboarding: { ...cur, showChecklist: true } });
       }
     },
     seedBenchStatus: (opts) => {

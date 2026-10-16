@@ -30,16 +30,25 @@ export type RendererApi = {
   setThemeAttr: (theme: "light" | "dark") => void;
   setTheme: (theme: "light" | "dark" | "system") => void;
   setNavLayout: (layout: NavLayout) => void;
+  setFontFamily: (family: string) => void;
+  setKanbanRaven: (enabled: boolean) => void;
   getSettings: () => AppSettings | null;
   clearProject: () => Promise<void>;
+  clearOpenProjects: () => void;
   showToast: (message: string, opts?: ToastOptions) => void;
+  seedBenchStatus: (data: BenchStatusOverride) => void;
 } & (CaptureRigStubs | CaptureRigMethods);
+
+/** Shape accepted by seedBenchStatus and read by useBenchContext. */
+export type BenchStatusOverride = { status: string; benchPath: string | null; site: string | null; siteCount?: number } | null;
 
 declare global {
   interface Window {
     __PI_DESKTOP__?: RendererApi;
     /** Set by the capture suite before it calls any fixture method. */
     __PI_CAPTURE__?: unknown;
+    /** Overrides live IPC bench-status polling for capture screenshots. */
+    __PI_BENCH_OVERRIDE__?: BenchStatusOverride;
   }
 }
 
@@ -64,6 +73,9 @@ const CAPTURE_RIG_METHODS = [
   "seedOmpSettings",
   "ensureVisualFixtures",
   "seedBenchStatus",
+  "clearPendingPermissions",
+  "seedEmptyHome",
+  "seedOnboardingChecklist",
 ] as const satisfies readonly CaptureRigMethod[];
 
 export function installRendererApi(): () => void {
@@ -128,9 +140,22 @@ export function installRendererApi(): () => void {
       useAppStore.setState({ settings: { ...base, navLayout: layout } });
       document.documentElement.dataset.navLayout = layout;
     },
+    setKanbanRaven: (enabled) => {
+      useAppStore.setState({ kanbanEnabled: enabled, ravenEnabled: enabled });
+    },
     clearProject: () => useAppStore.getState().clearProject(),
+    clearOpenProjects: () => useAppStore.setState({ openProjectPaths: [] }),
     getSettings: () => useAppStore.getState().settings ?? null,
     showToast: (message, opts) => useAppStore.getState().showToast(message, opts),
+    setFontFamily: (family) => {
+      const s = useAppStore.getState().settings;
+      const base = s ?? ({ theme: "system", defaultMode: "plan", enterToSend: true, onboardingDismissed: false } as unknown as NonNullable<typeof s>);
+      useAppStore.setState({ settings: { ...base, fontFamily: family } });
+    },
+    seedBenchStatus: (data) => {
+      window.__PI_BENCH_OVERRIDE__ = data;
+      document.dispatchEvent(new Event("pi:bench-update"));
+    },
     ...stubs,
   };
   window.__PI_DESKTOP__ = surface;

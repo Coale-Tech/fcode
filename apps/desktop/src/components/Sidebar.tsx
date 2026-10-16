@@ -2340,9 +2340,12 @@ export function Sidebar({
             </div>
             <div className="d3-sb-bench-sub">
               {bench.kind === "running"
-                ? bench.site
-                  ? `${t("workspaceBar.running")} · ${bench.site}`
-                  : t("workspaceBar.running")
+                ? (() => {
+                    const sc = bench.siteCount != null ? bench.siteCount : bench.site ? 1 : 0;
+                    return sc > 0
+                      ? `${t("workspaceBar.benchRunning")} · ${sc} ${sc === 1 ? t("workspaceBar.site", { defaultValue: "site" }) : t("workspaceBar.sites", { defaultValue: "sites" })}`
+                      : t("workspaceBar.benchRunning", { defaultValue: "bench running" });
+                  })()
                 : bench.kind === "stopped"
                 ? t("workspaceBar.stopped")
                 : t("workspaceBar.chooseBench")}
@@ -2354,7 +2357,7 @@ export function Sidebar({
             onClick={() => void createSession({ projectPath: null })}
           >
             <IconNewSession size={12} aria-hidden />
-            {t("nav.newTask")}
+            {t("nav.newSession")}
           </button>
           <div className="d3-sb-search no-drag">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>

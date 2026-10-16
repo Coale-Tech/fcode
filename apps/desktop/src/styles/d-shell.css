@@ -326,6 +326,10 @@
   cursor: pointer; flex-shrink: 0; transition: background .12s;
 }
 .shell-navbar-avatar:hover { background: var(--surface-gray-5); }
+.shell-navbar-avatar-initials {
+  font-size: 10px; font-weight: 600; line-height: 1;
+  color: var(--ink-base); user-select: none; pointer-events: none;
+}
 
 /* ── Overflow destination menu (NavTabs "···" dropdown) ── */
 .nav-tabs-overflow-menu {
