@@ -26,6 +26,7 @@ import {
   IconSearch,
   IconSquare,
   IconTerminal,
+  IconTriangleAlert,
 } from "../icons";
 import { StatusDot } from "./BenchBadges";
 import { ContextMenu, useContextMenu } from "../ContextMenu";
@@ -124,7 +125,7 @@ export function AllBenches({
       {/* Direction D: amber warning banner when a bench is running (only one at a time) */}
       {blocker && (
         <div className="d-banner warn" style={{ margin: "10px 12px 0", flexShrink: 0, borderRadius: 8 }}>
-          <span aria-hidden="true" style={{ flexShrink: 0 }}>⚠</span>
+          <IconTriangleAlert size={14} aria-hidden="true" style={{ flexShrink: 0, marginTop: 1 }} />
           <span>
             Only one bench can run at a time.{" "}
             Stop <strong>{baseName(blocker)}</strong> before starting another.
@@ -145,9 +146,7 @@ export function AllBenches({
                   <th scope="col">Apps</th>
                   <th scope="col" className="wb-table-col-sm" style={{ textAlign: "center" }}>Sites</th>
                   <th scope="col">Status</th>
-                  <th scope="col" style={{ width: 148, textAlign: "right" }}>
-                    <span className="wb-sr-only">Action</span>
-                  </th>
+                  <th scope="col" style={{ width: 148, textAlign: "right" }}>Action</th>
                 </tr>
               </thead>
               <tbody>

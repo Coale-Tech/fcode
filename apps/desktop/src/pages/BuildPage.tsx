@@ -462,7 +462,7 @@ export function BuildPage() {
       {/* Direction D: Left sidebar — bench hero card + Studio Apps / Other Apps list */}
       <aside className="context-sidebar">
         {/* Bench hero card */}
-        <div className="wb-panel d-panel" style={{ flexShrink: 0 }}>
+        <div className="wb-panel d-panel" style={{ flex: "none" }}>
           <div className="d-mini-head">
             <span className="d-mini-title wb-truncate">{benchName ?? "No bench"}</span>
             <div className="d-mini-act">
@@ -492,7 +492,7 @@ export function BuildPage() {
         </div>
 
         {/* App list: Studio Apps + Other Apps */}
-        <div className="wb-panel d-panel" style={{ flexShrink: 0, overflow: "hidden" }}>
+        <div className="wb-panel d-panel" style={{ flex: "none", overflow: "hidden" }}>
           <div className="wb-app-section">Studio Apps</div>
           {(["studio", "builder"] as const).map((app) => {
             const installed = installedApps.includes(app);

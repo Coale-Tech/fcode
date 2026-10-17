@@ -719,11 +719,11 @@ export function BenchPage() {
                 </button>
                 <button
                   type="button"
-                  className="wb-btab-close"
+                  className="bf-tab-x"
                   aria-label={`Close ${name}`}
                   onClick={() => closeTab(b.id)}
                 >
-                  <IconClose size={12} aria-hidden="true" />
+                  <IconClose size={9} aria-hidden="true" />
                 </button>
               </div>
             );
