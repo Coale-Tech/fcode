@@ -428,6 +428,63 @@
 }
 
 
+/* ── D1 Tabs: gray canvas backdrop + island cards ─────────────────────────────
+ * Reference: sessions sidebar card + chat/page main-pane card side-by-side on
+ * a light-gray canvas. No nav rail in tabs, so BOTH sidebar and main-pane get
+ * card treatment. Uses child-margin gaps (like D2 rail) rather than padding on
+ * the parent container, so .sidebar height:100% resolves correctly.
+ */
+:root[data-nav-layout="tabs"] .app-chat-shell {
+  background: var(--d-canvas-bg);              /* light: surface-gray-2; dark: surface-base */
+}
+/* Sessions sidebar: elevation-1 card; overflow:hidden already in chrome.css clips radius */
+:root[data-nav-layout="tabs"] .sidebar {
+  margin: var(--d-gap) 0 var(--d-gap) var(--d-gap);   /* 12px gap on all sides except right */
+  border-radius: var(--d-r);
+  border: 1px solid var(--outline-elevation-1);
+}
+:root[data-nav-layout="tabs"] .sidebar-surface,
+:root[data-platform="darwin"][data-nav-layout="tabs"] .sidebar-surface {
+  background-color: var(--surface-elevation-1);        /* solid white; removes darwin glass */
+  background-image: none;
+}
+:root[data-nav-layout="tabs"] .sidebar-rail,
+:root[data-platform="darwin"][data-nav-layout="tabs"] .sidebar-rail {
+  background-color: var(--surface-elevation-1);
+  background-image: none;
+}
+/* Main pane: override base margin:8px → D gap; apply D card tokens for all pages */
+:root[data-nav-layout="tabs"] .main-pane {
+  margin: var(--d-gap);
+  border-radius: var(--d-r);
+  border: 1px solid var(--outline-elevation-1);
+  box-shadow: var(--elevation-base);
+}
+/* Workbench pages (bench/build/kanban): base CSS clears bg+overflow — restore card */
+:root[data-nav-layout="tabs"] .main-pane.is-workbench {
+  background: var(--ds-bg-primary);
+  overflow: hidden;
+}
+/* Dark mode */
+:root[data-theme="dark"][data-nav-layout="tabs"] .main-pane {
+  background: var(--surface-elevation-1);
+  border-color: var(--outline-gray-2);
+}
+:root[data-theme="dark"][data-nav-layout="tabs"] .sidebar {
+  border-color: var(--outline-gray-2);
+}
+/* List pages: hide the in-pane titlebar drag band — ShellNavbar is the drag region */
+:root[data-nav-layout="tabs"] .main-pane:not(.is-workbench) .main-titlebar {
+  display: none;
+}
+/* Remove top-padding clearance for pages that cleared the now-hidden titlebar */
+:root[data-nav-layout="tabs"] .plg-host,
+:root[data-nav-layout="tabs"] .raven-page-wrap,
+:root[data-nav-layout="tabs"] .filebird-page-wrap {
+  padding-top: 0;
+}
+
+
 /* ── D2 rail footer: notification+settings+toggle (D.css:432-449) ── */
 /* align-items:stretch puts footer items on the same full-width left-start grid
  * as scroll items (D.css:432-435 reuses .d-rail-item with margin:1px 6px). */
@@ -664,11 +721,10 @@
 :root[data-theme="dark"][data-nav-layout="island"] .d3-sb-pinned-row:hover  { background: var(--surface-gray-2); }
 :root[data-theme="dark"][data-nav-layout="island"] .d3-sb-pinned-row.active { background: var(--surface-gray-3); }
 
-/* ── D1 tabs dark: opaque sidebar surface (no canvas backdrop unlike rail/island) ──
- * In rail/island, .app-chat-shell gets background:var(--d-canvas-bg) so the
- * transparent sidebar renders correctly. In tabs layout there is no canvas bg,
- * so the sidebar must be explicitly opaque in dark mode.
- * Override darwin glass tint (1-attr specificity) with 3-attr rule. */
+/* ── D1 tabs: opaque sidebar surface (complementary dark-mode specificity bump) ──
+ * The canvas island rules above cover light+dark. These higher-specificity
+ * selectors ensure the darwin glass tint (3-attr rule) is also suppressed in
+ * dark mode when [data-theme] is present as a second attribute. */
 :root[data-theme="dark"][data-nav-layout="tabs"] .sidebar-surface,
 :root[data-platform="darwin"][data-theme="dark"][data-nav-layout="tabs"] .sidebar-surface {
   background-color: var(--surface-elevation-1);
