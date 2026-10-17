@@ -28,7 +28,8 @@ import { LogView } from "../components/bench/LogView";
 import { AllBenches } from "../components/bench/AllBenches";
 import { StatusBadge, StatusDot } from "../components/bench/BenchBadges";
 import { DestructiveActionDialog } from "../components/DestructiveActionDialog";
-import { IconClose, IconMore, IconPlay, IconPlus, IconSquare } from "../components/icons";
+import { IconClose, IconMore, IconNewProject, IconPlay, IconPlus, IconSquare } from "../components/icons";
+import { ContextMenu, useContextMenu } from "../components/ContextMenu";
 import { Button, Input, Select, TooltipButton } from "../components/ui";
 import { api } from "../lib/api";
 import {
@@ -67,6 +68,9 @@ type OneshotEntry = {
   elapsed?: string;
   output?: string;
 };
+
+/** T14: the 2×2 one-shot command grid verbs (design .wb-cmd-grid). */
+const GRID_VERBS = ["migrate", "clear-cache", "build", "list-apps"] as const;
 
 // ── Selectors ─────────────────────────────────────────────────────────────────
 
@@ -660,6 +664,7 @@ export function BenchPage() {
             )}
             <span className="wb-spacer" />
             <Button variant="secondary" size="sm" onClick={() => void pickRoot()}>
+              <IconNewProject size={12} aria-hidden="true" />
               {t("bench.addFolder", "Add folder")}
             </Button>
             <Button variant="primary" size="sm" onClick={() => void pickRoot()}>
@@ -759,6 +764,7 @@ export function BenchPage() {
               onMigrateDocTypes={docTypeMigrateAction}
               installAppName={installAppName}
               onInstallAppNameChange={setInstallAppName}
+              onClearLog={() => setLogLines([])}
             />
           ) : loading ? (
             <BenchListSkeleton />
@@ -851,6 +857,7 @@ function BenchDetail({
   onMigrateDocTypes,
   installAppName,
   onInstallAppNameChange,
+  onClearLog,
 }: {
   bench: BenchSummary;
   benches: BenchSummary[];
@@ -877,8 +884,10 @@ function BenchDetail({
   onMigrateDocTypes: ((el: HTMLButtonElement) => void) | undefined;
   installAppName: string;
   onInstallAppNameChange: (name: string) => void;
+  onClearLog?: () => void;
 }) {
   const { t } = useTranslation();
+  const { contextMenu, openContextMenu, closeContextMenu } = useContextMenu();
   // T14: fetch real apps (with versions) + procfile entries + port for this bench.
   const [detail, setDetail] = useState<{
     apps: AppWithVersion[];
@@ -946,6 +955,11 @@ function BenchDetail({
                 )}>
                 {t("bench.copy", "Copy")}
               </button>
+              {onClearLog && logLines.length > 0 && (
+                <button type="button" className="wb-log-term-btn" onClick={onClearLog}>
+                  {t("bench.clear", "Clear")}
+                </button>
+              )}
             </div>
             {logLines.length > 0 ? (
               <LogView lines={logLines} followTail={followTail}
@@ -980,7 +994,7 @@ function BenchDetail({
           )}
           {/* 2×2 icon-button grid: migrate / clear-cache / build / list-apps */}
           <div className="wb-cmd-grid">
-            {(["migrate", "clear-cache", "build", "list-apps"] as const).map((verb) => {
+            {GRID_VERBS.map((verb) => {
               const vs = oneshotState.get(oneshotKey(bench.path, verb));
               const busy = vs?.status === "running";
               return (

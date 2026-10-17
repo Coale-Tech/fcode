@@ -22,6 +22,8 @@ export type BenchIpcDependencies = {
   dataDir?: string;
   /** Native folder picker; resolves null when cancelled. */
   pickDirectory?: () => Promise<string | null>;
+  /** Reveal a path in the system file manager (shell.showItemInFolder). Optional dep so tests need not supply it. */
+  revealPath?: (path: string) => void;
 };
 
 /** The picked folder(s); empty when none was picked or the file is unreadable. */
@@ -41,6 +43,7 @@ export function registerBenchIpc({
   discover = (options = {}) => discoverBenches({ roots: defaultRoots(readSavedRoots(dataDir)), ...options }),
   dataDir,
   pickDirectory,
+  revealPath,
 }: BenchIpcDependencies): void {
   const { handle } = registrar;
 
@@ -257,5 +260,18 @@ export function registerBenchIpc({
       }
     }
     return { apps, procfileEntries, port, mainPid, workerPids };
+  });
+
+  // T14: Reveal the bench root in the system file manager (Finder / Explorer).
+  // Restricted to bench roots — never reveals arbitrary renderer-supplied paths.
+  handle(IPC.invoke.benchReveal, async (input: { benchPath?: string } = {}) => {
+    const benchPath = String(input.benchPath ?? "").trim();
+    if (!benchPath) return { ok: false as const, error: "benchPath is required" };
+    // Only allow paths that are real bench roots (present in the discovered list).
+    const { benches } = await discover();
+    const isBenchRoot = benches.some((b) => resolve(b.path) === resolve(benchPath));
+    if (!isBenchRoot) return { ok: false as const, error: "Path is not a known bench root" };
+    revealPath?.(benchPath);
+    return { ok: true as const };
   });
 }

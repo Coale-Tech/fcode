@@ -3593,6 +3593,11 @@ importConfirm: "Imported extensions run inside the agent process with the same a
     waitingForLogs: "Waiting for log output…",
     appSingular: "app",
     appPluralLabel: "apps",
+    clear: "Clear",
+    copyPath: "Copy path",
+    showInFinder: "Show in Finder",
+    dtMigrateTitle: "Migrate",
+    dtMore: "+ {{count}} more…",
   },
   terminal: {
     title: "Terminal",

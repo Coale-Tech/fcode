@@ -75,6 +75,16 @@ declare global {
     __PI_CAPTURE_FILEBIRD_VISIBLE__?: boolean;
     /** Capture-only: pre-select this PR number when PullRequestsPage loads. */
     __PI_CAPTURE_PR_SELECTED__?: number;
+    /** Capture-only bench detail (apps, procfile, port, pids) used by BenchPage BenchDetail. */
+    __PI_CAPTURE_BENCH_DETAIL__?: import("../lib/bench-detail").BenchDetail;
+    /** Capture-only bench log lines used by BenchPage log terminal. */
+    __PI_CAPTURE_BENCH_LOGS__?: Array<[string, string]>;
+    /** Capture-only oneshot state for BenchPage OneshotResult sections. */
+    __PI_CAPTURE_BENCH_ONESHOT__?: { path: string; verb: string; status: "ok" | "error"; output: string; elapsed: string };
+    /** Capture-only Studio watcher state for the Build status strip. */
+    __PI_CAPTURE_BUILD_WATCHER__?: { lastImport: string };
+    /** Capture-only DocType scan result for the bench detail DocTypes tree. */
+    __PI_CAPTURE_DOCTYPES__?: Array<{ path: string; app: string; module: string; name: string; dirty: boolean }>;
   }
 }
 

@@ -35,6 +35,7 @@ import { IPC, type Result } from "@pi-desktop/shared";
 import { buildChecks, checksFor, failing } from "../lib/build-checks";
 import { useAppStore } from "../stores/app-store";
 import { Button, SegmentedControl } from "../components/ui";
+import { IconMore, IconReview, IconTriangleAlert } from "../components/icons";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -326,11 +327,18 @@ export function BuildPage() {
       installedApps.includes("studio");
 
     if (shouldWatch) {
+      // Capture mode: seed watcher as running from __PI_CAPTURE_BUILD_WATCHER__
+      if (window.__PI_CAPTURE__) {
+        const watcher = window.__PI_CAPTURE_BUILD_WATCHER__;
+        setWatcherStatus("running");
+        setWatcherLastImport(watcher?.lastImport ?? new Date().toLocaleTimeString());
+        return;
+      }
       setWatcherStatus("starting");
       void invoke(IPC.invoke.buildStartWatcher).catch(() => setWatcherStatus("failed"));
     } else {
       setWatcherStatus("stopped");
-      void invoke(IPC.invoke.buildStopWatcher);
+      if (!window.__PI_CAPTURE__) void invoke(IPC.invoke.buildStopWatcher);
     }
     return () => {
       if (canvas === "studio") void invoke(IPC.invoke.buildStopWatcher);
@@ -455,23 +463,27 @@ export function BuildPage() {
       <aside className="context-sidebar">
         {/* Bench hero card */}
         <div className="wb-panel d-panel" style={{ flexShrink: 0 }}>
-          <div className="wb-island-hd" style={{ height: 32, padding: "0 8px 0 10px" }}>
-            <span className="wb-island-title wb-truncate" style={{ fontSize: 13 }}>
-              {benchName ?? "No bench"}
-            </span>
+          <div className="d-mini-head">
+            <span className="d-mini-title wb-truncate">{benchName ?? "No bench"}</span>
+            <div className="d-mini-act">
+              <button type="button" className="d-btn ghost icon-btn sm" title="Bench options">
+                <IconMore size={12} aria-hidden="true" />
+              </button>
+            </div>
           </div>
           <div className="wb-build-hero-body">
             <div className="wb-build-hero-row">
-              <span className={`wb-dot wb-dot-${benchBadge.hue}`} aria-hidden="true" />
+              <span className={`bf-dot ${benchBadge.hue === "green" ? "g" : benchBadge.hue === "amber" ? "am" : "gr"}`} aria-hidden="true" />
               <span className="wb-build-hero-name">{site ?? benchName ?? "—"}</span>
-              <span className={`wb-badge wb-badge-${benchBadge.hue}`} style={{ flexShrink: 0 }}>
+              <span className={`d-pill ${benchBadge.hue === "green" ? "green" : benchBadge.hue === "amber" ? "amber" : "gray"}`} style={{ fontSize: 10, height: 16, padding: "0 5px", flexShrink: 0 }}>
+                <span className="d-pill-dot" />
                 {benchBadge.label}
               </span>
             </div>
             <div className="wb-build-meta">
               {benchStatus === "running" && (
                 <span className="wb-build-meta-row">
-                  <span aria-hidden="true">↕</span>
+                  <span aria-hidden="true" style={{ fontSize: 10 }}>↕</span>
                   Port :{webserverPort ?? 8000}
                 </span>
               )}
@@ -480,7 +492,7 @@ export function BuildPage() {
         </div>
 
         {/* App list: Studio Apps + Other Apps */}
-        <div className="wb-panel d-panel" style={{ flex: 1, overflow: "hidden" }}>
+        <div className="wb-panel d-panel" style={{ flexShrink: 0, overflow: "hidden" }}>
           <div className="wb-app-section">Studio Apps</div>
           {(["studio", "builder"] as const).map((app) => {
             const installed = installedApps.includes(app);
@@ -524,37 +536,40 @@ export function BuildPage() {
       </aside>
 
       <section className="island">
-        {/* Direction D: "Build" title header (not bench name) */}
-        <div className="build-hd">
-          <span className="build-title">Build</span>
-          {site && <span className="wb-note wb-muted" style={{ fontSize: 11 }}>{site}</span>}
-          {benchStatus === "running" && (
-            <span className="wb-note wb-muted" style={{ fontSize: 11 }}>:{webserverPort}</span>
+        {/* Direction D: "Build" title header — d-page-head */}
+        <div className="d-page-head">
+          <span className="d-page-title">Build</span>
+          {site && benchStatus === "running" && (
+            <span style={{ fontSize: 11, color: "var(--ink-gray-5)" }}>{site} · :{webserverPort ?? 8000}</span>
           )}
-          <span className={`wb-badge wb-badge-${benchBadge.hue}`}>
-            <span className={`wb-dot wb-dot-${benchBadge.hue}`} aria-hidden="true" />
+          <span className={`d-pill ${benchBadge.hue === "green" ? "green" : benchBadge.hue === "amber" ? "amber" : "gray"}`}>
+            <span className="d-pill-dot" />
             {benchBadge.label}
           </span>
-          <span className="wb-spacer" />
-          {benchDown ? (
-            <Button variant="primary" size="sm" onClick={goBench}>
-              Start bench
-            </Button>
-          ) : problems.length > 0 ? (
-            <Button variant="primary" size="sm" onClick={() => setDismissed([])}>
-              Fix {problems.length} issue{problems.length === 1 ? "" : "s"}
-            </Button>
-          ) : canvas === "builder" ? (
-            <Button
-              variant="primary"
-              size="sm"
-              disabled={syncStatus === "loading" || !builderInstalled || benchStatus !== "running"}
-              onClick={() => void doSync()}
-              aria-label="Sync Builder files to site database"
-            >
-              {syncStatus === "loading" ? "Syncing…" : "Sync files → site"}
-            </Button>
-          ) : null}
+          <div className="d-page-head-actions">
+            {benchDown ? (
+              <Button variant="primary" size="sm" onClick={goBench}>
+                Start bench
+              </Button>
+            ) : problems.length > 0 ? (
+              <Button variant="primary" size="sm" onClick={() => setDismissed([])}>
+                Fix {problems.length} issue{problems.length === 1 ? "" : "s"}
+              </Button>
+            ) : canvas === "builder" ? (
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={syncStatus === "loading" || !builderInstalled || benchStatus !== "running"}
+                onClick={() => void doSync()}
+                aria-label="Sync Builder files to site database"
+              >
+                {syncStatus === "loading" ? "Syncing…" : "Sync files → site"}
+              </Button>
+            ) : null}
+            <button type="button" className="d-btn sm ghost icon-btn" title="More actions">
+              <IconMore size={13} aria-hidden="true" />
+            </button>
+          </div>
         </div>
 
         {/* Direction D: SegmentedControl (Studio | Builder) + Reload */}
@@ -613,21 +628,24 @@ export function BuildPage() {
             onClick={handleReload}
             aria-label="Reload canvas"
           >
-            ⟳ Reload
+            <IconReview size={12} aria-hidden="true" /> Reload
           </Button>
         </div>
 
         {/* Problem banner: framed inset block per design .d-banner */}
         {showBanner && (
           <div className={`build-banner ${firstProblem.key === "bench" ? "is-red" : "is-amber"}`} role="alert">
-            <strong>{firstProblem.problem}</strong>
+            <IconTriangleAlert size={14} aria-hidden="true" style={{ flexShrink: 0 }} />
+            <span><strong>{firstProblem.problem}</strong></span>
             <code className="build-banner-cmd">{firstProblem.remedy}</code>
-            <Button variant="ghost" size="sm" onClick={() => void copyRemedy(firstProblem.remedy)}>
-              {copied ? "Copied" : "Copy"}
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setDismissed((d) => [...d, firstProblem.key])}>
-              Dismiss
-            </Button>
+            <div style={{ marginLeft: "auto", display: "flex", gap: 4, flexShrink: 0 }}>
+              <Button variant="ghost" size="sm" onClick={() => void copyRemedy(firstProblem.remedy)}>
+                {copied ? "Copied" : "Copy"}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setDismissed((d) => [...d, firstProblem.key])}>
+                Dismiss
+              </Button>
+            </div>
           </div>
         )}
 
@@ -696,7 +714,12 @@ export function BuildPage() {
               {checks.map((c) => (
                 <li key={c.key} className={`build-check is-${c.state}`}>
                   <span
-                    className={`wb-dot wb-dot-${c.state === "ok" ? "green" : c.state === "fail" ? "red" : "gray"}`}
+                    className={`wb-dot wb-dot-${
+                      c.state === "ok" ? "green"
+                      : c.state === "fail" && (c.key === "bench" || c.key === "studio") ? "red"
+                      : c.state === "fail" ? "amber"
+                      : "gray"
+                    }`}
                     aria-hidden="true"
                   />
                   {c.short}

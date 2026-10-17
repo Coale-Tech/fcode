@@ -5,6 +5,7 @@
  * is single-bench and would reject it with CONFLICT.
  */
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "../ui";
 import {
   baseName,
@@ -17,8 +18,19 @@ import {
   type BenchStatus,
   type BenchSummary,
 } from "../../lib/bench-view";
-import { IconPlay, IconSearch, IconSquare } from "../icons";
-import { StatusBadge, StatusDot } from "./BenchBadges";
+import {
+  IconMore,
+  IconNewProject,
+  IconPlay,
+  IconPlus,
+  IconSearch,
+  IconSquare,
+  IconTerminal,
+} from "../icons";
+import { StatusDot } from "./BenchBadges";
+import { ContextMenu, useContextMenu } from "../ContextMenu";
+import { api } from "../../lib/api";
+import { shortenPath } from "../../lib/project-archive";
 
 /** Format elapsed time as MM:SS for running bench display. */
 function fmtElapsed(startedAtMs: number): string {
@@ -49,6 +61,8 @@ export function AllBenches({
   roots: string[];
   onPickRoot: () => void;
 }) {
+  const { t } = useTranslation();
+  const { contextMenu, openContextMenu, closeContextMenu } = useContextMenu();
   const [query, setQuery] = useState("");
   const [chip, setChip] = useState<BenchChip>("all");
 
@@ -109,132 +123,177 @@ export function AllBenches({
       )}
       {/* Direction D: amber warning banner when a bench is running (only one at a time) */}
       {blocker && (
-        <div className="build-banner is-amber" role="status" style={{ margin: "8px 0 0", padding: "7px 12px" }}>
-          <span aria-hidden="true">⚠</span>
-          Only one bench can run at a time.{" "}
-          <span className="wb-muted">Stop <strong>{baseName(blocker)}</strong> before starting another.</span>
+        <div className="d-banner warn" style={{ margin: "10px 12px 0", flexShrink: 0, borderRadius: 8 }}>
+          <span aria-hidden="true" style={{ flexShrink: 0 }}>⚠</span>
+          <span>
+            Only one bench can run at a time.{" "}
+            Stop <strong>{baseName(blocker)}</strong> before starting another.
+          </span>
         </div>
       )}
       <div className="wb-all-scroll">
         {rows.length === 0 ? (
           <p className="wb-muted wb-all-empty">No benches match.</p>
         ) : (
-          <table className="wb-table">
-            <thead>
-              <tr>
-                <th scope="col">Name</th>
-                <th scope="col">Path</th>
-                <th scope="col">Apps</th>
-                <th scope="col">Sites</th>
-                <th scope="col">Status</th>
-                <th scope="col">
-                  <span className="wb-sr-only">Action</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((bench) => {
-                const status = statusOf(bench);
-                const active = status === "running" || status === "starting";
-                const blocked = !active && blocker !== null && blocker !== bench.path;
-                const cue = blocked ? startBlockedCue(blocker) : undefined;
-                const name = baseName(bench.path);
-                return (
-                  <tr key={bench.id}>
-                    <td>
-                      <button
-                        type="button"
-                        className="wb-link-btn wb-table-name"
-                        title={bench.path}
-                        onClick={() => onOpen(bench)}
-                      >
+          <>
+            <table className="wb-table">
+              <thead>
+                <tr>
+                  <th scope="col" className="wb-table-col-icon" aria-hidden="true" />
+                  <th scope="col">Name</th>
+                  <th scope="col">Path</th>
+                  <th scope="col">Apps</th>
+                  <th scope="col" className="wb-table-col-sm" style={{ textAlign: "center" }}>Sites</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" style={{ width: 148, textAlign: "right" }}>
+                    <span className="wb-sr-only">Action</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((bench) => {
+                  const status = statusOf(bench);
+                  const active = status === "running" || status === "starting";
+                  const blocked = !active && blocker !== null && blocker !== bench.path;
+                  const cue = blocked ? startBlockedCue(blocker) : undefined;
+                  const name = baseName(bench.path);
+                  const statusHue = active ? "green" : status === "failed" ? "red" : "gray";
+                  const elapsed = active && bench.startedAtMs ? fmtElapsed(bench.startedAtMs) : undefined;
+                  return (
+                    <tr key={bench.id}>
+                      {/* Leading bench icon */}
+                      <td className="wb-table-col-icon">
                         <StatusDot status={status} />
-                        <span className="wb-truncate">{name}</span>
-                      </button>
-                    </td>
-                    <td className="wb-table-path">
-                      <code className="wb-mono wb-truncate" title={bench.path}
-                        style={{ fontSize: 11, color: "var(--ink-gray-5)", maxWidth: 180, display: "inline-block" }}>
-                        {bench.path}
-                      </code>
-                    </td>
-                    <td className="wb-table-apps">
-                      {bench.apps.length > 0 ? (
-                        <div className="wb-app-tags">
-                          {bench.apps.slice(0, 4).map((app) => (
-                            <span key={app} className="wb-app-tag">{app}</span>
-                          ))}
-                          {bench.apps.length > 4 && (
-                            <span className="wb-app-tag wb-muted">+{bench.apps.length - 4}</span>
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="wb-link-btn wb-table-name"
+                          title={bench.path}
+                          onClick={() => onOpen(bench)}
+                        >
+                          <span className="wb-truncate" style={{ fontWeight: 500, color: "var(--ink-gray-9)" }}>{name}</span>
+                        </button>
+                      </td>
+                      <td className="wb-table-path">
+                        <span className="bf-path wb-truncate" title={bench.path}>
+                          {shortenPath(bench.path)}
+                        </span>
+                      </td>
+                      <td className="wb-table-apps">
+                        {bench.apps.length > 0 ? (
+                          <div className="bf-apps">
+                            {bench.apps.slice(0, 4).map((app) => (
+                              <span key={app} className="bf-app-tag">{app}</span>
+                            ))}
+                            {bench.apps.length > 4 && (
+                              <span className="bf-app-tag" style={{ color: "var(--ink-gray-4)" }}>+{bench.apps.length - 4}</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="wb-muted" style={{ fontSize: 11 }}>—</span>
+                        )}
+                      </td>
+                      <td className="wb-table-col-sm" style={{ textAlign: "center", color: "var(--ink-gray-5)" }}>
+                        {bench.sites.length}
+                      </td>
+                      <td style={{ width: 120 }}>
+                        <span className={`d-pill ${statusHue}`} style={{ fontSize: 10, height: 16, padding: "0 6px", lineHeight: "16px", whiteSpace: "nowrap" }}>
+                          <span className="d-pill-dot" />
+                          {active ? `Running${elapsed ? ` · ${elapsed}` : ""}` : status === "failed" ? "Failed" : "Stopped"}
+                        </span>
+                      </td>
+                      <td style={{ width: 148 }}>
+                        <div className="bf-acts" style={{ justifyContent: "flex-end" }}>
+                          {active ? (
+                            <>
+                              <button
+                                type="button"
+                                className="d-btn sm secondary"
+                                onClick={() => onStop(bench)}
+                                disabled={status === "starting"}
+                                aria-label={`Stop ${name}`}
+                              >
+                                <IconSquare size={11} aria-hidden="true" />
+                                Stop
+                              </button>
+                              <button
+                                type="button"
+                                className="d-btn ghost icon-btn sm"
+                                title={`Open ${name}`}
+                                onClick={() => onOpen(bench)}
+                              >
+                                <IconTerminal size={12} aria-hidden="true" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              {cue && (
+                                <span style={{ fontSize: 10, color: "var(--ink-gray-4)", whiteSpace: "nowrap" }}>
+                                  {cue}
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                className="d-btn sm primary"
+                                onClick={() => onStart(bench)}
+                                disabled={blocked}
+                                aria-label={cue ? `Start ${name} — ${cue}` : `Start ${name}`}
+                              >
+                                Start
+                              </button>
+                            </>
                           )}
+                          <button
+                            type="button"
+                            className="d-btn ghost icon-btn sm"
+                            aria-label={`More options for ${name}`}
+                            onClick={(e) =>
+                              openContextMenu(e, {
+                                label: name,
+                                items: [
+                                  {
+                                    id: "copy-path",
+                                    label: t("bench.copyPath"),
+                                    onSelect: () => void navigator.clipboard.writeText(bench.path),
+                                  },
+                                  {
+                                    id: "show-finder",
+                                    label: t("bench.showInFinder"),
+                                    onSelect: () => void api.benchReveal(bench.path),
+                                  },
+                                ],
+                              })
+                            }
+                          >
+                            <IconMore size={13} aria-hidden="true" />
+                          </button>
                         </div>
-                      ) : (
-                        <span className="wb-muted" style={{ fontSize: 11 }}>—</span>
-                      )}
-                    </td>
-                    <td className="wb-table-sites">
-                      <span className="wb-truncate">{siteSummary(bench)}</span>
-                    </td>
-                    <td>
-                      <StatusBadge
-                        status={status}
-                        elapsed={active && bench.startedAtMs ? fmtElapsed(bench.startedAtMs) : undefined}
-                      />
-                    </td>
-                    <td className="wb-table-action">
-                      {active ? (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => onStop(bench)}
-                          disabled={status === "starting"}
-                          aria-label={`Stop ${name}`}
-                        >
-                          <IconSquare size={12} aria-hidden="true" />
-                          Stop
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => onStart(bench)}
-                          disabled={blocked}
-                          title={cue}
-                          aria-label={cue ? `Start ${name} — ${cue}` : `Start ${name}`}
-                        >
-                          <IconPlay size={12} aria-hidden="true" />
-                          Start
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {/* Direction D: footer inline after table rows */}
+            <div className="wb-all-footer">
+              <span>
+                Showing {rows.length} of {benches.length} bench{benches.length !== 1 ? "es" : ""}
+              </span>
+              <button
+                type="button"
+                className="wb-link-btn"
+                onClick={() => void window.open(`file://${roots[0] ?? ""}`, "_blank")}
+                style={{ marginLeft: "auto", fontSize: 11 }}
+              >
+                Browse all in Finder
+              </button>
+            </div>
+          </>
         )}
       </div>
-      {/* Direction D: footer with total count + Finder link */}
-      {benches.length > 0 && (
-        <div className="wb-all-footer">
-          <span>
-            Showing {rows.length} of {benches.length} bench{benches.length !== 1 ? "es" : ""}
-          </span>
-          <button
-            type="button"
-            className="wb-link-btn"
-            onClick={() => void window.open(`file://${roots[0] ?? ""}`, "_blank")}
-            style={{ marginLeft: "auto", fontSize: 11 }}
-          >
-            Browse all in Finder
-          </button>
-        </div>
-      )}
+      <ContextMenu state={contextMenu} onClose={closeContextMenu} />
     </div>
   );
 }
 
-function siteSummary(bench: BenchSummary): string {
-  // Show site count as a number (e.g. 3) — matches D3 reference design.
-  return bench.sites.length === 0 ? "0" : String(bench.sites.length);
-}

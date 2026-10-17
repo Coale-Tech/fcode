@@ -1284,13 +1284,6 @@ export function installCaptureRig(): CaptureRig {
     },
     ensureVisualFixtures: async () => {
       if (!window.__PI_CAPTURE__) return;
-      // Suppress backend-down banner: no host binary runs during captures.
-      if (!document.getElementById("pi-capture-overrides")) {
-        const style = document.createElement("style");
-        style.id = "pi-capture-overrides";
-        style.textContent = ".backend-banner { display: none !important; }";
-        document.head.appendChild(style);
-      }
       const ws = useAppStore.getState().workspace;
       if (ws?.path) {
         const base = (ws.name || ws.path.split(/[/]/).filter(Boolean).pop() || "").trim();
@@ -1669,6 +1662,8 @@ export function installCaptureRig(): CaptureRig {
         viewedBenchSiteCount: siteCount,
         ...(settings ? { settings: { ...settings, defaultModelId: "claude-sonnet-5" } } : {}),
       });
+      // T14: seed build watcher so Build page strip shows "watching · last import 2:14:07 PM"
+      window.__PI_CAPTURE_BUILD_WATCHER__ = { lastImport: new Date(Date.now() - 3 * 60_000 - 23_000).toLocaleTimeString() };
     },
     seedBenchList: () => {
       if (!window.__PI_CAPTURE__) return;
@@ -1712,6 +1707,58 @@ export function installCaptureRig(): CaptureRig {
       window.__PI_CAPTURE_BENCH_LIST__ = { benches, failedRoots: [], roots: ["/Users/mac/ERPNext"] };
       // Pre-open coale_v16 and dev_bench as tab strip tabs (matches reference design)
       window.__PI_CAPTURE_BENCH_OPEN_IDS__ = ["cap-bench-coale-v16", "cap-bench-dev"];
+      // T14: bench detail — apps with versions, procfile, port, pids
+      window.__PI_CAPTURE_BENCH_DETAIL__ = {
+        apps: [
+          { name: "frappe", version: "16.8.2" },
+          { name: "erpnext", version: "16.5.0" },
+          { name: "hrms", version: "0.42.0" },
+          { name: "raven", version: "2.1.3" },
+          { name: "frappe_assistant", version: "0.7.1" },
+        ],
+        procfileEntries: ["web.1", "worker.1", "worker.2", "redis.1", "schedule.1"],
+        port: 8000,
+        mainPid: 89190,
+        workerPids: { "web.1": 89234, "worker.1": 89235, "worker.2": 89236, "redis.1": 89190, "schedule.1": 89237 },
+      };
+      // T14: bench log lines (14 honcho lines matching fragment-detail.html log)
+      const ts = new Date().toISOString();
+      window.__PI_CAPTURE_BENCH_LOGS__ = [
+        [ts, "10:02:31 web.1     | INFO     Applications attached successfully"],
+        [ts, "10:02:31 web.1     | INFO     Listening on: http://0.0.0.0:8000"],
+        [ts, "10:02:31 web.1     | Running on http://0.0.0.0:8000"],
+        [ts, "10:02:31 worker.1  | Started worker for default queue"],
+        [ts, "10:02:32 worker.2  | Started worker for short queue"],
+        [ts, "10:02:32 redis.1   | * Ready to accept connections"],
+        [ts, "10:02:33 schedule.1| Scheduling job frappe.utils.backups.take_backups"],
+        [ts, "10:02:34 web.1     | frappe.reload_doc: 8 changes in 0.12s"],
+        [ts, "10:02:35 worker.1  | 2026-10-12 10:02:35: Worker started with pid 89234"],
+        [ts, "10:02:35 web.1     | INFO     reloading..."],
+        [ts, "10:02:36 web.1     | INFO     Listening on: http://0.0.0.0:8000"],
+        [ts, "10:02:36 web.1     | Running on http://0.0.0.0:8000"],
+        [ts, "10:02:37 worker.1  | Traceback (most recent call last):"],
+        [ts, "10:02:37 worker.1  |   Exception: task failed"],
+      ] as Array<[string, string]>;
+      // T14: bench oneshot — list-apps output
+      window.__PI_CAPTURE_BENCH_ONESHOT__ = {
+        path: COALE_PATH, verb: "list-apps", status: "ok",
+        output: "frappe\nerpnext\nhrms\nraven\nfrappe_assistant",
+        elapsed: "1.2s",
+      };
+      // T14: doctype entries for DocTypeTree
+      const fillers = Array.from({ length: 214 }, (_, i) => ({
+        path: `${COALE_PATH}/apps/erpnext/erpnext/stock/doctype/item_${i + 1}/item_${i + 1}.json`,
+        app: "erpnext", module: "Stock",
+        name: `item_${i + 1}`, dirty: false,
+      }));
+      window.__PI_CAPTURE_DOCTYPES__ = [
+        { path: `${COALE_PATH}/apps/frappe/frappe/core/doctype/user/user.json`, app: "frappe", module: "Core", name: "user", dirty: false },
+        { path: `${COALE_PATH}/apps/erpnext/erpnext/accounts/doctype/sales_invoice/sales_invoice.json`, app: "erpnext", module: "Accounts", name: "sales_invoice", dirty: true },
+        { path: `${COALE_PATH}/apps/erpnext/erpnext/accounts/doctype/purchase_invoice/purchase_invoice.json`, app: "erpnext", module: "Accounts", name: "purchase_invoice", dirty: false },
+        { path: `${COALE_PATH}/apps/erpnext/erpnext/selling/doctype/customer/customer.json`, app: "erpnext", module: "Selling", name: "customer", dirty: false },
+        ...fillers,
+        { path: `${COALE_PATH}/apps/hrms/hrms/hr/doctype/employee_checkin/employee_checkin.json`, app: "hrms", module: "HR", name: "employee_checkin", dirty: false },
+      ];
     },
     seedRavenConnected: () => {
       if (!window.__PI_CAPTURE__) return;

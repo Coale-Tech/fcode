@@ -1694,6 +1694,9 @@ export const api = {
   /** Seed the active memory backend with identity facts from the active Frappe bench. */
   benchBootstrapMemory: () =>
     invoke<BenchBootstrapResult>(IPC.invoke.benchBootstrapMemory),
+  /** Reveal the bench folder in the system file manager (Finder / Explorer). */
+  benchReveal: (benchPath: string) =>
+    invoke<{ ok: boolean; error?: string }>(IPC.invoke.benchReveal, { benchPath }),
   /** Write reflect/retain mission text to the active Hindsight bank and persist locally. */
   hindsightSetBankMission: (bankMission: string, retainMission: string) =>
     invoke<HindsightSetBankMissionResult>(IPC.invoke.hindsightSetBankMission, { bankMission, retainMission }),

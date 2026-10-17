@@ -3542,6 +3542,11 @@ sklm: {
     waitingForLogs: "Esperando salida del log…",
     appSingular: "app",
     appPluralLabel: "apps",
+    clear: "Clear",
+    copyPath: "Copy path",
+    showInFinder: "Show in Finder",
+    dtMigrateTitle: "Migrate",
+    dtMore: "+ {{count}} more…",
   },
   "terminal": {
     "title": "Terminal",

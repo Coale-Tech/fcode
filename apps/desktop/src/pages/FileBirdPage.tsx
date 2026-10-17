@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { IPC } from "@pi-desktop/shared";
 import { api } from "../lib/api";
 import { useBlockingOverlayActive } from "../lib/blocking-overlay";
 import { IconFileBird, IconMore } from "../components/icons";
@@ -23,7 +24,21 @@ export function FileBirdPage({ blocked }: { blocked: boolean }) {
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const [failed, setFailed] = useState(false);
   const [kebabOpen, setKebabOpen] = useState(false);
+  // T14: green pill when FileBird pushes fileBirdStatus=connected.
+  const [connected, setConnected] = useState(false);
 
+  useEffect(() => {
+    if (window.__PI_CAPTURE__ && window.__PI_CAPTURE_FILEBIRD_VISIBLE__) {
+      setConnected(true);
+      return;
+    }
+    const off = window.piDesktop?.on?.(IPC.event.fileBirdStatus, (data: unknown) => {
+      if (data && typeof data === "object" && "status" in data && typeof data.status === "string") {
+        setConnected(data.status === "connected");
+      }
+    });
+    return () => off?.();
+  }, []);
   useEffect(() => {
     // Capture mode: skip the IPC call that sets failed=true (fileBird service not running).
     if (window.__PI_CAPTURE__ && window.__PI_CAPTURE_FILEBIRD_VISIBLE__) return;
@@ -59,11 +74,10 @@ export function FileBirdPage({ blocked }: { blocked: boolean }) {
         {/* Fcode-owned chrome bar: title + status pill + kebab (fragment.html:55-68) */}
         <div className="d-page-head">
           <span className="d-page-title">{t("fileBird.title")}</span>
-          {/* Gray "Not connected" — FileBird's SFTP state is unknown from Fcode's renderer.
-              Green/amber states require a fileBirdStatus push event (future work). */}
-          <span className="d-pill gray">
+          {/* Pill reflects real SFTP connection state (fileBirdStatus IPC event). */}
+          <span className={`d-pill ${connected ? "green" : "gray"}`}>
             <span className="d-pill-dot" />
-            {t("fileBird.idle")}
+            {connected ? t("fileBird.connected", "Connected") : t("fileBird.idle")}
           </span>
           <div className="d-page-head-actions">
             <div className="fb-kebab" style={{ position: "relative" }}>
@@ -123,9 +137,9 @@ export function FileBirdPage({ blocked }: { blocked: boolean }) {
       {/* Always show the Fcode chrome bar even in failed state */}
       <div className="d-page-head">
         <span className="d-page-title">{t("fileBird.title")}</span>
-        <span className="d-pill gray">
+        <span className={`d-pill ${connected ? "green" : "gray"}`}>
           <span className="d-pill-dot" />
-          {t("fileBird.idle")}
+          {connected ? t("fileBird.connected", "Connected") : t("fileBird.idle")}
         </span>
       </div>
       <div className="rv-disconnected">

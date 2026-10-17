@@ -41,3 +41,8 @@ export function StatusBadge({ status, elapsed }: { status: BenchStatus; elapsed?
 export function StatusDot({ status }: { status: BenchStatus }) {
   return <span className={`wb-dot wb-dot-${STATUS_HUES[status]}`} aria-hidden="true" />;
 }
+
+/** T14: plain status string for use in ProcessPanel label. */
+export function statusLabel(status: BenchStatus): string {
+  return STATUS_LABELS[status];
+}

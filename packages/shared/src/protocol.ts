@@ -445,6 +445,8 @@ export const IPC = {
     benchRun: "pi-desktop/bench/run",
     /** Bench detail: installed apps, procfile process names, port, main PID for a bench path. */
     benchDetail: "pi-desktop/bench/detail",
+    /** Reveal a bench folder in the system file manager (Finder on macOS). */
+    benchReveal: "pi-desktop/bench/revealPath",
     /** Build tab: query installed apps on the active bench/site. */
     buildListApps: "pi-desktop/build/listApps",
     /** Build tab canvas — acquire exclusive ownership of the shared BrowserPane. */
@@ -658,7 +660,6 @@ export const IPC = {
     sidecarFatal: "pi-desktop/sidecar/event/fatal",
     /** omp setStatus / setWidget / setTitle forwarded from the omp bridge. */
     sidecarExtUi: "pi-desktop/sidecar/event/extUi",
-    /** Managed local Hindsight server state changed. */
     hindsightLocalStatus: "pi-desktop/hindsight-local/event/status",
     /** Kanban board changed (tasks/runs/links updated by dispatcher or user). */
     kanbanChanged: "pi-desktop/kanban/event/changed",
@@ -673,6 +674,8 @@ export const IPC = {
     ompCliOutput: "pi-desktop/omp/cli/output",
     /** omp CLI run completed (`{ runId, exitCode, killed }`). */
     ompCliDone: "pi-desktop/omp/cli/done",
+    /** FileBird SFTP service status change (`{ status: "connected"|"idle"|"disconnected" }`). */
+    fileBirdStatus: "pi-desktop/filebird/event/status",
   },
 } as const;
 
