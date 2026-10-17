@@ -1032,21 +1032,34 @@ export function installCaptureRig(): CaptureRig {
         ],
         dailyStats: [{ date: new Date(now).toISOString().slice(0, 10), spawned: 2 }],
       };
-      api.kanbanList = async () => ({ board, paused: false });
-      // The running payroll card waits on a tool approval (fragment.html:365).
+      // HD2: inject pendingPermissions inside the mock so that every board
+      // fetch atomically delivers the approval state — avoids a timing window
+      // where React batches a seedBenchStatus setState and the permission store
+      // update together, causing needsApproval to recompute before board is set.
+      const permissionEntry: PendingPermission = {
+        requestId: "capture-kanban-perm-1",
+        sessionId: approvalSession,
+        toolCallId: "capture-kanban-tool-1",
+        toolName: "bash",
+        argsPreview: { command: "bench --site coale_v16 execute hrms.payroll.run" },
+        risk: "high",
+        reason: "Runs payroll for every employee.",
+        receivedAt: now - 2 * m,
+      };
+      api.kanbanList = async () => {
+        useAppStore.setState({
+          pendingPermissions: {
+            ...withoutApproval(),
+            [approvalSession]: [permissionEntry],
+          },
+        });
+        return { board, paused: false };
+      };
+      // Also set immediately for any component already mounted.
       useAppStore.setState({
         pendingPermissions: {
           ...withoutApproval(),
-          [approvalSession]: [{
-            requestId: "capture-kanban-perm-1",
-            sessionId: approvalSession,
-            toolCallId: "capture-kanban-tool-1",
-            toolName: "bash",
-            argsPreview: { command: "bench --site coale_v16 execute hrms.payroll.run" },
-            risk: "high",
-            reason: "Runs payroll for every employee.",
-            receivedAt: now - 2 * m,
-          }],
+          [approvalSession]: [permissionEntry],
         },
       });
     },
