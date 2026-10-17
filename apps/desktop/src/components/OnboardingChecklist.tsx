@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { ToolApprovalMode } from "@pi-desktop/shared";
+import type { ToolApprovalMode, ModelInfo } from "@pi-desktop/shared";
+import { bindingFromModelInfo } from "@pi-desktop/shared";
 import { api } from "../lib/api";
 import { useAppStore } from "../stores/app-store";
 import { Button } from "./ui";
-import { IconCheck } from "./icons";
+import { IconCheck, IconTerminal } from "./icons";
 
 /**
  * D onboarding wizard (4 fixed steps) — shown on first run until dismissed.
@@ -13,11 +14,24 @@ import { IconCheck } from "./icons";
  * implemented from primitives/tokens; needs design review.
  *
  * Step 1: Connect provider — provider radio + API key input + Verify (real:
- *         navigates to agent settings for actual key entry and storage).
+ *         calls api.listProviderModels; creates provider on Continue if not yet
+ *         added).
  * Step 2: Pick a bench — navigates to Bench page (NEEDS DESIGN REVIEW).
  * Step 3: Permissions mode — real toolApprovalMode select (NEEDS DESIGN REVIEW).
  * Step 4: Ready — done icon + summary chips + Start coding CTA.
  */
+
+const NAMED_ENDPOINT_PRESETS: Record<
+  "anthropic" | "gemini" | "openai",
+  { vendorKey: string; apiStyle: string; name: string }
+> = {
+  anthropic: { vendorKey: "anthropic", apiStyle: "anthropic_messages", name: "Anthropic" },
+  gemini:    { vendorKey: "google",    apiStyle: "google_gemini",       name: "Google Gemini" },
+  openai:    { vendorKey: "openai",    apiStyle: "openai_chat",         name: "OpenAI" },
+};
+
+// `bindingFromModelInfo` is imported from @pi-desktop/shared above.
+
 export function OnboardingChecklist() {
   const { t } = useTranslation();
   const onboarding = useAppStore((s) => s.onboarding);
@@ -29,7 +43,11 @@ export function OnboardingChecklist() {
   const [step, setStep] = useState(1); // 1–4
   const [selectedProvider, setSelectedProvider] = useState<"anthropic" | "gemini" | "openai">("anthropic");
   const [apiKey, setApiKey] = useState("");
-  const [keyVerified, setKeyVerified] = useState(false);
+  const [verifyState, setVerifyState] = useState<
+    "idle" | "checking" | "ok" | "no-models" | "error"
+  >("idle");
+  const [verifiedModelName, setVerifiedModelName] = useState("");
+  const [verifiedModel, setVerifiedModel] = useState<ModelInfo | null>(null);
   const [permMode, setPermMode] = useState<ToolApprovalMode>("always-ask");
 
   if (!onboarding?.showChecklist) return null;
@@ -44,7 +62,12 @@ export function OnboardingChecklist() {
       });
   };
 
-  const providerList: { id: "anthropic" | "gemini" | "openai"; label: string; abbr: string; desc: string }[] = [
+  const providerList: {
+    id: "anthropic" | "gemini" | "openai";
+    label: string;
+    abbr: string;
+    desc: string;
+  }[] = [
     { id: "anthropic", label: "Anthropic", abbr: "A", desc: "Claude Sonnet — recommended" },
     { id: "gemini",    label: "Google Gemini", abbr: "G", desc: "Gemini 2.5 Pro / Flash" },
     { id: "openai",    label: "OpenAI", abbr: "O", desc: "GPT-4o / o3" },
@@ -58,13 +81,55 @@ export function OnboardingChecklist() {
   ];
 
   const hasProvider = providers.length > 0;
-  const isStep1Done = hasProvider || keyVerified;
+  const isStep1Done = hasProvider || verifyState === "ok";
   const isStep2Done = workspace != null;
   const isStep3Done = permMode !== "always-ask";
 
   const stepDone = [isStep1Done, isStep2Done, isStep3Done, false];
-
   const totalSteps = 4;
+
+  const preset = NAMED_ENDPOINT_PRESETS[selectedProvider];
+  const providerApiKeyLabel = t("onboarding.providerApiKeyLabel", {
+    provider: preset.name,
+  });
+
+  const handleVerify = async () => {
+    if (!apiKey.trim()) return;
+    setVerifyState("checking");
+    try {
+      const res = await api.listProviderModels({
+        apiKey: apiKey.trim(),
+        apiStyle: preset.apiStyle,
+        source: "refresh",
+      });
+      const remoteModels = (res.models ?? []).filter(
+        () => res.source === "remote",
+      );
+      if (remoteModels.length === 0) {
+        setVerifyState("no-models");
+      } else {
+        setVerifiedModel(remoteModels[0]!);
+        setVerifiedModelName(remoteModels[0]!.modelId);
+        setVerifyState("ok");
+      }
+    } catch {
+      setVerifyState("error");
+    }
+  };
+
+  const handleContinue = async () => {
+    if (step === 1 && verifyState === "ok" && !hasProvider) {
+      try {
+        await api.createProvider({
+          name: preset.name,
+          vendorKey: preset.vendorKey,
+          secretValue: apiKey.trim(),
+          models: verifiedModel ? [bindingFromModelInfo(verifiedModel)] : undefined,
+        });
+      } catch { /* best-effort */ }
+    }
+    if (step < totalSteps) setStep((s) => s + 1);
+  };
 
   return (
     <div className="ob-wrap home-onboarding-checklist" data-testid="onboarding-checklist">
@@ -74,10 +139,7 @@ export function OnboardingChecklist() {
         <div className="ob-head">
           <div className="ob-logo">
             <div className="ob-logo-mark">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <rect x="3" y="3" width="18" height="18" rx="3"/>
-                <path d="M9 12l2 2 4-4"/>
-              </svg>
+              <IconTerminal size={18} />
             </div>
             <span className="ob-logo-name">Fcode</span>
           </div>
@@ -85,7 +147,10 @@ export function OnboardingChecklist() {
           <p className="ob-sub">{step === 4 ? t("onboarding.readySub") : t("onboarding.wizardSub")}</p>
           <div className="ob-progress">
             {stepTitles.map((_, i) => (
-              <div key={i} className={`ob-prog-seg${i < step ? " done" : ""}`} />
+              <div
+                key={i}
+                className={`ob-prog-seg${i < step - 1 ? " done" : i === step - 1 ? " active" : ""}`}
+              />
             ))}
           </div>
         </div>
@@ -134,11 +199,16 @@ export function OnboardingChecklist() {
                     <div
                       key={p.id}
                       className={`ob-provider-row${selectedProvider === p.id ? " selected" : ""}`}
-                      onClick={() => setSelectedProvider(p.id)}
+                      onClick={() => { setSelectedProvider(p.id); setVerifyState("idle"); }}
                       role="radio"
                       aria-checked={selectedProvider === p.id}
                       tabIndex={0}
-                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedProvider(p.id); }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          setSelectedProvider(p.id);
+                          setVerifyState("idle");
+                        }
+                      }}
                     >
                       <div className="ob-provider-icon">{p.abbr}</div>
                       <div>
@@ -151,32 +221,38 @@ export function OnboardingChecklist() {
                 </div>
 
                 <div className="ob-key-field">
-                  <label className="ob-key-label">{t("onboarding.apiKeyLabel")}</label>
-                  <div style={{ display: "flex", gap: 6 }}>
+                  <label className="ob-key-label">{providerApiKeyLabel}</label>
+                  <div className="ob-key-row">
                     <input
                       className="ob-key-input"
                       type="password"
                       placeholder={t("onboarding.apiKeyPlaceholder")}
                       value={apiKey}
-                      onChange={(e) => { setApiKey(e.target.value); setKeyVerified(false); }}
+                      onChange={(e) => { setApiKey(e.target.value); setVerifyState("idle"); }}
                     />
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={() => {
-                        // Real action: navigate to agent settings where the key is stored.
-                        setSettingsTab("agent");
-                        setPage("settings");
-                        setKeyVerified(true);
-                      }}
+                      disabled={verifyState === "checking" || !apiKey.trim()}
+                      onClick={() => { void handleVerify(); }}
                     >
                       {t("onboarding.verify")}
                     </Button>
                   </div>
-                  {keyVerified && (
+                  {verifyState === "ok" && (
                     <div className="ob-banner-success">
                       <IconCheck size={12} />
-                      {t("onboarding.keyVerified")}
+                      {t("onboarding.keyVerifiedModel", { model: verifiedModelName })}
+                    </div>
+                  )}
+                  {verifyState === "no-models" && (
+                    <div className="ob-banner-error">
+                      {t("onboarding.keyVerifyNoModels")}
+                    </div>
+                  )}
+                  {verifyState === "error" && (
+                    <div className="ob-banner-error">
+                      {t("onboarding.keyVerifyFailed")}
                     </div>
                   )}
                 </div>
@@ -273,11 +349,18 @@ export function OnboardingChecklist() {
           {step < 4 ? (
             <span className="ob-step-counter">{t("onboarding.stepOf", { step, total: totalSteps })}</span>
           ) : null}
-          <span className="ob-foot-skip">
-            <Button variant="ghost" size="sm" onClick={dismiss}>{t("onboarding.dismiss")}</Button>
-          </span>
-          {step > 1 && step < 4 && (
-            <Button variant="ghost" size="sm" onClick={() => setStep((s) => s - 1)}>
+          <span className="ob-foot-spacer" />
+          {step > 1 ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={step === 1}
+              onClick={() => setStep((s) => s - 1)}
+            >
+              {t("onboarding.back")}
+            </Button>
+          ) : (
+            <Button variant="ghost" size="sm" disabled>
               {t("onboarding.back")}
             </Button>
           )}
@@ -286,7 +369,11 @@ export function OnboardingChecklist() {
               <Button variant="secondary" size="sm" onClick={() => { setSettingsTab("agent"); setPage("settings"); }}>
                 {t("onboarding.changeSettings")}
               </Button>
-              <Button variant="primary" onClick={() => { void api.toolApprovalModeSet(permMode).catch(() => undefined); dismiss(); setPage("chat"); }}>
+              <Button variant="primary" onClick={() => {
+                void api.toolApprovalModeSet(permMode).catch(() => undefined);
+                dismiss();
+                setPage("chat");
+              }}>
                 {t("onboarding.startCoding")}
               </Button>
             </>
@@ -294,11 +381,9 @@ export function OnboardingChecklist() {
             <Button
               variant="primary"
               size="sm"
-              onClick={() => {
-                if (step < totalSteps) setStep((s) => s + 1);
-              }}
+              onClick={() => { void handleContinue(); }}
             >
-              {t("onboarding.continue")}
+              {t("onboarding.continue")} →
             </Button>
           )}
         </div>

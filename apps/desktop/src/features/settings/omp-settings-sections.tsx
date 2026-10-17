@@ -7,7 +7,7 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { OmpAgentEntry, OmpAcpInfoResult, OmpModel, OmpSettingsValues } from "@pi-desktop/shared";
+import type { OmpAgentEntry, OmpAcpInfoResult, OmpModel, OmpSettingsValues, OmpWorktreeEntry } from "@pi-desktop/shared";
 import { useAppStore } from "../../stores/app-store";
 import { api } from "../../lib/api";
 import { Button, Input, SettingsToggle } from "../../components/ui";
@@ -90,13 +90,20 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
   const [worktreeExpanded, setWorktreeExpanded] = useState(false);
   const [ompModels, setOmpModels] = useState<OmpModel[]>([]);
   const [agents, setAgents] = useState<OmpAgentEntry[]>([]);
+  const [worktreeCount, setWorktreeCount] = useState<number | null>(null);
   const load = useCallback(() => {
     setLoadState("loading");
-    Promise.all([api.ompSettingsGet(), api.ompModelsList(), api.ompAgentList(projectPath ?? undefined)])
-      .then(([settings, models, agentList]) => {
+    Promise.all([
+      api.ompSettingsGet(),
+      api.ompModelsList(),
+      api.ompAgentList(projectPath ?? undefined),
+      api.ompWorktreeList().catch((): { worktrees: OmpWorktreeEntry[] } => ({ worktrees: [] })),
+    ])
+      .then(([settings, models, agentList, wtList]) => {
         setOmp(settings);
         setOmpModels(models.models);
         setAgents(agentList.agents);
+        setWorktreeCount(wtList.worktrees.length);
         setLoadState("ready");
       })
       .catch(() => setLoadState("error"));
@@ -819,7 +826,9 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
             onClick={() => setWorktreeExpanded((v) => !v)}
           >
             {t("settings.ompWorktreesGroup")}
-            <span className="sn-badge" style={{ marginLeft: "auto", marginRight: 4 }}>3</span>
+            {worktreeCount !== null && worktreeCount > 0 && (
+              <span className="sn-badge" style={{ marginLeft: "auto", marginRight: 4 }}>{worktreeCount}</span>
+            )}
             <svg className={`sf-chevron${worktreeExpanded ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           {worktreeExpanded && <OmpWorktreeSection />}

@@ -15,6 +15,7 @@ import type {
   KanbanTask,
   McpServerRecord,
   McpServerStatus,
+  ModelInfo,
   OmpAgentEntry,
   OmpModelsListResult,
   OmpSettingDescriptor,
@@ -86,6 +87,9 @@ export type CaptureRigMethods = {
   seedRavenConnected: () => void;
   /** Seed FileBird as running (mock fileBirdSetVisible → {ok:true} so failed=false). */
   seedFileBirdConnected: () => void;
+  /** Intercept api.listProviderModels to return Claude Sonnet 5 as a remote model (source:"remote").
+   *  Simulates a successful API key verification in the onboarding wizard. */
+  seedOnboardingKeyCheck: () => void;
 };
 
 export type CaptureRig = CaptureRigMethods & {
@@ -110,6 +114,7 @@ export function installCaptureRig(): CaptureRig {
   const originalOmpModelsList = api.ompModelsList;
   const originalOmpWorktreeList = api.ompWorktreeList;
   const originalOmpSettingsGet  = api.ompSettingsGet;
+  const originalListProviderModels = api.listProviderModels;
   const originalOmpAgentList    = api.ompAgentList;
   const methods: CaptureRigMethods = {
     openWorkPanelArtifact: (
@@ -659,8 +664,8 @@ export function installCaptureRig(): CaptureRig {
           source: "marketplace",
           marketplace: npm,
           status: "ready",
-          permissions: ["fs.read"],
-          capabilities: ["commands"],
+          permissions: [],
+          // No grants or capabilities: the reference shows this row without a Details disclosure.
           author: "CoaleTech",
           description: "Maps CSV columns to DocType fields and runs Data Import.",
         },
@@ -1764,6 +1769,21 @@ export function installCaptureRig(): CaptureRig {
         ...(metaChanged ? { sessionMeta: meta } : {}),
       });
     },
+    seedOnboardingKeyCheck: () => {
+      if (!window.__PI_CAPTURE__) return;
+      const stubModel: ModelInfo = {
+        modelId: "claude-sonnet-5",
+        displayName: "Claude Sonnet 5",
+        providerId: "anthropic",
+        capabilities: ["text", "tools", "vision"],
+        contextWindow: 200000,
+        source: "discovered",
+      };
+      api.listProviderModels = async (_input) => ({
+        models: [stubModel],
+        source: "remote" as const,
+      });
+    },
   };
   return {
     ...methods,
@@ -1786,6 +1806,7 @@ export function installCaptureRig(): CaptureRig {
       api.ompWorktreeList = originalOmpWorktreeList;
       api.ompSettingsGet  = originalOmpSettingsGet;
       api.ompAgentList    = originalOmpAgentList;
+      api.listProviderModels = originalListProviderModels;
     },
   };
 }

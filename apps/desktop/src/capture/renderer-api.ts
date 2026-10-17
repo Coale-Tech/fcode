@@ -109,6 +109,7 @@ const CAPTURE_RIG_METHODS = [
   "seedFileBirdConnected",
   "seedLargePasteThreshold",
   "clearPinnedSessions",
+  "seedOnboardingKeyCheck",
 ] as const satisfies readonly CaptureRigMethod[];
 
 export function installRendererApi(): () => void {

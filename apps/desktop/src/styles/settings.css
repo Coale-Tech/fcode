@@ -1030,6 +1030,18 @@
   font-size: var(--text-md);
   line-height: var(--leading-body);
 }
+/* Inline variant: badge next to the row title (pages-d/settings-ai: agent source chip) */
+.settings-row-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.settings-row-detail-inline {
+  /* Keep font size consistent with the title; visual weight from the chip style. */
+  font-size: var(--text-xs);
+  line-height: 1;
+}
 
 .settings-row-control {
   flex: 0 0 auto;

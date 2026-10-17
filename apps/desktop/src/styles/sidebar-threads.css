@@ -365,3 +365,25 @@
 }
 
 
+/* ── First-run empty state (D onboarding, before any sessions) ── */
+.sidebar.is-first-run .sidebar-list-toolbar,
+.sidebar.is-first-run .sidebar-list,
+.sidebar.is-first-run .d3-sb-pinned-pages {
+  display: none;
+}
+.sidebar-first-run-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  color: var(--ds-text-muted);
+  text-align: center;
+}
+.sidebar-first-run-empty p {
+  font-size: var(--text-md);
+  line-height: 1.4;
+  margin: 0;
+}
