@@ -127,9 +127,9 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   }, [open]);
 
   // Capture mode: load rig-seeded file entries for the FILES palette section.
-  // In production __PI_PALETTE_FILES__ is undefined so this section stays hidden.
+  // Production has no file-search IPC; section only shown in capture mode.
   useEffect(() => {
-    if (!open) return;
+    if (!open || !window.__PI_CAPTURE__) { setPaletteFiles([]); return; }
     setPaletteFiles(window.__PI_PALETTE_FILES__ ?? []);
   }, [open]);
 

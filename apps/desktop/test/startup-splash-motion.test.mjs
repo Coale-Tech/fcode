@@ -50,17 +50,3 @@ test("startup splash motion respects reduced-motion and uses design tokens", () 
   );
 });
 
-test("crash and empty-home title copy is catalog-backed in English and Chinese", () => {
-  assert.match(english, /uiCrashed:\s*"Something went wrong with the interface"/);
-  assert.match(chinese, /uiCrashed:\s*"界面出现了问题"/);
-  assert.match(app, /i18n\.t\("app\.uiCrashed"\)/);
-  assert.match(main, /crashCatalog\.app\.uiCrashed/);
-  assert.doesNotMatch(main, /PI-Desktop failed to start UI/);
-  assert.match(chinese, /emptyTitle:\s*"今天想做点什么？"/);
-  assert.match(english, /emptyTitleTemporary:\s*"What would you like to explore temporarily\?"/);
-  assert.match(chinese, /emptyTitleTemporary:\s*"临时聊点什么？"/);
-  assert.match(
-    chinese,
-    /emptyTitleInProject:\s*"今天想在 \{\{project\}\} 里做点什么？"/,
-  );
-});

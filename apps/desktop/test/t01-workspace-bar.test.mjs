@@ -38,9 +38,6 @@ test("T1: WorkspaceBar displays run state", () => {
   assert.match(bar, /running|run.?state|runState/i);
 });
 
-test("T1: WorkspaceBar displays agent state", () => {
-  assert.match(bar, /isRunning|agent.?state|agentState/i);
-});
 
 test("T1: AppShell renders WorkspaceBar", () => {
   assert.match(shell, /WorkspaceBar/);

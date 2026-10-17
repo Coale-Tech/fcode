@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { IPC } from "@pi-desktop/shared";
+/** IPC channel key — inline to keep this hook free of @pi-desktop/shared (SSR-safe). */
+const BENCH_STATUS_IPC = "pi-desktop/bench/status" as const;
 import {
   formatWorkspaceBarState,
   type BenchStatusInput,
@@ -10,7 +11,7 @@ import {
  * Capture override: set `window.__PI_BENCH_OVERRIDE__` to a bench-status data object. */
 export function useBenchContext(): WorkspaceBarState {
   const [state, setState] = useState<WorkspaceBarState>(() => {
-    const override = window.__PI_BENCH_OVERRIDE__ ?? undefined;
+    const override = (typeof window !== "undefined" ? window.__PI_BENCH_OVERRIDE__ : undefined) ?? undefined;
     return override ? formatWorkspaceBarState(override) : { kind: "empty" };
   });
 
@@ -41,7 +42,7 @@ export function useBenchContext(): WorkspaceBarState {
       const bridge = window.piDesktop;
       if (!bridge?.invoke) return;
       try {
-        const result = await bridge.invoke<BenchStatusInput>(IPC.invoke.benchStatus);
+        const result = await bridge.invoke<BenchStatusInput>(BENCH_STATUS_IPC);
         if (!cancelled && result.ok) {
           setState(formatWorkspaceBarState(result.data));
         }
