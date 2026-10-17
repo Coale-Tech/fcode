@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type AnimationEventHandler as ReactAnimationEventHandler,
+  type ComponentType,
   type DragEvent as ReactDragEvent,
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
@@ -44,6 +45,8 @@ import {
   type SidebarSessionStatus,
 } from "../lib/sidebar-session-status";
 import { sessionStatusLabel } from "../lib/session-status-label";
+import { sessionKind, type SessionKind } from "../lib/session-kind";
+import { compactSessionAge } from "../lib/session-age";
 import { ErrorCodes } from "@pi-desktop/shared";
 import type { SessionSummary } from "@pi-desktop/shared";
 import type {
@@ -75,6 +78,7 @@ import {
   IconChat,
   IconCheck,
   IconChevronDown,
+  IconCode,
   IconCopy,
   IconCircleAlert,
   IconFileBird,
@@ -85,13 +89,24 @@ import {
   IconNewProject,
   IconPin,
   IconPencil,
+  IconPullRequest,
   IconRaven,
   IconSidebar,
+  IconSquarePen,
   IconStar,
   IconTrash,
+  IconWrench,
   IconX,
+  type IconProps,
 } from "./icons";
 import { useBenchContext } from "../hooks/use-bench-context";
+const SESSION_KIND_ICONS: Record<SessionKind, ComponentType<IconProps>> = {
+  chat: IconChat,
+  code: IconCode,
+  edit: IconSquarePen,
+  git: IconPullRequest,
+  tool: IconWrench,
+};
 
 type ProjectEntry = {
   path: string;
@@ -996,6 +1011,11 @@ export function Sidebar({
     () => temporarySessions.filter((session) => !pinnedSessionIds.has(session.id)),
     [temporarySessions, pinnedSessionIds],
   );
+  // D mini-head count: all standalone sessions including archived
+  const standaloneSessionTotal = useMemo(
+    () => sessions.filter((session) => !normalizeProjectPath(session.projectPath)).length,
+    [sessions],
+  );
   // Flat ordered list of every visible session id — used for Shift+click range selection.
   const flatSessionOrder = useMemo(() => {
     const ids: string[] = [];
@@ -1702,12 +1722,14 @@ export function Sidebar({
     const archived = sessionArchived(session, meta);
     const running = Boolean(runningSessions[session.id]);
     const hasPendingPermission = (pendingPermissions[session.id]?.length ?? 0) > 0;
-    const status = sidebarSessionStatus({
+    const status = active ? null : sidebarSessionStatus({
       running,
-      selected: active,
+      selected: false,
       outcome: sessionOutcomes[session.id],
       hasPendingPermission,
     });
+    const KindIcon = SESSION_KIND_ICONS[sessionKind(session.title)];
+    const age = compactSessionAge(session.updatedAt);
     return (
       <div
         key={session.id}
@@ -1777,7 +1799,9 @@ export function Sidebar({
         >
           {sessionPinned(session, meta) ? (
             <IconPin size={11} className="thread-item-pin" aria-hidden />
-          ) : null}
+          ) : (
+            <KindIcon size={14} className="thread-item-kind" aria-hidden />
+          )}
           {session.source === "pi-native" ? (
             <span className="thread-item-source" title="omp session">omp</span>
           ) : null}
@@ -1796,19 +1820,9 @@ export function Sidebar({
                 : t("nav.sessionPermissionLabel", { defaultValue: "Needs approval" })}
             </span>
           ) : null}
-          {navLayout === "island" && !sessionStatusLabel(status) && session.updatedAt && (
-            <span className="thread-item-time" aria-hidden>
-              {(() => {
-                const diff = Math.max(0, Date.now() - Date.parse(session.updatedAt));
-                const min = Math.floor(diff / 60000);
-                if (min < 1) return "now";
-                if (min < 60) return `${min}m`;
-                const h = Math.floor(min / 60);
-                if (h < 24) return `${h}h`;
-                return `${Math.floor(h / 24)}d`;
-              })()}
-            </span>
-          )}
+          {!sessionStatusLabel(status) && age ? (
+            <span className="thread-item-time" aria-hidden>{age}</span>
+          ) : null}
           <TooltipButton
             type="button"
             className="thread-item-more"
@@ -2463,10 +2477,10 @@ export function Sidebar({
           >
             <span id="sidebar-standalone-sessions-label" className="sidebar-list-label">
               {t("nav.sessions", { defaultValue: "Sessions" })}
-              {temporarySessions.length > 0 && (
-                <span className="sidebar-session-count">{temporarySessions.length}</span>
-              )}
             </span>
+            {standaloneSessionTotal > 0 && (
+              <span className="sidebar-session-count">{standaloneSessionTotal}</span>
+            )}
             <div className="sidebar-toolbar-actions">
               <div className="sidebar-menu-wrap">
                 <TooltipButton

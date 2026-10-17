@@ -22,6 +22,7 @@ import {
 } from "../../lib/sidebar-preferences";
 import { sidebarWidthBudget } from "../../lib/sidebar-resize";
 import { commitWorkPanelPresentation } from "../../lib/work-panel-presentation";
+import { userIdentityFromName } from "../../lib/user-identity";
 import {
   MAIN_PANE_MIN_WIDTH,
   workPanelWidthForSidebarReopen,
@@ -547,22 +548,17 @@ export function useAppShellRuntime() {
     }
   }, [settings?.fontFamily]);
 
-  // Avatar initials: derive from settings.displayName first, then OS full name.
+  // Chat author identity (chatUserName + userInitials): settings.displayName
+  // first, then the OS full name from main process.
   useEffect(() => {
     const computeAndSet = (name: string) => {
-      const words = name.trim().split(/\s+/).filter(Boolean);
-      if (words.length === 0) return;
-      const initials =
-        words.length >= 2
-          ? ((words[0]?.[0] ?? "") + (words[words.length - 1]?.[0] ?? "")).toUpperCase()
-          : (words[0]?.slice(0, 2) ?? "").toUpperCase();
-      if (initials) useAppStore.setState({ userInitials: initials });
+      const identity = userIdentityFromName(name);
+      if (identity) useAppStore.setState(identity);
     };
 
     if (settings?.displayName) {
       computeAndSet(settings.displayName);
     } else if (ready) {
-      // Fallback: ask main process for OS full name once on startup.
       void api.getUserInfo().then((r) => {
         if (r?.fullName) computeAndSet(r.fullName);
       }).catch(() => { /* non-fatal */ });
