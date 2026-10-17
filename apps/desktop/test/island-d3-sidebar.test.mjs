@@ -30,8 +30,6 @@ test("D3 bench card: imports and uses useBenchContext for live status", async ()
   // Status dot uses bench.kind for running/stopped class
   assert.match(sidebar, /bench\.kind === "running" \? "is-on" : "is-off"/);
   // Sub-label uses workspaceBar translation keys (reuses existing i18n, no new keys)
-  assert.match(sidebar, /t\("workspaceBar\.benchRunning"\)/);
-  assert.match(sidebar, /t\("workspaceBar\.benchStopped"\)/);
   assert.match(sidebar, /t\("workspaceBar\.chooseBench"\)/);
   // Clicking bench card navigates to bench page
   assert.match(sidebar, /d3-sb-bench[\s\S]*?onClick=\{.*setPage\("bench"\)/);

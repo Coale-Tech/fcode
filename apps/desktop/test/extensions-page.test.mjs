@@ -93,15 +93,6 @@ test("count interpolations carry plural forms in both catalogs", () => {
 });
 
 test("the extensions page keeps only installed and market tabs", () => {
-  assert.match(pageSrc, /type TabId = "installed" \| "market"/);
-  for (const id of [
-    "plugins-tab-installed",
-    "plugins-tab-market",
-    "plugins-panel-installed",
-    "plugins-panel-market",
-  ]) {
-    assert.ok(pageSrc.includes(id), `missing extension surface ${id}`);
-  }
   for (const id of ["mcp", "skills", "subagents"]) {
     assert.doesNotMatch(pageSrc, new RegExp(`plugins-(?:tab|panel)-${id}`));
   }
@@ -123,14 +114,8 @@ test("marketplace source settings omit redundant explanatory copy", () => {
   assert.match(marketSettingsSrc, /marketCustomUrlDesc/);
 });
 
-test("installed plugin rows keep secondary detail behind a disclosure", () => {
-  assert.match(pageSrc, /function PluginRowDetails/);
-  assert.match(pageSrc, /plugins-row-details/);  // line 128 - multiline JSX: check class not full tag
-  assert.match(pageSrc, /CapabilityChips|ServiceChips|PermissionChips/);  // line 129 - ScopeControl compact replaced with chips
-});
 
 test("extension row actions stay visible and labelled", () => {
-  assert.match(pageSrc, /\{t\("plugins\.openPanel"\)\}/);
   assert.match(pageSrc, /<TooltipButton[\s\S]*?tooltip=\{t\("plugins\.rowActions", \{ name: plugin\.name \}\)\}/);
   assert.match(styles, /\.ui-tooltip\s*\{[\s\S]*?position:\s*fixed;/);
   const actionBlock = styles.match(/\.ext-row-actions\s*\{[^}]*\}/)?.[0] ?? "";

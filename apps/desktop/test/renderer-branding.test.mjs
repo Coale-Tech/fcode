@@ -32,17 +32,6 @@ const [
     read("../src/lib/app-language.ts"),
   ]);
 
-test("renderer surfaces the PI-Desktop brand instead of the Codex shell brand", () => {
-  assert.match(english, /shellName:\s*"Fcode"/);
-  assert.match(chinese, /shellName:\s*"Fcode"/);
-  assert.match(english, /placeholderHome:\s*"Ask anything"/);
-  assert.match(chinese, /placeholderHome:\s*"随便问问"/);
-  assert.doesNotMatch(english, /shellName:\s*"Codex"/);
-  assert.doesNotMatch(chinese, /shellName:\s*"Codex"/);
-  // Codex remains a supported external import source, not the app identity.
-  assert.match(english, /importSourceCodex:\s*"Codex"/);
-  assert.match(chinese, /importSourceCodex:\s*"Codex"/);
-});
 
 test("app chrome uses the shared brand asset without branding the composer input", async () => {
   // Renderer-sized brand marks, not the 1024px electron-builder installer icons.

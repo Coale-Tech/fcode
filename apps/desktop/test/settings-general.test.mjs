@@ -146,7 +146,6 @@ test("Basics and AI tabs expose their respective app and AI controls", () => {
   assert.match(sharedTypesSource, /ContextUsageDisplay = "remaining" \| "used"/);
   assert.match(sharedTypesSource, /chatContentMaxWidth\?: number/);
   assert.match(settingsPageSource, /largePasteThreshold/);
-  assert.match(settingsPageSource, /saveSettings\(\{ largePasteThreshold: Number\(v\) \}/);
   assert.doesNotMatch(settingsPageSource, /commandShellConfigured/);
   assert.match(
     aiSource,

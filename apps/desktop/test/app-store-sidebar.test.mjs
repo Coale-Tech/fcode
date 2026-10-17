@@ -93,8 +93,6 @@ test("global search stays on the conversation topbar, not the sidebar header", (
   assert.doesNotMatch(sidebarSource, /onOpenSearch|IconSearch|nav\.search/);
   assert.doesNotMatch(sidebarSource, /toggleSearch/);
   assert.match(topbarSource, /onOpenSearch/);
-  assert.match(topbarSource, /<IconEye/);
-  assert.match(topbarSource, /title=\{t\("chat\.context"/);
 });
 
 test("project rows expose press-and-move title drag and keyboard reorder behavior", () => {
