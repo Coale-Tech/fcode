@@ -26,12 +26,14 @@ export function VersionBadge({ version }: { version: BenchVersion }) {
   return <span className="wb-badge wb-badge-gray">v{version}</span>;
 }
 
-export function StatusBadge({ status }: { status: BenchStatus }) {
+/** Status pill; optionally includes elapsed uptime inside the badge ("● Running · 02:47"). */
+export function StatusBadge({ status, elapsed }: { status: BenchStatus; elapsed?: string }) {
   const hue = STATUS_HUES[status];
   return (
     <span className={`wb-badge wb-badge-${hue}`}>
       <span className={`wb-dot wb-dot-${hue}`} aria-hidden="true" />
       {STATUS_LABELS[status]}
+      {elapsed ? ` · ${elapsed}` : null}
     </span>
   );
 }

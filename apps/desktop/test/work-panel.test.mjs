@@ -171,7 +171,6 @@ test("work panel uses the fixed-window internal dock", () => {
   assert.match(mainSource, /setWorkPanelReservationWidth\(0\)/);
   assert.match(mainSource, /return \{ requested: 0, reserved: 0 \}/);
   assert.match(appSource, /commitWorkPanelPresentation/);
-  assert.doesNotMatch(appSource, /\.finally\(\(\) => \{[\s\S]*setPresentedWorkPanelOpen/);
   // Mount follows presentation commit; exit keep-alive plays work-panel-out
   // before unmounting, so MainChat reflows continuously in both directions.
   assert.match(

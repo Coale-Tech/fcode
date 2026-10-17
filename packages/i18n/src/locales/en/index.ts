@@ -2419,6 +2419,7 @@ sklm: {
     cadenceDaily: "Daily",
     cadenceWeekly: "Weekly",
     cadenceMonthly: "Monthly",
+    cadenceCron: "Custom cron",
     enabled: "Enabled",
     disabled: "Disabled",
     lastFailed: "Last: failed",

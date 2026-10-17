@@ -2402,6 +2402,7 @@ sklm: {
     cadenceDaily: "Günlük",
     cadenceWeekly: "Haftalık",
     cadenceMonthly: "Aylık",
+    cadenceCron: "Özel Cron",
     enabled: "Açık",
     disabled: "Kapalı",
     lastFailed: "Son: başarısız",

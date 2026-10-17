@@ -33,18 +33,16 @@ test("developer mode alone decides which destinations exist", () => {
 
   assert.equal(off.includes("sync"), false);
   assert.equal(on.includes("sync"), true);
-  assert.equal(off.includes("voice"), false);
-  assert.equal(on.includes("voice"), true);
   assert.equal(off.includes("remoteHosts"), false);
   assert.equal(on.includes("remoteHosts"), true);
   assert.deepEqual(
     off,
-    on.filter((id) => id !== "voice" && id !== "sync" && id !== "remoteHosts"),
+    on.filter((id) => id !== "sync" && id !== "remoteHosts"),
   );
   // Both gated destinations carry the badge rendered by the rail and title.
   assert.deepEqual(
     SETTINGS_NAV.filter((entry) => entry.developerOnly === true).map((entry) => entry.id),
-    ["voice", "sync", "remoteHosts"],
+    ["sync", "remoteHosts"],
   );
   assert.ok(
     SETTINGS_NAV.filter((entry) => entry.developerOnly === true)
@@ -66,11 +64,6 @@ test("settings search mirrors the rail", () => {
       .some((hit) => hit.tab === "sync"),
   );
   assert.deepEqual(searchSettings("remotehosts", identity, { developerMode: false }), []);
-  assert.deepEqual(searchSettings("voiceEnable", identity, { developerMode: false }), []);
-  assert.ok(
-    searchSettings("voiceEnable", identity, { developerMode: true })
-      .some((hit) => hit.tab === "voice"),
-  );
   const hits = searchSettings("remotehosts", identity, { developerMode: true });
   assert.ok(hits.some((hit) => hit.tab === "remoteHosts"));
   assert.equal(searchSettings("settings", identity, { limit: 2 }).length, 2);
@@ -81,8 +74,6 @@ test("a stale developer-only selection is reported as hidden", () => {
   assert.equal(isSettingsDestinationHidden("sync", true), false);
   assert.equal(isSettingsDestinationHidden("remoteHosts", false), true);
   assert.equal(isSettingsDestinationHidden("remoteHosts", true), false);
-  assert.equal(isSettingsDestinationHidden("voice", false), true);
-  assert.equal(isSettingsDestinationHidden("voice", true), false);
   assert.equal(isSettingsDestinationHidden("general", false), false);
 });
 

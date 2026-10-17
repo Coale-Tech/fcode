@@ -176,12 +176,10 @@ export function AllBenches({
                       <span className="wb-truncate">{siteSummary(bench)}</span>
                     </td>
                     <td>
-                      <StatusBadge status={status} />
-                      {active && bench.startedAtMs && (
-                        <span className="wb-muted" style={{ fontSize: 11, marginLeft: 4 }}>
-                          · {fmtElapsed(bench.startedAtMs)}
-                        </span>
-                      )}
+                      <StatusBadge
+                        status={status}
+                        elapsed={active && bench.startedAtMs ? fmtElapsed(bench.startedAtMs) : undefined}
+                      />
                     </td>
                     <td className="wb-table-action">
                       {active ? (

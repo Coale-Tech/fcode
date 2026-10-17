@@ -2396,6 +2396,7 @@ sklm: {
     "cadenceDaily": "Täglich",
     "cadenceWeekly": "Wöchentlich",
     "cadenceMonthly": "Monatlich",
+    "cadenceCron": "Benutzerdefinierter Cron",
     "enabled": "Aktiviert",
     "disabled": "Deaktiviert",
     "lastFailed": "Letzter Lauf: fehlgeschlagen",

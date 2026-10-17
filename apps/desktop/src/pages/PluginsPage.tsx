@@ -217,8 +217,10 @@ export function PluginsPage() {
               <div className="d-seg" role="tablist">
                 <button
                   type="button"
+                  id="plugins-tab-installed"
                   role="tab"
                   aria-selected={tab === "installed"}
+                  aria-controls="plugins-panel-installed"
                   className={cx("d-seg-opt", tab === "installed" && "active")}
                   onClick={() => goInstalled(plgNav === "market" ? "all" : plgNav)}
                 >
@@ -227,8 +229,10 @@ export function PluginsPage() {
                 </button>
                 <button
                   type="button"
+                  id="plugins-tab-market"
                   role="tab"
                   aria-selected={tab === "market"}
+                  aria-controls="plugins-panel-market"
                   className={cx("d-seg-opt", tab === "market" && "active")}
                   onClick={goMarket}
                 >

@@ -645,7 +645,7 @@ export function installCaptureRig(): CaptureRig {
           source: "builtin",
           bundled: true,
           status: "ready",
-          permissions: ["exec_process", "net:outbound", "fs:read", "ui.panel", "notify"],
+          permissions: ["net:outbound", "fs:read", "exec_process", "ui.panel", "notify"],
           fs: { read: { scope: ["~/ERPNext/coale_v16/sites/"] } },
           capabilities: ["tools", "services"],
           author: "CoaleTech",
@@ -1077,7 +1077,7 @@ export function installCaptureRig(): CaptureRig {
         { id: "st-1", title: "Daily ERPNext Digest", prompt: "Summarise all outstanding Sales Orders, Purchase Orders, and Stock movements from the last 24 h. List top 5 overdue items.", cadence: "daily", mode: "agent", enabled: true, createdAt: now, updatedAt: now, schedule: { hour: 8, minute: 0, weekday: 0, weekdays: [0, 1, 2, 3, 4] }, nextRunAt: next(8, 0), workspacePath: bench, modelId: "claude-sonnet-4-6" },
         { id: "st-2", title: "Hourly CI Health Check", prompt: "Check frappe-bench CI status across all apps. Alert if any test suite has been failing for 2+ runs.", cadence: "hourly", mode: "agent", enabled: true, createdAt: now, updatedAt: now, schedule: { hour: 0, minute: 0, weekday: 0 }, nextRunAt: nextHour.toISOString(), workspacePath: bench, modelId: "claude-sonnet-4-6" },
         { id: "st-3", title: "Weekly HRMS Payroll Review", prompt: "Review pending payroll entries in HRMS. Flag employees with missing attendance or salary revision approvals.", cadence: "weekly", mode: "agent", enabled: true, createdAt: now, updatedAt: now, schedule: { hour: 7, minute: 30, weekday: 0, weekdays: [0] }, nextRunAt: at(daysToMonday, 7, 30).toISOString(), workspacePath: "/Users/mac/ERPNext/hrms-bench", modelId: "claude-sonnet-4-6" },
-        { id: "st-4", title: "Stock Reconciliation Snapshot", prompt: "Take a full stock reconciliation snapshot across all warehouses and export as CSV to /tmp/stock-snapshot.", cadence: "monthly", mode: "agent", enabled: true, createdAt: now, updatedAt: now, schedule: { hour: 2, minute: 0, weekday: 0 }, nextRunAt: at(1, 2, 0).toISOString(), workspacePath: bench, modelId: "claude-sonnet-4-6" },
+        { id: "st-4", title: "Stock Reconciliation Snapshot", prompt: "Take a full stock reconciliation snapshot across all warehouses and export as CSV to /tmp/stock-snapshot.", cadence: "cron", mode: "agent", enabled: true, createdAt: now, updatedAt: now, schedule: { hour: 2, minute: 0, weekday: 0 }, nextRunAt: at(1, 2, 0).toISOString(), workspacePath: bench, modelId: "claude-sonnet-4-6" },
         { id: "st-5", title: "Monthly Accounts Ageing", prompt: "Generate accounts receivable ageing report for month-end and post summary to Raven #finance channel.", cadence: "monthly", mode: "agent", enabled: false, createdAt: now, updatedAt: now, schedule: { hour: 9, minute: 0, weekday: 0 }, workspacePath: bench, modelId: "claude-sonnet-4-6" },
       ];
       // health is computed at call-time (not seed-time) so lastTickAt stays within 90s window
@@ -1130,7 +1130,7 @@ export function installCaptureRig(): CaptureRig {
       const pulls: PullRequestSummary[] = [
         {
           number: 247,
-          title: "feat: Add eTIMS KRA receipt signing via VSCU integration",
+          title: "eTIMS VSCU",
           url: "https://github.com/Coale-Tech/frappe-agent/pull/247",
           author: "wanjiru@coaletech.com",
           headRefName: "feature/etims-vscu", baseRefName: "main",
@@ -1257,8 +1257,11 @@ export function installCaptureRig(): CaptureRig {
         { id: "storage.pruneOnLow",  tab: "general", group: "Storage",             type: "boolean", label: "storage.pruneOnLow",     description: "Auto-prune when disk space falls below 500 MB",   default: true },
         { id: "storage.cacheDir",    tab: "general", group: "Storage",             type: "string",  label: "storage.cacheDir",       description: "Directory for transient tool output cache",       default: "~/.omp/cache" },
         // ── general / Network ─────────────────────────────────────────────
-        { id: "network.relaxed",     tab: "general", group: "Network",             type: "boolean", label: "network.relaxed",        description: "Disable strict host validation for local development", default: false },
-        { id: "network.proxy",       tab: "general", group: "Network",             type: "string",  label: "network.proxy",          description: "HTTP/HTTPS proxy URL (e.g. http://proxy:8080)" },
+        { id: "network.relaxed",     tab: "general", group: "Network",             type: "boolean", label: "network.relaxed",        description: "Disable strict TLS verification (not recommended)", default: false },
+        { id: "network.timeout",     tab: "general", group: "Network",             type: "number",  label: "network.timeout",        description: "Default HTTP request timeout in milliseconds", default: 30000, min: 1000, max: 300000 },
+        // ── general / Experimental ────────────────────────────────────────
+        { id: "experimental.parallelToolCalls",  tab: "general", group: "Experimental", type: "boolean", label: "experimental.parallelToolCalls",  description: "Allow multiple tool calls to execute in parallel",              default: false },
+        { id: "experimental.streamToolResults",  tab: "general", group: "Experimental", type: "boolean", label: "experimental.streamToolResults",  description: "Stream tool results as they arrive instead of batching",       default: false },
         // ── tools ─────────────────────────────────────────────────────────
         { id: "tools.timeout",       tab: "tools",   group: "Execution",           type: "number",  label: "tools.timeout",          description: "Maximum seconds a single tool call may run",     default: 60, min: 5, max: 600 },
         { id: "tools.maxOutput",     tab: "tools",   group: "Execution",           type: "number",  label: "tools.maxOutput",        description: "Maximum bytes of tool output kept in context",   default: 200000 },
