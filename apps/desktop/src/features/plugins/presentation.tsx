@@ -30,14 +30,17 @@ export function PermissionChips({
   permissions,
   limit = INLINE_PERMISSION_LIMIT,
   keys = false,
+  sorted = true,
 }: {
   permissions: readonly string[] | undefined;
   limit?: number;
   /** Show the manifest key itself (the description moves to the tooltip). */
   keys?: boolean;
+  /** Sort chips by risk tier (default true). Pass false to keep insertion order. */
+  sorted?: boolean;
 }) {
   const { t } = useTranslation();
-  const ordered = orderPermissions(permissions);
+  const ordered = sorted ? orderPermissions(permissions) : [...new Set(permissions ?? [])];
   if (ordered.length === 0) {
     return <span className="plugins-perm-none">{t("plugins.noPermissions")}</span>;
   }
@@ -290,7 +293,7 @@ export function PluginRowDetails({
             <span className="plugins-row-detail-label">
               {t("plugins.permissionsTitle")}
             </span>
-            <PermissionChips permissions={plugin.permissions} keys />
+            <PermissionChips permissions={plugin.permissions} keys sorted={false} />
           </div>
         ) : null}
         {hasFsScope ? (

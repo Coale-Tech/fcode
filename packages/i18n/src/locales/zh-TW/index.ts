@@ -2382,6 +2382,7 @@ sklm: {
     cadenceDaily: "每天",
     cadenceWeekly: "每週",
     cadenceMonthly: "每月",
+    cadenceCron: "自訂 Cron",
     enabled: "已啟用",
     disabled: "已停用",
     lastFailed: "上次：失敗",
