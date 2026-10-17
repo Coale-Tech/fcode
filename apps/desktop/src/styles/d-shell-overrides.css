@@ -9,12 +9,11 @@
   border-radius: var(--d-r);
   border: 1px solid var(--outline-elevation-1);
   box-shadow: var(--elevation-base);
-  background: var(--d-canvas-bg);   /* inner gray mini-canvas (D-SPEC.md:128) */
-  overflow: hidden;                 /* clip to border-radius */
+  /* White card on gray canvas (reference D3): NOT the inner gray mini-canvas */
+  background: var(--surface-elevation-2);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: var(--d-gap);               /* inner gap between sub-panels */
-  padding: var(--d-gap);           /* 12px inner padding (D-SPEC.md:128,152) */
 }
 :root[data-theme="dark"][data-nav-layout="island"] .main-pane {
   background: var(--surface-elevation-1);
@@ -527,21 +526,3 @@
   color: var(--ink-gray-6);
 }
 
-/* ── D3 Island: main-pane floating card on gray canvas ──────────────────
- * d-shell.css sets the canvas bg for island but omits the elevated card.
- * Mirror the rail rule (d-shell.css:394-403) for island chat surface. */
-:root[data-nav-layout="island"] .main-pane:not(.is-workbench) {
-  margin: var(--d-gap);
-  border-radius: var(--d-r);
-  border: 1px solid var(--outline-elevation-1);
-  box-shadow: var(--elevation-base);
-}
-:root[data-theme="dark"][data-nav-layout="island"] .main-pane:not(.is-workbench) {
-  background: var(--surface-elevation-1);
-  border-color: var(--outline-gray-2);
-}
-:root[data-nav-layout="island"] .main-pane.is-workbench {
-  margin: 0;
-  border: none;
-  box-shadow: none;
-}

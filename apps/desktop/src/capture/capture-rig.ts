@@ -1382,21 +1382,21 @@ export function installCaptureRig(): CaptureRig {
         }
         await useAppStore.getState().refreshSessions();
         // All session titles (visible + archived) matching variant-D1/D2/D3 reference.
-        // Created oldest-first; count=12 (6 visible in TODAY+YESTERDAY + 6 archived).
-        // No THIS WEEK sessions — island sidebar shows PINNED PAGES right after YESTERDAY.
+        // count=12: TODAY(3) + YESTERDAY(3) + THIS WEEK(2) + archived(4).
+        // THIS WEEK 2d/4d matches reference D1/D2.
         const allTitles = [
-          "Set up CI pipeline for ERPNext",        // archived
-          "Migrate legacy plugin API",             // archived
-          "Rewrite notification service",          // archived
-          "Fix bench restart on M1",              // archived
-          "Debug slow stock valuation query",     // archived (formerly THIS WEEK)
-          "Set up coale_v16 from scratch",        // archived (formerly THIS WEEK)
-          "ERPNext payroll period config",        // YESTERDAY
-          "Review PR #224 leave approvals",       // YESTERDAY
-          "Migrate Raven to frappe-ui v2",        // YESTERDAY
-          "Fix duplicate bench start bug",        // TODAY
-          "Redesign settings plugin section",     // TODAY
-          "Sync ERPNext code module",             // TODAY — selected
+          "Set up CI pipeline for ERPNext",    // archived
+          "Migrate legacy plugin API",         // archived
+          "Rewrite notification service",      // archived
+          "Fix bench restart on M1",           // archived
+          "Debug slow stock valuation query",  // THIS WEEK (4d)
+          "Set up coale_v16 from scratch",     // THIS WEEK (2d)
+          "ERPNext payroll period config",     // YESTERDAY
+          "Review PR #224 leave approvals",    // YESTERDAY
+          "Migrate Raven to frappe-ui v2",     // YESTERDAY
+          "Fix duplicate bench start bug",     // TODAY
+          "Redesign settings plugin section",  // TODAY
+          "Sync ERPNext code module",          // TODAY — selected
         ];
         const keepTitles = new Set(allTitles);
         for (const s of useAppStore.getState().sessions || []) {
@@ -1446,34 +1446,43 @@ export function installCaptureRig(): CaptureRig {
           "Migrate Raven to frappe-ui v2":     S - D + 14 * H,
           "Review PR #224 leave approvals":    S - D + 12 * H,
           "ERPNext payroll period config":     S - D + 10 * H,
-          // Archived (beyond 30d cutoff; counted in total but not shown in groups)
-          "Set up coale_v16 from scratch":     S - 8 * D,
-          "Debug slow stock valuation query":  S - 9 * D,
+          // THIS WEEK — 2d and 4d ago (within 6-day thisWeek window)
+          "Set up coale_v16 from scratch":     S - 2 * D,
+          "Debug slow stock valuation query":  S - 4 * D,
+          // Archived (beyond 14d; hidden by archived:true on session object)
           "Fix bench restart on M1":           S - 10 * D,
           "Rewrite notification service":      S - 11 * D,
           "Migrate legacy plugin API":         S - 12 * D,
           "Set up CI pipeline for ERPNext":    S - 13 * D,
         };
-        const backdated = (useAppStore.getState().sessions ?? []).map((s) => {
-          const ts = sessionAges[(s.title || "").trim()];
-          return ts ? { ...s, updatedAt: new Date(ts).toISOString(), createdAt: new Date(ts).toISOString() } : s;
-        });
-        useAppStore.setState({ sessions: backdated });
-        // Mark the 6 archived session titles as archived in sessionMeta so they
-        // are hidden from the sidebar default view (showArchived=false).
+        // Titles to mark as archived (hidden from sidebar default view).
         const archivedTitles = new Set([
           "Set up CI pipeline for ERPNext",
           "Migrate legacy plugin API",
           "Rewrite notification service",
           "Fix bench restart on M1",
-          "Debug slow stock valuation query",
-          "Set up coale_v16 from scratch",
         ]);
+        // Rebuild sessions array from ONLY the 12 wanted titles, filtering out stale
+        // sessions from old capture runs that the backend API deletion may have missed.
+        const wantedTitles = new Set(allTitles);
+        const backdated = (useAppStore.getState().sessions ?? [])
+          .filter((s) => wantedTitles.has((s.title || "").trim()))
+          .map((s) => {
+            const title = (s.title || "").trim();
+            const ts = sessionAges[title];
+            const isArchived = archivedTitles.has(title);
+            return {
+              ...s,
+              ...(ts ? { updatedAt: new Date(ts).toISOString(), createdAt: new Date(ts).toISOString() } : {}),
+              ...(isArchived ? { archived: true } : {}),
+            };
+          });
+        useAppStore.setState({ sessions: backdated });
+        // Belt-and-suspenders: also set sessionMeta.archived for the 4 archived titles.
         const existingMeta = useAppStore.getState().sessionMeta ?? {};
         const updatedMeta = { ...existingMeta };
         for (const s of backdated) {
-          const title = (s.title || "").trim();
-          if (archivedTitles.has(title)) {
+          if (archivedTitles.has((s.title || "").trim())) {
             updatedMeta[s.id] = { ...(existingMeta[s.id] ?? {}), archived: true };
           }
         }
@@ -1656,13 +1665,24 @@ export function installCaptureRig(): CaptureRig {
         { id: "ev-bash",    name: "bash",             target: "list-apps on coale_v16",      status: "ok",      durationMs: 800,       timestamp: "10:42" },
         { id: "ev-perm",    name: "Approval requested", target: "edit payment_entry.py",     status: "running", durationMs: undefined, timestamp: "10:43" },
       ];
-      // Scroll transcript to top so the user message (Josh Kim, 10:42 AM) is visible.
-      // Multi-retry: app auto-scroll-to-bottom may fire after mount at various intervals.
-      const _scrollToTop = () => {
-        (document.querySelector('[data-scroll-owner="transcript"]') as HTMLElement | null)
-          ?.scrollTo({ top: 0, behavior: "instant" });
-      };
-      for (const ms of [80, 200, 400, 700, 1200, 2000]) setTimeout(_scrollToTop, ms);
+      // Scroll transcript to top so user message (Josh Kim, 10:42 AM) is visible.
+      // ResizeObserver on thread-content fires whenever messages are added (auto-scroll
+      // wins), forcing scroll back to 0. Disconnects after 3s. Fallback timeouts too.
+      (() => {
+        const getEl = () =>
+          document.querySelector('[data-scroll-owner="transcript"]') as HTMLElement | null;
+        const scrollTop = () => getEl()?.scrollTo({ top: 0, behavior: "instant" });
+        scrollTop();
+        const target =
+          document.querySelector(".thread-content") ??
+          document.querySelector(".thread-scroll");
+        if (target) {
+          const obs = new ResizeObserver(scrollTop);
+          obs.observe(target);
+          setTimeout(() => { obs.disconnect(); scrollTop(); }, 3000);
+        }
+        for (const ms of [100, 300, 600, 1000, 2000]) setTimeout(scrollTop, ms);
+      })();
     },
     clearPendingPermissions: () => {
       if (!window.__PI_CAPTURE__) return;
