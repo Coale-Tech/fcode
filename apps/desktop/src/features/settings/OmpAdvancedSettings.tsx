@@ -25,6 +25,31 @@ import {
 } from "../../components/ui";
 import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect";
 import { SettingsCard, SettingsRow } from "./primitives";
+import {
+  IconDatabase,
+  IconGlobe,
+  IconPackage,
+  IconPlay,
+  IconServer,
+  IconSparkles,
+  IconStar,
+  IconWrench,
+  IconWorkflow,
+} from "../../components/icons";
+import type { ReactNode } from "react";
+
+/** Decorative icons per manifest group name (matches reference design). */
+const GROUP_ICONS: Record<string, ReactNode> = {
+  "Core":                  <IconPackage size={13} />,
+  "Startup & Lifecycle":   <IconServer size={13} />,
+  "Storage":               <IconDatabase size={13} />,
+  "Network":               <IconGlobe size={13} />,
+  "Experimental":          <IconSparkles size={13} />,
+  "Execution":             <IconWrench size={13} />,
+  "Spawning":              <IconWorkflow size={13} />,
+  "Context":               <IconDatabase size={13} />,
+  "Beta":                  <IconStar size={13} />,
+};
 
 // ── Pure helpers (exported so unit tests can import directly) ─────────────────
 
@@ -245,13 +270,9 @@ function DescriptorRow({
 
   return (
     <SettingsRow
+      className="omp-advanced-row"
       title={descriptor.label}
       description={descriptor.description}
-      detail={
-        defaultDisplay !== null
-          ? `${t("settings.ompAdvancedDefault")} ${defaultDisplay}`
-          : undefined
-      }
     >
       <div className="omp-advanced-control-wrap">
         <DescriptorControl
@@ -440,6 +461,7 @@ export function OmpAdvancedSettings() {
           <SettingsCard
             key={`${tab}::${group}`}
             title={flatMode ? `${tab} › ${group}` : group}
+            icon={flatMode ? undefined : GROUP_ICONS[group]}
           >
             {items.map((d) => (
               <DescriptorRow

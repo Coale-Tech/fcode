@@ -1257,8 +1257,11 @@ export function installCaptureRig(): CaptureRig {
         { id: "storage.pruneOnLow",  tab: "general", group: "Storage",             type: "boolean", label: "storage.pruneOnLow",     description: "Auto-prune when disk space falls below 500 MB",   default: true },
         { id: "storage.cacheDir",    tab: "general", group: "Storage",             type: "string",  label: "storage.cacheDir",       description: "Directory for transient tool output cache",       default: "~/.omp/cache" },
         // ── general / Network ─────────────────────────────────────────────
-        { id: "network.relaxed",     tab: "general", group: "Network",             type: "boolean", label: "network.relaxed",        description: "Disable strict host validation for local development", default: false },
-        { id: "network.proxy",       tab: "general", group: "Network",             type: "string",  label: "network.proxy",          description: "HTTP/HTTPS proxy URL (e.g. http://proxy:8080)" },
+        { id: "network.relaxed",     tab: "general", group: "Network",             type: "boolean", label: "network.relaxed",        description: "Disable strict TLS verification (not recommended)", default: false },
+        { id: "network.timeout",     tab: "general", group: "Network",             type: "number",  label: "network.timeout",        description: "Default HTTP request timeout in milliseconds", default: 30000, min: 1000, max: 300000 },
+        // ── general / Experimental ────────────────────────────────────────
+        { id: "experimental.parallelToolCalls",  tab: "general", group: "Experimental", type: "boolean", label: "experimental.parallelToolCalls",  description: "Allow multiple tool calls to execute in parallel",              default: false },
+        { id: "experimental.streamToolResults",  tab: "general", group: "Experimental", type: "boolean", label: "experimental.streamToolResults",  description: "Stream tool results as they arrive instead of batching",       default: false },
         // ── tools ─────────────────────────────────────────────────────────
         { id: "tools.timeout",       tab: "tools",   group: "Execution",           type: "number",  label: "tools.timeout",          description: "Maximum seconds a single tool call may run",     default: 60, min: 5, max: 600 },
         { id: "tools.maxOutput",     tab: "tools",   group: "Execution",           type: "number",  label: "tools.maxOutput",        description: "Maximum bytes of tool output kept in context",   default: 200000 },
