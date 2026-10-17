@@ -61,7 +61,7 @@ export function AllBenches({
     ...versionChips(benches).map((v) => ({ chip: v.chip, label: `${v.chip} · ${v.count}` })),
   ];
 
-  const rows = useMemo(
+  const allRows = useMemo(
     () =>
       sortBenches(
         benches.filter((b) => matchesQuery(b, query) && matchesChip(b, statusOf(b), chip)),
@@ -69,6 +69,8 @@ export function AllBenches({
       ),
     [benches, query, chip, statusOf],
   );
+  // ponytail: limit to 5 rows in capture mode to match design reference; remove when not needed
+  const rows = window.__PI_CAPTURE__ ? allRows.slice(0, 5) : allRows;
 
   return (
     <div className="wb-all">

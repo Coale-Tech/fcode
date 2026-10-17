@@ -158,6 +158,8 @@ export const ChatSurface = memo(function ChatSurface({
   // not take over just because the destination projection is still empty.
   const showEmptyState =
     !hasTranscript && (!visibleSessionId || visibleSessionId === activeSessionId);
+  // D1 onboarding: when checklist is active, hide mascot hero and composer.
+  const showChecklist = useAppStore((s) => Boolean(s.onboarding?.showChecklist));
   const vendorModelMissing = vendorAccountOmitsSessionModel(
     activeSession,
     providers,
@@ -259,9 +261,11 @@ export const ChatSurface = memo(function ChatSurface({
               <OnboardingChecklist />
             </div>
           </div>
-          <div className="home-composer-wrap">
-            <StableComposer variant="home" />
-          </div>
+          {!showChecklist && (
+            <div className="home-composer-wrap">
+              <StableComposer variant="home" />
+            </div>
+          )}
         </div>
       ) : (
         <>

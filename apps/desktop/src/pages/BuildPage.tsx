@@ -105,6 +105,16 @@ export function BuildPage() {
     let cancelled = false;
     const poll = async () => {
       if (cancelled) return;
+      // Capture-rig override: mirrors the same pattern as BenchPage/use-bench-context.
+      const override = window.__PI_BENCH_OVERRIDE__;
+      if (override !== undefined && override !== null) {
+        if (!cancelled) {
+          setBenchStatus(override.status as BenchStatus);
+          setBenchPath(override.benchPath);
+          setSite(override.site);
+        }
+        return;
+      }
       try {
         const s = await invoke<{ status: BenchStatus; benchPath: string | null; site: string | null }>(IPC.invoke.benchStatus);
         if (!cancelled) {
@@ -114,11 +124,14 @@ export function BuildPage() {
         }
       } catch { /* ignore */ }
     };
+    const onBenchUpdate = () => { void poll(); };
+    document.addEventListener("pi:bench-update", onBenchUpdate);
     poll();
     const id = setInterval(poll, 2_000);
     return () => {
       cancelled = true;
       clearInterval(id);
+      document.removeEventListener("pi:bench-update", onBenchUpdate);
     };
   }, []);
 
@@ -127,6 +140,14 @@ export function BuildPage() {
   const loadApps = useCallback(async () => {
     setListAppsStatus("loading");
     setListAppsError(null);
+    // Capture-rig: seed Studio + Builder as installed so the sidebar shows ● green dots.
+    if (window.__PI_CAPTURE__) {
+      setInstalledApps(["studio", "builder", "frappe", "erpnext", "hrms", "raven"]);
+      setWebserverPort(8000);
+      setBuilderPath("builder");
+      setListAppsStatus("loaded");
+      return;
+    }
     try {
       const data = await invoke<{
         apps: string[];
@@ -174,6 +195,12 @@ export function BuildPage() {
 
   useEffect(() => {
     if (benchStatus !== "running" || !installedApps.includes("studio")) return;
+    // Capture-rig: seed dev mode = false (shows "developer_mode is off" banner like reference).
+    if (window.__PI_CAPTURE__) {
+      setDeveloperMode(false);
+      setWatchdogOk(true);
+      return;
+    }
     // Check developer_mode and watchdog in parallel
     void invoke<{ developerMode: boolean }>(IPC.invoke.buildCheckDeveloperMode)
       .then((r) => setDeveloperMode(r.developerMode))
@@ -191,8 +218,9 @@ export function BuildPage() {
       : `http://localhost:${webserverPort}/${builderPath}`
     : null;
 
-  // Acquire canvas and set initial bounds on mount
+  // Acquire canvas and set initial bounds on mount (skip in capture mode — no live canvas).
   useEffect(() => {
+    if (window.__PI_CAPTURE__) return;
     void invoke(IPC.invoke.buildCanvasAcquire).then(() => setCanvasOwned(true));
     return () => {
       void invoke(IPC.invoke.buildCanvasRelease);

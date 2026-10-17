@@ -225,11 +225,15 @@ export function BenchPage() {
         }
       } catch { /* ignore */ }
     };
+    // Also respond to bench-update events from the capture rig.
+    const onBenchUpdate = () => { void poll(); };
+    document.addEventListener("pi:bench-update", onBenchUpdate);
     poll();
     const id = setInterval(poll, 2000);
     return () => {
       cancelled = true;
       clearInterval(id);
+      document.removeEventListener("pi:bench-update", onBenchUpdate);
     };
   }, []);
 
