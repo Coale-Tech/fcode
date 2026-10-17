@@ -282,6 +282,7 @@ export const fr = {
     "placeholderHomeHint": "Tapez / pour les commandes · @ pour les fichiers",
     "placeholderShortcut": "Maj+Entrée pour une nouvelle ligne · Utilisez Envoyer pour soumettre",
     "addFiles": "Ajoutez des fichiers et plus encore",
+    "addContext": "Add context",
     "filesAttached": "Ajout de {{count}} élément(s) au brouillon",
     "filesPasted": "Enregistrement de {{count}} fichier(s) collé(s) dans le dossier de travail de la session",
     "largeTextPasted": "Enregistrement d'un texte collé volumineux sous @{{name}}",

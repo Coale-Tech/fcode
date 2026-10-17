@@ -291,6 +291,7 @@ export const ko = {
     placeholderHomeHint: "명령은 / · 파일은 @ 입력",
     placeholderShortcut: "줄바꿈은 Shift+Enter · 보내기를 눌러 제출",
     addFiles: "파일 추가",
+    addContext: "Add context",
     filesAttached: "초안에 항목 {{count}}개 추가됨",
     filesPasted: "붙여넣은 파일 {{count}}개를 세션 임시 폴더에 저장함",
     largeTextPasted: "큰 붙여넣기 텍스트를 @{{name}}으로 저장함",

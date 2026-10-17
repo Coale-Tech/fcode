@@ -281,6 +281,7 @@ export const ptBR = {
     placeholderHomeHint: "Digite / para comandos · @ para arquivos",
     placeholderShortcut: "Shift+Enter para inserir uma quebra de linha · Use Enviar para enviar",
     addFiles: "Adicionar arquivos",
+    addContext: "Add context",
     filesAttached: "{{count}} item(ns) adicionado(s) ao rascunho",
     filesPasted: "{{count}} arquivo(s) colado(s) salvo(s) na pasta temporária da sessão",
     largeTextPasted: "Texto longo colado salvo como @{{name}}",

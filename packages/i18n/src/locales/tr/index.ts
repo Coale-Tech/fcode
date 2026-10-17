@@ -291,6 +291,7 @@ export const tr = {
     placeholderHomeHint: "Komutlar için / · dosyalar için @ yazın",
     placeholderShortcut: "Yeni satır için Shift+Enter · göndermek için Gönder",
     addFiles: "Dosya ekle",
+    addContext: "Add context",
     filesAttached: "Taslağa {{count}} öğe eklendi",
     filesPasted: "Yapıştırılan {{count}} dosya oturum klasörüne kaydedildi",
     largeTextPasted: "Uzun yapıştırılan metin @{{name}} olarak kaydedildi",
