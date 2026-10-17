@@ -36,6 +36,7 @@ import {
   IconPlug,
   IconWorkflow,
   IconWrench,
+  IconShield,
   IconKanban as IconColumns,
   IconRaven,
   IconTerminal,
@@ -540,7 +541,7 @@ export function SettingsPage() {
 
           {tab === "ai" && settings && (
             <div className="settings-stack">
-              <SettingsCard title={t("settings.permissions")}>
+              <SettingsCard title={t("settings.permissions")} icon={<IconShield size={13} />}>
                 {/* lane t13: pending dirty state — row highlight when value differs from saved */}
                 <SettingsRow
                   className={(pendingAiChanges.defaultPermissionMode !== undefined &&
@@ -593,7 +594,7 @@ export function SettingsPage() {
                 </SettingsRow>
               </SettingsCard>
 
-              <SettingsCard title={t("settings.defaultsTitle")}>
+              <SettingsCard title={t("settings.defaultsTitle")} icon={<IconSliders size={13} />}>
                 <SettingsRow title={t("settings.mode")} description={t("settings.modeDesc")}>
                   <SegmentedControl
                     value={settings.defaultMode ?? "agent"}
@@ -608,12 +609,6 @@ export function SettingsPage() {
                   />
                 </SettingsRow>
                 <CommandShellRow settings={settings} saveSettings={saveSettings} />
-                <LinkOpenTargetRow settings={settings} saveSettings={saveSettings} />
-                <ThinkingDisplayModeRow settings={settings} saveSettings={saveSettings} />
-                <ContextUsageDisplayRow
-                  settings={settings}
-                  saveSettings={saveSettings}
-                />
                 <SettingsRow
                   title={t("settings.enterToSend")}
                   description={t("settings.enterToSendDesc")}
@@ -624,16 +619,11 @@ export function SettingsPage() {
                     onChange={() => void saveSettings({ enterToSend: !settings.enterToSend })}
                   />
                 </SettingsRow>
-                <SettingsRow
-                  title={t("settings.infiniteProviderRetry")}
-                  description={t("settings.infiniteProviderRetryDesc")}
-                >
-                  <SettingsToggle
-                    checked={settings.infiniteProviderRetry === true}
-                    label={t("settings.infiniteProviderRetry")}
-                    onChange={() => void saveSettings({ infiniteProviderRetry: settings.infiniteProviderRetry !== true })}
-                  />
-                </SettingsRow>
+                <ThinkingDisplayModeRow settings={settings} saveSettings={saveSettings} />
+                <ContextUsageDisplayRow
+                  settings={settings}
+                  saveSettings={saveSettings}
+                />
                 <SettingsRow
                   title={t("settings.smoothStreaming")}
                   description={t("settings.smoothStreamingDesc")}
@@ -642,6 +632,16 @@ export function SettingsPage() {
                     checked={settings.smoothStreaming !== false}
                     label={t("settings.smoothStreaming")}
                     onChange={() => void saveSettings({ smoothStreaming: !(settings.smoothStreaming !== false) })}
+                  />
+                </SettingsRow>
+                <SettingsRow
+                  title={t("settings.infiniteProviderRetry")}
+                  description={t("settings.infiniteProviderRetryDesc")}
+                >
+                  <SettingsToggle
+                    checked={settings.infiniteProviderRetry === true}
+                    label={t("settings.infiniteProviderRetry")}
+                    onChange={() => void saveSettings({ infiniteProviderRetry: settings.infiniteProviderRetry !== true })}
                   />
                 </SettingsRow>
                 <LargePasteThresholdRow

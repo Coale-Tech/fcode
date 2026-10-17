@@ -38,9 +38,11 @@ export function SettingsRow({
   return (
     <div className={className ? `settings-row ${className}` : "settings-row"}>
       <div className="settings-row-copy">
-        <div className="settings-row-title">{title}</div>
+        <div className="settings-row-title">
+          {title}
+          {detail ? <span className="settings-row-detail-inline">{detail}</span> : null}
+        </div>
         {description ? <div className="settings-row-desc">{description}</div> : null}
-        {detail ? <div className="settings-row-detail">{detail}</div> : null}
       </div>
       <div className="settings-row-control">{children}</div>
     </div>

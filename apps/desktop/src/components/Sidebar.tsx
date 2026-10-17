@@ -72,6 +72,7 @@ import {
   IconArchiveRestore,
   IconArrowUpDown,
   IconBranch,
+  IconChat,
   IconCheck,
   IconChevronDown,
   IconCopy,
@@ -244,6 +245,8 @@ export function Sidebar({
   const page = useAppStore((s) => s.page);
   const settings = useAppStore((s) => s.settings);
   const navLayout = resolveNavLayout(settings?.navLayout);
+  const onboarding = useAppStore((s) => s.onboarding);
+  const firstRunEmpty = navLayout !== "island" && Boolean(onboarding?.showChecklist) && sessions.length === 0;
   const kanbanEnabled = useAppStore((s) => s.kanbanEnabled);
   const ravenEnabled = useAppStore((s) => s.ravenEnabled);
   const bench = useBenchContext();
@@ -2329,7 +2332,7 @@ export function Sidebar({
 
   return (
     <aside
-      className={cx("sidebar", "sidebar-surface", className)}
+      className={cx("sidebar", "sidebar-surface", firstRunEmpty && "is-first-run", className)}
       data-window-blur={windowFocused ? undefined : "true"}
       onAnimationEnd={onAnimationEnd}
     >
@@ -2548,6 +2551,12 @@ export function Sidebar({
             ) : null}
           </div>
         </section>
+        {firstRunEmpty && (
+          <div className="sidebar-first-run-empty" data-testid="sidebar-first-run-empty">
+            <IconChat size={20} aria-hidden />
+            <p>{t("nav.firstRunSessionsEmpty")}</p>
+          </div>
+        )}
 
         {navLayout === "island" && (
           <section className="d3-sb-pinned-pages" aria-label={t("nav.pinnedPages")}>

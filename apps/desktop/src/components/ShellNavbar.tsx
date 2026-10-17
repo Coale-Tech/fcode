@@ -55,7 +55,7 @@ export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
   const isMac  = (window.piDesktop?.platform ?? "darwin") === "darwin";
   const bench  = useBenchContext();
   // T13-L03: nested breadcrumb label for settings tabs
-  const settingsTabLabel = page === "settings"
+  const settingsTabLabel = page === "settings" && layout !== "island"
     ? t(SETTINGS_NAV.find((e) => e.id === settingsTab)?.labelKey ?? "nav.settings")
     : null;
   // D design: show user initials in avatar (max 2 chars from first + last name word)
