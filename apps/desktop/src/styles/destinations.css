@@ -296,6 +296,9 @@
 /* D.css:645,653 pill tones the shared .d-pill set (workbench.css) lacks */
 .d-pill.red    { background: var(--surface-red-2); color: var(--ink-red-8); border-color: var(--outline-red-2); }
 .d-pill.violet { background: var(--da-sub);        color: var(--da-txt);    border-color: var(--da-bdr); }
+/* Filled accent pill: solid accent background (e.g. notifications unread badge). */
+.d-pill.accent { background: var(--da); color: var(--ds-accent-foreground); border-color: transparent; }
+.d-pill.accent .d-pill-dot { background: var(--ds-accent-foreground); opacity: 0.85; }
 
 /* ── Pull Requests page layout ───────────────────────────────────────────── */
 /* The page is the canvas (D.css .d-canvas): list and detail are two elevated

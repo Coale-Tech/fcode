@@ -3976,50 +3976,95 @@
   letter-spacing: 0.01em;
 }
 
-/* ── Advanced omp settings tab bar ──────────────────────────────────────── */
+.settings-agent-overrides-head {
+  padding: 8px 12px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ds-settings-row-desc-ink);
+  border-top: 1px solid var(--d-border);
+  margin-top: 4px;
+}
+
+/* ── Advanced omp settings (OmpAdvancedSettings.tsx) ────────────────────── */
 .omp-advanced-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 0 4px;
+  gap: 10px;
+  padding: 12px 16px 8px;
+  border-bottom: 1px solid var(--d-border);
 }
-.omp-advanced-toolbar .omp-advanced-search { flex: 1; }
-.omp-advanced-filter-label {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+.omp-advanced-search {
+  flex: 1;
+  min-width: 0;
+  height: var(--d-ctrl);
+  border: 1px solid var(--d-border);
+  border-radius: var(--d-r-ctrl);
+  background: var(--surface-elevation-0);
+  padding: 0 10px;
   font-size: var(--d-text-sm);
-  color: var(--ink-gray-7);
-  white-space: nowrap;
-  cursor: pointer;
-  user-select: none;
+  color: inherit;
 }
-.omp-advanced-saving { font-size: var(--d-text-xs); }
-
+.omp-advanced-search:focus { outline: none; border-color: var(--da); }
+.omp-advanced-filter-label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: var(--d-text-sm); color: var(--ds-settings-row-desc-ink); white-space: nowrap; cursor: pointer;
+}
+.omp-advanced-saving { font-size: var(--d-text-sm); }
 .omp-advanced-tabs {
   display: flex;
-  flex-direction: row;
   gap: 0;
+  padding: 0 16px;
   border-bottom: 1px solid var(--d-border);
-  padding: 0 0 0;
-  margin-bottom: 4px;
+  overflow-x: auto;
 }
 .omp-advanced-tab {
+  height: 34px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ds-settings-row-desc-ink);
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
-  cursor: pointer;
-  padding: 6px 12px;
-  font-size: var(--d-text-sm);
-  color: var(--ink-gray-6);
-  line-height: 1.4;
   margin-bottom: -1px;
-  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
   transition: color 0.1s, border-color 0.1s;
 }
-.omp-advanced-tab:hover { color: var(--ink-gray-8); }
-.omp-advanced-tab.active {
-  color: var(--ink-gray-8);
-  border-bottom-color: var(--da);
-  font-weight: var(--font-weight-medium);
+.omp-advanced-tab:hover { color: var(--ink-gray-7); }
+.omp-advanced-tab.active { color: var(--da); border-bottom-color: var(--da); }
+.omp-advanced-restart-note {
+  padding: 6px 16px 0;
+  font-size: var(--d-text-sm);
 }
+.omp-advanced-key {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--surface-gray-2);
+  color: var(--ink-gray-7);
+  border-radius: 3px;
+  padding: 1px 5px;
+  border: 1px solid var(--d-border);
+}
+.omp-advanced-control-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}
+.omp-advanced-default-hint {
+  font-size: 10px;
+  color: var(--ds-settings-row-desc-ink);
+}
+.omp-advanced-reset-btn {
+  font-size: 10px;
+  color: var(--da);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.omp-advanced-reset-btn:hover { text-decoration: underline; }

@@ -51,6 +51,7 @@ export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
   const userInitials = useAppStore((s) => s.userInitials);
   const chatUserName = useAppStore((s) => s.chatUserName);
   const pageCrumb = useAppStore((s) => s.pageCrumb);
+  const onboarding = useAppStore((s) => s.onboarding);
   const isMac  = (window.piDesktop?.platform ?? "darwin") === "darwin";
   const bench  = useBenchContext();
   // T13-L03: nested breadcrumb label for settings tabs
@@ -82,7 +83,7 @@ export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
           <nav className="shell-navbar-breadcrumb" aria-label="Location">
             <span className="shell-navbar-crumb-root">{t("app.shellName")}</span>
             <span className="shell-navbar-crumb-sep" aria-hidden="true">/</span>
-            <span className="shell-navbar-crumb-page">{t(PAGE_LABEL_KEY[page])}</span>
+            <span className="shell-navbar-crumb-page">{page === "chat" && Boolean(onboarding?.showChecklist) ? t("onboarding.welcomeBreadcrumb") : t(PAGE_LABEL_KEY[page])}</span>
             {settingsTabLabel && (
               <>
                 <span className="shell-navbar-crumb-sep" aria-hidden="true">/</span>

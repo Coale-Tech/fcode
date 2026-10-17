@@ -187,7 +187,7 @@ export function NotificationsPage() {
         <IconBell size={16} aria-hidden className="notifications-page-bell" />
         <span className="d-page-title">{t("notifications.title")}</span>
         {unreadCount > 0 && (
-          <span className="d-pill violet" aria-live="polite">
+          <span className="d-pill accent" aria-live="polite">
             <span className="d-pill-dot" aria-hidden />
             {t("notifications.unreadCount", { count: unreadCount })}
           </span>

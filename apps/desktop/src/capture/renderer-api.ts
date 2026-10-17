@@ -59,6 +59,8 @@ declare global {
     __PI_PALETTE_BENCHES__?: Array<{ id: string; path: string; status: "running" | "stopped" }>;
     /** Capture-only: command entries for the command-palette COMMANDS section. */
     __PI_PALETTE_COMMANDS__?: CommandItem[];
+    /** Capture-only: session entries seeded for the command-palette SESSIONS section. */
+    __PI_PALETTE_SESSIONS__?: Array<{ id: string; title: string; updatedAt: string }>;
     /** Capture-only seeded bench list; BenchPage.loadBenches reads this instead of IPC. */
     __PI_CAPTURE_BENCH_LIST__?: {
       benches: Array<{ id: string; path: string; version: number | "unknown"; sites: Array<{ name: string; isDefault: boolean }>; apps: string[] }>;
@@ -71,6 +73,8 @@ declare global {
     __PI_CAPTURE_RAVEN_CONNECTED__?: boolean;
     /** When set, FileBirdPage skips fileBirdSetVisible IPC call (avoids failed=true). */
     __PI_CAPTURE_FILEBIRD_VISIBLE__?: boolean;
+    /** Capture-only: pre-select this PR number when PullRequestsPage loads. */
+    __PI_CAPTURE_PR_SELECTED__?: number;
   }
 }
 
@@ -103,6 +107,8 @@ const CAPTURE_RIG_METHODS = [
   "seedBenchList",
   "seedRavenConnected",
   "seedFileBirdConnected",
+  "seedLargePasteThreshold",
+  "clearPinnedSessions",
 ] as const satisfies readonly CaptureRigMethod[];
 
 export function installRendererApi(): () => void {

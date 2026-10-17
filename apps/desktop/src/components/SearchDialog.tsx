@@ -8,13 +8,14 @@ import { searchSettings, type SettingsSearchHit } from "../lib/settings-search";
 import { useSessionSearch, useSessionSearchState } from "../hooks/use-session-search";
 import { SearchHighlight } from "./SearchHighlight";
 import { SearchSessionResults, type SearchRow } from "./SearchSessionResults";
-import type { SessionSummary, CommandItem } from "@pi-desktop/shared";
 import { IPC } from "@pi-desktop/shared";
+import type { SessionSummary, CommandItem } from "@pi-desktop/shared";
 import type { SessionMeta } from "../lib/sidebar-preferences";
 import {
   IconAt,
   IconClock,
   IconFileBird,
+  IconFileText,
   IconNewSession,
   IconPullRequest,
   IconRaven,
@@ -116,10 +117,19 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   type PaletteFile = { path: string; appRoot: string };
   const [paletteFiles, setPaletteFiles] = useState<PaletteFile[]>([]);
 
-  // Capture mode: load rig-seeded file entries for the FILES palette section.
-  // Production has no file-search IPC; section is only shown in capture mode.
+  type PaletteSession = { id: string; title: string; updatedAt: string };
+  const [paletteSessions, setPaletteSessions] = useState<PaletteSession[]>([]);
+
+  // Capture mode: load rig-seeded session entries for the SESSIONS palette section.
   useEffect(() => {
-    if (!open || !window.__PI_CAPTURE__) { setPaletteFiles([]); return; }
+    if (!open) return;
+    setPaletteSessions(window.__PI_PALETTE_SESSIONS__ ?? []);
+  }, [open]);
+
+  // Capture mode: load rig-seeded file entries for the FILES palette section.
+  // In production __PI_PALETTE_FILES__ is undefined so this section stays hidden.
+  useEffect(() => {
+    if (!open) return;
     setPaletteFiles(window.__PI_PALETTE_FILES__ ?? []);
   }, [open]);
 
@@ -263,7 +273,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   }, [rows]);
 
   // Pages and settings rows join the listbox after the session results;
-  // flat option order is: new-task, sessions, files, pages, settings, commands, benches.
+  // flat option order is: new-task, sessions, [loadMore], sessions-palette, files, pages, settings, commands, benches.
   const pageHits = useMemo<PageEntry[]>(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
@@ -293,8 +303,9 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   );
   // "New task" occupies slot 0 only when no query; adjust base indices accordingly.
   const moreIndex = sessionOptionCount + (hasNewTask ? 1 : 0);
-  // flat option order: [new-task(0) when no query], sessions, [loadMore], files, pages, settings, commands, benches.
-  const filesBase = moreIndex + (query.trim() && search.nextOffset !== null ? 1 : 0);
+  // flat option order: [new-task(0) when no query], sessions, [loadMore], sessions-palette, files, pages, settings, commands, benches.
+  const paletteSessionsBase = moreIndex + (query.trim() && search.nextOffset !== null ? 1 : 0);
+  const filesBase = paletteSessionsBase + paletteSessions.length;
   const pageBase = filesBase + fileHits.length;
   const settingsBase = pageBase + pageHits.length;
   const commandsBase = settingsBase + settingsHits.length;
@@ -512,6 +523,33 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
               {t("search.loadMore")}
             </button>
           ) : null}
+          {/* SESSIONS section — capture-mode-only seeded sessions (from __PI_PALETTE_SESSIONS__) */}
+          {paletteSessions.length > 0 ? (
+            <div role="presentation">
+              <div className="search-group-label" role="presentation">
+                {t("search.sessions")}
+              </div>
+              {paletteSessions.map((session, index) => {
+                const optionIndex = paletteSessionsBase + index;
+                return (
+                  <button
+                    key={session.id}
+                    id={`global-search-option-${optionIndex}`}
+                    type="button"
+                    role="option"
+                    aria-selected={active === optionIndex}
+                    className={`search-item ${active === optionIndex ? "active" : ""}`}
+                    onMouseEnter={() => setActive(optionIndex)}
+                    onClick={() => {}}
+                  >
+                    <IconNewSession size={15} className="search-item-icon" />
+                    <span className="search-item-title">{highlightMatch(session.title, query)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+          {/* FILES section — capture-mode-only file search results from rig seed */}
           {fileHits.length > 0 ? (
             <div role="presentation">
               <div className="search-group-label" role="presentation">
@@ -519,6 +557,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
               </div>
               {fileHits.map((file, index) => {
                 const optionIndex = filesBase + index;
+                const fileName = file.path.split("/").pop() ?? file.path;
                 return (
                   <button
                     key={file.path}
@@ -530,10 +569,8 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
                     onMouseEnter={() => setActive(optionIndex)}
                     onClick={() => {}}
                   >
-                    <IconSearch size={15} className="search-item-icon" />
-                    <span className="search-item-title">
-                      {highlightMatch(file.path, query)}
-                    </span>
+                    <IconFileText size={15} className="search-item-icon" />
+                    <span className="search-item-title">{highlightMatch(fileName, query)}</span>
                     <span className="search-item-meta">
                       <span className="search-item-project">{file.appRoot}</span>
                     </span>

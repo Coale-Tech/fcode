@@ -741,6 +741,7 @@ export const en = {
     back: "Back",
     stepOf: "Step {{step}} of {{total}}",
     welcomeTitle: "Welcome to Fcode",
+    welcomeBreadcrumb: "Welcome",
   },
   settings: {
     memoryTitle: "Memory",
@@ -1795,7 +1796,8 @@ sklm: {
     ompQueueModeAll: "All at once",
     ompQueueModeOneAtATime: "One at a time",
     ompAgentModelOverridesDesc: "Override the model used by this bundled agent. Leave at Default to use the session model.",
-    ompAgentModelOverridesDefault: "Default",
+    ompAgentModelOverridesDefault: "— Follow session model —",
+    ompAgentModelOverridesSection: "AGENT MODEL OVERRIDES",
     ompAgentAllTools: "all tools",
     ompCollabPanelShare: "Share Snapshot",
     ompCollabPanelShareDesc: "Upload an encrypted snapshot of this session and get a shareable link.",
@@ -2519,7 +2521,7 @@ sklm: {
     close: "Close widget",
   },
   panel: {
-    title: "Work panel",
+    title: "Work Panel",
     subagent: "Subagent",
     subagentTask: "Task",
     subagentTaskEmpty: "No task description.",

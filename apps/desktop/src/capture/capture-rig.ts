@@ -19,6 +19,7 @@ import type {
   OmpModelsListResult,
   OmpSettingDescriptor,
   OmpWorktreeEntry,
+  OnboardingState,
   PluginSummary,
   PluginTheme,
   ProjectRecord,
@@ -73,9 +74,13 @@ export type CaptureRigMethods = {
   seedOnboardingChecklist: () => void;
   /** Seed capture-only extras for the command palette: FILES, BENCHES and COMMANDS sections. */
   seedCommandPaletteExtras: () => void;
+  /** Patch settings.largePasteThreshold to 200 directly in the Zustand store. */
+  seedLargePasteThreshold: () => void;
   /** Intercept window.piDesktop.invoke for bench IPC channels so BenchPage shows
    *  seeded data (5 specific benches, coale_v16 running) without needing a host binary. */
   seedBenchList: () => void;
+  /** Remove the pinned flag from all sessions so no PINNED section shows in the sidebar. */
+  clearPinnedSessions: () => void;
   /** Seed Raven as connected (enabled=true, URL set, ravenConnected event fired).
    *  The WebContentsView content is still not capturable by CDP. */
   seedRavenConnected: () => void;
@@ -1101,12 +1106,11 @@ export function installCaptureRig(): CaptureRig {
         api.listPullRequests = originalListPullRequests;
         return;
       }
-      // Ensure workspace is set so the PR page renders data (not the empty state).
-      if (!useAppStore.getState().workspace?.path) {
-        useAppStore.setState({
-          workspace: { path: "/Users/mac/CoaleTech/frappe-agent", name: "frappe-agent", branch: "main" },
-        });
-      }
+      // Always set workspace so PR page shows "CoaleTech/frappe-agent" in header.
+      // The path's last 2 components are displayed: slice(-2) → "CoaleTech/frappe-agent".
+      useAppStore.setState({
+        workspace: { path: "/Users/mac/CoaleTech/frappe-agent", name: "frappe-agent", branch: "main" },
+      });
       const p247checks: PullRequestCheck[] = [
         { name: "frappe-tests", state: "success", durationSeconds: 82, details: "142 passed" },
         { name: "type-check",   state: "success", durationSeconds: 48 },
@@ -1181,6 +1185,8 @@ export function installCaptureRig(): CaptureRig {
         },
       ];
       api.listPullRequests = async () => ({ pulls });
+      // Pre-select PR #247 (the top row) for the capture detail-panel screenshot.
+      window.__PI_CAPTURE_PR_SELECTED__ = 247;
     },
     seedSidebarStatuses: () => {
       if (!window.__PI_CAPTURE__) return null;
@@ -1610,9 +1616,13 @@ export function installCaptureRig(): CaptureRig {
       // Force onboarding checklist visible regardless of backend state.
       if (!window.__PI_CAPTURE__) return;
       const cur = useAppStore.getState().onboarding;
-      useAppStore.setState({
-        onboarding: { showChecklist: true, steps: [], ...(cur ?? {}) },
-      });
+      const steps = cur?.steps ?? [
+        { id: "connect-provider", title: "Connect provider", done: false },
+        { id: "pick-a-bench", title: "Pick a bench", done: false },
+        { id: "permissions-mode", title: "Permissions mode", done: false },
+        { id: "youre-ready", title: "You're ready", done: false },
+      ];
+      useAppStore.setState({ onboarding: { ...(cur ?? {}), showChecklist: true, steps } as OnboardingState });
     },
     seedCommandPaletteExtras: () => {
       // Seed capture-only FILES, BENCHES and COMMANDS data for command palette shots.
@@ -1629,6 +1639,13 @@ export function installCaptureRig(): CaptureRig {
         { id: "bench-migrate-run", title: "Run bench migrate", source: "builtin" as const },
         { id: "bench-migrate-skip", title: "bench migrate --skip-failing", source: "builtin" as const },
       ] satisfies CommandItem[];
+      // Seed sessions matching "migrate" for the palette SESSIONS section.
+      const now = Date.now();
+      const D = 86_400_000;
+      window.__PI_PALETTE_SESSIONS__ = [
+        { id: "fixture-s4", title: "Migrate Raven to frappe-ui v2",    updatedAt: new Date(now - D + 14 * 3600000).toISOString() },
+        { id: "fixture-s9", title: "ERPNext payroll migrate planning",  updatedAt: new Date(now - D + 8 * 3600000).toISOString() },
+      ];
     },
     seedBenchStatus: (opts) => {
       if (!window.__PI_CAPTURE__) return;
@@ -1713,6 +1730,35 @@ export function installCaptureRig(): CaptureRig {
       api.fileBirdSetBounds = async () => {};
       api.fileBirdReload = async () => ({ ok: true });
       api.fileBirdOpenWindow = async () => ({ ok: true });
+    },
+    seedLargePasteThreshold: () => {
+      if (!window.__PI_CAPTURE__) return;
+      const storeSettings = useAppStore.getState().settings;
+      if (storeSettings) {
+        useAppStore.setState({ settings: { ...storeSettings, largePasteThreshold: 200 } });
+      }
+    },
+    clearPinnedSessions: () => {
+      if (!window.__PI_CAPTURE__) return;
+      // Clear pinned flag from session objects (seedVisualState sets session.pinned=true).
+      const sessions = (useAppStore.getState().sessions ?? []).map((s) =>
+        (s as typeof s & { pinned?: boolean }).pinned
+          ? { ...s, pinned: false }
+          : s
+      );
+      // Also clear from sessionMeta in case it's set there.
+      const meta = { ...useAppStore.getState().sessionMeta };
+      let metaChanged = false;
+      for (const id of Object.keys(meta)) {
+        if (meta[id]?.pinned) {
+          meta[id] = { ...meta[id], pinned: false };
+          metaChanged = true;
+        }
+      }
+      useAppStore.setState({
+        sessions: sessions as unknown as SessionSummary[],
+        ...(metaChanged ? { sessionMeta: meta } : {}),
+      });
     },
   };
   return {
