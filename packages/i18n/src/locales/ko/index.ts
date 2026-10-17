@@ -742,6 +742,7 @@ export const ko = {
     back: "뒤로",
     stepOf: "{{step}} / {{total}} 단계",
     welcomeTitle: "Welcome to Fcode",
+    welcomeBreadcrumb: "Welcome",
   },
   settings: {
     memoryTitle: "Memory",

@@ -741,6 +741,7 @@ export const en = {
     back: "Back",
     stepOf: "Step {{step}} of {{total}}",
     welcomeTitle: "Welcome to Fcode",
+    welcomeBreadcrumb: "Welcome",
   },
   settings: {
     memoryTitle: "Memory",

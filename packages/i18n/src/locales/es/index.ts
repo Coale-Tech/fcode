@@ -733,6 +733,7 @@ export const es = {
     "back": "Atrás",
     "stepOf": "Paso {{step}} de {{total}}",
     "welcomeTitle": "Welcome to Fcode",
+    "welcomeBreadcrumb": "Welcome",
   },
   "settings": {
     "memoryTitle": "Memory",

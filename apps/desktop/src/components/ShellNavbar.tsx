@@ -83,7 +83,7 @@ export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
           <nav className="shell-navbar-breadcrumb" aria-label="Location">
             <span className="shell-navbar-crumb-root">{t("app.shellName")}</span>
             <span className="shell-navbar-crumb-sep" aria-hidden="true">/</span>
-            <span className="shell-navbar-crumb-page">{page === "chat" && Boolean(onboarding?.showChecklist) ? t("onboarding.welcomeTitle") : t(PAGE_LABEL_KEY[page])}</span>
+            <span className="shell-navbar-crumb-page">{page === "chat" && Boolean(onboarding?.showChecklist) ? t("onboarding.welcomeBreadcrumb") : t(PAGE_LABEL_KEY[page])}</span>
             {settingsTabLabel && (
               <>
                 <span className="shell-navbar-crumb-sep" aria-hidden="true">/</span>
