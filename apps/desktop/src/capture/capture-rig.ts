@@ -98,6 +98,8 @@ export function installCaptureRig(): CaptureRig {
   const originalListPullRequests = api.listPullRequests;
   const originalOmpModelsList = api.ompModelsList;
   const originalOmpWorktreeList = api.ompWorktreeList;
+  const originalOmpSettingsGet  = api.ompSettingsGet;
+  const originalOmpAgentList    = api.ompAgentList;
   const methods: CaptureRigMethods = {
     openWorkPanelArtifact: (
       kind: "review" | "browser" | "file",
@@ -1198,8 +1200,8 @@ export function installCaptureRig(): CaptureRig {
     },
     seedOmpSettings: () => {
       if (!window.__PI_CAPTURE__) return;
-      // Mock ompModelsList — the only sidecar-gated call in OmpSettingsSections.
-      // ompSettingsGet reads disk (works without sidecar); ompAgentList reads agent dirs.
+      // Mock all three calls that OmpSettingsSections awaits so it reaches "ready" state
+      // without a live omp sidecar. All three must resolve for loadState to become "ready".
       const fakeModels: OmpModelsListResult = {
         models: [
           { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6", provider: { id: "anthropic", name: "Anthropic" } },
@@ -1208,17 +1210,25 @@ export function installCaptureRig(): CaptureRig {
         ],
       };
       api.ompModelsList = async () => fakeModels;
+      // ompSettingsGet: return empty defaults — OmpSettingsSections only reads known keys.
+      api.ompSettingsGet = async () => ({});
+      // ompAgentList: 4 agents matching the reference design (frappe-dev, frappe-reviewer,
+      // frappe-scout, sonic) shown in AGENT MODEL OVERRIDES section.
+      const fakeAgents: OmpAgentEntry[] = [
+        { name: "frappe-dev",      description: "Frappe/ERPNext implementation · 21 tools", tools: [], source: "omp" },
+        { name: "frappe-reviewer", description: "Code review specialist · read-only",       tools: [], source: "omp" },
+        { name: "frappe-scout",    description: "Read-only codebase scout · fast queries",  tools: [], source: "omp" },
+        { name: "sonic",           description: "Low-reasoning agent · mechanical tasks",   tools: [], source: "omp" },
+      ];
+      api.ompAgentList = async () => ({ agents: fakeAgents });
       // Mock ompWorktreeList with 3 realistic entries (badge count = 3).
       const fakeWorktrees: OmpWorktreeEntry[] = [
-        { path: "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-feat-etims", kind: "pr-checkout", branch: "feat/etims-vscu", parentRepo: "/Users/mac/ERPNext/frappe_agent/PI-Desktop" },
-        { path: "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-fix-currency", kind: "pr-checkout", branch: "fix/multi-currency", parentRepo: "/Users/mac/ERPNext/frappe_agent/PI-Desktop" },
-        { path: "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-task-iso-abc123", kind: "task-isolation", parentRepo: "/Users/mac/ERPNext/frappe_agent/PI-Desktop" },
+        { path: "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-feat-etims",      kind: "pr-checkout",    branch: "feat/etims-vscu",    parentRepo: "/Users/mac/ERPNext/frappe_agent/PI-Desktop" },
+        { path: "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-fix-currency",    kind: "pr-checkout",    branch: "fix/multi-currency", parentRepo: "/Users/mac/ERPNext/frappe_agent/PI-Desktop" },
+        { path: "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-task-iso-abc123", kind: "task-isolation",                               parentRepo: "/Users/mac/ERPNext/frappe_agent/PI-Desktop" },
       ];
       api.ompWorktreeList = async () => ({ worktrees: fakeWorktrees });
-      // Also update the Zustand store settings directly so FontFamilyRow shows
-      // "InterVariable" instead of "System default" in the screenshot.
-      // ensureVisualFixtures already sets fontFamily via IPC (updates the settings file),
-      // but the store state needs a direct patch so the UI re-renders with the new value.
+      // Patch store settings so FontFamilyRow shows "InterVariable".
       const storeSettings = useAppStore.getState().settings;
       if (storeSettings) {
         useAppStore.setState({ settings: { ...storeSettings, fontFamily: "InterVariable" } });
@@ -1643,6 +1653,8 @@ export function installCaptureRig(): CaptureRig {
       api.listPullRequests = originalListPullRequests;
       api.ompModelsList = originalOmpModelsList;
       api.ompWorktreeList = originalOmpWorktreeList;
+      api.ompSettingsGet  = originalOmpSettingsGet;
+      api.ompAgentList    = originalOmpAgentList;
     },
   };
 }

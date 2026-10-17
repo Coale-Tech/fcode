@@ -200,24 +200,24 @@ export function installRendererApi(): () => void {
         mk("fixture-p2", "Raven · #general",    S - 5 * D, true),
         mk("fixture-p3", "FileBird workspace",  S - 5 * D, true),
       ];
-      // 8 reference sessions matching pages-d sidebar:
-      // TODAY (group by calendar day), YESTERDAY (yesterday's window), THIS WEEK.
+      // 12 reference sessions matching pages-d cmdpal reference; timestamps are
+      // absolute ms (now - offset) so relativeTime shows correct "47m ago" / "3d ago".
       const sessions = [
-        mk("fixture-s1",  "Sync ERPNext code module",           2 * 60_000),
-        mk("fixture-s2",  "Redesign settings plugin section",   25 * H),
-        mk("fixture-s3",  "Fix duplicate bench start bug",      2 * H),
-        mk("fixture-s4",  "Migrate Raven to frappe-ui v2",      47 * 60_000),
-        mk("fixture-s5",  "Review PR #224 leave approvals",     26 * H),
-        mk("fixture-s6",  "ERPNext payroll migrate planning",   3 * D),
-        mk("fixture-s7",  "Set up coale_v16 from scratch",      4 * D),
-        mk("fixture-s8",  "Debug slow stock valuation query",   5 * D),
-        mk("fixture-s9",  "Frappe UI modal refactor",           6 * D),
-        mk("fixture-s10", "Refactor payment_entry hooks",       7 * D),
-        mk("fixture-s11", "Install hrms on coale_staging",      7.5 * D),
-        mk("fixture-s12", "Debug bench worker crash",           8 * D),
+        mk("fixture-s1",  "Sync ERPNext code module",           now - 2 * M),
+        mk("fixture-s2",  "Redesign settings plugin section",   now - 25 * H),
+        mk("fixture-s3",  "Fix duplicate bench start bug",      now - 2 * H),
+        mk("fixture-s4",  "Migrate Raven to frappe-ui v2",      now - 47 * M),
+        mk("fixture-s5",  "Review PR #224 leave approvals",     now - 26 * H),
+        mk("fixture-s6",  "ERPNext payroll migrate planning",   now - 3 * D),
+        mk("fixture-s7",  "Set up coale_v16 from scratch",      now - 4 * D),
+        mk("fixture-s8",  "Debug slow stock valuation query",   now - 5 * D),
+        mk("fixture-s9",  "Frappe UI modal refactor",           now - 6 * D),
+        mk("fixture-s10", "Refactor payment_entry hooks",       now - 7 * D),
+        mk("fixture-s11", "Install hrms on coale_staging",      now - 7.5 * D),
+        mk("fixture-s12", "Debug bench worker crash",           now - 8 * D),
       ] as unknown as SessionSummary[];
       useAppStore.setState({
-        sessions,
+        sessions: [...pinnedSessions, ...sessions],
         activeSessionId: "fixture-s1",
         retainedSessionIds: ["fixture-s1"],
         retainedTranscripts: { "fixture-s1": [] },
