@@ -740,6 +740,7 @@ export const en = {
     continue: "Continue \u2192",
     back: "Back",
     stepOf: "Step {{step}} of {{total}}",
+    welcomeTitle: "Welcome to Fcode",
   },
   settings: {
     memoryTitle: "Memory",
@@ -2632,6 +2633,9 @@ sklm: {
     empty: "No matching chats",
     pages: "Pages",
     commands: "Commands",
+    sessions: "Sessions",
+    files: "Files",
+    benches: "Benches",
     today: "Today",
     yesterday: "Yesterday",
     previous7Days: "Previous 7 days",
@@ -2642,6 +2646,7 @@ sklm: {
     legendOpen: "open",
     legendClose: "close",
     legendToOpen: "to open",
+    legendPreview: "preview",
   },
   plugins: {
     title: "Plugins",

@@ -10,7 +10,7 @@
  * object, so later capture calls stay synchronous as before.
  */
 import { useAppStore, type AppState, type ToastOptions } from "../stores/app-store";
-import type { AppSettings, NavLayout, SessionSummary } from "@pi-desktop/shared";
+import type { AppSettings, CommandItem, NavLayout, SessionSummary } from "@pi-desktop/shared";
 import type { CaptureRig, CaptureRigMethods } from "./capture-rig";
 
 type CaptureRigMethod = keyof CaptureRigMethods;
@@ -39,6 +39,8 @@ export type RendererApi = {
   enableFeatureFlags: (flags: { kanban?: boolean; raven?: boolean }) => void;
   /** Synchronously seed visual state (sessions + chat page) — call after persistence hydrates. */
   seedVisualState: () => void;
+  /** Seed only header cluster (bench chip, initials) without sessions — for onboarding shots. */
+  seedHeaderCluster: () => void;
 } & (CaptureRigStubs | CaptureRigMethods);
 
 /** Shape accepted by seedBenchStatus and read by useBenchContext. */
@@ -51,6 +53,12 @@ declare global {
     __PI_CAPTURE__?: unknown;
     /** Overrides live IPC bench-status polling for capture screenshots. */
     __PI_BENCH_OVERRIDE__?: BenchStatusOverride;
+    /** Capture-only: file entries seeded for the command-palette FILES section. */
+    __PI_PALETTE_FILES__?: Array<{ path: string; appRoot: string }>;
+    /** Capture-only: bench entries seeded for the command-palette BENCHES section. */
+    __PI_PALETTE_BENCHES__?: Array<{ id: string; path: string; status: "running" | "stopped" }>;
+    /** Capture-only: command entries for the command-palette COMMANDS section. */
+    __PI_PALETTE_COMMANDS__?: CommandItem[];
     /** Capture-only seeded bench list; BenchPage.loadBenches reads this instead of IPC. */
     __PI_CAPTURE_BENCH_LIST__?: {
       benches: Array<{ id: string; path: string; version: number | "unknown"; sites: Array<{ name: string; isDefault: boolean }>; apps: string[] }>;
@@ -85,6 +93,7 @@ const CAPTURE_RIG_METHODS = [
   "clearPendingPermissions",
   "seedEmptyHome",
   "seedOnboardingChecklist",
+  "seedCommandPaletteExtras",
   "seedBenchList",
 ] as const satisfies readonly CaptureRigMethod[];
 
@@ -191,21 +200,24 @@ export function installRendererApi(): () => void {
         mk("fixture-p2", "Raven · #general",    S - 5 * D, true),
         mk("fixture-p3", "FileBird workspace",  S - 5 * D, true),
       ];
-      // 8 reference sessions matching pages-d sidebar:
-      // TODAY (group by calendar day), YESTERDAY (yesterday's window), THIS WEEK.
+      // 12 reference sessions matching pages-d cmdpal reference; timestamps are
+      // absolute ms (now - offset) so relativeTime shows correct "47m ago" / "3d ago".
       const sessions = [
-        ...pinnedSessions,
-        mk("fixture-s1",  "Sync ERPNext code module",          todayTs(2 * M, 3)),
-        mk("fixture-s2",  "Redesign settings plugin section",  todayTs(47 * M, 2)),
-        mk("fixture-s3",  "Fix duplicate bench start bug",     todayTs(2 * H, 1)),
-        mk("fixture-s4",  "Migrate Raven to frappe-ui v2",     S - D + 14 * H),
-        mk("fixture-s5",  "Review PR #224 leave approvals",    S - D + 12 * H),
-        mk("fixture-s6",  "ERPNext payroll period config",     S - D + 10 * H),
-        mk("fixture-s7",  "Set up coale_v16 from scratch",     S - 4 * D),
-        mk("fixture-s8",  "Debug slow stock valuation query",  S - 3 * D),
+        mk("fixture-s1",  "Sync ERPNext code module",           now - 2 * M),
+        mk("fixture-s2",  "Redesign settings plugin section",   now - 25 * H),
+        mk("fixture-s3",  "Fix duplicate bench start bug",      now - 2 * H),
+        mk("fixture-s4",  "Migrate Raven to frappe-ui v2",      now - 47 * M),
+        mk("fixture-s5",  "Review PR #224 leave approvals",     now - 26 * H),
+        mk("fixture-s6",  "ERPNext payroll migrate planning",   now - 3 * D),
+        mk("fixture-s7",  "Set up coale_v16 from scratch",      now - 4 * D),
+        mk("fixture-s8",  "Debug slow stock valuation query",   now - 5 * D),
+        mk("fixture-s9",  "Frappe UI modal refactor",           now - 6 * D),
+        mk("fixture-s10", "Refactor payment_entry hooks",       now - 7 * D),
+        mk("fixture-s11", "Install hrms on coale_staging",      now - 7.5 * D),
+        mk("fixture-s12", "Debug bench worker crash",           now - 8 * D),
       ] as unknown as SessionSummary[];
       useAppStore.setState({
-        sessions,
+        sessions: [...pinnedSessions, ...sessions],
         activeSessionId: "fixture-s1",
         retainedSessionIds: ["fixture-s1"],
         retainedTranscripts: { "fixture-s1": [] },
@@ -219,6 +231,31 @@ export function installRendererApi(): () => void {
         onboarding: undefined,
         openProjectPaths: [],
         workspace: null,
+        // Prevent SearchDialog's open-effect refreshSessions() IPC from clearing
+        // the seeded sessions. Pattern from seedNotifications' refreshNotifications patch.
+        refreshSessions: async () => undefined,
+      });
+    },
+    /** Seed only header cluster (bench chip, initials) without sessions.
+     *  Used for first-run onboarding shots: sessions panel shows empty state. */
+    seedHeaderCluster: () => {
+      const s = useAppStore.getState().settings;
+      const base = s ?? ({ theme: "system", defaultMode: "plan", enterToSend: true, onboardingDismissed: false } as unknown as NonNullable<typeof s>);
+      useAppStore.setState({
+        chatUserName: "Josh Kim",
+        userInitials: "JK",
+        kanbanEnabled: true,
+        ravenEnabled: true,
+        onboarding: undefined,
+        activeSessionId: undefined,
+        sessions: [],
+        retainedSessionIds: [],
+        retainedTranscripts: {},
+        messages: [],
+        runningSessions: {},
+        workspace: undefined,
+        refreshSessions: async () => undefined,
+        settings: { ...base, defaultModelId: "claude-sonnet-5" },
       });
     },
     showToast: (message, opts) => useAppStore.getState().showToast(message, opts),

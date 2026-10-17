@@ -732,6 +732,7 @@ export const de = {
     "continue": "Weiter →",
     "back": "Zurück",
     "stepOf": "Schritt {{step}} von {{total}}",
+    "welcomeTitle": "Welcome to Fcode",
   },
   "settings": {
     "memoryTitle": "Memory",
@@ -2609,6 +2610,9 @@ sklm: {
     "empty": "Keine passenden Chats",
     "pages": "Seiten",
     "commands": "Befehle",
+    "sessions": "Sitzungen",
+    "files": "Dateien",
+    "benches": "Benches",
     "today": "Heute",
     "yesterday": "Gestern",
     "previous7Days": "Vorherige 7 Tage",
@@ -2619,6 +2623,7 @@ sklm: {
     "legendOpen": "öffnen",
     "legendClose": "schließen",
     "legendToOpen": "zum Öffnen",
+    "legendPreview": "Vorschau",
   },
   "plugins": {
     "title": "Erweiterungen",

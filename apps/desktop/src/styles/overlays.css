@@ -183,6 +183,16 @@
   font-size: var(--d-text);
   text-align: center;
 }
+/* Bench status dot in palette Benches section (D.css fragment.html pal-dot) */
+.search-bench-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+.search-bench-dot.on  { background: var(--green-500); }
+.search-bench-dot.off { background: var(--outline-gray-3); }
+
 /* lane t13: palette keyboard-legend footer (D.css d-cmdpal-foot / d-kbd) */
 .d-cmdpal-foot {
   display: flex;

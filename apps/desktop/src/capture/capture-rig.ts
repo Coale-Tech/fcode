@@ -10,6 +10,7 @@
  */
 import type {
   AppNotificationKind,
+  CommandItem,
   KanbanBoard,
   KanbanTask,
   McpServerRecord,
@@ -69,6 +70,8 @@ export type CaptureRigMethods = {
   clearPendingPermissions: () => void;
   seedEmptyHome: () => void;
   seedOnboardingChecklist: () => void;
+  /** Seed capture-only extras for the command palette: FILES, BENCHES and COMMANDS sections. */
+  seedCommandPaletteExtras: () => void;
   /** Intercept window.piDesktop.invoke for bench IPC channels so BenchPage shows
    *  seeded data (5 specific benches, coale_v16 running) without needing a host binary. */
   seedBenchList: () => void;
@@ -95,6 +98,8 @@ export function installCaptureRig(): CaptureRig {
   const originalListPullRequests = api.listPullRequests;
   const originalOmpModelsList = api.ompModelsList;
   const originalOmpWorktreeList = api.ompWorktreeList;
+  const originalOmpSettingsGet  = api.ompSettingsGet;
+  const originalOmpAgentList    = api.ompAgentList;
   const methods: CaptureRigMethods = {
     openWorkPanelArtifact: (
       kind: "review" | "browser" | "file",
@@ -1195,8 +1200,8 @@ export function installCaptureRig(): CaptureRig {
     },
     seedOmpSettings: () => {
       if (!window.__PI_CAPTURE__) return;
-      // Mock ompModelsList — the only sidecar-gated call in OmpSettingsSections.
-      // ompSettingsGet reads disk (works without sidecar); ompAgentList reads agent dirs.
+      // Mock all three calls that OmpSettingsSections awaits so it reaches "ready" state
+      // without a live omp sidecar. All three must resolve for loadState to become "ready".
       const fakeModels: OmpModelsListResult = {
         models: [
           { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6", provider: { id: "anthropic", name: "Anthropic" } },
@@ -1205,17 +1210,25 @@ export function installCaptureRig(): CaptureRig {
         ],
       };
       api.ompModelsList = async () => fakeModels;
+      // ompSettingsGet: return empty defaults — OmpSettingsSections only reads known keys.
+      api.ompSettingsGet = async () => ({});
+      // ompAgentList: 4 agents matching the reference design (frappe-dev, frappe-reviewer,
+      // frappe-scout, sonic) shown in AGENT MODEL OVERRIDES section.
+      const fakeAgents: OmpAgentEntry[] = [
+        { name: "frappe-dev",      description: "Frappe/ERPNext implementation · 21 tools", tools: [], source: "omp" },
+        { name: "frappe-reviewer", description: "Code review specialist · read-only",       tools: [], source: "omp" },
+        { name: "frappe-scout",    description: "Read-only codebase scout · fast queries",  tools: [], source: "omp" },
+        { name: "sonic",           description: "Low-reasoning agent · mechanical tasks",   tools: [], source: "omp" },
+      ];
+      api.ompAgentList = async () => ({ agents: fakeAgents });
       // Mock ompWorktreeList with 3 realistic entries (badge count = 3).
       const fakeWorktrees: OmpWorktreeEntry[] = [
-        { path: "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-feat-etims", kind: "pr-checkout", branch: "feat/etims-vscu", parentRepo: "/Users/mac/ERPNext/frappe_agent/PI-Desktop" },
-        { path: "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-fix-currency", kind: "pr-checkout", branch: "fix/multi-currency", parentRepo: "/Users/mac/ERPNext/frappe_agent/PI-Desktop" },
-        { path: "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-task-iso-abc123", kind: "task-isolation", parentRepo: "/Users/mac/ERPNext/frappe_agent/PI-Desktop" },
+        { path: "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-feat-etims",      kind: "pr-checkout",    branch: "feat/etims-vscu",    parentRepo: "/Users/mac/ERPNext/frappe_agent/PI-Desktop" },
+        { path: "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-fix-currency",    kind: "pr-checkout",    branch: "fix/multi-currency", parentRepo: "/Users/mac/ERPNext/frappe_agent/PI-Desktop" },
+        { path: "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-task-iso-abc123", kind: "task-isolation",                               parentRepo: "/Users/mac/ERPNext/frappe_agent/PI-Desktop" },
       ];
       api.ompWorktreeList = async () => ({ worktrees: fakeWorktrees });
-      // Also update the Zustand store settings directly so FontFamilyRow shows
-      // "InterVariable" instead of "System default" in the screenshot.
-      // ensureVisualFixtures already sets fontFamily via IPC (updates the settings file),
-      // but the store state needs a direct patch so the UI re-renders with the new value.
+      // Patch store settings so FontFamilyRow shows "InterVariable".
       const storeSettings = useAppStore.getState().settings;
       if (storeSettings) {
         useAppStore.setState({ settings: { ...storeSettings, fontFamily: "InterVariable" } });
@@ -1542,18 +1555,34 @@ export function installCaptureRig(): CaptureRig {
         openProjectPaths: [],
         page: "chat",
       });
-      const cur = useAppStore.getState().onboarding;
-      if (cur) {
-        useAppStore.setState({ onboarding: { ...cur, showChecklist: true } });
-      }
+      const curOnb = useAppStore.getState().onboarding;
+      useAppStore.setState({
+        onboarding: { showChecklist: true, steps: [], ...(curOnb ?? {}) },
+      });
     },
     seedOnboardingChecklist: () => {
       // Force onboarding checklist visible regardless of backend state.
       if (!window.__PI_CAPTURE__) return;
       const cur = useAppStore.getState().onboarding;
-      if (cur) {
-        useAppStore.setState({ onboarding: { ...cur, showChecklist: true } });
-      }
+      useAppStore.setState({
+        onboarding: { showChecklist: true, steps: [], ...(cur ?? {}) },
+      });
+    },
+    seedCommandPaletteExtras: () => {
+      // Seed capture-only FILES, BENCHES and COMMANDS data for command palette shots.
+      if (!window.__PI_CAPTURE__) return;
+      window.__PI_PALETTE_FILES__ = [
+        { path: "patches/migrate_payment_entry_v15_to_v16.py", appRoot: "apps/erpnext" },
+        { path: "migrate_leave_allocation.py", appRoot: "apps/hrms" },
+      ];
+      window.__PI_PALETTE_BENCHES__ = [
+        { id: "coale_v16", path: "/Users/mac/ERPNext/coale_v16", status: "running" },
+        { id: "frappe-bench", path: "/Users/mac/ERPNext/frappe-bench", status: "stopped" },
+      ];
+      window.__PI_PALETTE_COMMANDS__ = [
+        { id: "bench-migrate-run", title: "Run bench migrate", source: "builtin" as const },
+        { id: "bench-migrate-skip", title: "bench migrate --skip-failing", source: "builtin" as const },
+      ] satisfies CommandItem[];
     },
     seedBenchStatus: (opts) => {
       if (!window.__PI_CAPTURE__) return;
@@ -1624,6 +1653,8 @@ export function installCaptureRig(): CaptureRig {
       api.listPullRequests = originalListPullRequests;
       api.ompModelsList = originalOmpModelsList;
       api.ompWorktreeList = originalOmpWorktreeList;
+      api.ompSettingsGet  = originalOmpSettingsGet;
+      api.ompAgentList    = originalOmpAgentList;
     },
   };
 }

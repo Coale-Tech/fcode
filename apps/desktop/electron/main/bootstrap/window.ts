@@ -2865,7 +2865,6 @@ body{background:#f4f4f5;display:flex;flex-direction:column;height:100vh;overflow
             // Island: sidebar always visible
             await t14gShot("d-filebird-D3-light");
             await setTheme("dark"); await sleep(500); await t14gShot("d-filebird-D3-dark");
-
             // ── Restore state ─────────────────────────────────────────────
             // Revert all monkey-patches so the supervisor behaves normally.
             (benchSupervisor as unknown as Record<string, Function>).runOneShot = _origRunOneShot;
