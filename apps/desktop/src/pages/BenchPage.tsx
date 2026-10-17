@@ -619,10 +619,14 @@ export function BenchPage() {
             <span className="wb-path wb-truncate" title={selectedBench.path}>
               {selectedBench.path}
             </span>
-            <StatusBadge status={displayStatus} />
-            {(displayStatus === "running" || displayStatus === "starting") && elapsedLabel && (
-              <span className="wb-muted">{elapsedLabel}</span>
-            )}
+            <StatusBadge
+              status={displayStatus}
+              elapsed={
+                (displayStatus === "running" || displayStatus === "starting") && elapsedLabel
+                  ? elapsedLabel
+                  : undefined
+              }
+            />
             <span className="wb-spacer" />
             {displayStatus === "stopped" || displayStatus === "failed" ? (
               <Button
@@ -1183,10 +1187,10 @@ export function ProcessPanel({
       {/* Direction D: process card (running · N procs · port · elapsed · Restart) */}
       <div className="wb-proc-card">
         <div className="wb-proc-card-row">
-          <StatusBadge status={status} />
-          {(running || starting) && elapsedLabel && (
-            <span className="wb-muted">{elapsedLabel}</span>
-          )}
+          <StatusBadge
+            status={status}
+            elapsed={(running || starting) && elapsedLabel ? elapsedLabel : undefined}
+          />
           {running && onRestart && (
             <Button variant="secondary" size="sm" onClick={onRestart} style={{ marginLeft: "auto" }}>
               {t("bench.restart", "Restart")}

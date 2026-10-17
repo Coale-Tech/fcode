@@ -283,7 +283,7 @@ export class BrowserPane {
        * Compares the renderer host rect passed in from getBoundingClientRect()
        * against what Electron reports back via view.getBounds(); a delta >1px
        * indicates the native view has drifted from its host div. */
-      if (process.env.PI_DESKTOP_CAPTURE) {
+      if (process.env.PI_DESKTOP_CAPTURE || process.env.PI_DESKTOP_BENCH_BOUNDS) {
         const vb = this.view.getBounds();
         const dx = Math.abs(vb.x - safe.x);
         const dy = Math.abs(vb.y - safe.y);
