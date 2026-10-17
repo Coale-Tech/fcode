@@ -1411,6 +1411,25 @@ export function installCaptureRig(): CaptureRig {
           return ts ? { ...s, updatedAt: new Date(ts).toISOString(), createdAt: new Date(ts).toISOString() } : s;
         });
         useAppStore.setState({ sessions: backdated });
+        // Mark the 6 archived session titles as archived in sessionMeta so they
+        // are hidden from the sidebar default view (showArchived=false).
+        const archivedTitles = new Set([
+          "Set up CI pipeline for ERPNext",
+          "Migrate legacy plugin API",
+          "Rewrite notification service",
+          "Fix bench restart on M1",
+          "Debug slow stock valuation query",
+          "Set up coale_v16 from scratch",
+        ]);
+        const existingMeta = useAppStore.getState().sessionMeta ?? {};
+        const updatedMeta = { ...existingMeta };
+        for (const s of backdated) {
+          const title = (s.title || "").trim();
+          if (archivedTitles.has(title)) {
+            updatedMeta[s.id] = { ...(existingMeta[s.id] ?? {}), archived: true };
+          }
+        }
+        useAppStore.setState({ sessionMeta: updatedMeta });
         const allSessions = useAppStore.getState().sessions ?? [];
         // Select "Sync ERPNext code module" as the active session.
         const preferred = allSessions.find(
