@@ -16,6 +16,7 @@ import type {
   McpServerStatus,
   OmpAgentEntry,
   OmpModelsListResult,
+  OmpSettingDescriptor,
   OmpWorktreeEntry,
   OnboardingState,
   PluginSummary,
@@ -1228,6 +1229,47 @@ export function installCaptureRig(): CaptureRig {
         { name: "sonic",           description: "Low-reasoning agent · mechanical tasks", tools: [], source: "omp" },
       ];
       api.ompAgentList = async () => ({ agents: fakeAgents });
+      // Mock ompSettingsManifest — sidecar-gated; returns fake descriptors matching the
+      // reference design (general/tools/agents/memory/features tabs, raw key display).
+      const fakeManifest: OmpSettingDescriptor[] = [
+        // general › Core
+        { id: "debug.enabled",         tab: "general", group: "Core",               type: "boolean", label: "Debug enabled",         description: "Enable verbose debug output in the sidecar log" },
+        { id: "log.level",             tab: "general", group: "Core",               type: "enum",    label: "Log level",             description: "Minimum log severity written to disk",           values: ["debug", "info", "warn", "error"] },
+        { id: "telemetry.enabled",     tab: "general", group: "Core",               type: "boolean", label: "Telemetry enabled",     description: "Send anonymous usage metrics to improve omp" },
+        { id: "locale.override",       tab: "general", group: "Core",               type: "string",  label: "Locale override",       description: "Force a specific locale (empty = system default)" },
+        // general › Startup & Lifecycle
+        { id: "startup.watchdog",      tab: "general", group: "Startup & Lifecycle", type: "boolean", label: "Startup watchdog",      description: "Restart sidecar automatically if it crashes", default: true },
+        { id: "startup.timeout",       tab: "general", group: "Startup & Lifecycle", type: "number",  label: "Startup timeout",       description: "Seconds to wait for sidecar ready before failing", default: 30 },
+        { id: "startup.env.passthrough", tab: "general", group: "Startup & Lifecycle", type: "string", label: "Env passthrough",     description: "Extra environment variables forwarded to sidecar" },
+        // general › Storage
+        { id: "storage.maxSessions",   tab: "general", group: "Storage",            type: "number",  label: "Max sessions",          description: "Maximum stored sessions before pruning oldest",  default: 1000 },
+        { id: "storage.pruneOnLow",    tab: "general", group: "Storage",            type: "boolean", label: "Prune on low disk",     description: "Auto-prune when disk space falls below 500 MB", default: true },
+        { id: "storage.cacheDir",      tab: "general", group: "Storage",            type: "string",  label: "Cache directory",       description: "Directory for transient tool output cache" },
+        // general › Network
+        { id: "network.relaxed",       tab: "general", group: "Network",            type: "boolean", label: "Relaxed network",       description: "Allow non-HTTPS connections to external services" },
+        { id: "network.proxyUrl",      tab: "general", group: "Network",            type: "string",  label: "Proxy URL",             description: "HTTP/HTTPS proxy for outbound sidecar requests" },
+        // tools › Execution
+        { id: "tools.timeout",         tab: "tools",   group: "Execution",          type: "number",  label: "Tool timeout",          description: "Seconds before a running tool call is cancelled", default: 120 },
+        { id: "tools.maxOutputBytes",  tab: "tools",   group: "Execution",          type: "number",  label: "Max output bytes",      description: "Truncate tool output beyond this byte count", default: 102400 },
+        // agents › Concurrency
+        { id: "agents.maxRunning",     tab: "agents",  group: "Concurrency",        type: "number",  label: "Max running agents",    description: "Hard cap on simultaneously executing subagents", default: 8 },
+        // memory › Recall
+        { id: "recall.contextTurns",   tab: "memory",  group: "Recall",             type: "number",  label: "Recall context turns",  description: "How many recent turns to include in recall queries", default: 5 },
+        // features › Experimental
+        { id: "features.nightlyBuilds", tab: "features", group: "Experimental",     type: "boolean", label: "Nightly builds",        description: "Opt in to pre-release nightly build channel" },
+      ];
+      api.ompSettingsManifest = async () => fakeManifest;
+      // Seed advanced values matching the reference (watchdog on, pruneOnLow on).
+      const currentSettings = useAppStore.getState().settings;
+      if (currentSettings) {
+        const advancedPatch: Record<string, unknown> = {
+          "startup.watchdog": true,
+          "storage.pruneOnLow": true,
+        };
+        useAppStore.setState({
+          settings: { ...currentSettings, advanced: { ...(currentSettings.advanced ?? {}), ...advancedPatch } },
+        });
+      }
       // Also update the Zustand store settings directly so FontFamilyRow shows
       // "InterVariable" instead of "System default" in the screenshot.
       // ensureVisualFixtures already sets fontFamily via IPC (updates the settings file),
