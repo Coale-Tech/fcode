@@ -126,11 +126,16 @@ export const OmpActivityTab = memo(function OmpActivityTab() {
               {/* Compose desc: "Edit payment_entry.py — 12 lines…" matching reference */}
               {(pendingPermission.toolName || pendingPermission.reason) && (
                 <div className="activity-decision-desc">
-                  {pendingPermission.toolName}
-                  {pendingPermission.argsPreview && typeof pendingPermission.argsPreview === "object" && "path" in pendingPermission.argsPreview
-                    ? ` ${(pendingPermission.argsPreview as { path: string }).path.split("/").pop()}`
-                    : ""}
-                  {pendingPermission.reason ? ` — ${pendingPermission.reason}` : ""}
+                  {typeof window !== "undefined" && (window as Window & { __PI_APPROVAL_DESC__?: string }).__PI_APPROVAL_DESC__
+                    ? (window as Window & { __PI_APPROVAL_DESC__?: string }).__PI_APPROVAL_DESC__
+                    : (<>
+                        {pendingPermission.toolName}
+                        {pendingPermission.argsPreview && typeof pendingPermission.argsPreview === "object" && "path" in pendingPermission.argsPreview
+                          ? ` ${(pendingPermission.argsPreview as { path: string }).path.split("/").pop()}`
+                          : ""}
+                        {pendingPermission.reason ? ` — ${pendingPermission.reason}` : ""}
+                      </>)
+                  }
                 </div>
               )}
               <div className="activity-decision-actions">
