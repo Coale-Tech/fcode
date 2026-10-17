@@ -107,9 +107,6 @@
   overflow: hidden;
 }
 
-.app-shell.settings-mode > .workspace-bar {
-  display: none;
-}
 
 .workspace-bar-bench {
   color: var(--ink-gray-7);

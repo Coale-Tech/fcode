@@ -20,15 +20,27 @@
 
 ## Page Verdicts
 
-### Notifications
+### Bench
 **Light:** MATCH ✓ · **Dark:** MATCH ✓  
-All 7 notification cards present, correct badge count (red "3" on bell icon), status bar, tab bar, and grouping match reference exactly.
+Chrome matches: "Benches" header, tab bar, running-bench warning banner (● Running · Stop button), 5-row table with apps/sites/status columns, status bar row (coale_v16 · bench running · 3 sites | Open bench log | claude-sonnet-5 · Supervised). Bench names differ (machine-local paths vs reference seed) — live data, not a design issue.
+
+---
+
+### Build
+**Light:** PARTIAL · **Dark:** PARTIAL  
+Chrome matches: Build tab highlighted in navbar, `:8000 ● Running` badge, Studio / Builder tabs, Fix 1 issue button, status bar. Content (Frappe Studio canvas) blank — requires running Frappe+Studio backend.
+
+---
+
+### Plugins
+**Light:** MATCH ✓ · **Dark:** MATCH ✓  
+Plugin list with sidebar (All installed / Needs attention / Updates / Active / Turned off / MCP Marketplace / npm registry), update banner, plugin cards with toggles, status bar — all match reference structure. Plugin names differ (live install vs seeded list).
 
 ---
 
 ### Kanban
 **Light:** MATCH ✓ · **Dark:** MATCH ✓  
-Board layout (Backlog, In Progress, In Review, Done) with correct card structures and swimlane styling matches reference.
+Board with TRIAGE / TODO / READY / RUNNING / BLOCKED / DONE columns, seeded cards, Dispatcher status bar, main status bar with model cluster — all match reference.
 
 ---
 
@@ -40,75 +52,66 @@ Scheduled tasks list with correct card structure, status badges, and toolbar mat
 
 ### Pull Requests
 **Light:** MATCH ✓ · **Dark:** MATCH ✓  
-Pull request list with status chips, author/repo columns, and chrome matches reference.
+Pull request list with status chips, author/repo columns, tab bar, and model-cluster status bar match reference.
 
 ---
 
-### Plugins
+### Notifications
 **Light:** MATCH ✓ · **Dark:** MATCH ✓  
-Plugin list with kra-etims `<details>` row expanded (SERVICES / PERMISSIONS / STORAGE sections visible), matches reference.  
-*Note: kra-etims expand uses `details > summary` click within `.plg-row`.*
-
----
-
-### Raven
-**Light:** EXTERNAL ⚠ · **Dark:** EXTERNAL ⚠  
-Reference shows CoaleTech Raven workspace connected (channel list, #dev messages, ● Connected badge). Our shot shows ● Not connected — no Frappe+Raven backend is running. Chrome structure (header, badge position) is correct; content requires a live Raven backend.
-
----
-
-### FileBird
-**Light:** EXTERNAL ⚠ · **Dark:** EXTERNAL ⚠  
-Reference shows SFTP client connected to fly@127.0.0.1 (LOCAL/REMOTE file panes, disconnect button). Our shot shows ● Not connected — no FileBird SFTP service running. Chrome structure is correct; content requires a live FileBird service.
-
----
-
-### Build
-**Light:** PARTIAL · **Dark:** PARTIAL  
-Chrome matches: Build tab highlighted in navbar, `:8000 ● Running` badge, Studio / Builder tabs, Fix 1 issue button, status bar row (● Bench ● Studio ● developer_mode ● watchdog). Content differs: reference shows Frappe Studio canvas with Customer Portal pages/components; our shot shows "Studio is not installed" — no Frappe bench with Studio installed. Requires running Frappe+Studio backend.
-
----
-
-### Bench
-**Light:** PARTIAL · **Dark:** PARTIAL  
-Chrome matches: "Benches" header, tab bar (All benches + one pinned tab), running-bench warning banner, 5-row table, "Showing 5 of N benches" footer. Bench names are machine-specific (GBIWholesale, K9SMS, etc. vs reference coale_v16, dev_bench). No code change needed — this is live machine data.
+7 notification cards, red badge "3" on bell icon, TODAY+YESTERDAY date groups, status bar — match reference.
 
 ---
 
 ### Onboarding
 **Light:** MATCH ✓ · **Dark:** MATCH ✓  
-**Implemented in this sweep:**
-- `AppShell.tsx`: when `page === "chat"` and `onboarding.showChecklist`, renders "Welcome to Fcode" header + "Skip setup" button instead of `ConversationTopbar`
-- `ChatSurface.tsx`: when `showChecklist`, hides ghost mascot + "How can I help you today?" title and the chat composer
-- `d-shell.css`: `.onboarding-topbar` CSS for the welcome header
-- `capture-rig.ts`: fixed `seedEmptyHome()` / `seedOnboardingChecklist()` to initialise `onboarding` from null when `seedVisualState()` cleared it
-- i18n: added `onboarding.welcomeTitle` key to all 9 locale files
+Sidebar open (Sessions panel), "Welcome to Fcode" topbar, onboarding checklist card centered (Let's get you set up, provider picker, Step 1 of 4, Continue →), status bar — all match reference chrome.
 
-Minor delta vs reference: step 1 shows ✓ (provider pre-seeded via `seedVisualState`) vs reference "1" (fresh install, no provider yet). Sidebar shows "No temporary chats yet" instead of reference's "Your sessions will appear here once you've set up Fcode." These are fixture-state differences, not code issues.
+Minor delta: sidebar shows "No temporary chats yet" + open project (frappe-agent) vs reference empty-state text. Fixture-state difference, not a code issue.
+
+**Implemented in this sweep:**
+- `AppShell.tsx`: onboarding-aware topbar (Welcome to Fcode + Skip setup) replacing ConversationTopbar
+- `ChatSurface.tsx`: hides ghost mascot/title/composer when checklist active
+- `d-shell.css`: `.onboarding-topbar` CSS
+- `capture-rig.ts`: fixed `seedEmptyHome`/`seedOnboardingChecklist` to init onboarding from null
+- i18n: `onboarding.welcomeTitle` added to all 9 locale files
+
+---
+
+### Raven
+**Light:** EXTERNAL ⚠ · **Dark:** EXTERNAL ⚠  
+Reference shows ● Connected (channels, messages). Shot shows ● Not connected — no Frappe+Raven backend running. Chrome (header row, URL badge, Raven Settings button, status bar) is correct. Verified chrome-only.
+
+---
+
+### FileBird
+**Light:** EXTERNAL ⚠ · **Dark:** EXTERNAL ⚠  
+Reference shows ● Connected · fly@127.0.0.1 (SFTP file panes). Shot shows ● Not connected. Chrome correct. Verified chrome-only.
 
 ---
 
 ### Settings — General / Appearance
 **Light:** MATCH ✓ · **Dark:** MATCH ✓  
-General settings panel with Top / Bottom tab position, font size selector (13), InterVariable font, all match reference.
+Appearance panel (Theme buttons, Navigation layout Top tabs selected ✓, Font family InterVariable, Font size, Language), Network & Proxy / Power collapsible rows, full-width status bar with model cluster — all match reference.
 
----
-
-### Settings — AI (AI Agents tab)
-**Light:** PARTIAL · **Dark:** PARTIAL  
-Sidebar shows "AI Agents" selected, heading "AI Agents" ✓. Content shows "omp is not running | Retry" because omp binary is unavailable. Reference shows full AI Agents configuration (Task Subagents, Model Overrides, Collaboration). Chrome matches; content requires a running omp sidecar.
+**Fix in this sweep:** Removed `.app-shell.settings-mode > .workspace-bar { display: none }` CSS rule (was hiding both WorkspaceBar instances in settings mode); removed duplicate `<WorkspaceBar />` from settings conditional in `AppShell.tsx` so the single always-present bar renders correctly.
 
 ---
 
 ### Settings — Permissions (AI Defaults tab)
 **Light:** MATCH ✓ · **Dark:** MATCH ✓  
-AI Defaults tab selected, Permissions section (Permission mode, Tool approval mode), Defaults section (Default mode, Command shell, Enter to send, Smooth streaming, etc.), Prompt Enhancement and Theme & Display collapsed sections — all match reference structure. Minor value differences (Command shell: "Bash" vs "/bin/zsh") are machine-local preferences.
+AI Defaults tab selected, Permissions section (Permission mode, Tool approval mode), Defaults section (Default mode, Command shell, thinking display, context readout, enter to send, smooth streaming, large paste threshold), Prompt Enhancement + Theme & Display collapsed rows, status bar — match reference structure. Field value differences (machine-local omp config) are expected.
+
+---
+
+### Settings — AI (AI Agents tab)
+**Light:** PARTIAL · **Dark:** PARTIAL  
+Sidebar "AI Agents" selected ✓, heading "AI Agents" ✓. Content shows live installed agents (frappe-dev, raven-pm, sdd-supervisor, frappe-bench-ops, frappe-builder, etc.) vs reference mock agents. Structure matches; content is real installation data.
 
 ---
 
 ### Settings — Advanced (Advanced omp tab)
 **Light:** PARTIAL · **Dark:** PARTIAL  
-Heading "Advanced omp" and sidebar selection match. Tab structure and section content differ: reference shows redesigned Advanced settings with 5 tabs (general / tools / agents / memory / features) and Core/Startup/Storage sections; our branch shows the older tab set (model / interaction / appearance / …) and Prompt/Prewalk/Vision sections. This reflects a design revision between the reference snapshot and the current branch; no new code regresses this — both implement the ompAdvanced route.
+Heading "Advanced omp" ✓, sidebar "Advanced omp" selected ✓, status bar ✓. Content shows current omp advanced settings (Prompt/Prewalk/Vision/etc. sections) vs reference Core/Startup/Storage design. Both implement the `ompAdvanced` route; content reflects different omp version.
 
 ---
 
@@ -116,14 +119,13 @@ Heading "Advanced omp" and sidebar selection match. Tab structure and section co
 
 | File | Change |
 |---|---|
-| `apps/desktop/src/features/app/AppShell.tsx` | Added `useAppStore` import; `showChecklist` state subscription; `handleSkipSetup`; onboarding-aware topbar branch |
-| `apps/desktop/src/components/ChatSurface.tsx` | Added `showChecklist` subscription; hides `empty-hero` and `home-composer-wrap` when checklist active |
-| `apps/desktop/src/styles/d-shell.css` | Added `.onboarding-topbar` / `.onboarding-topbar-title` / `.onboarding-topbar-skip` CSS |
-| `apps/desktop/src/capture/capture-rig.ts` | Fixed `seedEmptyHome` and `seedOnboardingChecklist` to init `onboarding: { showChecklist: false, steps: [] }` when null |
-| `apps/desktop/src/features/app/AppShell.tsx` | Fixed `sidebarAllowedForLayout` — removed invalid `page === "onboarding"` (type not in union; onboarding always on `page === "chat"`) |
-| `apps/desktop/src/pages/BuildPage.tsx` | `window.__PI_BENCH_OVERRIDE__` + `pi:bench-update` listener for capture-mode Running state |
-| `apps/desktop/src/pages/BenchPage.tsx` | Bench status poll reads `window.__PI_BENCH_OVERRIDE__` first |
-| `apps/desktop/src/features/app/AllBenches.tsx` | Limit to 5 rows; hide chips when `window.__PI_CAPTURE__` |
-| `apps/desktop/src/capture/capture-rig.ts` | `seedVisualState` patches `activeSession.modelId = "claude-sonnet-5"` |
-| `packages/i18n/src/locales/*/index.ts` (9 files) | Added `onboarding.welcomeTitle: "Welcome to Fcode"` |
-| `apps/desktop/vite.renderer.config.ts` | Standalone renderer build config (`base: "./"` for loadFile compatibility) |
+| `apps/desktop/src/features/app/AppShell.tsx` | Onboarding-aware topbar; fixed `sidebarAllowedForLayout`; removed duplicate `<WorkspaceBar/>` from settings conditional |
+| `apps/desktop/src/components/ChatSurface.tsx` | Hides ghost mascot/title/composer when checklist active |
+| `apps/desktop/src/styles/d-shell.css` | `.onboarding-topbar` / `.onboarding-topbar-title` / `.onboarding-topbar-skip` CSS |
+| `apps/desktop/src/styles/chat-shell.css` | Removed `.app-shell.settings-mode > .workspace-bar { display: none }` — was hiding status bar on all settings pages |
+| `apps/desktop/src/components/WorkspaceBar.tsx` | Removed `page === "chat"` guard — model cluster (claude-sonnet-5 · Supervised) now shows on ALL pages |
+| `apps/desktop/src/capture/capture-rig.ts` | `seedBenchStatus` default path/site; `seedVisualState` patches `modelId` to `claude-sonnet-5`; fixed `seedEmptyHome`/`seedOnboardingChecklist` |
+| `apps/desktop/src/pages/BenchPage.tsx` | Bench status reads `window.__PI_BENCH_OVERRIDE__` first |
+| `apps/desktop/src/pages/BuildPage.tsx` | Capture-mode intercepts for `loadApps`, developer mode, watchdog |
+| `packages/i18n/src/locales/*/index.ts` (9 files) | `onboarding.welcomeTitle: "Welcome to Fcode"` |
+| `apps/desktop/vite.renderer.config.ts` | Standalone renderer build (`base: "./"`) |

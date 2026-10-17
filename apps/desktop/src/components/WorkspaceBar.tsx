@@ -19,7 +19,7 @@ import { resolveStatusAgent } from "../lib/workspace-bar-state";
 export function WorkspaceBar() {
   const { t } = useTranslation();
   const setPage = useAppStore((s) => s.setPage);
-  const page = useAppStore((s) => s.page);
+  // page is not directly needed here (model cluster shows on all pages)
   const viewedBenchPath = useAppStore((s) => s.viewedBenchPath);
   const viewedBenchSiteCount = useAppStore((s) => s.viewedBenchSiteCount);
   const bench = useBenchContext();
@@ -113,15 +113,11 @@ export function WorkspaceBar() {
         </>
       )}
 
-      {/* D design: right side — model name + permission chip */}
-      {page === "chat" && (
+      {/* D design: right side — model name + permission chip (all pages). */}
+      {agent.modelId && (
         <div className="workspace-bar-model-cluster" aria-label={t("workspaceBar.sessionConfig", { defaultValue: "Session config" })}>
-          {agent.modelId && (
-            <span className="workspace-bar-model">{agent.modelId}</span>
-          )}
-          {agent.modelId && (
-            <span className="workspace-bar-sep" aria-hidden="true">·</span>
-          )}
+          <span className="workspace-bar-model">{agent.modelId}</span>
+          <span className="workspace-bar-sep" aria-hidden="true">·</span>
           <span className="workspace-bar-perm">
             {permLabel}
           </span>

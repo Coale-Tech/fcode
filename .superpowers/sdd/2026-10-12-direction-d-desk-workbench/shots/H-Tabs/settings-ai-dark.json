@@ -1,7 +1,5 @@
 {
-  "shot": "settings-ai-dark",
-  "captureTime": "2026-10-16T14:11:51.927Z",
-  "page": "settings",
-  "theme": "dark",
-  "tab": "ai-agents"
+  "name": "settings-ai-dark",
+  "ts": "2026-10-17T00:20:29.669Z",
+  "targetId": "1A32423EB5853D7C8E7CA1A48EB458AB"
 }

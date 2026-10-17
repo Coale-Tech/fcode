@@ -63,8 +63,8 @@ export type CaptureRigMethods = {
   ensureVisualFixtures: () => Promise<void>;
   seedOmpSettings: () => void;
   /** Seed a fake running bench in the status bar and navbar bench chip.
-   *  benchPath defaults to "/bench/coale_v16", siteCount to 3. */
-  seedBenchStatus: (opts?: { benchPath?: string; siteCount?: number }) => void;
+   *  benchPath defaults to coale_v16 path, siteCount to 3, site to "coale.frappe.cloud". */
+  seedBenchStatus: (opts?: { benchPath?: string; siteCount?: number; site?: string }) => void;
   seedApprovalCard: () => void;
   clearPendingPermissions: () => void;
   seedEmptyHome: () => void;
@@ -1567,12 +1567,13 @@ export function installCaptureRig(): CaptureRig {
     },
     seedBenchStatus: (opts) => {
       if (!window.__PI_CAPTURE__) return;
-      const benchPath = opts?.benchPath ?? "/bench/coale_v16";
+      const benchPath = opts?.benchPath ?? "/Users/mac/ERPNext/frappe_agent/coale_v16";
       const siteCount = opts?.siteCount ?? 3;
+      const site = opts?.site ?? "coale.frappe.cloud";
       // Inject the override read by use-bench-context so the bench chip + status bar show running state.
       // startedAtMs is 2m47s ago so the BenchPage elapsed timer (startMsRef) shows "02:47".
       const startedAtMs = Date.now() - 2 * 60_000 - 47_000;
-      window.__PI_BENCH_OVERRIDE__ = { status: "running", benchPath, site: null, siteCount, startedAtMs };
+      window.__PI_BENCH_OVERRIDE__ = { status: "running", benchPath, site, siteCount, startedAtMs };
       document.dispatchEvent(new Event("pi:bench-update"));
       // Also seed viewedBenchSiteCount so WorkspaceBar shows "N sites", and the
       // design's default model so the status bar's right side matches the references.

@@ -1,7 +1,5 @@
 {
-  "shot": "settings-perms-light",
-  "captureTime": "2026-10-16T14:11:54.360Z",
-  "page": "settings",
-  "theme": "light",
-  "tab": "permissions"
+  "name": "settings-perms-light",
+  "ts": "2026-10-17T00:20:14.609Z",
+  "targetId": "1A32423EB5853D7C8E7CA1A48EB458AB"
 }
