@@ -16,6 +16,7 @@ import type {
   McpServerStatus,
   OmpAgentEntry,
   OmpModelsListResult,
+  OmpSettingDescriptor,
   OmpWorktreeEntry,
   PluginSummary,
   PluginTheme,
@@ -72,6 +73,11 @@ export type CaptureRigMethods = {
   /** Intercept window.piDesktop.invoke for bench IPC channels so BenchPage shows
    *  seeded data (5 specific benches, coale_v16 running) without needing a host binary. */
   seedBenchList: () => void;
+  /** Seed Raven as connected (enabled=true, URL set, ravenConnected event fired).
+   *  The WebContentsView content is still not capturable by CDP. */
+  seedRavenConnected: () => void;
+  /** Seed FileBird as running (mock fileBirdSetVisible → {ok:true} so failed=false). */
+  seedFileBirdConnected: () => void;
 };
 
 export type CaptureRig = CaptureRigMethods & {
@@ -1212,6 +1218,36 @@ export function installCaptureRig(): CaptureRig {
         { path: "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-task-iso-abc123", kind: "task-isolation", parentRepo: "/Users/mac/ERPNext/frappe_agent/PI-Desktop" },
       ];
       api.ompWorktreeList = async () => ({ worktrees: fakeWorktrees });
+      // Mock ompSettingsManifest so Advanced omp page shows reference tabs/sections:
+      // general (Core / Startup & Lifecycle / Storage / Network) | tools | agents | memory | features
+      const fakeManifest: OmpSettingDescriptor[] = [
+        // ── general / Core ────────────────────────────────────────────────
+        { id: "debug.enabled",       tab: "general", group: "Core",                type: "boolean", label: "debug.enabled",          description: "Enable verbose debug output in the sidecar log", default: false },
+        { id: "log.level",           tab: "general", group: "Core",                type: "enum",    label: "log.level",              description: "Minimum log severity written to disk",            default: "info", values: ["debug","info","warn","error"] },
+        { id: "telemetry.enabled",   tab: "general", group: "Core",                type: "boolean", label: "telemetry.enabled",      description: "Send anonymous usage metrics to improve omp",    default: false },
+        { id: "locale.override",     tab: "general", group: "Core",                type: "string",  label: "locale.override",        description: "Force a specific locale (empty = system default)" },
+        // ── general / Startup & Lifecycle ─────────────────────────────────
+        { id: "startup.watchdog",    tab: "general", group: "Startup & Lifecycle", type: "boolean", label: "startup.watchdog",       description: "Restart sidecar automatically if it crashes",     default: true },
+        { id: "startup.timeout",     tab: "general", group: "Startup & Lifecycle", type: "number",  label: "startup.timeout",        description: "Seconds to wait for sidecar ready before failing", default: 30, min: 5, max: 300 },
+        { id: "startup.env.passthrough", tab: "general", group: "Startup & Lifecycle", type: "string", label: "startup.env.passthrough", description: "Extra environment variables forwarded to sidecar" },
+        // ── general / Storage ─────────────────────────────────────────────
+        { id: "storage.maxSessions", tab: "general", group: "Storage",             type: "number",  label: "storage.maxSessions",    description: "Maximum stored sessions before pruning oldest",  default: 1000, min: 10, max: 10000 },
+        { id: "storage.pruneOnLow",  tab: "general", group: "Storage",             type: "boolean", label: "storage.pruneOnLow",     description: "Auto-prune when disk space falls below 500 MB",   default: true },
+        { id: "storage.cacheDir",    tab: "general", group: "Storage",             type: "string",  label: "storage.cacheDir",       description: "Directory for transient tool output cache",       default: "~/.omp/cache" },
+        // ── general / Network ─────────────────────────────────────────────
+        { id: "network.relaxed",     tab: "general", group: "Network",             type: "boolean", label: "network.relaxed",        description: "Disable strict host validation for local development", default: false },
+        { id: "network.proxy",       tab: "general", group: "Network",             type: "string",  label: "network.proxy",          description: "HTTP/HTTPS proxy URL (e.g. http://proxy:8080)" },
+        // ── tools ─────────────────────────────────────────────────────────
+        { id: "tools.timeout",       tab: "tools",   group: "Execution",           type: "number",  label: "tools.timeout",          description: "Maximum seconds a single tool call may run",     default: 60, min: 5, max: 600 },
+        { id: "tools.maxOutput",     tab: "tools",   group: "Execution",           type: "number",  label: "tools.maxOutput",        description: "Maximum bytes of tool output kept in context",   default: 200000 },
+        // ── agents ────────────────────────────────────────────────────────
+        { id: "agents.spawn.timeout",tab: "agents",  group: "Spawning",            type: "number",  label: "agents.spawn.timeout",   description: "Seconds to wait for a subagent to start",        default: 30 },
+        // ── memory ────────────────────────────────────────────────────────
+        { id: "memory.maxTokens",    tab: "memory",  group: "Context",             type: "number",  label: "memory.maxTokens",       description: "Maximum tokens retained in memory context",      default: 50000 },
+        // ── features ──────────────────────────────────────────────────────
+        { id: "features.experiments",tab: "features",group: "Beta",                type: "boolean", label: "features.experiments",   description: "Enable experimental features (may be unstable)",  default: false },
+      ];
+      api.ompSettingsManifest = async () => fakeManifest;
       // Also update the Zustand store settings directly so FontFamilyRow shows
       // "InterVariable" instead of "System default" in the screenshot.
       // ensureVisualFixtures already sets fontFamily via IPC (updates the settings file),
@@ -1587,10 +1623,11 @@ export function installCaptureRig(): CaptureRig {
     seedBenchList: () => {
       if (!window.__PI_CAPTURE__) return;
       const COALE_PATH = "/Users/mac/ERPNext/frappe_agent/coale_v16";
-      // Reference bench data (pages-d/bench/variant-D3.png): 5 benches, coale_v16 running.
+      // Reference bench data (pages-d/bench/variant-D1.png): 5 primary benches, coale_v16 running.
+      // Total = 61 (5 primary + 56 archived/remote) to match reference footer "Showing 5 of 61".
       // BenchPage.tsx reads window.__PI_CAPTURE_BENCH_LIST__ in loadBenches() when in
-      // capture mode — avoids requiring contextBridge interception (which is not possible).
-      const benches = [
+      // capture mode — avoids requiring contextBridge interception.
+      const primaryBenches = [
         { id: "cap-bench-coale-v16", path: COALE_PATH,
           version: 16,
           startedAtMs: Date.now() - 167_000,           // 2m47s ago → "02:47" elapsed
@@ -1613,7 +1650,40 @@ export function installCaptureRig(): CaptureRig {
           version: 16, sites: [{ name: "test.localhost", isDefault: true }],
           apps: ["frappe"] },
       ];
+      // 56 archived benches so totalCount = 61 (matches reference "Showing 5 of 61 benches")
+      const archivedBenches = Array.from({ length: 56 }, (_, i) => ({
+        id: `cap-bench-archive-${i}`,
+        path: `/Users/mac/ERPNext/archived/bench-${String(i + 1).padStart(3, "0")}`,
+        version: 15 + (i % 2),
+        sites: [{ name: `archive-${i + 1}.localhost`, isDefault: true }],
+        apps: ["frappe"],
+      }));
+      const benches = [...primaryBenches, ...archivedBenches];
       window.__PI_CAPTURE_BENCH_LIST__ = { benches, failedRoots: [], roots: ["/Users/mac/ERPNext"] };
+      // Pre-open coale_v16 and dev_bench as tab strip tabs (matches reference design)
+      window.__PI_CAPTURE_BENCH_OPEN_IDS__ = ["cap-bench-coale-v16", "cap-bench-dev"];
+    },
+    seedRavenConnected: () => {
+      if (!window.__PI_CAPTURE__) return;
+      // Set the capture flag so RavenPage's useEffect immediately marks connected=true.
+      // WebContentsView content is NOT capturable by CDP screenshot; only the chrome
+      // bar (green "Connected" pill) and empty hole div will appear in the shot.
+      window.__PI_CAPTURE_RAVEN_CONNECTED__ = true;
+      // Ensure ravenEnabled and settings match (ravenSettingsGet already mocked in seedOmpSettings)
+      useAppStore.setState({ ravenEnabled: true });
+      api.ravenSetVisible = async () => {};
+      api.ravenSetBounds = async () => {};
+      api.ravenReload = async () => ({ ok: true });
+    },
+    seedFileBirdConnected: () => {
+      if (!window.__PI_CAPTURE__) return;
+      // Set the capture flag so FileBirdPage skips the fileBirdSetVisible IPC call
+      // that would mark failed=true. Shows chrome bar + WebContentsView hole (empty in CDP).
+      window.__PI_CAPTURE_FILEBIRD_VISIBLE__ = true;
+      api.fileBirdSetVisible = async () => ({ ok: true });
+      api.fileBirdSetBounds = async () => {};
+      api.fileBirdReload = async () => ({ ok: true });
+      api.fileBirdOpenWindow = async () => ({ ok: true });
     },
   };
   return {

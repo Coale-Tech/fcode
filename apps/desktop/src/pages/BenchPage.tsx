@@ -107,7 +107,12 @@ export function BenchPage() {
   const [loading, setLoading] = useState(true);
   // Tabs: "all" (the All benches table) or a bench id; openIds are the bench tabs in open order.
   const [tab, setTab] = useState<string>("all");
-  const [openIds, setOpenIds] = useState<string[]>([]);
+  const [openIds, setOpenIds] = useState<string[]>(
+    // Capture mode: pre-open bench tabs to match reference design (coale_v16 + dev_bench)
+    window.__PI_CAPTURE__ && Array.isArray(window.__PI_CAPTURE_BENCH_OPEN_IDS__)
+      ? (window.__PI_CAPTURE_BENCH_OPEN_IDS__ as string[])
+      : [],
+  );
   // Gap 4 / T6: failed roots surfaced by discovery
   const [failedRoots, setFailedRoots] = useState<Array<{ root: string; reason: string }>>([]);
   const [roots, setRoots] = useState<string[]>([]);
