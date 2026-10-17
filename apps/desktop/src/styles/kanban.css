@@ -492,7 +492,7 @@
 }
 
 .kanban-drawer-id {
-  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-family: var(--font-mono);
   font-size: var(--d-text-xs);
   font-weight: 600;
   color: var(--ink-gray-5);

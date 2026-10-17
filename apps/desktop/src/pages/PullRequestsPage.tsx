@@ -339,8 +339,8 @@ export function PullRequestsPage() {
         {selectedPr && (
           <div className="pr-detail">
             <div className="d-mini-head">
-              <span className="d-mini-title" title={`#${selectedPr.number} ${selectedPr.shortTitle ?? selectedPr.title}`}>
-                #{selectedPr.number} {selectedPr.shortTitle ?? selectedPr.title}
+              <span className="d-mini-title" title={`#${selectedPr.number} ${selectedPr.title}`}>
+                #{selectedPr.number} {selectedPr.title}
               </span>
               <div className="d-mini-act">
                 <TooltipButton

@@ -76,8 +76,6 @@ export type PullRequestCheck = {
 export type PullRequestSummary = {
   number: number;
   title: string;
-  /** Optional short display name for compact panel headers; falls back to title. */
-  shortTitle?: string;
   url: string;
   author?: string;
   headRefName?: string;

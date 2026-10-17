@@ -356,11 +356,8 @@ export function ScheduledPage() {
                           </div>
                           <p className="sch-row-prompt">{task.prompt}</p>
                           <p className="dest-row-meta sch-row-meta">
-                            {task.cadence === "cron" && task.schedule?.cron && (
-                              <><span className="sch-row-cron">{task.schedule.cron}</span>{" · "}</>
-                            )}
                             {nextRunLabel(task)}
-                            {task.enabled && task.cadence !== "cron" && task.workspacePath ? ` · ${task.workspacePath}` : ""}
+                            {task.enabled && task.workspacePath ? ` · ${task.workspacePath}` : ""}
                           </p>
                         </div>
                         <div className="dest-row-actions" onClick={(e) => e.stopPropagation()}>

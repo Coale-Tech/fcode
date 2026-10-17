@@ -1077,7 +1077,7 @@ export function installCaptureRig(): CaptureRig {
         { id: "st-1", title: "Daily ERPNext Digest", prompt: "Summarise all outstanding Sales Orders, Purchase Orders, and Stock movements from the last 24 h. List top 5 overdue items.", cadence: "daily", mode: "agent", enabled: true, createdAt: now, updatedAt: now, schedule: { hour: 8, minute: 0, weekday: 0, weekdays: [0, 1, 2, 3, 4] }, nextRunAt: next(8, 0), workspacePath: bench, modelId: "claude-sonnet-4-6" },
         { id: "st-2", title: "Hourly CI Health Check", prompt: "Check frappe-bench CI status across all apps. Alert if any test suite has been failing for 2+ runs.", cadence: "hourly", mode: "agent", enabled: true, createdAt: now, updatedAt: now, schedule: { hour: 0, minute: 0, weekday: 0 }, nextRunAt: nextHour.toISOString(), workspacePath: bench, modelId: "claude-sonnet-4-6" },
         { id: "st-3", title: "Weekly HRMS Payroll Review", prompt: "Review pending payroll entries in HRMS. Flag employees with missing attendance or salary revision approvals.", cadence: "weekly", mode: "agent", enabled: true, createdAt: now, updatedAt: now, schedule: { hour: 7, minute: 30, weekday: 0, weekdays: [0] }, nextRunAt: at(daysToMonday, 7, 30).toISOString(), workspacePath: "/Users/mac/ERPNext/hrms-bench", modelId: "claude-sonnet-4-6" },
-        { id: "st-4", title: "Stock Reconciliation Snapshot", prompt: "Take a full stock reconciliation snapshot across all warehouses and export as CSV to /tmp/stock-snapshot.", cadence: "cron", mode: "agent", enabled: true, createdAt: now, updatedAt: now, schedule: { hour: 2, minute: 0, weekday: 0, cron: "0 2 * * *" }, nextRunAt: at(1, 2, 0).toISOString(), workspacePath: bench, modelId: "claude-sonnet-4-6" },
+        { id: "st-4", title: "Stock Reconciliation Snapshot", prompt: "Take a full stock reconciliation snapshot across all warehouses and export as CSV to /tmp/stock-snapshot.", cadence: "cron", mode: "agent", enabled: true, createdAt: now, updatedAt: now, schedule: { hour: 2, minute: 0, weekday: 0 }, nextRunAt: at(1, 2, 0).toISOString(), workspacePath: bench, modelId: "claude-sonnet-4-6" },
         { id: "st-5", title: "Monthly Accounts Ageing", prompt: "Generate accounts receivable ageing report for month-end and post summary to Raven #finance channel.", cadence: "monthly", mode: "agent", enabled: false, createdAt: now, updatedAt: now, schedule: { hour: 9, minute: 0, weekday: 0 }, workspacePath: bench, modelId: "claude-sonnet-4-6" },
       ];
       // health is computed at call-time (not seed-time) so lastTickAt stays within 90s window
@@ -1130,8 +1130,7 @@ export function installCaptureRig(): CaptureRig {
       const pulls: PullRequestSummary[] = [
         {
           number: 247,
-          title: "feat: Add eTIMS KRA receipt signing via VSCU integration",
-          shortTitle: "eTIMS VSCU",
+          title: "eTIMS VSCU",
           url: "https://github.com/Coale-Tech/frappe-agent/pull/247",
           author: "wanjiru@coaletech.com",
           headRefName: "feature/etims-vscu", baseRefName: "main",
