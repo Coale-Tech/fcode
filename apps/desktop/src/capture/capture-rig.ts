@@ -1298,11 +1298,12 @@ export function installCaptureRig(): CaptureRig {
           useAppStore.setState({ workspace: { ...ws, name: "PI-Desktop" } });
         }
       }
-      // Seed user initials for avatar (matches reference "JK").
-      // Also store displayName so the useEffect in useAppShellRuntime derives "JK".
-      useAppStore.setState({ userInitials: "JK" });
+      // Seed user identity (chatUserName + userInitials) for the chat user plate.
+      useAppStore.setState({ userInitials: "JK", chatUserName: "Josh Kim" });
       // Mock getUserInfo so the avatar always shows "JK" (not the OS login name).
       api.getUserInfo = async () => ({ fullName: "Josh Kim" });
+      // Dismiss onboarding checklist so it doesn't obscure the chat surface.
+      { const curOnb = useAppStore.getState().onboarding; useAppStore.setState({ onboarding: { ...curOnb, showChecklist: false } as typeof curOnb }); }
       // NOTE: Use seedBenchList() to intercept window.piDesktop.invoke for bench IPC channels.
       // Enable kanban and raven so rail + sidebar show all feature items.
       // Patch the IPC fetch so NavRail's useEffect cannot overwrite the enabled state.
@@ -1330,33 +1331,23 @@ export function installCaptureRig(): CaptureRig {
           }
         }
         await useAppStore.getState().refreshSessions();
-        // Dynamic membership tracking for dedup during session creation.
-        const existing = new Set(
-          (useAppStore.getState().sessions || []).map((s) => (s.title || "").trim()),
-        );
-        // Pinned page sessions (sidebar PINNED section).
-        const pinnedTitles = [
-          "Kanban · coale_v16",
-          "Raven · #general",
-          "FileBird workspace",
+        // All session titles (visible + archived) matching variant-D1/D2/D3 reference.
+        // Created oldest-first; count=12 (8 visible in groups + 4 archived).
+        const allTitles = [
+          "Set up CI pipeline for ERPNext",  // archived
+          "Migrate legacy plugin API",        // archived
+          "Rewrite notification service",     // archived
+          "Fix bench restart on M1",          // archived
+          "Debug slow stock valuation query", // THIS WEEK (4d)
+          "Set up coale_v16 from scratch",    // THIS WEEK (3d)
+          "ERPNext payroll period config",    // YESTERDAY
+          "Review PR #224 leave approvals",   // YESTERDAY
+          "Migrate Raven to frappe-ui v2",    // YESTERDAY
+          "Fix duplicate bench start bug",    // TODAY
+          "Redesign settings plugin section", // TODAY
+          "Sync ERPNext code module",         // TODAY — selected
         ];
-        // Main session titles matching variant-D1/D2/D3 reference.
-        const regularTitles = [
-          // Created oldest-first so most-recently-created = Sync ERPNext (appears at TOP
-          // of the session list sorted by createdAt DESC).
-          // Matches reference exactly: 8 sessions across THIS WEEK / YESTERDAY / TODAY.
-          "Debug slow stock valuation query",   // THIS WEEK
-          "Set up coale_v16 from scratch",      // THIS WEEK
-          "ERPNext payroll period config",      // YESTERDAY
-          "Review PR #224 leave approvals",     // YESTERDAY
-          "Migrate Raven to frappe-ui v2",      // YESTERDAY
-          "Fix duplicate bench start bug",      // TODAY
-          "Redesign settings plugin section",   // TODAY
-          "Sync ERPNext code module",           // TODAY — selected (created LAST = most recent)
-        ];
-        // Delete sessions NOT in the expected keep set to remove stale/dup entries
-        // from previous runs (prevents "Review PR #224" appearing twice, etc.).
-        const keepTitles = new Set([...pinnedTitles, ...regularTitles]);
+        const keepTitles = new Set(allTitles);
         for (const s of useAppStore.getState().sessions || []) {
           const t = (s.title || "").trim();
           if (!keepTitles.has(t)) {
@@ -1378,7 +1369,7 @@ export function installCaptureRig(): CaptureRig {
         const existing2 = new Set(
           (useAppStore.getState().sessions || []).map((s) => (s.title || "").trim()),
         );
-        for (const title of [...pinnedTitles, ...regularTitles]) {
+        for (const title of allTitles) {
           if (existing2.has(title)) continue;
           if ((useAppStore.getState().sessions?.length ?? 0) >= 16) break;
           await api.createSession({ title });
@@ -1404,29 +1395,21 @@ export function installCaptureRig(): CaptureRig {
           "Migrate Raven to frappe-ui v2":     S - D + 14 * H,
           "Review PR #224 leave approvals":    S - D + 12 * H,
           "ERPNext payroll period config":     S - D + 10 * H,
-          // THIS WEEK
-          "Debug slow stock valuation query":  S - 3 * D,
-          "Set up coale_v16 from scratch":     S - 4 * D,
+          // THIS WEEK: Set up 3d old (newest → appears first), Debug 4d old (second)
+          "Set up coale_v16 from scratch":     S - 3 * D,
+          "Debug slow stock valuation query":  S - 4 * D,
+          // Archived (beyond THIS WEEK cutoff; counted in total but hidden)
+          "Fix bench restart on M1":           S - 10 * D,
+          "Rewrite notification service":      S - 11 * D,
+          "Migrate legacy plugin API":         S - 12 * D,
+          "Set up CI pipeline for ERPNext":    S - 13 * D,
         };
         const backdated = (useAppStore.getState().sessions ?? []).map((s) => {
           const ts = sessionAges[(s.title || "").trim()];
           return ts ? { ...s, updatedAt: new Date(ts).toISOString(), createdAt: new Date(ts).toISOString() } : s;
         });
         useAppStore.setState({ sessions: backdated });
-        // Pin the pinned-page sessions in localStorage.
         const allSessions = useAppStore.getState().sessions ?? [];
-        try {
-          const raw = localStorage.getItem("pi.desktop.pinnedSessions");
-          const parsed = raw ? JSON.parse(raw) : [];
-          const pins: string[] = Array.isArray(parsed)
-            ? parsed.filter((x) => typeof x === "string")
-            : [];
-          for (const pt of pinnedTitles) {
-            const s = allSessions.find((s2) => (s2.title || "").trim() === pt);
-            if (s && !pins.includes(s.id)) pins.unshift(s.id);
-          }
-          localStorage.setItem("pi.desktop.pinnedSessions", JSON.stringify(pins.slice(0, 40)));
-        } catch { /* ignore */ }
         // Select "Sync ERPNext code module" as the active session.
         const preferred = allSessions.find(
           (s) => (s.title || "").trim() === "Sync ERPNext code module",
@@ -1475,7 +1458,9 @@ export function installCaptureRig(): CaptureRig {
       }
       if (!sessionId) return;
       const activeSessionId = sessionId;
-      const base = Date.now() - 5 * 60_000; // 5 min ago → realistic "5m" elapsed time
+      // Set base to 10:42 AM today so user message displays "10:42 AM" matching reference.
+      const _today = new Date(); _today.setHours(10, 42, 0, 0);
+      const base = _today.getTime();
       const messages: UiMessage[] = [
         {
           id: "cap-perm-user-0",
@@ -1681,24 +1666,24 @@ export function installCaptureRig(): CaptureRig {
         { id: "cap-bench-coale-v16", path: COALE_PATH,
           version: 16,
           startedAtMs: Date.now() - 167_000,           // 2m47s ago → "02:47" elapsed
-          sites: [{ name: "coale.frappe.cloud", isDefault: true },
-                  { name: "demo.frappe.cloud", isDefault: false }],
+          sites: [{ name: "coale.localhost", isDefault: true },
+                  { name: "demo.localhost", isDefault: false }],
           apps: ["frappe", "erpnext", "hrms", "raven"] },
         { id: "cap-bench-dev",     path: "/Users/mac/ERPNext/dev_bench",
           version: 16, sites: [{ name: "dev.localhost", isDefault: true }],
-          apps: ["frappe", "erpnext"] },
+          apps: ["frappe"] },
         { id: "cap-bench-v15",     path: "/Users/mac/ERPNext/v15-bench",
           version: 15, sites: [{ name: "v15.localhost", isDefault: true }],
-          apps: ["frappe", "hrms"] },
+          apps: ["frappe", "erpnext", "hrms"] },
         { id: "cap-bench-staging", path: "/Users/mac/ERPNext/staging_v16",
           version: 16,
           sites: [{ name: "staging-1.frappe.cloud", isDefault: true },
                   { name: "staging-2.frappe.cloud", isDefault: false },
                   { name: "staging-3.frappe.cloud", isDefault: false }],
-          apps: ["frappe", "erpnext", "hrms"] },
+          apps: ["frappe", "erpnext", "hrms", "raven"] },
         { id: "cap-bench-test",    path: "/Users/mac/ERPNext/test_v16",
           version: 16, sites: [{ name: "test.localhost", isDefault: true }],
-          apps: ["frappe"] },
+          apps: ["frappe", "erpnext"] },
       ];
       // 56 archived benches so totalCount = 61 (matches reference "Showing 5 of 61 benches")
       const archivedBenches = Array.from({ length: 56 }, (_, i) => ({
@@ -1712,6 +1697,65 @@ export function installCaptureRig(): CaptureRig {
       window.__PI_CAPTURE_BENCH_LIST__ = { benches, failedRoots: [], roots: ["/Users/mac/ERPNext"] };
       // Pre-open coale_v16 and dev_bench as tab strip tabs (matches reference design)
       window.__PI_CAPTURE_BENCH_OPEN_IDS__ = ["cap-bench-coale-v16", "cap-bench-dev"];
+      // Bench detail (pages-d/bench/fragment-detail.html): apps, Procfile workers, port, pids.
+      window.__PI_CAPTURE_BENCH_DETAIL__ = {
+        apps: [
+          { name: "frappe", version: "16.8.2" },
+          { name: "erpnext", version: "16.5.0" },
+          { name: "hrms", version: "0.42.0" },
+          { name: "raven", version: "2.1.3" },
+          { name: "frappe_assistant", version: "0.7.1" },
+        ],
+        procfileEntries: ["web.1", "worker.1", "worker.2", "redis.1", "schedule.1"],
+        port: 8000,
+        mainPid: 89180,
+        workerPids: { "web.1": 89234, "worker.1": 89235, "worker.2": 89236, "redis.1": 89190, "schedule.1": 89237 },
+      };
+      const at = (hms: string) => {
+        const [h, m, s] = hms.split(":").map(Number);
+        const d = new Date();
+        d.setHours(h, m, s, 0);
+        return d.getTime();
+      };
+      const logs: Array<[string, string]> = [
+        ["15:20:27", "redis.1 | 89190:M 12 Oct 2026 15:20:27.832 * Ready to accept connections tcp"],
+        ["15:20:28", "web.1 |  * Running on http://0.0.0.0:8000 (Press CTRL+C to quit)"],
+        ["15:20:28", "web.1 |  * Restarting with inotify reloader"],
+        ["15:20:29", "web.1 |  * Debugger is active!"],
+        ["15:20:31", "worker.1 | [2026-10-12 15:20:31,204] INFO in worker: Starting long job worker"],
+        ["15:20:31", "worker.2 | [2026-10-12 15:20:31,211] INFO in worker: Starting short job worker"],
+        ["15:20:35", "schedule.1 | [2026-10-12 15:20:35,018] INFO in schedule: Scheduler started"],
+        ["15:21:04", "web.1 | 127.0.0.1 - - [12/Oct/2026 15:21:04] \"GET /api/method/frappe.auth.get_logged_user HTTP/1.1\" 200 -"],
+        ["15:21:09", "web.1 | 127.0.0.1 - - [12/Oct/2026 15:21:09] \"GET /app/sales-invoice HTTP/1.1\" 200 -"],
+        ["15:22:41", "worker.1 | [2026-10-12 15:22:41,887] INFO in worker: Executing scheduled job: frappe.email.queue.flush"],
+        ["15:22:44", "web.1 | 127.0.0.1 - - [12/Oct/2026 15:22:44] \"POST /api/method/frappe.desk.form.save.savedocs HTTP/1.1\" 200 -"],
+        ["15:23:14", "web.1 | Reloading: /home/mac/ERPNext/frappe_agent/coale_v16/apps/erpnext/erpnext/accounts/doctype/sales_invoice/sales_invoice.py changed"],
+        ["15:23:14", "web.1 |  * Restarting with inotify reloader"],
+        ["15:23:15", "web.1 |  * Debugger is active! Running on http://0.0.0.0:8000"],
+      ];
+      window.__PI_CAPTURE_BENCH_LOGS__ = logs.map(([ts, text]) => ({ ts: at(ts), text }));
+      window.__PI_CAPTURE_BENCH_ONESHOT__ = {
+        verb: "list-apps",
+        output: "frappe\nerpnext\nhrms\nraven\nfrappe_assistant",
+        elapsed: "1.2s",
+      };
+      const dt = (app: string, module: string, name: string, dirty = false) => ({
+        path: `apps/${app}/${app}/${module}/doctype/${name}/${name}.json`,
+        app,
+        module,
+        name,
+        dirty,
+      });
+      const erpnextFiller = Array.from({ length: 214 }, (_, i) => dt("erpnext", "stock", `stock_doctype_${String(i + 1).padStart(3, "0")}`));
+      window.__PI_CAPTURE_DOCTYPES__ = [
+        dt("frappe", "core", "doctype"),
+        dt("frappe", "core", "user"),
+        dt("erpnext", "accounts", "sales_invoice", true),
+        dt("erpnext", "accounts", "purchase_invoice"),
+        dt("erpnext", "selling", "customer"),
+        ...erpnextFiller,
+        dt("hrms", "hr", "employee_checkin"),
+      ];
     },
     seedRavenConnected: () => {
       if (!window.__PI_CAPTURE__) return;

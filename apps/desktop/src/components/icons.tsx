@@ -37,6 +37,7 @@ import {
   EyeOff,
   FileDiff,
   FileSpreadsheet,
+  File,
   FileText,
   Folder,
   FolderOpen,
@@ -49,8 +50,10 @@ import {
   Image,
   Info,
   Keyboard,
+  Key,
   KeyRound,
   Link,
+  List,
   ListChecks,
   LogOut,
   Mic,
@@ -80,11 +83,13 @@ import {
   RefreshCcw,
   RefreshCw,
   RotateCw,
+  RotateCcw,
   Search,
   Server,
   Settings,
   Shield,
   SlidersHorizontal,
+  Signal,
   Slash,
   Smile,
   Sparkles,
@@ -99,12 +104,15 @@ import {
   Trash2,
   TriangleAlert,
   UserRound,
+  Users,
   Undo2,
   Upload,
   Video,
   Webhook,
   Workflow,
   Wrench,
+  Paperclip,
+  SendHorizontal,
   X,
   type LucideIcon,
   type LucideProps,
@@ -244,6 +252,15 @@ export const IconPerson = icon(Smile);
 export const IconInfo = icon(Info);
 export const IconServer = icon(Server);
 export const IconBarChart2 = icon(BarChart2);
+/* Bench detail (D-kit bench fragment): app glyphs and one-shot command icons. */
+export const IconSignal = icon(Signal);
+export const IconUsers = icon(Users);
+export const IconKeySimple = icon(Key);
+export const IconList = icon(List);
+export const IconRotateCcw = icon(RotateCcw);
+export const IconFile = icon(File);
+/** Reload an embedded canvas (Build tab). */
+export const IconReload = icon(RefreshCw);
 export const IconSun = icon(Sun);
 export const IconMoon = icon(Moon);
 export const IconMonitor = icon(Monitor);
@@ -270,6 +287,10 @@ export const IconSquareCheck = icon(SquareCheck);
 /** Raven team chat destination (nav rail + settings). */
 export const IconRaven = icon(MessagesSquare);
 /** FileBird SFTP file manager destination (nav rail). */
+/** Composer attach button (D-chat fragment). */
+export const IconPaperclip = icon(Paperclip);
+/** Composer send button (D-chat fragment). */
+export const IconSend = icon(SendHorizontal);
 export const IconFileBird = icon(FolderSync);
 
 export function IconStop({ size = 16, style, ...props }: IconProps) {

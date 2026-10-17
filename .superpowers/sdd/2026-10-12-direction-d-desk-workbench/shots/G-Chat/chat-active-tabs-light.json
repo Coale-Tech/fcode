@@ -1,0 +1,35 @@
+{
+  "shot": "chat-active-tabs-light",
+  "md5": "6926a77f95e05ad0377a954b5bc83f3a",
+  "layout": "tabs",
+  "theme": "light",
+  "state": "active",
+  "commit": "232e66836",
+  "dirtyApps": true,
+  "dataDir": "/tmp/pi-t14g-cap11",
+  "cdpPort": 9355,
+  "target": "file:///Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-t14g-chat/apps/desktop/out/renderer/index.html",
+  "viewport": "1440x900@1x",
+  "dom": {
+    "layout": "tabs",
+    "theme": "light",
+    "banner": false,
+    "dialog": false,
+    "toast": false,
+    "sidebar": 256,
+    "sessions": [
+      "FileBird workspace",
+      "Raven · #general",
+      "Kanban · coale_v16",
+      "Sync ERPNext code module",
+      "Redesign settings plugin section",
+      "Fix duplicate bench start bug",
+      "Migrate Raven to frappe-ui v2",
+      "Review PR #224 leave approvals",
+      "ERPNext payroll period config",
+      "Debug slow stock valuation query",
+      "Set up coale_v16 from scratch"
+    ]
+  },
+  "ts": "2026-10-17T08:53:41.463Z"
+}

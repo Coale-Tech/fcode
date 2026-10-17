@@ -45,6 +45,7 @@ import {
   IconCircleAlert,
   IconCode,
   IconCopy,
+  IconEye,
   IconFileText,
   IconFolder,
   IconGlobe,
@@ -58,6 +59,7 @@ import {
   IconWrench,
   IconX,
 } from "../../../components/icons";
+import { splitInlineCode } from "../../../lib/inline-code";
 import { TooltipButton } from "../../../components/ui";
 
 /**
@@ -383,10 +385,10 @@ export const TOOL_RUNNING_KEYS: Record<ToolAction, string> = {
 };
 
 export function ToolActionIcon({ action }: { action: ToolAction }) {
-  const props = { size: 15, "aria-hidden": true };
+  const props = { size: 12, "aria-hidden": true };
   switch (action) {
     case "read":
-      return <IconFileText {...props} />;
+      return <IconEye {...props} />;
     case "list":
       return <IconFolder {...props} />;
     case "search":
@@ -513,9 +515,30 @@ export function LinkifiedText({ text, attachments }: { text: string; attachments
         const start = offset;
         offset += segment.text.length;
         const position = { "data-source-start": start, "data-source-end": offset };
-        return segment.kind === "text" ? (
-          <span key={index} {...position}>{segment.text}</span>
-        ) : segment.target.kind === "file" ? (
+        if (segment.kind === "text") {
+          let partOffset = start;
+          return (
+            <span key={index} {...position}>
+              {splitInlineCode(segment.text).map((part, partIndex) => {
+                const partStart = partOffset;
+                partOffset += part.raw.length;
+                return part.code ? (
+                  <code
+                    key={partIndex}
+                    className="chat-inline-code"
+                    data-source-start={partStart}
+                    data-source-end={partOffset}
+                  >
+                    {part.text}
+                  </code>
+                ) : (
+                  part.text
+                );
+              })}
+            </span>
+          );
+        }
+        return segment.target.kind === "file" ? (
           <FileRefChip
             key={index}
             name={segment.label}

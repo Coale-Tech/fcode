@@ -44,45 +44,58 @@
   align-items: flex-start;
 }
 
-/* D design shared: avatar circle */
+/* D design shared: avatar circle (D.css .d-msg-avatar) */
 .d-msg-avatar {
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
+  background: var(--surface-gray-3);
+  color: var(--ink-gray-6);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0;
   margin-top: 2px;
 }
 .d-msg-avatar.user {
-  background: var(--da, #3d4ee4);
-  color: #fff;
+  background: var(--surface-gray-10);
+  color: var(--ink-base);
 }
 .d-msg-avatar.ai {
-  background: var(--ink-gray-6, #555);
-  color: #fff;
+  background: var(--da-sub);
+  color: var(--da-txt);
+  font-size: 9px;
 }
 
 /* D design: sender meta row (name + time) */
 .d-msg-meta {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 3px;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
 }
 .d-msg-sender {
-  font-size: 12px;
+  font-size: var(--d-text);
   font-weight: 600;
-  color: var(--ink-gray-8, #1a1a1a);
+  color: var(--ink-gray-9);
 }
 .d-msg-time {
-  font-size: 11px;
-  color: var(--ink-gray-4, #888);
+  font-size: var(--d-text-xs);
+  color: var(--ink-gray-4);
   font-variant-numeric: tabular-nums;
+}
+
+/* Inline `code` in user prose (D.css .d-msg-body code) */
+.chat-inline-code {
+  font-family: var(--font-mono);
+  font-size: var(--d-text-sm);
+  background: var(--surface-gray-2);
+  border-radius: var(--d-r-sm);
+  padding: 1px 4px;
+  color: var(--ink-gray-9);
 }
 
 /* D design: message content column (next to avatar) */

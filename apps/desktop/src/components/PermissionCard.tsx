@@ -10,6 +10,8 @@ import { buildToolPresentation } from "../lib/tool-presentation";
 import { ToolDetailBlocks } from "./ToolDetails";
 import { Button } from "./ui";
 import { DestructiveActionDialog } from "./DestructiveActionDialog";
+import { IconTriangleAlert } from "./icons";
+import { splitInlineCode } from "../lib/inline-code";
 
 export function PermissionCard({
   permission,
@@ -156,9 +158,10 @@ export function PermissionCard({
         aria-hidden="true"
       />
       <div className="permission-card-header">
-        <span className="permission-card-title" role="status" aria-live="polite">
-          {cardTitle}
-        </span>
+          <span className="permission-card-title" role="status" aria-live="polite">
+            <IconTriangleAlert size={14} className="permission-card-alert-icon" aria-hidden />
+            {cardTitle}
+          </span>
         {queued > 0 ? (
           <span className="permission-card-queued">
             {t("permission.queued", { count: queued })}
@@ -181,7 +184,15 @@ export function PermissionCard({
         />
       </div>
       {permission.reason ? (
-        <div className="permission-card-reason">{permission.reason}</div>
+        <div className="permission-card-reason">
+          {splitInlineCode(permission.reason).map((part, i) =>
+            part.code ? (
+              <code key={i} className="chat-inline-code">{part.text}</code>
+            ) : (
+              part.text
+            ),
+          )}
+        </div>
       ) : null}
       {argBlocks.length > 0 ? (
         <div className="permission-card-args">
@@ -202,6 +213,7 @@ export function PermissionCard({
         <div className="permission-action-item">
           <Button
             variant="primary"
+            size="sm"
             disabled={resolving}
             onClick={() => void resolve("allow-once")}
           >
@@ -212,6 +224,7 @@ export function PermissionCard({
         <div className="permission-action-item">
           <Button
             variant="secondary"
+            size="sm"
             disabled={resolving}
             onClick={() => void resolve("allow-session")}
           >
@@ -222,6 +235,7 @@ export function PermissionCard({
         <div className="permission-action-item">
           <Button
             variant="ghost"
+            size="sm"
             className="permission-deny-btn"
             disabled={resolving}
             onClick={() => void resolve("deny")}
