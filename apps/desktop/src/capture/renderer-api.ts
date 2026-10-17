@@ -65,6 +65,12 @@ declare global {
       failedRoots: Array<{ root: string; reason: string }>;
       roots: string[];
     };
+    /** Capture-only bench tab IDs to pre-open (coale_v16, dev_bench). */
+    __PI_CAPTURE_BENCH_OPEN_IDS__?: string[];
+    /** When set, RavenPage marks itself connected on mount (CDP can't capture WebContentsView). */
+    __PI_CAPTURE_RAVEN_CONNECTED__?: boolean;
+    /** When set, FileBirdPage skips fileBirdSetVisible IPC call (avoids failed=true). */
+    __PI_CAPTURE_FILEBIRD_VISIBLE__?: boolean;
   }
 }
 
@@ -95,6 +101,8 @@ const CAPTURE_RIG_METHODS = [
   "seedOnboardingChecklist",
   "seedCommandPaletteExtras",
   "seedBenchList",
+  "seedRavenConnected",
+  "seedFileBirdConnected",
 ] as const satisfies readonly CaptureRigMethod[];
 
 export function installRendererApi(): () => void {

@@ -25,6 +25,8 @@ export function FileBirdPage({ blocked }: { blocked: boolean }) {
   const [kebabOpen, setKebabOpen] = useState(false);
 
   useEffect(() => {
+    // Capture mode: skip the IPC call that sets failed=true (fileBird service not running).
+    if (window.__PI_CAPTURE__ && window.__PI_CAPTURE_FILEBIRD_VISIBLE__) return;
     void api.fileBirdSetVisible(!blocked && !overlayActive).then((r) => setFailed(!r.ok));
     return () => { void api.fileBirdSetVisible(false); };
   }, [blocked, overlayActive]);

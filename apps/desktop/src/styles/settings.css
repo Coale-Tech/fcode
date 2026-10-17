@@ -3975,3 +3975,51 @@
   border: 1px solid var(--d-border);
   letter-spacing: 0.01em;
 }
+
+/* ── Advanced omp settings tab bar ──────────────────────────────────────── */
+.omp-advanced-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 0 4px;
+}
+.omp-advanced-toolbar .omp-advanced-search { flex: 1; }
+.omp-advanced-filter-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--d-text-sm);
+  color: var(--ink-gray-7);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+.omp-advanced-saving { font-size: var(--d-text-xs); }
+
+.omp-advanced-tabs {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  border-bottom: 1px solid var(--d-border);
+  padding: 0 0 0;
+  margin-bottom: 4px;
+}
+.omp-advanced-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  padding: 6px 12px;
+  font-size: var(--d-text-sm);
+  color: var(--ink-gray-6);
+  line-height: 1.4;
+  margin-bottom: -1px;
+  font-family: inherit;
+  transition: color 0.1s, border-color 0.1s;
+}
+.omp-advanced-tab:hover { color: var(--ink-gray-8); }
+.omp-advanced-tab.active {
+  color: var(--ink-gray-8);
+  border-bottom-color: var(--da);
+  font-weight: var(--font-weight-medium);
+}

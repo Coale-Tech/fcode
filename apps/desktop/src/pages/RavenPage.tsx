@@ -35,9 +35,13 @@ export function RavenPage({ blocked }: { blocked: boolean }) {
 
   useEffect(() => {
     fetchSettings();
+    // Capture mode: immediately show connected state when flag is set (WebContentsView
+    // content is not capturable by CDP, but the green pill + chrome bar will show).
+    if (window.__PI_CAPTURE__ && window.__PI_CAPTURE_RAVEN_CONNECTED__) {
+      setConnected(true);
+    }
     const offChanged = window.piDesktop?.on?.(IPC.event.ravenChanged, () => {
       fetchSettings();
-      // A settings change (e.g. new URL) drops the existing pane; reset connected.
       setConnected(false);
     });
     const offConnected = window.piDesktop?.on?.(IPC.event.ravenConnected, () => {
