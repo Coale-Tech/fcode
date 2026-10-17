@@ -70,9 +70,16 @@ export function PullRequestsPage() {
     setLoading(true);
     try {
       const res = await api.listPullRequests();
-      setPulls(res.pulls || []);
+      const loaded = res.pulls || [];
+      setPulls(loaded);
       setError(res.error || null);
       setLastUpdated(new Date());
+      // Capture mode: pre-select the designated PR for the detail-panel screenshot.
+      const preSelect = window.__PI_CAPTURE_PR_SELECTED__;
+      if (preSelect) {
+        const match = loaded.find((p) => p.number === preSelect);
+        if (match) setSelectedPr(match);
+      }
     } catch (e) {
       setPulls([]);
       setError(e instanceof Error ? e.message : String(e));

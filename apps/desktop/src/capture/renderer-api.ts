@@ -65,6 +65,8 @@ declare global {
       failedRoots: Array<{ root: string; reason: string }>;
       roots: string[];
     };
+    /** Capture-only: pre-select this PR number when PullRequestsPage loads. */
+    __PI_CAPTURE_PR_SELECTED__?: number;
   }
 }
 

@@ -1178,6 +1178,8 @@ export function installCaptureRig(): CaptureRig {
         },
       ];
       api.listPullRequests = async () => ({ pulls });
+      // Pre-select PR #247 (the top row) for the capture detail-panel screenshot.
+      window.__PI_CAPTURE_PR_SELECTED__ = 247;
     },
     seedSidebarStatuses: () => {
       if (!window.__PI_CAPTURE__) return null;
