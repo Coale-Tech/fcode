@@ -741,6 +741,7 @@ export const ko = {
     continue: "계속 →",
     back: "뒤로",
     stepOf: "{{step}} / {{total}} 단계",
+    welcomeTitle: "Welcome to Fcode",
   },
   settings: {
     memoryTitle: "Memory",

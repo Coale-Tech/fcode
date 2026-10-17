@@ -73,9 +73,13 @@ export type CaptureRigMethods = {
   seedOnboardingChecklist: () => void;
   /** Seed capture-only extras for the command palette: FILES, BENCHES and COMMANDS sections. */
   seedCommandPaletteExtras: () => void;
+  /** Patch settings.largePasteThreshold to 200 directly in the Zustand store. */
+  seedLargePasteThreshold: () => void;
   /** Intercept window.piDesktop.invoke for bench IPC channels so BenchPage shows
    *  seeded data (5 specific benches, coale_v16 running) without needing a host binary. */
   seedBenchList: () => void;
+  /** Remove the pinned flag from all sessions so no PINNED section shows in the sidebar. */
+  clearPinnedSessions: () => void;
 };
 
 export type CaptureRig = CaptureRigMethods & {
@@ -1635,6 +1639,35 @@ export function installCaptureRig(): CaptureRig {
           apps: ["frappe"] },
       ];
       window.__PI_CAPTURE_BENCH_LIST__ = { benches, failedRoots: [], roots: ["/Users/mac/ERPNext"] };
+    },
+    seedLargePasteThreshold: () => {
+      if (!window.__PI_CAPTURE__) return;
+      const storeSettings = useAppStore.getState().settings;
+      if (storeSettings) {
+        useAppStore.setState({ settings: { ...storeSettings, largePasteThreshold: 200 } });
+      }
+    },
+    clearPinnedSessions: () => {
+      if (!window.__PI_CAPTURE__) return;
+      // Clear pinned flag from session objects (seedVisualState sets session.pinned=true).
+      const sessions = (useAppStore.getState().sessions ?? []).map((s) =>
+        (s as typeof s & { pinned?: boolean }).pinned
+          ? { ...s, pinned: false }
+          : s
+      );
+      // Also clear from sessionMeta in case it's set there.
+      const meta = { ...useAppStore.getState().sessionMeta };
+      let metaChanged = false;
+      for (const id of Object.keys(meta)) {
+        if (meta[id]?.pinned) {
+          meta[id] = { ...meta[id], pinned: false };
+          metaChanged = true;
+        }
+      }
+      useAppStore.setState({
+        sessions: sessions as unknown as SessionSummary[],
+        ...(metaChanged ? { sessionMeta: meta } : {}),
+      });
     },
   };
   return {

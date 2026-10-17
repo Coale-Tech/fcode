@@ -730,6 +730,7 @@ export const ptBR = {
     continue: "Continuar →",
     back: "Voltar",
     stepOf: "Passo {{step}} de {{total}}",
+    welcomeTitle: "Welcome to Fcode",
   },
   settings: {
     memoryTitle: "Memory",
