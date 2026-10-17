@@ -4039,6 +4039,18 @@
   padding: 6px 16px 0;
   font-size: var(--d-text-sm);
 }
+/* Key chip: monospace label for each manifest setting row */
+.omp-advanced-row .settings-row-title {
+  display: inline-block;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--surface-gray-2);
+  color: var(--ink-gray-7);
+  border-radius: 3px;
+  padding: 1px 5px;
+  border: 1px solid var(--d-border);
+}
 .omp-advanced-key {
   font-family: var(--font-mono, monospace);
   font-size: 11px;
