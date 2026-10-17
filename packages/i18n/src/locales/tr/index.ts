@@ -1008,6 +1008,7 @@ sklm: {
     models: "Modeller",
     permissions: "İzinler",
     appearance: "Görünüm",
+    themeDisplay: "Tema ve Görüntü",
     about: "Bilgi",
     addProvider: "Servis ekle",
     apiKey: "API anahtarı",

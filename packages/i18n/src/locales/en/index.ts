@@ -1007,6 +1007,7 @@ sklm: {
     models: "Models",
     permissions: "Permissions",
     appearance: "Appearance",
+    themeDisplay: "Theme & Display",
     about: "About",
     addProvider: "Add provider",
     apiKey: "API key",

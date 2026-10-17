@@ -122,6 +122,8 @@ export function SettingsPage() {
   // D: Network & Proxy and Power collapsed by default (fragment-d1.html spec)
   const [netExpanded, setNetExpanded] = useState(false);
   const [powerExpanded, setPowerExpanded] = useState(false);
+  const [promptEnhancementExpanded, setPromptEnhancementExpanded] = useState(false);
+  const [themeDisplayExpanded, setThemeDisplayExpanded] = useState(false);
   const isDirty = Object.keys(pendingAiChanges).length > 0;
   const seenSettingsTabNonce = useRef(settingsTabNonce);
   // setSettingsTab means "show this built-in category", even when the tab id
@@ -650,10 +652,43 @@ export function SettingsPage() {
                 />
               </SettingsCard>
 
-              <PromptEnhancementCard
-                settings={settings}
-                saveSettings={saveSettings}
-              />
+              {/* D: Prompt Enhancement — collapsed by default (settings-permissions ref) */}
+              <div className="settings-card-block">
+                <button
+                  className="sf-sec-btn"
+                  type="button"
+                  aria-expanded={promptEnhancementExpanded}
+                  onClick={() => setPromptEnhancementExpanded((v) => !v)}
+                >
+                  <IconSparkles size={13} style={{ color: "var(--ink-gray-5)", flexShrink: 0 }} aria-hidden />
+                  {t("settings.promptEnhancementTitle")}
+                  <svg className={`sf-chevron${promptEnhancementExpanded ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                {promptEnhancementExpanded && (
+                  <PromptEnhancementCard settings={settings} saveSettings={saveSettings} />
+                )}
+              </div>
+              {/* D: Theme & Display — collapsed by default */}
+              <div className="settings-card-block">
+                <button
+                  className="sf-sec-btn"
+                  type="button"
+                  aria-expanded={themeDisplayExpanded}
+                  onClick={() => setThemeDisplayExpanded((v) => !v)}
+                >
+                  <IconPalette size={13} style={{ color: "var(--ink-gray-5)", flexShrink: 0 }} aria-hidden />
+                  {t("settings.themeDisplay")}
+                  <svg className={`sf-chevron${themeDisplayExpanded ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                {themeDisplayExpanded && settings && (
+                  <div className="settings-panel">
+                    <ThemeRow settings={settings} saveSettings={saveSettings} />
+                    <NavLayoutRow settings={settings} saveSettings={saveSettings} />
+                    <FontFamilyRow settings={settings} saveSettings={saveSettings} />
+                    <FontSizeRow settings={settings} saveSettings={saveSettings} />
+                  </div>
+                )}
+              </div>
               <OmpSettingsSections part="defaults" />
             </div>
           )}
