@@ -30,7 +30,11 @@ const NAMED_ENDPOINT_PRESETS: Record<
   openai:    { vendorKey: "openai",    apiStyle: "openai_chat",         name: "OpenAI" },
 };
 
-// `bindingFromModelInfo` is imported from @pi-desktop/shared above.
+// Capture-rig deterministic override: seedOnboardingKeyCheck() sets this global
+// so the key field + verified banner show without any user click.
+type CaptureKeyOverride = { apiKey: string; modelId: string; modelDisplayName: string };
+const piKeyOverride = (): CaptureKeyOverride | undefined =>
+  (window as unknown as Record<string, CaptureKeyOverride | undefined>).__PI_ONBOARDING_KEY_VERIFIED__;
 
 export function OnboardingChecklist() {
   const { t } = useTranslation();
@@ -42,12 +46,25 @@ export function OnboardingChecklist() {
 
   const [step, setStep] = useState(1); // 1–4
   const [selectedProvider, setSelectedProvider] = useState<"anthropic" | "gemini" | "openai">("anthropic");
-  const [apiKey, setApiKey] = useState("");
+  const [apiKey, setApiKey] = useState(() => piKeyOverride()?.apiKey ?? "");
   const [verifyState, setVerifyState] = useState<
     "idle" | "checking" | "ok" | "no-models" | "error"
-  >("idle");
-  const [verifiedModelName, setVerifiedModelName] = useState("");
-  const [verifiedModel, setVerifiedModel] = useState<ModelInfo | null>(null);
+  >(() => (piKeyOverride() ? "ok" : "idle"));
+  const [verifiedModelName, setVerifiedModelName] = useState(
+    () => piKeyOverride()?.modelId ?? "",
+  );
+  const [verifiedModel, setVerifiedModel] = useState<ModelInfo | null>(() => {
+    const ov = piKeyOverride();
+    if (!ov) return null;
+    return {
+      modelId: ov.modelId,
+      displayName: ov.modelDisplayName,
+      providerId: "anthropic",
+      capabilities: ["text", "tools", "vision"] as ModelInfo["capabilities"],
+      contextWindow: 200000,
+      source: "discovered",
+    };
+  });
   const [permMode, setPermMode] = useState<ToolApprovalMode>("always-ask");
 
   if (!onboarding?.showChecklist) return null;
