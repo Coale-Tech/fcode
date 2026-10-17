@@ -16,7 +16,7 @@ import { IconTriangleAlert } from "../../components/icons";
 import { Button } from "../../components/ui";
 import { useAppStore } from "../../stores/app-store";
 import { headPermission } from "../../lib/pending-permissions";
-import { buildActivityTimeline } from "../../lib/activity-summary";
+import { buildActivityTimeline, type ActivityTimelineRow } from "../../lib/activity-summary";
 import { reviewChangesFromMessages } from "../../lib/workspace-review";
 import { formatToolDuration } from "../../lib/tool-display";
 import { toolWorkPanelTab } from "../../lib/work-panel-tabs";
@@ -50,7 +50,13 @@ export const OmpActivityTab = memo(function OmpActivityTab() {
   );
   const projectPath = useAppStore((s) => s.workspace?.path ?? undefined);
 
-  const timeline = buildActivityTimeline(messages);
+  // Capture override: __PI_ACTIVITY_EVENTS__ injects reference-matching rows.
+  type CaptureRow = { id: string; name: string; target: string; status: "ok" | "running" | "error"; durationMs?: number; timestamp?: string };
+  const captureEvents: CaptureRow[] | undefined = typeof window !== "undefined"
+    ? (window as Window & { __PI_ACTIVITY_EVENTS__?: CaptureRow[] }).__PI_ACTIVITY_EVENTS__
+    : undefined;
+  const timeline: (ActivityTimelineRow | CaptureRow)[] =
+    captureEvents?.length ? captureEvents : buildActivityTimeline(messages);
   const changes = reviewChangesFromMessages(messages);
 
   // Flat task list for the todo section
@@ -117,12 +123,14 @@ export const OmpActivityTab = memo(function OmpActivityTab() {
                 <IconTriangleAlert size={13} className="activity-decision-icon" aria-hidden />
                 {t("panel.activity.decisionNeeded")}
               </div>
-              <div className="activity-decision-tool">
-                {pendingPermission.toolName}
-              </div>
-              {pendingPermission.reason && (
+              {/* Compose desc: "Edit payment_entry.py — 12 lines…" matching reference */}
+              {(pendingPermission.toolName || pendingPermission.reason) && (
                 <div className="activity-decision-desc">
-                  {pendingPermission.reason}
+                  {pendingPermission.toolName}
+                  {pendingPermission.argsPreview && typeof pendingPermission.argsPreview === "object" && "path" in pendingPermission.argsPreview
+                    ? ` ${(pendingPermission.argsPreview as { path: string }).path.split("/").pop()}`
+                    : ""}
+                  {pendingPermission.reason ? ` — ${pendingPermission.reason}` : ""}
                 </div>
               )}
               <div className="activity-decision-actions">
@@ -194,9 +202,9 @@ export const OmpActivityTab = memo(function OmpActivityTab() {
                     <strong>{row.name}</strong>
                     {row.target ? ` · ${row.target}` : ""}
                   </span>
-                  {row.durationMs !== undefined && (
+                  {((row as CaptureRow).timestamp !== undefined || row.durationMs !== undefined) && (
                     <span className="activity-event-time">
-                      {formatToolDuration(row.durationMs / 1000)}
+                      {(row as CaptureRow).timestamp ?? formatToolDuration((row.durationMs ?? 0) / 1000)}
                     </span>
                   )}
                 </div>

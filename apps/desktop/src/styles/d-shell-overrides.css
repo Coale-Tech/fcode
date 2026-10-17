@@ -458,3 +458,71 @@
   font-size: var(--d-text-sm);
   line-height: 1.6;
 }
+
+/* ── D Composer footer overrides ─────────────────────────────────────── */
+
+/* Send button always shows accent color even when disabled (D design) */
+.send-btn:disabled {
+  background: var(--ds-accent) !important;
+  color: var(--ds-accent-foreground) !important;
+  opacity: 0.65;
+}
+
+/* Hide extra right-side composer elements not in D reference */
+.composer-enhance-btn:not(.is-loading),
+.composer-enhance-undo,
+.context-inspector-trigger {
+  display: none;
+}
+
+/* Mode chip (Supervised): plain text style, no border/background */
+.composer-mode-chip {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 2px !important;
+  height: auto !important;
+  min-width: 0 !important;
+  gap: 4px;
+  font-size: var(--d-text-xs);
+  color: var(--ink-gray-6);
+}
+.composer-mode-chip:hover {
+  background: transparent !important;
+  color: var(--ink-gray-8);
+}
+.composer-mode-chip .composer-mode-chip-label {
+  font-size: var(--d-text-xs);
+}
+
+/* Composer permission picker: hide in D layout (Supervised is shown via mode chip) */
+.composer-permission-picker { display: none; }
+
+/* Model picker trigger: plain text style */
+.composer-model-trigger {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 2px !important;
+  height: auto !important;
+  min-width: 0 !important;
+  font-size: var(--d-text-xs);
+  color: var(--ink-gray-6);
+  gap: 4px;
+}
+.composer-model-trigger:hover {
+  background: transparent !important;
+  color: var(--ink-gray-8);
+}
+/* Hide model picker dropdown arrow in D layout */
+.composer-model-trigger .model-trigger-caret { display: none; }
+
+/* Bench label and meta sep in composer footer */
+.composer-meta-sep {
+  font-size: var(--d-text-xs);
+  color: var(--ink-gray-4);
+  user-select: none;
+  margin: 0 1px;
+}
+.composer-bench-label {
+  font-size: var(--d-text-xs);
+  color: var(--ink-gray-6);
+}

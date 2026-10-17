@@ -1304,6 +1304,8 @@ export function installCaptureRig(): CaptureRig {
       api.getUserInfo = async () => ({ fullName: "Josh Kim" });
       // Dismiss onboarding checklist so it doesn't obscure the chat surface.
       { const curOnb = useAppStore.getState().onboarding; useAppStore.setState({ onboarding: { ...curOnb, showChecklist: false } as typeof curOnb }); }
+      // Clear stale pinned sessions from localStorage to avoid spurious PINNED section.
+      try { localStorage.removeItem("pi.desktop.pinnedSessions"); } catch { /* ignore */ }
       // NOTE: Use seedBenchList() to intercept window.piDesktop.invoke for bench IPC channels.
       // Enable kanban and raven so rail + sidebar show all feature items.
       // Patch the IPC fetch so NavRail's useEffect cannot overwrite the enabled state.
@@ -1530,7 +1532,7 @@ export function installCaptureRig(): CaptureRig {
         },
         risk: "medium",
         reason:
-          "Claude wants to write 12 lines to payment_entry.py — adding a sync helper that calls frappe.get_doc on the remote bench socket. Review the diff before allowing.",
+          "12 lines. Adds remote sync helper via bench socket.",
         receivedAt: Date.now() + 3_600_000, // 1h in future — prevents auto-deny timer during capture
       };
       // Open Activity tab so the right panel shows Pending approval box.
@@ -1575,6 +1577,19 @@ export function installCaptureRig(): CaptureRig {
           [activeSessionId]: fakeTodoPhases,
         },
       });
+      // Seed capture-only RECENT ACTIVITY events matching D1/D2/D3 reference.
+      (window as Window & { __PI_ACTIVITY_EVENTS__?: unknown[] }).__PI_ACTIVITY_EVENTS__ = [
+        { id: "ev-bench",   name: "bench started",    target: "coale_v16 · 3 workers",      status: "ok",      durationMs: undefined, timestamp: "10:40" },
+        { id: "ev-session", name: "Session created",  target: "Sync ERPNext code module",    status: "ok",      durationMs: undefined, timestamp: "10:42" },
+        { id: "ev-read",    name: "read",             target: "payment_entry/__init__.py",   status: "ok",      durationMs: 1200,      timestamp: "10:42" },
+        { id: "ev-bash",    name: "bash",             target: "list-apps on coale_v16",      status: "ok",      durationMs: 800,       timestamp: "10:42" },
+        { id: "ev-perm",    name: "Approval requested", target: "edit payment_entry.py",     status: "running", durationMs: undefined, timestamp: "10:43" },
+      ];
+      // Scroll transcript to top so the user message (Josh Kim, 10:42 AM) is visible.
+      setTimeout(() => {
+        (document.querySelector('[data-scroll-owner="transcript"]') as HTMLElement | null)
+          ?.scrollTo({ top: 0, behavior: "instant" });
+      }, 150);
     },
     clearPendingPermissions: () => {
       if (!window.__PI_CAPTURE__) return;
