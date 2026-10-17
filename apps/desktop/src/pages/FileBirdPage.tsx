@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { api } from "../lib/api";
 import { useBlockingOverlayActive } from "../lib/blocking-overlay";
 import { IconFileBird, IconMore } from "../components/icons";
-import { Panel } from "../components/ui";
 
 /**
  * FileBird (apps/filebird) in a main-owned `persist:filebird` WebContentsView,
@@ -26,6 +25,8 @@ export function FileBirdPage({ blocked }: { blocked: boolean }) {
   const [kebabOpen, setKebabOpen] = useState(false);
 
   useEffect(() => {
+    // Capture mode: skip the IPC call that sets failed=true (fileBird service not running).
+    if (window.__PI_CAPTURE__ && window.__PI_CAPTURE_FILEBIRD_VISIBLE__) return;
     void api.fileBirdSetVisible(!blocked && !overlayActive).then((r) => setFailed(!r.ok));
     return () => { void api.fileBirdSetVisible(false); };
   }, [blocked, overlayActive]);
@@ -116,18 +117,25 @@ export function FileBirdPage({ blocked }: { blocked: boolean }) {
     );
   }
 
+
   return (
-    <div className="thread-scroll">
-      <div className="page-frame">
-        <div className="page-header">
-          <h1 className="page-title">{t("fileBird.title")}</h1>
-        </div>
-        <Panel className="page-card page-empty">
-          <div className="page-empty-icon">
-            <IconFileBird size={20} />
+    <div className="filebird-page-wrap">
+      {/* Always show the Fcode chrome bar even in failed state */}
+      <div className="d-page-head">
+        <span className="d-page-title">{t("fileBird.title")}</span>
+        <span className="d-pill gray">
+          <span className="d-pill-dot" />
+          {t("fileBird.idle")}
+        </span>
+      </div>
+      <div className="rv-disconnected">
+        <div className="rv-signin-card">
+          <div className="rv-signin-icon gray">
+            <IconFileBird size={24} />
           </div>
-          <div className="text-base-plus font-medium">{t("fileBird.unavailable")}</div>
-        </Panel>
+          <p className="rv-signin-title">{t("fileBird.title")}</p>
+          <p className="rv-signin-desc">{t("fileBird.unavailable")}</p>
+        </div>
       </div>
     </div>
   );

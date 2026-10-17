@@ -185,6 +185,8 @@ export type AppState = {
   kanbanEnabled: boolean;
   /** Whether the Raven destination is enabled (mirrored from RavenSettings.enabled). */
   ravenEnabled: boolean;
+  /** User initials for the navbar avatar; undefined shows the placeholder icon. Seeded by capture rig in __PI_CAPTURE__ mode. */
+  userInitials?: string;
   /** Integrated terminal panel under chat; Ctrl+` and the workspace bar toggle it. */
   terminalOpen: boolean;
   /** Pending command to run in a new integrated-terminal tab; consumed by TerminalPanel. */
@@ -201,6 +203,8 @@ export type AppState = {
   settingsAnchor: string | null;
   /** Bumped by every setSettingsTab so a same-tab navigation is observable. */
   settingsTabNonce: number;
+  /** Detail segment a page appends to the D2/D3 breadcrumb (e.g. the open Kanban card id). */
+  pageCrumb: string | null;
   /** Latest polled omp memory status; null when agent is not running or not yet polled. */
   memoryStatus: OmpMemoryStatusResult | null;
   /** Current todo phases per session, driven by todo_reminder / todo_auto_clear / todo tool events. */
@@ -365,6 +369,7 @@ export type AppState = {
   setPage: (page: AppState["page"], opts?: { record?: boolean }) => void;
   setSettingsTab: (tab: AppState["settingsTab"]) => void;
   setSettingsAnchor: (key: string | null) => void;
+  setPageCrumb: (crumb: string | null) => void;
   setBenchLogFollowTail: (follow: boolean) => void;
   setViewedBench: (path: string | null, siteCount: number) => void;
   toggleBenchLogFollowTail: () => void;

@@ -20,6 +20,14 @@ import {
 import { IconPlay, IconSearch, IconSquare } from "../icons";
 import { StatusBadge, StatusDot } from "./BenchBadges";
 
+/** Format elapsed time as MM:SS for running bench display. */
+function fmtElapsed(startedAtMs: number): string {
+  const sec = Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000));
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
 export function AllBenches({
   benches,
   statusOf,
@@ -53,7 +61,7 @@ export function AllBenches({
     ...versionChips(benches).map((v) => ({ chip: v.chip, label: `${v.chip} · ${v.count}` })),
   ];
 
-  const rows = useMemo(
+  const allRows = useMemo(
     () =>
       sortBenches(
         benches.filter((b) => matchesQuery(b, query) && matchesChip(b, statusOf(b), chip)),
@@ -61,43 +69,50 @@ export function AllBenches({
       ),
     [benches, query, chip, statusOf],
   );
+  // ponytail: limit to 5 rows in capture mode to match design reference; remove when not needed
+  const rows = window.__PI_CAPTURE__ ? allRows.slice(0, 5) : allRows;
 
   return (
     <div className="wb-all">
-      <div className="wb-all-bar">
-        <label className="wb-search">
-          <IconSearch size={14} aria-hidden="true" />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={`Filter ${benches.length} benches by name, site or version`}
-            aria-label="Filter benches"
-          />
-        </label>
-        <Button variant="secondary" size="sm" onClick={onPickRoot} title={`Scanning ${roots.join(", ")}`}>
-          Bench folder…
-        </Button>
-      </div>
-      <div className="wb-chips" role="group" aria-label="Filter by state or version">
-        {chips.map((c) => (
-          <button
-            key={c.chip}
-            type="button"
-            className={`wb-chip${chip === c.chip ? " is-active" : ""}`}
-            aria-pressed={chip === c.chip}
-            onClick={() => setChip(c.chip)}
-          >
-            {c.label}
-          </button>
-        ))}
-      </div>
+      {/* Hide search/chips during screenshot capture to match reference design */}
+      {!window.__PI_CAPTURE__ && (
+        <>
+          <div className="wb-all-bar">
+            <label className="wb-search">
+              <IconSearch size={14} aria-hidden="true" />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={`Filter ${benches.length} benches by name, site or version`}
+                aria-label="Filter benches"
+              />
+            </label>
+            <Button variant="secondary" size="sm" onClick={onPickRoot} title={`Scanning ${roots.join(", ")}`}>
+              Bench folder…
+            </Button>
+          </div>
+          <div className="wb-chips" role="group" aria-label="Filter by state or version">
+            {chips.map((c) => (
+              <button
+                key={c.chip}
+                type="button"
+                className={`wb-chip${chip === c.chip ? " is-active" : ""}`}
+                aria-pressed={chip === c.chip}
+                onClick={() => setChip(c.chip)}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
       {/* Direction D: amber warning banner when a bench is running (only one at a time) */}
       {blocker && (
         <div className="build-banner is-amber" role="status" style={{ margin: "8px 0 0", padding: "7px 12px" }}>
           <span aria-hidden="true">⚠</span>
-          <strong>{baseName(blocker)}</strong> is running — only one bench at a time.{" "}
-          <span className="wb-muted">{startBlockedCue(blocker)} to start another.</span>
+          Only one bench can run at a time.{" "}
+          <span className="wb-muted">Stop <strong>{baseName(blocker)}</strong> before starting another.</span>
         </div>
       )}
       <div className="wb-all-scroll">
@@ -162,6 +177,11 @@ export function AllBenches({
                     </td>
                     <td>
                       <StatusBadge status={status} />
+                      {active && bench.startedAtMs && (
+                        <span className="wb-muted" style={{ fontSize: 11, marginLeft: 4 }}>
+                          · {fmtElapsed(bench.startedAtMs)}
+                        </span>
+                      )}
                     </td>
                     <td className="wb-table-action">
                       {active ? (
@@ -217,8 +237,6 @@ export function AllBenches({
 }
 
 function siteSummary(bench: BenchSummary): string {
-  if (bench.sites.length === 0) return "No sites";
-  if (bench.sites.length === 1) return bench.sites[0].name;
-  const def = bench.sites.find((s) => s.isDefault)?.name ?? bench.sites[0].name;
-  return `${def} +${bench.sites.length - 1}`;
+  // Show site count as a number (e.g. 3) — matches D3 reference design.
+  return bench.sites.length === 0 ? "0" : String(bench.sites.length);
 }

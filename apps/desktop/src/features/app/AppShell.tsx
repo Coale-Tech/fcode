@@ -27,6 +27,7 @@ import { CollapsedTitlebarActions, RoutePending } from "./chrome";
 import { useAppShellRuntime } from "./useAppShellRuntime";
 import { useMemoryHealthPoller } from "../../hooks/use-memory-health-poller";
 import { islandSidebarProps } from "../../lib/nav-layout";
+import { useAppStore } from "../../stores/app-store";
 
 const SettingsPage = lazy(() =>
   import("../../pages/SettingsPage").then((module) => ({
@@ -125,6 +126,14 @@ export function AppShell() {
   } = useAppShellRuntime();
   useCopyTex();
   useMemoryHealthPoller();
+  // D1 onboarding: "Welcome to Fcode" header replaces ConversationTopbar while checklist is active.
+  const showChecklist = useAppStore((s) => Boolean(s.onboarding?.showChecklist));
+  const handleSkipSetup = () => {
+    void api.dismissOnboarding().catch(() => undefined).finally(() => {
+      const cur = useAppStore.getState().onboarding;
+      if (cur) useAppStore.setState({ onboarding: { ...cur, showChecklist: false } });
+    });
+  };
 
   // A boot that never reaches the shell gets a surface it can act on instead of
   // a window that only knows how to wait (issue #831). Rendered as a direct child
@@ -143,10 +152,20 @@ export function AppShell() {
   // Bench and Build own their context sidebar and islands (E frame), so the
   // sessions dock stays out and the pane is a transparent host.
   const workbench = page === "bench" || page === "build";
-  // D2 rail: sidebar only appears on chat page (list pages are full-width per variant-D2 refs).
-  // D3 island: permanent sidebar always mounted regardless of page.
-  // Tabs: sidebar mounts when not collapsed (or during exit animation).
-  const sidebarAllowedForLayout = navLayout === "island" || navLayout === "tabs" || page === "chat";
+  // Pull Requests, Scheduled, Notifications, Plugins and Kanban compose their
+  // own cards directly on the canvas (D.css .d-canvas > .d-panel), so the pane
+  // is a transparent host there too and needs no titlebar band — ShellNavbar
+  // already owns window dragging.
+  const canvasPage =
+    page === "pulls" ||
+    page === "scheduled" ||
+    page === "notifications" ||
+    page === "plugins" ||
+    page === "kanban";
+  // D1 tabs: sessions sidebar on chat page (onboarding wizard also renders on chat page);
+  // hidden on list/tool pages. D2 rail: sidebar only on chat. D3 island: sidebar always.
+  const sidebarAllowedForLayout =
+    navLayout === "island" || page === "chat";
   const mountSidebar = !workbench && (!sidebarCollapsed || sidebarExiting) ? sidebarAllowedForLayout : navLayout === "island";
 
   let shell: ReactNode = null;
@@ -212,8 +231,8 @@ export function AppShell() {
             )}
 
             {!workPanelMaximized && (
-              <section className={cx("main-pane", workbench && "is-workbench")}>
-                {page === "chat" ? (
+              <section className={cx("main-pane", (workbench || canvasPage) && "is-workbench")}>
+                {page === "chat" && !showChecklist ? (
                   <ConversationTopbar
                     sidebarCollapsed={sidebarCollapsed}
                     workPanelOpen={presentedWorkPanelOpen}
@@ -221,7 +240,14 @@ export function AppShell() {
                     onNewTask={() => void runMenuCommand("newTask")}
                     onOpenSearch={() => setSearchOpen(true)}
                   />
-                ) : (
+                ) : page === "chat" && showChecklist ? (
+                  <div className={cx("main-titlebar", "onboarding-topbar", presentedWorkPanelOpen && "work-panel-open")}>
+                    <span className="onboarding-topbar-title">{t("onboarding.welcomeTitle")}</span>
+                    <button type="button" className="onboarding-topbar-skip" onClick={handleSkipSetup}>
+                      {t("onboarding.dismiss")}
+                    </button>
+                  </div>
+                ) : canvasPage ? null : (
                   <div
                     className={cx(
                       "main-titlebar",
@@ -333,7 +359,6 @@ export function AppShell() {
                   )}
                 </Suspense>
                 <TerminalPanel visible={page === "chat"} />
-                <WorkspaceBar />
               </section>
             )}
 
@@ -374,10 +399,15 @@ export function AppShell() {
           </div>
         </PortalVisibilityProvider>
         {page === "settings" && navLayout !== "island" ? (
-          <Suspense fallback={<RoutePending />}>
-            <SettingsPage />
-          </Suspense>
+          <div className="settings-mode-body">
+            {navLayout === "rail" ? <NavRail onExpandChange={onRailExpandChange} /> : null}
+            <Suspense fallback={<RoutePending />}>
+              <SettingsPage />
+            </Suspense>
+          </div>
         ) : null}
+        {/* D.css .d-statusbar: full-width app foot below rail, sidebar and canvas. */}
+        <WorkspaceBar />
         <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
         <ToastHost />
         <ExtensionPromptHost />

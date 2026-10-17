@@ -61,6 +61,7 @@ export const ChatSurface = memo(function ChatSurface({
   // reads its own session's flag.
   const isRunning = useAppStore((state) => state.isRunning);
   const workspace = useAppStore((state) => state.workspace);
+  const onboarding = useAppStore((state) => state.onboarding);
   const error = useAppStore((state) => state.error);
   const errorCode = useAppStore((state) => state.errorCode);
   const errorRetriable = useAppStore((state) => state.errorRetriable);
@@ -157,6 +158,8 @@ export const ChatSurface = memo(function ChatSurface({
   // not take over just because the destination projection is still empty.
   const showEmptyState =
     !hasTranscript && (!visibleSessionId || visibleSessionId === activeSessionId);
+  // D1 onboarding: when checklist is active, hide mascot hero and composer.
+  const showChecklist = useAppStore((s) => Boolean(s.onboarding?.showChecklist));
   const vendorModelMissing = vendorAccountOmitsSessionModel(
     activeSession,
     providers,
@@ -229,34 +232,40 @@ export const ChatSurface = memo(function ChatSurface({
         >
           <div className="home-scroll">
             <div className="home-stack-inner">
-              <div className="empty-hero">
-                <div
-                  className="empty-hero-icon"
-                  data-testid="home-icon"
-                  aria-hidden
-                >
-                  <HomeMascotLogo />
+              {/* Hide the empty hero when the onboarding wizard is active: the
+                  wizard IS the focal content for the new-user first-run state. */}
+              {!onboarding?.showChecklist && (
+                <div className="empty-hero">
+                  <div
+                    className="empty-hero-icon"
+                    data-testid="home-icon"
+                    aria-hidden
+                  >
+                    <HomeMascotLogo />
+                  </div>
+                  <h1>
+                    {heroProject ? (
+                      <>
+                        {emptyTitleParts.before}
+                        <HomeProjectSwitcher name={heroProject} path={workspace?.path || activeSession?.projectPath || null} />
+                        {emptyTitleParts.after}
+                      </>
+                    ) : isTemporarySession ? (
+                      t("chat.emptyTitleTemporary")
+                    ) : (
+                      t("chat.emptyTitle")
+                    )}
+                  </h1>
                 </div>
-                <h1>
-                  {heroProject ? (
-                    <>
-                      {emptyTitleParts.before}
-                      <HomeProjectSwitcher name={heroProject} path={workspace?.path || activeSession?.projectPath || null} />
-                      {emptyTitleParts.after}
-                    </>
-                  ) : isTemporarySession ? (
-                    t("chat.emptyTitleTemporary")
-                  ) : (
-                    t("chat.emptyTitle")
-                  )}
-                </h1>
-              </div>
+              )}
               <OnboardingChecklist />
             </div>
           </div>
-          <div className="home-composer-wrap">
-            <StableComposer variant="home" />
-          </div>
+          {!showChecklist && (
+            <div className="home-composer-wrap">
+              <StableComposer variant="home" />
+            </div>
+          )}
         </div>
       ) : (
         <>

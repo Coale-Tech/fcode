@@ -40,6 +40,8 @@ export function ConversationTopbar({
   const sessions = useAppStore((s) => s.sessions);
   const runningSessions = useAppStore((s) => s.runningSessions);
   const workspace = useAppStore((s) => s.workspace);
+  const onboarding = useAppStore((s) => s.onboarding);
+  const showOnboarding = Boolean(onboarding?.showChecklist);
 
   // omp setTitle override: cleared on session change.
   const [ompTitle, setOmpTitle] = useState<string | null>(null);
@@ -91,11 +93,13 @@ export function ConversationTopbar({
         </div>
         <div
           className="ct-title-wrap"
-          title={project ? `${project} · ${fullTaskTitle}` : fullTaskTitle}
+          title={showOnboarding ? t("onboarding.welcomeTitle") : (project ? `${project} · ${fullTaskTitle}` : fullTaskTitle)}
         >
-          <span className="ct-title">{fullTaskTitle}</span>
-          {/* D design: amber Running badge when session is active */}
-          {isSessionRunning && (
+          <span className="ct-title">
+            {showOnboarding ? t("onboarding.welcomeTitle") : fullTaskTitle}
+          </span>
+          {/* D design: amber Running badge when session is active (hidden during onboarding) */}
+          {!showOnboarding && isSessionRunning && (
             <span className="d-pill amber ct-running-pill">
               <span className="d-pill-dot" aria-hidden />
               {t("chat.sessionRunning", { defaultValue: "Running" })}
@@ -106,28 +110,46 @@ export function ConversationTopbar({
 
       <div className="ct-right">
         <div className="ct-actions">
-          {/* D design: Context button (opens file/context picker) */}
-          {activeSessionId && (
+          {showOnboarding ? (
+            /* D onboarding: "Skip setup" link in topbar right */
             <button
               type="button"
               className="ct-btn-secondary"
-              title={t("chat.context", { defaultValue: "Context" })}
-              onClick={onOpenSearch}
+              onClick={() => {
+                void api.dismissOnboarding().catch(() => undefined).finally(() => {
+                  const cur = useAppStore.getState().onboarding;
+                  if (cur) useAppStore.setState({ onboarding: { ...cur, showChecklist: false } });
+                });
+              }}
             >
-              <IconEye size={13} aria-hidden />
-              {t("chat.context", { defaultValue: "Context" })}
+              {t("onboarding.dismiss")}
             </button>
+          ) : (
+            <>
+              {/* D design: Context button (opens file/context picker) */}
+              {activeSessionId && (
+                <button
+                  type="button"
+                  className="ct-btn-secondary"
+                  title={t("chat.context", { defaultValue: "Context" })}
+                  onClick={onOpenSearch}
+                >
+                  <IconEye size={13} aria-hidden />
+                  {t("chat.context", { defaultValue: "Context" })}
+                </button>
+              )}
+              {/* D design: kebab overflow menu */}
+              <TooltipButton
+                type="button"
+                className="ct-icon-btn"
+                tooltip={t("nav.more", { defaultValue: "More" })}
+                ariaLabel={t("nav.more", { defaultValue: "More" })}
+                onClick={onNewTask}
+              >
+                <IconMore size={15} />
+              </TooltipButton>
+            </>
           )}
-          {/* D design: kebab overflow menu */}
-          <TooltipButton
-            type="button"
-            className="ct-icon-btn"
-            tooltip={t("nav.more", { defaultValue: "More" })}
-            ariaLabel={t("nav.more", { defaultValue: "More" })}
-            onClick={onNewTask}
-          >
-            <IconMore size={15} />
-          </TooltipButton>
         </div>
       </div>
     </div>

@@ -302,6 +302,7 @@ export function FontFamilyRow({
     <div className="settings-row">
       <div className="settings-row-copy">
         <div className="settings-row-title">{t("settings.font")}</div>
+        <div className="settings-row-desc">{t("settings.fontFamilyDesc")}</div>
       </div>
       <div className="settings-row-control">
         <div className="settings-font" ref={rootRef} onKeyDown={onKeyDown}>

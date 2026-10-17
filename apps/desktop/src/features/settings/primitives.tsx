@@ -54,10 +54,13 @@ export function SettingsRow({
 export function SettingsCard({
   title,
   description,
+  icon,
   children,
 }: {
   title?: string;
   description?: string;
+  /** Leading heading glyph (D sf-head: icon + title). */
+  icon?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -69,6 +72,7 @@ export function SettingsCard({
           list of headings should not read out every explanation.
         */
         <div className="settings-card-heading-help">
+          {icon ? <span className="settings-card-heading-icon" aria-hidden>{icon}</span> : null}
           <h3 className="settings-card-heading">{title}</h3>
           {description ? <HelpIcon label={description} /> : null}
         </div>
@@ -274,68 +278,28 @@ export function LargePasteThresholdRow({
   saveSettings: (patch: Partial<AppSettings>) => Promise<void>;
 }) {
   const { t } = useTranslation();
-  const currentThreshold = normalizeLargePasteThreshold(
-    settings.largePasteThreshold,
-  );
-  const [draft, setDraft] = useState(String(currentThreshold));
-  const [saveError, setSaveError] = useState(false);
-
-  useEffect(() => {
-    setDraft(String(currentThreshold));
-  }, [currentThreshold]);
-
-  const commit = async () => {
-    const parsed = Number(draft.trim());
-    const next =
-      Number.isInteger(parsed) &&
-      parsed >= MIN_LARGE_PASTE_THRESHOLD &&
-      parsed <= MAX_LARGE_PASTE_THRESHOLD
-        ? parsed
-        : currentThreshold;
-    setDraft(String(next));
-    if (next === currentThreshold) {
-      setSaveError(false);
-      return;
-    }
-    setSaveError(false);
-    try {
-      await saveSettings({ largePasteThreshold: next });
-    } catch {
-      setDraft(String(currentThreshold));
-      setSaveError(true);
-    }
-  };
-
+  const currentThreshold = normalizeLargePasteThreshold(settings.largePasteThreshold);
+  const options = [50, 100, 200, 500, 1000].map((n) => ({
+    id: String(n),
+    label: `${n} lines`,
+  }));
+  // Snap current value to nearest preset; fallback to 200.
+  const snapped = options.find((o) => Number(o.id) === currentThreshold)?.id
+    ?? String(options.reduce((best, o) => {
+        return Math.abs(Number(o.id) - currentThreshold) < Math.abs(Number(best.id) - currentThreshold)
+          ? o : best;
+      }, options[0]).id);
   return (
     <SettingsRow
       title={t("settings.largePasteThreshold")}
       description={t("settings.largePasteThresholdDesc")}
     >
-      <div className="settings-number-control">
-        <Input
-          type="number"
-          min={MIN_LARGE_PASTE_THRESHOLD}
-          max={MAX_LARGE_PASTE_THRESHOLD}
-          step={1}
-          inputMode="numeric"
-          value={draft}
-          aria-label={t("settings.largePasteThreshold")}
-          aria-invalid={saveError}
-          onChange={(event) => setDraft(event.target.value)}
-          onBlur={() => void commit()}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              event.currentTarget.blur();
-            }
-          }}
-        />
-        {saveError ? (
-          <span className="settings-command-shell-state error" role="status">
-            {t("settings.largePasteThresholdSaveError")}
-          </span>
-        ) : null}
-      </div>
+      <SettingsMenuSelect
+        label={t("settings.largePasteThreshold")}
+        value={snapped}
+        onChange={(v) => void saveSettings({ largePasteThreshold: Number(v) })}
+        options={options}
+      />
     </SettingsRow>
   );
 }

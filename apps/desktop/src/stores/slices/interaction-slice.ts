@@ -37,6 +37,7 @@ export function createInteractionSlice({
   | "setPage"
   | "setSettingsTab"
   | "setSettingsAnchor"
+  | "setPageCrumb"
   | "setBenchLogFollowTail"
   | "setViewedBench"
   | "toggleBenchLogFollowTail"
@@ -97,6 +98,7 @@ export function createInteractionSlice({
       }));
     },
     setSettingsAnchor: (settingsAnchor) => set({ settingsAnchor }),
+    setPageCrumb: (pageCrumb) => set({ pageCrumb }),
     setBenchLogFollowTail: (benchLogFollowTail) => set({ benchLogFollowTail }),
     toggleBenchLogFollowTail: () =>
       set((state) => ({ benchLogFollowTail: !state.benchLogFollowTail })),

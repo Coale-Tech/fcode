@@ -471,7 +471,7 @@ export function SettingsPage() {
 
           {tab === "general" && settings && (
             <div className="settings-stack">
-              <SettingsCard title={t("settings.appearance")}>
+              <SettingsCard title={t("settings.appearance")} icon={<IconPalette size={13} />}>
                 <ThemeRow settings={settings} saveSettings={saveSettings} />
                 <NavLayoutRow settings={settings} saveSettings={saveSettings} />
                 <FontFamilyRow settings={settings} saveSettings={saveSettings} />

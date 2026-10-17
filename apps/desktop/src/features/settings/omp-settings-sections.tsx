@@ -203,6 +203,11 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
               ]}
             />
           </SettingsRow>
+          {agents.filter((a) => !a.shadowed).length > 0 && (
+            <div className="settings-agent-overrides-head">
+              <span>{t("settings.ompAgentModelOverridesSection")}</span>
+            </div>
+          )}
           {/* ── Agent model overrides ─────────────────────────────── */}
           {agents.filter((a) => !a.shadowed).map((agent) => {
             const current = omp["task.agentModelOverrides"]?.[agent.name] ?? "";
@@ -216,10 +221,10 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
             ];
             const toolSummary = agent.tools.length > 0
               ? `${agent.tools.length} tool${agent.tools.length === 1 ? "" : "s"}`
-              : t("settings.ompAgentAllTools", "all tools");
+              : null;
             const desc = agent.description
-              ? `${agent.description} · ${toolSummary}`
-              : toolSummary;
+              ? (toolSummary ? `${agent.description} · ${toolSummary}` : agent.description)
+              : (toolSummary ?? t("settings.ompAgentAllTools", "all tools"));
             return (
               <SettingsRow
                 key={`${agent.source}:${agent.name}`}

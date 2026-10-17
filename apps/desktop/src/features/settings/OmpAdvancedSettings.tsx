@@ -406,6 +406,11 @@ export function OmpAdvancedSettings() {
         )}
       </div>
 
+      {/* Restart note — shown above the tab bar (matches reference layout) */}
+      <p className="settings-row-desc omp-advanced-restart-note">
+        ⚠ {t("settings.ompAdvancedRestartNote")}
+      </p>
+
       {/* Tab bar — hidden when searching / filtering */}
       {!flatMode && allTabs.length > 1 && (
         <div className="omp-advanced-tabs" role="tablist">
@@ -426,10 +431,6 @@ export function OmpAdvancedSettings() {
         </div>
       )}
 
-      {/* Restart note */}
-      <p className="settings-row-desc omp-advanced-restart-note">
-        {t("settings.ompAdvancedRestartNote")}
-      </p>
 
       {/* Settings groups */}
       {visibleGroups.length === 0 ? (

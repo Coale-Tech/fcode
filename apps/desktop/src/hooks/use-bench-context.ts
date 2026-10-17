@@ -6,16 +6,11 @@ import {
   type WorkspaceBarState,
 } from "../lib/workspace-bar-state";
 
-/** Capture-only bench status set by the capture rig before a shot. */
-function captureBenchOverride(): BenchStatusInput | undefined {
-  return (window as unknown as { __PI_BENCH_OVERRIDE__?: BenchStatusInput }).__PI_BENCH_OVERRIDE__;
-}
-
 /** Poll IPC.invoke.benchStatus every 3 s; pause when tab is hidden.
  * Capture override: set `window.__PI_BENCH_OVERRIDE__` to a bench-status data object. */
 export function useBenchContext(): WorkspaceBarState {
   const [state, setState] = useState<WorkspaceBarState>(() => {
-    const override = captureBenchOverride();
+    const override = window.__PI_BENCH_OVERRIDE__ ?? undefined;
     return override ? formatWorkspaceBarState(override) : { kind: "empty" };
   });
 
@@ -26,14 +21,23 @@ export function useBenchContext(): WorkspaceBarState {
     // Capture rig re-applies the override after a layout remount; the poll
     // below skips while the override global is set, so it cannot reset it.
     const onOverride = (e: Event) => {
-      setState(formatWorkspaceBarState((e as CustomEvent<BenchStatusInput>).detail));
+      const ev = e as CustomEvent<BenchStatusInput>; // Event→CustomEvent: unexpressible DOM library type
+      setState(formatWorkspaceBarState(ev.detail));
     };
     window.addEventListener("pi-bench-override", onOverride);
 
     const poll = async () => {
-      // Skip if cancelled, tab hidden, or a capture override is active.
-      if (document.hidden || cancelled) return;
-      if (captureBenchOverride()) return;
+      if (cancelled) return;
+      // Capture-rig override: runs even when document.hidden so CDP-driven
+      // screenshots always see bench state regardless of OS window visibility.
+      if (window.__PI_CAPTURE__) {
+        const override = window.__PI_BENCH_OVERRIDE__ ?? undefined;
+        if (override !== undefined) {
+          setState(formatWorkspaceBarState(override));
+          return;
+        }
+      }
+      if (document.hidden) return;
       const bridge = window.piDesktop;
       if (!bridge?.invoke) return;
       try {
@@ -47,12 +51,15 @@ export function useBenchContext(): WorkspaceBarState {
     void poll();
     intervalId = window.setInterval(() => void poll(), 3000);
     const onVisible = () => { if (!document.hidden) void poll(); };
+    const onBenchUpdate = () => { void poll(); };
     document.addEventListener("visibilitychange", onVisible);
+    document.addEventListener("pi:bench-update", onBenchUpdate);
 
     return () => {
       cancelled = true;
       clearInterval(intervalId);
       document.removeEventListener("visibilitychange", onVisible);
+      document.removeEventListener("pi:bench-update", onBenchUpdate);
       window.removeEventListener("pi-bench-override", onOverride);
     };
   }, []);

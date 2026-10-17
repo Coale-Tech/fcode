@@ -1,18 +1,40 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import type { ProjectRecord, ScheduledTask, ScheduledTaskRun } from "@pi-desktop/shared";
 import { useAppStore } from "../stores/app-store";
 import { api } from "../lib/api";
-import { Badge, Button, Panel } from "../components/ui";
-import { IconClock } from "../components/icons";
+import { formatClock, formatDayTime, formatWeekdays, runDurationSeconds } from "../lib/scheduled-format";
+import { useBenchContext } from "../hooks/use-bench-context";
+import { Badge, Button, Panel, TooltipButton } from "../components/ui";
+import { ContextMenu, useContextMenu } from "../components/ContextMenu";
+import {
+  IconClock,
+  IconDownload,
+  IconExternal,
+  IconMore,
+  IconPlay,
+  IconPlus,
+  IconSquarePen,
+  IconTrash,
+  IconUpload,
+} from "../components/icons";
 import { ScheduledEditor, type ScheduledDraft } from "../features/scheduled/ScheduledEditor";
 
+const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
+
+/**
+ * Scheduled tasks (Direction D `pages-d/scheduled/fragment.html`): a task list
+ * card and, for the selected task, a 340px detail card on the page canvas.
+ */
 export function ScheduledPage() {
   const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language;
   const showToast = useAppStore((s) => s.showToast);
   const selectSession = useAppStore((s) => s.selectSession);
   const setPage = useAppStore((s) => s.setPage);
   const currentWorkspacePath = useAppStore((s) => s.workspace?.path ?? "");
+  const bench = useBenchContext();
+  const { contextMenu, openContextMenu, closeContextMenu } = useContextMenu();
   const [tasks, setTasks] = useState<ScheduledTask[]>([]);
   const [runs, setRuns] = useState<ScheduledTaskRun[]>([]);
   const [projects, setProjects] = useState<ProjectRecord[]>([]);
@@ -77,8 +99,29 @@ export function ScheduledPage() {
     await selectSession(id);
     if (mounted.current) setPage("chat");
   };
+  const runNow = (task: ScheduledTask) =>
+    void action(async () => {
+      await api.executeScheduled(task.id);
+      if (mounted.current) setTab("runs");
+    });
+  const toggleEnabled = (task: ScheduledTask) =>
+    void action(async () => {
+      await api.updateScheduled({ id: task.id, enabled: !task.enabled });
+    });
+  const remove = (task: ScheduledTask) => {
+    if (!window.confirm(t("scheduled.deleteConfirm", { title: task.title }))) return;
+    void action(async () => {
+      await api.deleteScheduled(task.id);
+      if (mounted.current && selectedTaskId === task.id) setSelectedTaskId(null);
+    });
+  };
   const date = (value: string) =>
     new Date(value).toLocaleString(i18n.resolvedLanguage ?? i18n.language);
+  /** "Today 08:00" / "Tomorrow 02:00" / "Mon 07:30" / "Oct 11, 08:00". */
+  const dayTime = (value: string) => {
+    const result = formatDayTime(new Date(value), new Date(), locale);
+    return result.kind === "date" ? result.text : t(`scheduled.${result.kind}`, { time: result.time });
+  };
   const cadenceKey = {
     manual: "scheduled.cadenceManual",
     hourly: "scheduled.cadenceHourly",
@@ -92,6 +135,76 @@ export function ScheduledPage() {
     aborted: "scheduled.statusAborted",
     error: "scheduled.statusError",
   } as const;
+  /** Days a task fires on (Monday = 0); null when the cadence is not day-based. */
+  const taskDays = (task: ScheduledTask): number[] | null => {
+    if (!task.schedule) return null;
+    if (task.cadence === "daily") return task.schedule?.weekdays ?? ALL_DAYS;
+    if (task.cadence === "weekly") return task.schedule.weekdays ?? [task.schedule.weekday];
+    return null;
+  };
+  /** Cadence pill: "Daily", "Weekly · Mon". */
+  const cadenceLabel = (task: ScheduledTask) => {
+    const days = task.cadence === "weekly" ? taskDays(task) : null;
+    return days ? `${t(cadenceKey.weekly)} · ${formatWeekdays(days, locale)}` : t(cadenceKey[task.cadence]);
+  };
+  /** Row meta line: next run and workspace, or why there is none. Hourly runs
+   *  later today read as a bare clock ("Next run: 14:00"). */
+  const nextRunLabel = (task: ScheduledTask) => {
+    if (!task.enabled) return t("scheduled.pausedNoRun");
+    if (task.schedule && task.nextRunAt) {
+      const next = formatDayTime(new Date(task.nextRunAt), new Date(), locale);
+      const when = task.cadence === "hourly" && next.kind === "today" ? next.time : dayTime(task.nextRunAt);
+      return `${t("scheduled.nextRun")}: ${when}`;
+    }
+    return t(task.cadence !== "manual" && !task.schedule ? "scheduled.legacyHint" : "scheduled.noNextRun");
+  };
+  const taskState = (task: ScheduledTask) => {
+    const running = runs.some((run) => run.taskId === task.id && run.status === "running");
+    const lastRun = runs
+      .filter((run) => run.taskId === task.id && run.status !== "running")
+      .sort((a, b) => (b.startedAt > a.startedAt ? 1 : -1))[0];
+    const lastFailed = lastRun?.status === "error" || lastRun?.status === "aborted";
+    return { running, lastFailed };
+  };
+  /** D `.d-pill`: Disabled (gray) / Running / Last: failed (amber) / Enabled. */
+  const statusPill = (task: ScheduledTask, running: boolean, lastFailed: boolean) => {
+    if (!task.enabled) return <span className="d-pill gray">{t("scheduled.disabled")}</span>;
+    const failed = lastFailed && !running;
+    return (
+      <span className={`d-pill ${failed ? "amber" : "green"}`}>
+        <span className="d-pill-dot" aria-hidden />
+        {t(running ? "scheduled.statusRunningShort" : failed ? "scheduled.lastFailed" : "scheduled.enabled")}
+      </span>
+    );
+  };
+  const openTaskMenu = (event: MouseEvent<HTMLElement>, task: ScheduledTask, running: boolean) =>
+    openContextMenu(event, {
+      label: t("scheduled.moreActions"),
+      items: [
+        {
+          id: "run-now",
+          label: t("scheduled.runNow"),
+          icon: <IconPlay size={13} />,
+          disabled: busy || running,
+          onSelect: () => runNow(task),
+        },
+        {
+          id: "toggle",
+          label: t(task.enabled ? "scheduled.pause" : "scheduled.resume"),
+          disabled: busy,
+          onSelect: () => toggleEnabled(task),
+        },
+        {
+          id: "delete",
+          label: t("scheduled.delete"),
+          icon: <IconTrash size={13} />,
+          danger: true,
+          separatorBefore: true,
+          disabled: busy,
+          onSelect: () => remove(task),
+        },
+      ],
+    });
   const insights = useMemo(() => {
     const completed = runs.filter((run) => run.status === "completed");
     const durations = completed
@@ -104,6 +217,7 @@ export function ScheduledPage() {
       avgSeconds: Math.round(avgMs / 1000),
     };
   }, [runs]);
+  const tickSeconds = health?.lastTickAt ? Math.round((Date.now() - health.lastTickAt) / 1000) : 0;
   return (
     <div className="sch-page">
       <div className="sch-layout">
@@ -111,9 +225,12 @@ export function ScheduledPage() {
         {/* ── Main panel ── */}
         <div className="sch-main">
           <div className="d-page-head">
-            <span className="d-page-title">{t("scheduled.title")}</span>
+            <span className="d-page-title">{t("scheduled.pageTitle")}</span>
             {health && !health.lastError && health.lastTickAt && Date.now() - health.lastTickAt < 90_000 && (
-              <Badge tone="success">{t("scheduled.schedulerHealthy")}</Badge>
+              <span className="d-pill green">
+                <span className="d-pill-dot" aria-hidden />
+                {t("scheduled.schedulerHealthy")}
+              </span>
             )}
             <div className="d-page-head-actions">
               <Button
@@ -125,6 +242,7 @@ export function ScheduledPage() {
                   if (result) showToast(t("scheduled.exportDone", { count: result.count }));
                 })}
               >
+                <IconUpload size={13} aria-hidden />
                 {t("scheduled.export")}
               </Button>
               <Button
@@ -136,14 +254,17 @@ export function ScheduledPage() {
                   if (result) showToast(t("scheduled.importDone", { count: result.imported }));
                 })}
               >
+                <IconDownload size={13} aria-hidden />
                 {t("scheduled.import")}
               </Button>
               <Button
+                size="sm"
                 variant="primary"
                 disabled={busy}
                 onClick={() => { setTab("tasks"); setEditor("new"); }}
               >
-                {t("scheduled.create")}
+                <IconPlus size={13} aria-hidden />
+                {t("scheduled.newTask")}
               </Button>
             </div>
           </div>
@@ -179,7 +300,9 @@ export function ScheduledPage() {
               {health.lastError
                 ? t("scheduled.healthError", { error: health.lastError })
                 : health.lastTickAt
-                  ? t("scheduled.healthTick", { seconds: Math.round((Date.now() - health.lastTickAt) / 1000) })
+                  ? bench.kind === "running"
+                    ? t("scheduled.healthTickBench", { seconds: tickSeconds, bench: bench.benchName })
+                    : t("scheduled.healthTick", { seconds: tickSeconds })
                   : t("scheduled.healthStale")}
             </div>
           )}
@@ -190,9 +313,9 @@ export function ScheduledPage() {
               <Button onClick={() => void refresh()}>{t("scheduled.retry")}</Button>
             </Panel>
           )}
-          {!loaded && !error && <p role="status" style={{ padding: "12px" }}>{t("common.loading")}</p>}
+          {!loaded && !error && <p role="status" className="sch-loading">{t("common.loading")}</p>}
 
-          <div className="d-panel-body flush" style={{ overflowY: "auto", flex: 1, minHeight: 0 }}>
+          <div className="d-panel-body flush sch-scroll">
             {tab === "tasks" && (
               <>
                 {editor && (
@@ -207,58 +330,77 @@ export function ScheduledPage() {
                   />
                 )}
                 {loaded && !tasks.length && !editor && (
-                  <div className="d-empty" style={{ padding: "32px 16px", textAlign: "center" }}>
-                    <IconClock size={24} style={{ color: "var(--ink-gray-3)", marginBottom: 8 }} />
-                    <div style={{ fontWeight: 500 }}>{t("scheduled.emptyTitle")}</div>
-                    <p style={{ fontSize: "var(--d-text-sm)", color: "var(--ink-gray-4)" }}>{t("scheduled.description")}</p>
+                  <div className="d-empty sch-empty">
+                    <IconClock size={24} className="sch-empty-icon" />
+                    <div className="sch-empty-title">{t("scheduled.emptyTitle")}</div>
+                    <p className="sch-empty-body">{t("scheduled.description")}</p>
                   </div>
                 )}
                 <div className="dest-list">
                   {tasks.map((task) => {
-                    const running = runs.some((run) => run.taskId === task.id && run.status === "running");
-                    const taskRuns = runs.filter((r) => r.taskId === task.id && r.status !== "running");
-                    const lastRun = taskRuns.sort((a, b) => (b.startedAt > a.startedAt ? 1 : -1))[0];
-                    const lastFailed = lastRun?.status === "error" || lastRun?.status === "aborted";
+                    const { running, lastFailed } = taskState(task);
+                    const selected = selectedTaskId === task.id;
                     return (
                       <div
                         key={task.id}
-                        className={`dest-row${selectedTaskId === task.id ? " selected" : ""}`}
-                        onClick={() => setSelectedTaskId(task.id === selectedTaskId ? null : task.id)}
+                        className={`dest-row sch-row${selected ? " selected" : ""}${task.enabled ? "" : " is-disabled"}`}
+                        onClick={() => setSelectedTaskId(selected ? null : task.id)}
                       >
-                        <div className={`dest-row-icon${lastFailed ? " dest-row-icon-warn" : ""}`}><IconClock size={16} /></div>
+                        <div className={`dest-row-icon sch-row-icon${lastFailed && !running ? " dest-row-icon-warn" : ""}`}><IconClock size={14} /></div>
                         <div className="dest-row-body">
-                          <div className="dest-row-title">
+                          <div className="dest-row-title sch-row-title">
                             <span>{task.title}</span>
-                            <Badge tone={!task.enabled ? "neutral" : "success"}>
-                              {t(!task.enabled ? "scheduled.disabled" : running ? "scheduled.statusRunning" : "scheduled.enabled")}
-                            </Badge>
-                            {lastFailed && !running && <Badge tone="warning">{t("scheduled.lastFailed")}</Badge>}
-                            <Badge tone="neutral">{t(cadenceKey[task.cadence])}</Badge>
+                            {statusPill(task, running, lastFailed)}
+                            <span className={`d-pill ${selected ? "violet" : "gray"}`}>{cadenceLabel(task)}</span>
                           </div>
-                          <p className="dest-row-meta line-clamp-2">{task.prompt}</p>
-                          <p className="dest-row-meta">
-                            {task.schedule && task.enabled && task.nextRunAt
-                              ? `${t("scheduled.nextRun")}: ${date(task.nextRunAt)}`
-                              : t(task.enabled && task.cadence !== "manual" && !task.schedule ? "scheduled.legacyHint" : "scheduled.noNextRun")}
+                          <p className="sch-row-prompt">{task.prompt}</p>
+                          <p className="dest-row-meta sch-row-meta">
+                            {nextRunLabel(task)}
+                            {task.enabled && task.workspacePath ? ` · ${task.workspacePath}` : ""}
                           </p>
                         </div>
                         <div className="dest-row-actions" onClick={(e) => e.stopPropagation()}>
-                          <Button size="sm" disabled={busy || running}
-                            onClick={() => void action(async () => {
-                              await api.executeScheduled(task.id);
-                              if (mounted.current) setTab("runs");
-                            })}>
-                            {t(running ? "scheduled.statusRunning" : "scheduled.runNow")}
-                          </Button>
-                          <Button size="sm" disabled={busy} onClick={() => setEditor(task)}>
-                            {t("scheduled.edit")}
-                          </Button>
-                          <Button size="sm" disabled={busy}
-                            onClick={() => void action(async () => {
-                              await api.updateScheduled({ id: task.id, enabled: !task.enabled });
-                            })}>
-                            {t(task.enabled ? "scheduled.pause" : "scheduled.resume")}
-                          </Button>
+                          {task.enabled ? (
+                            <Button size="sm" variant="secondary" disabled={busy || running} onClick={() => runNow(task)}>
+                              {t(running ? "scheduled.runningEllipsis" : "scheduled.runNow")}
+                            </Button>
+                          ) : (
+                            <Button size="sm" variant="ghost" disabled={busy} onClick={() => toggleEnabled(task)}>
+                              {t("scheduled.resume")}
+                            </Button>
+                          )}
+                          <TooltipButton
+                            type="button"
+                            className="icon-btn icon-btn-square"
+                            tooltip={t("scheduled.edit")}
+                            ariaLabel={t("scheduled.edit")}
+                            disabled={busy}
+                            onClick={() => setEditor(task)}
+                          >
+                            <IconSquarePen size={13} />
+                          </TooltipButton>
+                          {task.enabled ? (
+                            <TooltipButton
+                              type="button"
+                              className="icon-btn icon-btn-square"
+                              tooltip={t("scheduled.moreActions")}
+                              ariaLabel={t("scheduled.moreActions")}
+                              onClick={(event) => openTaskMenu(event, task, running)}
+                            >
+                              <IconMore size={13} />
+                            </TooltipButton>
+                          ) : (
+                            <TooltipButton
+                              type="button"
+                              className="icon-btn icon-btn-square sch-delete-btn"
+                              tooltip={t("scheduled.delete")}
+                              ariaLabel={t("scheduled.delete")}
+                              disabled={busy}
+                              onClick={() => remove(task)}
+                            >
+                              <IconTrash size={13} />
+                            </TooltipButton>
+                          )}
                         </div>
                       </div>
                     );
@@ -269,16 +411,14 @@ export function ScheduledPage() {
             {tab === "runs" && (
               <>
                 {runs.length > 0 && (
-                  <div style={{ display: "flex", gap: 6, padding: "8px 12px", borderBottom: "1px solid var(--d-border)" }}>
+                  <div className="sch-insights">
                     <Badge>{t("scheduled.insightsRuns")}: {insights.total}</Badge>
                     <Badge tone="success">{t("scheduled.insightsSuccess")}: {insights.successRate}%</Badge>
                     <Badge>{t("scheduled.insightsAvgDuration")}: {insights.avgSeconds}s</Badge>
                   </div>
                 )}
                 {!runs.length && loaded && (
-                  <div style={{ padding: "24px 16px", textAlign: "center", color: "var(--ink-gray-4)", fontSize: "var(--d-text-sm)" }}>
-                    {t("scheduled.emptyRuns")}
-                  </div>
+                  <div className="sch-empty-runs">{t("scheduled.emptyRuns")}</div>
                 )}
                 <div className="dest-list">
                   {runs.map((run) => (
@@ -309,43 +449,78 @@ export function ScheduledPage() {
         {selectedTaskId && (() => {
           const task = tasks.find((tsk) => tsk.id === selectedTaskId);
           if (!task) return null;
-          const running = runs.some((run) => run.taskId === task.id && run.status === "running");
-          const recentRuns = runs.filter((run) => run.taskId === task.id).slice(0, 3);
+          const { running, lastFailed } = taskState(task);
+          const recentRuns = runs
+            .filter((run) => run.taskId === task.id && run.status !== "running")
+            .sort((a, b) => (b.startedAt > a.startedAt ? 1 : -1))
+            .slice(0, 3);
+          const days = taskDays(task);
+          const timed = task.schedule && task.cadence !== "manual" && task.cadence !== "hourly";
           return (
             <div className="sch-detail">
               <div className="d-mini-head">
                 <span className="d-mini-title">{task.title}</span>
                 <div className="d-mini-act">
-                  <Button size="sm" variant="ghost" onClick={() => setEditor(task)}>{t("scheduled.edit")}</Button>
-                  <Button size="sm" variant="ghost" onClick={() => setSelectedTaskId(null)}>✕</Button>
+                  <TooltipButton
+                    type="button"
+                    className="icon-btn icon-btn-square"
+                    tooltip={t("scheduled.edit")}
+                    ariaLabel={t("scheduled.edit")}
+                    disabled={busy}
+                    onClick={() => setEditor(task)}
+                  >
+                    <IconSquarePen size={13} />
+                  </TooltipButton>
+                  <TooltipButton
+                    type="button"
+                    className="icon-btn icon-btn-square"
+                    tooltip={t("scheduled.moreActions")}
+                    ariaLabel={t("scheduled.moreActions")}
+                    onClick={(event) => openTaskMenu(event, task, running)}
+                  >
+                    <IconMore size={13} />
+                  </TooltipButton>
                 </div>
               </div>
-              <div className="d-panel-body" style={{ overflowY: "auto" }}>
-                <div style={{ marginBottom: 12 }}>
+              <div className="d-panel-body sch-detail-body">
+                <div className="sch-detail-field">
                   <div className="sch-detail-label">{t("scheduled.detailStatus")}</div>
-                  <Badge tone={task.enabled ? "success" : "neutral"}>
-                    {t(task.enabled ? (running ? "scheduled.statusRunning" : "scheduled.enabled") : "scheduled.disabled")}
-                  </Badge>
+                  {statusPill(task, running, lastFailed)}
                 </div>
-                <div style={{ marginBottom: 12 }}>
+                <div className="sch-detail-field">
                   <div className="sch-detail-label">{t("scheduled.detailSchedule")}</div>
-                  <div className="sch-detail-value">{t(cadenceKey[task.cadence])}</div>
-                  {task.nextRunAt && <div style={{ fontSize: "var(--d-text-xs)", color: "var(--ink-gray-4)", marginTop: 2 }}>{t("scheduled.nextRun")}: {date(task.nextRunAt)}</div>}
+                  <div className="sch-detail-value">
+                    {timed ? (
+                      <Trans
+                        i18nKey="scheduled.scheduleAt"
+                        values={{
+                          cadence: t(cadenceKey[task.cadence]),
+                          time: formatClock(new Date(2000, 0, 1, task.schedule!.hour, task.schedule!.minute), locale),
+                        }}
+                        components={{ strong: <strong /> }}
+                      />
+                    ) : (
+                      t(cadenceKey[task.cadence])
+                    )}
+                  </div>
+                  {days ? (
+                    <div className="sch-detail-sub">{formatWeekdays(days, locale)}</div>
+                  ) : task.enabled && task.nextRunAt ? (
+                    <div className="sch-detail-sub">{t("scheduled.nextRun")}: {dayTime(task.nextRunAt)}</div>
+                  ) : null}
                 </div>
-                <div style={{ marginBottom: 12 }}>
-                  <div className="sch-detail-label">{t("scheduled.prompt")}</div>
-                  <div style={{ fontSize: "var(--d-text-sm)", color: "var(--ink-gray-7)", lineHeight: 1.55 }}>{task.prompt}</div>
+                <div className="sch-detail-field">
+                  <div className="sch-detail-label">{t("scheduled.detailPrompt")}</div>
+                  <div className="sch-detail-prompt">{task.prompt}</div>
                 </div>
                 {task.workspacePath && (
-                  <div style={{ marginBottom: 12 }}>
+                  <div className="sch-detail-field">
                     <div className="sch-detail-label">{t("scheduled.detailWorkspace")}</div>
-                    <code style={{ fontFamily: "ui-monospace,monospace", fontSize: "var(--d-text-xs)", background: "var(--surface-gray-2)", border: "1px solid var(--d-border)", borderRadius: 4, padding: "2px 6px" }}>
-                      {task.workspacePath}
-                    </code>
+                    <code className="sch-detail-mono">{task.workspacePath}</code>
                   </div>
                 )}
                 {task.modelId && (
-                  <div style={{ marginBottom: 12 }}>
+                  <div className="sch-detail-field">
                     <div className="sch-detail-label">{t("scheduled.detailModel")}</div>
                     <div className="sch-detail-value">{task.modelId}</div>
                   </div>
@@ -353,39 +528,43 @@ export function ScheduledPage() {
                 {recentRuns.length > 0 && (
                   <div>
                     <div className="sch-detail-label">{t("scheduled.recentRuns")}</div>
-                    <div style={{ marginTop: 4, border: "1px solid var(--d-border)", borderRadius: 6, overflow: "hidden" }}>
-                      {recentRuns.map((run, i) => (
-                        <div key={run.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", fontSize: "var(--d-text-xs)", borderTop: i > 0 ? "1px solid var(--d-border)" : undefined }}>
-                          <Badge tone={run.status === "completed" ? "success" : run.status === "running" ? "neutral" : "error"} style={{ flexShrink: 0 }}>{t(statusKey[run.status])}</Badge>
-                          <span style={{ flex: 1, color: "var(--ink-gray-5)" }}>{date(run.startedAt)}</span>
-                          {run.sessionId && (
-                            <Button size="sm" variant="ghost" onClick={() => void action(() => openSession(run.sessionId!))}>↗</Button>
-                          )}
-                        </div>
-                      ))}
+                    <div className="sch-recent-runs">
+                      {recentRuns.map((run) => {
+                        const seconds = runDurationSeconds(run.startedAt, run.endedAt);
+                        return (
+                          <div key={run.id} className="sch-recent-run">
+                            <span className={`d-pill ${run.status === "completed" ? "green" : "red"}`}>
+                              {t(run.status === "completed" ? "scheduled.runDone" : statusKey[run.status])}
+                            </span>
+                            <span className="sch-recent-run-time">{dayTime(run.startedAt)}</span>
+                            {seconds !== null && (
+                              <span className="sch-recent-run-dur">{t("scheduled.durationSeconds", { seconds })}</span>
+                            )}
+                            {run.sessionId && (
+                              <TooltipButton
+                                type="button"
+                                className="icon-btn icon-btn-square"
+                                tooltip={t("scheduled.openResult")}
+                                ariaLabel={t("scheduled.openResult")}
+                                disabled={busy}
+                                onClick={() => void action(() => openSession(run.sessionId!))}
+                              >
+                                <IconExternal size={11} />
+                              </TooltipButton>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
-                <div style={{ display: "flex", gap: 6, marginTop: 14 }}>
-                  <Button size="sm" variant="secondary" style={{ flex: 1 }} disabled={busy || running}
-                    onClick={() => void action(async () => {
-                      await api.executeScheduled(task.id);
-                      if (mounted.current) setTab("runs");
-                    })}>
-                    {t(running ? "scheduled.statusRunning" : "scheduled.runNow")}
+                <div className="sch-detail-actions">
+                  <Button size="sm" variant="secondary" className="sch-detail-run" disabled={busy || running || !task.enabled}
+                    onClick={() => runNow(task)}>
+                    {t(running ? "scheduled.runningEllipsis" : "scheduled.runNow")}
                   </Button>
-                  <Button size="sm" variant="ghost" disabled={busy}
-                    onClick={() => void action(async () => {
-                      await api.updateScheduled({ id: task.id, enabled: !task.enabled });
-                    })}>
+                  <Button size="sm" variant="ghost" disabled={busy} onClick={() => toggleEnabled(task)}>
                     {t(task.enabled ? "scheduled.pause" : "scheduled.resume")}
-                  </Button>
-                  <Button size="sm" variant="ghost" disabled={busy}
-                    onClick={() => void action(async () => {
-                      await api.deleteScheduled(task.id);
-                      setSelectedTaskId(null);
-                    })}>
-                    {t("scheduled.delete")}
                   </Button>
                 </div>
               </div>
@@ -394,6 +573,7 @@ export function ScheduledPage() {
         })()}
 
       </div>
+      <ContextMenu state={contextMenu} onClose={closeContextMenu} />
     </div>
   );
 }

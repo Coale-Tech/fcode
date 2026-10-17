@@ -80,6 +80,7 @@ export function createInitialState(): AppStateData {
     settingsTab: "general",
     settingsAnchor: null,
     settingsTabNonce: 0,
+    pageCrumb: null,
     memoryStatus: null,
     navStack: [{ page: "bench" }],
     navIndex: 0,
@@ -95,6 +96,7 @@ export function createInitialState(): AppStateData {
     showKanbanSessions: false,
     kanbanEnabled: false,
     ravenEnabled: false,
+    userInitials: undefined,
     terminalOpen: false,
     pendingTuiCommand: null,
   };

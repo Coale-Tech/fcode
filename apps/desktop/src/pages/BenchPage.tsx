@@ -107,7 +107,12 @@ export function BenchPage() {
   const [loading, setLoading] = useState(true);
   // Tabs: "all" (the All benches table) or a bench id; openIds are the bench tabs in open order.
   const [tab, setTab] = useState<string>("all");
-  const [openIds, setOpenIds] = useState<string[]>([]);
+  const [openIds, setOpenIds] = useState<string[]>(
+    // Capture mode: pre-open bench tabs to match reference design (coale_v16 + dev_bench)
+    window.__PI_CAPTURE__ && Array.isArray(window.__PI_CAPTURE_BENCH_OPEN_IDS__)
+      ? (window.__PI_CAPTURE_BENCH_OPEN_IDS__ as string[])
+      : [],
+  );
   // Gap 4 / T6: failed roots surfaced by discovery
   const [failedRoots, setFailedRoots] = useState<Array<{ root: string; reason: string }>>([]);
   const [roots, setRoots] = useState<string[]>([]);
@@ -172,6 +177,11 @@ export function BenchPage() {
   const loadBenches = useCallback(async () => {
     setLoading(true);
     try {
+      // Capture mode: use seeded bench list if set (avoids contextBridge IPC which can't be mocked).
+      if (window.__PI_CAPTURE__ && window.__PI_CAPTURE_BENCH_LIST__) {
+        applyBenchList(window.__PI_CAPTURE_BENCH_LIST__ as BenchListResult);
+        return;
+      }
       applyBenchList(await invoke<BenchListResult>(IPC.invoke.benchList));
     } catch {
       // discovery error: show empty state
@@ -201,6 +211,13 @@ export function BenchPage() {
     let cancelled = false;
     const poll = async () => {
       if (cancelled) return;
+      // Capture mode: read bench-status override set by seedBenchStatus() (mirrors use-bench-context).
+      if (window.__PI_CAPTURE__ && window.__PI_BENCH_OVERRIDE__) {
+        const ov = window.__PI_BENCH_OVERRIDE__;
+        setStatus(ov.status as BenchStatus);
+        setActiveBenchPath(ov.benchPath ?? null);
+        return;
+      }
       try {
         const s = await invoke<{ status: BenchStatus; benchPath: string | null; logs?: LogLine[] }>(IPC.invoke.benchStatus);
         setStatus(s.status);
@@ -213,11 +230,15 @@ export function BenchPage() {
         }
       } catch { /* ignore */ }
     };
+    // Also respond to bench-update events from the capture rig.
+    const onBenchUpdate = () => { void poll(); };
+    document.addEventListener("pi:bench-update", onBenchUpdate);
     poll();
     const id = setInterval(poll, 2000);
     return () => {
       cancelled = true;
       clearInterval(id);
+      document.removeEventListener("pi:bench-update", onBenchUpdate);
     };
   }, []);
 
@@ -283,7 +304,10 @@ export function BenchPage() {
   // Gap 3 / T6: prime startMs when status becomes starting/running (e.g. after restart)
   useEffect(() => {
     if ((status === "starting" || status === "running") && startMsRef.current === null) {
-      startMsRef.current = Date.now();
+      // Capture mode: use seeded startedAtMs so elapsed timer shows a realistic "02:47"
+      // rather than 0s (which is what happens when the bench was just seeded as running).
+      const captureStart = window.__PI_CAPTURE__ ? window.__PI_BENCH_OVERRIDE__?.startedAtMs : undefined;
+      startMsRef.current = captureStart ?? Date.now();
     } else if (status === "stopped") {
       startMsRef.current = null;
       setElapsedLabel("");
@@ -856,10 +880,11 @@ function BenchDetail({
     apps: AppWithVersion[];
     procfileEntries: string[];
     port: number | null;
+    workerPids: Record<string, number | null>;
   } | null>(null);
   useEffect(() => {
     let cancelled = false;
-    invoke<{ apps: AppWithVersion[]; procfileEntries: string[]; port: number | null; mainPid: number | null }>(
+    invoke<{ apps: AppWithVersion[]; procfileEntries: string[]; port: number | null; mainPid: number | null; workerPids: Record<string, number | null> }>(
       IPC.invoke.benchDetail,
       { benchPath: bench.path },
     )
@@ -884,7 +909,7 @@ function BenchDetail({
         <div className="wb-bfd-left">
           <SiteList sites={bench.sites} />
           <AppsSection apps={detail?.apps ?? null} />
-          <WorkersSection entries={detail?.procfileEntries ?? []} running={status === "running"} />
+          <WorkersSection entries={detail?.procfileEntries ?? []} running={status === "running"} workerPids={detail?.workerPids ?? {}} />
         </div>
 
 
@@ -1093,7 +1118,7 @@ function AppsSection({ apps }: { apps: AppWithVersion[] | null }) {
 }
 
 /** T14: Procfile workers — vertical column rows matching design .bfd-chip layout. */
-function WorkersSection({ entries, running }: { entries: string[]; running: boolean }) {
+function WorkersSection({ entries, running, workerPids = {} }: { entries: string[]; running: boolean; workerPids?: Record<string, number | null> }) {
   const { t } = useTranslation();
   if (entries.length === 0) return null;
   return (
@@ -1106,7 +1131,12 @@ function WorkersSection({ entries, running }: { entries: string[]; running: bool
               <span className="wb-worker-dot" aria-hidden="true" />
               {" "}{name}
             </span>
-            {running && <span className="wb-worker-pid-placeholder" />}
+            {running && workerPids[name] != null && (
+              <span className="wb-worker-pid">pid {workerPids[name]}</span>
+            )}
+            {running && workerPids[name] == null && (
+              <span className="wb-worker-pid-placeholder" />
+            )}
           </div>
         ))}
       </div>

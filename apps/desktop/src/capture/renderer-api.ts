@@ -10,7 +10,7 @@
  * object, so later capture calls stay synchronous as before.
  */
 import { useAppStore, type AppState, type ToastOptions } from "../stores/app-store";
-import type { AppSettings, NavLayout, SessionSummary } from "@pi-desktop/shared";
+import type { AppSettings, CommandItem, NavLayout, SessionSummary } from "@pi-desktop/shared";
 import type { CaptureRig, CaptureRigMethods } from "./capture-rig";
 
 type CaptureRigMethod = keyof CaptureRigMethods;
@@ -30,19 +30,51 @@ export type RendererApi = {
   setThemeAttr: (theme: "light" | "dark") => void;
   setTheme: (theme: "light" | "dark" | "system") => void;
   setNavLayout: (layout: NavLayout) => void;
+  setFontFamily: (family: string) => void;
+  setKanbanRaven: (enabled: boolean) => void;
   getSettings: () => AppSettings | null;
   clearProject: () => Promise<void>;
+  clearOpenProjects: () => void;
   showToast: (message: string, opts?: ToastOptions) => void;
   enableFeatureFlags: (flags: { kanban?: boolean; raven?: boolean }) => void;
   /** Synchronously seed visual state (sessions + chat page) — call after persistence hydrates. */
   seedVisualState: () => void;
+  /** Seed only header cluster (bench chip, initials) without sessions — for onboarding shots. */
+  seedHeaderCluster: () => void;
 } & (CaptureRigStubs | CaptureRigMethods);
+
+/** Shape accepted by seedBenchStatus and read by useBenchContext. */
+export type BenchStatusOverride = { status: string; benchPath: string | null; site: string | null; siteCount?: number; startedAtMs?: number } | null;
 
 declare global {
   interface Window {
     __PI_DESKTOP__?: RendererApi;
     /** Set by the capture suite before it calls any fixture method. */
     __PI_CAPTURE__?: unknown;
+    /** Overrides live IPC bench-status polling for capture screenshots. */
+    __PI_BENCH_OVERRIDE__?: BenchStatusOverride;
+    /** Capture-only: file entries seeded for the command-palette FILES section. */
+    __PI_PALETTE_FILES__?: Array<{ path: string; appRoot: string }>;
+    /** Capture-only: bench entries seeded for the command-palette BENCHES section. */
+    __PI_PALETTE_BENCHES__?: Array<{ id: string; path: string; status: "running" | "stopped" }>;
+    /** Capture-only: command entries for the command-palette COMMANDS section. */
+    __PI_PALETTE_COMMANDS__?: CommandItem[];
+    /** Capture-only: session entries seeded for the command-palette SESSIONS section. */
+    __PI_PALETTE_SESSIONS__?: Array<{ id: string; title: string; updatedAt: string }>;
+    /** Capture-only seeded bench list; BenchPage.loadBenches reads this instead of IPC. */
+    __PI_CAPTURE_BENCH_LIST__?: {
+      benches: Array<{ id: string; path: string; version: number | "unknown"; sites: Array<{ name: string; isDefault: boolean }>; apps: string[] }>;
+      failedRoots: Array<{ root: string; reason: string }>;
+      roots: string[];
+    };
+    /** Capture-only bench tab IDs to pre-open (coale_v16, dev_bench). */
+    __PI_CAPTURE_BENCH_OPEN_IDS__?: string[];
+    /** When set, RavenPage marks itself connected on mount (CDP can't capture WebContentsView). */
+    __PI_CAPTURE_RAVEN_CONNECTED__?: boolean;
+    /** When set, FileBirdPage skips fileBirdSetVisible IPC call (avoids failed=true). */
+    __PI_CAPTURE_FILEBIRD_VISIBLE__?: boolean;
+    /** Capture-only: pre-select this PR number when PullRequestsPage loads. */
+    __PI_CAPTURE_PR_SELECTED__?: number;
   }
 }
 
@@ -66,11 +98,17 @@ const CAPTURE_RIG_METHODS = [
   "seedSidebarStatuses",
   "seedOmpSettings",
   "ensureVisualFixtures",
+  "seedBenchStatus",
   "seedApprovalCard",
   "clearPendingPermissions",
   "seedEmptyHome",
   "seedOnboardingChecklist",
-  "seedBenchStatus",
+  "seedCommandPaletteExtras",
+  "seedBenchList",
+  "seedRavenConnected",
+  "seedFileBirdConnected",
+  "seedLargePasteThreshold",
+  "clearPinnedSessions",
 ] as const satisfies readonly CaptureRigMethod[];
 
 export function installRendererApi(): () => void {
@@ -135,7 +173,11 @@ export function installRendererApi(): () => void {
       useAppStore.setState({ settings: { ...base, navLayout: layout } });
       document.documentElement.dataset.navLayout = layout;
     },
+    setKanbanRaven: (enabled) => {
+      useAppStore.setState({ kanbanEnabled: enabled, ravenEnabled: enabled });
+    },
     clearProject: () => useAppStore.getState().clearProject(),
+    clearOpenProjects: () => useAppStore.setState({ openProjectPaths: [] }),
     getSettings: () => useAppStore.getState().settings ?? null,
     /** Synchronously enable feature flags so nav rail shows Kanban/Raven in capture. */
     enableFeatureFlags: (flags: { kanban?: boolean; raven?: boolean }) => {
@@ -149,32 +191,47 @@ export function installRendererApi(): () => void {
      *  Unlike ensureVisualFixtures this is a direct sync call — no dynamic import needed. */
     seedVisualState: () => {
       const now = Date.now();
-      const H = 3_600_000;
-      const D = 86_400_000;
-      const mk = (id: string, title: string, ageMs: number) => ({
+      const M = 60_000, H = 3_600_000, D = 86_400_000;
+      // Anchor TODAY sessions to the start of the current calendar day so the
+      // groupSidebarSessionsByTime calendar-day boundary is always respected,
+      // regardless of what time the screenshot is taken.
+      const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
+      const S = startOfToday.getTime();
+      // todayTs: use rolling offset when it's within today; else clamp to S+slotMin.
+      const todayTs = (offset: number, slotMin: number): number =>
+        Math.max(S + slotMin * M, now - offset);
+      const mk = (id: string, title: string, ts: number, pinned = false) => ({
         id, title, source: "desktop" as const, modelId: "claude-sonnet-5",
         mode: "plan" as const, thinkingLevel: "off" as const, permissionMode: "ask" as const,
         messageCount: 0,
-        updatedAt: new Date(now - ageMs).toISOString(),
-        createdAt: new Date(now - ageMs).toISOString(),
-        pinned: false, archived: false,
+        updatedAt: new Date(ts).toISOString(),
+        createdAt: new Date(ts).toISOString(),
+        pinned, archived: false,
       });
+      // Pinned page sessions (sidebar PINNED PAGES section; not grouped by time).
+      const pinnedSessions = [
+        mk("fixture-p1", "Kanban · coale_v16",  S - 5 * D, true),
+        mk("fixture-p2", "Raven · #general",    S - 5 * D, true),
+        mk("fixture-p3", "FileBird workspace",  S - 5 * D, true),
+      ];
+      // 12 reference sessions matching pages-d cmdpal reference; timestamps are
+      // absolute ms (now - offset) so relativeTime shows correct "47m ago" / "3d ago".
       const sessions = [
-        mk("fixture-s1",  "Sync ERPNext code module",           2 * 60_000),
-        mk("fixture-s2",  "Redesign settings plugin section",   47 * 60_000),
-        mk("fixture-s3",  "Fix duplicate bench start bug",      2 * H),
-        mk("fixture-s4",  "Migrate Raven to frappe-ui v2",      25 * H),
-        mk("fixture-s5",  "Review PR #224 leave approvals",     26 * H),
-        mk("fixture-s6",  "ERPNext payroll period config",      27 * H),
-        mk("fixture-s7",  "Set up coale_v16 from scratch",      3 * D),
-        mk("fixture-s8",  "Debug slow stock valuation query",   4 * D),
-        mk("fixture-s9",  "Frappe UI modal refactor",           5 * D),
-        mk("fixture-s10", "Refactor payment_entry hooks",       6 * D),
-        mk("fixture-s11", "Install hrms on coale_staging",      6.5 * D),
-        mk("fixture-s12", "Debug bench worker crash",           7 * D),
+        mk("fixture-s1",  "Sync ERPNext code module",           now - 2 * M),
+        mk("fixture-s2",  "Redesign settings plugin section",   now - 25 * H),
+        mk("fixture-s3",  "Fix duplicate bench start bug",      now - 2 * H),
+        mk("fixture-s4",  "Migrate Raven to frappe-ui v2",      now - 47 * M),
+        mk("fixture-s5",  "Review PR #224 leave approvals",     now - 26 * H),
+        mk("fixture-s6",  "ERPNext payroll migrate planning",   now - 3 * D),
+        mk("fixture-s7",  "Set up coale_v16 from scratch",      now - 4 * D),
+        mk("fixture-s8",  "Debug slow stock valuation query",   now - 5 * D),
+        mk("fixture-s9",  "Frappe UI modal refactor",           now - 6 * D),
+        mk("fixture-s10", "Refactor payment_entry hooks",       now - 7 * D),
+        mk("fixture-s11", "Install hrms on coale_staging",      now - 7.5 * D),
+        mk("fixture-s12", "Debug bench worker crash",           now - 8 * D),
       ] as unknown as SessionSummary[];
       useAppStore.setState({
-        sessions,
+        sessions: [...pinnedSessions, ...sessions],
         activeSessionId: "fixture-s1",
         retainedSessionIds: ["fixture-s1"],
         retainedTranscripts: { "fixture-s1": [] },
@@ -182,14 +239,45 @@ export function installRendererApi(): () => void {
         runningSessions: { "fixture-s1": true },
         page: "chat",
         chatUserName: "Josh Kim",
+        userInitials: "JK",
         kanbanEnabled: true,
         ravenEnabled: true,
-        onboardingDismissed: true,
-        // Clear project workspaces so the sidebar PROJECTS section shows nothing.
-        openProjects: [] as unknown as AppState["openProjects"],
+        onboarding: undefined,
+        openProjectPaths: [],
+        workspace: null,
+        // Prevent SearchDialog's open-effect refreshSessions() IPC from clearing
+        // the seeded sessions. Pattern from seedNotifications' refreshNotifications patch.
+        refreshSessions: async () => undefined,
+      });
+    },
+    /** Seed only header cluster (bench chip, initials) without sessions.
+     *  Used for first-run onboarding shots: sessions panel shows empty state. */
+    seedHeaderCluster: () => {
+      const s = useAppStore.getState().settings;
+      const base = s ?? ({ theme: "system", defaultMode: "plan", enterToSend: true, onboardingDismissed: false } as unknown as NonNullable<typeof s>);
+      useAppStore.setState({
+        chatUserName: "Josh Kim",
+        userInitials: "JK",
+        kanbanEnabled: true,
+        ravenEnabled: true,
+        onboarding: undefined,
+        activeSessionId: undefined,
+        sessions: [],
+        retainedSessionIds: [],
+        retainedTranscripts: {},
+        messages: [],
+        runningSessions: {},
+        workspace: undefined,
+        refreshSessions: async () => undefined,
+        settings: { ...base, defaultModelId: "claude-sonnet-5" },
       });
     },
     showToast: (message, opts) => useAppStore.getState().showToast(message, opts),
+    setFontFamily: (family) => {
+      const s = useAppStore.getState().settings;
+      const base = s ?? ({ theme: "system", defaultMode: "plan", enterToSend: true, onboardingDismissed: false } as unknown as NonNullable<typeof s>);
+      useAppStore.setState({ settings: { ...base, fontFamily: family } });
+    },
     ...stubs,
   };
   window.__PI_DESKTOP__ = surface;

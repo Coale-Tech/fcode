@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AppNotification } from "@pi-desktop/shared";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "../stores/app-store";
@@ -6,66 +6,41 @@ import {
   inboxNotifications,
   inboxUnreadCount,
 } from "../lib/notification-inbox";
+import { notificationAge } from "../lib/notification-time";
 import {
   IconBell,
-  IconCircleAlert,
   IconCircleCheck,
+  IconCircleX,
   IconCheckCheck,
+  IconExternal,
   IconTrash,
 } from "./icons";
 import { Button, TooltipButton } from "./ui";
 
 type NotificationFilter = "all" | "unread";
 
-function formatRelativeTime(value: string, locale: string, justNow: string): string {
-  const timestamp = Date.parse(value);
-  if (!Number.isFinite(timestamp)) return justNow;
-
-  const delta = timestamp - Date.now();
-  const absoluteDelta = Math.abs(delta);
-  if (absoluteDelta < 45_000) return justNow;
-
-  try {
-    const formatter = new Intl.RelativeTimeFormat(locale || undefined, {
-      numeric: "auto",
-    });
-    if (absoluteDelta < 60 * 60_000) {
-      return formatter.format(Math.round(delta / 60_000), "minute");
-    }
-    if (absoluteDelta < 24 * 60 * 60_000) {
-      return formatter.format(Math.round(delta / (60 * 60_000)), "hour");
-    }
-    if (absoluteDelta < 7 * 24 * 60 * 60_000) {
-      return formatter.format(Math.round(delta / (24 * 60 * 60_000)), "day");
-    }
-    return new Intl.DateTimeFormat(locale || undefined, {
-      month: "short",
-      day: "numeric",
-    }).format(timestamp);
-  } catch {
-    return justNow;
-  }
-}
-
-/** Group a sorted notification list into Today / Yesterday / Earlier buckets. */
+/** Group a sorted notification list into Today / Yesterday / dated buckets. */
 function groupByDate(
   notifications: AppNotification[],
   today: string,
   yesterday: string,
-): { label: string; items: AppNotification[] }[] {
+  locale: string,
+): { key: string; label: string; items: AppNotification[] }[] {
   const now = new Date();
   const todayStr = now.toDateString();
   const yestDate = new Date(now);
   yestDate.setDate(yestDate.getDate() - 1);
   const yestStr = yestDate.toDateString();
+  const dayFormat = new Intl.DateTimeFormat(locale || undefined, { weekday: "long", month: "short", day: "numeric" });
 
-  const groups: { label: string; items: AppNotification[] }[] = [];
+  const groups: { key: string; label: string; items: AppNotification[] }[] = [];
   for (const n of notifications) {
-    const ds = new Date(n.createdAt).toDateString();
-    const label = ds === todayStr ? today : ds === yestStr ? yesterday : ds;
+    const date = new Date(n.createdAt);
+    const key = date.toDateString();
+    const label = key === todayStr ? today : key === yestStr ? yesterday : dayFormat.format(date);
     const last = groups[groups.length - 1];
-    if (last?.label === label) last.items.push(n);
-    else groups.push({ label, items: [n] });
+    if (last?.key === key) last.items.push(n);
+    else groups.push({ key, label, items: [n] });
   }
   return groups;
 }
@@ -101,7 +76,7 @@ export function NotificationCenter({
     <div className="notification-center">
       <TooltipButton
         type="button"
-        className={`footer-notification notification-trigger`}
+        className={`footer-notification notification-trigger${navRailLabel ? " nav-rail-labeled" : ""}`}
         tooltip={unreadLabel}
         ariaLabel={unreadLabel}
         onClick={() => {
@@ -109,12 +84,17 @@ export function NotificationCenter({
           setPage("notifications");
         }}
       >
-        <IconBell size={14} aria-hidden />
+        {navRailLabel ? (
+          <span className="nav-rail-icon"><IconBell size={16} aria-hidden /></span>
+        ) : (
+          <IconBell size={14} aria-hidden />
+        )}
         {unreadCount > 0 ? (
           <span className="notification-badge" aria-hidden>
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         ) : null}
+        {navRailLabel && <span className="nav-rail-label">{navRailLabel}</span>}
       </TooltipButton>
     </div>
   );
@@ -160,10 +140,26 @@ export function NotificationsPage() {
     [filter, notifications],
   );
 
+  const locale = i18n.resolvedLanguage || i18n.language;
+
   const groups = useMemo(
-    () => groupByDate(visible, t("notifications.today"), t("notifications.yesterday")),
-    [visible, t],
+    () => groupByDate(visible, t("notifications.today"), t("notifications.yesterday"), locale),
+    [visible, t, locale],
   );
+
+  /** "just now" / "2 m ago" / "2 h ago" / "Yesterday 07:30" / "Oct 11, 08:00". */
+  const ageLabel = (value: string) => {
+    const age = notificationAge(new Date(value), new Date(), locale);
+    switch (age.kind) {
+      case "now": return t("notifications.justNow");
+      case "minutes": return t("notifications.minutesAgo", { minutes: age.minutes });
+      case "hours": return t("notifications.hoursAgo", { hours: age.hours });
+      case "yesterday": return t("notifications.yesterdayAt", { time: age.time });
+      case "today":
+      case "tomorrow": return age.time;
+      case "date": return age.text;
+    }
+  };
 
   const runAction = useCallback(
     async (action: () => Promise<void>) => {
@@ -183,21 +179,20 @@ export function NotificationsPage() {
     [openNotification, showToast, t],
   );
 
-  const locale = i18n.resolvedLanguage || i18n.language;
-
   return (
     <div className="notifications-page">
+      <div className="notifications-card">
       {/* Page head — labeled actions (T12-F07) */}
-      <div className="notifications-page-head">
-        <IconBell size={16} aria-hidden />
-        <span className="notifications-page-title">{t("notifications.title")}</span>
+      <div className="d-page-head">
+        <IconBell size={16} aria-hidden className="notifications-page-bell" />
+        <span className="d-page-title">{t("notifications.title")}</span>
         {unreadCount > 0 && (
-          <span className="d-pill violet" aria-live="polite">
+          <span className="d-pill accent" aria-live="polite">
             <span className="d-pill-dot" aria-hidden />
             {t("notifications.unreadCount", { count: unreadCount })}
           </span>
         )}
-        <div className="notifications-page-actions">
+        <div className="d-page-head-actions">
           <Button
             type="button"
             variant="ghost"
@@ -237,10 +232,10 @@ export function NotificationsPage() {
             >
               {t(`notifications.${value}`)}
               {value === "all" && notifications.length > 0 && (
-                <span className="d-mini-count">{notifications.length}</span>
+                <span className="notifications-filter-count">{notifications.length}</span>
               )}
               {value === "unread" && unreadCount > 0 && (
-                <span className="d-mini-count">{unreadCount}</span>
+                <span className="notifications-filter-count">{unreadCount}</span>
               )}
             </button>
           ))}
@@ -250,10 +245,10 @@ export function NotificationsPage() {
       {/* Notification list with date groups (T12-F07) */}
       <div className="notifications-body" role="main">
         {visible.length > 0 ? (
-          <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+          <ul className="notifications-list">
             {groups.map((group) => (
-              <>
-                <li key={group.label} role="presentation">
+              <Fragment key={group.key}>
+                <li role="presentation">
                   <div className="notifications-date-head">{group.label}</div>
                 </li>
                 {group.items.map((notification) => {
@@ -262,11 +257,11 @@ export function NotificationsPage() {
                   const title = failed
                     ? t("notifications.failedTitle", { sessionTitle })
                     : t("notifications.completedTitle", { sessionTitle });
-                  const body = failed
+                  const body = notification.body ?? (failed
                     ? (notification.errorCode
                         ? t("notifications.failedBodyWithCode", { code: notification.errorCode })
                         : t("notifications.failedBody"))
-                    : t("notifications.completedBody");
+                    : t("notifications.completedBody"));
 
 
                   return (
@@ -280,21 +275,24 @@ export function NotificationsPage() {
                         onClick={() => void activateNotification(notification)}
                       >
                         <span className={`notif-page-icon ${failed ? "failed" : "ok"}`} aria-hidden>
-                          {failed ? <IconCircleAlert size={16} /> : <IconCircleCheck size={16} />}
+                          {failed ? <IconCircleX size={14} /> : <IconCircleCheck size={14} />}
                         </span>
                         <span className="notif-page-copy">
                           <span className="notif-page-title">{title}</span>
                           <span className="notif-page-body">{body}</span>
                         </span>
                         <time className="notif-page-time" dateTime={notification.createdAt}>
-                          {formatRelativeTime(notification.createdAt, locale, t("notifications.justNow"))}
+                          {ageLabel(notification.createdAt)}
                         </time>
+                        <span className="notif-page-link" aria-hidden>
+                          <IconExternal size={12} />
+                        </span>
                         {!notification.readAt && <span className="notif-page-unread-dot" aria-hidden />}
                       </button>
                     </li>
                   );
                 })}
-              </>
+              </Fragment>
             ))}
           </ul>
         ) : (
@@ -304,6 +302,7 @@ export function NotificationsPage() {
             <span>{t(filter === "unread" ? "notifications.emptyUnreadBody" : "notifications.emptyBody")}</span>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

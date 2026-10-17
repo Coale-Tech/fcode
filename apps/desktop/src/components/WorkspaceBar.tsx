@@ -1,5 +1,6 @@
 /**
- * WorkspaceBar — persistent context strip at the foot of the main pane (T1).
+ * WorkspaceBar — the app-level 28px status bar spanning the window foot (T1, D.css
+ * `.d-statusbar`), below the rail, sidebar and canvas in every nav layout.
  *
  * Left: <dot> bench · bench running|stopped · N sites | Open bench log
  * Right (D design): model name · Supervised chip
@@ -7,34 +8,32 @@
  * When a bench detail tab is open but the bench is not running, we fall back to
  * viewedBenchPath (set by BenchPage) so the bar always names the bench in focus.
  *
- * Styled (28px, Espresso ink) by `.workspace-bar` in chat-shell.css.
+ * Styled by `.workspace-bar` in chat-shell.css.
  */
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "../stores/app-store";
 import { useBenchContext } from "../hooks/use-bench-context";
 import { baseName } from "../lib/bench-view";
+import { resolveStatusAgent } from "../lib/workspace-bar-state";
 
 export function WorkspaceBar() {
   const { t } = useTranslation();
   const setPage = useAppStore((s) => s.setPage);
-  const page = useAppStore((s) => s.page);
+  // page is not directly needed here (model cluster shows on all pages)
   const viewedBenchPath = useAppStore((s) => s.viewedBenchPath);
   const viewedBenchSiteCount = useAppStore((s) => s.viewedBenchSiteCount);
   const bench = useBenchContext();
-  // Active session model + permission for the right chip cluster.
-  const activeSessionId = useAppStore((s) => s.activeSessionId);
-  const sessions = useAppStore((s) => s.sessions);
-  const activeSession = sessions.find((s) => s.id === activeSessionId);
-  const modelId = activeSession?.modelId ?? null;
-  const permMode = activeSession?.permissionMode ?? null;
-  // "ask" / "inherit" / null = supervised (default Pi Desktop behavior).
-  // "auto" = fully autonomous. "accept-edits" = mid-tier.
-  const isSupervisedMode =
-    permMode === "ask" || permMode === "inherit" || permMode == null;
-  // D design: show "Supervised" for ask/inherit, "Auto" otherwise.
-  const permLabel = isSupervisedMode
+
+  // Active session model + permission — use full fallback chain (session → draft → settings → providers).
+  const activeSession = useAppStore((s) => s.sessions.find((session) => session.id === s.activeSessionId));
+  const draftConfiguration = useAppStore((s) => s.draftConfiguration);
+  const settings = useAppStore((s) => s.settings);
+  const providers = useAppStore((s) => s.providers);
+  const agent = resolveStatusAgent({ session: activeSession, draft: draftConfiguration ?? undefined, settings, providers });
+  // D design: "Supervised" for ask, "Accept edits" for accept-edits, "Auto" for auto.
+  const permLabel = agent.mode === "ask"
     ? t("workspaceBar.supervised", { defaultValue: "Supervised" })
-    : permMode === "accept-edits"
+    : agent.mode === "accept-edits"
       ? t("workspaceBar.acceptEdits", { defaultValue: "Accept edits" })
       : t("workspaceBar.autonomous", { defaultValue: "Auto" });
 
@@ -46,10 +45,9 @@ export function WorkspaceBar() {
       ? baseName(viewedBenchPath)
       : null;
   const isLiveRunning = bench.kind === "running";
-  // siteCount: both "running" and "stopped" states carry siteCount (workspace-bar-state.ts).
-  const siteCount = bench.kind === "running" || bench.kind === "stopped"
-    ? bench.siteCount
-    : viewedBenchSiteCount;
+  // siteCount precedence: bench state (already defaults site→1) > viewedBenchSiteCount.
+  // formatWorkspaceBarState always computes bench.siteCount = opts.siteCount ?? (site ? 1 : 0).
+  const siteCount = bench.kind !== "empty" ? bench.siteCount : viewedBenchSiteCount;
 
   return (
     <div className="workspace-bar" role="status" aria-label="Workspace context">
@@ -94,7 +92,7 @@ export function WorkspaceBar() {
           <span className="workspace-bar-vsep" aria-hidden="true" />
           <button
             type="button"
-            className="workspace-bar-choose-btn no-drag"
+            className="workspace-bar-link no-drag"
             onClick={() => setPage("bench")}
           >
             {t("workspaceBar.openBenchLog", { defaultValue: "Open bench log" })}
@@ -115,20 +113,14 @@ export function WorkspaceBar() {
         </>
       )}
 
-      {/* D design: right side — model name + permission chip */}
-      {(modelId || permMode != null) && page === "chat" && (
+      {/* D design: right side — model name + permission chip (all pages). */}
+      {agent.modelId && (
         <div className="workspace-bar-model-cluster" aria-label={t("workspaceBar.sessionConfig", { defaultValue: "Session config" })}>
-          {modelId && (
-            <span className="workspace-bar-model">{modelId}</span>
-          )}
-          {(modelId && permMode != null) && (
-            <span className="workspace-bar-sep" aria-hidden="true">·</span>
-          )}
-          {permMode != null && (
-            <span className="workspace-bar-perm">
-              {permLabel}
-            </span>
-          )}
+          <span className="workspace-bar-model">{agent.modelId}</span>
+          <span className="workspace-bar-sep" aria-hidden="true">·</span>
+          <span className="workspace-bar-perm">
+            {permLabel}
+          </span>
         </div>
       )}
     </div>
