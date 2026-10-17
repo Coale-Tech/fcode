@@ -11,6 +11,7 @@ import type { OmpAgentEntry, OmpAcpInfoResult, OmpModel, OmpSettingsValues, OmpW
 import { useAppStore } from "../../stores/app-store";
 import { api } from "../../lib/api";
 import { Button, Input, SettingsToggle } from "../../components/ui";
+import { IconBot, IconGlobe } from "../../components/icons";
 import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect";
 import { SettingsCard, SettingsRow } from "./primitives";
 import { OmpSkillsSection } from "../../components/settings/OmpSkillsSection";
@@ -146,7 +147,7 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
       {part === "agents" && (
         <>
         {/* ── Task Subagents ───────────────────────────────────────── */}
-        <SettingsCard title={t("settings.ompTaskGroup")}>
+        <SettingsCard title={t("settings.ompTaskGroup")} icon={<IconBot size={13} />}>
           <SettingsRow title={t("settings.ompTaskIsolation")} description={t("settings.ompTaskIsolationDesc")}>
             <SettingsToggle
               checked={omp["task.isolation.enabled"] === true}
@@ -373,7 +374,7 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
       {part === "agents" && (
         <>
         {/* ── Collab ───────────────────────────────────────────────── */}
-        <SettingsCard title={t("settings.ompCollabGroup")}>
+        <SettingsCard title={t("settings.ompCollabGroup")} icon={<IconGlobe size={13} />}>
           <SettingsRow title={t("settings.ompCollabRelayUrl")} description={t("settings.ompCollabRelayUrlDesc")}>
             <Input
               type="text"
