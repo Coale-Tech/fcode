@@ -79,6 +79,7 @@ import {
   IconChevronDown,
   IconCode,
   IconCopy,
+  IconChat,
   IconCircleAlert,
   IconFileBird,
   IconKanban,
