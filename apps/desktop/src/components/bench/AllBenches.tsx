@@ -28,7 +28,6 @@ import {
   IconTerminal,
   IconTriangleAlert,
 } from "../icons";
-import { StatusDot } from "./BenchBadges";
 import { ContextMenu, useContextMenu } from "../ContextMenu";
 import { api } from "../../lib/api";
 import { shortenPath } from "../../lib/project-archive";
@@ -160,9 +159,9 @@ export function AllBenches({
                   const elapsed = active && bench.startedAtMs ? fmtElapsed(bench.startedAtMs) : undefined;
                   return (
                     <tr key={bench.id}>
-                      {/* Leading bench icon */}
-                      <td className="wb-table-col-icon">
-                        <StatusDot status={status} />
+                      {/* Leading bench icon — dim terminal glyph per reference */}
+                      <td className="wb-table-col-icon" style={{ color: active ? "var(--ink-gray-5)" : "var(--ink-gray-3)" }}>
+                        <IconTerminal size={13} aria-hidden="true" />
                       </td>
                       <td>
                         <button
