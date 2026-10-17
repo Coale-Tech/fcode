@@ -22,8 +22,8 @@ export function ThinkingDisplayModeRow({
         value={current}
         onChange={(value) => void saveSettings({ thinkingDisplayMode: resolveThinkingDisplayMode(value) })}
         options={[
-          { value: "detailed", label: t("settings.thinkingDisplayDetailed") },
           { value: "compact", label: t("settings.thinkingDisplayCompact") },
+          { value: "detailed", label: t("settings.thinkingDisplayDetailed") },
         ]}
         label={t("settings.thinkingDisplayMode")}
       />

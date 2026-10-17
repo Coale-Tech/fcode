@@ -1,76 +1,50 @@
 /**
- * T14 — bench reveal IPC: benchReveal handler rejects non-bench paths,
- * accepts known bench roots, calls revealPath exactly once.
- *
- * Behavioral: all checks operate on handler return values and call counts;
- * no source-text pins.
+ * Bench list "Show in Finder" / "Browse all in Finder": the reveal channel
+ * opens paths at or under a bench root and refuses anything else.
  */
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { register } from "node:module";
-import { dirname, join as pjoin } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-register(pathToFileURL(pjoin(here, "helpers/ts-import-hooks.mjs")));
+register(pathToFileURL(join(here, "helpers/ts-import-hooks.mjs")));
 
-// Build a minimal bench directory (needs a Procfile so discoverBenches finds it)
-function makeBench(root, name = "my_bench") {
-  const benchPath = join(root, name);
-  mkdirSync(join(benchPath, "sites"), { recursive: true });
-  mkdirSync(join(benchPath, "apps"), { recursive: true });
-  writeFileSync(join(benchPath, "Procfile"), "web: gunicorn\n");
-  return benchPath;
-}
+const { IPC } = await import("@pi-desktop/shared");
+const { registerBenchIpc } = await import("../electron/main/ipc/bench-ipc.ts");
 
-test("benchReveal returns ok=false for an unknown path", async () => {
-  const root = mkdtempSync(join(tmpdir(), "bench-reveal-test-"));
-  const revealCalls = [];
-  try {
-    // Register a bench but reveal a different path
-    const knownPath = makeBench(root, "coale_v16");
-    const { registerBenchIpc } = await import("../electron/main/ipc/bench-ipc.ts");
-    const handlers = new Map();
-    const registrar = { handle: (ch, fn) => handlers.set(ch, fn) };
-    registerBenchIpc({
-      registrar,
-      mainWindow: () => null,
-      discover: async () => ({ benches: [{ path: knownPath, id: "x", version: 16, sites: [], apps: [] }], failedRoots: [] }),
-      revealPath: (p) => revealCalls.push(p),
-    });
-    const benchReveal = handlers.get("pi-desktop/bench/revealPath");
-    assert.ok(benchReveal, "benchReveal handler registered");
-    const result = await benchReveal({ benchPath: "/some/other/path" });
-    assert.equal(result.ok, false);
-    assert.equal(revealCalls.length, 0, "revealPath not called for unknown path");
-  } finally {
+test("benchReveal reveals bench roots and benches, refuses other paths", async (t) => {
+  const savedEnv = process.env.FCODE_BENCH_ROOTS;
+  const root = mkdtempSync(join(tmpdir(), "bench-reveal-root-"));
+  const outside = mkdtempSync(join(tmpdir(), "bench-reveal-outside-"));
+  process.env.FCODE_BENCH_ROOTS = root;
+  t.after(() => {
+    if (savedEnv === undefined) delete process.env.FCODE_BENCH_ROOTS;
+    else process.env.FCODE_BENCH_ROOTS = savedEnv;
     rmSync(root, { recursive: true, force: true });
-  }
-});
+    rmSync(outside, { recursive: true, force: true });
+  });
+  const bench = join(root, "coale_v16");
+  mkdirSync(bench);
 
-test("benchReveal returns ok=true and calls revealPath for a known bench root", async () => {
-  const root = mkdtempSync(join(tmpdir(), "bench-reveal-test-"));
-  const revealCalls = [];
-  try {
-    const knownPath = makeBench(root, "coale_v16");
-    const { registerBenchIpc } = await import("../electron/main/ipc/bench-ipc.ts");
-    const handlers = new Map();
-    const registrar = { handle: (ch, fn) => handlers.set(ch, fn) };
-    registerBenchIpc({
-      registrar,
-      mainWindow: () => null,
-      discover: async () => ({ benches: [{ path: knownPath, id: "x", version: 16, sites: [], apps: [] }], failedRoots: [] }),
-      revealPath: (p) => revealCalls.push(p),
-    });
-    const benchReveal = handlers.get("pi-desktop/bench/revealPath");
-    const result = await benchReveal({ benchPath: knownPath });
-    assert.equal(result.ok, true);
-    assert.equal(revealCalls.length, 1);
-    assert.equal(revealCalls[0], knownPath);
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
+  const revealed = [];
+  const handlers = new Map();
+  registerBenchIpc({
+    registrar: { handle: (channel, fn) => handlers.set(channel, fn) },
+    mainWindow: () => null,
+    revealPath: (path) => revealed.push(path),
+  });
+  const reveal = handlers.get(IPC.invoke.benchReveal);
+
+  assert.deepEqual(await reveal({ path: bench }), { ok: true });
+  assert.deepEqual(await reveal({ path: root }), { ok: true });
+  assert.deepEqual(revealed, [bench, root]);
+
+  await assert.rejects(reveal({ path: outside }), /not under a bench root/);
+  await assert.rejects(reveal({ path: `${root}-sibling` }), /not under a bench root/);
+  await assert.rejects(reveal({ path: "" }), /not under a bench root/);
+  assert.equal(revealed.length, 2);
 });

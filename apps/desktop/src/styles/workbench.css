@@ -1274,6 +1274,7 @@
 .ob-progress  { display:flex; gap:4px; margin-top:14px; }
 .ob-prog-seg  { height:4px; flex:1; border-radius:2px; background:var(--surface-gray-2); }
 .ob-prog-seg.done { background:var(--da); }
+.ob-prog-seg.active { background:color-mix(in srgb,var(--da) 40%,transparent); }
 
 /* Two-column layout */
 .ob-layout { display:flex; }
@@ -1349,6 +1350,7 @@
   color:var(--ink-gray-8);
 }
 .ob-key-input::placeholder { color:var(--ink-gray-3); }
+.ob-key-row { display:flex; gap:6px; }
 
 /* Banner: success */
 .ob-banner-success {
@@ -1356,6 +1358,12 @@
   padding:7px 10px; border-radius:6px; font-size:12px;
   background:var(--surface-green-1); color:var(--ink-green-8);
   border:1px solid var(--outline-green-2);
+}
+.ob-banner-error {
+  display:flex; align-items:center; gap:6px;
+  padding:7px 10px; border-radius:6px; font-size:12px;
+  background:var(--surface-red-1); color:var(--ink-red-8);
+  border:1px solid var(--outline-red-2);
 }
 
 /* Done state */

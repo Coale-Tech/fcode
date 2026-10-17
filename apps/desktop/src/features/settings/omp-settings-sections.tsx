@@ -7,10 +7,11 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { OmpAgentEntry, OmpAcpInfoResult, OmpModel, OmpSettingsValues } from "@pi-desktop/shared";
+import type { OmpAgentEntry, OmpAcpInfoResult, OmpModel, OmpSettingsValues, OmpWorktreeEntry } from "@pi-desktop/shared";
 import { useAppStore } from "../../stores/app-store";
 import { api } from "../../lib/api";
 import { Button, Input, SettingsToggle } from "../../components/ui";
+import { IconBot, IconGlobe } from "../../components/icons";
 import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect";
 import { SettingsCard, SettingsRow } from "./primitives";
 import { OmpSkillsSection } from "../../components/settings/OmpSkillsSection";
@@ -90,13 +91,20 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
   const [worktreeExpanded, setWorktreeExpanded] = useState(false);
   const [ompModels, setOmpModels] = useState<OmpModel[]>([]);
   const [agents, setAgents] = useState<OmpAgentEntry[]>([]);
+  const [worktreeCount, setWorktreeCount] = useState<number | null>(null);
   const load = useCallback(() => {
     setLoadState("loading");
-    Promise.all([api.ompSettingsGet(), api.ompModelsList(), api.ompAgentList(projectPath ?? undefined)])
-      .then(([settings, models, agentList]) => {
+    Promise.all([
+      api.ompSettingsGet(),
+      api.ompModelsList(),
+      api.ompAgentList(projectPath ?? undefined),
+      api.ompWorktreeList().catch((): { worktrees: OmpWorktreeEntry[] } => ({ worktrees: [] })),
+    ])
+      .then(([settings, models, agentList, wtList]) => {
         setOmp(settings);
         setOmpModels(models.models);
         setAgents(agentList.agents);
+        setWorktreeCount(wtList.worktrees.length);
         setLoadState("ready");
       })
       .catch(() => setLoadState("error"));
@@ -139,7 +147,7 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
       {part === "agents" && (
         <>
         {/* ── Task Subagents ───────────────────────────────────────── */}
-        <SettingsCard title={t("settings.ompTaskGroup")}>
+        <SettingsCard title={t("settings.ompTaskGroup")} icon={<IconBot size={13} />}>
           <SettingsRow title={t("settings.ompTaskIsolation")} description={t("settings.ompTaskIsolationDesc")}>
             <SettingsToggle
               checked={omp["task.isolation.enabled"] === true}
@@ -366,7 +374,7 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
       {part === "agents" && (
         <>
         {/* ── Collab ───────────────────────────────────────────────── */}
-        <SettingsCard title={t("settings.ompCollabGroup")}>
+        <SettingsCard title={t("settings.ompCollabGroup")} icon={<IconGlobe size={13} />}>
           <SettingsRow title={t("settings.ompCollabRelayUrl")} description={t("settings.ompCollabRelayUrlDesc")}>
             <Input
               type="text"
@@ -819,7 +827,9 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
             onClick={() => setWorktreeExpanded((v) => !v)}
           >
             {t("settings.ompWorktreesGroup")}
-            <span className="sn-badge" style={{ marginLeft: "auto", marginRight: 4 }}>3</span>
+            {worktreeCount !== null && worktreeCount > 0 && (
+              <span className="sn-badge" style={{ marginLeft: "auto", marginRight: 4 }}>{worktreeCount}</span>
+            )}
             <svg className={`sf-chevron${worktreeExpanded ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           {worktreeExpanded && <OmpWorktreeSection />}

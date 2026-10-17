@@ -33,6 +33,7 @@ import {
   resolveThinkingDisplayMode,
   shouldGroupTurnProcess,
 } from "../../../lib/turn-process";
+import { latestTurnRunOutput } from "../../../lib/turn-run-output";
 import { useAppStore } from "../../../stores/app-store";
 import { Markdown } from "../../../components/Markdown";
 import { IconBranch, IconReview } from "../../../components/icons";
@@ -338,6 +339,13 @@ export const AssistantTurn = memo(function AssistantTurn({
       ),
     [entry.parts],
   );
+  const runOutput = useMemo(
+    () =>
+      latestTurnRunOutput(
+        turnAllActivityItems.flatMap((item) => (item.kind === "tool" ? [item.message] : [])),
+      ),
+    [turnAllActivityItems],
+  );
   const rawDelegationStatuses = useMemo(
     () =>
       collectDelegationStatuses(turnAllActivityItems, { turnLive: isActive }),
@@ -428,6 +436,15 @@ export const AssistantTurn = memo(function AssistantTurn({
           {turnAllActivityItems.filter((item) => item.kind === "tool" && item.message.toolName === "GenerateImages").map((item) => (
             <GeneratedImages key={item.message.id} message={item.message} />
           ))}
+          {runOutput ? (
+            <div className="d-code-block turn-run-output" data-message-id={runOutput.messageId}>
+              <div className="d-code-block-head">
+                <span>{runOutput.toolName} {"\u00b7"} output</span>
+                <CopyButton text={runOutput.output} label={t("chat.copy")} />
+              </div>
+              <pre className="selectable">{runOutput.output}</pre>
+            </div>
+          ) : null}
           {!isActive && metaMessage ? (
             <MessageMeta
               modelId={modelId}

@@ -69,22 +69,28 @@ declare global {
     };
     /** Capture-only bench tab IDs to pre-open (coale_v16, dev_bench). */
     __PI_CAPTURE_BENCH_OPEN_IDS__?: string[];
+    /** Capture-only bench detail (apps + versions, Procfile workers, port, pids) read via fetchBenchDetail. */
+    __PI_CAPTURE_BENCH_DETAIL__?: {
+      apps: Array<{ name: string; version: string }>;
+      procfileEntries: string[];
+      port: number | null;
+      mainPid: number | null;
+      workerPids: Record<string, number | null>;
+    };
+    /** Capture-only bench log lines (honcho format) for the bench detail log terminal. */
+    __PI_CAPTURE_BENCH_LOGS__?: Array<{ ts: number; text: string }>;
+    /** Capture-only finished one-shot command shown under the bench command grid. */
+    __PI_CAPTURE_BENCH_ONESHOT__?: { verb: string; output: string; elapsed: string };
+    /** Capture-only Studio watcher state for the Build status strip. */
+    __PI_CAPTURE_BUILD_WATCHER__?: { lastImport: string };
+    /** Capture-only DocType scan result for the bench detail DocTypes tree. */
+    __PI_CAPTURE_DOCTYPES__?: Array<{ path: string; app: string; module: string; name: string; dirty: boolean }>;
     /** When set, RavenPage marks itself connected on mount (CDP can't capture WebContentsView). */
     __PI_CAPTURE_RAVEN_CONNECTED__?: boolean;
     /** When set, FileBirdPage skips fileBirdSetVisible IPC call (avoids failed=true). */
     __PI_CAPTURE_FILEBIRD_VISIBLE__?: boolean;
     /** Capture-only: pre-select this PR number when PullRequestsPage loads. */
     __PI_CAPTURE_PR_SELECTED__?: number;
-    /** Capture-only bench detail (apps, procfile, port, pids) used by BenchPage BenchDetail. */
-    __PI_CAPTURE_BENCH_DETAIL__?: import("../lib/bench-detail").BenchDetail;
-    /** Capture-only bench log lines used by BenchPage log terminal. */
-    __PI_CAPTURE_BENCH_LOGS__?: Array<[string, string]>;
-    /** Capture-only oneshot state for BenchPage OneshotResult sections. */
-    __PI_CAPTURE_BENCH_ONESHOT__?: { path: string; verb: string; status: "ok" | "error"; output: string; elapsed: string };
-    /** Capture-only Studio watcher state for the Build status strip. */
-    __PI_CAPTURE_BUILD_WATCHER__?: { lastImport: string };
-    /** Capture-only DocType scan result for the bench detail DocTypes tree. */
-    __PI_CAPTURE_DOCTYPES__?: Array<{ path: string; app: string; module: string; name: string; dirty: boolean }>;
   }
 }
 
@@ -119,6 +125,7 @@ const CAPTURE_RIG_METHODS = [
   "seedFileBirdConnected",
   "seedLargePasteThreshold",
   "clearPinnedSessions",
+  "seedOnboardingKeyCheck",
 ] as const satisfies readonly CaptureRigMethod[];
 
 export function installRendererApi(): () => void {

@@ -15,7 +15,7 @@ import { StartupRecovery } from "../../components/StartupRecovery";
 import { TerminalPanel } from "../../components/TerminalPanel";
 import { ToastHost } from "../../components/Toast";
 import { UpdateBanner } from "../../components/UpdateBanner";
-import { cx, TooltipButton } from "../../components/ui";
+import { Button, cx, TooltipButton } from "../../components/ui";
 import { WindowControls } from "../../components/WindowControls";
 import { ShellNavbar } from "../../components/ShellNavbar";
 import { WorkPanel } from "../../components/workpanel/WorkPanel";
@@ -241,11 +241,13 @@ export function AppShell() {
                     onOpenSearch={() => setSearchOpen(true)}
                   />
                 ) : page === "chat" && showChecklist ? (
-                  <div className={cx("main-titlebar", "onboarding-topbar", presentedWorkPanelOpen && "work-panel-open")}>
-                    <span className="onboarding-topbar-title">{t("onboarding.welcomeTitle")}</span>
-                    <button type="button" className="onboarding-topbar-skip" onClick={handleSkipSetup}>
-                      {t("onboarding.dismiss")}
-                    </button>
+                  <div className="d-page-head onboarding-topbar">
+                    <span className="d-page-title">{t("onboarding.welcomeTitle")}</span>
+                    <div className="d-page-head-actions">
+                      <Button variant="ghost" size="sm" onClick={handleSkipSetup}>
+                        {t("onboarding.dismiss")}
+                      </Button>
+                    </div>
                   </div>
                 ) : canvasPage ? null : (
                   <div

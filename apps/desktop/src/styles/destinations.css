@@ -274,13 +274,20 @@
 .sch-row.is-disabled .sch-row-title { opacity: .6; }
 .sch-row.is-disabled .sch-row-prompt,
 .sch-row.is-disabled .sch-row-meta { opacity: .55; }
-/* D.css .d-btn.danger (tinted, not solid) for the disabled-row delete */
-.icon-btn.sch-delete-btn {
+/* D.css .d-btn.danger (tinted, not solid) for the disabled-row delete.
+   Override icon-btn's full-radius and icon-btn-square's 30px to match
+   the 24px rounded-square shape of .d-btn.sm.danger in the reference. */
+.icon-btn.icon-btn-square.sch-delete-btn {
+  width: var(--ds-btn-height-sm);
+  height: var(--ds-btn-height-sm);
+  min-width: var(--ds-btn-height-sm);
+  flex: 0 0 var(--ds-btn-height-sm);
+  border-radius: var(--d-r-ctrl);
   background: var(--surface-red-2);
   color: var(--ink-red-8);
   border: 1px solid var(--outline-red-2);
 }
-.icon-btn.sch-delete-btn:hover:not(:disabled) { background: var(--surface-red-3); }
+.icon-btn.icon-btn-square.sch-delete-btn:hover:not(:disabled) { background: var(--surface-red-3); }
 .sch-insights {
   display: flex; gap: 6px; flex-wrap: wrap;
   padding: 8px 12px;
@@ -357,6 +364,14 @@
 }
 .pr-detail > .d-mini-head {
   border-bottom: 1px solid var(--d-border);
+}
+/* PR panel action buttons: match reference .d-btn.sm.icon-btn = 24px (D.css:731).
+   icon-btn-square defaults to --ds-control-size (28px); scope to pr-detail. */
+.pr-detail .d-mini-act { flex-shrink: 0; }
+.pr-detail .d-mini-act .icon-btn.icon-btn-square {
+  width: var(--ds-btn-height-sm);
+  height: var(--ds-btn-height-sm);
+  flex: 0 0 var(--ds-btn-height-sm);
 }
 /* Repo chip in page head (fragment.html:41-48) */
 .pr-repo-chip {

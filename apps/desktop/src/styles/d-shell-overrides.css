@@ -33,10 +33,6 @@
  * ──────────────────────────────────────────────────────────────────────────── */
 
 /* ── Sidebar: hide PROJECTS section + version label ── */
-/* The PROJECTS section container has data-sidebar-section="projects" (Sidebar.tsx:2583).
- * Individual project items have class .project-group on a nested section. */
-/* Hide toolbar label + ALL subsequent siblings (project entries div + sidebar footer).
- * Sidebar.tsx:2581 — projects toolbar has the attr; the project-entries div comes right after. */
 [data-sidebar-section="projects"],
 [data-sidebar-section="projects"] ~ * { display: none !important; }
 /* Hide the build-version footer for all D layouts (D1/D2 show bench chip in topbar) */
@@ -47,14 +43,12 @@
 /* ── D3 island: hide session-groups and sessions toolbar (replaced by d3-sb-header) ── */
 :root[data-nav-layout="island"] .sidebar-session-groups { display: none; }
 :root[data-nav-layout="island"] .sidebar-list-toolbar[data-sidebar-section="sessions"] { display: none; }
-/* D3 island: pinned thread rows replaced by d3-sb-pinned-pages icon buttons → hide the
-   duplicate .sidebar-pinned-sessions so sessions get the full middle space. */
 :root[data-nav-layout="island"] .sidebar-pinned-sessions { display: none; }
-/* D3 island: standalone session list fills the space between bench card and pinned pages. */
-:root[data-nav-layout="island"] .sidebar-standalone-sessions { flex: 1 1 auto; min-height: 0; }
+:root[data-nav-layout="island"] .sidebar-standalone-sessions { flex: 0 1 auto; min-height: 0; }
 :root[data-nav-layout="island"] .sidebar-session-group-body.standalone {
+  flex: 0 1 auto;
   max-height: none;
-  flex: 1 1 auto;
+  padding: 0 4px;
 }
 
 /* ── D3 island: bench card name row — flex so chevron floats right ── */
@@ -67,7 +61,7 @@
 
 /* ── D3 island: session row timestamps — always visible; kebab on hover only ── */
 :root[data-nav-layout="island"] .thread-item-time {
-  font-size: 11px;
+  font-size: var(--d-text-xs);
   color: var(--ink-gray-4);
   white-space: nowrap;
   flex-shrink: 0;
@@ -76,13 +70,238 @@
 :root[data-nav-layout="island"] .thread-item:hover .thread-item-more { display: flex; }
 :root[data-nav-layout="island"] .thread-item:hover .thread-item-time { display: none; }
 
+/* ── D3 sidebar: time group header ── */
+:root[data-nav-layout="island"] .sidebar-time-group-header {
+  padding: 8px 6px 3px;
+  font-size: var(--d-text-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: .04em;
+}
+
+/* ── D3 pinned pages: hairline + tighter rows ── */
+:root[data-nav-layout="island"] .d3-sb-pinned-pages {
+  margin: 6px 10px 0;
+  border-top: 1px solid var(--d-border);
+}
+:root[data-nav-layout="island"] .d3-sb-pinned-pages > .sidebar-list-toolbar { padding: 12px 4px 4px; }
+:root[data-nav-layout="island"] .d3-sb-pinned-list { padding: 0 0 6px; }
+:root[data-nav-layout="island"] .d3-sb-pinned-row { gap: 6px; padding: 0 4px; }
+:root[data-nav-layout="island"] .d3-sb-pinned-row > svg { color: var(--ink-gray-4); }
+:root[data-nav-layout="island"] .d3-sb-pinned-name { flex: 0 1 auto; }
+:root[data-nav-layout="island"] .d3-sb-pinned-sub { font-size: inherit; color: inherit; }
+
+/* ── D1/D2: chat canvas backdrop + floating session panel ──
+ * Design: three d-panels side-by-side on gray canvas with 12px gutters.
+ * Sessions = 280px left panel; Activity = 300px right panel. */
+:root[data-nav-layout="tabs"] .app-chat-shell:has(.chat-surface) {
+  background: var(--d-canvas-bg);
+}
+:root[data-nav-layout="tabs"] .main-pane:has(> .chat-surface) {
+  margin: var(--d-gap);
+  border-radius: var(--d-r);
+  border: 1px solid var(--outline-elevation-1);
+  box-shadow: var(--elevation-base);
+}
+:root[data-theme="dark"][data-nav-layout="tabs"] .main-pane:has(> .chat-surface) {
+  background: var(--surface-elevation-1);
+  border-color: var(--outline-gray-2);
+}
+
+/* Sessions sidebar panel (D1/D2): fixed 280px, floating card */
+:root:is([data-nav-layout="tabs"], [data-nav-layout="rail"]) .sidebar {
+  --ds-sidebar-width: var(--d-sessions-w);
+  width: var(--d-sessions-w);
+  flex: 0 0 var(--d-sessions-w);
+  max-width: var(--d-sessions-w);
+  height: auto;
+  margin: var(--d-gap) 0 var(--d-gap) var(--d-gap);
+  border-radius: var(--d-r);
+  border: 1px solid var(--outline-elevation-1);
+  box-shadow: var(--elevation-base);
+  overflow: hidden;
+}
+:root:is([data-nav-layout="tabs"], [data-nav-layout="rail"]) .sidebar.sidebar-surface,
+:root[data-platform="darwin"]:is([data-nav-layout="tabs"], [data-nav-layout="rail"]) .sidebar.sidebar-surface {
+  background-color: var(--surface-elevation-1);
+  background-image: none;
+}
+:root[data-theme="dark"]:is([data-nav-layout="tabs"], [data-nav-layout="rail"]) .sidebar {
+  border-color: var(--outline-gray-2);
+}
+:root:is([data-nav-layout="tabs"], [data-nav-layout="rail"]) .sidebar-header,
+:root:is([data-nav-layout="tabs"], [data-nav-layout="rail"]) .sidebar-resize-handle,
+:root:is([data-nav-layout="tabs"], [data-nav-layout="rail"]) .sidebar-list-toolbar[data-sidebar-section="sessions"] .sidebar-menu-wrap {
+  display: none;
+}
+:root:is([data-nav-layout="tabs"], [data-nav-layout="rail"]) .sidebar-body {
+  padding: 0;
+}
+
+/* Mini-head: "Sessions  12  +" */
+:root:is([data-nav-layout="tabs"], [data-nav-layout="rail"]) .sidebar-list-toolbar[data-sidebar-section="sessions"] {
+  height: var(--d-mini-h);
+  min-height: var(--d-mini-h);
+  flex: 0 0 var(--d-mini-h);
+  gap: 6px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--d-border);
+  background: var(--surface-gray-1);
+}
+:root[data-theme="dark"]:is([data-nav-layout="tabs"], [data-nav-layout="rail"]) .sidebar-list-toolbar[data-sidebar-section="sessions"] {
+  background: var(--surface-elevation-2);
+  border-color: var(--outline-gray-2);
+}
+:root:is([data-nav-layout="tabs"], [data-nav-layout="rail"]) .sidebar-standalone-sessions .sidebar-list-label {
+  flex: 1;
+  font-size: var(--d-text);
+  font-weight: 600;
+  color: var(--ink-gray-8);
+}
+:root:is([data-nav-layout="tabs"], [data-nav-layout="rail"]) .sidebar-standalone-sessions .sidebar-session-count {
+  margin: 0;
+  height: 16px;
+  padding: 0 5px;
+  border-radius: 8px;
+  background: var(--surface-gray-2);
+  color: var(--ink-gray-4);
+  font-size: var(--d-text-xs);
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+}
+:root:is([data-nav-layout="tabs"], [data-nav-layout="rail"]) .sidebar-standalone-sessions .sidebar-session-search {
+  height: 26px;
+  flex: 0 0 26px;
+  gap: 6px;
+  margin: 6px 6px 2px;
+  padding: 0 8px;
+  border-radius: 6px;
+}
+:root:is([data-nav-layout="tabs"], [data-nav-layout="rail"]) .sidebar-session-search-input {
+  font-size: var(--d-text-sm);
+}
+:root:is([data-nav-layout="tabs"], [data-nav-layout="rail"]) .sidebar-session-group-body.standalone {
+  padding: 0 6px 6px;
+}
+:root:is([data-nav-layout="tabs"], [data-nav-layout="rail"]) .sidebar-time-group-header {
+  padding: 8px 4px 3px;
+  font-size: var(--d-text-xs);
+  font-weight: 600;
+  letter-spacing: .04em;
+}
+
+/* Session rows (D.css .d-session-item) — all layouts */
+.sidebar-body .thread-item {
+  min-height: 0;
+  gap: 0;
+  margin: 1px 0;
+  padding: 0 10px 0 0;
+  border-radius: var(--d-r-ctrl);
+  color: var(--ink-gray-7);
+}
+.sidebar-body .thread-item-main {
+  gap: 7px;
+  padding: 7px 0 7px 10px;
+}
+.sidebar-body .thread-item-title {
+  font-size: var(--d-text);
+}
+.sidebar-body .thread-item:hover {
+  background: var(--surface-gray-2);
+  color: var(--ink-gray-9);
+}
+.sidebar-body .thread-item.active {
+  background: var(--da-sub);
+  box-shadow: none;
+  color: var(--da-txt);
+}
+.sidebar-body .thread-item.active .thread-item-title {
+  font-weight: var(--font-weight-medium);
+}
+/* Session kind icon (D .d-session-icon) */
+.thread-item-kind {
+  flex-shrink: 0;
+  color: var(--ink-gray-4);
+}
+.sidebar-body .thread-item.active .thread-item-kind { color: var(--da-txt); }
+/* Session age (D .d-session-time) — all layouts */
+.sidebar-body .thread-item-time {
+  font-size: var(--d-text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-gray-3);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sidebar-body .thread-item.active .thread-item-time {
+  color: var(--da-txt);
+  opacity: .7;
+}
+/* Row kebab appears in place of the age on hover / keyboard focus */
+.sidebar-body .thread-item .thread-item-more { display: none; }
+.sidebar-body .thread-item:is(:hover, :focus-within) .thread-item-more,
+.sidebar-body .thread-item .thread-item-more[aria-expanded="true"] { display: inline-flex; }
+.sidebar-body .thread-item:is(:hover, :focus-within) .thread-item-time { display: none; }
+
+/* Activity panel: floating d-panel right of conversation (D1/D2) */
+:root:is([data-nav-layout="tabs"], [data-nav-layout="rail"]) .work-panel {
+  height: auto;
+  margin: var(--d-gap) var(--d-gap) var(--d-gap) 0;
+  overflow: hidden;
+  background: var(--surface-elevation-1);
+}
+:root[data-theme="dark"]:is([data-nav-layout="tabs"], [data-nav-layout="rail"]) .work-panel {
+  border-color: var(--outline-gray-2);
+}
+
+/* D3: Activity panel inside the island card */
+:root[data-nav-layout="island"] .main-pane:has(+ .work-panel:not(.is-exiting)) {
+  margin-right: 0;
+  border-right: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  box-shadow: none;
+}
+:root[data-nav-layout="island"] .main-pane + .work-panel {
+  width: calc(var(--work-panel-width) + var(--d-gap));
+  flex-basis: calc(var(--work-panel-width) + var(--d-gap));
+  height: auto;
+  margin: var(--d-gap) var(--d-gap) var(--d-gap) 0;
+  padding: var(--d-gap) var(--d-gap) var(--d-gap) 0;
+  border: 1px solid var(--outline-elevation-1);
+  border-left: 0;
+  border-radius: 0 var(--d-r) var(--d-r) 0;
+  box-shadow: none;
+  background: var(--d-canvas-bg);
+}
+:root[data-theme="dark"][data-nav-layout="island"] .main-pane + .work-panel {
+  background: var(--surface-elevation-1);
+  border-color: var(--outline-gray-2);
+}
+:root[data-nav-layout="island"] .main-pane + .work-panel > .work-panel-main {
+  overflow: hidden;
+  border: 1px solid var(--outline-elevation-1);
+  border-radius: var(--d-r);
+  box-shadow: var(--elevation-base);
+  background: var(--surface-elevation-1);
+}
+:root[data-theme="dark"][data-nav-layout="island"] .main-pane + .work-panel > .work-panel-main {
+  border-color: var(--outline-gray-2);
+  background: var(--surface-elevation-2);
+}
+
+/* Work panel header: mini-head (title only; add/expand appear on hover) */
+.wp-mini-head { padding: 0 8px 0 10px; }
+.wp-mini-title {
+  font-size: var(--d-text);
+  font-weight: 600;
+  color: var(--ink-gray-8);
+}
+.wp-mini-acts { opacity: 0; transition: opacity var(--motion-duration-fast) var(--motion-ease-out); }
+.wp-mini-head:is(:hover, :focus-within) .wp-mini-acts { opacity: 1; }
+
 /* ── Composer: simplified toolbar ── */
-/* Design shows: attach | folder | ○ Supervised · model · bench | send.
- * Hide Plan mode-chip and sparkle/enhance buttons (not in reference). */
 .composer-mode-chip { display: none !important; }
 .composer-enhance-btn { display: none !important; }
 .composer-enhance-undo { display: none !important; }
-/* Compact the permission picker label so it fits in the toolbar row */
 .composer-permission .mode-chip .text-sm {
   font-size: 11px;
   max-width: 140px;
@@ -91,43 +310,151 @@
   white-space: nowrap;
 }
 
-/* ── PermissionCard: simplified to match d-approval-box reference ──
- * ref: fragment.html:395-408 .d-approval-box — title + desc + 3 inline buttons.
- * Hide non-design elements; make action row horizontal. */
-.permission-card-meta { display: none !important; }
-.permission-card-prompt { display: none !important; }
-.permission-card-args { display: none !important; }
-.permission-card-timer-bar { display: none !important; }
-.permission-risk { display: none !important; }
+/* ── PermissionCard = D.css .d-approval-box ── */
+.permission-card-meta,
+.permission-card-prompt,
+.permission-card-args,
+.permission-card-timer-bar,
+.permission-risk,
 .permission-action-hint { display: none !important; }
-.permission-card-title { color: var(--ink-amber-7) !important; }
-.permission-card-reason { color: var(--ink-amber-7) !important; }
+.permission-card,
+.permission-card:is(.risk-high, .risk-medium, .risk-low) {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  width: auto;
+  margin: 8px 0 8px 36px;
+  padding: 10px 12px;
+  border: 1px solid var(--outline-amber-3);
+  border-radius: var(--d-r-ctrl);
+  background: var(--surface-amber-2);
+  box-shadow: none;
+  overflow: visible;
+}
+.permission-card-header { align-items: center; gap: 6px; }
+.permission-card-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-amber-9);
+  font-size: var(--d-text);
+  font-weight: 500;
+  margin: 0;
+}
+.permission-card-reason {
+  margin: 0;
+  color: var(--ink-amber-8);
+  font-size: var(--d-text-sm);
+  line-height: 1.45;
+}
+.permission-card-reason code {
+  font-family: var(--font-mono);
+  font-size: var(--d-text-sm);
+}
 .permission-card-actions {
   flex-direction: row !important;
-  flex-wrap: wrap !important;
-  gap: 8px !important;
-  margin-top: 10px !important;
+  gap: 6px !important;
+  margin: 0 !important;
 }
-.permission-action-item {
-  flex-direction: row !important;
-}
-.permission-action-item .btn {
+.permission-action-item { flex-direction: row !important; }
+.permission-card-actions .btn {
+  height: 24px;
   width: auto !important;
-  text-align: center !important;
-  justify-content: center !important;
+  padding: 0 7px !important;
+  border-radius: var(--d-r-ctrl) !important;
+  font-size: var(--d-text-sm) !important;
 }
-.permission-card { border: 1px solid var(--outline-amber-2) !important; }
+.permission-card-actions .btn-secondary {
+  background: var(--surface-gray-2);
+  border: 1px solid var(--d-border-ctrl);
+  color: var(--ink-gray-8);
+}
+.permission-card-actions .permission-deny-btn.btn-ghost { color: var(--ink-gray-7) !important; }
+.permission-card-actions .permission-deny-btn.btn-ghost:hover:not(:disabled) {
+  background: var(--surface-gray-2) !important;
+  color: var(--ink-gray-9) !important;
+}
 
-/* ── Tool activity header: hide "Processing · Ns · N tools" disclosure header ──
- * ref: D1/D2/D3 show tool rows directly; no disclosure header in design. */
+/* ── Tool activity header: hide "Processing · Ns · N tools" ── */
 .tool-activity-header { display: none !important; }
 
-/* ── Tool row: running pill uses amber (design d-pill.amber) ── */
-.tool-row-state.is-running { color: var(--ink-amber-8) !important; }
-.tool-row-state.is-running .tool-row-state-dot {
-  background: var(--ink-amber-7) !important;
-  animation: none !important;
+/* ── Tool row (D.css .d-tool-name + .d-pill 16px): "bash ● done" ── */
+.tool-row-name-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
+.tool-row-name-line .tool-row-name {
+  font-size: var(--d-text);
+  color: var(--ink-gray-8);
+}
+.tool-row-name.running::after { display: none; }
+.tool-row-name-line .tool-row-state {
+  height: 16px;
+  gap: 5px;
+  margin: 0;
+  padding: 0 5px;
+  border: 1px solid var(--d-border);
+  border-radius: 10px;
+  background: var(--surface-gray-2);
+  color: var(--ink-gray-6);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: lowercase;
+}
+.tool-row-name-line .tool-row-state.is-done {
+  background: var(--surface-green-2);
+  border-color: var(--outline-green-2);
+  color: var(--ink-green-8);
+}
+.tool-row-name-line .tool-row-state.is-done .tool-row-state-dot { background: var(--green-500); }
+.tool-row-name-line .tool-row-state.is-running {
+  background: var(--surface-amber-2);
+  border-color: var(--outline-amber-2);
+  color: var(--ink-amber-8);
+}
+.tool-row-name-line .tool-row-state.is-running .tool-row-state-dot {
+  background: var(--amber-500);
+  animation: none;
+}
+.tool-row-name-line .tool-row-status { margin: 0; }
+/* Disclosure caret + command copy on hover only */
+.tool-row .tool-row-caret,
+.tool-row .tool-row-head-copy { opacity: 0; }
+.tool-row:is(:hover, :focus-within) .tool-row-caret,
+.tool-row:is(:hover, :focus-within) .tool-row-head-copy,
+.tool-row.open .tool-row-caret { opacity: 1; }
 
-/* ── Tool row: lowercase pill text (done → "done", Running → "running") ── */
-.tool-row-state { text-transform: lowercase !important; }
+/* ── Turn "bash · output" block (D.css .d-code-block) ── */
+.turn-run-output {
+  margin: 10px 0 8px;
+  overflow: hidden;
+  border: 1px solid var(--d-border-ctrl);
+  border-radius: var(--d-r-ctrl);
+  background: var(--surface-gray-1);
+}
+.turn-run-output .d-code-block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--d-border);
+  background: var(--surface-gray-2);
+  color: var(--ink-gray-5);
+  font-size: var(--d-text-xs);
+  font-weight: 500;
+}
+.turn-run-output .d-code-block-head .copy-btn {
+  min-height: 22px;
+  padding: 0 5px;
+}
+.turn-run-output pre {
+  margin: 0;
+  padding: 10px 12px;
+  overflow-x: auto;
+  color: var(--ink-gray-8);
+  font-family: var(--font-mono);
+  font-size: var(--d-text-sm);
+  line-height: 1.6;
+}

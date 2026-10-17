@@ -177,14 +177,14 @@
 :root {
   --d-terminal-bg: #181818;  /* near-black background */
   --d-terminal-fg: #d4d4d4;  /* light-gray foreground */
-  /* T14: log-line tone colours (bench terminal, always-dark surface) */
-  --d-term-ts:    #4a5568;  /* timestamp — muted blue-gray */
-  --d-term-proc:  #63b3ed;  /* process label — steel blue */
-  --d-term-text:  #d1d5db;  /* plain log text */
-  --d-term-green: #6ee7b7;  /* "running on http" — emerald */
-  --d-term-amber: #fbbf24;  /* warnings / reloading — amber */
-  --d-term-red:   #f87171;  /* errors / exceptions — rose */
-  --d-term-muted: #6b7280;  /* lines with a proc but no special tone */
+  /* bench log line palette (pages-d/bench/fragment-detail.html .bfd-log-*) */
+  --d-term-ts:    #4a5568;
+  --d-term-proc:  #63b3ed;
+  --d-term-text:  #d1d5db;
+  --d-term-green: #6ee7b7;
+  --d-term-amber: #fbbf24;
+  --d-term-red:   #f87171;
+  --d-term-muted: #6b7280;
 }
 
 /* Dark theme: remap violet to FileBird dark blues */
