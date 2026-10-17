@@ -2351,6 +2351,7 @@ export const ptBR = {
     cadenceDaily: "Diário",
     cadenceWeekly: "Semanal",
     cadenceMonthly: "Mensal",
+    cadenceCron: "Cron personalizado",
     enabled: "Ativada",
     disabled: "Desativada",
     lastFailed: "Último: falhou",

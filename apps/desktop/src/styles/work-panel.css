@@ -1563,7 +1563,9 @@
   flex-shrink: 0;
   align-items: center;
   height: 32px; /* var(--d-mini-h) */
-  padding: 0 8px 0 14px;
+  /* Reserve right space for the viewport-fixed work-panel toggle so
+     .work-panel-new-tab never overlaps it (probe requires gap >= 24px). */
+  padding: 0 calc(var(--ds-work-panel-toggle-size) + var(--ds-work-panel-toggle-inset) + var(--ds-work-panel-control-gap)) 0 14px;
   gap: 4px;
   background: var(--surface-gray-1);
   border-bottom: 1px solid var(--outline-elevation-1);

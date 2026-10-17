@@ -2412,6 +2412,7 @@ sklm: {
     cadenceDaily: "매일",
     cadenceWeekly: "매주",
     cadenceMonthly: "매월",
+    cadenceCron: "사용자 정의 Cron",
     enabled: "활성화됨",
     disabled: "비활성화됨",
     lastFailed: "마지막: 실패",
