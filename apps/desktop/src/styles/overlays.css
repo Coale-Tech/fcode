@@ -114,9 +114,6 @@
 .search-item.active {
   background: var(--da-sub);
   color: var(--da-txt);
-  /* R11i: 2px offset focus outline */
-  outline: 2px solid var(--da-bdr);
-  outline-offset: -2px;
 }
 
 .search-item-icon {

@@ -17,11 +17,13 @@ import {
   IconFileBird,
   IconFileText,
   IconNewSession,
+  IconPin,
   IconPullRequest,
   IconRaven,
   IconSearch,
   IconSettings,
   IconSliders,
+  IconTerminal,
 } from "./icons";
 
 /** Navigable pages surfaced by the global search alongside sessions. */
@@ -462,6 +464,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
               }
             }}
           />
+          {query.trim() && <span className="d-kbd search-input-esc">Esc</span>}
         </div>
         <div
           id="global-search-results"
@@ -539,16 +542,17 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
               </div>
               {paletteSessions.map((session, index) => {
                 const optionIndex = paletteSessionsBase + index;
+                const isActive = active === optionIndex;
                 const relTs = session.updatedAt
                   ? (() => {
                       const diffMs = Date.now() - Date.parse(session.updatedAt);
                       const diffH = Math.floor(diffMs / 3_600_000);
                       const diffM = Math.floor(diffMs / 60_000);
                       return diffH >= 24
-                        ? `${Math.floor(diffH / 24)}d`
+                        ? `${Math.floor(diffH / 24)}d ago`
                         : diffH > 0
-                        ? `${diffH}h`
-                        : `${diffM}m`;
+                        ? `${diffH}h ago`
+                        : `${diffM}m ago`;
                     })()
                   : "";
                 return (
@@ -557,8 +561,8 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
                     id={`global-search-option-${optionIndex}`}
                     type="button"
                     role="option"
-                    aria-selected={active === optionIndex}
-                    className={`search-item ${active === optionIndex ? "active" : ""}`}
+                    aria-selected={isActive}
+                    className={`search-item ${isActive ? "active" : ""}`}
                     onMouseEnter={() => setActive(optionIndex)}
                     onClick={() => {}}
                   >
@@ -567,6 +571,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
                     {relTs ? (
                       <span className="search-item-meta">
                         <span className="search-item-project">{relTs}</span>
+                        {isActive && <span className="d-kbd">↵</span>}
                       </span>
                     ) : null}
                   </button>
@@ -582,7 +587,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
               </div>
               {fileHits.map((file, index) => {
                 const optionIndex = filesBase + index;
-                const fileName = file.path.split("/").pop() ?? file.path;
+                const fileName = file.path;
                 return (
                   <button
                     key={file.path}
@@ -671,6 +676,10 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
               </div>
               {commandHits.map((command, index) => {
                 const optionIndex = commandsBase + index;
+                const cmd = command as typeof command & { shortcut?: string[] };
+                const CmdIcon = command.source === "builtin" ? IconTerminal
+                              : command.source === "extension" ? IconPin
+                              : IconSliders;
                 return (
                   <button
                     key={command.id}
@@ -682,10 +691,20 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
                     onMouseEnter={() => setActive(optionIndex)}
                     onClick={() => void runCommand(command)}
                   >
-                    <IconSliders size={15} className="search-item-icon" />
+                    <CmdIcon size={15} className="search-item-icon" />
                     <span className="search-item-title">
                       {highlightMatch(command.title, query)}
                     </span>
+                    {(command.category || cmd.shortcut) && (
+                      <span className="search-item-meta">
+                        {command.category && (
+                          <span className="search-item-project">{command.category}</span>
+                        )}
+                        {cmd.shortcut?.map((key, ki) => (
+                          <span key={ki} className="d-kbd">{key}</span>
+                        ))}
+                      </span>
+                    )}
                     {command.source === "plugin" && (
                       <span className="search-item-badge">{t("plugins.title")}</span>
                     )}

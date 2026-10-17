@@ -1334,20 +1334,21 @@ export function installCaptureRig(): CaptureRig {
         }
         await useAppStore.getState().refreshSessions();
         // All session titles (visible + archived) matching variant-D1/D2/D3 reference.
-        // Created oldest-first; count=12 (8 visible in groups + 4 archived).
+        // Created oldest-first; count=12 (6 visible in TODAY+YESTERDAY + 6 archived).
+        // No THIS WEEK sessions — island sidebar shows PINNED PAGES right after YESTERDAY.
         const allTitles = [
-          "Set up CI pipeline for ERPNext",  // archived
-          "Migrate legacy plugin API",        // archived
-          "Rewrite notification service",     // archived
-          "Fix bench restart on M1",          // archived
-          "Debug slow stock valuation query", // THIS WEEK (4d)
-          "Set up coale_v16 from scratch",    // THIS WEEK (3d)
-          "ERPNext payroll period config",    // YESTERDAY
-          "Review PR #224 leave approvals",   // YESTERDAY
-          "Migrate Raven to frappe-ui v2",    // YESTERDAY
-          "Fix duplicate bench start bug",    // TODAY
-          "Redesign settings plugin section", // TODAY
-          "Sync ERPNext code module",         // TODAY — selected
+          "Set up CI pipeline for ERPNext",        // archived
+          "Migrate legacy plugin API",             // archived
+          "Rewrite notification service",          // archived
+          "Fix bench restart on M1",              // archived
+          "Debug slow stock valuation query",     // archived (formerly THIS WEEK)
+          "Set up coale_v16 from scratch",        // archived (formerly THIS WEEK)
+          "ERPNext payroll period config",        // YESTERDAY
+          "Review PR #224 leave approvals",       // YESTERDAY
+          "Migrate Raven to frappe-ui v2",        // YESTERDAY
+          "Fix duplicate bench start bug",        // TODAY
+          "Redesign settings plugin section",     // TODAY
+          "Sync ERPNext code module",             // TODAY — selected
         ];
         const keepTitles = new Set(allTitles);
         for (const s of useAppStore.getState().sessions || []) {
@@ -1397,10 +1398,9 @@ export function installCaptureRig(): CaptureRig {
           "Migrate Raven to frappe-ui v2":     S - D + 14 * H,
           "Review PR #224 leave approvals":    S - D + 12 * H,
           "ERPNext payroll period config":     S - D + 10 * H,
-          // THIS WEEK: Set up 3d old (newest → appears first), Debug 4d old (second)
-          "Set up coale_v16 from scratch":     S - 3 * D,
-          "Debug slow stock valuation query":  S - 4 * D,
-          // Archived (beyond THIS WEEK cutoff; counted in total but hidden)
+          // Archived (beyond 30d cutoff; counted in total but not shown in groups)
+          "Set up coale_v16 from scratch":     S - 8 * D,
+          "Debug slow stock valuation query":  S - 9 * D,
           "Fix bench restart on M1":           S - 10 * D,
           "Rewrite notification service":      S - 11 * D,
           "Migrate legacy plugin API":         S - 12 * D,
@@ -1531,10 +1531,14 @@ export function installCaptureRig(): CaptureRig {
           path: "apps/erpnext/erpnext/accounts/doctype/payment_entry/payment_entry.py",
         },
         risk: "medium",
+        // Long reason for transcript PermissionCard (matches D1/D2/D3 reference).
         reason:
-          "12 lines. Adds remote sync helper via bench socket.",
+          "Claude wants to write 12 lines to payment_entry.py \u2014 adding a sync helper that calls frappe.get_doc on the remote bench socket. Review the diff before allowing.",
         receivedAt: Date.now() + 3_600_000, // 1h in future — prevents auto-deny timer during capture
       };
+      // Short desc for Activity panel card (OmpActivityTab reads __PI_APPROVAL_DESC__).
+      (window as Window & { __PI_APPROVAL_DESC__?: string }).__PI_APPROVAL_DESC__ =
+        "Edit payment_entry.py \u2014 12 lines. Adds remote sync helper via bench socket.";
       // Open Activity tab so the right panel shows Pending approval box.
       useAppStore.setState({
         workPanelContexts: {
@@ -1586,10 +1590,12 @@ export function installCaptureRig(): CaptureRig {
         { id: "ev-perm",    name: "Approval requested", target: "edit payment_entry.py",     status: "running", durationMs: undefined, timestamp: "10:43" },
       ];
       // Scroll transcript to top so the user message (Josh Kim, 10:42 AM) is visible.
-      setTimeout(() => {
+      // Multi-retry: app auto-scroll-to-bottom may fire after mount at various intervals.
+      const _scrollToTop = () => {
         (document.querySelector('[data-scroll-owner="transcript"]') as HTMLElement | null)
           ?.scrollTo({ top: 0, behavior: "instant" });
-      }, 150);
+      };
+      for (const ms of [80, 200, 400, 700, 1200, 2000]) setTimeout(_scrollToTop, ms);
     },
     clearPendingPermissions: () => {
       if (!window.__PI_CAPTURE__) return;
