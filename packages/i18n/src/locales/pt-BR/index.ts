@@ -2561,6 +2561,9 @@ export const ptBR = {
     empty: "Nenhuma conversa correspondente",
     pages: "Páginas",
     commands: "Comandos",
+    sessions: "Sessões",
+    files: "Arquivos",
+    benches: "Benches",
     today: "Hoje",
     yesterday: "Ontem",
     previous7Days: "Últimos 7 dias",
@@ -2571,6 +2574,7 @@ export const ptBR = {
     legendOpen: "abrir",
     legendClose: "fechar",
     legendToOpen: "para abrir",
+    legendPreview: "visualizar",
   },
   plugins: {
     title: "Extensões",

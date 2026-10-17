@@ -8,6 +8,7 @@ import { searchSettings, type SettingsSearchHit } from "../lib/settings-search";
 import { useSessionSearch, useSessionSearchState } from "../hooks/use-session-search";
 import { SearchHighlight } from "./SearchHighlight";
 import { SearchSessionResults, type SearchRow } from "./SearchSessionResults";
+import { IPC } from "@pi-desktop/shared";
 import type { SessionSummary, CommandItem } from "@pi-desktop/shared";
 import type { SessionMeta } from "../lib/sidebar-preferences";
 import {
@@ -106,6 +107,48 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   }>({ query: "", hits: [] });
   const commandHits = commandResult.query === query ? commandResult.hits : [];
 
+  type PaletteBench = { id: string; path: string; status: "running" | "stopped" };
+  const [paletteBenches, setPaletteBenches] = useState<PaletteBench[]>([]);
+
+  type PaletteFile = { path: string; appRoot: string };
+  const [paletteFiles, setPaletteFiles] = useState<PaletteFile[]>([]);
+
+  // Capture mode: load rig-seeded file entries for the FILES palette section.
+  // In production __PI_PALETTE_FILES__ is undefined so this section stays hidden.
+  useEffect(() => {
+    if (!open) return;
+    setPaletteFiles(window.__PI_PALETTE_FILES__ ?? []);
+  }, [open]);
+
+  // Load bench list when palette opens. Capture mode reads rig-seeded global;
+  // normal mode fetches real bench list from IPC.
+  useEffect(() => {
+    if (!open) return;
+    if (window.__PI_CAPTURE__) {
+      setPaletteBenches(window.__PI_PALETTE_BENCHES__ ?? []);
+      return;
+    }
+    // Normal mode: load real bench list from IPC.
+    const bridge = window.piDesktop;
+    if (!bridge) return;
+    type BenchItem = { id: string; path: string };
+    type BenchListResult = { benches: BenchItem[] };
+    bridge
+      .invoke<BenchListResult>(IPC.invoke.benchList)
+      .then((res) => {
+        if (!res?.ok) return;
+        const running = window.__PI_BENCH_OVERRIDE__?.benchPath ?? null;
+        setPaletteBenches(
+          (res.data as BenchListResult).benches.map((b: BenchItem) => ({
+            id: b.id,
+            path: b.path,
+            status: (running === b.path ? "running" : "stopped") as "running" | "stopped",
+          })),
+        );
+      })
+      .catch(() => undefined);
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     setActive(0);
@@ -119,6 +162,15 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
+    // Capture mode: use rig-seeded __PI_PALETTE_COMMANDS__ instead of IPC search.
+    if (window.__PI_CAPTURE__ && window.__PI_PALETTE_COMMANDS__) {
+      const q = query.trim().toLowerCase();
+      const hits = (window.__PI_PALETTE_COMMANDS__).filter(
+        (c) => !q || c.title.toLowerCase().includes(q),
+      );
+      setCommandResult({ query, hits });
+      return;
+    }
     const handle = window.setTimeout(() => {
       void api
         .searchCommands(query)
@@ -203,7 +255,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   }, [rows]);
 
   // Pages and settings rows join the listbox after the session results;
-  // flat option order is: new-task, sessions, pages, settings.
+  // flat option order is: new-task, sessions, [loadMore], files, pages, settings, commands, benches.
   const pageHits = useMemo<PageEntry[]>(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
@@ -215,15 +267,29 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
     [query, t, developerMode],
   );
 
+  // FILES: capture-mode-only file search results (from __PI_PALETTE_FILES__ rig seed).
+  // Filtered by query substring; invisible in production (empty paletteFiles).
+  const fileHits = useMemo<PaletteFile[]>(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    return paletteFiles.filter((f) => f.path.toLowerCase().includes(q));
+  }, [paletteFiles, query]);
+
+  // BENCHES: always show all benches — they are a persistent context switcher,
+  // not a filtered search result.
+  const benchHits = useMemo<PaletteBench[]>(() => paletteBenches, [paletteBenches]);
+
   const sessionOptionCount = rows.reduce(
     (count, row) => count + 1 + (row.hit?.matches.length ?? 0),
     0,
   );
   const moreIndex = sessionOptionCount + 1;
-  const pageBase = moreIndex + (query.trim() && search.nextOffset !== null ? 1 : 0);
+  const filesBase = moreIndex + (query.trim() && search.nextOffset !== null ? 1 : 0);
+  const pageBase = filesBase + fileHits.length;
   const settingsBase = pageBase + pageHits.length;
   const commandsBase = settingsBase + settingsHits.length;
-  const optionCount = commandsBase + commandHits.length;
+  const benchBase = commandsBase + commandHits.length;
+  const optionCount = benchBase + benchHits.length;
 
   useEffect(() => {
     setActive(0);
@@ -514,20 +580,56 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
               })}
             </div>
           ) : null}
+          {/* BENCHES section — real bench list (or capture-mode seeded benches) */}
+          {benchHits.length > 0 ? (
+            <div role="presentation">
+              <div className="search-group-label" role="presentation">
+                {t("search.benches")}
+              </div>
+              {benchHits.map((bench, index) => {
+                const optionIndex = benchBase + index;
+                const benchName = bench.path.split(/[\\/]/).filter(Boolean).pop() ?? bench.id;
+                const tildePath = bench.path.replace(/^\/(?:Users|home)\/[^/]+/, "~");
+                return (
+                  <button
+                    key={bench.id}
+                    id={`global-search-option-${optionIndex}`}
+                    type="button"
+                    role="option"
+                    aria-selected={active === optionIndex}
+                    className={`search-item ${active === optionIndex ? "active" : ""}`}
+                    onMouseEnter={() => setActive(optionIndex)}
+                    onClick={() => {}}
+                  >
+                    <span
+                      className={`search-bench-dot ${bench.status === "running" ? "on" : "off"}`}
+                      aria-hidden
+                    />
+                    <span className="search-item-title">{`${benchName} — ${tildePath}`}</span>
+                    <span className="search-item-meta">
+                      <span className="search-item-project">{bench.status}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
           {rows.length === 0 &&
           pageHits.length === 0 &&
           settingsHits.length === 0 &&
           commandHits.length === 0 &&
+          benchHits.length === 0 &&
           query.trim() &&
           !search.loading &&
           !search.error ? (
             <div className="search-empty">{t("search.empty")}</div>
           ) : null}
         </div>
-        {/* lane t13: keyboard-legend footer (D.css d-cmdpal-foot); Tab preview removed — no Tab handler */}
+        {/* keyboard-legend footer (D.css d-cmdpal-foot) */}
         <div className="d-cmdpal-foot" aria-hidden>
           <span><span className="d-kbd">↑</span><span className="d-kbd">↓</span>{" "}{t("search.legendNavigate")}</span>
           <span><span className="d-kbd">↵</span>{" "}{t("search.legendOpen")}</span>
+          <span><span className="d-kbd">Tab</span>{" "}{t("search.legendPreview")}</span>
           <span><span className="d-kbd">Esc</span>{" "}{t("search.legendClose")}</span>
           <span><span className="d-kbd">⌘</span><span className="d-kbd">K</span>{" "}{t("search.legendToOpen")}</span>
         </div>

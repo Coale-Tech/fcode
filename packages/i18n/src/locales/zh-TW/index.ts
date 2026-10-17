@@ -2596,6 +2596,9 @@ sklm: {
     empty: "沒有匹配的對話",
     pages: "頁面",
     commands: "命令",
+    sessions: "工作階段",
+    files: "檔案",
+    benches: "開發環境",
     today: "今天",
     yesterday: "昨天",
     previous7Days: "近 7 天",
@@ -2606,6 +2609,7 @@ sklm: {
     legendOpen: "開啟",
     legendClose: "關閉",
     legendToOpen: "開啟方式",
+    legendPreview: "預覽",
   },
   plugins: {
     title: "擴充套件",

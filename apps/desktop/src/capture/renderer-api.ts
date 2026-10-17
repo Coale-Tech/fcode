@@ -10,7 +10,7 @@
  * object, so later capture calls stay synchronous as before.
  */
 import { useAppStore, type AppState, type ToastOptions } from "../stores/app-store";
-import type { AppSettings, NavLayout, SessionSummary } from "@pi-desktop/shared";
+import type { AppSettings, CommandItem, NavLayout, SessionSummary } from "@pi-desktop/shared";
 import type { CaptureRig, CaptureRigMethods } from "./capture-rig";
 
 type CaptureRigMethod = keyof CaptureRigMethods;
@@ -51,6 +51,12 @@ declare global {
     __PI_CAPTURE__?: unknown;
     /** Overrides live IPC bench-status polling for capture screenshots. */
     __PI_BENCH_OVERRIDE__?: BenchStatusOverride;
+    /** Capture-only seeded file list for the FILES palette section. */
+    __PI_PALETTE_FILES__?: Array<{ path: string; appRoot: string }>;
+    /** Capture-only seeded bench list for the BENCHES palette section. */
+    __PI_PALETTE_BENCHES__?: Array<{ id: string; path: string; status: "running" | "stopped" }>;
+    /** Capture-only seeded command list for the COMMANDS palette section. */
+    __PI_PALETTE_COMMANDS__?: CommandItem[];
     /** Capture-only seeded bench list; BenchPage.loadBenches reads this instead of IPC. */
     __PI_CAPTURE_BENCH_LIST__?: {
       benches: Array<{ id: string; path: string; version: number | "unknown"; sites: Array<{ name: string; isDefault: boolean }>; apps: string[] }>;

@@ -297,8 +297,10 @@ export function BenchPage() {
     if ((status === "starting" || status === "running") && startMsRef.current === null) {
       // Capture mode: use seeded startedAtMs so elapsed timer shows a realistic "02:47"
       // rather than 0s (which is what happens when the bench was just seeded as running).
-      const captureStart = window.__PI_CAPTURE__ && window.__PI_BENCH_OVERRIDE__?.startedAtMs;
-      startMsRef.current = captureStart ? captureStart : Date.now();
+      const captureStart: number | undefined = window.__PI_CAPTURE__
+        ? window.__PI_BENCH_OVERRIDE__?.startedAtMs
+        : undefined;
+      startMsRef.current = captureStart ?? Date.now();
     } else if (status === "stopped") {
       startMsRef.current = null;
       setElapsedLabel("");

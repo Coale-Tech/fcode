@@ -26,6 +26,7 @@ import type {
   ScheduledTask,
   ScheduledTaskRun,
   SessionSummary,
+  CommandItem,
   UiMessage,
   UserSkillRecord,
 } from "@pi-desktop/shared";
@@ -70,6 +71,8 @@ export type CaptureRigMethods = {
   clearPendingPermissions: () => void;
   seedEmptyHome: () => void;
   seedOnboardingChecklist: () => void;
+  /** Seed capture-only extras for the command palette: FILES, BENCHES and COMMANDS sections. */
+  seedCommandPaletteExtras: () => void;
   /** Intercept window.piDesktop.invoke for bench IPC channels so BenchPage shows
    *  seeded data (5 specific benches, coale_v16 running) without needing a host binary. */
   seedBenchList: () => void;
@@ -1567,6 +1570,22 @@ export function installCaptureRig(): CaptureRig {
         { id: "youre-ready", title: "You're ready", done: false },
       ];
       useAppStore.setState({ onboarding: { ...(cur ?? {}), showChecklist: true, steps } as OnboardingState });
+    },
+    seedCommandPaletteExtras: () => {
+      // Seed capture-only FILES, BENCHES and COMMANDS data for command palette shots.
+      if (!window.__PI_CAPTURE__) return;
+      window.__PI_PALETTE_FILES__ = [
+        { path: "patches/migrate_payment_entry_v15_to_v16.py", appRoot: "apps/erpnext" },
+        { path: "migrate_leave_allocation.py", appRoot: "apps/hrms" },
+      ];
+      window.__PI_PALETTE_BENCHES__ = [
+        { id: "coale_v16", path: "/Users/mac/ERPNext/coale_v16", status: "running" },
+        { id: "frappe-bench", path: "/Users/mac/ERPNext/frappe-bench", status: "stopped" },
+      ];
+      window.__PI_PALETTE_COMMANDS__ = [
+        { id: "bench-migrate-run", title: "Run bench migrate", source: "builtin" as const },
+        { id: "bench-migrate-skip", title: "bench migrate --skip-failing", source: "builtin" as const },
+      ] satisfies CommandItem[];
     },
     seedBenchStatus: (opts) => {
       if (!window.__PI_CAPTURE__) return;

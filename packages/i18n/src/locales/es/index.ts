@@ -2610,6 +2610,9 @@ sklm: {
     "empty": "No hay chats coincidentes",
     "pages": "Páginas",
     "commands": "Comandos",
+    "sessions": "Sesiones",
+    "files": "Archivos",
+    "benches": "Benches",
     "today": "Hoy",
     "yesterday": "Ayer",
     "previous7Days": "7 días anteriores",
@@ -2620,6 +2623,7 @@ sklm: {
     "legendOpen": "abrir",
     "legendClose": "cerrar",
     "legendToOpen": "para abrir",
+    "legendPreview": "vista previa",
   },
   "plugins": {
     "title": "Extensiones",
