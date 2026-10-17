@@ -1991,3 +1991,55 @@
 
 /* ── T14: BenchPage GRID_VERBS oneshot grid ── */
 .wb-oneshot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 5px; }
+
+/* ── bench fragment: bf-* classes (Design kit D, fragment.html) ── */
+.bf-wrap  { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.bf-body  { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.bf-scroll { flex: 1; overflow-y: auto; min-height: 0; }
+/* status dot (6px inline) */
+.bdot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; vertical-align: middle; margin-right: 3px; }
+.bdot.green { background: var(--green-500); }
+.bdot.gray  { background: var(--outline-gray-3); }
+.bdot.red   { background: var(--red-500); }
+.bdot.amber { background: var(--amber-500); }
+/* bench monospace path */
+.bf-path {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 11px; color: var(--ink-gray-4);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* row action cluster */
+.bf-acts { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+/* close-tab × in panel tab */
+.bf-tab-x {
+  width: 14px; height: 14px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 3px; border: none; background: transparent;
+  cursor: pointer; color: var(--ink-gray-3); margin-left: 2px; padding: 0;
+}
+.bf-tab-x:hover { background: var(--surface-gray-3); color: var(--ink-gray-6); }
+/* apps tag list */
+.bf-apps { display: flex; gap: 3px; flex-wrap: wrap; }
+.bf-app-tag {
+  font-size: 10px; height: 16px; line-height: 16px; padding: 0 5px;
+  background: var(--surface-gray-2); border-radius: 4px; color: var(--ink-gray-5);
+  white-space: nowrap;
+}
+
+/* ── d-banner (Design kit D, §19) ── */
+.d-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--d-r-ctrl, 8px);
+  border: 1px solid transparent;
+  font-size: var(--d-text, 13px);
+  line-height: 1.45;
+  margin-bottom: 10px;
+}
+.d-banner svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 1px; }
+.d-banner.info    { background: var(--surface-blue-2);   color: var(--ink-blue-8);   border-color: var(--outline-blue-2); }
+.d-banner.warn    { background: var(--surface-amber-2);  color: var(--ink-amber-8);  border-color: var(--outline-amber-2); }
+.d-banner.error   { background: var(--surface-red-2);    color: var(--ink-red-8);    border-color: var(--outline-red-2); }
+.d-banner.success { background: var(--surface-green-2);  color: var(--ink-green-8);  border-color: var(--outline-green-2); }
