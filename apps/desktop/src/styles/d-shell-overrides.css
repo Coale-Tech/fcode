@@ -121,3 +121,13 @@
 /* ── Tool activity header: hide "Processing · Ns · N tools" disclosure header ──
  * ref: D1/D2/D3 show tool rows directly; no disclosure header in design. */
 .tool-activity-header { display: none !important; }
+
+/* ── Tool row: running pill uses amber (design d-pill.amber) ── */
+.tool-row-state.is-running { color: var(--ink-amber-8) !important; }
+.tool-row-state.is-running .tool-row-state-dot {
+  background: var(--ink-amber-7) !important;
+  animation: none !important;
+}
+
+/* ── Tool row: lowercase pill text (done → "done", Running → "running") ── */
+.tool-row-state { text-transform: lowercase !important; }

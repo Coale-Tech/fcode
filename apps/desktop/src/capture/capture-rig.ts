@@ -1636,15 +1636,16 @@ export function installCaptureRig(): CaptureRig {
         { id: "frappe-bench", path: "/Users/mac/ERPNext/frappe-bench", status: "stopped" },
       ];
       window.__PI_PALETTE_COMMANDS__ = [
-        { id: "bench-migrate-run", title: "Run bench migrate", source: "builtin" as const },
-        { id: "bench-migrate-skip", title: "bench migrate --skip-failing", source: "builtin" as const },
+        { id: "bench-migrate-run",  title: "Run bench migrate",           source: "builtin" as const, category: "coale_v16" },
+        { id: "bench-migrate-skip", title: "bench migrate --skip-failing", source: "extension" as const, category: "Scheduled task" },
       ] satisfies CommandItem[];
       // Seed sessions matching "migrate" for the palette SESSIONS section.
+      // Timestamps: first session ~47m ago (yesterday at 14h), second ~3 days ago.
       const now = Date.now();
       const D = 86_400_000;
       window.__PI_PALETTE_SESSIONS__ = [
-        { id: "fixture-s4", title: "Migrate Raven to frappe-ui v2",    updatedAt: new Date(now - D + 14 * 3600000).toISOString() },
-        { id: "fixture-s9", title: "ERPNext payroll migrate planning",  updatedAt: new Date(now - D + 8 * 3600000).toISOString() },
+        { id: "fixture-s4", title: "Migrate Raven to frappe-ui v2",    updatedAt: new Date(now - 47 * 60_000).toISOString() },
+        { id: "fixture-s9", title: "ERPNext payroll migrate planning",  updatedAt: new Date(now - 3 * D).toISOString() },
       ];
     },
     seedBenchStatus: (opts) => {
