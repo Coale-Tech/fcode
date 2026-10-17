@@ -1148,7 +1148,7 @@ export function installCaptureRig(): CaptureRig {
       const pulls: PullRequestSummary[] = [
         {
           number: 247,
-          title: "eTIMS VSCU",
+          title: "feat: Add eTIMS KRA receipt signing via VSCU integration",
           url: "https://github.com/Coale-Tech/frappe-agent/pull/247",
           author: "wanjiru@coaletech.com",
           headRefName: "feature/etims-vscu", baseRefName: "main",
@@ -1212,10 +1212,28 @@ export function installCaptureRig(): CaptureRig {
       // which guarantees a fresh fetch regardless of how many times this is
       // called per session.
       if (useAppStore.getState().page === "pulls") {
+        // Navigate away and back to unmount PullRequestsPage, guaranteeing a
+        // fresh useEffect([workspace?.path]) fetch regardless of prior shots.
         useAppStore.getState().setPage("chat");
         await new Promise<void>((r) => setTimeout(r, 80));
         useAppStore.getState().setPage("pulls");
         await new Promise<void>((r) => setTimeout(r, 200));
+        // Poll for the PR list to render, then click the first row to select
+        // #247. This is deterministic: if the row is already selected (React
+        // batched setSelectedPr in refresh()), the .selected class is present
+        // and we skip the click; otherwise we click to ensure the panel opens.
+        for (let i = 0; i < 15; i++) {
+          const rows = document.querySelectorAll<HTMLElement>(".pr-row");
+          if (rows.length === 0) {
+            await new Promise<void>((r) => setTimeout(r, 100));
+            continue;
+          }
+          if (!rows[0]!.classList.contains("selected")) {
+            rows[0]!.click();
+            await new Promise<void>((r) => setTimeout(r, 100));
+          }
+          break;
+        }
       }
     },
     seedSidebarStatuses: () => {
