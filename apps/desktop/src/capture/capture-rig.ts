@@ -17,6 +17,7 @@ import type {
   OmpAgentEntry,
   OmpModelsListResult,
   OmpSettingDescriptor,
+  OmpSettingsValues,
   OmpWorktreeEntry,
   OnboardingState,
   PluginSummary,
@@ -1261,17 +1262,12 @@ export function installCaptureRig(): CaptureRig {
         { id: "features.nightlyBuilds", tab: "features", group: "Experimental",     type: "boolean", label: "Nightly builds",        description: "Opt in to pre-release nightly build channel" },
       ];
       api.ompSettingsManifest = async () => fakeManifest;
-      // Seed advanced values matching the reference (watchdog on, pruneOnLow on).
-      const currentSettings = useAppStore.getState().settings;
-      if (currentSettings) {
-        const advancedPatch: Record<string, unknown> = {
-          "startup.watchdog": true,
-          "storage.pruneOnLow": true,
-        };
-        useAppStore.setState({
-          settings: { ...currentSettings, advanced: { ...(currentSettings.advanced ?? {}), ...advancedPatch } },
-        });
-      }
+      // Also mock ompSettingsGet to return values matching the reference (watchdog on, pruneOnLow on).
+      const originalOmpSettingsGet = api.ompSettingsGet;
+      api.ompSettingsGet = async (): Promise<OmpSettingsValues> => ({
+        ...(await originalOmpSettingsGet()),
+        advanced: { "startup.watchdog": true, "storage.pruneOnLow": true },
+      } as OmpSettingsValues);
       // Also update the Zustand store settings directly so FontFamilyRow shows
       // "InterVariable" instead of "System default" in the screenshot.
       // ensureVisualFixtures already sets fontFamily via IPC (updates the settings file),
