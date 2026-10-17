@@ -92,6 +92,14 @@ export function PullRequestsPage() {
     void refresh();
   }, [workspace?.path]);
 
+  // Capture mode: once pulls load, pre-select the designated PR number.
+  useEffect(() => {
+    const preSelect = window.__PI_CAPTURE_PR_SELECTED__;
+    if (!preSelect || !pulls.length) return;
+    const match = pulls.find((p) => p.number === preSelect);
+    if (match) setSelectedPr(match);
+  }, [pulls]);
+
   const filtered = useMemo(() => {
     if (filter === "all") return pulls;
     if (filter === "draft") return pulls.filter((p) => p.isDraft);
