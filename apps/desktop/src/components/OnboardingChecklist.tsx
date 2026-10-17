@@ -383,7 +383,7 @@ export function OnboardingChecklist() {
               size="sm"
               onClick={() => { void handleContinue(); }}
             >
-              {t("onboarding.continue")} →
+              {t("onboarding.continue")}
             </Button>
           )}
         </div>
