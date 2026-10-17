@@ -52,7 +52,7 @@ export const OmpActivityTab = memo(function OmpActivityTab() {
 
   // Capture override: __PI_ACTIVITY_EVENTS__ injects reference-matching rows.
   type CaptureRow = { id: string; name: string; target: string; status: "ok" | "running" | "error"; durationMs?: number; timestamp?: string };
-  const captureEvents: CaptureRow[] | undefined = typeof window !== "undefined"
+  const captureEvents: CaptureRow[] | undefined = typeof window !== "undefined" && (window as unknown as Record<string, unknown>).__PI_CAPTURE__
     ? (window as Window & { __PI_ACTIVITY_EVENTS__?: CaptureRow[] }).__PI_ACTIVITY_EVENTS__
     : undefined;
   const timeline: (ActivityTimelineRow | CaptureRow)[] =
@@ -126,7 +126,7 @@ export const OmpActivityTab = memo(function OmpActivityTab() {
               {/* Compose desc: "Edit payment_entry.py — 12 lines…" matching reference */}
               {(pendingPermission.toolName || pendingPermission.reason) && (
                 <div className="activity-decision-desc">
-                  {typeof window !== "undefined" && (window as Window & { __PI_APPROVAL_DESC__?: string }).__PI_APPROVAL_DESC__
+                  {typeof window !== "undefined" && (window as unknown as Record<string, unknown>).__PI_CAPTURE__ && (window as Window & { __PI_APPROVAL_DESC__?: string }).__PI_APPROVAL_DESC__
                     ? (window as Window & { __PI_APPROVAL_DESC__?: string }).__PI_APPROVAL_DESC__
                     : (<>
                         {pendingPermission.toolName}

@@ -34,7 +34,9 @@ const NAMED_ENDPOINT_PRESETS: Record<
 // so the key field + verified banner show without any user click.
 type CaptureKeyOverride = { apiKey: string; modelId: string; modelDisplayName: string };
 const piKeyOverride = (): CaptureKeyOverride | undefined =>
-  (window as unknown as Record<string, CaptureKeyOverride | undefined>).__PI_ONBOARDING_KEY_VERIFIED__;
+  (window as unknown as Record<string, unknown>).__PI_CAPTURE__
+    ? (window as unknown as Record<string, CaptureKeyOverride | undefined>).__PI_ONBOARDING_KEY_VERIFIED__
+    : undefined;
 
 export function OnboardingChecklist() {
   const { t } = useTranslation();
