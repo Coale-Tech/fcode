@@ -15,6 +15,7 @@ import {
   IconAt,
   IconClock,
   IconFileBird,
+  IconFileText,
   IconNewSession,
   IconPullRequest,
   IconRaven,
@@ -203,7 +204,12 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   const rows = useMemo<SearchRow[]>(() => {
     const q = query.trim().toLowerCase();
     const candidates: Omit<SearchRow, "optionIndex">[] = [];
-    const source = q ? search.hits.map((hit) => hit.session) : sessions;
+    // Capture mode: IPC sessionSearch is unavailable, use in-memory title filter.
+    const source = q
+      ? (window.__PI_CAPTURE__ && !search.hits.length && !search.loading
+          ? sessions.filter((s) => s.title?.toLowerCase().includes(q))
+          : search.hits.map((hit) => hit.session))
+      : sessions;
     const hits = new Map(search.hits.map((hit) => [hit.session.id, hit]));
     for (const session of source) {
       // Untitled drafts carry no searchable signal; they stay sidebar-only.
@@ -489,6 +495,36 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
             >
               {t("search.loadMore")}
             </button>
+          ) : null}
+          {/* FILES section — capture-mode-only file search results from rig seed */}
+          {fileHits.length > 0 ? (
+            <div role="presentation">
+              <div className="search-group-label" role="presentation">
+                {t("search.files")}
+              </div>
+              {fileHits.map((file, index) => {
+                const optionIndex = filesBase + index;
+                const fileName = file.path.split("/").pop() ?? file.path;
+                return (
+                  <button
+                    key={file.path}
+                    id={`global-search-option-${optionIndex}`}
+                    type="button"
+                    role="option"
+                    aria-selected={active === optionIndex}
+                    className={`search-item ${active === optionIndex ? "active" : ""}`}
+                    onMouseEnter={() => setActive(optionIndex)}
+                    onClick={() => {}}
+                  >
+                    <IconFileText size={15} className="search-item-icon" />
+                    <span className="search-item-title">{highlightMatch(fileName, query)}</span>
+                    <span className="search-item-meta">
+                      <span className="search-item-project">{file.appRoot}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           ) : null}
           {pageHits.length > 0 ? (
             <div role="presentation">

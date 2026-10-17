@@ -210,6 +210,7 @@ export function installRendererApi(): () => void {
         mk("fixture-s4",  "Migrate Raven to frappe-ui v2",     S - D + 14 * H),
         mk("fixture-s5",  "Review PR #224 leave approvals",    S - D + 12 * H),
         mk("fixture-s6",  "ERPNext payroll period config",     S - D + 10 * H),
+        mk("fixture-s9",  "ERPNext payroll migrate planning",  S - D + 8 * H),
         mk("fixture-s7",  "Set up coale_v16 from scratch",     S - 4 * D),
         mk("fixture-s8",  "Debug slow stock valuation query",  S - 3 * D),
       ] as unknown as SessionSummary[];
