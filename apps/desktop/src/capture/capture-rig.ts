@@ -1863,6 +1863,14 @@ export function installCaptureRig(): CaptureRig {
         contextWindow: 200000,
         source: "discovered",
       };
+      // Pre-fill key field + verified state so the banner shows without a click.
+      // OnboardingChecklist reads this from useState() initializer on first render.
+      (window as unknown as Record<string, unknown>).__PI_ONBOARDING_KEY_VERIFIED__ = {
+        apiKey: "sk-ant-api03-\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7",
+        modelId: stubModel.modelId,
+        modelDisplayName: stubModel.displayName,
+      };
+      // Also patch listProviderModels for any live Verify clicks.
       api.listProviderModels = async (_input) => ({
         models: [stubModel],
         source: "remote" as const,
