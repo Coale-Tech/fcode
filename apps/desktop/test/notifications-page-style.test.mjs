@@ -63,9 +63,9 @@ test("NotificationsPage applies groupByDate logic (today/yesterday/older)", () =
   assert.match(pageSource, /notifications\.yesterday/, "uses notifications.yesterday key");
 });
 
-test("NotificationsPage renders unread count pill using d-pill violet", () => {
-  assert.match(pageSource, /d-pill.*violet|violet.*d-pill/,
-    "unread pill uses violet variant");
+test("NotificationsPage renders unread count pill using d-pill accent", () => {
+  assert.match(pageSource, /d-pill.*accent|accent.*d-pill/,
+    "unread pill uses accent variant");
   assert.match(pageSource, /notifications\.unreadCount/,
     "uses notifications.unreadCount i18n key");
 });

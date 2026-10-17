@@ -35,8 +35,8 @@ const [
 test("renderer surfaces the PI-Desktop brand instead of the Codex shell brand", () => {
   assert.match(english, /shellName:\s*"Fcode"/);
   assert.match(chinese, /shellName:\s*"Fcode"/);
-  assert.match(english, /placeholder:\s*"Ask Fcode to help with anything"/);
-  assert.match(chinese, /placeholder:\s*"让 Fcode 帮你做任何事"/);
+  assert.match(english, /placeholderHome:\s*"Ask anything"/);
+  assert.match(chinese, /placeholderHome:\s*"随便问问"/);
   assert.doesNotMatch(english, /shellName:\s*"Codex"/);
   assert.doesNotMatch(chinese, /shellName:\s*"Codex"/);
   // Codex remains a supported external import source, not the app identity.

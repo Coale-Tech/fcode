@@ -39,7 +39,7 @@ test("T1: WorkspaceBar displays run state", () => {
 });
 
 test("T1: WorkspaceBar displays agent state", () => {
-  assert.match(bar, /isRunning|agent.?state|agentState/i);
+  assert.match(bar, /isLiveRunning|resolveStatusAgent/i);
 });
 
 test("T1: AppShell renders WorkspaceBar", () => {

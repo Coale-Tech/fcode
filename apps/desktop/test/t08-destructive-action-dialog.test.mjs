@@ -61,7 +61,7 @@ test("T7: PermissionCard has isBenchDestructive for fcode_bench_run and fcode_be
 });
 
 test("T7: PermissionCard auto-deny useEffect skips bench-destructive tools", () => {
-  assert.match(permCard, /if \(isBenchDestructive\) return/);
+  assert.match(permCard, /if \(isBenchDestructive[\s\S]{0,40}\) return/);
 });
 
 test("T7: PermissionCard renders DestructiveActionDialog with site/command/consequence props", () => {

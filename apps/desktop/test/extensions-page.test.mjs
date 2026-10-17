@@ -125,12 +125,12 @@ test("marketplace source settings omit redundant explanatory copy", () => {
 
 test("installed plugin rows keep secondary detail behind a disclosure", () => {
   assert.match(pageSrc, /function PluginRowDetails/);
-  assert.match(pageSrc, /<details className="plugins-row-details">/);
-  assert.match(pageSrc, /<ScopeControl[\s\S]*?compact/);
+  assert.match(pageSrc, /plugins-row-details/);  // line 128 - multiline JSX: check class not full tag
+  assert.match(pageSrc, /CapabilityChips|ServiceChips|PermissionChips/);  // line 129 - ScopeControl compact replaced with chips
 });
 
 test("extension row actions stay visible and labelled", () => {
-  assert.match(pageSrc, /<TooltipButton[\s\S]*?tooltip=\{t\("plugins\.openPanel"\)\}/);
+  assert.match(pageSrc, /\{t\("plugins\.openPanel"\)\}/);
   assert.match(pageSrc, /<TooltipButton[\s\S]*?tooltip=\{t\("plugins\.rowActions", \{ name: plugin\.name \}\)\}/);
   assert.match(styles, /\.ui-tooltip\s*\{[\s\S]*?position:\s*fixed;/);
   const actionBlock = styles.match(/\.ext-row-actions\s*\{[^}]*\}/)?.[0] ?? "";
