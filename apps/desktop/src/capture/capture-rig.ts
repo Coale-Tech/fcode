@@ -1590,6 +1590,13 @@ export function installCaptureRig(): CaptureRig {
         { id: "bench-migrate-run", title: "Run bench migrate", source: "builtin" as const },
         { id: "bench-migrate-skip", title: "bench migrate --skip-failing", source: "builtin" as const },
       ] satisfies CommandItem[];
+      // Seed sessions matching "migrate" for the palette SESSIONS section.
+      const now = Date.now();
+      const D = 86_400_000;
+      window.__PI_PALETTE_SESSIONS__ = [
+        { id: "fixture-s4", title: "Migrate Raven to frappe-ui v2",    updatedAt: new Date(now - D + 14 * 3600000).toISOString() },
+        { id: "fixture-s9", title: "ERPNext payroll migrate planning",  updatedAt: new Date(now - D + 8 * 3600000).toISOString() },
+      ];
     },
     seedBenchStatus: (opts) => {
       if (!window.__PI_CAPTURE__) return;

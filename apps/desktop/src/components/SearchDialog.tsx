@@ -114,6 +114,15 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   type PaletteFile = { path: string; appRoot: string };
   const [paletteFiles, setPaletteFiles] = useState<PaletteFile[]>([]);
 
+  type PaletteSession = { id: string; title: string; updatedAt: string };
+  const [paletteSessions, setPaletteSessions] = useState<PaletteSession[]>([]);
+
+  // Capture mode: load rig-seeded session entries for the SESSIONS palette section.
+  useEffect(() => {
+    if (!open) return;
+    setPaletteSessions(window.__PI_PALETTE_SESSIONS__ ?? []);
+  }, [open]);
+
   // Capture mode: load rig-seeded file entries for the FILES palette section.
   // In production __PI_PALETTE_FILES__ is undefined so this section stays hidden.
   useEffect(() => {
@@ -204,12 +213,8 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   const rows = useMemo<SearchRow[]>(() => {
     const q = query.trim().toLowerCase();
     const candidates: Omit<SearchRow, "optionIndex">[] = [];
-    // Capture mode: IPC sessionSearch is unavailable, use in-memory title filter.
-    const source = q
-      ? (window.__PI_CAPTURE__ && !search.hits.length
-          ? sessions.filter((s) => s.title?.toLowerCase().includes(q))
-          : search.hits.map((hit) => hit.session))
-      : sessions;
+    // Normal: use IPC session search hits; empty when no backend (capture mode uses paletteSessions).
+    const source = q ? search.hits.map((hit) => hit.session) : sessions;
     const hits = new Map(search.hits.map((hit) => [hit.session.id, hit]));
     for (const session of source) {
       // Untitled drafts carry no searchable signal; they stay sidebar-only.
@@ -290,7 +295,8 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
     0,
   );
   const moreIndex = sessionOptionCount + 1;
-  const filesBase = moreIndex + (query.trim() && search.nextOffset !== null ? 1 : 0);
+  const paletteSessionsBase = moreIndex + (query.trim() && search.nextOffset !== null ? 1 : 0);
+  const filesBase = paletteSessionsBase + paletteSessions.length;
   const pageBase = filesBase + fileHits.length;
   const settingsBase = pageBase + pageHits.length;
   const commandsBase = settingsBase + settingsHits.length;
@@ -495,6 +501,32 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
             >
               {t("search.loadMore")}
             </button>
+          ) : null}
+          {/* SESSIONS section — capture-mode-only seeded sessions (from __PI_PALETTE_SESSIONS__) */}
+          {paletteSessions.length > 0 ? (
+            <div role="presentation">
+              <div className="search-group-label" role="presentation">
+                {t("search.sessions")}
+              </div>
+              {paletteSessions.map((session, index) => {
+                const optionIndex = paletteSessionsBase + index;
+                return (
+                  <button
+                    key={session.id}
+                    id={`global-search-option-${optionIndex}`}
+                    type="button"
+                    role="option"
+                    aria-selected={active === optionIndex}
+                    className={`search-item ${active === optionIndex ? "active" : ""}`}
+                    onMouseEnter={() => setActive(optionIndex)}
+                    onClick={() => {}}
+                  >
+                    <IconNewSession size={15} className="search-item-icon" />
+                    <span className="search-item-title">{highlightMatch(session.title, query)}</span>
+                  </button>
+                );
+              })}
+            </div>
           ) : null}
           {/* FILES section — capture-mode-only file search results from rig seed */}
           {fileHits.length > 0 ? (

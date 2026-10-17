@@ -57,6 +57,8 @@ declare global {
     __PI_PALETTE_BENCHES__?: Array<{ id: string; path: string; status: "running" | "stopped" }>;
     /** Capture-only seeded command list for the COMMANDS palette section. */
     __PI_PALETTE_COMMANDS__?: CommandItem[];
+    /** Capture-only seeded session list for the SESSIONS palette section. */
+    __PI_PALETTE_SESSIONS__?: Array<{ id: string; title: string; updatedAt: string }>;
     /** Capture-only seeded bench list; BenchPage.loadBenches reads this instead of IPC. */
     __PI_CAPTURE_BENCH_LIST__?: {
       benches: Array<{ id: string; path: string; version: number | "unknown"; sites: Array<{ name: string; isDefault: boolean }>; apps: string[] }>;
