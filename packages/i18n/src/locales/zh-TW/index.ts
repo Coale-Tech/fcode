@@ -997,6 +997,7 @@ sklm: {
     models: "模型",
     permissions: "許可權",
     appearance: "外觀",
+    themeDisplay: "主題與顯示",
     about: "資訊",
     addProvider: "新增服務",
     apiKey: "API 金鑰",

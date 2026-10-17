@@ -1007,6 +1007,7 @@ sklm: {
     models: "모델",
     permissions: "권한",
     appearance: "모양",
+    themeDisplay: "테마 및 표시",
     about: "정보",
     addProvider: "프로바이더 추가",
     apiKey: "API 키",

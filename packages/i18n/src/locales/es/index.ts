@@ -998,6 +998,7 @@ sklm: {
     "models": "Modelos",
     "permissions": "Permisos",
     "appearance": "Apariencia",
+    "themeDisplay": "Tema y pantalla",
     "about": "Información",
     "addProvider": "Agregar proveedor",
     "apiKey": "Clave API",
