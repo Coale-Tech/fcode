@@ -12,6 +12,7 @@
 import { memo, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { OmpTodoPhase } from "@pi-desktop/shared";
+import { IconTriangleAlert } from "../../components/icons";
 import { Button } from "../../components/ui";
 import { useAppStore } from "../../stores/app-store";
 import { headPermission } from "../../lib/pending-permissions";
@@ -113,7 +114,7 @@ export const OmpActivityTab = memo(function OmpActivityTab() {
           {pendingPermission && (
             <section className="activity-decision">
               <div className="activity-decision-header">
-                <span className="activity-decision-icon" aria-hidden>⚠</span>
+                <IconTriangleAlert size={13} className="activity-decision-icon" aria-hidden />
                 {t("panel.activity.decisionNeeded")}
               </div>
               <div className="activity-decision-tool">
