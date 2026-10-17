@@ -1234,9 +1234,6 @@ export function installCaptureRig(): CaptureRig {
         { path: "/Users/mac/ERPNext/frappe_agent/fcode-worktrees/direction-d-task-iso-abc123", kind: "task-isolation",                               parentRepo: "/Users/mac/ERPNext/frappe_agent/PI-Desktop" },
       ];
       api.ompWorktreeList = async () => ({ worktrees: fakeWorktrees });
-<<<<<<< HEAD
-      // Patch store settings so FontFamilyRow shows "InterVariable".
-=======
       // Mock ompSettingsManifest so Advanced omp page shows reference tabs/sections:
       // general (Core / Startup & Lifecycle / Storage / Network) | tools | agents | memory | features
       const fakeManifest: OmpSettingDescriptor[] = [
@@ -1271,7 +1268,6 @@ export function installCaptureRig(): CaptureRig {
       // "InterVariable" instead of "System default" in the screenshot.
       // ensureVisualFixtures already sets fontFamily via IPC (updates the settings file),
       // but the store state needs a direct patch so the UI re-renders with the new value.
->>>>>>> feat/direction-d-t14h-tabs
       const storeSettings = useAppStore.getState().settings;
       if (storeSettings) {
         useAppStore.setState({ settings: { ...storeSettings, fontFamily: "InterVariable" } });
