@@ -57,7 +57,7 @@ export type CaptureRigMethods = {
   seedNotifications: (count?: number) => void;
   seedKanbanBoard: (count?: number) => void;
   seedScheduledTasks: (count?: number) => void;
-  seedPullRequests: (count?: number) => void;
+  seedPullRequests: (count?: number) => Promise<void>;
   seedSidebarStatuses: () => {
     selected: string;
     running: string;
@@ -1118,7 +1118,7 @@ export function installCaptureRig(): CaptureRig {
       api.listScheduled = async () => ({ tasks, health: { lastTickAt: Date.now() - 28_000, lastError: undefined, hostAvailable: true } });
       api.listScheduledRuns = async () => ({ runs });
     },
-    seedPullRequests: (count = 1) => {
+    seedPullRequests: async (count = 1) => {
       if (!window.__PI_CAPTURE__) return;
       if (count <= 0) {
         api.listPullRequests = originalListPullRequests;
@@ -1205,6 +1205,18 @@ export function installCaptureRig(): CaptureRig {
       api.listPullRequests = async () => ({ pulls });
       // Pre-select PR #247 (the top row) for the capture detail-panel screenshot.
       window.__PI_CAPTURE_PR_SELECTED__ = 247;
+      // Force a fresh mount of PullRequestsPage when it is already displayed.
+      // PullRequestsPage's useEffect([workspace?.path]) won't re-fire if
+      // workspace.path is already set to the same value from a prior shot.
+      // Navigate to "chat" and back so the component unmounts and remounts,
+      // which guarantees a fresh fetch regardless of how many times this is
+      // called per session.
+      if (useAppStore.getState().page === "pulls") {
+        useAppStore.getState().setPage("chat");
+        await new Promise<void>((r) => setTimeout(r, 80));
+        useAppStore.getState().setPage("pulls");
+        await new Promise<void>((r) => setTimeout(r, 200));
+      }
     },
     seedSidebarStatuses: () => {
       if (!window.__PI_CAPTURE__) return null;
