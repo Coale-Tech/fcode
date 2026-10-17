@@ -78,6 +78,7 @@ export const PERMISSION_RISK: Record<string, RiskTier> = {
   // Design-variant permission keys used by the fragment reference (colon-notation and exec_process).
   // They map to the same risk tiers as their dot-notation equivalents.
   "net:outbound": "medium",
+  "fs:read": "low",
   "exec_process": "high",
 };
 
