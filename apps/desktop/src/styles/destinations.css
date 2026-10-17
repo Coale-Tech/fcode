@@ -274,13 +274,25 @@
 .sch-row.is-disabled .sch-row-title { opacity: .6; }
 .sch-row.is-disabled .sch-row-prompt,
 .sch-row.is-disabled .sch-row-meta { opacity: .55; }
-/* D.css .d-btn.danger (tinted, not solid) for the disabled-row delete */
-.icon-btn.sch-delete-btn {
+/* Monospace cron expression in the task row meta line */
+.sch-row-cron {
+  font-family: var(--font-mono);
+  font-size: var(--d-text-xs);
+}
+/* D.css .d-btn.danger (tinted, not solid) for the disabled-row delete.
+   Override icon-btn's full-radius and icon-btn-square's 30px to match
+   the 24px rounded-square shape of .d-btn.sm.danger in the reference. */
+.icon-btn.icon-btn-square.sch-delete-btn {
+  width: var(--ds-btn-height-sm);
+  height: var(--ds-btn-height-sm);
+  min-width: var(--ds-btn-height-sm);
+  flex: 0 0 var(--ds-btn-height-sm);
+  border-radius: var(--d-r-ctrl);
   background: var(--surface-red-2);
   color: var(--ink-red-8);
   border: 1px solid var(--outline-red-2);
 }
-.icon-btn.sch-delete-btn:hover:not(:disabled) { background: var(--surface-red-3); }
+.icon-btn.icon-btn-square.sch-delete-btn:hover:not(:disabled) { background: var(--surface-red-3); }
 .sch-insights {
   display: flex; gap: 6px; flex-wrap: wrap;
   padding: 8px 12px;

@@ -94,6 +94,8 @@ export type ScheduledTaskSchedule = {
   weekday: number;
   /** Selected days, Monday = 0. When present, must be nonempty and unique. */
   weekdays?: number[];
+  /** Raw cron expression for cadence=cron tasks (e.g. "0 2 * * *"). */
+  cron?: string;
 };
 export type ScheduledTaskRun = {
   id: string; taskId: string; sessionId: string | null;
