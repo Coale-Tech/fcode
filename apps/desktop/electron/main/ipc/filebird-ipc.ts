@@ -136,7 +136,7 @@ export function registerFileBirdIpc({ registrar, dataDir, getMainWindow, sendToR
     view?.setBounds(bounds);
     /* Capture-gated bounds diagnostics: compare host rect vs view.getBounds()
      * to confirm native view tracks the renderer's surfaceRef within 1px. */
-    if (process.env.PI_DESKTOP_CAPTURE && view && !view.webContents.isDestroyed()) {
+    if ((process.env.PI_DESKTOP_CAPTURE || process.env.PI_DESKTOP_BENCH_BOUNDS) && view && !view.webContents.isDestroyed()) {
       const vb = view.getBounds();
       const dx = Math.abs(vb.x - bounds.x);
       const dy = Math.abs(vb.y - bounds.y);
