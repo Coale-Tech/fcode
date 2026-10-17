@@ -285,6 +285,7 @@ export const zhCN = {
     placeholderHomeHint: "输入 / 使用命令 · @ 引用文件",
     placeholderShortcut: "Shift+Enter 换行 · 点击发送提交",
     addFiles: "添加文件",
+    addContext: "Add context",
     filesAttached: "已将 {{count}} 项加入草稿",
     filesPasted: "已将 {{count}} 个粘贴文件保存到会话临时目录",
     largeTextPasted: "已将大段粘贴文本保存为 @{{name}}",

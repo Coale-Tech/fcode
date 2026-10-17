@@ -290,6 +290,7 @@ export const en = {
     placeholderHomeHint: "Type / for commands · @ for files",
     placeholderShortcut: "Shift+Enter for newline · Use Send to submit",
     addFiles: "Add files",
+    addContext: "Add context",
     filesAttached: "Added {{count}} item(s) to the draft",
     filesPasted: "Saved {{count}} pasted file(s) to the session scratch folder",
     largeTextPasted: "Saved large pasted text as @{{name}}",
