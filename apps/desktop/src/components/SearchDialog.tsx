@@ -206,7 +206,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
     const candidates: Omit<SearchRow, "optionIndex">[] = [];
     // Capture mode: IPC sessionSearch is unavailable, use in-memory title filter.
     const source = q
-      ? (window.__PI_CAPTURE__ && !search.hits.length && !search.loading
+      ? (window.__PI_CAPTURE__ && !search.hits.length
           ? sessions.filter((s) => s.title?.toLowerCase().includes(q))
           : search.hits.map((hit) => hit.session))
       : sessions;
