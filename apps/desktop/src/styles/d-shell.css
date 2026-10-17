@@ -426,6 +426,12 @@
 :root[data-nav-layout="island"] .filebird-page-wrap {
   padding-top: 0;
 }
+/* D1 tabs: Raven and FileBird are full-width chromeless surfaces; hide the
+ * absolute main-titlebar drag band so their chrome bar sits flush at top. */
+:root[data-nav-layout="tabs"] .main-pane .raven-page-wrap ~ .main-titlebar,
+:root[data-nav-layout="tabs"] .main-pane .filebird-page-wrap ~ .main-titlebar { display: none; }
+:root[data-nav-layout="tabs"] .raven-page-wrap,
+:root[data-nav-layout="tabs"] .filebird-page-wrap { padding-top: 0; }
 
 
 /* ── D1 Tabs: gray canvas backdrop + island cards ─────────────────────────────

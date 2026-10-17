@@ -3557,8 +3557,7 @@ sklm: {
     procStartedAgo: "iniciado hace {{elapsed}}",
     procPort: "puerto {{port}}",
     dtMore: "+ {{count}} más…",
-    dtMigrateTitle: "Migrar",
-  },
+    dtMigrateTitle: "Migrar",  },
   "terminal": {
     "title": "Terminal",
     "toggle": "Mostrar/ocultar terminal (Ctrl+`)",

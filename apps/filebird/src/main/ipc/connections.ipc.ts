@@ -73,10 +73,12 @@ export interface ConnectionsIpcDependencies {
   imports: SshConfigImportService
   /** Opens the native file dialog; resolves null if cancelled. */
   pickPrivateKey: () => Promise<string | null>
+  /** Called after a successful SFTP connection so the embedding host can update its status indicator. */
+  onConnected?: () => void
 }
 
 /** Saved connections, private keys and SSH config import (Milestone 4). */
-export function registerConnectionsIpc({ profiles, imports, pickPrivateKey }: ConnectionsIpcDependencies): void {
+export function registerConnectionsIpc({ profiles, imports, pickPrivateKey, onConnected }: ConnectionsIpcDependencies): void {
   handle<ConnectionSummary[]>(IPC.CONNECTIONS_LIST, () => profiles.list())
 
   handle<ConnectionSummary>(IPC.CONNECTIONS_CREATE, (input) => profiles.create(assertConnectionInput(input)))
@@ -89,13 +91,17 @@ export function registerConnectionsIpc({ profiles, imports, pickPrivateKey }: Co
 
   handle<void>(IPC.CONNECTIONS_FORGET_SECRET, (id) => profiles.forgetSecret(assertUuid(id, 'id')))
 
-  handle<ConnectOutcome>(IPC.CONNECTIONS_CONNECT, (id, secret) =>
-    profiles.connect(assertUuid(id, 'id'), assertSecret(secret))
-  )
+  handle<ConnectOutcome>(IPC.CONNECTIONS_CONNECT, async (id, secret) => {
+    const result = await profiles.connect(assertUuid(id, 'id'), assertSecret(secret))
+    if (result.status === 'connected') onConnected?.()
+    return result
+  })
 
-  handle<ConnectOutcome>(IPC.CONNECTIONS_CONNECT_UNSAVED, (input, secret) =>
-    profiles.connectUnsaved(assertConnectionInput(input, { allowEmptyName: true }), assertSecret(secret))
-  )
+  handle<ConnectOutcome>(IPC.CONNECTIONS_CONNECT_UNSAVED, async (input, secret) => {
+    const result = await profiles.connectUnsaved(assertConnectionInput(input, { allowEmptyName: true }), assertSecret(secret))
+    if (result.status === 'connected') onConnected?.()
+    return result
+  })
 
   handle<string | null>(IPC.KEYS_PICK, () => pickPrivateKey())
 

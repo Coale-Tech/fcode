@@ -77,6 +77,11 @@ export function registerFileBirdIpc({ registrar, dataDir, getMainWindow, sendToR
           const result = window ? await dialog.showOpenDialog(window, options) : await dialog.showOpenDialog(options);
           return result.canceled ? null : (result.filePaths[0] ?? null);
         },
+        // T14: forward SFTP connection status changes to the Fcode renderer
+        // so FileBirdPage can show the green/amber connected pill.
+        onStatusChange: (status) => {
+          sendToRenderer(IPC.event.fileBirdStatus, { status });
+        },
       });
       // Kill every PTY before Electron tears down (node-pty aborts on a late exit).
       // will-quit, not before-quit: before-quit also fires for a quit the user then

@@ -1060,6 +1060,15 @@
 }
 .wb-app-row.is-selected { background: var(--da-sub); color: var(--da-txt); }
 .wb-app-row.is-muted    { color: var(--ink-gray-5); cursor: default; }
+/* build hero dot (design .bf-dot: 7px circle) */
+.bf-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
+.bf-dot.g  { background: var(--green-500, #22c55e); }
+.bf-dot.gr { background: var(--outline-gray-3); }
+.bf-dot.am { background: var(--amber-500, #f59e0b); }
+/* ⋯ more button in bench table rows */
+.wb-row-more { background: none; border: none; cursor: pointer; padding: 2px 4px;
+  color: var(--ink-gray-4); border-radius: 3px; display: flex; align-items: center; }
+.wb-row-more:hover { background: var(--surface-gray-2); color: var(--ink-gray-7); }
 
 /* ── lane T11-r2: Bench overview 48px header + 30px list rows ── */
 .wb-all-hd {
@@ -1928,3 +1937,57 @@
   text-align: center;
   color: var(--ink-gray-5);
 }
+
+/* ── T14: log line structured segments ── */
+.wb-log-line { display: flex; align-items: baseline; gap: 4px; font-family: ui-monospace, Menlo, monospace; font-size: 11px; line-height: 18px; padding: 0 10px; }
+.wb-log-ts { flex-shrink: 0; color: var(--d-term-ts, #4a5568); font-size: 10px; }
+.wb-log-proc { flex-shrink: 0; color: var(--d-term-proc, #6e86c0); font-size: 10px; }
+.wb-log-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--d-term-text, #c9d1d9); }
+.wb-log-text.is-red   { color: var(--d-term-red,   #f85149); }
+.wb-log-text.is-amber { color: var(--d-term-amber, #d29922); }
+.wb-log-text.is-green { color: var(--d-term-green, #3fb950); }
+.wb-log-text.is-muted { color: var(--d-term-muted, #6e7681); }
+.wb-log-text.is-plain { color: var(--d-term-text,  #c9d1d9); }
+
+/* ── T14: DocType tree ── */
+.wb-doctypes-sub { display: flex; flex-direction: column; gap: 0; }
+.wb-dt-row { display: flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; font-size: 12px; cursor: pointer; border-radius: 4px; }
+.wb-dt-row:hover { background: var(--surface-gray-2); }
+.wb-dt-row.is-dirty { color: var(--ink-amber-7); }
+.wb-dt-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wb-dt-migrate { opacity: 0; color: var(--ink-amber-7); flex-shrink: 0; }
+.wb-dt-row:hover .wb-dt-migrate, .wb-dt-row.is-dirty .wb-dt-migrate { opacity: 1; }
+.wb-dt-more { font-size: 11px; color: var(--ink-gray-4); padding: 2px 8px; cursor: pointer; }
+.wb-dt-more:hover { color: var(--ink-gray-7); }
+
+/* ── T14: app glyph colors in app detail icon ── */
+.wb-app-detail-icon.is-blue   { background: var(--surface-blue-2);   border-color: var(--outline-blue-1);   color: var(--ink-blue-7); }
+.wb-app-detail-icon.is-green  { background: var(--surface-green-2);  border-color: var(--outline-green-1);  color: var(--ink-green-7); }
+.wb-app-detail-icon.is-violet { background: var(--surface-violet-2); border-color: var(--outline-violet-1); color: var(--ink-violet-7); }
+.wb-app-detail-icon.is-amber  { background: var(--surface-amber-2);  border-color: var(--outline-amber-1);  color: var(--ink-amber-7); }
+
+/* ── T14: proc card label/meta (extended) ── */
+.wb-proc-label { font-size: 12px; font-weight: 500; color: var(--ink-gray-8); }
+.wb-proc-info  { display: flex; flex-direction: column; gap: 2px; }
+.wb-proc-meta  { font-size: 11px; color: var(--ink-gray-5); }
+
+/* ── T14: site row (design .wb-site) ── */
+.wb-site { display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 4px; font-size: 12px; }
+.wb-site.is-secondary { color: var(--ink-gray-5); }
+
+/* ── T14: pill dot (green status dot inside d-pill) ── */
+.wb-pill-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+/* ── T14: cmd status badge ── */
+.wb-cmd-status { font-size: 10px; height: 16px; line-height: 16px; padding: 0 4px; border-radius: 4px;
+  background: var(--surface-gray-2); color: var(--ink-gray-5); border: 1px solid var(--d-border); }
+.wb-cmd-out-mono.is-error { color: var(--ink-red-7); }
+
+/* ── T14: install app section ── */
+.wb-install-app-sec .wb-cmd-full { margin-top: 4px; }
+
+/* ── T14: AllBenches more-actions column ── */
+.wb-table-action-more { width: 28px; padding: 0 2px; }
+
+/* ── T14: BenchPage GRID_VERBS oneshot grid ── */
+.wb-oneshot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 5px; }
