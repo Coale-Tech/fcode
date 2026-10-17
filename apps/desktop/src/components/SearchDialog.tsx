@@ -301,10 +301,14 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
     (count, row) => count + 1 + (row.hit?.matches.length ?? 0),
     0,
   );
+  // When palette sessions override is active (capture mode), real sessions are hidden
+  // and don't consume option slots — palette sessions start at index 0.
+  const paletteActive = paletteSessions.length > 0 && !!query.trim();
+  const effectiveSessionCount = paletteActive ? 0 : sessionOptionCount;
   // "New task" occupies slot 0 only when no query; adjust base indices accordingly.
-  const moreIndex = sessionOptionCount + (hasNewTask ? 1 : 0);
+  const moreIndex = effectiveSessionCount + (hasNewTask ? 1 : 0);
   // flat option order: [new-task(0) when no query], sessions, [loadMore], sessions-palette, files, pages, settings, commands, benches.
-  const paletteSessionsBase = moreIndex + (query.trim() && search.nextOffset !== null ? 1 : 0);
+  const paletteSessionsBase = moreIndex + (!paletteActive && query.trim() && search.nextOffset !== null ? 1 : 0);
   const filesBase = paletteSessionsBase + paletteSessions.length;
   const pageBase = filesBase + fileHits.length;
   const settingsBase = pageBase + pageHits.length;
@@ -479,23 +483,26 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
               <span className="search-item-title">{t("nav.newTask")}</span>
             </button>
           ) : null}
-          {/* Sessions group: show flat "Sessions" header when query matches sessions */}
-          {query.trim() && groups.length > 0 ? (
+          {/* Sessions group header: show when query matches real sessions AND no palette override */}
+          {query.trim() && groups.length > 0 && !paletteActive ? (
             <div role="presentation">
               <div className="search-group-label" role="presentation">
                 {t("search.sessions")}
               </div>
             </div>
           ) : null}
-          <SearchSessionResults
-            groups={groups}
-            query={query}
-            active={active}
-            runningSessions={runningSessions}
-            onActivate={setActive}
-            onSelect={(row, messageId) => void run(row, messageId)}
-            showGroupLabels={!query.trim()}
-          />
+          {/* Real session results — hidden when palette override is active with a query */}
+          {!paletteActive ? (
+            <SearchSessionResults
+              groups={groups}
+              query={query}
+              active={active}
+              runningSessions={runningSessions}
+              onActivate={setActive}
+              onSelect={(row, messageId) => void run(row, messageId)}
+              showGroupLabels={!query.trim()}
+            />
+          ) : null}
           {query.trim() && search.loading ? (
             <div className="search-empty" role="status">
               {t("search.loading")}
@@ -523,14 +530,27 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
               {t("search.loadMore")}
             </button>
           ) : null}
-          {/* SESSIONS section — capture-mode-only seeded sessions (from __PI_PALETTE_SESSIONS__) */}
-          {paletteSessions.length > 0 ? (
+          {/* SESSIONS section — capture-mode-only seeded sessions (from __PI_PALETTE_SESSIONS__).
+           *  Only shown when a query is active (these are search results, not a default list). */}
+          {paletteActive ? (
             <div role="presentation">
               <div className="search-group-label" role="presentation">
                 {t("search.sessions")}
               </div>
               {paletteSessions.map((session, index) => {
                 const optionIndex = paletteSessionsBase + index;
+                const relTs = session.updatedAt
+                  ? (() => {
+                      const diffMs = Date.now() - Date.parse(session.updatedAt);
+                      const diffH = Math.floor(diffMs / 3_600_000);
+                      const diffM = Math.floor(diffMs / 60_000);
+                      return diffH >= 24
+                        ? `${Math.floor(diffH / 24)}d`
+                        : diffH > 0
+                        ? `${diffH}h`
+                        : `${diffM}m`;
+                    })()
+                  : "";
                 return (
                   <button
                     key={session.id}
@@ -544,6 +564,11 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
                   >
                     <IconNewSession size={15} className="search-item-icon" />
                     <span className="search-item-title">{highlightMatch(session.title, query)}</span>
+                    {relTs ? (
+                      <span className="search-item-meta">
+                        <span className="search-item-project">{relTs}</span>
+                      </span>
+                    ) : null}
                   </button>
                 );
               })}

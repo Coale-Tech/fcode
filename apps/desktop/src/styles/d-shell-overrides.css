@@ -35,7 +35,10 @@
 /* ── Sidebar: hide PROJECTS section + version label ── */
 /* The PROJECTS section container has data-sidebar-section="projects" (Sidebar.tsx:2583).
  * Individual project items have class .project-group on a nested section. */
-[data-sidebar-section="projects"] { display: none !important; }
+/* Hide toolbar label + ALL subsequent siblings (project entries div + sidebar footer).
+ * Sidebar.tsx:2581 — projects toolbar has the attr; the project-entries div comes right after. */
+[data-sidebar-section="projects"],
+[data-sidebar-section="projects"] ~ * { display: none !important; }
 /* Hide the build-version footer for all D layouts (D1/D2 show bench chip in topbar) */
 .sidebar-footer { display: none !important; }
 /* Hide "Running" / "Needs approval" session badges — ref D1/D2/D3 show only timestamps */
@@ -118,3 +121,13 @@
 /* ── Tool activity header: hide "Processing · Ns · N tools" disclosure header ──
  * ref: D1/D2/D3 show tool rows directly; no disclosure header in design. */
 .tool-activity-header { display: none !important; }
+
+/* ── Tool row: running pill uses amber (design d-pill.amber) ── */
+.tool-row-state.is-running { color: var(--ink-amber-8) !important; }
+.tool-row-state.is-running .tool-row-state-dot {
+  background: var(--ink-amber-7) !important;
+  animation: none !important;
+}
+
+/* ── Tool row: lowercase pill text (done → "done", Running → "running") ── */
+.tool-row-state { text-transform: lowercase !important; }

@@ -197,41 +197,35 @@ export function installRendererApi(): () => void {
       // regardless of what time the screenshot is taken.
       const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
       const S = startOfToday.getTime();
-      // todayTs: use rolling offset when it's within today; else clamp to S+slotMin.
-      const todayTs = (offset: number, slotMin: number): number =>
-        Math.max(S + slotMin * M, now - offset);
-      const mk = (id: string, title: string, ts: number, pinned = false) => ({
+      const mk = (id: string, title: string, ts: number) => ({
         id, title, source: "desktop" as const, modelId: "claude-sonnet-5",
         mode: "plan" as const, thinkingLevel: "off" as const, permissionMode: "ask" as const,
         messageCount: 0,
         updatedAt: new Date(ts).toISOString(),
         createdAt: new Date(ts).toISOString(),
-        pinned, archived: false,
+        pinned: false, archived: false,
       });
-      // Pinned page sessions (sidebar PINNED PAGES section; not grouped by time).
-      const pinnedSessions = [
-        mk("fixture-p1", "Kanban · coale_v16",  S - 5 * D, true),
-        mk("fixture-p2", "Raven · #general",    S - 5 * D, true),
-        mk("fixture-p3", "FileBird workspace",  S - 5 * D, true),
-      ];
-      // 12 reference sessions matching pages-d cmdpal reference; timestamps are
-      // absolute ms (now - offset) so relativeTime shows correct "47m ago" / "3d ago".
+      // 12 reference sessions matching pages-d reference design (variant-D1/D2/D3).
+      // TODAY: s1 (2m), s2 (47m), s3 (2h) — all well within today calendar day.
+      // YESTERDAY: s4 (anchor=S-12H), s5 (S-14H), s6 (S-16H) — always yesterday.
+      // THIS WEEK: s7-s12 anchored at S - 2D..5D so they never fall into "older14d".
+      // NOTE: no pinnedSessions array — avoid PINNED section in sidebar (ref has none).
       const sessions = [
         mk("fixture-s1",  "Sync ERPNext code module",           now - 2 * M),
-        mk("fixture-s2",  "Redesign settings plugin section",   now - 25 * H),
+        mk("fixture-s2",  "Redesign settings plugin section",   now - 47 * M),
         mk("fixture-s3",  "Fix duplicate bench start bug",      now - 2 * H),
-        mk("fixture-s4",  "Migrate Raven to frappe-ui v2",      now - 47 * M),
-        mk("fixture-s5",  "Review PR #224 leave approvals",     now - 26 * H),
-        mk("fixture-s6",  "ERPNext payroll migrate planning",   now - 3 * D),
-        mk("fixture-s7",  "Set up coale_v16 from scratch",      now - 4 * D),
-        mk("fixture-s8",  "Debug slow stock valuation query",   now - 5 * D),
-        mk("fixture-s9",  "Frappe UI modal refactor",           now - 6 * D),
-        mk("fixture-s10", "Refactor payment_entry hooks",       now - 7 * D),
-        mk("fixture-s11", "Install hrms on coale_staging",      now - 7.5 * D),
-        mk("fixture-s12", "Debug bench worker crash",           now - 8 * D),
+        mk("fixture-s4",  "Migrate Raven to frappe-ui v2",      S - 12 * H),
+        mk("fixture-s5",  "Review PR #224 leave approvals",     S - 14 * H),
+        mk("fixture-s6",  "ERPNext payroll period config",      S - 16 * H),
+        mk("fixture-s7",  "Set up coale_v16 from scratch",      S - 2 * D),
+        mk("fixture-s8",  "Debug slow stock valuation query",   S - 3 * D),
+        mk("fixture-s9",  "Frappe UI modal refactor",           S - 4 * D),
+        mk("fixture-s10", "Refactor payment_entry hooks",       S - 4 * D + 8 * H),
+        mk("fixture-s11", "Install hrms on coale_staging",      S - 5 * D),
+        mk("fixture-s12", "Debug bench worker crash",           S - 5 * D + 8 * H),
       ] as unknown as SessionSummary[];
       useAppStore.setState({
-        sessions: [...pinnedSessions, ...sessions],
+        sessions: [...sessions],
         activeSessionId: "fixture-s1",
         retainedSessionIds: ["fixture-s1"],
         retainedTranscripts: { "fixture-s1": [] },
