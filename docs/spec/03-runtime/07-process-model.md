@@ -5,11 +5,12 @@
 MVP target topology:
 
 ```text
-PI-Desktop.app
-├── Electron Main
-│   ├── Renderer (React UI)
-│   ├── Rust host-core sidecar
-│   └── Node pi agent sidecar
+Fcode.app
+├── Electron main  (apps/desktop/electron/main; index.ts wires ipc/ runtime/ bootstrap/ services/)
+│   ├── Renderer   (apps/desktop/src — React 19 + Vite, zustand app store)
+│   ├── host-core  (crates/host-core → bin/pi-desktop-host-core; NDJSON JSON-RPC over stdio)
+│   └── omp-bridge (packages/omp-bridge/dist-bundle/bridge.js on ELECTRON_RUN_AS_NODE)
+│       └── omp    (resources/bin/omp — vendored, Bun-compiled agent engine)
 ```
 
 ## 2. Ownership
@@ -19,7 +20,7 @@ PI-Desktop.app
 | Electron Main | window lifecycle, cross-platform tray integration, IPC fan-in/out, child process supervision, fixed-feed app update lifecycle |
 | Renderer | UI only |
 | Rust host-core | DB, tools, permissions, immutable Plan/Goal artifacts/`plan_approvals` execution fields, shell catalog, plugin host services, secrets adapters |
-| Node pi sidecar | pi agent loop, provider streaming, tool-call planning |
+| omp-bridge sidecar | the `omp` agent loop (spawned by the bridge), provider streaming, tool-call planning; calls host-core only through the parent's `HOST_PROXY_ALLOWED` allowlist |
 
 ## 3. Boot order
 
@@ -48,7 +49,7 @@ E2E harnesses point a build at a throwaway profile with it.
 2. Load English locale defaults
 3. Spawn Rust host-core
 4. `app.handshake` with host-core
-5. Spawn Node pi agent sidecar
+5. Spawn the omp-bridge sidecar (`bridge.js`, built from `packages/omp-bridge`), which in turn runs the bundled `omp` binary
 6. Connect agent sidecar tool-bridge to host-core via main
 7. Create main window / renderer
 8. Renderer performs `app/getVersion` healthcheck through main
@@ -265,10 +266,14 @@ sidecar/host shutdown sequence runs before the updater replaces the app.
 - Electron via electron-vite
 - Rust via `cargo run` binary path
 - Node via system Node (`>= 22.19`)
-- `desktop` `predev` rebuilds every workspace dependency in topological order
-  (`shared`, `i18n`, `plugin-sdk`, and `agent-runtime`) before host-core and
-  Electron startup; Electron must never compile against or load stale ignored
-  package artifacts from an earlier source revision
+- `desktop` `predev` runs `build:deps` (`pnpm --filter '@pi-desktop/desktop^...'
+  build`), which rebuilds every workspace dependency of the desktop package in
+  topological order (`shared`, `i18n`, `plugin-sdk`, `plugin-devkit`,
+  `agent-host`, `agent-runtime`, `host-runtime`, `racp`, `voice-runtime`, and
+  `filebird`), then builds host-core, before Electron startup; Electron must
+  never compile against or load stale ignored package artifacts from an earlier
+  source revision. `omp-bridge` is not one of those dependencies: its bundle and
+  the `omp` binary come from `bundle:runtime`
 - Electron 43+ no longer installs its binary during `pnpm install`;
   `scripts/dev-electron.mjs` resolves the development host through the
   `electron` package entry, which downloads and extracts the binary on demand
@@ -277,13 +282,16 @@ sidecar/host shutdown sequence runs before the updater replaces the app.
 ### Release
 - package Electron app
 - ship Rust host binary in resources (`Resources/bin/pi-desktop-host-core`)
-- agent sidecar runs the bundled `agent-runtime/sidecar.js` on the Electron
-  binary itself with `ELECTRON_RUN_AS_NODE=1` — no separate Node runtime is
-  shipped (resolves **D008**)
-- `Resources/agent-runtime/sidecar.js` is the sidecar's only independent
-  release entry. ASAR does not carry a second complete
-  `@pi-desktop/agent-runtime` package tree; Electron Main may inline the
-  pure-JS helpers it calls without changing process or protocol ownership
+- agent sidecar runs the bundled `omp-bridge/bridge.js` (built from
+  `packages/omp-bridge` into `Resources/omp-bridge/`) on the Electron binary
+  itself with `ELECTRON_RUN_AS_NODE=1` — no separate Node runtime is shipped
+  (resolves **D008**) — and the bridge runs the bundled agent engine at
+  `Resources/bin/omp` (`omp.exe` on Windows)
+- `Resources/omp-bridge/bridge.js` is the sidecar's only independent release
+  entry. ASAR does not carry a second complete `@pi-desktop/omp-bridge`
+  package tree; Electron Main may inline the pure-JS helpers it calls (for
+  example from `@pi-desktop/agent-runtime`) without changing process or
+  protocol ownership
 - renderer dependencies ship through Vite output rather than duplicate raw
   package trees; no interactive PTY native module is packaged
 - packaged builds use the Main-owned update controller. macOS, non-AppImage
@@ -297,7 +305,7 @@ sidecar/host shutdown sequence runs before the updater replaces the app.
 Remote control does not add a public listener to Rust host-core or the current
 renderer IPC surface. The target Agent Host is a headless module
 (`packages/agent-host`) that owns session and turn admission, the turn queue,
-the approval broker, and the event log, supervised beside the Node pi sidecar
+the approval broker, and the event log, supervised beside the omp-bridge sidecar
 and Rust host-core, with an authenticated RACP server above it (D374). The
 first remote deployment (D375) runs that module as a headless `pi-host` on a
 remote machine, bound to loopback and reached from the desktop through an SSH
@@ -307,7 +315,7 @@ state.
 
 The detailed topology, ownership, and migration boundary are specified in
 [`02-architecture/05-remote-agent-control.md`](../02-architecture/05-remote-agent-control.md).
-The current four-process local topology and shutdown order remain unchanged
+The current five-process local topology and shutdown order remain unchanged
 until a post-MVP implementation milestone explicitly amends this section.
 
 ## 8. Acceptance

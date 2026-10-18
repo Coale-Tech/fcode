@@ -57,7 +57,6 @@ they cover are specified in
 | `e2e-config-sync-multidevice.mjs` | `pnpm test:e2e:config-sync` | Two isolated host-core devices against an ephemeral local WebDAV fixture; covers encrypted sync, new-device approval, cross-device edits, conditional requests, and ciphertext-only remote storage |
 | `e2e-supervision.mjs` | `pnpm test:e2e:supervision` | Process supervision and restart behavior |
 | `e2e-subagents.mjs` | `pnpm test:e2e:subagents` | Subagent registry over RPC, then through the real loader (D202) |
-| `e2e-agent-live.mjs` | `node scripts/e2e-agent-live.mjs` | Live streaming chat through agent-runtime + host-core. Requires `PI_DESKTOP_TEST_API_KEY`, `PI_DESKTOP_TEST_BASE_URL`, and `PI_DESKTOP_TEST_MODEL` (no defaults), so it has no `pnpm` alias |
 
 ## Continuous integration
 
@@ -92,9 +91,6 @@ runbook](../docs/spec/06-delivery/06-release-runbook.md).
 
 ### Provider certificate regression
 
-- `node scripts/e2e-provider-certificates.mjs`: real desktop launcher and
-  bundled sidecar against a loopback TLS model; tests trust, terminal failure,
-  inherited extra CA, and hostname validation. Requires installed Electron.
 - `node scripts/e2e-provider-certificate-ui.mjs`: production transcript error
   component, localized guidance and detail disclosure. Requires built desktop
   styles. Optional `PI_CERTIFICATE_EVIDENCE_DIR` saves a review screenshot;

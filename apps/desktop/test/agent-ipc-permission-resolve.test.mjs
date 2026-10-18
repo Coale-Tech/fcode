@@ -35,7 +35,6 @@ function mount({ host, agentHostBridge }) {
     getAgentHostBridge: () => agentHostBridge,
     logger: { app: () => undefined },
     vendorOAuth: {},
-    agentExtensions: {},
     cancelSessionTools: unused("cancelSessionTools"),
     persistenceOutbox: {},
     dataDir: "/tmp",

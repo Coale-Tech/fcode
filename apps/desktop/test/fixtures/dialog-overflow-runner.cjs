@@ -38,31 +38,6 @@ app.whenReady().then(async () => {
     win.webContents.sendInputEvent({ type: 'mouseUp', button: 'left', clickCount: 1, ...point });
     await evaluate('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))');
   }
-  await evaluate('window.dialogFixture.show("extension")');
-  const original = await measure();
-  check('extension source fits and close is reachable', original.contained && original.overflow <= 1 && original.closeContained && original.closeHit, original);
-  check('full source path wraps without clipping or changing dialog width', original.sourceWrapped && original.width <= 420, original);
-  writeFileSync(join(process.env.PI_DIALOG_ARTIFACT_DIR, 'extension-path.png'), (await win.webContents.capturePage()).toPNG());
-  await click('.session-rename-dialog-close');
-  check('close dismisses the extension prompt', await evaluate('!document.querySelector("[role=dialog]") && window.dialogFixture.responses.length === 1'));
-  await evaluate('window.dialogFixture.show("extension")');
-  for (const keyCode of 'Ann') win.webContents.sendInputEvent({ type: 'char', keyCode });
-  await click('button[type="submit"]');
-  check('typing and submit preserve the input answer', await evaluate('window.dialogFixture.responses[0]?.value === "Ann"'));
-  for (const theme of ['light','dark']) for (const request of ['input','confirm','select']) {
-    win.setContentSize(520, 480);
-    await evaluate('window.dialogFixture.show("extension", ' + JSON.stringify({ theme, request, longTitle: true, locale: 'zh-CN' }) + ')');
-    const m = await measure();
-    check(theme + ' ' + request + ' wraps long content within the viewport', m.contained && m.overflow <= 1 && m.closeContained && m.sourceWrapped, m);
-    if (request === 'select') {
-      await click('input[type="radio"][value="Second option"]');
-      await click('button[type="submit"]');
-      check(theme + ' long option still allows selecting and submitting', await evaluate('window.dialogFixture.responses[0]?.value === "Second option"'));
-    } else {
-      await evaluate('window.dispatchEvent(new KeyboardEvent("keydown", {key:"Escape",bubbles:true}))');
-      check(theme + ' ' + request + ' Escape dismisses', await evaluate('!document.querySelector("[role=dialog]")'));
-    }
-  }
   for (const kind of ['rename','instructions','memory','delete','install','plugin-settings','plugin-review','oauth']) {
     win.setContentSize(1100, 800);
     await evaluate('window.dialogFixture.show(' + JSON.stringify(kind) + ')');

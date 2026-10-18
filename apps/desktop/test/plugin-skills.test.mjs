@@ -18,16 +18,6 @@ const skillDoc = readFileSync(
   join(desktopRoot, "resources/skills/plugin-development.md"),
   "utf8",
 );
-const agentRuntimeSrc = readFileSync(
-  join(repoRoot, "packages/agent-runtime/src/runtime.ts"),
-  "utf8",
-);
-const sidecarSrc = readFileSync(join(repoRoot, "packages/agent-runtime/src/sidecar.ts"), "utf8");
-const composerAutocompleteSrc = readFileSync(
-  join(desktopRoot, "src/components/ComposerAutocomplete.tsx"),
-  "utf8",
-);
-
 test("the plugin runtime indexes contributed skills under caps", () => {
   assert.match(runtimeSrc, /registerSkills/);
   assert.match(runtimeSrc, /getSkills\(\)/);
@@ -78,27 +68,6 @@ test("main forwards the skill catalog and serves the Skill tool locally", () => 
   assert.match(mainSrc, /\n\s+pluginSkills,\n/);
   assert.match(mainSrc, /setLocalTool\("Skill"/);
   assert.match(mainSrc, /loadSkillBody\(id\)/);
-});
-
-test("the composer lists active skills last and routes slash skills to the Skill tool", () => {
-  assert.match(mainSrc, /const loadComposerSkillCommands = async/);
-  assert.match(mainSrc, /const userSkills = \(await activeUserSkills/);
-  assert.match(mainSrc, /kind: "skill" as const/);
-  assert.match(mainSrc, /skillId: skill\.id/);
-  assert.match(
-    mainSrc,
-    /\.\.\.extensionCommands,\s*\.\.\.skillCommands,/,
-  );
-  assert.match(mainSrc, /command\?\.kind === "skill" && command\.skillId/);
-  assert.match(mainSrc, /Call the \\`Skill\\` tool with id/);
-  assert.match(composerAutocompleteSrc, /item\.command\.kind === "skill"/);
-});
-
-test("the agent runtime advertises skills and rebuilds when the catalog changes", () => {
-  assert.match(agentRuntimeSrc, /pluginSkillsPrompt/);
-  assert.match(agentRuntimeSrc, /SKILL_TOOL_NAME/);
-  assert.match(agentRuntimeSrc, /pluginSkillsDigest/);
-  assert.match(sidecarSrc, /pluginSkills/);
 });
 
 test("the built-in plugin skill only activates for plugin workspaces", () => {
@@ -153,24 +122,6 @@ test("plugin dev tools resolve paths inside the workspace and report failures", 
   // Scaffolding loads the plugin so the first edit is already a hot reload.
   assert.match(devToolsSrc, /registerDevPlugin\(target\.path\)/);
   assert.match(devToolsSrc, /loadPlugin\(target\.path, permissions\)/);
-});
-
-test("only PluginCheck is available outside agent mode", () => {
-  const builderEnd = agentRuntimeSrc.indexOf(
-    "const builtins = tools.map(exec)",
-  );
-  const builderStart = agentRuntimeSrc.lastIndexOf("const tools =", builderEnd);
-  assert.ok(builderStart >= 0 && builderEnd > builderStart);
-  const builder = agentRuntimeSrc.slice(builderStart, builderEnd);
-  const agentBranchStart = builder.indexOf('if (this.mode === "agent")');
-  assert.ok(agentBranchStart >= 0);
-  const nonAgentBranch = builder.slice(0, agentBranchStart);
-  assert.match(nonAgentBranch, /"PluginCheck"/);
-  assert.doesNotMatch(nonAgentBranch, /PluginScaffold|PluginPack/);
-  assert.match(
-    builder.slice(agentBranchStart),
-    /tools\.push\("PluginScaffold", "PluginPack"/,
-  );
 });
 
 test("main registers the three plugin dev tools as local tools", () => {

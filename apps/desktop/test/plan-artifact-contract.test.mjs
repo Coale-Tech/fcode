@@ -8,22 +8,8 @@ const readRoot = (relativePath) =>
 const readDesktop = (relativePath) =>
   readFile(new URL(`../${relativePath}`, import.meta.url), "utf8");
 
-test("Plan and Goal artifact runtime uses the terminating submit contract", async () => {
-  const [runtime, sidecar, main] = await Promise.all([
-    readRoot("packages/agent-runtime/src/runtime.ts"),
-    readRoot("packages/agent-runtime/src/sidecar.ts"),
-    readMainSourceSync(),
-  ]);
-
-  // One kind-keyed table names both submit tools, so Plan and Goal cannot drift.
-  assert.match(runtime, /SUBMIT_TOOL_NAMES: Record<ProposalKind, string> = \{\s*plan: "SubmitPlan",\s*goal: "SubmitGoal",/);
-  assert.match(runtime, /const name = SUBMIT_TOOL_NAMES\[kind\]/);
-  assert.match(runtime, /title: Type\.String/);
-  assert.match(runtime, /markdown: Type\.String/);
-  assert.match(runtime, /question: Type\.String/);
-  assert.match(runtime, /terminate: true/);
-  assert.doesNotMatch(runtime, /ExitPlanMode/);
-  assert.match(sidecar, /agent\.executeApprovedPlan/);
+test("Plan and Goal artifact runtime uses the terminating submit contract", () => {
+  const main = readMainSourceSync();
   assert.match(main, /plans\.queuedExecutions/);
   assert.match(main, /plans\.claimExecution/);
   assert.match(main, /plans\.finishExecution/);

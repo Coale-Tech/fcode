@@ -8,38 +8,48 @@
 一个仓库里有两个工作区：pnpm 管理全部 JavaScript 包（`apps/*`、`packages/*`、`docs`），Cargo 管理 Rust crate。根目录 `package.json` 的脚本同时驱动两者。
 
 ```text
-PI-Desktop/
+fcode/                        # 仓库根目录（GitHub Coale-Tech/fcode；本地检出目录名 PI-Desktop）
 ├── apps/
-│ └── desktop/                # Electron 产品外壳
-│   ├── electron/
-│   │ ├── main/               # 主进程，每个关注点一个模块
-│   │ ├── preload/            # 渲染器与插件面板的 preload
-│   │ └── shared/             # main 与 preload 共用的代码
-│   ├── src/                  # React 渲染器
-│   │ ├── components/         # UI；含 settings/、workpanel/、plugins/、extensions/
-│   │ ├── hooks/              # React hooks
-│   │ ├── lib/                # 与框架无关的渲染器逻辑和 IPC 客户端
-│   │ ├── pages/              # 路由目的页
-│   │ ├── stores/             # zustand 应用 store
-│   │ ├── styles/             # 按界面拆分的 CSS；tokens.css 是设计系统
-│   │ └── assets/             # 字体与品牌素材
-│   ├── test/                 # node --test 套件（*.test.mjs）与 helpers/
-│   ├── resources/            # 打包 extraResources：skills/、plugins/、models.dev/
-│   ├── build/                # electron-builder 用的图标与 macOS entitlements
-│   ├── index.html
-│   ├── electron.vite.config.ts
-│   └── package.json          # 同时承载 electron-builder 配置
+│ ├── desktop/                # Electron 产品外壳
+│ │ ├── electron/
+│ │ │ ├── main/               # 主进程，每个关注点一个模块；子目录 ipc/ runtime/ bootstrap/ services/ remote/ bench/ importers/ hindsight-local/
+│ │ │ ├── preload/            # 渲染器与插件面板的 preload
+│ │ │ ├── shared/             # main 与 preload 共用的代码
+│ │ │ └── test/
+│ │ ├── src/                  # React 渲染器
+│ │ │ ├── components/         # UI；含 settings/、workpanel/、plugins/、extensions/、bench/、code/
+│ │ │ ├── features/           # 领域模块：app、chat、kanban、omp-tools、plugins、projects、scheduled、sessions、settings、voice、work-panel
+│ │ │ ├── hooks/              # React hooks
+│ │ │ ├── lib/                # 与框架无关的渲染器逻辑和 IPC 客户端
+│ │ │ ├── pages/              # 路由目的页
+│ │ │ ├── stores/             # zustand 应用 store，含 slices/ 与 runtime/
+│ │ │ ├── styles/             # 按界面拆分的 CSS；tokens.css 是设计系统
+│ │ │ ├── assets/             # 字体与品牌素材
+│ │ │ └── capture/            # 截图采集装置
+│ │ ├── test/                 # node --test 套件（*.test.mjs）与 helpers/
+│ │ ├── resources/            # 打包 extraResources：bin/、skills/、fcode-skills/、fcode-agents/、skill-packs/、plugins/、models.dev/
+│ │ ├── build/                # electron-builder 用的图标与 macOS entitlements
+│ │ ├── index.html
+│ │ ├── electron.vite.config.ts
+│ │ └── package.json          # 同时承载 electron-builder 配置
+│ ├── filebird/               # FileBird SFTP 客户端，独立的 Electron 应用；其 out/ 随桌面应用发布
+│ └── pi-host/                # 无头 Fcode 宿主：host-core + omp-bridge，经 RACP-WS 提供服务
 ├── crates/
 │ └── host-core/              # Rust 特权宿主（二进制 pi-desktop-host-core）
 │   ├── Cargo.toml
 │   └── src/                  # rpc/、tools/，其余每个领域一个模块
+├── omp/                      # 内置快照（vendored）的代理引擎；不属于任何工作区，由 Bun 构建
+│ ├── packages/               # agent、ai、browser-relay、catalog、coding-agent、collab-web、mnemopi、natives、omptype、snapcompact、stats、tui、utils、wire
+│ └── crates/                 # pi-ast、pi-builtins、pi-diff、pi-edit、pi-iso、pi-natives、pi-shell、pi-vcs、pi-vfs、pi-voice、pi-walker、vendor
 ├── packages/
 │ ├── shared/                 # IPC/协议契约、错误码、更新日志
-│ ├── i18n/                   # en 与 zh-CN 目录及 locale 辅助函数
-│ ├── agent-runtime/          # pi sidecar 与运行时包装（打包进应用）
+│ ├── i18n/                   # 随应用发布的界面目录及 locale 辅助函数
+│ ├── omp-bridge/             # 随应用发布的代理 sidecar：连接 omp 二进制的 Node 桥
+│ ├── host-runtime/           # 与 Electron 无关的运行时：stdio 传输、监督器、回合生命周期、host-proxy 白名单
 │ ├── agent-host/             # 无头 Agent Host 模块：准入、队列、审批、事件日志
-│ ├── host-runtime/           # 与 Electron 无关的运行时：stdio 传输、监督器、回合生命周期
+│ ├── agent-runtime/          # 共享 Node 辅助模块（provider 绑定、提示词增强等）；pi 代理循环已退役
 │ ├── racp/                   # RACP-WS 服务端与客户端、设备令牌配对
+│ ├── voice-runtime/          # 语音听写用的本地语音转文字运行时
 │ ├── plugin-sdk/             # 插件作者类型与校验器
 │ └── plugin-devkit/          # pi-plugin CLI：scaffold、check、pack、publish
 ├── examples/
@@ -60,9 +70,13 @@ PI-Desktop/
 ├── AGENTS.md                 # AI 编码代理的强制规则
 ├── package.json              # 根脚本、pnpm 工作区
 ├── pnpm-workspace.yaml
-├── Cargo.toml                # Rust 工作区
+├── Cargo.toml                # Rust 工作区；排除 omp/
 └── README.md · README.zh-CN.md
 ```
+
+`omp/` 是 oh-my-pi 代理引擎的内置快照（vendored），不是依赖项。它被排除在 Cargo 工作区之外（`exclude = ["omp"]`），也不在 `pnpm-workspace.yaml` 中，使用 Bun 安装。`scripts/build-omp.mjs` 把它编译（Bun `--compile`，每个目标一个二进制文件）为 `apps/desktop/resources/bin/omp-<platform>-<arch>`，electron-builder 再把它作为 `bin/omp` 发布。该快照已偏离 oh-my-pi `ba344f5e69`，不再与上游同步；修改后需重新运行 `build-omp.mjs`。
+
+关联的 `git worktree` 检出——例如维护者工作站上的 `fcode-worktrees/`、`fcode-wt/` 以及被 git 忽略的 `PI-Desktop-worktrees/` 目录——都是本仓库的其他工作副本：每个目录里的 `.git` 文件指向主检出的 `.git/worktrees/`，共用其对象库与引用，不含独立源码。进行全仓扫描时应排除它们。
 
 ## 2. 包职责
 
@@ -74,6 +88,12 @@ PI-Desktop/
 - 插件运行时、面板与视图
 - 打包配置
 
+### `apps/filebird`
+FileBird，作为独立 Electron 应用构建的跨平台 SFTP 客户端。`apps/desktop` 将它与其他工作区依赖一起构建，并把 `out/preload` 与 `out/renderer` 作为 `Resources/filebird/` 发布。
+
+### `apps/pi-host`
+无头 Fcode 宿主（`pi-host` CLI）：host-core 加 omp-bridge sidecar，经 RACP-WS 提供服务，默认只绑定 loopback。它是远程控制的部署目标；见进程模型第 7 节。
+
 ### `crates/host-core`
 Rust 宿主服务：
 - 工具执行
@@ -82,12 +102,33 @@ Rust 宿主服务：
 - 持久化（SQLite、转录、工件、密钥）
 - 审计日志
 
+### `packages/omp-bridge`
+随应用发布的代理 sidecar：
+- 打包为 `dist-bundle/bridge.js`，由 Electron main（以及 `pi-host`）作为 Node 子进程运行
+- 以 `--mode rpc` 启动捆绑的 `omp` 二进制文件，并把它的事件和扩展 UI 请求映射为 Fcode 事件
+- skill 策展、评审与 pack 逻辑
+
+### `packages/host-runtime`
+桌面应用与 `pi-host` 共用、与 Electron 无关的运行时：
+- 连接 host-core 与 sidecar 的 stdio 传输，及重启监督
+- 回合生命周期、持久化与在途检查点
+- 计划分发与执行；bench 与 kanban 核心
+- `HOST_PROXY_ALLOWED`：sidecar 可回调的宿主方法白名单
+
 ### `packages/agent-runtime`
-Node 对 pi 的包装：
-- 模型引导
-- 代理回合控制
-- 事件标准化
-- 宿主工具桥客户端
+供 Electron main、`host-runtime` 与 `pi-host` 使用的共享 Node 辅助模块：
+- provider 绑定与请求头、模型能力映射
+- 提示词增强与模板、会话标题摘要
+- 项目指令链加载、插件一次性补全
+- 代理与 SOCKS5 中继、语音与图像生成辅助
+
+该包最初包装的 pi 代理循环（`DesktopAgentRuntime`，入口 `src/sidecar.ts`）已不再启动或打包；随应用发布的 sidecar 是 `packages/omp-bridge`。
+
+### `packages/voice-runtime`
+用于语音听写的本地语音转文字：
+- `VoiceController`、`TranscriptionEngine` 以及带模型目录与下载器的 `ModelManager`
+- PCM 工具函数与中文输出转换
+- 由主进程语音服务使用
 
 ### `packages/shared`
 跨边界契约：

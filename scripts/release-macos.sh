@@ -77,9 +77,6 @@ cargo build -p host-core --release
 echo "==> Building workspace packages"
 pnpm -r --filter '!@pi-desktop/desktop' build
 
-echo "==> Bundling the agent-runtime sidecar"
-pnpm --filter @pi-desktop/agent-runtime bundle
-
 echo "==> Building the desktop bundles"
 pnpm --filter @pi-desktop/desktop exec electron-vite build
 

@@ -17,10 +17,6 @@ const protocolSource = await readFile(
   new URL("../../../packages/shared/src/protocol.ts", import.meta.url),
   "utf8",
 );
-const runtimeSource = await readFile(
-  new URL("../../../packages/agent-runtime/src/runtime.ts", import.meta.url),
-  "utf8",
-);
 
 test("sidecar routes main-local tools before the host-core proxy", () => {
   // Local tools short-circuit tools.execute; other methods still proxy.
@@ -84,22 +80,3 @@ test("renderer routes browser preview events to the originating session", () => 
   assert.match(appSource, /offBrowserPreview\(\);/);
 });
 
-test("agent runtime exposes BrowserPreview in every mode and prompts for it", () => {
-  // The complete registry includes BrowserPreview even though the active
-  // provider context may defer its schema until ToolSearch activates it.
-  const builderStart = runtimeSource.indexOf("const tools =");
-  const builderEnd = runtimeSource.indexOf(
-    "const builtins = tools.map(exec)",
-    builderStart,
-  );
-  assert.ok(builderStart >= 0 && builderEnd > builderStart);
-  assert.match(runtimeSource.slice(builderStart, builderEnd), /"BrowserPreview"/);
-  // `path` carries an alias alongside it (D273), so assert the entry and its
-  // canonical argument rather than one exact line of source.
-  assert.match(
-    runtimeSource,
-    /BrowserPreview: \{\s*path: pathParam\([^)]*\),\s*file_path: aliasParam\("path"\),\s*\}/,
-  );
-  // BrowserPreview tool description mentions live-reload behaviour.
-  assert.match(runtimeSource, /live-reloads/);
-});

@@ -8,10 +8,6 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const transcriptSource = await readTranscriptSource();
-const runtimeSource = await readFile(
-  new URL("../../../packages/agent-runtime/src/runtime.ts", import.meta.url),
-  "utf8",
-);
 const toolPresentationSource = await readFile(
   new URL("../src/lib/tool-presentation.ts", import.meta.url),
   "utf8",
@@ -145,51 +141,6 @@ test("a Task row is expandable and names the delegate it used", () => {
   assert.match(transcriptSource, /case "delegate":\n\s+return <IconBot/);
 });
 
-test("a Task node shows the effective model after the subagent name", () => {
-  assert.match(
-    runtimeSource,
-    /startedAt,\s*\n\s*modelId: provider\.modelId,/,
-  );
-  assert.match(
-    transcriptSource,
-    /const modelId = variant === "topology" \? delegateModelId\(message\) : "";/,
-  );
-  assert.match(
-    transcriptSource,
-    /className="subagent-topology-node-model"[\s\S]*?title=\{modelLabel\}/,
-  );
-  assert.match(
-    toolPresentationSource,
-    /key !== "agent" &&[\s\S]*?key !== "error" &&[\s\S]*?key !== "modelId" &&[\s\S]*?key !== "thinkingLevel"/,
-  );
-  assert.match(
-    messagesCss,
-    /\.subagent-topology-node-model \{[^}]*font-family: var\(--font-mono\)/,
-  );
-});
-
-test("a Task node and detail header show the effective thinking level", () => {
-  assert.match(
-    runtimeSource,
-    /modelId: provider\.modelId,\s*\n\s*thinkingLevel,/,
-  );
-  assert.match(
-    runtimeSource,
-    /modelId: record\.modelId,\s*\n\s*thinkingLevel: record\.thinkingLevel,/,
-  );
-  assert.match(transcriptSource, /function delegateThinkingLevel\(message: UiMessage\)/);
-  assert.match(transcriptSource, /value === "off"/);
-  assert.match(transcriptSource, /const thinkingLabel = thinkingLevel \?\? "";/);
-  assert.doesNotMatch(transcriptSource, /thinkingLevel\./);
-  assert.match(
-    transcriptSource,
-    /const modelLabel = \[modelId, thinkingLabel\]\.filter\(Boolean\)\.join\(" "\);/,
-  );
-  assert.match(
-    transcriptSource,
-    /className="subagent-topology-node-model"[\s\S]*?title=\{modelLabel\}[\s\S]*?aria-label=\{modelLabel\}/,
-  );
-});
 
 test("the report is printed once: in the body, or as the nested answer", () => {
   assert.match(

@@ -10,6 +10,7 @@ import {
   initFcodeAgentDir,
   isReadOnlyExecuteMethod,
   makeOmpOverlay,
+  ompImages,
   ompBinaryCandidates,
   resolveOmpBinary,
   writeOmpOverlay,
@@ -1535,5 +1536,17 @@ describe("OmpBridge — native.session.fork gives user-visible reason (D2)", () 
       expect(reply?.result?.error).toContain("branch");
       expect(reply?.result?.error).not.toBe("native bridging unsupported");
     } finally { restore(); }
+  });
+});
+
+describe("ompImages", () => {
+  it("forwards only inline image attachments, as omp ImageContent", () => {
+    const out = ompImages([
+      { kind: "image", data: "QUJD", mimeType: "image/png", path: "a.png" },
+      { kind: "image", mimeType: "image/png" },
+      { kind: "file", data: "QUJD", mimeType: "text/plain" },
+    ]);
+    expect(out).toEqual([{ type: "image", data: "QUJD", mimeType: "image/png" }]);
+    expect(ompImages(undefined)).toEqual([]);
   });
 });

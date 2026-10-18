@@ -8,11 +8,12 @@
 MVP 目标拓扑：
 
 ```text
-PI-Desktop.app
-├── Electron Main
-│   ├── Renderer (React UI)
-│   ├── Rust host-core sidecar
-│   └── Node pi agent sidecar
+Fcode.app
+├── Electron main  (apps/desktop/electron/main; index.ts wires ipc/ runtime/ bootstrap/ services/)
+│   ├── Renderer   (apps/desktop/src — React 19 + Vite, zustand app store)
+│   ├── host-core  (crates/host-core → bin/pi-desktop-host-core; NDJSON JSON-RPC over stdio)
+│   └── omp-bridge (packages/omp-bridge/dist-bundle/bridge.js on ELECTRON_RUN_AS_NODE)
+│       └── omp    (resources/bin/omp — vendored, Bun-compiled agent engine)
 ```
 
 ## 2. 所有权
@@ -22,7 +23,7 @@ PI-Desktop.app
 | Electron 主要 | 窗口生命周期、跨平台托盘集成、IPC fan-in/out、子进程监控、固定源应用程序更新生命周期 |
 | Renderer | 仅用户界面 |
 | Rust host-core | DB、工具、权限、不可变 Plan/Goal artifacts/Electron 执行字段、shell 目录、插件主机服务、机密适配器 |
-| Node pi sidecar | pi 代理循环、提供商流、工具调用规划 |
+| omp-bridge sidecar | `omp` 代理循环（由 bridge 启动）、提供商流、工具调用规划；只通过父进程的 `HOST_PROXY_ALLOWED` 白名单调用 host-core |
 
 ## 3. 启动顺序
 
@@ -46,7 +47,7 @@ profile。
 2. 加载英文语言环境默认值
 3. 生成 Rust host-core
 4. `app.handshake` 与 host-core
-5. 生成 Node pi 代理 sidecar
+5. 生成 omp-bridge sidecar（`bridge.js`，由 `packages/omp-bridge` 构建），它再运行捆绑的 `omp` 二进制文件
 6. 通过 main 将代理 sidecar 工具桥连接到 host-core
 7. 创建主窗口/渲染器
 8. Renderer 通过 main 执行 `app/getVersion` 健康检查
@@ -196,10 +197,12 @@ sidecar/host 关闭序列在更新程序替换应用程序之前运行。
 - Electron 通过 electronics-vite
 - Rust 通过 `cargo run` 二进制路径
 - Node 通过系统 Node (`>= 22.19`)
-- `desktop` `predev` 按拓扑顺序重建每个工作区依赖关系
-  （`shared`、`i18n`、`plugin-sdk` 和 `agent-runtime`）在 host-core 之前和
-  Electron 启动； Electron 绝不能编译或忽略加载过时的内容
-  来自早期源版本的软件包工件
+- `desktop` 的 `predev` 运行 `build:deps`（`pnpm --filter '@pi-desktop/desktop^...'
+  build`），按拓扑顺序重建桌面包的每个工作区依赖（`shared`、`i18n`、
+  `plugin-sdk`、`plugin-devkit`、`agent-host`、`agent-runtime`、`host-runtime`、
+  `racp`、`voice-runtime` 和 `filebird`），然后构建 host-core，再启动 Electron；
+  Electron 绝不能针对早期源版本遗留的、被忽略的过时包产物进行编译或加载。
+  `omp-bridge` 不在这些依赖之内：它的打包产物和 `omp` 二进制文件来自 `bundle:runtime`
 - Electron 43+ 不再在 `pnpm install` 期间安装其二进制文件；
   `scripts/dev-electron.mjs` 通过 `electron` 包入口解析开发主机，
   该入口在首次开发启动时按需下载并解压二进制文件
@@ -207,13 +210,13 @@ sidecar/host 关闭序列在更新程序替换应用程序之前运行。
 ### 发布
 - Electron 应用程序包
 - 在资源中发送 Rust 主机二进制文件 (`Resources/bin/pi-desktop-host-core`)
-- 代理 sidecar 在 Electron 上运行捆绑的 `agent-runtime/sidecar.js`
-  二进制文件本身与 `ELECTRON_RUN_AS_NODE=1` — 没有单独的 Node 运行时
-  已发货（解决 **D008**）
-- `Resources/agent-runtime/sidecar.js` 是 sidecar 唯一独立的
-  释放条目。 ASAR 不携带第二个完整的
-  `@pi-desktop/agent-runtime` 包树； Electron 主要可能内联
-  它调用的纯 JS 助手无需更改进程或协议所有权
+- 代理 sidecar 在 Electron 二进制文件本身上运行捆绑的 `omp-bridge/bridge.js`
+  （由 `packages/omp-bridge` 构建到 `Resources/omp-bridge/`），使用
+  `ELECTRON_RUN_AS_NODE=1` — 不单独发布 Node 运行时（解决 **D008**）— 并由该 bridge
+  运行位于 `Resources/bin/omp` 的捆绑代理引擎（Windows 上为 `omp.exe`）
+- `Resources/omp-bridge/bridge.js` 是 sidecar 唯一独立的发布入口。ASAR 不携带第二个
+  完整的 `@pi-desktop/omp-bridge` 包树；Electron Main 可以内联它调用的纯 JS 辅助模块
+  （例如来自 `@pi-desktop/agent-runtime` 的），而无需更改进程或协议所有权
 - 渲染器依赖项通过 Vite 输出传送，而不是重复原始数据
   包树；桌面包不再携带交互式 PTY 原生模块
 - 打包版本使用 Main 拥有的更新控制器。macOS、非 AppImage Linux 和
@@ -225,14 +228,14 @@ sidecar/host 关闭序列在更新程序替换应用程序之前运行。
 
 远程控制不会给 Rust host-core 或当前 renderer IPC 表面增加公共监听器。目标 Agent
 Host 是无头模块（`packages/agent-host`），拥有会话与回合准入、回合队列、审批代理和
-事件日志，与 Node pi sidecar、Rust host-core 一起受监督，其上是已认证的 RACP 服务
+事件日志，与 omp-bridge sidecar、Rust host-core 一起受监督，其上是已认证的 RACP 服务
 （D374）。首个远程部署（D375）把该模块作为无头 `pi-host` 运行在远端机器上，只绑定
 loopback，桌面经 SSH 端口转发连接。未排期的 Gateway 拓扑会增加出站 Host link；
 Gateway 负责路由已认证客户，但不拥有工作区状态。
 
 详细拓扑、所有权和迁移边界见
 [`02-architecture/05-remote-agent-control.md`](/zh-CN/spec/02-architecture/05-remote-agent-control)。
-在 MVP 后的实现里程碑明确修订本节之前，当前四进程本地拓扑和关闭顺序保持不变。
+在 MVP 后的实现里程碑明确修订本节之前，当前五进程本地拓扑和关闭顺序保持不变。
 
 ## 8. 验收
 

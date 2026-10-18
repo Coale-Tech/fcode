@@ -125,16 +125,11 @@ describe("createHeadlessLaunchResolver", () => {
     expect(bypassed.modelId).toBe("omp");
   });
 
-  it("falls back to the omp placeholder for a headless-only vendor account, but still refuses plugin agents", async () => {
+  it("falls back to the omp placeholder for a headless-only vendor account", async () => {
     const { host } = hostWith([{ ...provider, authKind: "oauth" }]);
     const resolver = createHeadlessLaunchResolver({ getHost: () => host, dataDir: "/data", log: () => undefined });
     const bypassed = await resolver.resolve("s1", { providerId: "p1" }, {});
     expect(bypassed.providerId).toBe("omp");
-    // Plugin-agent admission happens before the omp bypass and is unrelated
-    // to PI-native provider state, so it still refuses on a headless host.
-    await expect(resolver.resolve("s1", { providerId: "extension-agent:plugin.x%2Fagent" }, {})).rejects.toMatchObject({
-      errorCode: "MODEL_NOT_CONFIGURED",
-    });
   });
 
   it("falls back to the omp placeholder when no provider is configured, but still fails typed when the host is gone", async () => {

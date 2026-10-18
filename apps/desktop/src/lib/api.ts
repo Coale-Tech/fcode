@@ -118,9 +118,6 @@ import type {
   ConfigSyncRestoreInput,
   ConfigSyncProgress,
   ConfigSyncState,
-  TrustedExtensionStatusEvent,
-  TrustedExtensionUiPrompt,
-  TrustedExtensionUiPromptResponse,
   OmpModelsListResult,
   OmpModelsSetResult,
   OmpThinkingLevelsResult,
@@ -1306,25 +1303,6 @@ export const api = {
   /** Ask the running install to stop. Only a download can be interrupted. */
   marketCancelInstall: (id: string) =>
     invoke<{ cancelled: boolean; id: string }>(IPC.invoke.marketCancelInstall, { id }),
-  /** Import a pi CLI extension file or directory as a development plugin (spec 16 §3). */
-  importPiExtension: () =>
-    invoke<
-      | { canceled: true }
-      | {
-          canceled: false;
-          id: string;
-          path: string;
-          entries: string[];
-          dependencies:
-            | { state: "skipped"; reason: "no-package-json" | "no-dependencies" }
-            | { state: "installed" }
-            | { state: "failed"; error: string; reason?: "npm-unavailable" };
-        }
-    >(IPC.invoke.pluginImportExtension),
-  runExtensionCommand: (input: { sessionId: string; name: string; args: string }) =>
-    invoke<{ ok: boolean }>(IPC.invoke.extensionsCommandRun, input),
-  respondExtensionPrompt: (response: TrustedExtensionUiPromptResponse) =>
-    invoke<{ ok: boolean }>(IPC.invoke.extensionsUiRespond, response),
   searchCommands: (query: string) =>
     invoke<{ commands: CommandItem[] }>(
       IPC.invoke.commandPaletteSearch,
@@ -1523,18 +1501,6 @@ export const api = {
     if (!window.piDesktop?.on) return () => undefined;
     return window.piDesktop.on(IPC.event.mcpOauth, (payload) =>
       listener(payload as McpOAuthLoginEvent),
-    );
-  },
-  onExtensionPrompt: (listener: (prompt: TrustedExtensionUiPrompt) => void) => {
-    if (!window.piDesktop?.on) return () => undefined;
-    return window.piDesktop.on(IPC.event.extensionsUiPrompt, (payload) =>
-      listener(payload as TrustedExtensionUiPrompt),
-    );
-  },
-  onExtensionStatus: (listener: (event: TrustedExtensionStatusEvent) => void) => {
-    if (!window.piDesktop?.on) return () => undefined;
-    return window.piDesktop.on(IPC.event.extensionsStatus, (payload) =>
-      listener(payload as TrustedExtensionStatusEvent),
     );
   },
   onSidecarExtUi: (listener: (event: SidecarExtUiEvent) => void) => {

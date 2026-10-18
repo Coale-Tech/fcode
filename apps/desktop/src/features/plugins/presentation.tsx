@@ -10,7 +10,6 @@ import {
   IconX,
 } from "../../components/icons";
 import type {
-  PluginAgentExtensionStatus,
   PluginCapability,
   PluginFsPolicy,
   PluginServiceStatus,
@@ -172,61 +171,6 @@ export function ServiceChips({ statuses }: { statuses: readonly PluginServiceSta
   );
 }
 
-/** Live state of a plugin's ExtensionAPI modules (spec 07-plugins/16 §11). */
-export function AgentExtensionDetails({ status }: { status: PluginAgentExtensionStatus }) {
-  const { t } = useTranslation();
-  const names = [
-    ...status.toolNames,
-    ...status.commandNames.map((name) => `/${name}`),
-    ...status.agentNames,
-  ];
-  return (
-    <div className="plugins-agent-extension">
-      <span
-        className={cx(
-          "agent-capability-badge",
-          status.state === "loaded" && "is-ready",
-          status.state === "error" && "is-failed",
-          status.state === "enabled" && "is-level",
-        )}
-      >
-        {t(`plugins.agentExtension.state.${status.state}`)}
-      </span>
-      {names.length ? <code className="plugins-agent-extension-names">{names.join(" · ")}</code> : null}
-      {status.diagnostics.length ? (
-        <ul className="agent-extension-diagnostics" aria-label={t("plugins.agentExtension.diagnostics")}>
-          {status.diagnostics.map((diagnostic) => (
-            <li
-              key={`${diagnostic.kind}:${diagnostic.member ?? ""}`}
-              className={cx(
-                "agent-extension-diagnostic",
-                (diagnostic.kind === "load_error" ||
-                  diagnostic.kind === "factory_error" ||
-                  diagnostic.kind === "handler_error" ||
-                  diagnostic.kind === "handler_timeout") &&
-                  "is-error",
-              )}
-            >
-              <span className="agent-extension-diagnostic-kind">
-                {t(`plugins.agentExtension.kinds.${diagnostic.kind}`)}
-              </span>
-              {diagnostic.member ? (
-                <code className="agent-extension-diagnostic-member">{diagnostic.member}</code>
-              ) : null}
-              <span className="agent-extension-diagnostic-message" title={diagnostic.stack}>
-                {diagnostic.message}
-              </span>
-              {diagnostic.count > 1 ? (
-                <span className="agent-capability-badge">×{diagnostic.count}</span>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-    </div>
-  );
-}
-
 /** Keep the installed row calm while retaining the full capability readout on demand. */
 export function PluginRowDetails({
   plugin,
@@ -244,13 +188,12 @@ export function PluginRowDetails({
   const hasCapabilities = (plugin.capabilities?.length ?? 0) > 0;
   const hasServices = (services?.length ?? 0) > 0;
   const hasPermissions = (plugin.permissions?.length ?? 0) > 0;
-  const hasAgentExtension = plugin.agentExtension !== undefined;
   const hasFsScope = FS_MODES.some((mode) => plugin.fs?.[mode]);
   const legacyFs = (plugin.permissions ?? []).filter((permission) =>
     LEGACY_FS_PERMISSIONS.includes(permission),
   );
 
-  if (!hasCapabilities && !hasServices && !hasPermissions && !hasAgentExtension) return null;
+  if (!hasCapabilities && !hasServices && !hasPermissions) return null;
 
   return (
     <details
@@ -278,14 +221,6 @@ export function PluginRowDetails({
           <div className="plugins-row-detail">
             <span className="plugins-row-detail-label">{t("plugins.servicesTitle")}</span>
             <ServiceChips statuses={services} />
-          </div>
-        ) : null}
-        {hasAgentExtension && plugin.agentExtension ? (
-          <div className="plugins-row-detail">
-            <span className="plugins-row-detail-label">
-              {t("plugins.agentExtension.title")}
-            </span>
-            <AgentExtensionDetails status={plugin.agentExtension} />
           </div>
         ) : null}
         {hasPermissions ? (

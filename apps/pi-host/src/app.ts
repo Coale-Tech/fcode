@@ -224,15 +224,7 @@ export async function startPiHost(config: PiHostConfig, options: { log?: HostLog
       if (!result?.skill || typeof result.body !== "string") return { ok: false, isError: true, content: `Skill: "${id}" is not available on this Host.` };
       return { ok: true, content: `# Skill: ${result.skill.name} (${result.skill.id})\n\n${result.body}` };
     });
-    sidecar.setTrustedExtensionBridge({
-      publishCommands: () => undefined,
-      publishDiagnostics: () => undefined,
-      requestUi: async () => {
-        throw new Error("extension UI is not available on a headless host");
-      },
-      configureModel: async () => {
-        throw new Error("extension model configuration is not available on a headless host");
-      },
+    sidecar.setSessionBridge({
       queuePush: async (params) =>
         agentHost.startTurn({ subject: "extension", roles: ["controller"] }, {
           sessionId: String(params.sessionId ?? ""),

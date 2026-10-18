@@ -25,7 +25,6 @@ const startup = readMainModuleSync("bootstrap/startup.ts");
 const shutdown = readMainModuleSync("bootstrap/shutdown.ts");
 const pluginIpc = readMainModuleSync("ipc/plugin-ipc.ts");
 const workspaceIpc = readMainModuleSync("ipc/workspace-ipc.ts");
-const extensionIpc = readMainModuleSync("agent-extensions-ipc.ts");
 const app = readAppSourceSync();
 const api = readFileSync(join(desktopRoot, "src/lib/api.ts"), "utf8");
 const protocol = readFileSync(
@@ -56,7 +55,7 @@ test("the optional MCP control server reuses IPC and synchronizes renderer state
 test("native picker handlers and secret-write channels stay out of the MCP catalog", () => {
   const pickerKeys = [];
   const handlePattern = /handle(?:WithEvent)?\(\s*IPC\.invoke\.([A-Za-z0-9_]+)/g;
-  for (const source of [pluginIpc, workspaceIpc, extensionIpc]) {
+  for (const source of [pluginIpc, workspaceIpc]) {
     const starts = [...source.matchAll(handlePattern)];
     for (let index = 0; index < starts.length; index += 1) {
       const from = starts[index].index ?? 0;

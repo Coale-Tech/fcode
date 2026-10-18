@@ -7,7 +7,6 @@ import {
   isImageGenerationModel,
   normalizeMode,
   resolveBindingContextWindow,
-  trustedExtensionAgentKeyFromProviderId,
   type CommandShellCatalog,
   type McpServerRecord,
   type ModelBinding,
@@ -212,53 +211,38 @@ export function createSessionLaunchRuntime({
       { includeDisabled: false },
     );
     const requestedProviderId = overrides.providerId ?? session.providerId;
-    const extensionAgentKey = requestedProviderId
-      ? trustedExtensionAgentKeyFromProviderId(requestedProviderId)
-      : undefined;
     async function admitProviderAndModel(): Promise<{
       provider: RuntimeProvider;
       isVendorAccount: boolean;
       secret: { value?: string };
       modelId: string;
     }> {
-      const provider: RuntimeProvider = extensionAgentKey
-        ? {
-            id: requestedProviderId!,
-            name: "Plugin agent",
-            modelId: overrides.modelId ?? session.modelId,
-            authKind: "none",
-            extensionAgentKey,
-          }
-        : providers.providers.find((item) => item.id === requestedProviderId) ||
-          providers.providers.find((item) => item.id === settings.defaultProviderId) ||
-          providers.providers.find(
-            (item) => item.hasSecret || item.hasOauth || item.authKind === "none",
-          ) ||
-          providers.providers[0];
+      const provider: RuntimeProvider =
+        providers.providers.find((item) => item.id === requestedProviderId) ||
+        providers.providers.find((item) => item.id === settings.defaultProviderId) ||
+        providers.providers.find(
+          (item) => item.hasSecret || item.hasOauth || item.authKind === "none",
+        ) ||
+        providers.providers[0];
       if (!provider) {
         throw Object.assign(new Error("No provider configured"), {
           errorCode: ErrorCodes.MODEL_NOT_CONFIGURED,
         });
       }
-      // Plugin-owned agents resolve credentials and transport inside the trusted
-      // extension; the host never reads or injects a secret for them.
-      const isExtensionAgent = Boolean(extensionAgentKey);
-      const isVendorAccount = !isExtensionAgent && provider.authKind === OAUTH_AUTH_KIND;
-      const secret = isExtensionAgent || isVendorAccount
+      const isVendorAccount = provider.authKind === OAUTH_AUTH_KIND;
+      const secret = isVendorAccount
         ? { value: undefined }
         : await runtimeState.host!.call<{ value?: string }>("providers.getSecret", {
             id: provider.id,
           });
-      if (!secret.value && !isExtensionAgent && !isVendorAccount && provider.authKind !== "none") {
+      if (!secret.value && !isVendorAccount && provider.authKind !== "none") {
         throw Object.assign(new Error("Provider API key missing"), {
           errorCode: ErrorCodes.PROVIDER_SECRET_MISSING,
         });
       }
-      const modelId = isExtensionAgent
+      const modelId = (provider.id === requestedProviderId
         ? overrides.modelId ?? session.modelId
-        : (provider.id === requestedProviderId
-          ? overrides.modelId ?? session.modelId
-          : undefined) ||
+        : undefined) ||
         (provider.id === settings.defaultProviderId
           ? settings.defaultModelId
           : undefined) ||
@@ -461,7 +445,6 @@ export function createSessionLaunchRuntime({
           modelId,
           apiKey: secret.value || "",
           authKind: provider.authKind,
-          extensionAgentKey: provider.extensionAgentKey,
           apiStyle,
           ...optionalProviderHeaders(provider.headers),
           supportsReasoning: thinkingCapabilities.supportsReasoning,
@@ -495,18 +478,6 @@ export function createSessionLaunchRuntime({
         // Plugin skills (D174): only the catalog crosses to the sidecar; the
         // document body is fetched on demand through the local `Skill` tool.
         pluginSkills,
-        // Trusted extensions enabled for this project (spec 16 §3.2). The set
-        // is part of the runtime match, so a toggle retires the runtime.
-        trustedExtensions: plugins
-          .getAgentExtensions()
-          .filter((extension) => pluginActiveInProject(extension.pluginId, projectPath))
-          .map((extension) => ({
-            id: extension.id,
-            entry: extension.entry,
-            label: extension.pluginName,
-            source: "plugin" as const,
-            root: extension.root,
-          })),
       },
     };
   }
