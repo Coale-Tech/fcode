@@ -1,6 +1,5 @@
 import { readMainModule, readMainSource } from "./helpers/source-contracts.mjs";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { loadStyles } from "./helpers/styles.mjs";
 
@@ -16,10 +15,6 @@ const macOptions =
   mainWindowBlock.match(
     /\.\.\.\(process\.platform === "darwin"[\s\S]*?\n      : \{[\s\S]*?\n        \}\),/,
   )?.[0] ?? "";
-
-function styleBlock(selector) {
-  return stylesSource.match(new RegExp(`${selector}\\s*\\{[^}]*\\}`))?.[0] ?? "";
-}
 
 function functionSource(source, name) {
   const start = source.indexOf(`function ${name}(`);

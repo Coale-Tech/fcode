@@ -174,7 +174,29 @@ export function AppShell() {
       <>
         {/* ShellNavbar: outside the inert/hidden subtree; stays usable in settings mode
             (Review Focus 4). Drag region + Cmd-K awesomebar for all pages. */}
-        <ShellNavbar onOpenSearch={() => setSearchOpen(true)} />
+        <ShellNavbar
+          onOpenSearch={() => setSearchOpen(true)}
+          workPanelToggle={
+            <TooltipButton
+              type="button"
+              className="app-work-panel-toggle no-drag"
+              tooltip={workPanelToggleTooltip}
+              ariaLabel={workPanelToggleTooltip}
+              aria-pressed={workPanelOpen || presentedWorkPanelOpen}
+              disabled={
+                !presentedWorkPanelOpen &&
+                !workPanelExiting &&
+                (page === "settings" || page === "plugins" || page === "scheduled" || page === "raven" || page === "filebird" || page === "notifications")
+              }
+              onClick={togglePresentedWorkPanel}
+            >
+              <span className="app-work-panel-toggle-icon" aria-hidden>
+                <IconPanel size={15} />
+                <IconPanelOpen size={15} />
+              </span>
+            </TooltipButton>
+          }
+        />
         <PortalVisibilityProvider visible={page !== "settings" || navLayout === "island"}>
           <div
             className="app-chat-shell"
@@ -379,25 +401,6 @@ export function AppShell() {
                 onToggleMaximize={toggleWorkPanelMaximize}
               />
             )}
-
-            <TooltipButton
-              type="button"
-              className="app-work-panel-toggle no-drag"
-              tooltip={workPanelToggleTooltip}
-              ariaLabel={workPanelToggleTooltip}
-              aria-pressed={workPanelOpen || presentedWorkPanelOpen}
-              disabled={
-                !presentedWorkPanelOpen &&
-                !workPanelExiting &&
-                (page === "settings" || page === "plugins" || page === "scheduled" || page === "raven" || page === "filebird" || page === "notifications")
-              }
-              onClick={togglePresentedWorkPanel}
-            >
-              <span className="app-work-panel-toggle-icon" aria-hidden>
-                <IconPanel size={15} />
-                <IconPanelOpen size={15} />
-              </span>
-            </TooltipButton>
           </div>
         </PortalVisibilityProvider>
         {page === "settings" && navLayout !== "island" ? (

@@ -18,6 +18,7 @@
  *                        56px (rail+island, D-SPEC.md:6 / D2-shell.html:71)
  * Awesomebar: position:absolute, left:50%, 300px wide (D.css:194-202)
  */
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "../stores/app-store";
 import { resolveNavLayout } from "../lib/nav-layout";
@@ -42,7 +43,13 @@ const PAGE_LABEL_KEY: Record<AppState["page"], string> = {
   notifications: "notifications.title",
 };
 
-export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
+export function ShellNavbar({
+  onOpenSearch,
+  workPanelToggle,
+}: {
+  onOpenSearch: () => void;
+  workPanelToggle?: ReactNode;
+}) {
   const { t } = useTranslation();
   const layout  = resolveNavLayout(useAppStore((s) => s.settings?.navLayout));
   const page    = useAppStore((s) => s.page);
@@ -144,6 +151,8 @@ export function ShellNavbar({ onOpenSearch }: { onOpenSearch: () => void }) {
             <IconChevronDown size={11} aria-hidden />
           </button>
         )}
+
+        {workPanelToggle}
 
         {/* Notification bell (tabs layout: 28px/16px icon per d-shell.css;
             rail/island: same cluster, bell also in rail footer for rail nav) */}

@@ -166,7 +166,8 @@
 }
 
 .kanban-column {
-  flex: 1 0 var(--d-kd-col-w);
+  flex: 1 1 var(--d-kd-col-w);
+  min-width: 150px;
   display: flex;
   flex-direction: column;
   min-height: 0;

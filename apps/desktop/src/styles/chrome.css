@@ -687,15 +687,9 @@
   background: var(--ds-tile);
 }
 
-/* Keep the sole work-panel toggle anchored to the viewport while the in-flow
- * panel changes MainPane width. AppShell ownership keeps it available on every
- * non-Settings route and above the panel header throughout both animations. */
+/* The work-panel toggle sits in the navbar's right cluster (ShellNavbar), so it
+ * flows with the bell, settings and avatar instead of overlaying them. */
 .app-work-panel-toggle {
-  position: fixed;
-  top: 9px;
-  right: var(--ds-work-panel-toggle-inset);
-  z-index: 30;
-  pointer-events: auto;
   -webkit-app-region: no-drag;
   app-region: no-drag;
 }
@@ -723,13 +717,6 @@
 .app-work-panel-toggle[aria-pressed="false"] .app-work-panel-toggle-icon > svg:last-child,
 .app-work-panel-toggle[aria-pressed="true"] .app-work-panel-toggle-icon > svg:first-child {
   opacity: 0;
-}
-
-:root[data-platform="win32"] .app-work-panel-toggle,
-:root[data-platform="linux"] .app-work-panel-toggle {
-  right: calc(
-    var(--ds-window-controls-width) + var(--ds-work-panel-toggle-inset)
-  );
 }
 
 

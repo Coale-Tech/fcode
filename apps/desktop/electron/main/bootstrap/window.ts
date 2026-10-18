@@ -1410,27 +1410,18 @@ export async function createWindow({
                   };
                 };
                 const add = rectFor('.work-panel-new-tab');
-                const toggle = rectFor('.app-work-panel-toggle');
                 const header = rectFor('.work-panel-header');
                 return {
                   scene: ${JSON.stringify(scene)},
                   viewport: { width: innerWidth, height: innerHeight },
                   header,
                   add,
-                  toggle,
-                  gap: add && toggle ? toggle.left - add.right : null,
-                  overlaps: add && toggle
-                    ? add.left < toggle.right && add.right > toggle.left &&
-                      add.top < toggle.bottom && add.bottom > toggle.top
-                    : null,
+                  fits: add && header ? add.right <= header.right : null,
                 };
               })()`);
               console.log("WORK_PANEL_HEADER_PROBE", probe);
-              if (probe?.overlaps) {
-                throw new Error(`work-panel header controls overlap in ${scene}`);
-              }
-              if (probe?.gap != null && probe.gap < 24) {
-                throw new Error(`work-panel header controls are too close in ${scene}`);
+              if (probe?.fits === false) {
+                throw new Error(`work-panel header controls overflow the panel in ${scene}`);
               }
             };
             await probeWorkPanelHeader("browser-from-new");

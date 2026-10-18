@@ -134,16 +134,7 @@
   align-items: center;
   gap: var(--ds-work-panel-control-gap);
   background: var(--ds-bg-dock-raised);
-  /* Keep the fixed work-panel toggle in its own hit-target lane. The reserve is
-     spent from the toggle's size/inset tokens plus the header's own control
-     gap, so the last panel control ends exactly one button gap before the
-     toggle instead of behind a divider. */
-  padding: 0
-    calc(
-      var(--ds-work-panel-toggle-size) + var(--ds-work-panel-toggle-inset) +
-        var(--ds-work-panel-control-gap)
-    )
-    0 12px;
+  padding: 0 12px;
   -webkit-app-region: drag;
 }
 
@@ -1563,9 +1554,7 @@
   flex-shrink: 0;
   align-items: center;
   height: 32px; /* var(--d-mini-h) */
-  /* Reserve right space for the viewport-fixed work-panel toggle so
-     .work-panel-new-tab never overlaps it (probe requires gap >= 24px). */
-  padding: 0 calc(var(--ds-work-panel-toggle-size) + var(--ds-work-panel-toggle-inset) + var(--ds-work-panel-control-gap)) 0 14px;
+  padding: 0 12px 0 14px;
   gap: 4px;
   background: var(--surface-gray-1);
   border-bottom: 1px solid var(--outline-elevation-1);
