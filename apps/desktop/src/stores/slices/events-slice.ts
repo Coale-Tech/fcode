@@ -29,6 +29,7 @@ import {
 import { formatToolValue } from "../../lib/tool-display";
 import type { AppState } from "../app-state";
 import type { SessionRuntime } from "../runtime/session-runtime";
+import { api } from "../../lib/api";
 import type { StoreAccess } from "./types";
 
 export type EventsSliceDependencies = StoreAccess & {
@@ -77,6 +78,26 @@ export function createEventsSlice({
   AppState,
   "handlePlansChanged" | "handleAgentEvent"
 > {
+  // omp is always spawned `--approval-mode always-ask` (E18), so the composer's
+  // "Auto" / "Accept edits" modes are enforced here: a matching request is
+  // answered at once instead of raising a card. A failed answer falls back to the card.
+  const admitPermission = (
+    sessionId: string,
+    request: Extract<AgentEventEnvelope["event"], { type: "tool_permission_request" }>["request"],
+    receivedAt: number,
+  ) => {
+    const card = () => {
+      set((state) => ({
+        pendingPermissions: enqueuePermission(state.pendingPermissions, { ...request, receivedAt }),
+      }));
+      notifyInteractivePrompt(sessionId, "permission", { toolName: request.toolName });
+    };
+    const mode = get().sessions.find((session) => session.id === sessionId)?.permissionMode;
+    const auto = mode === "auto" || (mode === "accept-edits" && (request.toolName === "edit" || request.toolName === "write"));
+    if (!auto) return card();
+    void api.resolvePermission({ requestId: request.requestId, decision: "allow-once" }).catch(card);
+  };
+
   let flushingStreamUpdates = false;
   const streamUpdates = createFrameBatcher<AgentEventEnvelope>((envelopes) => {
     flushingStreamUpdates = true;
@@ -431,15 +452,7 @@ export function createEventsSlice({
           runtime.removeToolStart(event.toolCallId);
         }
         if (event.type === "tool_permission_request") {
-          set((state) => ({
-            pendingPermissions: enqueuePermission(state.pendingPermissions, {
-              ...event.request,
-              receivedAt: envelope.ts,
-            }),
-          }));
-          notifyInteractivePrompt(envelope.sessionId, "permission", {
-            toolName: event.request.toolName,
-          });
+          admitPermission(envelope.sessionId, event.request, envelope.ts);
         } else if (event.type === "asktool_request") {
           set((state) => ({
             pendingAsks: enqueueAsk(state.pendingAsks, event.request),
@@ -617,15 +630,7 @@ export function createEventsSlice({
           });
           break;
         case "tool_permission_request":
-          set((state) => ({
-            pendingPermissions: enqueuePermission(state.pendingPermissions, {
-              ...event.request,
-              receivedAt: envelope.ts,
-            }),
-          }));
-          notifyInteractivePrompt(envelope.sessionId, "permission", {
-            toolName: event.request.toolName,
-          });
+          admitPermission(envelope.sessionId, event.request, envelope.ts);
           break;
         case "asktool_request":
           set((state) => ({

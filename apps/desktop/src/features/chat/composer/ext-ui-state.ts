@@ -14,6 +14,9 @@ export type ExtStatusState = Record<string, string>;
 /** Per-session widget entries: key → lines[]. */
 export type ExtWidgetState = Record<string, string[]>;
 
+/** omp renders TUI status with SGR colour escapes; the desktop shows plain text. */
+const stripAnsi = (text: string) => text.replace(/\u001b\[[0-9;]*m/g, "");
+
 /**
  * Apply a setStatus event to the status map.
  * Undefined or empty text clears the key; non-empty replaces it.
@@ -29,8 +32,9 @@ export function applyExtStatus(
     delete next[key];
     return next;
   }
-  if (state[key] === text) return state;
-  return { ...state, [key]: text };
+  const clean = stripAnsi(text);
+  if (state[key] === clean) return state;
+  return { ...state, [key]: clean };
 }
 
 /**
@@ -48,5 +52,5 @@ export function applyExtWidget(
     delete next[key];
     return next;
   }
-  return { ...state, [key]: lines };
+  return { ...state, [key]: lines.map(stripAnsi) };
 }

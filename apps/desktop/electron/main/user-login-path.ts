@@ -33,6 +33,8 @@ function defaultProbe(): string | undefined {
     const result = spawnSync(shell, ["-lic", 'printf %s "$PATH"'], {
       encoding: "utf8",
       timeout: PROBE_TIMEOUT_MS,
+      // An interactive zsh ignores SIGTERM, so the default kill left it running forever.
+      killSignal: "SIGKILL",
       stdio: ["ignore", "pipe", "ignore"],
     });
     if (result.status !== 0 || result.error || typeof result.stdout !== "string") {
