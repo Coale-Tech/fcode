@@ -6,14 +6,6 @@ const electronProxy = await readFile(
   new URL("../electron/main/network-proxy.ts", import.meta.url),
   "utf8",
 );
-const sidecarSource = await readFile(
-  new URL("../../../packages/agent-runtime/src/sidecar.ts", import.meta.url),
-  "utf8",
-);
-const nodeProxy = await readFile(
-  new URL("../../../packages/agent-runtime/src/node-proxy.ts", import.meta.url),
-  "utf8",
-);
 const hostProcess = await readFile(
   new URL("../../../packages/host-runtime/src/host-process.ts", import.meta.url),
   "utf8",
@@ -31,14 +23,6 @@ test("Electron main applies Chromium proxy and net.fetch", () => {
   assert.match(electronProxy, /PI_DESKTOP_PROXY_JSON/);
   assert.match(electronProxy, /startAuthenticatedProxyRelay/);
   assert.match(electronProxy, /proxyHasCredentials/);
-});
-
-test("sidecar reconfigures undici without a restart", () => {
-  assert.match(sidecarSource, /applyNodeNetworkProxy/);
-  assert.match(sidecarSource, /sidecar\.configure/);
-  assert.match(nodeProxy, /ProxyAgent/);
-  assert.match(nodeProxy, /socks5Connect/);
-  assert.match(nodeProxy, /setGlobalDispatcher/);
 });
 
 test("host-core marketplace curl uses --proxy and Bash does not inherit env", () => {

@@ -13,15 +13,12 @@ const readRoot = (path) =>
 const readSessionTranscript = () => read("src/lib/session-transcript.ts");
 
 test("provider failures stay in the transcript as structured assistant messages", async () => {
-  const [runtime, store, main, sessionTranscript] = await Promise.all([
-    readRoot("packages/agent-runtime/src/runtime.ts"),
+  const [store, main, sessionTranscript] = await Promise.all([
     readStoreSource(),
     readMainSource(),
     readSessionTranscript(),
   ]);
 
-  assert.match(runtime, /error:\s*classifiedError,\s*isError:\s*true/);
-  assert.match(runtime, /m\.status === "error" \|\| m\.isError \|\| m\.error/);
   assert.match(sessionTranscript, /!event\.message\.error/);
   assert.match(store, /assistantErrorMessage\(event\.error\)/);
   assert.match(main, /failed && empty && !event\.message\.error/);

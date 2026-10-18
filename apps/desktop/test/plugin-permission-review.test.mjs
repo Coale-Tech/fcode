@@ -151,7 +151,7 @@ test("the refusal names an action that exists", () => {
 
 test("the renderer holds the declaration until the user answers", () => {
   assert.match(pluginsUiSrc, /const \[pendingReview, setPendingReview\] = useState<PluginPermissionReview \| null>\(null\)/);
-  const loadDev = slice(pluginsUiSrc, "const loadDev = () =>", "// A pi CLI extension becomes a development plugin");
+  const loadDev = slice(pluginsUiSrc, "const loadDev = () =>", "const reloadPlugin");
   assert.match(loadDev, /const result = await api\.loadDevPlugin\(\)/);
   assert.match(loadDev, /if \(result\.canceled \|\| !result\.review\) return/);
   assert.match(loadDev, /setPendingReview\(result\.review\)/);

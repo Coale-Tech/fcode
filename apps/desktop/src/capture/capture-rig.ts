@@ -1733,7 +1733,7 @@ export function installCaptureRig(): CaptureRig {
       ];
       window.__PI_PALETTE_COMMANDS__ = [
         { id: "bench-migrate-run",  title: "Run bench migrate",           source: "builtin" as const, category: "coale_v16" },
-        { id: "bench-migrate-skip", title: "bench migrate --skip-failing", source: "extension" as const, category: "Scheduled task" },
+        { id: "bench-migrate-skip", title: "bench migrate --skip-failing", source: "plugin" as const, category: "Scheduled task" },
       ] satisfies CommandItem[];
       // Seed sessions matching "migrate" for the palette SESSIONS section.
       // Timestamps: first session ~47m ago (yesterday at 14h), second ~3 days ago.

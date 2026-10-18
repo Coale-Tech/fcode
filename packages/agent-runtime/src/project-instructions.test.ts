@@ -5,9 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   loadInstructionChain,
   loadProjectInstructions,
-  type ProjectInstructions,
 } from "./project-instructions.js";
-import { projectInstructionsPrompt } from "./project-instructions-prompt.js";
 
 let root: string | undefined;
 
@@ -122,23 +120,5 @@ describe("loadInstructionChain", () => {
     await expect(loadInstructionChain(root, undefined, globalPath)).resolves.toEqual({
       entries: [{ source: "~/.pi/agent/AGENTS.md", content: "a".repeat(32 * 1024) }],
     });
-  });
-});
-
-describe("projectInstructionsPrompt", () => {
-  it("labels instruction sources and makes later entries authoritative", () => {
-    const instructions: ProjectInstructions = {
-      entries: [
-        { source: "AGENTS.md", content: "Run unit tests." },
-        { source: "packages/api/AGENTS.md", content: "Run API tests." },
-      ],
-    };
-
-    expect(projectInstructionsPrompt(instructions)).toContain(
-      "## AGENTS.md\n\nRun unit tests.",
-    );
-    expect(projectInstructionsPrompt(instructions)).toContain(
-      "## packages/api/AGENTS.md\n\nRun API tests.",
-    );
   });
 });

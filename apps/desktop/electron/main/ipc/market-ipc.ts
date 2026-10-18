@@ -1,6 +1,5 @@
-import { IPC, ErrorCodes, trustedExtensionCommandId, trustedExtensionCommandName } from "@pi-desktop/shared";
+import { IPC, ErrorCodes } from "@pi-desktop/shared";
 import { builtinPaletteItems } from "../builtin-commands";
-import type { AgentExtensionBridge } from "../agent-extensions";
 import type { HostProcess } from "../host-process";
 import type { PluginRuntime } from "../plugin-runtime";
 import type { IpcRegistrar } from "./types";
@@ -9,7 +8,6 @@ export type MarketIpcDependencies = {
   registrar: IpcRegistrar;
   getHost: () => HostProcess | null;
   plugins: PluginRuntime;
-  agentExtensions: AgentExtensionBridge;
   optionalWorkspaceRoot: () => Promise<string | null>;
   pluginActiveInProject: (pluginId: string, projectPath: string | null | undefined) => boolean;
   sendToRenderer: (channel: string, payload?: unknown) => void;
@@ -20,7 +18,6 @@ export function registerMarketIpc({
   registrar,
   getHost,
   plugins,
-  agentExtensions,
   optionalWorkspaceRoot,
   pluginActiveInProject,
   sendToRenderer,
@@ -118,16 +115,8 @@ export function registerMarketIpc({
         source: "plugin" as const,
         pluginId: c.pluginId,
       }));
-    const extensionCmds = agentExtensions.allCommands().map((c) => ({
-      id: trustedExtensionCommandId(c.name),
-      title: `/${c.name}`,
-      category: c.extensionLabel,
-      keywords: c.description ? [c.description] : [],
-      source: "extension" as const,
-      extensionId: c.extensionId,
-    }));
     return {
-      commands: [...builtin, ...pluginCmds, ...extensionCmds].filter((c) => {
+      commands: [...builtin, ...pluginCmds].filter((c) => {
         if (!q) return true;
         const hay = `${c.title} ${c.category ?? ""} ${(c as any).keywords?.join(" ") ?? ""}`.toLowerCase();
         return hay.includes(q);
@@ -139,13 +128,7 @@ export function registerMarketIpc({
     if (commandId.startsWith("builtin.")) {
       return { ok: true, commandId };
     }
-    if (trustedExtensionCommandName(commandId) !== undefined) {
-      // Extension commands need a session; the renderer routes them through
-      // `extensions/commands/run` with the active session id.
-      throw Object.assign(new Error("extension commands run inside a session"), {
-        errorCode: ErrorCodes.INVALID_ARGUMENT,
-      });
-    }
+
     const cmd = plugins.getCommands().find((c) => c.id === commandId);
     if (!cmd) throw new Error("command not found");
     // A command can be typed into the composer by name, so the scope has to be

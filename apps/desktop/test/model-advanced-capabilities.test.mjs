@@ -30,10 +30,6 @@ const catalogSource = await readFile(
 );
 const mainSource = await readMainSource();
 const providerCatalogSource = await readMainModule("runtime/provider-catalog.ts");
-const sidecarSource = await readFile(
-  new URL("../../../packages/agent-runtime/src/sidecar.ts", import.meta.url),
-  "utf8",
-);
 const styles = await loadStyles();
 
 test("advanced settings choose the default thinking level among omit and the enabled ones", () => {
@@ -184,10 +180,8 @@ test("every image gate reads the override-shaped model config", () => {
   // history replay. A raw input.includes("image") on any of them would disagree
   // with the settings switch for exactly the models the override exists for.
   assert.doesNotMatch(mainSource, /modelConfig\?\.input\.includes\("image"\)/);
-  assert.doesNotMatch(sidecarSource, /modelConfig\?\.input\.includes\("image"\)/);
   const gates = mainSource.match(/visionFromModelConfig\(/g) ?? [];
   assert.ok(gates.length >= 4, `expected 4+ vision gates, saw ${gates.length}`);
-  assert.match(sidecarSource, /visionFromModelConfig\(params\.provider\.modelConfig\)/);
 });
 
 test("a model the catalog does not describe still reports its binding overrides", () => {

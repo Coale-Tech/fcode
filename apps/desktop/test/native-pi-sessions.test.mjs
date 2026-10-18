@@ -7,7 +7,6 @@ const agent = await read("../electron/main/ipc/agent-ipc.ts");
 const composer = await read("../src/components/Composer.tsx");
 const transcript = await read("../src/stores/slices/transcript-slice.ts");
 const events = await read("../src/stores/slices/events-slice.ts");
-const sidecarDispatch = await read("../../../packages/agent-runtime/src/sidecar.ts");
 
 test("native model readiness uses capability instead of Desktop secrets", () => {
   assert.match(composer, /const modelReady\s*=\s*nativeSession\s*\?\s*activeSessionSummary\??\.capabilities\?\.canPrompt === true\s*:/);
@@ -22,12 +21,6 @@ test("native abort bypasses smart-stop rewrite and refreshes source detail", () 
   assert.doesNotMatch(native, /replaceSessionMessages|resolveComposerSmartStop/);
 });
 
-test("native dispatch and events carry durable user acknowledgement", () => {
-  const dispatch = sidecarDispatch.slice(sidecarDispatch.indexOf('case "agent.prompt"'), sidecarDispatch.indexOf('const turnId =', sidecarDispatch.indexOf('case "agent.prompt"')));
-  assert.match(dispatch, /params\.userMessageId/);
-  assert.match(events, /event\.type === "user_message_persisted"/);
-  assert.match(events, /reconcilePersistedUserMessage/);
-});
 
 test("native compact and session-addressed queue endpoints reject before host or queue access", () => {
   for (const operation of ["agentCompact", "agentQueuePush", "agentQueueList"]) {

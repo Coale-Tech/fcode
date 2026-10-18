@@ -153,15 +153,6 @@ export type RegisteredPluginTool = {
  * module runs inside the agent sidecar; this record only says where it is
  * and which plugin owns it.
  */
-export type RegisteredAgentExtension = {
-  /** Realpath of the module; stable identity for the sidecar and diagnostics. */
-  id: string;
-  pluginId: string;
-  pluginName: string;
-  /** Absolute module path inside the plugin directory. */
-  entry: string;
-  root: string;
-};
 
 export type RegisteredPluginSkill = {
   /** `<pluginId>/<skillId>` — what the model passes to the Skill tool. */
@@ -288,8 +279,6 @@ export type PluginHostServices = {
    * visible workspace -- for a panel call or an unknown session.
    */
   getWorkspacePathForSession?: (sessionId: string) => string | null;
-  /** The set of `contributes.agentExtensions` modules changed (load/unload). */
-  agentExtensionsChanged?: () => void;
   getLocale?: () => string;
   getAppVersion?: () => string;
   /**
@@ -1279,7 +1268,6 @@ export class PluginRuntime {
     pluginId: string;
   }>();
   private skills = new Map<string, RegisteredPluginSkill>();
-  private agentExtensions = new Map<string, RegisteredAgentExtension>();
   private themes = new Map<string, RegisteredPluginTheme>();
   /**
    * Declared theme assets, keyed by plugin id and then by the package-relative
@@ -1421,12 +1409,6 @@ export class PluginRuntime {
     return parseSpeechAdapterReply(reply);
   }
 
-  /** ExtensionAPI modules from loaded plugins holding `agent.extension`. */
-  getAgentExtensions(): RegisteredAgentExtension[] {
-    return [...this.agentExtensions.values()].sort((a, b) => a.id.localeCompare(b.id));
-  }
-
-  /** Catalog of active plugin skills, ordered by id for a stable prompt. */
   getSkills(): RegisteredPluginSkill[] {
     return [...this.skills.values()].sort((a, b) => a.id.localeCompare(b.id));
   }
@@ -1799,7 +1781,6 @@ export class PluginRuntime {
     }
 
     this.registerSkills(loaded);
-    this.registerAgentExtensions(loaded);
     this.registerThemes(loaded);
     await this.registerMcpServers(loaded);
     await this.startServices(loaded);
@@ -3072,14 +3053,6 @@ export class PluginRuntime {
     for (const [id, skill] of this.skills) {
       if (skill.pluginId === pluginId) this.skills.delete(id);
     }
-    let droppedExtension = false;
-    for (const [id, extension] of this.agentExtensions) {
-      if (extension.pluginId === pluginId) {
-        this.agentExtensions.delete(id);
-        droppedExtension = true;
-      }
-    }
-    if (droppedExtension) this.services.agentExtensionsChanged?.();
     for (const [id, theme] of this.themes) {
       if (theme.pluginId === pluginId) this.themes.delete(id);
     }
@@ -3119,58 +3092,6 @@ export class PluginRuntime {
    * Skills predate the permission gate, so a plugin that declares them without
    * `agent.prompt.inject` still loads — it just teaches the agent nothing.
    */
-  /**
-   * Index `contributes.agentExtensions`. The modules are loaded by the agent
-   * sidecar at the next turn, so this only validates paths and records
-   * ownership. Without `agent.extension` the plugin loads but contributes no
-   * module, mirroring how skills behave without `agent.prompt.inject`.
-   */
-  private registerAgentExtensions(loaded: LoadedPlugin): void {
-    const declared = loaded.manifest.contributes?.agentExtensions ?? [];
-    if (!declared.length) return;
-    const pluginId = loaded.manifest.id;
-    if (!loaded.permissions.has("agent.extension")) {
-      this.services.audit?.({
-        pluginId,
-        api: "plugin.agentExtensions.skipped",
-        ok: false,
-        errorCode: "PERMISSION_DENIED",
-        count: declared.length,
-        ts: Date.now(),
-      });
-      return;
-    }
-    let changed = false;
-    for (const relative of declared) {
-      const entry = resolveInsidePlugin(loaded.path, String(relative ?? "").trim());
-      if (!entry || !existsSync(entry)) {
-        this.services.audit?.({
-          pluginId,
-          api: "plugin.agentExtensions.skipped",
-          ok: false,
-          errorCode: "NOT_FOUND",
-          ts: Date.now(),
-        });
-        continue;
-      }
-      let id = entry;
-      try {
-        id = realpathSync(entry);
-      } catch {
-        // Fall back to the resolved path; the sidecar reports a load error.
-      }
-      this.agentExtensions.set(id, {
-        id,
-        pluginId,
-        pluginName: loaded.manifest.name,
-        entry,
-        root: loaded.path,
-      });
-      changed = true;
-    }
-    if (changed) this.services.agentExtensionsChanged?.();
-  }
-
   private registerSkills(loaded: LoadedPlugin): void {
     const declared = loaded.manifest.contributes?.skills ?? [];
     if (!declared.length) return;

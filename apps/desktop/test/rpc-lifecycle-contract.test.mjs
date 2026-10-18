@@ -19,16 +19,8 @@ const mainSource = await readMainSource();
 const plansSource = await readMainModule("runtime/plans.ts");
 const shutdownModuleSource = await readMainModule("bootstrap/shutdown.ts");
 const mainIndexSource = await readMainModule("index.ts");
-const runtimeSource = await readFile(
-  new URL("../../../packages/agent-runtime/src/runtime.ts", import.meta.url),
-  "utf8",
-);
 const rpcTimeoutSource = await readFile(
   new URL("../../../packages/shared/src/rpc-timeouts.ts", import.meta.url),
-  "utf8",
-);
-const agentSidecarEntrySource = await readFile(
-  new URL("../../../packages/agent-runtime/src/sidecar.ts", import.meta.url),
   "utf8",
 );
 const e2eHostSource = await readFile(
@@ -52,7 +44,6 @@ test("stdio RPC readers split frames on LF only", () => {
   for (const [name, source] of [
     ["host-process", hostSource],
     ["agent-sidecar", sidecarSource],
-    ["runtime sidecar", agentSidecarEntrySource],
     ["e2e host harness", e2eHostSource],
     ["e2e smoke host", e2eSmokeSource],
     ["codex importer", codexImporterSource],
@@ -154,14 +145,6 @@ test("host disposal closes stdin, observes exit, and force-kills only after grac
   );
 });
 
-test("Bash defaults are finite and the tool advertises the effective timeout", () => {
-  assert.match(runtimeSource, /DEFAULT_COMMAND_TIMEOUT_MS/);
-  assert.match(runtimeSource, /defaults to a 60-second timeout/);
-  assert.match(runtimeSource, /timeoutMs,\n\s+}/);
-  assert.match(rpcTimeoutSource, /DEFAULT_BASH_RPC_TIMEOUT_MS/);
-  assert.match(rpcTimeoutSource, /return DEFAULT_BASH_RPC_TIMEOUT_MS/);
-  assert.doesNotMatch(rpcTimeoutSource, /return undefined/);
-});
 
 test("turn ownership and execution queue wake only after durable turn settlement", () => {
   const finishStart = plansSource.indexOf("function finishTurn(");

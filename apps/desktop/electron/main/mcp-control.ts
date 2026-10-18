@@ -258,10 +258,6 @@ const CONTROL_OPERATION_SPECS: OperationSpec[] = [
   spec("marketSearch", "market/search", "Search the plugin marketplace.", "read", ["query"]),
   spec("marketGetDetail", "market/getDetail", "Read marketplace plugin details.", "read", ["input"]),
   spec("commandPaletteSearch", "commandPalette/search", "Search command-palette commands.", "read", ["query"]),
-  // Trusted extensions (spec 16 §10.2): reads and session-scoped command runs
-  // are exposed; enablement, paths, and removal stay local (blocked below).
-  spec("extensionsCommandRun", "extensions/commands/run", "Run a trusted extension command in a session.", "write", ["input"]),
-  spec("extensionsUiRespond", "extensions/ui/respond", "Answer a pending trusted extension prompt.", "dangerous", ["response"]),
 ];
 
 const coreTool = (
@@ -476,8 +472,6 @@ export const MCP_CONTROL_BLOCKED_CHANNEL_KEYS = [
   "settingsSet",
   "mcpUpsert",
   "mcpImport",
-  // Importing a pi extension opens a native picker and grants agent.extension.
-  "pluginImportExtension",
 ] as const;
 
 function asObject(value: unknown): Record<string, unknown> {

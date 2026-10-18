@@ -6,7 +6,6 @@ import type { AgentHostBridge } from "../agent-host-bridge";
 import type { AgentSidecar } from "../agent-sidecar";
 import type { HostProcess } from "../host-process";
 import { ROUTE_LOCAL, type BackendRouter } from "../remote/backend-router";
-import { registerAgentExtensionIpc } from "../agent-extensions-ipc";
 import type { BrowserPane } from "../browser-view";
 import { readNpmPath, writeNpmPath } from "../npm-preferences";
 import { registerAgentIpc } from "./agent-ipc";
@@ -137,7 +136,6 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     listRuntimeProviders,
     enrichProviderList,
     bindingForModel,
-    agentExtensions,
     activeUserSkills,
     pluginActiveInProject,
     getWorkPanelReservationWidth,
@@ -313,7 +311,6 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
   const composerCommandService = registerComposerIpc({
     registrar,
     plugins,
-    agentExtensions,
     optionalWorkspaceRoot,
     activeUserSkills,
     pluginActiveInProject,
@@ -468,31 +465,6 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
   });
   registerFileBirdIpc({ registrar, dataDir, getMainWindow, sendToRenderer });
 
-
-  registerAgentExtensionIpc({
-    handle,
-    bridge: agentExtensions,
-    window: getMainWindow,
-    dialogs: dialog,
-    getLocale: getUpdaterLocale,
-    getNpmPath: () => readNpmPath(dataDir),
-    setNpmPath: (path) => writeNpmPath(dataDir, path),
-    importRoot: join(dataDir, "plugins", "imported"),
-    loadDevPlugin: async (path) => {
-      const currentHost = getHost();
-      if (!currentHost) throw new Error("host unavailable");
-      const loaded = await currentHost.call<{ plugin: any }>("plugins.loadDev", { path });
-      await plugins.loadFromPath(path, loaded.plugin?.permissions ?? [], { development: true });
-      if (loaded.plugin?.id) plugins.watchDevPlugin(loaded.plugin.id);
-      sendToRenderer(IPC.event.pluginChanged, { reason: "importExtension", pluginId: loaded.plugin?.id });
-      return loaded;
-    },
-    runCommand: async (input) => {
-      const currentSidecar = getSidecar();
-      if (!currentSidecar) throw new Error("agent sidecar unavailable");
-      return currentSidecar.call<{ handled: boolean }>("extensions.command.run", input);
-    },
-  });
   registerAgentIpc({
     registrar,
     getHost,
@@ -505,7 +477,6 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     },
     logger,
     vendorOAuth,
-    agentExtensions,
     persistenceOutbox,
     dataDir,
     activeTurns,
@@ -532,7 +503,6 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     registrar,
     getHost,
     plugins,
-    agentExtensions,
     browserHost,
     pluginViews,
     pluginScopes,
@@ -599,7 +569,6 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     registrar,
     getHost,
     plugins,
-    agentExtensions,
     optionalWorkspaceRoot,
     pluginActiveInProject,
     sendToRenderer,
