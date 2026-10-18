@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { PullRequestCheck, PullRequestSummary } from "@pi-desktop/shared";
+import type { PullRequestCheck, PullRequestSummary, PullsErrorKind } from "@pi-desktop/shared";
 import { useAppStore } from "../stores/app-store";
 import { api } from "../lib/api";
 import { formatUpdated } from "../lib/project-archive";
 import { Button, TooltipButton, Panel } from "../components/ui";
+import { GhSetupNotice } from "../components/GhSetupNotice";
+import { failedChecks, fixCiPrompt, hasPendingChecks } from "../lib/pull-requests";
 import { ContextMenu, useContextMenu } from "../components/ContextMenu";
 import {
   IconChat,
@@ -14,6 +16,7 @@ import {
   IconPullRequest,
   IconRefresh,
   IconFileText,
+  IconWrench,
 } from "../components/icons";
 
 type Filter = "open" | "draft" | "all";
@@ -61,47 +64,64 @@ export function PullRequestsPage() {
   const sendPrompt = useAppStore((s) => s.sendPrompt);
   const [pulls, setPulls] = useState<PullRequestSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [errorKind, setErrorKind] = useState<PullsErrorKind | undefined>();
   const [loading, setLoading] = useState(false);
-  const [selectedPr, setSelectedPr] = useState<PullRequestSummary | null>(null);
+  // Only the number is kept: the PR itself is derived from `pulls`, so a refresh updates the open detail panel.
+  const [selectedPrNumber, setSelectedPrNumber] = useState<number | null>(null);
   const [filter, setFilter] = useState<Filter>("open");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  const refresh = async () => {
-    setLoading(true);
+  const latestRequest = useRef(0);
+
+  /** `quiet` refreshes (focus, polling) keep what is on screen through a transient gh failure. */
+  const refresh = async (quiet = false) => {
+    const request = ++latestRequest.current;
+    if (!quiet) setLoading(true);
     try {
       const res = await api.listPullRequests();
+      if (request !== latestRequest.current) return;
+      if (quiet && res.error && !res.errorKind) return;
       const loaded = res.pulls || [];
       setPulls(loaded);
       setError(res.error || null);
+      setErrorKind(res.errorKind);
       setLastUpdated(new Date());
       // Capture mode: pre-select the designated PR for the detail-panel screenshot.
       if (window.__PI_CAPTURE__) {
         const preSelect = window.__PI_CAPTURE_PR_SELECTED__;
-        if (preSelect) {
-          const match = loaded.find((p) => p.number === preSelect);
-          if (match) setSelectedPr(match);
-        }
+        if (preSelect && loaded.some((p) => p.number === preSelect)) setSelectedPrNumber(preSelect);
       }
     } catch (e) {
+      if (request !== latestRequest.current || quiet) return;
       setPulls([]);
+      setErrorKind(undefined);
       setError(e instanceof Error ? e.message : String(e));
     } finally {
-      setLoading(false);
+      if (request === latestRequest.current) setLoading(false);
     }
   };
 
+  // A PR number only means something inside one repo: drop the old repo's list and selection first.
   useEffect(() => {
+    setPulls([]);
+    setSelectedPrNumber(null);
+    setError(null);
+    setErrorKind(undefined);
     void refresh();
   }, [workspace?.path]);
 
-  // Capture mode: once pulls load, pre-select the designated PR number.
+  // CI moves on without us: refetch when the window regains focus, and every 30 s while a check is running.
   useEffect(() => {
-    if (!window.__PI_CAPTURE__) return;
-    const preSelect = window.__PI_CAPTURE_PR_SELECTED__;
-    if (!preSelect || !pulls.length) return;
-    const match = pulls.find((p) => p.number === preSelect);
-    if (match) setSelectedPr(match);
+    const onFocus = () => void refresh(true);
+    window.addEventListener("focus", onFocus);
+    const poll = hasPendingChecks(pulls) ? window.setInterval(onFocus, 30_000) : undefined;
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      if (poll) window.clearInterval(poll);
+    };
   }, [pulls]);
+
+  const selectedPr = pulls.find((p) => p.number === selectedPrNumber) ?? null;
 
   const filtered = useMemo(() => {
     if (filter === "all") return pulls;
@@ -122,17 +142,17 @@ export function PullRequestsPage() {
   /** Derive branch from the first open PR if workspace.branch unavailable. */
   const defaultBranch = pulls[0]?.baseRefName ?? "main";
 
-  const startAiReviewAll = async () => {
+  const startChat = async (prompt: string) => {
     await newSession();
     setPage("chat");
-    await sendPrompt("List open pull requests and current branch status for this repository. Summarize what needs review.");
+    await sendPrompt(prompt);
   };
 
-  const startReview = async (pr: PullRequestSummary) => {
-    await newSession();
-    setPage("chat");
-    await sendPrompt(`Review pull request #${pr.number}${pr.title ? ` (${pr.title})` : ""}. Summarize changes, risks, and suggested next steps.`);
-  };
+  const startAiReviewAll = () =>
+    startChat("List open pull requests and current branch status for this repository. Summarize what needs review.");
+
+  const startReview = (pr: PullRequestSummary) =>
+    startChat(`Review pull request #${pr.number}${pr.title ? ` (${pr.title})` : ""}. Summarize changes, risks, and suggested next steps.`);
 
   return (
     <div className="pr-page">
@@ -180,7 +200,7 @@ export function PullRequestsPage() {
           </div>
 
           {/* Filter bar */}
-          {workspace?.path && (
+          {workspace?.path && !errorKind && (
             <div className="dest-toolbar">
               <div className="dest-filters" role="tablist" aria-label={t("pulls.filters")}>
                 {(
@@ -241,6 +261,8 @@ export function PullRequestsPage() {
                   {t("project.open")}
                 </Button>
               </Panel>
+            ) : errorKind ? (
+              <GhSetupNotice kind={errorKind} checking={loading} onRecheck={() => void refresh()} />
             ) : filtered.length === 0 ? (
               <Panel className="page-card page-empty">
                 <div className="page-empty-icon"><IconPullRequest size={20} /></div>
@@ -257,7 +279,7 @@ export function PullRequestsPage() {
                   <div
                     key={pr.number}
                     className={`pr-row${selectedPr?.number === pr.number ? " selected" : ""}`}
-                    onClick={() => setSelectedPr(selectedPr?.number === pr.number ? null : pr)}
+                    onClick={() => setSelectedPrNumber(selectedPr?.number === pr.number ? null : pr.number)}
                   >
                     <div className={`pr-row-icon${pr.isDraft ? " draft" : ""}`}>
                       <IconPullRequest size={12} />
@@ -465,27 +487,53 @@ export function PullRequestsPage() {
                 <div className="pr-detail-section">
                   <div className="pr-detail-label">{t("pulls.ciChecks")}</div>
                   <div className="pr-checks-list">
-                    {selectedPr.checks.map((c: PullRequestCheck, i: number) => (
-                      <div key={i} className={`pr-check-row pr-check-${c.state}`}>
-                        <span className="pr-check-icon">
-                          {c.state === "success" ? "✓" : c.state === "failure" ? "✗" : c.state === "pending" ? "●" : "—"}
-                        </span>
-                        <span className="pr-check-name">
-                          {c.name}{c.details ? ` · ${c.details}` : ""}
-                        </span>
-                        {c.durationSeconds != null && (
-                          <span className="pr-check-dur">{`${Math.floor(c.durationSeconds / 60)}m ${c.durationSeconds % 60}s`}</span>
-                        )}
-                      </div>
-                    ))}
+                    {selectedPr.checks.map((c: PullRequestCheck, i: number) => {
+                      const label = `${c.name}${c.details ? ` · ${c.details}` : ""}`;
+                      const url = c.url;
+                      return (
+                        <div key={i} className={`pr-check-row pr-check-${c.state}`}>
+                          <span className="pr-check-icon">
+                            {c.state === "success" ? "✓" : c.state === "failure" ? "✗" : c.state === "pending" ? "●" : "—"}
+                          </span>
+                          <span className="pr-check-name">
+                            {url ? (
+                              <button
+                                type="button"
+                                className="pr-check-link"
+                                title={t("pulls.openGitHub")}
+                                onClick={() => void api.browserOpenExternal(url)}
+                              >
+                                {label}
+                              </button>
+                            ) : (
+                              label
+                            )}
+                          </span>
+                          {c.durationSeconds != null && (
+                            <span className="pr-check-dur">{`${Math.floor(c.durationSeconds / 60)}m ${c.durationSeconds % 60}s`}</span>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
 
               {/* Actions */}
               <div className="pr-detail-actions">
+                {failedChecks(selectedPr).length > 0 && (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    style={{ width: "100%" }}
+                    onClick={() => void startChat(fixCiPrompt(selectedPr))}
+                  >
+                    <IconWrench size={12} aria-hidden />
+                    {t("pulls.fixCi")}
+                  </Button>
+                )}
                 <Button
-                  variant="primary"
+                  variant={failedChecks(selectedPr).length > 0 ? "secondary" : "primary"}
                   size="sm"
                   style={{ width: "100%" }}
                   onClick={() => void startReview(selectedPr)}

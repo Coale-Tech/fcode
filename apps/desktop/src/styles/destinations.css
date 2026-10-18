@@ -449,6 +449,18 @@
 .pr-check-row.pr-check-success .pr-check-icon { color: var(--ink-green-8); }
 .pr-check-row.pr-check-failure .pr-check-icon { color: var(--ink-red-8); }
 .pr-check-row.pr-check-pending .pr-check-icon { color: var(--ink-amber-8); }
+.pr-check-link { all: unset; cursor: pointer; }
+.pr-check-link:hover { text-decoration: underline; }
+.pr-check-link:focus-visible { outline: 2px solid var(--outline-gray-4); outline-offset: 2px; border-radius: var(--d-r-sm); }
+/* gh not installed / not signed in: must not read as an ordinary empty list */
+.pr-setup { display: flex; gap: 12px; margin: 16px; padding: 14px 16px; border: 1px solid var(--outline-amber-3); border-left-width: 4px; border-radius: var(--d-r-sm); background: var(--surface-amber-2); color: var(--ink-gray-8); }
+.pr-setup-icon { color: var(--ink-amber-8); flex-shrink: 0; display: flex; padding-top: 1px; }
+.pr-setup-main { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.pr-setup-title { font-size: var(--d-text); font-weight: var(--font-weight-strong); }
+.pr-setup-text { font-size: var(--d-text-sm); color: var(--ink-gray-7); line-height: var(--leading-normal); }
+.pr-setup-cmd { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pr-setup-cmd code { font-family: var(--font-mono); font-size: var(--d-text-sm); background: var(--surface-gray-2); border: 1px solid var(--d-border); border-radius: var(--d-r-sm); padding: 3px 8px; }
+.pr-setup-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 /* PR row sub-line (branch+author meta below title) */
 .pr-row-sub { font-family: var(--font-mono); font-size: var(--d-text-xs); color: var(--ink-gray-4); overflow-wrap: anywhere; margin-top: 2px; }
 .pr-row.selected .pr-row-sub { color: var(--da-txt); opacity: .8; }

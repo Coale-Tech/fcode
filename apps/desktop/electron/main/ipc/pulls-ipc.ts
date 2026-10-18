@@ -3,6 +3,8 @@ import { promisify } from "node:util";
 import { IPC } from "@pi-desktop/shared";
 import type { HostProcess } from "../host-process";
 import type { IpcRegistrar } from "./types";
+import { userLookupPath } from "../user-login-path";
+import { classifyGhFailure, mapChecks } from "./pulls-map";
 
 const execFileP = promisify(execFile);
 
@@ -44,7 +46,9 @@ export function registerPullsIpc({
     }
     const run = (cmd: string, args: string[]) =>
       new Promise<{ code: number; stdout: string; stderr: string }>((resolve) => {
-        const child = spawn(cmd, args, { cwd, env: process.env });
+        // GUI-launched Electron has a bare PATH, so a brew/winget-installed gh is only found via the login PATH.
+        const env = { ...process.env, PATH: userLookupPath(process.env.PATH ?? "") };
+        const child = spawn(cmd, args, { cwd, env });
         let stdout = "";
         let stderr = "";
         child.stdout.on("data", (data) => (stdout += String(data)));
@@ -60,13 +64,11 @@ export function registerPullsIpc({
       "--limit",
       "30",
       "--json",
-      "number,title,url,author,headRefName,baseRefName,updatedAt,isDraft",
+      "number,title,url,author,headRefName,baseRefName,updatedAt,isDraft,body,createdAt,changedFiles,additions,deletions,statusCheckRollup",
     ]);
     if (result.code !== 0) {
-      return {
-        pulls: [],
-        error: result.stderr.trim() || result.stdout.trim() || "GH_FAILED",
-      };
+      const message = result.stderr.trim() || result.stdout.trim() || "GH_FAILED";
+      return { pulls: [], error: message, errorKind: classifyGhFailure(message) };
     }
     try {
       const pulls = JSON.parse(result.stdout || "[]") as Array<Record<string, unknown>>;
@@ -83,6 +85,12 @@ export function registerPullsIpc({
           baseRefName: pull.baseRefName ? String(pull.baseRefName) : undefined,
           updatedAt: pull.updatedAt ? String(pull.updatedAt) : undefined,
           isDraft: Boolean(pull.isDraft),
+          body: pull.body ? String(pull.body) : undefined,
+          openedAt: pull.createdAt ? String(pull.createdAt) : undefined,
+          changedFiles: typeof pull.changedFiles === "number" ? pull.changedFiles : undefined,
+          additions: typeof pull.additions === "number" ? pull.additions : undefined,
+          deletions: typeof pull.deletions === "number" ? pull.deletions : undefined,
+          checks: mapChecks(pull.statusCheckRollup),
         })),
       };
     } catch (error) {

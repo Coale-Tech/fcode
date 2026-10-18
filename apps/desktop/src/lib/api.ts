@@ -74,6 +74,7 @@ import type {
   ProjectMemoryEntry,
   ProjectWorkspace,
   PullRequestSummary,
+  PullsErrorKind,
   ScheduledTask,
   ProviderCreateInput,
   ProviderPublic,
@@ -910,7 +911,7 @@ export const api = {
   setProject: (path: string) =>
     invoke<{ workspace: ProjectWorkspace | null }>(IPC.invoke.projectSet, path),
   listPullRequests: () =>
-    invoke<{ pulls: PullRequestSummary[]; error?: string }>(IPC.invoke.pullsList),
+    invoke<{ pulls: PullRequestSummary[]; error?: string; errorKind?: PullsErrorKind }>(IPC.invoke.pullsList),
   /** Local branches of the current workspace repo; `error` when there is no workspace or git failed. */
   listGitBranches: () =>
     invoke<{ branches: string[]; error?: "NO_WORKSPACE" | "GIT_FAILED" }>(IPC.invoke.gitBranchList),

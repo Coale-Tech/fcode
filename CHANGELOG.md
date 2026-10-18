@@ -19,6 +19,8 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - `scripts/e2e-remote-host.mjs` drives the omp-bridge sidecar; a provider-less turn is now admitted and settles instead of failing closed at admission.
 
 ### Added
+- Pull Requests now shows real CI: the row badge and the detail panel's check list come from `gh pr list` (`statusCheckRollup`: Actions runs and legacy statuses; duration, workflow and a link to the run's logs), along with the PR body, size and opened date. A **Fix CI** button appears while a check is failing and starts a chat that reads the failing logs with `gh`, checks out the branch and fixes it; it does not push without asking. The page refetches when the window regains focus and every 30 s while a check is running.
+- When `gh` is not installed, not signed in, or the folder has no GitHub remote, Pull Requests shows a highlighted setup callout (install or `gh auth login` command with a copy button, install guide, Check again) instead of an empty list.
 - Kanban routes each ready card to the best-matching agent (name and description match against the project, user, Fcode and omp agents, scaled by that agent's record once it has three finished runs). The card shows an agent chip, a roster above the board lists running workers, and the drawer shows the agent's record. The worker is told to delegate with the `task` tool. See ADR 0310.
 - Kanban setting "Max workers per project" (1–5, default 1). Extra workers run in their own git worktree under `~/.omp/wt` on branch `kanban/<id>`, reused if the card is retried; a card whose worktree cannot be created stays Ready and the error is logged.
 - Kanban workers can read the board: `kanban_list` is open to workers, and `kanban_show` / `kanban_comment` take a `taskId` for another live card. Worker prompts name `docs/adr/` as binding decisions.
@@ -44,6 +46,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - The legacy subagent catalog (explorer, code-reviewer, test-runner, fixer, ui-designer) from desktop session launch and `launch-resolver`: the `subagents`/`subagentProviders`/`subagentModelKeys` sidecar params (omp ignored them), the ten `subagent*` IPC channels with their `api.ts` wrappers and mcp-control specs, and the `provider.resolveSubagentModel` hook on host-runtime `AgentSidecar`. Native `native-pi:` sessions keep their own catalog in `agent-runtime`.
 
 ### Fixed
+- Pull Requests: the open detail panel now follows refreshes instead of keeping a stale copy of the PR, and switching project clears the previous project's list and selection. `gh` is looked up on the login-shell `PATH`, so a Homebrew `gh` is found when the app is launched from the Dock.
 - Voice settings show a load error instead of silently empty state; settings radii use design tokens; README no longer claims a non-existent fcode-skills bundle.
 - Permission dialogs raised from a delegated subagent say which subagent asked (when exactly one delegate is running).
 - Bench page (site list, process panel, failure banner, empty state) is translated in all 9 locales.

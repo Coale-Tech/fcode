@@ -71,7 +71,12 @@ export type PullRequestCheck = {
   durationSeconds?: number;
   /** Optional short detail text shown after the check name (e.g. "142 passed"). */
   details?: string;
+  /** Where the check's logs live (CheckRun `detailsUrl` / status `targetUrl`). */
+  url?: string;
 };
+
+/** `gh` problems the user can fix themselves; other failures keep their raw message. */
+export type PullsErrorKind = "GH_NOT_INSTALLED" | "GH_NOT_AUTHENTICATED" | "NOT_GITHUB_REPO";
 
 export type PullRequestSummary = {
   number: number;

@@ -58,11 +58,6 @@ test("PullRequestsPage uses pr-layout (D-layout root class)", () => {
   assert.match(prSource, /pr-layout/, "pr-layout class present");
 });
 
-test("PullRequestsPage has selectedPr state for detail panel", () => {
-  assert.match(prSource, /selectedPr/, "selectedPr state present");
-  assert.match(prSource, /setSelectedPr/, "setSelectedPr setter present");
-});
-
 test("PullRequestsPage shows pr-detail panel only when PR selected", () => {
   assert.match(prSource, /pr-detail/, "pr-detail class present");
   assert.match(prSource, /selectedPr\s*&&/, "detail conditioned on selectedPr");
