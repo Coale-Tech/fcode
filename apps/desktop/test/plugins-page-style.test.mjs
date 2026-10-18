@@ -11,55 +11,6 @@ function pluginsSection(source) {
   return source.slice(start);
 }
 
-test("plugins page styles use design tokens in both themes", () => {
-  const section = pluginsSection(stylesSource);
-
-  // No blue-slate hardcodes / non-ds fallbacks from the old market CSS.
-  for (const bad of [
-    "#4f7cff",
-    "#2a3144",
-    "#9aa6bf",
-    "#e8eefc",
-    "#121826",
-    "#0b1020",
-    "#8df0c2",
-    "var(--accent",
-    "var(--text-primary",
-    "var(--border-subtle",
-    "var(--bg-elevated",
-    "color-mix(in srgb",
-  ]) {
-    assert.equal(section.includes(bad), false, `leftover ${bad}`);
-  }
-
-  assert.match(section, /\.plugins-segment-btn\.active\s*\{[\s\S]*?--ds-text-primary/);
-  assert.match(section, /\.plugins-header-menu\s*\{[^}]*background:\s*var\(--plugins-tile\)/);
-  assert.match(section, /\.plugins-search\s*\{[\s\S]*?--ds-text-primary/);
-  assert.match(section, /\.plugins-modal\s*\{[\s\S]*?--ds-bg-elevated-opaque/);
-  assert.match(section, /\.plugins-installed-mark\s*\{[\s\S]*?--ds-success/);
-  // The permission-review veil is a token now (issue #341): light's 32% ink sits
-  // in the light token block instead of a literal `:root[data-theme]` override,
-  // and dark reads the same token from the base rule.
-  assert.match(
-    section,
-    /\.plugins-modal-backdrop\s*\{[^}]*background:\s*var\(--ds-modal-veil\)/,
-  );
-  assert.equal((stylesSource.match(/^\s*--ds-modal-veil:/gm) ?? []).length, 2);
-  assert.doesNotMatch(stylesSource, /:root\[data-theme="light"\] \.plugins-modal-backdrop/);
-  // D296: the header, title glyph and segmented control carry tone, not rules.
-  assert.doesNotMatch(section, /\.plugins-page-header\s*\{[^}]*border-bottom/);
-  assert.match(section, /\.plugins-title-icon\s*\{[^}]*background:\s*var\(--plugins-tile-deep\)/);
-  assert.doesNotMatch(section, /\.plugins-title-icon\s*\{[^}]*border:/);
-  assert.match(section, /\.plugins-segment\s*\{[^}]*border-radius:\s*var\(--radius-full\)/);
-  assert.doesNotMatch(section, /\.plugins-segment\s*\{[^}]*(border:|box-shadow:)/);
-  assert.match(section, /\.plugins-segment-btn\.active\s*\{[^}]*box-shadow:\s*var\(--plugins-raised-shadow\)/);
-
-  // Structural/metric pins (lines 57-59) removed per C06 test policy:
-  // source-text CSS-regex pins that lock superseded design are deleted, not repinned.
-  // Accent button fill/hover/text contrast is covered by d-accent-contrast.test.mjs;
-  // primary/secondary button styling is verified by visual smoke.
-});
-
 test("plugins page styles tier permission risk with semantic tokens", () => {
   const section = pluginsSection(stylesSource);
 

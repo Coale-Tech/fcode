@@ -1,6 +1,6 @@
 /**
- * Bench list "Show in Finder" / "Browse all in Finder": the reveal channel
- * opens paths at or under a bench root and refuses anything else.
+ * Bench list "Show in Finder": the reveal channel opens only discovered bench
+ * roots and refuses everything else.
  */
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -16,7 +16,7 @@ register(pathToFileURL(join(here, "helpers/ts-import-hooks.mjs")));
 const { IPC } = await import("@pi-desktop/shared");
 const { registerBenchIpc } = await import("../electron/main/ipc/bench-ipc.ts");
 
-test("benchReveal reveals bench roots and benches, refuses other paths", async (t) => {
+test("benchReveal reveals discovered benches, refuses other paths", async (t) => {
   const savedEnv = process.env.FCODE_BENCH_ROOTS;
   const root = mkdtempSync(join(tmpdir(), "bench-reveal-root-"));
   const outside = mkdtempSync(join(tmpdir(), "bench-reveal-outside-"));
@@ -28,7 +28,8 @@ test("benchReveal reveals bench roots and benches, refuses other paths", async (
     rmSync(outside, { recursive: true, force: true });
   });
   const bench = join(root, "coale_v16");
-  mkdirSync(bench);
+  mkdirSync(join(bench, "apps"), { recursive: true });
+  mkdirSync(join(bench, "sites"), { recursive: true });
 
   const revealed = [];
   const handlers = new Map();
@@ -39,12 +40,11 @@ test("benchReveal reveals bench roots and benches, refuses other paths", async (
   });
   const reveal = handlers.get(IPC.invoke.benchReveal);
 
-  assert.deepEqual(await reveal({ path: bench }), { ok: true });
-  assert.deepEqual(await reveal({ path: root }), { ok: true });
-  assert.deepEqual(revealed, [bench, root]);
+  assert.deepEqual(await reveal({ benchPath: bench }), { ok: true });
+  assert.deepEqual(revealed, [bench]);
 
-  await assert.rejects(reveal({ path: outside }), /not under a bench root/);
-  await assert.rejects(reveal({ path: `${root}-sibling` }), /not under a bench root/);
-  await assert.rejects(reveal({ path: "" }), /not under a bench root/);
-  assert.equal(revealed.length, 2);
+  for (const benchPath of [root, outside, `${bench}-sibling`, ""]) {
+    assert.equal((await reveal({ benchPath })).ok, false);
+  }
+  assert.equal(revealed.length, 1);
 });

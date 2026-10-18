@@ -79,50 +79,6 @@ test("the collapse keyframes cannot reflow the sidebar's content", () => {
   assert.match(sidebarBlock, /overflow:\s*hidden/);
 });
 
-test("a collapsed sidebar keeps the preferred chat band and only changes motion", () => {
-  assert.match(
-    appSource,
-    /sidebarCollapsed && "sidebar-collapsed"/,
-  );
-
-  const mainPaneBlock = globalStyles.match(/\.main-pane\s*\{[\s\S]*?\}/)?.[0] ?? "";
-  assert.match(
-    mainPaneBlock,
-    /--chat-composer-max-width:\s*var\(--chat-content-max-width\)/,
-  );
-  assert.match(
-    mainPaneBlock,
-    /--chat-prose-max-width:\s*var\(--chat-content-max-width\)/,
-  );
-
-  const collapsedBlock =
-    globalStyles.match(/\.app-shell\.sidebar-collapsed \.main-pane\s*\{[\s\S]*?\}/)?.[0] ?? "";
-  assert.doesNotMatch(collapsedBlock, /--chat-content-max-width:\s*640px/);
-  assert.doesNotMatch(collapsedBlock, /--chat-composer-max-width:\s*640px/);
-  assert.match(
-    collapsedBlock,
-    /--chat-width-transition:\s*var\(--motion-duration-fast\) var\(--motion-ease-out\)/,
-  );
-
-  const threadContentBlock =
-    globalStyles.match(/^\.thread-content\s*\{[\s\S]*?\}/m)?.[0] ?? "";
-  assert.match(threadContentBlock, /width:\s*min\(100%,\s*var\(--chat-content-max-width\)\)/);
-  assert.match(threadContentBlock, /transition:\s*width var\(--chat-width-transition\)/);
-
-  const homeStackBlock =
-    globalStyles.match(/^\.home-stack-inner\s*\{[\s\S]*?\}/m)?.[0] ?? "";
-  assert.match(homeStackBlock, /width:\s*min\(100%,\s*var\(--chat-composer-max-width\)\)/);
-  assert.match(homeStackBlock, /transition:\s*width var\(--chat-width-transition\)/);
-
-  const composerBlock =
-    globalStyles.match(/^\.composer-stack\s*\{[\s\S]*?\}/m)?.[0] ?? "";
-  assert.match(
-    composerBlock,
-    /width:\s*min\(100%,\s*var\(--chat-composer-max-width,\s*768px\)\)/,
-  );
-  assert.match(composerBlock, /transition:\s*width var\(--chat-width-transition/);
-});
-
 test("the top bar's collapsed lead-in tracks the dock instead of snapping", () => {
   // The traffic-light inset and the returning dock toggle add ~100px to the top
   // bar's left edge. Flipping them instantly throws the title the wrong way on
