@@ -551,6 +551,12 @@ export const IPC = {
     ompUserProfileGet: "pi-desktop/omp/user-profile/get",
     /** Write the cross-project user-profile text to ~/.omp/agent/USER.md (cap 1024 chars). */
     ompUserProfileSet: "pi-desktop/omp/user-profile/set",
+    /** List language servers (omp built-ins merged with ~/.omp/agent/lsp.json) and whether each resolves. */
+    ompLspList: "pi-desktop/omp/lsp/list",
+    /** Add or change a server in ~/.omp/agent/lsp.json. */
+    ompLspSave: "pi-desktop/omp/lsp/save",
+    /** Remove a server's entry from ~/.omp/agent/lsp.json (a built-in reverts to its default). */
+    ompLspRemove: "pi-desktop/omp/lsp/remove",
     /** Read project-scoped memory from <workspace>/.omp/MEMORY.md. */
     ompProjectMemoryGet: "pi-desktop/omp/project-memory/get",
     /** Write project-scoped memory to <workspace>/.omp/MEMORY.md (cap 16 KiB). */

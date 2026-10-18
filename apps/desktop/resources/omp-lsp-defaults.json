@@ -1,0 +1,437 @@
+{
+  "rust-analyzer": {
+    "command": "rust-analyzer",
+    "fileTypes": [
+      ".rs"
+    ]
+  },
+  "tlaplus": {
+    "command": "tlapm_lsp",
+    "fileTypes": [
+      ".tla",
+      ".tlaplus"
+    ]
+  },
+  "clangd": {
+    "command": "clangd",
+    "fileTypes": [
+      ".c",
+      ".cpp",
+      ".cc",
+      ".cxx",
+      ".h",
+      ".hpp",
+      ".hxx",
+      ".cu",
+      ".cuh",
+      ".m",
+      ".mm"
+    ]
+  },
+  "zls": {
+    "command": "zls",
+    "fileTypes": [
+      ".zig"
+    ]
+  },
+  "gopls": {
+    "command": "gopls",
+    "fileTypes": [
+      ".go",
+      ".mod",
+      ".sum"
+    ]
+  },
+  "typescript-language-server": {
+    "command": "typescript-language-server",
+    "fileTypes": [
+      ".ts",
+      ".tsx",
+      ".js",
+      ".jsx",
+      ".mjs",
+      ".cjs"
+    ]
+  },
+  "typescript-native": {
+    "command": "tsc",
+    "fileTypes": [
+      ".ts",
+      ".tsx",
+      ".js",
+      ".jsx",
+      ".mjs",
+      ".cjs"
+    ]
+  },
+  "biome": {
+    "command": "biome",
+    "fileTypes": [
+      ".ts",
+      ".tsx",
+      ".js",
+      ".jsx",
+      ".mjs",
+      ".cjs",
+      ".json",
+      ".jsonc",
+      ".css"
+    ],
+    "isLinter": true
+  },
+  "eslint": {
+    "command": "vscode-eslint-language-server",
+    "fileTypes": [
+      ".ts",
+      ".tsx",
+      ".js",
+      ".jsx",
+      ".mjs",
+      ".cjs",
+      ".vue",
+      ".svelte"
+    ],
+    "isLinter": true
+  },
+  "denols": {
+    "command": "deno",
+    "fileTypes": [
+      ".ts",
+      ".tsx",
+      ".js",
+      ".jsx"
+    ]
+  },
+  "vscode-html-language-server": {
+    "command": "vscode-html-language-server",
+    "fileTypes": [
+      ".html",
+      ".htm"
+    ]
+  },
+  "vscode-css-language-server": {
+    "command": "vscode-css-language-server",
+    "fileTypes": [
+      ".css",
+      ".scss",
+      ".sass",
+      ".less"
+    ]
+  },
+  "vscode-json-language-server": {
+    "command": "vscode-json-language-server",
+    "fileTypes": [
+      ".json",
+      ".jsonc"
+    ]
+  },
+  "tailwindcss": {
+    "command": "tailwindcss-language-server",
+    "fileTypes": [
+      ".html",
+      ".css",
+      ".scss",
+      ".js",
+      ".jsx",
+      ".ts",
+      ".tsx",
+      ".vue",
+      ".svelte"
+    ]
+  },
+  "svelte": {
+    "command": "svelteserver",
+    "fileTypes": [
+      ".svelte"
+    ]
+  },
+  "vue-language-server": {
+    "command": "vue-language-server",
+    "fileTypes": [
+      ".vue"
+    ]
+  },
+  "astro": {
+    "command": "astro-ls",
+    "fileTypes": [
+      ".astro"
+    ]
+  },
+  "pyright": {
+    "command": "pyright-langserver",
+    "fileTypes": [
+      ".py",
+      ".pyi"
+    ]
+  },
+  "basedpyright": {
+    "command": "basedpyright-langserver",
+    "fileTypes": [
+      ".py",
+      ".pyi"
+    ]
+  },
+  "pylsp": {
+    "command": "pylsp",
+    "fileTypes": [
+      ".py"
+    ]
+  },
+  "ty": {
+    "command": "ty",
+    "fileTypes": [
+      ".py",
+      ".pyi"
+    ]
+  },
+  "ruff": {
+    "command": "ruff",
+    "fileTypes": [
+      ".py",
+      ".pyi"
+    ],
+    "isLinter": true
+  },
+  "jdtls": {
+    "command": "jdtls",
+    "fileTypes": [
+      ".java"
+    ]
+  },
+  "kotlin-lsp": {
+    "command": "kotlin-lsp",
+    "fileTypes": [
+      ".kt",
+      ".kts"
+    ]
+  },
+  "metals": {
+    "command": "metals",
+    "fileTypes": [
+      ".scala",
+      ".sbt",
+      ".sc"
+    ]
+  },
+  "hls": {
+    "command": "haskell-language-server-wrapper",
+    "fileTypes": [
+      ".hs",
+      ".lhs"
+    ]
+  },
+  "ocamllsp": {
+    "command": "ocamllsp",
+    "fileTypes": [
+      ".ml",
+      ".mli",
+      ".mll",
+      ".mly"
+    ]
+  },
+  "elixirls": {
+    "command": "elixir-ls",
+    "fileTypes": [
+      ".ex",
+      ".exs",
+      ".heex",
+      ".eex"
+    ]
+  },
+  "expert": {
+    "command": "expert",
+    "fileTypes": [
+      ".ex",
+      ".exs",
+      ".heex",
+      ".eex"
+    ]
+  },
+  "erlangls": {
+    "command": "erlang_ls",
+    "fileTypes": [
+      ".erl",
+      ".hrl"
+    ]
+  },
+  "gleam": {
+    "command": "gleam",
+    "fileTypes": [
+      ".gleam"
+    ]
+  },
+  "solargraph": {
+    "command": "solargraph",
+    "fileTypes": [
+      ".rb",
+      ".rake",
+      ".gemspec"
+    ]
+  },
+  "ruby-lsp": {
+    "command": "ruby-lsp",
+    "fileTypes": [
+      ".rb",
+      ".rake",
+      ".gemspec",
+      ".erb"
+    ]
+  },
+  "rubocop": {
+    "command": "rubocop",
+    "fileTypes": [
+      ".rb",
+      ".rake"
+    ],
+    "isLinter": true
+  },
+  "bashls": {
+    "command": "bash-language-server",
+    "fileTypes": [
+      ".sh",
+      ".bash",
+      ".zsh"
+    ]
+  },
+  "lua-language-server": {
+    "command": "lua-language-server",
+    "fileTypes": [
+      ".lua"
+    ]
+  },
+  "intelephense": {
+    "command": "intelephense",
+    "fileTypes": [
+      ".php",
+      ".phtml"
+    ]
+  },
+  "phpactor": {
+    "command": "phpactor",
+    "fileTypes": [
+      ".php"
+    ]
+  },
+  "omnisharp": {
+    "command": "omnisharp",
+    "fileTypes": [
+      ".cs",
+      ".csx"
+    ]
+  },
+  "yamlls": {
+    "command": "yaml-language-server",
+    "fileTypes": [
+      ".yaml",
+      ".yml"
+    ]
+  },
+  "terraformls": {
+    "command": "terraform-ls",
+    "fileTypes": [
+      ".tf",
+      ".tfvars"
+    ]
+  },
+  "dockerls": {
+    "command": "docker-langserver",
+    "fileTypes": [
+      ".dockerfile",
+      "Dockerfile"
+    ]
+  },
+  "helm-ls": {
+    "command": "helm_ls",
+    "fileTypes": [
+      ".yaml",
+      ".yml",
+      ".tpl"
+    ]
+  },
+  "nixd": {
+    "command": "nixd",
+    "fileTypes": [
+      ".nix"
+    ]
+  },
+  "nil": {
+    "command": "nil",
+    "fileTypes": [
+      ".nix"
+    ]
+  },
+  "ols": {
+    "command": "ols",
+    "fileTypes": [
+      ".odin"
+    ]
+  },
+  "dartls": {
+    "command": "dart",
+    "fileTypes": [
+      ".dart"
+    ]
+  },
+  "marksman": {
+    "command": "marksman",
+    "fileTypes": [
+      ".md",
+      ".markdown"
+    ]
+  },
+  "texlab": {
+    "command": "texlab",
+    "fileTypes": [
+      ".tex",
+      ".bib",
+      ".sty",
+      ".cls"
+    ]
+  },
+  "graphql": {
+    "command": "graphql-lsp",
+    "fileTypes": [
+      ".graphql",
+      ".gql"
+    ]
+  },
+  "prismals": {
+    "command": "prisma-language-server",
+    "fileTypes": [
+      ".prisma"
+    ]
+  },
+  "vimls": {
+    "command": "vim-language-server",
+    "fileTypes": [
+      ".vim",
+      ".vimrc"
+    ]
+  },
+  "emmet-language-server": {
+    "command": "emmet-language-server",
+    "fileTypes": [
+      ".html",
+      ".css",
+      ".scss",
+      ".less",
+      ".jsx",
+      ".tsx",
+      ".vue",
+      ".svelte"
+    ]
+  },
+  "sourcekit-lsp": {
+    "command": "sourcekit-lsp",
+    "fileTypes": [
+      ".swift"
+    ]
+  },
+  "swiftlint": {
+    "command": "swiftlint",
+    "fileTypes": [
+      ".swift"
+    ],
+    "isLinter": true
+  }
+}

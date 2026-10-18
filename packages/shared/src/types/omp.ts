@@ -751,6 +751,40 @@ export interface OmpUserProfileSetResult {
   error?: string;
 }
 
+/** One language server as omp will see it: its built-in default merged with `~/.omp/agent/lsp.json`. */
+export interface OmpLspServer {
+  name: string;
+  command: string;
+  fileTypes: string[];
+  /** Ships in omp's built-in set. */
+  builtin: boolean;
+  /** Has an entry in the user's lsp.json (an added server, or an override of a built-in). */
+  custom: boolean;
+  disabled: boolean;
+  isLinter: boolean;
+  /** Where `command` resolves on the agent's PATH; null = not found. */
+  resolved: string | null;
+  /** `resolved` is inside Fcode's bundled tools folder. */
+  bundled: boolean;
+}
+
+/** Result of `ompLspList`. `error` is set when lsp.json could not be read (the built-ins are still listed). */
+export interface OmpLspListResult {
+  servers: OmpLspServer[];
+  configPath: string;
+  error?: string;
+}
+
+/** Input of `ompLspSave`: fields given are merged into the server's lsp.json entry. A new name needs `command` and `fileTypes`. */
+export interface OmpLspSaveInput {
+  name: string;
+  command?: string;
+  args?: string[];
+  fileTypes?: string[];
+  rootMarkers?: string[];
+  disabled?: boolean;
+}
+
 /** One local commit on the self-improvement branch of a skill pack clone. */
 export interface OmpSkillPackCommit {
   sha: string;

@@ -94,3 +94,22 @@ writeFileSync(outFile, JSON.stringify(manifest, null, 2) + "\n");
 console.log(
   `gen-omp-settings-manifest: wrote ${descriptors.length} descriptors → ${outFile}`,
 );
+
+// ── Write LSP defaults (Settings → LSP lists omp's built-in servers) ───────────
+// The trimmed shape the desktop needs: command to resolve, file types to show.
+const lspDefaults = JSON.parse(readFileSync(join(ompRoot, "packages/coding-agent/src/lsp/defaults.json"), "utf8"));
+const lspOut = join(repoRoot, "apps", "desktop", "resources", "omp-lsp-defaults.json");
+writeFileSync(
+  lspOut,
+  JSON.stringify(
+    Object.fromEntries(
+      Object.entries(lspDefaults).map(([name, s]) => [
+        name,
+        { command: s.command, fileTypes: s.fileTypes, ...(s.isLinter && { isLinter: true }) },
+      ]),
+    ),
+    null,
+    2,
+  ) + "\n",
+);
+console.log(`gen-omp-settings-manifest: wrote ${Object.keys(lspDefaults).length} LSP servers → ${lspOut}`);

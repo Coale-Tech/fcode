@@ -166,6 +166,8 @@ import type {
   OmpBashResult,
   OmpUserProfileGetResult,
   OmpUserProfileSetResult,
+  OmpLspListResult,
+  OmpLspSaveInput,
   KanbanBoard,
   KanbanSettings,
   RavenSettings,
@@ -1990,6 +1992,15 @@ export const api = {
   /** Write cross-project user profile to ~/.omp/agent/USER.md (server caps at 1024 chars). */
   ompUserProfileSet: (text: string) =>
     invoke<OmpUserProfileSetResult>(IPC.invoke.ompUserProfileSet, { text }),
+  /** Settings → LSP: omp's built-in servers merged with ~/.omp/agent/lsp.json, each with where its command resolves. */
+  ompLspList: () =>
+    invoke<OmpLspListResult>(IPC.invoke.ompLspList),
+  /** Add a server or change/override one in ~/.omp/agent/lsp.json. */
+  ompLspSave: (input: OmpLspSaveInput) =>
+    invoke<OmpUserProfileSetResult>(IPC.invoke.ompLspSave, input),
+  /** Remove a server's lsp.json entry (a built-in reverts to its default). */
+  ompLspRemove: (name: string) =>
+    invoke<OmpUserProfileSetResult>(IPC.invoke.ompLspRemove, { name }),
   /** Effective agent list merged from all sources (project/.omp/agents, user ~/.omp/agent/agents, fcode bundled, omp bundled). */
   ompAgentList: (projectPath?: string) =>
     invoke<OmpAgentListResult>(IPC.invoke.ompAgentList, { projectPath }),

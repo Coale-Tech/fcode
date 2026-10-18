@@ -61,6 +61,8 @@ import { resolveOmpBin, ompChildEnv, appResourcesPath } from "../omp-binary";
 import { skillPackDiscard, skillPackOpenPr, skillPackStatus } from "../skill-packs";
 import { curatorPin, curatorRestore, curatorStatus } from "../skill-curator.ts";
 import { approveProposal, getJourneyEvents, listPendingProposals, rejectProposal } from "../skill-review.ts";
+import type { OmpLspListResult, OmpLspSaveInput } from "@pi-desktop/shared";
+import { listLspServers, removeLspServer, saveLspServer } from "../omp-lsp-config";
 import type { IpcRegistrar } from "./types";
 
 const execFileP = promisify(execFile);
@@ -891,6 +893,18 @@ export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpc
   ): Promise<OmpUserProfileSetResult> => {
     if (typeof input?.text !== "string") invalid("text (string) required");
     return writeUserProfile(ompAgentDir(), input.text as string);
+  });
+
+  // ── omp.lsp.* ─────────────────────────────────────────────────────────────
+  // Settings → LSP: built-in + user servers (~/.omp/agent/lsp.json), add/override, remove.
+  handle(IPC.invoke.ompLspList, async (): Promise<OmpLspListResult> => listLspServers());
+  handle(IPC.invoke.ompLspSave, async (input?: Partial<OmpLspSaveInput>) => {
+    if (typeof input?.name !== "string") invalid("name (string) required");
+    return saveLspServer(input as OmpLspSaveInput);
+  });
+  handle(IPC.invoke.ompLspRemove, async (input?: { name?: unknown }) => {
+    if (typeof input?.name !== "string") invalid("name (string) required");
+    return removeLspServer(input.name);
   });
 
   // ── omp.project-memory.get ────────────────────────────────────────────────

@@ -22,6 +22,7 @@ import { SkillJourneySection } from "../../components/settings/SkillJourneySecti
 import { OmpUsageSection } from "../../components/settings/OmpUsageSection";
 import { OmpWorktreeSection } from "../../components/settings/OmpWorktreeSection";
 import { OmpExtensionsSection } from "../../components/settings/OmpExtensionsSection";
+import { LspServersCard } from "./LspServersCard";
 import { HooksSection } from "./HooksSection";
 import { CommandsSection } from "./CommandsSection";
 import { MaintenanceSection } from "./MaintenanceSection";
@@ -524,6 +525,7 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
             />
           </SettingsRow>
         </SettingsCard>
+        <LspServersCard />
         </>
       )}
 

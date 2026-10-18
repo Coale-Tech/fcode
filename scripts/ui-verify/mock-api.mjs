@@ -297,6 +297,30 @@ function buildMockHandlers(memoryState) {
       collectedAt: "2026-09-30T11:30:00Z",
     }),
     "pi-desktop/omp/worktrees/list": () => ({ worktrees: [] }),
+    "pi-desktop/omp/agents/list": () => ({ agents: [] }),
+    // Settings → Tools → Language servers. State lives on window so toggle/add/remove round-trip.
+    "pi-desktop/omp/lsp/list": () => ({
+      configPath: "/Users/dev/.omp/agent/lsp.json",
+      servers: (window.__MOCK_LSP__ ??= [
+        { name: "ruff", command: "ruff", fileTypes: [".py", ".pyi"], builtin: true, custom: false, disabled: false, isLinter: true, resolved: "/Applications/Fcode.app/Contents/Resources/tools/ruff", bundled: true },
+        { name: "typescript-language-server", command: "typescript-language-server", fileTypes: [".ts", ".tsx", ".js"], builtin: true, custom: false, disabled: false, isLinter: false, resolved: "/opt/homebrew/bin/typescript-language-server", bundled: false },
+        { name: "gopls", command: "gopls", fileTypes: [".go"], builtin: true, custom: false, disabled: false, isLinter: false, resolved: null, bundled: false },
+        { name: "rust-analyzer", command: "rust-analyzer", fileTypes: [".rs"], builtin: true, custom: false, disabled: false, isLinter: false, resolved: null, bundled: false },
+      ]),
+    }),
+    "pi-desktop/omp/lsp/save": (a) => {
+      const l = (window.__MOCK_LSP__ ??= []);
+      const s = l.find((x) => x.name === a.name);
+      if (s) { s.custom = true; if (a.disabled !== undefined) s.disabled = a.disabled; if (a.command) { s.command = a.command; s.resolved = a.command; } }
+      else l.unshift({ name: a.name, command: a.command, fileTypes: a.fileTypes ?? [], builtin: false, custom: true, disabled: false, isLinter: false, resolved: null, bundled: false });
+      return { ok: true };
+    },
+    "pi-desktop/omp/lsp/remove": (a) => {
+      const l = window.__MOCK_LSP__ ?? [];
+      for (const s of l) if (s.name === a.name && s.builtin) { s.custom = false; s.disabled = false; }
+      window.__MOCK_LSP__ = l.filter((x) => x.builtin || x.name !== a.name);
+      return { ok: true };
+    },
     "pi-desktop/omp/extensions/list": () => ({ extensions: MOCK_EXTENSIONS }),
     "pi-desktop/omp/extensions/install": () => ({ ok: true, output: "" }),
     "pi-desktop/omp/extensions/uninstall": () => ({ ok: true, output: "" }),

@@ -158,6 +158,10 @@
         "to": "skill-packs"
       },
       {
+        "from": "resources/omp-lsp-defaults.json",
+        "to": "omp-lsp-defaults.json"
+      },
+      {
         "from": "../filebird/out/preload",
         "to": "filebird/preload"
       },
