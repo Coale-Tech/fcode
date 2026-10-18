@@ -18,7 +18,6 @@ import {
   IconFileBird,
   IconFileText,
   IconNewSession,
-  IconPin,
   IconPullRequest,
   IconRaven,
   IconSearch,
@@ -702,7 +701,6 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
                 const optionIndex = commandsBase + index;
                 const cmd = command as typeof command & { shortcut?: string[] };
                 const CmdIcon = command.source === "builtin" ? IconTerminal
-                              : command.source === "extension" ? IconPin
                               : IconSliders;
                 return (
                   <button
