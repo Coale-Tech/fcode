@@ -400,17 +400,13 @@ export function Composer({
     ? sessionThinkingLevel
     : "off";
   const availableThinkingLevels = providerThinkingLevels(thinkingProvider);
-  const thinkingLevel = thinkingLevelForProvider(
+  const chatThinkingLevel = thinkingLevelForProvider(
     thinkingProvider,
     configuredThinkingLevel,
   );
-  const thinkingLabel = thinkingLevel;
   const selectedModelInfo = selectedModelCatalog?.find((candidate) =>
     sameComposerModelId(candidate.modelId, modelId ?? ""),
   );
-  const modelLabel = modelId
-    ? composerModelDisplayName(provider, modelId, selectedModelInfo?.displayName)
-    : t("chat.model");
   const modelMenu = useComposerModelMenu({
     configureActiveSession,
     mode,
@@ -418,10 +414,17 @@ export function Composer({
     provider,
     modelId,
     thinkingProvider,
-    thinkingLevel,
+    thinkingLevel: chatThinkingLevel,
     controlsBlocked,
     ompSession: true,
   });
+  const thinkingLevel = modelMenu.thinkingLevel;
+  const thinkingLabel = thinkingLevel;
+  const modelLabel =
+    modelMenu.ompModelLabel ??
+    (modelId
+      ? composerModelDisplayName(provider, modelId, selectedModelInfo?.displayName)
+      : t("chat.model"));
   const modelReady = isComposerModelReady({
     nativeSession,
     canPrompt: activeSessionSummary?.capabilities?.canPrompt,

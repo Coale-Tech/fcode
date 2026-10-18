@@ -6,6 +6,7 @@ import type {
   OmpThinkingLevel,
   ProviderPublic,
   SessionThinkingLevel,
+  OmpStateResult,
 } from "@pi-desktop/shared";
 import {
   initialThinkingLevelForBinding,
@@ -53,7 +54,7 @@ export function useComposerModelMenu({
   provider,
   modelId,
   thinkingProvider: resolvedThinkingProvider,
-  thinkingLevel,
+  thinkingLevel: chatThinkingLevel,
   controlsBlocked,
   configureActiveSession,
   ompSession = false,
@@ -84,6 +85,22 @@ export function useComposerModelMenu({
   const [ompCurrentProviderId, setOmpCurrentProviderId] = useState<string | null>(null);
   const [ompThinkingLevelList, setOmpThinkingLevelList] = useState<readonly OmpThinkingLevel[] | null>(null);
 
+  const [ompCurrentModelName, setOmpCurrentModelName] = useState<string | null>(null);
+  // True after the user picks a model that is not one of the chat's Fcode providers.
+  const [ompNativePick, setOmpNativePick] = useState(false);
+  const [ompThinkingLevel, setOmpThinkingLevel] = useState<SessionThinkingLevel | null>(null);
+  const applyOmpState = (state: OmpStateResult) => {
+    const raw = state.model?.provider as unknown;
+    setOmpCurrentModelId(state.model?.id ?? null);
+    setOmpCurrentModelName(state.model?.name ?? state.model?.id ?? null);
+    setOmpCurrentProviderId(
+      typeof raw === "string" ? raw : raw && typeof raw === "object" && "id" in raw ? String(raw.id) : null,
+    );
+    setOmpThinkingLevel((state.thinkingLevel as SessionThinkingLevel | undefined) ?? null);
+  };
+  // omp owns the reasoning level in an omp session; the chat's own setting is only the fallback.
+  const thinkingLevel = ompSession && ompThinkingLevel ? ompThinkingLevel : chatThinkingLevel;
+
   const ompSessionRef = useRef(ompSession);
   ompSessionRef.current = ompSession;
 
@@ -109,6 +126,7 @@ export function useComposerModelMenu({
       send: async (level) => {
         if (ompSessionRef.current) {
           await api.ompThinkingSet(level);
+          setOmpThinkingLevel(level);
         } else {
           const current = thinkingConfigRef.current;
           await current.configureActiveSession({
@@ -256,6 +274,10 @@ export function useComposerModelMenu({
   // For omp sessions use the live omp current model; otherwise use the session store values.
   const activeProviderId = ompSession ? (ompCurrentProviderId ?? provider?.id) : provider?.id;
   const activeModelId = ompSession ? (ompCurrentModelId ?? modelId) : modelId;
+  // omp-native models (and a chat with no Fcode model) are not in the session
+  // store, so the chip label comes from omp's own state.
+  const ompModelLabel =
+    ompSession && ompCurrentModelName && (ompNativePick || !modelId) ? ompCurrentModelName : undefined;
   const activeFlatIndex = useMemo(
     () =>
       flatModels.findIndex(
@@ -281,20 +303,18 @@ export function useComposerModelMenu({
   // When in omp mode: load models, current state, and thinking levels on open.
   useEffect(() => {
     if (!open || !ompSession) return;
-    const extractProviderId = (raw: unknown): string | null => {
-      if (typeof raw === "string") return raw;
-      if (raw && typeof raw === "object" && "id" in raw) return String(raw.id);
-      return null;
-    };
     void Promise.all([
       api.ompModelsList().then((r) => setOmpModelList(r.models)),
-      api.ompState().then((r) => {
-        setOmpCurrentModelId(r.model?.id ?? null);
-        setOmpCurrentProviderId(extractProviderId(r.model?.provider));
-      }),
+      api.ompState().then(applyOmpState),
       api.ompThinkingLevels().then((r) => setOmpThinkingLevelList(r.levels)),
     ]).catch(() => {/* sidecar not yet ready; gracefully show empty list */});
   }, [open, ompSession]);
+
+  // The chip shows omp's resolved model before the menu is ever opened.
+  useEffect(() => {
+    if (!ompSession) return;
+    void api.ompState().then(applyOmpState).catch(() => {});
+  }, [ompSession, activeSessionId]);
 
   // When not in omp mode: preload provider model metadata.
   useEffect(() => {
@@ -370,14 +390,8 @@ export function useComposerModelMenu({
       if (ompSession) {
         await api.ompModelsSet(candidate.id, nextModelId);
         // Refresh omp current model after selection.
-        const state = await api.ompState();
-        setOmpCurrentModelId(state.model?.id ?? null);
-        const rawProv = state.model?.provider as unknown;
-        setOmpCurrentProviderId(
-          typeof rawProv === "string" ? rawProv
-          : rawProv && typeof rawProv === "object" && "id" in rawProv ? String(rawProv.id)
-          : null,
-        );
+        applyOmpState(await api.ompState());
+        setOmpNativePick(!providers.some((entry) => `fcode-${entry.id}` === candidate.id));
       }
       // An Fcode model is also the chat's own setting: the chip shows it and the
       // omp bridge applies it on the chat's next turn. omp's own models stay omp-only.
@@ -515,5 +529,7 @@ export function useComposerModelMenu({
     selectThinkingLevel,
     onMenuKeyDown,
     controlsBlocked,
+    thinkingLevel,
+    ompModelLabel,
   };
 }

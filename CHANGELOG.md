@@ -10,6 +10,10 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 
+### Fixed
+
+- **Chat model picker and reasoning level.** The chip now shows the model and reasoning level omp is actually running, including omp's own providers (it stayed on "Model" and the old level before). The level you pick applies and is shown immediately.
+
 ## [0.21.0] — 2026-10-18
 
 ### Compatibility
