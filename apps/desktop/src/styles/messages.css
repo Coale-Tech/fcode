@@ -1202,6 +1202,11 @@
   color: var(--ds-error);
 }
 
+.copy-btn.danger.is-armed {
+  background: color-mix(in oklab, var(--ds-error) 14%, transparent);
+  color: var(--ds-error);
+}
+
 /* Message toolbars stay glyphs-only: the label rides in a hover/focus tooltip
    so a row of actions reads as icons instead of a sentence of chips. */
 .copy-btn.icon {

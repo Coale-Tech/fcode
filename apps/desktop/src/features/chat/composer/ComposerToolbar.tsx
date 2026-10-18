@@ -154,7 +154,10 @@ export function ComposerToolbar({
             tooltip={t("chat.addContext", { defaultValue: "Add context" })}
             ariaLabel={t("chat.addContext", { defaultValue: "Add context" })}
             disabled={controlsBlocked}
-            onClick={() => { setPermissionOpen(false); }}
+            onClick={() => {
+              setPermissionOpen(false);
+              document.dispatchEvent(new CustomEvent("pi:open-search"));
+            }}
           >
             <IconFolder size={13} aria-hidden="true" />
           </TooltipButton>

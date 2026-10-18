@@ -56,6 +56,13 @@ const NUDGE_PROMPT =
 export type KanbanRunner = {
   /** Called by the event-persistence tap when a session ends. */
   onTurnEnd: (sessionId: string) => void;
+  /**
+   * Called when the user explicitly stops a worker's turn (agentStop IPC).
+   * Moves the card from running → blocked(transient/"stopped by user") and
+   * frees the worker slot so the dispatcher does not re-launch it immediately.
+   * Safe to call for non-kanban sessions (no-op).
+   */
+  notifyWorkerStopped: (sessionId: string) => void;
   /** Called on startup to reclaim cards whose sessions are gone. */
   reclaimZombies: (liveSessions: Set<string>) => void;
   /** Manually trigger a dispatcher tick. */
@@ -83,6 +90,8 @@ export function createKanbanRunner(deps: KanbanRunnerDeps): KanbanRunner {
     runStartedAt.delete(taskId);
     deps.releaseWorker?.(sessionId);
   };
+  // Sessions stopped by the user; onTurnEnd skips nudge for these.
+  const stoppedSessions = new Set<string>();
 
   let paused = false;
   let polling = false;
@@ -253,6 +262,11 @@ export function createKanbanRunner(deps: KanbanRunnerDeps): KanbanRunner {
     const taskId = sessionToCardId.get(sessionId);
     if (!taskId) return;
 
+    // User-initiated stop: card was already reconciled by notifyWorkerStopped
+    // (slot freed → sessionToCardId no longer has this id in the normal path).
+    // Belt-and-suspenders: if the agent_end event somehow raced ahead, skip nudge.
+    if (stoppedSessions.delete(sessionId)) return;
+
     let board = getBoard();
     const t = board.tasks.find((t) => t.id === taskId);
     if (!t || t.status !== "running") {
@@ -279,8 +293,22 @@ export function createKanbanRunner(deps: KanbanRunnerDeps): KanbanRunner {
     void prompt(sessionId, NUDGE_PROMPT).catch(report);
   };
 
+  const notifyWorkerStopped = (sessionId: string) => {
+    const taskId = sessionToCardId.get(sessionId);
+    if (!taskId) return; // not a kanban worker; no-op
+    stoppedSessions.add(sessionId);
+    let board = getBoard();
+    const t = board.tasks.find((x) => x.id === taskId);
+    if (t && t.status === "running") {
+      board = blockTask(board, taskId, "stopped by user", "transient");
+    }
+    freeSlot(sessionId, taskId);
+    updateBoard(board);
+  };
+
   return {
     onTurnEnd,
+    notifyWorkerStopped,
     reclaimZombies,
     tick,
     start() {
@@ -291,7 +319,7 @@ export function createKanbanRunner(deps: KanbanRunnerDeps): KanbanRunner {
     },
     stop() {
       stopped = true;
-      if (timer) clearInterval(timer);
+      clearInterval(timer);
       timer = undefined;
     },
     pause(p: boolean) {

@@ -346,3 +346,46 @@ test("a retried card with a worktree runs there even as the only worker", async 
   assert.deepEqual(state.sessions.map((s) => s.projectPath), ["/wt/old"]);
   assert.equal(taskOf(state, id).worktreePath, "/wt/old");
 });
+
+// ── User-initiated stop ───────────────────────────────────────────────────────
+
+test("notifyWorkerStopped moves running card to blocked(transient) and frees slot", async () => {
+  const released = [];
+  const state = makeRunner({ releaseWorker: (id) => released.push(id) });
+  addReadyTask(state);
+  await state.runner.tick();
+  const sessionId = state.sessions[0].id;
+  const taskId = state.board.tasks.find((t) => t.status === "running").id;
+
+  state.runner.notifyWorkerStopped(sessionId);
+
+  const task = state.board.tasks.find((t) => t.id === taskId);
+  assert.equal(task.status, "blocked", "card must be blocked after user stop");
+  assert.equal(task.blockKind, "transient");
+  assert.equal(task.blockReason, "stopped by user");
+  assert.deepEqual(released, [sessionId], "worker slot must be freed");
+  // sessionToCard must no longer list this session
+  assert.equal(state.runner.sessionToCard().has(sessionId), false);
+});
+
+test("onTurnEnd after notifyWorkerStopped does not nudge", async () => {
+  const state = makeRunner();
+  addReadyTask(state);
+  await state.runner.tick();
+  const sessionId = state.sessions[0].id;
+
+  state.runner.notifyWorkerStopped(sessionId);
+  const promptsBefore = state.prompts.length;
+
+  // agent_end races in after the IPC stop was acknowledged
+  state.runner.onTurnEnd(sessionId);
+  await new Promise((r) => setImmediate(r));
+
+  assert.equal(state.prompts.length, promptsBefore, "no nudge should be sent after user stop");
+});
+
+test("notifyWorkerStopped is a no-op for non-kanban sessions", () => {
+  const state = makeRunner();
+  state.runner.notifyWorkerStopped("unknown-session");
+  assert.equal(state.board.tasks.length, 0);
+});

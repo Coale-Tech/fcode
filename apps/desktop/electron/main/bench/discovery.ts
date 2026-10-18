@@ -123,7 +123,7 @@ function readSites(benchPath: string): BenchSite[] {
   }
 
   try {
-    return readdirSync(sitesDir, { withFileTypes: true })
+    const sites = readdirSync(sitesDir, { withFileTypes: true })
       .filter((d) => d.isDirectory() && !d.name.startsWith(".") && d.name !== "assets" && existsSync(join(sitesDir, d.name, "site_config.json")))
       .map((d) => {
         let webserverPort = sharedWebserverPort ?? 8000;
@@ -142,6 +142,12 @@ function readSites(benchPath: string): BenchSite[] {
           webserverPort,
         };
       });
+    // If no explicit default (no currentsite.txt) and there is exactly one site,
+    // that site is implicitly the default — mark it so the UI never shows an empty name.
+    if (sites.length === 1 && !sites[0].isDefault) {
+      sites[0] = { ...sites[0], isDefault: true };
+    }
+    return sites;
   } catch {
     return [];
   }

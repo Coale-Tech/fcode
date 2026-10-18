@@ -211,20 +211,21 @@ export function AllBenches({
                         <div className="bf-acts" style={{ justifyContent: "flex-end" }}>
                           {active ? (
                             <>
-                              <button
-                                type="button"
-                                className="d-btn sm secondary"
+                              <Button
+                                variant="secondary"
+                                size="sm"
                                 onClick={() => onStop(bench)}
                                 disabled={status === "starting"}
                                 aria-label={t("bench.stopBenchAria", { name })}
                               >
                                 <IconSquare size={11} aria-hidden="true" />
                                 {t("bench.stop")}
-                              </button>
+                              </Button>
                               <button
                                 type="button"
-                                className="d-btn ghost icon-btn sm"
+                                className="icon-btn icon-btn-square"
                                 title={t("bench.openBenchAria", { name })}
+                                aria-label={t("bench.openBenchAria", { name })}
                                 onClick={() => onOpen(bench)}
                               >
                                 <IconTerminal size={12} aria-hidden="true" />
@@ -237,20 +238,20 @@ export function AllBenches({
                                   {cue}
                                 </span>
                               )}
-                              <button
-                                type="button"
-                                className="d-btn sm primary"
+                              <Button
+                                variant="primary"
+                                size="sm"
                                 onClick={() => onStart(bench)}
                                 disabled={blocked}
                                 aria-label={cue ? t("bench.startBlockedAria", { name, cue }) : t("bench.startBenchAria", { name })}
                               >
                                 {t("bench.start")}
-                              </button>
+                              </Button>
                             </>
                           )}
                           <button
                             type="button"
-                            className="d-btn ghost icon-btn sm"
+                            className="icon-btn icon-btn-square"
                             aria-label={t("bench.moreOptionsAria", { name })}
                             onClick={(e) =>
                               openContextMenu(e, {

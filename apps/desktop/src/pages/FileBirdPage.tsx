@@ -83,7 +83,7 @@ export function FileBirdPage({ blocked }: { blocked: boolean }) {
             <div className="fb-kebab" style={{ position: "relative" }}>
               <button
                 type="button"
-                className="d-btn ghost sm icon-btn"
+                className="icon-btn icon-btn-square"
                 title={t("fileBird.moreOptions")}
                 aria-haspopup="true"
                 aria-expanded={kebabOpen}

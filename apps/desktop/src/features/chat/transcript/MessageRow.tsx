@@ -32,6 +32,7 @@ import {
   useChatTextActions,
   useTranscriptMenu,
 } from "./TranscriptMenu";
+import { useArmedDelete } from "../../../hooks/use-armed-delete";
 
 export const MessageRow = memo(function MessageRow({
   message,
@@ -69,9 +70,12 @@ export const MessageRow = memo(function MessageRow({
   useEffect(() => () => editRequest.current?.abort(), []);
   const [editValue, setEditValue] = useState(editSeed);
   const [retryingEdit, setRetryingEdit] = useState(false);
+  const { armed: armedDelete, setArmed: setArmedDelete } = useArmedDelete();
   const copyLabel = t("chat.copy");
   const editLabel = t("chat.editMessage");
-  const deleteLabel = t("chat.deleteMessage");
+  const deleteLabel = armedDelete === message.id
+    ? t("chat.deleteMessageConfirm")
+    : t("chat.deleteMessage");
   // Runtime chunks are already progressive. Rendering that source directly
   // avoids a second per-frame state loop while Markdown memoizes stable blocks.
   const displayed = message.content || "";
@@ -385,11 +389,19 @@ export const MessageRow = memo(function MessageRow({
             ) : null}
             {editableUserMessage ? (
               <TooltipButton
-                className="copy-btn icon danger"
+                className={`copy-btn icon danger${armedDelete === message.id ? " is-armed" : ""}`}
                 tooltip={deleteLabel}
                 ariaLabel={deleteLabel}
+                data-armed={armedDelete === message.id ? "true" : undefined}
                 disabled={isRunning}
-                onClick={() => void deleteMessage(message.id)}
+                onClick={() => {
+                  if (armedDelete !== message.id) {
+                    setArmedDelete(message.id);
+                    return;
+                  }
+                  setArmedDelete(null);
+                  void deleteMessage(message.id);
+                }}
               >
                 <IconTrash size={13} />
               </TooltipButton>

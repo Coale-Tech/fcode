@@ -6,6 +6,7 @@ import { isDefaultSessionTitle, useAppStore } from "../stores/app-store";
 import { normalizeProjectPath } from "../lib/sidebar-session-groups";
 import { searchSettings, type SettingsSearchHit } from "../lib/settings-search";
 import { useSessionSearch, useSessionSearchState } from "../hooks/use-session-search";
+import { useBenchContext } from "../hooks/use-bench-context";
 import { SearchHighlight } from "./SearchHighlight";
 import { SearchSessionResults, type SearchRow } from "./SearchSessionResults";
 import { IPC } from "@pi-desktop/shared";
@@ -99,6 +100,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   const query = useSessionSearchState((state) => state.query);
   const setQuery = useSessionSearchState((state) => state.setQuery);
   const search = useSessionSearch(open, query);
+  const bench = useBenchContext();
   // "New task" slot occupies option 0 only when no active query; hidden during search.
   const hasNewTask = !query.trim();
   const selectionRequest = useRef(0);
@@ -520,10 +522,25 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
           ) : null}
           {query.trim() && search.error && rows.length === 0 ? (
             <div className="search-empty" role="alert">
-              {t("search.failed")}
-              <button type="button" className="btn btn-secondary" onClick={search.retry}>
-                {t("search.retry")}
-              </button>
+              {bench.kind === "empty" ? (
+                <>
+                  {t("search.noBench")}
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => { setPage("bench"); onClose(); }}
+                  >
+                    {t("search.chooseBench")}
+                  </button>
+                </>
+              ) : (
+                <>
+                  {t("search.failed")}
+                  <button type="button" className="btn btn-secondary" onClick={search.retry}>
+                    {t("search.retry")}
+                  </button>
+                </>
+              )}
             </div>
           ) : null}
           {query.trim() && search.nextOffset !== null ? (

@@ -259,6 +259,7 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     getViewingSessionId: getNotificationViewingSessionId,
     setViewingSessionId: setNotificationViewingSessionId,
     sendToRenderer,
+    dataDir,
   });
   registerSessionIpc({
     registrar,
@@ -524,6 +525,7 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     optionalWorkspaceRoot,
     composerCommandService,
     loadComposerTemplatesCached,
+    onAgentStop: (sessionId) => dependencies.kanban?.runner.notifyWorkerStopped(sessionId),
   });
 
   registerPluginIpc({

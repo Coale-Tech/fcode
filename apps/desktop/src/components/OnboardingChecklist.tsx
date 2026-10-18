@@ -357,6 +357,7 @@ export function OnboardingChecklist() {
                       : t("settings.toolApprovalModeYolo")}
                   </div>
                 </div>
+                <p className="ob-kanban-hint">{t("onboarding.kanbanHint")}</p>
               </div>
             )}
           </div>

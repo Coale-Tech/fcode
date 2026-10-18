@@ -347,7 +347,7 @@ function NewCardSheet({
         projectPath: projectPath.trim(),
         priority: Number(priority) || 0,
         parentIds: parent ? [parent] : [],
-        status: status === "triage" || status === "todo" ? status : undefined,
+        status: status === null ? "triage" : status === "triage" || status === "todo" ? status : undefined,
       });
       onDone();
     } catch (e) {
@@ -556,27 +556,27 @@ export function KanbanPage() {
             </span>
           )}
           <div className="d-page-head-actions">
-            <button
-              type="button"
-              className="d-btn sm ghost"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => void togglePause()}
               aria-pressed={paused}
             >
               {paused ? <IconPlay size={11} aria-hidden /> : <IconPause size={11} aria-hidden />}
               {paused ? t("kanban.dispatcher.resume") : t("kanban.dispatcher.pause")}
-            </button>
-            <button
-              type="button"
-              className="d-btn sm ghost"
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => void act(() => api.kanbanNudge())}
               title={t("kanban.toolbar.nudgeHint")}
             >
               {t("kanban.toolbar.nudge")}
-            </button>
-            <button type="button" className="d-btn sm ghost" onClick={() => void refresh()}>
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => void refresh()}>
               <IconRefresh size={12} aria-hidden />
               {t("kanban.toolbar.refresh")}
-            </button>
+            </Button>
             <Button size="sm" variant="primary" onClick={() => setNewCard({ status: null })}>
               <IconPlus size={12} aria-hidden />
               {t("kanban.addCard")}
@@ -615,9 +615,9 @@ export function KanbanPage() {
             onChange={(e) => setFilters({ ...filters, showArchived: e.target.checked })}
           />
           {filtersActive(filters) && (
-            <button type="button" className="d-btn sm ghost" onClick={() => setFilters(NO_FILTERS)}>
+            <Button variant="ghost" size="sm" onClick={() => setFilters(NO_FILTERS)}>
               {t("kanban.filter.clear")}
-            </button>
+            </Button>
           )}
         </div>
 

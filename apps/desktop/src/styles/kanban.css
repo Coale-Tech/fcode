@@ -911,6 +911,6 @@
   border-color: var(--da);
   box-shadow: 0 0 0 2px var(--da-bdr);
 }
-.kanban-drawer-foot .d-btn {
+.kanban-drawer-foot .btn {
   height: var(--d-ctrl);
 }

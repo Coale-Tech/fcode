@@ -535,6 +535,10 @@ export function ModelSelectionPanes({
           <ModelsFetchErrorMessage error={discovery.error} variant="banner" />
         ) : null}
 
+        {discovery.source === "catalog" && !fetchFailed ? (
+          <div className="provider-models-note">{t("settings.modelsFromCatalogBanner")}</div>
+        ) : null}
+
         {modelListBody}
       </div>
 

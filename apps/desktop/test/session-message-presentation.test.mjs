@@ -38,6 +38,12 @@ function loadComponent(name, extras = {}) {
     "react/jsx-runtime": jsxRuntime,
     "react-i18next": { useTranslation: () => ({ t }) },
     "../../../stores/app-store": { useAppStore },
+    "../../../hooks/use-armed-delete": {
+      useArmedDelete: () => {
+        const [armed, setArmed] = React.useState(null);
+        return { armed, setArmed };
+      },
+    },
     "../../../hooks/use-preview-target": { useOpenChatFileRef: () => () => {} },
     "../../../lib/chat-links": { splitChatText: () => [] },
     "../../../components/Markdown": { Markdown: ({ source: text }) => text },

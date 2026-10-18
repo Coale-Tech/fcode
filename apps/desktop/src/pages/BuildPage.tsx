@@ -31,11 +31,14 @@
  * aria-live so screen-reader users know they entered a web page.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { IPC, type Result } from "@pi-desktop/shared";
 import { buildChecks, checksFor, failing } from "../lib/build-checks";
 import { useAppStore } from "../stores/app-store";
 import { Button, SegmentedControl } from "../components/ui";
 import { IconMore, IconReview, IconTriangleAlert } from "../components/icons";
+import { ContextMenu, useContextMenu } from "../components/ContextMenu";
+import { api } from "../lib/api";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -452,6 +455,63 @@ export function BuildPage() {
     void invoke(IPC.invoke.buildCanvasAction, { action: "reload" });
   };
 
+  const { contextMenu, openContextMenu, closeContextMenu } = useContextMenu();
+
+  const openBenchOptions = (e: React.MouseEvent<HTMLElement>) => {
+    openContextMenu(e, {
+      label: "Bench options",
+      items: [
+        {
+          id: "go-bench",
+          label: "Open in Bench tab",
+          onSelect: () => goBench(),
+        },
+        ...(effectiveBenchPath
+          ? [
+              {
+                id: "show-finder",
+                label: "Show in Finder",
+                onSelect: () => void api.benchReveal(effectiveBenchPath),
+              },
+              {
+                id: "copy-path",
+                label: "Copy bench path",
+                onSelect: () => void navigator.clipboard.writeText(effectiveBenchPath),
+              },
+            ]
+          : []),
+      ],
+    });
+  };
+
+  const openMoreActions = (e: React.MouseEvent<HTMLElement>) => {
+    openContextMenu(e, {
+      label: "More actions",
+      items: [
+        {
+          id: "reload",
+          label: "Reload canvas",
+          disabled: benchStatus !== "running",
+          onSelect: () => handleReload(),
+        },
+        ...(effectiveBenchPath
+          ? [
+              {
+                id: "show-finder",
+                label: "Show in Finder",
+                onSelect: () => void api.benchReveal(effectiveBenchPath),
+              },
+              {
+                id: "copy-path",
+                label: "Copy bench path",
+                onSelect: () => void navigator.clipboard.writeText(effectiveBenchPath),
+              },
+            ]
+          : []),
+      ],
+    });
+  };
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   const benchBadge = BENCH_BADGES[benchStatus];
@@ -468,7 +528,7 @@ export function BuildPage() {
           <div className="d-mini-head">
             <span className="d-mini-title wb-truncate">{benchName ?? "No bench"}</span>
             <div className="d-mini-act">
-              <button type="button" className="d-btn ghost icon-btn sm" title="Bench options">
+              <button type="button" className="icon-btn icon-btn-square" title="Bench options" aria-label="Bench options" onClick={openBenchOptions}>
                 <IconMore size={12} aria-hidden="true" />
               </button>
             </div>
@@ -568,7 +628,7 @@ export function BuildPage() {
                 {syncStatus === "loading" ? "Syncing…" : "Sync files → site"}
               </Button>
             ) : null}
-            <button type="button" className="d-btn sm ghost icon-btn" title="More actions">
+            <button type="button" className="icon-btn icon-btn-square" title="More actions" aria-label="More actions" onClick={openMoreActions}>
               <IconMore size={13} aria-hidden="true" />
             </button>
           </div>
@@ -743,6 +803,7 @@ export function BuildPage() {
           )}
         </div>
       </section>
+      <ContextMenu state={contextMenu} onClose={closeContextMenu} />
     </main>
   );
 }
@@ -771,6 +832,7 @@ function CanvasOverlay({
   /** Navigate to bench page so user can start the bench. */
   onGoBench: () => void;
 }) {
+  const { t } = useTranslation();
   // Bench not running → Direction D: icon + help text + Start bench CTA
   if (benchStatus !== "running") {
     return (
@@ -780,10 +842,10 @@ function CanvasOverlay({
           <path d="m10 8 6 4-6 4V8z"/>
         </svg>
         <p className="wb-empty-title" style={{ marginTop: 8 }}>
-          {canvas === "studio" ? "Studio" : "Builder"} canvas
+          {t("build.benchNotRunning")}
         </p>
         <p className="wb-muted" style={{ fontSize: 13, maxWidth: 280, textAlign: "center" }}>
-          Start the bench to launch the {canvas === "studio" ? "Studio" : "Builder"} canvas.
+          {t("build.benchNotRunningDesc")}
         </p>
         <Button variant="primary" size="sm" onClick={onGoBench} style={{ marginTop: 12 }}>
           Start bench

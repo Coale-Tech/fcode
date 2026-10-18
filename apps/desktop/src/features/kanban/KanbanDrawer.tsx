@@ -177,9 +177,9 @@ export function KanbanDrawer({
                 <option key={c.id} value={c.id}>{`${shortId(c.id)} · ${c.title}`}</option>
               ))}
             </Select>
-            <button
-              type="button"
-              className="d-btn sm secondary"
+            <Button
+              variant="secondary"
+              size="sm"
               disabled={!linkPick}
               onClick={() => {
                 const id = linkPick;
@@ -188,7 +188,7 @@ export function KanbanDrawer({
               }}
             >
               {addLabel}
-            </button>
+            </Button>
           </div>
         )}
       </>
@@ -264,9 +264,9 @@ export function KanbanDrawer({
             <div className="kanban-section-head"><h3>{t("kanban.drawer.actions")}</h3></div>
             <div className="kanban-actions">
               {actions.map((a) => (
-                <button key={a.key} type="button" className="d-btn sm secondary" disabled={!a.enabled} onClick={a.run}>
+                <Button key={a.key} variant="secondary" size="sm" disabled={!a.enabled} onClick={a.run}>
                   {a.label}
-                </button>
+                </Button>
               ))}
             </div>
           </section>
@@ -393,14 +393,14 @@ export function KanbanDrawer({
               }
             }}
           />
-          <button
-            type="button"
-            className="d-btn sm secondary"
+          <Button
+            variant="secondary"
+            size="sm"
             disabled={!comment.trim()}
             onClick={() => void submitComment()}
           >
             {t("kanban.drawer.commentSubmit")}
-          </button>
+          </Button>
         </footer>
       </aside>
     </div>,

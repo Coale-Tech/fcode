@@ -405,7 +405,7 @@
 }
 /* workbench pages (build/bench) own their own panels; no island wrap */
 :root[data-nav-layout="rail"] .main-pane.is-workbench {
-  margin: 0;
+  margin: 0 var(--d-gap) 0 0;  /* gapR:12px like tabs/island bench — D2 design */
   border: none;
   box-shadow: none;
 }

@@ -31,6 +31,10 @@
 :root[data-nav-layout="island"] .settings-shell-full {
   gap: var(--d-gap);
   background: transparent;
+  /* S-02: route-page is a column flex; flex:1+min-height:0 binds height so
+   * settings-content-inner can scroll instead of overflowing the island card. */
+  flex: 1;
+  min-height: 0;
 }
 :root[data-nav-layout] .settings-mode-body .settings-shell-full > .settings-nav.sidebar-surface,
 :root[data-nav-layout="island"] .settings-shell-full > .settings-nav.sidebar-surface,

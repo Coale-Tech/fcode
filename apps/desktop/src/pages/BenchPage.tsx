@@ -527,9 +527,13 @@ export function BenchPage() {
       const site =
         verb === "migrate"
           ? (migrateSite ?? "")
-          : (selectedBench.sites.find((s) => s.isDefault)?.name ?? "");
+          : selectedBench.sites.length === 1
+            ? selectedBench.sites[0].name
+            : (selectedBench.sites.find((s) => s.isDefault)?.name ?? migrateSite ?? "");
       // Belt-and-suspenders: migrate with no valid site is a no-op
       if (verb === "migrate" && !migrateSite) return;
+      // install-app requires a site; multi-site benches with no selection fall through to no-op
+      if (verb === "install-app" && !site) return;
       // install-app requires an app name argument
       if (verb === "install-app" && !installAppName.trim()) return;
       const args = verb === "install-app" ? [installAppName.trim()] : undefined;
@@ -673,7 +677,7 @@ export function BenchPage() {
             </Button>
             <TooltipButton
               type="button"
-              className="d-btn ghost icon-btn"
+              className="icon-btn icon-btn-square"
               tooltip={t("nav.more", "More")}
               ariaLabel={t("nav.more", "More")}
             >

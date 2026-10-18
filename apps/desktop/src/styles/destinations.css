@@ -274,9 +274,8 @@
 .sch-row.is-disabled .sch-row-title { opacity: .6; }
 .sch-row.is-disabled .sch-row-prompt,
 .sch-row.is-disabled .sch-row-meta { opacity: .55; }
-/* D.css .d-btn.danger (tinted, not solid) for the disabled-row delete.
-   Override icon-btn's full-radius and icon-btn-square's 30px to match
-   the 24px rounded-square shape of .d-btn.sm.danger in the reference. */
+/* Override icon-btn's full-radius and icon-btn-square's default size to match
+   the 24px rounded-square shape of the delete button in the reference. */
 .icon-btn.icon-btn-square.sch-delete-btn {
   width: var(--ds-btn-height-sm);
   height: var(--ds-btn-height-sm);
@@ -365,8 +364,7 @@
 .pr-detail > .d-mini-head {
   border-bottom: 1px solid var(--d-border);
 }
-/* PR panel action buttons: match reference .d-btn.sm.icon-btn = 24px (D.css:731).
-   icon-btn-square defaults to --ds-control-size (28px); scope to pr-detail. */
+/* PR panel action buttons: 24px square (icon-btn-square defaults to --ds-control-size 28px; scope to pr-detail). */
 .pr-detail .d-mini-act { flex-shrink: 0; }
 .pr-detail .d-mini-act .icon-btn.icon-btn-square {
   width: var(--ds-btn-height-sm);

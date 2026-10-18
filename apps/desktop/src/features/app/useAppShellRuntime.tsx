@@ -170,6 +170,13 @@ export function useAppShellRuntime() {
   }, []);
   useTraySessions({ setSearchOpen, reopenSidebar });
 
+  // Composer toolbar "Add context" button dispatches this to open the search dialog.
+  useEffect(() => {
+    const handler = () => setSearchOpen(true);
+    document.addEventListener("pi:open-search", handler);
+    return () => document.removeEventListener("pi:open-search", handler);
+  }, []);
+
   // Stable identity: the keydown and native-menu handlers register once and
   // must never capture a stale `sidebarCollapsed`. Every invocation is a user
   // action, so it clears an automatic-collapse record before toggling.

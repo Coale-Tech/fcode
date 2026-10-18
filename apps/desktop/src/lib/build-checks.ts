@@ -50,7 +50,7 @@ export function buildChecks(i: BuildCheckInput): BuildCheck[] {
     },
     {
       key: "developerMode",
-      short: "developer_mode",
+      short: "dev_mode",
       problem: "developer_mode is off. Imports are disabled.",
       remedy: `bench set-config -g developer_mode 1 && bench --site ${site} clear-cache`,
       state: probed(i.developerMode),

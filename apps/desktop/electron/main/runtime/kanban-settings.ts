@@ -17,7 +17,7 @@ export type KanbanSettings = {
 
 const SETTINGS_FILE = "kanban-settings.json";
 const DEFAULTS: KanbanSettings = {
-  enabled: false,
+  enabled: true,
   maxInProgress: 2,
   maxRuntimeSeconds: 1800,
   maxAgentCardsPerSession: 20,

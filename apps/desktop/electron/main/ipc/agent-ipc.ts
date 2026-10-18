@@ -51,6 +51,8 @@ export type AgentIpcDependencies = {
   optionalWorkspaceRoot: () => Promise<string | null>;
   composerCommandService: Pick<ComposerCommandService, "buildComposerCommands">;
   loadComposerTemplatesCached: (root: string | null) => Promise<ComposerTemplate[]>;
+  /** Called after a graceful stop is acknowledged; used by kanban runner to reconcile the card. */
+  onAgentStop?: (sessionId: string) => void;
 };
 
 function rejectNativeAgentOperation(sessionId: string): void {
@@ -89,6 +91,7 @@ export function registerAgentIpc({
   optionalWorkspaceRoot,
   composerCommandService,
   loadComposerTemplatesCached,
+  onAgentStop,
 }: AgentIpcDependencies): void {
   let host: HostProcess | null = null;
   let sidecar: AgentSidecar | null = null;
@@ -733,7 +736,10 @@ export function registerAgentIpc({
     // The runtime owns the boundary decision. Do not close the durable turn
     // here: agent_end must arrive after the current reply/tool batch completes
     // and finish it as a normal completed turn.
-    return sidecar.call("agent.stop", req);
+    const result = await sidecar.call("agent.stop", req);
+    // Reconcile kanban card (no-op for non-worker sessions).
+    onAgentStop?.(req.sessionId);
+    return result;
   });
 
   handle(IPC.invoke.agentGetStatus, async (sessionId: string) => {

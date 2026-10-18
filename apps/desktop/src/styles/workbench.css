@@ -1252,16 +1252,20 @@
 /* ob-wrap: full-area centering container */
 .ob-wrap { flex:1; display:flex; align-items:center; justify-content:center; overflow-y:auto; padding:24px; }
 
-/* ob-card: 520px bordered wizard card */
+/* ob-card: 520px bordered wizard card — flex column so ob-foot stays pinned */
 .ob-card {
   width:520px; max-width:100%;
   background:var(--surface-elevation-1);
   border:1px solid var(--outline-elevation-1);
   border-radius:var(--d-r); box-shadow:var(--elevation-base); overflow:hidden;
+  /* S-03: cap card height so Continue button is always in-viewport;
+   * 76px ≈ main-pane margins (24) + home-stack padding (52). */
+  display:flex; flex-direction:column;
+  max-height:calc(100vh - var(--d-navbar-h) - var(--d-status-h) - 76px);
 }
 
 /* Card header */
-.ob-head { padding:20px 24px 14px; border-bottom:1px solid var(--d-border); }
+.ob-head { padding:20px 24px 14px; border-bottom:1px solid var(--d-border); flex-shrink:0; }
 .ob-logo { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
 .ob-logo-mark {
   width:32px; height:32px; border-radius:8px;
@@ -1277,7 +1281,8 @@
 .ob-prog-seg.active { background:color-mix(in srgb,var(--da) 40%,transparent); }
 
 /* Two-column layout */
-.ob-layout { display:flex; }
+/* S-03: layout column scrolls when card height is capped */
+.ob-layout { display:flex; flex:1; min-height:0; overflow-y:auto; }
 .ob-steps-col {
   width:168px; flex-shrink:0; padding:16px 0;
   border-right:1px solid var(--d-border);
@@ -1402,12 +1407,14 @@
 .ob-perm-row.selected { border-color:var(--da); background:var(--da-sub); color:var(--da-txt); }
 .ob-perm-row.selected .ob-radio { border-color:var(--da); background:var(--da); box-shadow:inset 0 0 0 4px var(--surface-base); }
 .ob-perm-label { flex:1; }
+/* Kanban feature hint in step 4 done state */
+.ob-kanban-hint { font-size:11px; color:var(--ink-gray-4); margin:0; text-align:center; }
 
 /* Footer */
 .ob-foot {
   padding:14px 24px; border-top:1px solid var(--d-border);
   display:flex; align-items:center; gap:8px;
-  background:var(--surface-gray-1);
+  background:var(--surface-gray-1); flex-shrink:0;
 }
 .ob-step-counter { font-size:11px; color:var(--ink-gray-4); }
 .ob-foot-skip { margin-right:auto; }
@@ -1638,27 +1645,6 @@
 .d-pill.gray    { background: var(--surface-gray-2);   color: var(--ink-gray-6);   border-color: var(--d-border); }
 .d-pill.gray    .d-pill-dot { background: var(--ink-gray-4); }
 
-/* D button base (D.css:657-731) */
-.d-btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  gap: 5px; height: var(--d-ctrl); padding: 0 10px;
-  border-radius: var(--d-r-ctrl); border: 1px solid transparent;
-  font-family: inherit; font-size: var(--d-text); font-weight: 500;
-  cursor: pointer; white-space: nowrap; transition: background .12s, color .12s;
-  outline: none; flex-shrink: 0;
-}
-.d-btn:focus-visible { box-shadow: 0 0 0 2px var(--da-bdr); }
-.d-btn:disabled { opacity: .45; cursor: not-allowed; }
-.d-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
-.d-btn.primary { background: var(--surface-gray-10); color: var(--ink-base); border-color: var(--surface-gray-10); }
-.d-btn.primary:hover:not(:disabled) { background: var(--ink-gray-8); border-color: var(--ink-gray-8); }
-.d-btn.secondary { background: var(--surface-gray-2); color: var(--ink-gray-8); border-color: var(--d-border-ctrl); }
-.d-btn.secondary:hover:not(:disabled) { background: var(--surface-gray-3); }
-.d-btn.ghost { background: transparent; color: var(--ink-gray-7); border-color: transparent; }
-.d-btn.ghost:hover:not(:disabled) { background: var(--surface-gray-2); color: var(--ink-gray-9); }
-.d-btn.sm  { height: 24px; padding: 0 7px; font-size: var(--d-text-sm); }
-.d-btn.icon-btn { width: var(--d-ctrl); padding: 0; }
-.d-btn.sm.icon-btn { width: 24px; }
 
 /* Raven page wrap: flex column for head + surface hole */
 /* padding-top clears the absolutely-positioned main-titlebar drag band (48px) */
@@ -1900,7 +1886,7 @@
   margin-top: 2px;
   font-variant-numeric: tabular-nums;
 }
-/* External link icon per notification row: kit .d-btn.ghost.sm.icon-btn (24px square) */
+/* External link icon per notification row: 24px square icon button */
 .notif-page-link {
   flex-shrink: 0;
   color: var(--ink-gray-7);

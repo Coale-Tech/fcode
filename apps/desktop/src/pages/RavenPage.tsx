@@ -106,10 +106,15 @@ export function RavenPage({ blocked }: { blocked: boolean }) {
             <span className="d-pill-dot" />
             {t("raven.connected")}
           </span>
-        ) : (
+        ) : ready ? (
           <span className="d-pill amber">
             <span className="d-pill-dot" />
             {t("raven.signInNeeded")}
+          </span>
+        ) : (
+          <span className="d-pill gray">
+            <span className="d-pill-dot" />
+            {t("raven.notConfigured")}
           </span>
         )}
         <div className="d-page-head-actions">
@@ -117,7 +122,7 @@ export function RavenPage({ blocked }: { blocked: boolean }) {
             <>
               <button
                 type="button"
-                className="d-btn ghost sm icon-btn"
+                className="icon-btn icon-btn-square"
                 title={t("raven.reload")}
                 onClick={() => void api.ravenReload().catch(() => {})}
               >
@@ -125,7 +130,7 @@ export function RavenPage({ blocked }: { blocked: boolean }) {
               </button>
               <button
                 type="button"
-                className="d-btn ghost sm icon-btn"
+                className="icon-btn icon-btn-square"
                 title={t("raven.openExternal")}
                 onClick={() => settings.url && void api.browserOpenExternal(new URL("/raven", settings.url).toString())}
               >
@@ -178,23 +183,17 @@ export function RavenPage({ blocked }: { blocked: boolean }) {
           </div>
         </div>
       ) : (
-        /* Not configured: sign-in card with Settings (not-enabled state) */
+        /* Not configured: neutral card prompting user to set up Raven in Settings */
         <div className="rv-disconnected">
           <div className="rv-signin-card">
             <div className="rv-signin-icon gray">
               <IconRaven size={24} />
             </div>
-            <p className="rv-signin-title">{t("raven.signInTitle")}</p>
-            {url && <p className="rv-signin-url">{url}</p>}
+            <p className="rv-signin-title">{t("raven.notConfiguredTitle")}</p>
+            <p className="rv-signin-desc">{t("raven.notConfiguredDesc")}</p>
             <div className="rv-signin-actions">
               <Button
                 variant="primary"
-                onClick={() => settings.url && void api.browserOpenExternal(new URL("/raven", settings.url).toString())}
-              >
-                {t("raven.openInBrowser")}
-              </Button>
-              <Button
-                variant="secondary"
                 onClick={() => {
                   setSettingsTab("raven");
                   setPage("settings");

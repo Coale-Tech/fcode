@@ -5,6 +5,14 @@ import {
   shouldShowNativeNotification,
 } from "../notification-policy";
 import type { IpcRegistrar } from "./types";
+import {
+  type NotificationReadStore,
+  overlayReadStore,
+  readNotificationReadStore,
+  storeWithReadBefore,
+  storeWithReadId,
+  writeNotificationReadStore,
+} from "./notification-read-store";
 
 export type NotificationIpcDependencies = {
   registrar: IpcRegistrar;
@@ -13,6 +21,8 @@ export type NotificationIpcDependencies = {
   getViewingSessionId: () => string | null;
   setViewingSessionId: (sessionId: string | null) => void;
   sendToRenderer: (channel: string, payload: unknown) => void;
+  /** dataDir for persisting notification read state. */
+  dataDir: string;
 };
 
 // Windows delivers Action Center activation through the native notification
@@ -87,15 +97,26 @@ export function registerNotificationIpc({
   getViewingSessionId,
   setViewingSessionId,
   sendToRenderer,
+  dataDir,
 }: NotificationIpcDependencies): void {
   const { handle } = registrar;
+
+  // Load persisted read state once; mutations update it in place and flush to disk.
+  let readStore: NotificationReadStore = readNotificationReadStore(dataDir);
+  const saveReadStore = (next: NotificationReadStore) => {
+    readStore = next;
+    writeNotificationReadStore(dataDir, next);
+  };
 
   handle(
     IPC.invoke.notificationList,
     async (input: { unreadOnly?: boolean; limit?: number } = {}) => {
       const host = getHost();
       if (!host) throw new Error("host unavailable");
-      return host.call("notification.list", input);
+      const result = await host.call<{ notifications: { id: string; createdAt: string; readAt: string | null }[]; unreadCount: number }>("notification.list", input);
+      const notifications = overlayReadStore(result.notifications ?? [], readStore);
+      const overlaidUnread = notifications.reduce((n, x) => n + (x.readAt ? 0 : 1), 0);
+      return { ...result, notifications, unreadCount: overlaidUnread };
     },
   );
 
@@ -104,7 +125,10 @@ export function registerNotificationIpc({
     if (!host) throw new Error("host unavailable");
     const id = typeof input.id === "string" ? input.id.trim() : "";
     const result = await host.call<{ ok?: boolean }>("notification.markRead", input);
-    if (id && result?.ok !== false) dismissTaskNativeNotification(id);
+    if (id && result?.ok !== false) {
+      dismissTaskNativeNotification(id);
+      saveReadStore(storeWithReadId(readStore, id));
+    }
     return result;
   });
 
@@ -113,9 +137,10 @@ export function registerNotificationIpc({
     if (!host) throw new Error("host unavailable");
     const requestedAt = Date.now();
     const result = await host.call<{ ok?: boolean }>("notification.markAllRead");
-    if (result?.ok === false) return result;
+    // Persist locally regardless of host response (host may not implement this).
     dismissedBefore = Math.max(dismissedBefore, requestedAt);
     dismissAllTaskNativeNotifications();
+    saveReadStore(storeWithReadBefore(readStore, requestedAt));
     return result;
   });
 
@@ -127,6 +152,7 @@ export function registerNotificationIpc({
     if (result?.ok === false) return result;
     dismissedBefore = Math.max(dismissedBefore, requestedAt);
     dismissAllTaskNativeNotifications();
+    saveReadStore(storeWithReadBefore(readStore, requestedAt));
     return result;
   });
 

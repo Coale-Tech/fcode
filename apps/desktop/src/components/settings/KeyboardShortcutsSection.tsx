@@ -1,4 +1,4 @@
-import { useMemo, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useMemo, useState, useRef, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import {
   KEYBOARD_SHORTCUTS,
@@ -70,6 +70,7 @@ export function KeyboardShortcutsSection({ settings, platform, saveSettings }: P
   const [error, setError] = useState<{ id: KeyboardShortcutId; message: string } | null>(
     null,
   );
+  const [confirmingReset, setConfirmingReset] = useState(false);
 
   const groups = useMemo(
     () =>
@@ -158,21 +159,37 @@ export function KeyboardShortcutsSection({ settings, platform, saveSettings }: P
         <div>
           <h3 className="settings-card-heading">{t("settings.keyboard")}</h3>
         </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="settings-text-action"
-          disabled={!hasOverrides || savingId !== null}
-          onClick={() => {
-            setRecordingId(null);
-            setError(null);
-            void saveSettings({ keybindings: {} });
-          }}
-        >
-          <IconSnapshot size={13} />
-          <span>{t("settings.shortcutResetAll")}</span>
-        </Button>
+        {confirmingReset ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="settings-text-action"
+            disabled={savingId !== null}
+            onBlur={() => setConfirmingReset(false)}
+            onClick={() => {
+              setConfirmingReset(false);
+              setRecordingId(null);
+              setError(null);
+              void saveSettings({ keybindings: {} });
+            }}
+          >
+            <IconSnapshot size={13} />
+            <span>{t("settings.shortcutResetAllConfirm")}</span>
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="settings-text-action"
+            disabled={!hasOverrides || savingId !== null}
+            onClick={() => setConfirmingReset(true)}
+          >
+            <IconSnapshot size={13} />
+            <span>{t("settings.shortcutResetAll")}</span>
+          </Button>
+        )}
       </div>
       <div className="settings-panel shortcut-map">
         {groups.map(({ group, shortcuts }) => (

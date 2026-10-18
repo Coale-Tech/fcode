@@ -93,7 +93,7 @@ export function createInitialState(): AppStateData {
     errorCode: null,
     errorRetriable: null,
     sessionTodoPhases: {},
-    showKanbanSessions: false,
+    showKanbanSessions: true,
     kanbanEnabled: false,
     ravenEnabled: false,
     userInitials: undefined,

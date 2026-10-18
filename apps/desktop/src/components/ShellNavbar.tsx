@@ -18,16 +18,17 @@
  *                        56px (rail+island, D-SPEC.md:6 / D2-shell.html:71)
  * Awesomebar: position:absolute, left:50%, 300px wide (D.css:194-202)
  */
-import type { ReactNode } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "../stores/app-store";
 import { resolveNavLayout } from "../lib/nav-layout";
-import { IconChevronDown, IconSearch, IconSettings, IconTerminal } from "./icons";
+import { IconBell, IconChevronDown, IconKeyboard, IconSearch, IconSettings, IconTerminal } from "./icons";
 import { NavTabs } from "./NavTabs";
 import { NotificationCenter } from "./NotificationCenter";
-import { TooltipButton } from "./ui";
+import { TooltipButton, cx } from "./ui";
 import { useBenchContext } from "../hooks/use-bench-context";
 import { SETTINGS_NAV } from "../lib/settings-search";
+import { portalToBody } from "../lib/portal-visibility";
 import type { AppState } from "../stores/app-state";
 const PAGE_LABEL_KEY: Record<AppState["page"], string> = {
   chat:          "nav.chat",
@@ -54,6 +55,7 @@ export function ShellNavbar({
   const layout  = resolveNavLayout(useAppStore((s) => s.settings?.navLayout));
   const page    = useAppStore((s) => s.page);
   const setPage = useAppStore((s) => s.setPage);
+  const setSettingsTab = useAppStore((s) => s.setSettingsTab);
   const settingsTab = useAppStore((s) => s.settingsTab);
   const userInitials = useAppStore((s) => s.userInitials);
   const chatUserName = useAppStore((s) => s.chatUserName);
@@ -69,6 +71,47 @@ export function ShellNavbar({
   const avatarInitials = chatUserName
     ? chatUserName.trim().split(/\s+/).map((w) => w[0]?.toUpperCase() ?? "").join("").slice(0, 2)
     : null;
+
+  /* Avatar dropdown */
+  const avatarRef = useRef<HTMLButtonElement>(null);
+  const avatarMenuRef = useRef<HTMLDivElement>(null);
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const [avatarMenuPos, setAvatarMenuPos] = useState<{ top: number; left: number } | null>(null);
+
+  const closeAvatarMenu = useCallback((restoreFocus = true) => {
+    setAvatarMenuOpen(false);
+    if (restoreFocus) requestAnimationFrame(() => avatarRef.current?.focus());
+  }, []);
+
+  useEffect(() => {
+    if (!avatarMenuOpen) { setAvatarMenuPos(null); return; }
+    const place = () => {
+      const rect = avatarRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setAvatarMenuPos({ top: rect.bottom + 4, left: rect.right - 180 });
+    };
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [avatarMenuOpen]);
+
+  useEffect(() => {
+    if (!avatarMenuOpen) return;
+    const onMouseDown = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (avatarRef.current?.contains(t) || avatarMenuRef.current?.contains(t)) return;
+      closeAvatarMenu(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeAvatarMenu();
+    };
+    document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [avatarMenuOpen, closeAvatarMenu]);
 
 
   return (
@@ -172,10 +215,14 @@ export function ShellNavbar({
 
         {/* Avatar — D1-shell.html:133, D.css:307-320 */}
         <button
+          ref={avatarRef}
           type="button"
-          className={`shell-navbar-avatar${(userInitials ?? avatarInitials) ? " has-initials" : ""}`}
+          className={cx(`shell-navbar-avatar${(userInitials ?? avatarInitials) ? " has-initials" : ""}`, avatarMenuOpen && "active")}
           aria-label={t("nav.userMenu", { defaultValue: "User menu" })}
+          aria-expanded={avatarMenuOpen}
+          aria-haspopup="menu"
           title={chatUserName ?? t("nav.userMenu", { defaultValue: "User menu" })}
+          onClick={() => setAvatarMenuOpen((o) => !o)}
         >
           {(userInitials ?? avatarInitials) ? (
             <span className="shell-navbar-avatar-initials" aria-hidden>{userInitials ?? avatarInitials}</span>
@@ -183,6 +230,44 @@ export function ShellNavbar({
             <IconTerminal size={12} aria-hidden />
           )}
         </button>
+        {avatarMenuOpen && avatarMenuPos && typeof document !== "undefined"
+          ? portalToBody(
+            <div
+              ref={avatarMenuRef}
+              role="menu"
+              className="nav-tabs-overflow-menu"
+              style={{ top: avatarMenuPos.top, left: avatarMenuPos.left }}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") { e.preventDefault(); closeAvatarMenu(); }
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  const items = Array.from(avatarMenuRef.current?.querySelectorAll<HTMLElement>("[role='menuitem']") ?? []);
+                  const idx = items.indexOf(document.activeElement as HTMLElement);
+                  items[(idx + 1) % items.length]?.focus();
+                }
+                if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  const items = Array.from(avatarMenuRef.current?.querySelectorAll<HTMLElement>("[role='menuitem']") ?? []);
+                  const idx = items.indexOf(document.activeElement as HTMLElement);
+                  items[(idx - 1 + items.length) % items.length]?.focus();
+                }
+              }}
+            >
+              <button type="button" role="menuitem" className="nav-tabs-overflow-item"
+                onClick={() => { setPage("settings"); closeAvatarMenu(false); }}>
+                <IconSettings size={13} aria-hidden />{t("nav.settings")}
+              </button>
+              <button type="button" role="menuitem" className="nav-tabs-overflow-item"
+                onClick={() => { setPage("notifications"); closeAvatarMenu(false); }}>
+                <IconBell size={13} aria-hidden />{t("notifications.title")}
+              </button>
+              <button type="button" role="menuitem" className="nav-tabs-overflow-item"
+                onClick={() => { setSettingsTab("shortcuts"); setPage("settings"); closeAvatarMenu(false); }}>
+                <IconKeyboard size={13} aria-hidden />{t("settings.nav.shortcuts")}
+              </button>
+            </div>
+          )
+          : null}
       </div>
     </header>
   );

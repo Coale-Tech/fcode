@@ -262,7 +262,7 @@ export function InstalledPluginsPanel({
                         <TooltipButton
                           ref={ref}
                           type="button"
-                          className="d-btn ghost sm icon-btn"
+                          className="icon-btn icon-btn-square"
                           tooltip={t("plugins.rowActions", { name: plugin.name })}
                           ariaLabel={t("plugins.rowActions", { name: plugin.name })}
                           aria-haspopup="menu"

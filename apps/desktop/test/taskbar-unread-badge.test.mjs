@@ -94,6 +94,15 @@ function loadBadgeModule({ renderPng } = {}) {
       if (id === "electron") return electron;
       if (id === "@pi-desktop/shared") return { IPC };
       if (id === "./taskbar-unread-overlay") return overlay;
+      if (id === "./notification-read-store") {
+        return {
+          readNotificationReadStore: () => ({ readBefore: null, readIds: [] }),
+          writeNotificationReadStore() {},
+          storeWithReadId: (s) => s,
+          storeWithReadBefore: (s) => s,
+          overlayReadStore: (n) => n,
+        };
+      }
       throw new Error(`unexpected dependency: ${id}`);
     },
     module.exports,

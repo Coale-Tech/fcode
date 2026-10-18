@@ -148,7 +148,7 @@ export function PluginsPage() {
             <div className="d-mini-act">
               <TooltipButton
                 type="button"
-                className="d-btn ghost sm icon-btn"
+                className="icon-btn icon-btn-square"
                 ariaLabel={t("plugins.installFromNpm")}
                 tooltip={t("plugins.installFromNpm")}
                 onClick={focusSpec}
@@ -256,7 +256,7 @@ export function PluginsPage() {
                   <TooltipButton
                     ref={ref}
                     type="button"
-                    className="d-btn ghost sm icon-btn"
+                    className="icon-btn icon-btn-square"
                     ariaLabel={t("plugins.moreActions")}
                     tooltip={t("plugins.moreActions")}
                     aria-haspopup="menu"
