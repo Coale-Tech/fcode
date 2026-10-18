@@ -2,6 +2,19 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const trEntries: ChangelogEntry[] = [
   {
+    "version": "0.21.0",
+    "date": "2026-10-18",
+    "highlights": [
+      "Kanban, hazır her kartı en uygun ajana yönlendirir; ajan etiketini, çalışan worker listesini ve her ajanın geçmişini gösterir. Proje başına en fazla 5 worker; ek worker'lar kendi git worktree'sinde çalışır.",
+      "Pull Requests, `gh` üzerinden gerçek CI kontrollerini gösterir; başarısız logları okuyup dalı push etmeden düzelten bir sohbet başlatan CI'yı Düzelt düğmesi sunar. `gh` yoksa veya oturum açık değilse kurulum uyarısı çıkar.",
+      "Ayarlar > Yapay Zeka Araçları > Dil sunucuları, omp'nin 55 yerleşik sunucusunu ve kendi eklediklerinizi Paketli, Bulundu veya Bulunamadı durumuyla listeler. Fcode artık `ruff` 0.17.1 ile gelir; Python lint'i ve ajanın kabuğu kutudan çıktığı gibi çalışır.",
+      "Yenilenen desk workbench: ada kenar çubuğu ve sekme tuvali, yeni sohbet yüzeyi, yenilenmiş Ayarlar, Bench, Build ve FileBird sayfaları ve bench, dosya ve komutları arayan bir komut paleti.",
+      "Ayarlara Ajanlar (omp'nin yüklediği tüm ajanlar, ajan başına model geçersiz kılma), Hooks, slash komutları, CLI Araçları, bellek denetimleri ve 385 omp ayarının tamamını içeren bir Gelişmiş sayfası eklendi.",
+      "Yapıştırılan ve eklenen görseller artık modele ulaşıyor. Köprü bunları daha önce atıyordu.",
+      "Emekliye ayrılan PI ajan döngüsü ve güvenilir uzantı altyapısı kaldırıldı. `pi-host` artık masaüstüyle aynı omp sidecar'ını çalıştırır; omp kendi ajan dizinini kullanır, böylece `~/.omp/agent` yapılandırması Fcode'a sızmaz.",
+    ],
+  },
+  {
     "version": "0.20.0",
     "date": "2026-10-10",
     "highlights": [

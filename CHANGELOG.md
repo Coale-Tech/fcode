@@ -10,20 +10,13 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 
-### Fixed
-- Pasted and attached inline images now reach omp. The omp-bridge dropped them: main sent `attachments` but the bridge forwarded only the text, so the model never saw the image.
+## [0.21.0] — 2026-10-18
 
-### Removed
-- The retired PI agent loop in `packages/agent-runtime` (`runtime.ts`, `sidecar.ts`, the compaction and subagent clusters, prompt fragments, trusted-extension runner) plus its `"./sidecar"` export, `bundle` script and release-script step. The shipped sidecar is `omp-bridge`; the `agent-runtime` helpers main still imports remain.
-- Trusted-extension plumbing in main, renderer and `@pi-desktop/shared` (`extensions.*` IPC, host-proxy entries, prompt dialog, "import pi extension"). omp loads extensions from its own `extensions:` directories.
+### Compatibility
 
-### Changed
-- `pi-host` (headless remote host) now runs the omp-bridge sidecar like the desktop, so remote sessions get omp and the nine bundled Fcode agents. The bundle ships `omp-bridge/bridge.js` and `resources/{bin/omp,fcode-agents,fcode-skills}`; `--resources <dir>` overrides the lookup. It passes curated and `advanced` omp settings, approval mode and memory backend through `ompSidecarExtraEnv`, and registers `fcode_bench_*`, `fcode_studio` (`FCODE_BENCH_PATH`, `FCODE_BENCH_SITE`) and `kanban_*`. `GenerateImages`, `BrowserPreview` and `fcode_canvas*` stay desktop-only (see `apps/pi-host/README.md`). Bench and Kanban pure modules now live once in `@pi-desktop/host-runtime`.
-- omp now runs with its own agent dir, `<dataDir>/omp-agent` (`PI_CODING_AGENT_DIR`), so `~/.omp/agent` config no longer leaks into Fcode sessions. First launch imports `agent.db` (logins), `agents/` and `USER.md` once; `config.yml`, skills and sessions are not imported. User agents, `USER.md`, skills and hooks/commands are read from that dir. First launch regenerates omp's skill routing hints with model calls (cached afterwards).
-- Subagent roles (`task`, `smol`, `slow`) now default to the session model via the overlay's `modelRoles`, instead of whatever `~/.omp` assigned them.
-- Dev builds resolve the bundled omp (`apps/desktop/resources/bin/omp-<platform>-<arch>`) and bundled `fcode-agents`/`fcode-skills` from `apps/desktop/resources`; PATH `omp` is a last resort and logs a warning. One `resolveOmpBin`/`ompChildEnv`/`appResourcesPath` in the desktop main process replaces five copies.
-- Provider env for omp (`FCODE_PROVIDER_*_KEY`, `FCODE_MODELS_CONFIG`, `FCODE_DEFAULT_MODEL`) is built by one shared `ompProviderEnv` in `@pi-desktop/host-runtime`, used by desktop and pi-host.
-- `scripts/e2e-remote-host.mjs` drives the omp-bridge sidecar; a provider-less turn is now admitted and settles instead of failing closed at admission.
+| Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
+|-------|-----------------|-----------|-----------------|--------|
+| 0.21.0 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
 
 ### Added
 - Pull Requests now shows real CI: the row badge and the detail panel's check list come from `gh pr list` (`statusCheckRollup`: Actions runs and legacy statuses; duration, workflow and a link to the run's logs), along with the PR body, size and opened date. A **Fix CI** button appears while a check is failing and starts a chat that reads the failing logs with `gh`, checks out the branch and fixes it; it does not push without asking. The page refetches when the window regains focus and every 30 s while a check is running.
@@ -49,16 +42,28 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Settings > CLI Tools: allowlisted runner for non-interactive omp subcommands (`stats`, `usage`, `gc`, `models`, `ps`, `worktree`, `tiny-models`, `toks`, `config`, `web-search`) using the bundled binary, no shell.
 - "Open in omp TUI" on a chat opens the bundled omp TUI in the integrated terminal on the same session (the launch script deletes itself before exec); Settings > Extensions shows the `omp acp` command and Zed/JetBrains snippets. Print mode and `omp setup` are intentionally not exposed.
 
+### Changed
+- `pi-host` (headless remote host) now runs the omp-bridge sidecar like the desktop, so remote sessions get omp and the nine bundled Fcode agents. The bundle ships `omp-bridge/bridge.js` and `resources/{bin/omp,fcode-agents,fcode-skills}`; `--resources <dir>` overrides the lookup. It passes curated and `advanced` omp settings, approval mode and memory backend through `ompSidecarExtraEnv`, and registers `fcode_bench_*`, `fcode_studio` (`FCODE_BENCH_PATH`, `FCODE_BENCH_SITE`) and `kanban_*`. `GenerateImages`, `BrowserPreview` and `fcode_canvas*` stay desktop-only (see `apps/pi-host/README.md`). Bench and Kanban pure modules now live once in `@pi-desktop/host-runtime`.
+- omp now runs with its own agent dir, `<dataDir>/omp-agent` (`PI_CODING_AGENT_DIR`), so `~/.omp/agent` config no longer leaks into Fcode sessions. First launch imports `agent.db` (logins), `agents/` and `USER.md` once; `config.yml`, skills and sessions are not imported. User agents, `USER.md`, skills and hooks/commands are read from that dir. First launch regenerates omp's skill routing hints with model calls (cached afterwards).
+- Subagent roles (`task`, `smol`, `slow`) now default to the session model via the overlay's `modelRoles`, instead of whatever `~/.omp` assigned them.
+- Dev builds resolve the bundled omp (`apps/desktop/resources/bin/omp-<platform>-<arch>`) and bundled `fcode-agents`/`fcode-skills` from `apps/desktop/resources`; PATH `omp` is a last resort and logs a warning. One `resolveOmpBin`/`ompChildEnv`/`appResourcesPath` in the desktop main process replaces five copies.
+- Provider env for omp (`FCODE_PROVIDER_*_KEY`, `FCODE_MODELS_CONFIG`, `FCODE_DEFAULT_MODEL`) is built by one shared `ompProviderEnv` in `@pi-desktop/host-runtime`, used by desktop and pi-host.
+- `scripts/e2e-remote-host.mjs` drives the omp-bridge sidecar; a provider-less turn is now admitted and settles instead of failing closed at admission.
+- Desk workbench redesign: island sidebar and tabs-canvas chrome, a new chat surface, and refreshed Settings, Bench, Build, FileBird, Pull Requests, Scheduled and Raven pages. The command palette now searches benches, files and commands.
+
 ### Removed
 - The orphaned subagent editor (`SubagentEditorSheet`, presets, model picker) and its source-text tests.
 - Unused IPC channels `buildCanvasGetState` and `kanbanListRuns` (no renderer caller; Kanban runs come from the board payload).
 - The legacy subagent catalog (explorer, code-reviewer, test-runner, fixer, ui-designer) from desktop session launch and `launch-resolver`: the `subagents`/`subagentProviders`/`subagentModelKeys` sidecar params (omp ignored them), the ten `subagent*` IPC channels with their `api.ts` wrappers and mcp-control specs, and the `provider.resolveSubagentModel` hook on host-runtime `AgentSidecar`. Native `native-pi:` sessions keep their own catalog in `agent-runtime`.
+- The retired PI agent loop in `packages/agent-runtime` (`runtime.ts`, `sidecar.ts`, the compaction and subagent clusters, prompt fragments, trusted-extension runner) plus its `"./sidecar"` export, `bundle` script and release-script step. The shipped sidecar is `omp-bridge`; the `agent-runtime` helpers main still imports remain.
+- Trusted-extension plumbing in main, renderer and `@pi-desktop/shared` (`extensions.*` IPC, host-proxy entries, prompt dialog, "import pi extension"). omp loads extensions from its own `extensions:` directories.
 
 ### Fixed
 - Pull Requests: the open detail panel now follows refreshes instead of keeping a stale copy of the PR, and switching project clears the previous project's list and selection. `gh` is looked up on the login-shell `PATH`, so a Homebrew `gh` is found when the app is launched from the Dock.
 - Voice settings show a load error instead of silently empty state; settings radii use design tokens; README no longer claims a non-existent fcode-skills bundle.
 - Permission dialogs raised from a delegated subagent say which subagent asked (when exactly one delegate is running).
 - Bench page (site list, process panel, failure banner, empty state) is translated in all 9 locales.
+- Pasted and attached inline images now reach omp. The omp-bridge dropped them: main sent `attachments` but the bridge forwarded only the text, so the model never saw the image.
 
 ## [0.20.0] — 2026-10-10
 
@@ -333,6 +338,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Security: YAML injection via `agentModelOverrides` key fixed (agent key now `JSON.stringify`-quoted in overlay); `validateOmpSettings` rejects keys with non-identifier chars (newlines, colons, spaces); `file:`/`git+file:`/`svn+`/`hg+` URI schemes blocked in `validateInstallSpec`; collab panel only renders `<a>` for http(s) URLs; Hindsight supervisor strips raw process output from IPC state message; port validated 1024–65535 in `hindsightLocalStart`; `benchRun` validates each `args` element against an identifier-safe regex.
 - `inflight-checkpoint.test.mjs` flaky timing fixed (freeze `Date.now()` via `t.mock.timers`); `plugin-mcp.test.mjs` `connectTimeoutMs` 20 → 300.
 
+[0.21.0]: https://github.com/Coale-Tech/fcode/releases/tag/v0.21.0
 [0.20.0]: https://github.com/Coale-Tech/fcode/releases/tag/v0.20.0
 [0.19.0]: https://github.com/Coale-Tech/fcode/releases/tag/v0.19.0
 [0.18.1]: https://github.com/Coale-Tech/fcode/releases/tag/v0.18.1

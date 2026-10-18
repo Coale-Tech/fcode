@@ -2,6 +2,19 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const frEntries: ChangelogEntry[] = [
   {
+    "version": "0.21.0",
+    "date": "2026-10-18",
+    "highlights": [
+      "Kanban attribue chaque carte prête à l'agent le plus adapté et affiche une pastille d'agent, la liste des workers en cours et le bilan de chaque agent. Jusqu'à 5 workers par projet ; les workers supplémentaires s'exécutent dans leur propre git worktree.",
+      "Pull Requests affiche les vrais checks CI via `gh`, avec un bouton Corriger la CI qui lance une conversation pour lire les logs en échec et réparer la branche sans pousser. Un encart de configuration apparaît si `gh` est absent ou non connecté.",
+      "Réglages > Outils IA > Serveurs de langage liste les 55 serveurs intégrés d'omp et les vôtres, avec le statut Inclus, Trouvé ou Introuvable. Fcode embarque désormais `ruff` 0.17.1 : le lint Python et le shell de l'agent fonctionnent sans configuration.",
+      "Nouveau desk workbench : barre latérale en îlots et canevas à onglets, nouvelle surface de chat, pages Réglages, Bench, Build et FileBird refondues, et une palette de commandes qui recherche benches, fichiers et commandes.",
+      "Les réglages gagnent Agents (tous les agents chargés par omp, avec modèle personnalisable par agent), Hooks, commandes slash, Outils CLI, contrôles de la mémoire et une page Avancé pour les 385 réglages d'omp.",
+      "Les images collées et jointes atteignent désormais le modèle. Le bridge les supprimait auparavant.",
+      "La boucle d'agent PI retirée et la plomberie des extensions de confiance sont supprimées. `pi-host` lance maintenant le même sidecar omp que le bureau, et omp utilise son propre répertoire d'agent : la configuration de `~/.omp/agent` ne fuit plus dans Fcode.",
+    ],
+  },
+  {
     "version": "0.20.0",
     "date": "2026-10-10",
     "highlights": [

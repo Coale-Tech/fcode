@@ -2,6 +2,19 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const esEntries: ChangelogEntry[] = [
   {
+    "version": "0.21.0",
+    "date": "2026-10-18",
+    "highlights": [
+      "Kanban asigna cada tarjeta lista al agente que mejor encaja y muestra una etiqueta de agente, la lista de workers en ejecución y el historial de cada agente. Hasta 5 workers por proyecto; los adicionales se ejecutan en su propio git worktree.",
+      "Pull Requests muestra checks de CI reales mediante `gh`, con un botón Corregir CI que inicia un chat para leer los logs fallidos y arreglar la rama sin hacer push. Si `gh` falta o no hay sesión, aparece un aviso de configuración.",
+      "Ajustes > Herramientas de IA > Servidores de lenguaje lista los 55 servidores integrados de omp más los tuyos, con estado Incluido, Encontrado o No encontrado. Fcode ahora incluye `ruff` 0.17.1, así que el linting de Python y el shell del agente funcionan de entrada.",
+      "Nuevo desk workbench: barra lateral en islas y lienzo con pestañas, nueva superficie de chat y páginas renovadas de Ajustes, Bench, Build y FileBird, además de una paleta de comandos que busca benches, archivos y comandos.",
+      "Ajustes suma Agentes (todos los agentes que carga omp, con modelo configurable por agente), Hooks, comandos con barra, Herramientas CLI, controles de memoria y una página Avanzado con los 385 ajustes de omp.",
+      "Las imágenes pegadas y adjuntas ahora llegan al modelo. El bridge las descartaba.",
+      "Se eliminan el bucle de agente PI retirado y la infraestructura de extensiones de confianza. `pi-host` ahora ejecuta el mismo sidecar de omp que el escritorio, y omp usa su propio directorio de agente, de modo que la configuración de `~/.omp/agent` ya no se filtra a Fcode.",
+    ],
+  },
+  {
     "version": "0.20.0",
     "date": "2026-10-10",
     "highlights": [

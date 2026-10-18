@@ -30,6 +30,19 @@ export type ChangelogEntry = {
 
 const enEntries: ChangelogEntry[] = [
   {
+    version: "0.21.0",
+    date: "2026-10-18",
+    highlights: [
+      "Kanban routes each ready card to the best-matching agent and shows an agent chip, a roster of running workers and each agent's record. Up to 5 workers per project; extra workers run in their own git worktree.",
+      "Pull Requests shows real CI checks from `gh`, with a Fix CI button that starts a chat to read the failing logs and fix the branch without pushing. A setup callout appears when `gh` is missing or signed out.",
+      "Settings > AI Tools > Language servers lists omp's 55 built-in servers plus your own, each marked Bundled, Found or Not found. Fcode now ships `ruff` 0.17.1, so Python linting and the agent's shell work out of the box.",
+      "A redesigned desk workbench: island sidebar and tabs-canvas chrome, a new chat surface, and refreshed Settings, Bench, Build and FileBird pages, plus a command palette that searches benches, files and commands.",
+      "Settings gained Agents (every agent omp loads, with a per-agent model override), Hooks, slash commands, CLI Tools, Memory controls, and an Advanced page for all 385 omp settings.",
+      "Pasted and attached images now reach the model. The bridge used to drop them.",
+      "The retired PI agent loop and trusted-extension plumbing are gone. `pi-host` now runs the same omp sidecar as the desktop, and omp keeps its own agent directory so `~/.omp/agent` config no longer leaks into Fcode.",
+    ],
+  },
+  {
     version: "0.20.0",
     date: "2026-10-10",
     highlights: [
@@ -955,6 +968,19 @@ const enEntries: ChangelogEntry[] = [
 
 const zhCNEntries: ChangelogEntry[] = [
   {
+    version: "0.21.0",
+    date: "2026-10-18",
+    highlights: [
+      "看板会把每张就绪卡片分配给最匹配的代理，并显示代理标签、运行中工人名单和每个代理的战绩。每个项目最多 5 个工人，额外的工人在各自独立的 git worktree 中运行。",
+      "Pull Requests 通过 `gh` 显示真实的 CI 检查，并提供“修复 CI”按钮：会启动一个对话读取失败日志并修复分支，不会推送。未安装或未登录 `gh` 时显示设置提示。",
+      "设置 > AI 工具 > 语言服务器列出 omp 的 55 个内置服务器和你自己添加的服务器，并标注已内置、已找到或未找到。Fcode 现在随附 `ruff` 0.17.1，Python 检查和代理的 shell 开箱即用。",
+      "全新的 desk workbench 界面：岛式侧边栏与标签画布外观、新的聊天界面，以及焕新的设置、Bench、Build 和 FileBird 页面，命令面板可搜索 bench、文件和命令。",
+      "设置新增代理（列出 omp 加载的所有代理，可按代理覆盖模型）、Hooks、斜杠命令、CLI 工具、记忆控制，以及涵盖 385 项 omp 设置的高级页面。",
+      "粘贴和附加的图片现在会送达模型；此前桥接层会丢弃它们。",
+      "已移除退役的 PI 代理循环和受信扩展管线。`pi-host` 现在与桌面端运行同一个 omp 侧车，omp 使用自己的代理目录，`~/.omp/agent` 中的配置不再泄漏到 Fcode。",
+    ],
+  },
+  {
     version: "0.20.0",
     date: "2026-10-10",
     highlights: [
@@ -1878,6 +1904,19 @@ const zhCNEntries: ChangelogEntry[] = [
 ];
 
 const zhTWEntries: ChangelogEntry[] = [
+  {
+    version: "0.21.0",
+    date: "2026-10-18",
+    highlights: [
+      "看板會把每張就緒卡片分派給最相符的代理，並顯示代理標籤、執行中工作者名單與每個代理的戰績。每個專案最多 5 個工作者，額外的工作者在各自獨立的 git worktree 中執行。",
+      "Pull Requests 透過 `gh` 顯示真實的 CI 檢查，並提供「修復 CI」按鈕：會開啟對話讀取失敗記錄並修復分支，不會推送。未安裝或未登入 `gh` 時顯示設定提示。",
+      "設定 > AI 工具 > 語言伺服器列出 omp 的 55 個內建伺服器與你自行新增的伺服器，並標示已內建、已找到或未找到。Fcode 現在隨附 `ruff` 0.17.1，Python 檢查與代理的 shell 開箱即用。",
+      "全新的 desk workbench 介面：島式側邊欄與分頁畫布外觀、新的聊天介面，以及煥然一新的設定、Bench、Build 與 FileBird 頁面，命令面板可搜尋 bench、檔案與命令。",
+      "設定新增代理（列出 omp 載入的所有代理，可依代理覆寫模型）、Hooks、斜線命令、CLI 工具、記憶控制，以及涵蓋 385 項 omp 設定的進階頁面。",
+      "貼上與附加的圖片現在會送達模型；先前橋接層會丟棄它們。",
+      "已移除退役的 PI 代理迴圈與受信擴充管線。`pi-host` 現在與桌面端執行同一個 omp 側車，omp 使用自己的代理目錄，`~/.omp/agent` 中的設定不再洩漏到 Fcode。",
+    ],
+  },
   {
     version: "0.20.0",
     date: "2026-10-10",

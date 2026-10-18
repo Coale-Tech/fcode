@@ -2,6 +2,19 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const deEntries: ChangelogEntry[] = [
   {
+    "version": "0.21.0",
+    "date": "2026-10-18",
+    "highlights": [
+      "Kanban weist jede bereite Karte dem passendsten Agenten zu und zeigt einen Agenten-Chip, eine Liste der laufenden Worker und die Bilanz jedes Agenten. Bis zu 5 Worker pro Projekt; zusätzliche Worker laufen in einem eigenen Git-Worktree.",
+      "Pull Requests zeigt echte CI-Checks über `gh`, mit einer Schaltfläche „CI beheben“, die einen Chat startet, der die fehlgeschlagenen Logs liest und den Branch repariert, ohne zu pushen. Fehlt `gh` oder ist es nicht angemeldet, erscheint ein Einrichtungshinweis.",
+      "Einstellungen > KI-Tools > Language Server listet die 55 integrierten omp-Server plus eigene mit dem Status Mitgeliefert, Gefunden oder Nicht gefunden. Fcode liefert jetzt `ruff` 0.17.1 mit, sodass Python-Linting und die Shell des Agenten sofort funktionieren.",
+      "Überarbeitete Desk-Workbench: Insel-Seitenleiste und Tabs-Canvas, neue Chat-Oberfläche sowie neu gestaltete Seiten für Einstellungen, Bench, Build und FileBird, dazu eine Befehlspalette, die Benches, Dateien und Befehle durchsucht.",
+      "Die Einstellungen bieten neu Agenten (alle von omp geladenen Agenten mit Modell-Überschreibung pro Agent), Hooks, Slash-Befehle, CLI-Tools, Speichersteuerung und eine Seite „Erweitert“ für alle 385 omp-Einstellungen.",
+      "Eingefügte und angehängte Bilder erreichen jetzt das Modell. Die Bridge hat sie bisher verworfen.",
+      "Die ausgemusterte PI-Agentenschleife und die Trusted-Extension-Anbindung sind entfernt. `pi-host` startet jetzt denselben omp-Sidecar wie der Desktop, und omp nutzt ein eigenes Agentenverzeichnis, sodass die Konfiguration aus `~/.omp/agent` nicht mehr in Fcode durchsickert.",
+    ],
+  },
+  {
     "version": "0.20.0",
     "date": "2026-10-10",
     "highlights": [
