@@ -64,12 +64,7 @@ const HOST_PROXY_ALLOWED = new Set([
   "project.instructions.resolve",
   "provider.resolveAuth",
   "app.health",
-  // Trusted extensions (D387): answered by the embedding host, plus the
   // session methods the ExtensionAPI reaches (spec 16 §10.1).
-  "extensions.commands.publish",
-  "extensions.ui.request",
-  "extensions.diagnostics.publish",
-  "extensions.model.configure",
   "session.rename",
   "session.create",
   "session.fork",
@@ -93,12 +88,8 @@ const HOST_PROXY_ALLOWED = new Set([
   "kanban_unblock",
 ]);
 
-/** Host-side answers for the `extensions.*` proxy methods. */
-export type TrustedExtensionSidecarBridge = {
-  publishCommands: (params: Record<string, unknown>) => void;
-  publishDiagnostics: (params: Record<string, unknown>) => void;
-  requestUi: (params: Record<string, unknown>) => Promise<unknown>;
-  configureModel: (params: Record<string, unknown>) => Promise<unknown>;
+/** The session-queue proxy shape used by the embedding host. */
+export type SidecarSessionBridge = {
   /** `sendUserMessage`: the Host-owned queue drains it (D386); host-core alone would only store it. */
   queuePush: (params: Record<string, unknown>) => Promise<unknown>;
   queuePrioritize: (params: Record<string, unknown>) => Promise<unknown>;
@@ -167,7 +158,7 @@ export class AgentSidecar {
   // record immediately before starting a runtime turn.
   private projectInstructionRoots = new Map<string, string>();
   private vendorAuthResolver: VendorAuthResolver | null = null;
-  private trustedExtensionBridge: TrustedExtensionSidecarBridge | null = null;
+  private sessionBridge: SidecarSessionBridge | null = null;
   // Vendor-account rows this session was launched with. The sidecar can only
   // ask for auth it is already using, and a session that never bound an OAuth
   // row can ask for nothing at all.
@@ -343,9 +334,8 @@ export class AgentSidecar {
   setVendorAuthResolver(resolver: VendorAuthResolver): void {
     this.vendorAuthResolver = resolver;
   }
-
-  setTrustedExtensionBridge(bridge: TrustedExtensionSidecarBridge): void {
-    this.trustedExtensionBridge = bridge;
+  setSessionBridge(bridge: SidecarSessionBridge): void {
+    this.sessionBridge = bridge;
   }
 
   /**
@@ -492,16 +482,12 @@ export class AgentSidecar {
           );
           return;
         }
-        if (method.startsWith("extensions.") || method === "session.queuePush" || method === "session.queuePrioritize") {
-          const bridge = this.trustedExtensionBridge;
-          if (!bridge) throw new Error("trusted extension bridge unavailable");
-          let result: unknown = { ok: true };
-          if (method === "extensions.commands.publish") bridge.publishCommands(params);
-          else if (method === "extensions.diagnostics.publish") bridge.publishDiagnostics(params);
-          else if (method === "extensions.model.configure") result = await bridge.configureModel(params);
-          else if (method === "session.queuePush") result = await bridge.queuePush(params);
-          else if (method === "session.queuePrioritize") result = await bridge.queuePrioritize(params);
-          else result = await bridge.requestUi(params);
+        if (method === "session.queuePush" || method === "session.queuePrioritize") {
+          const bridge = this.sessionBridge;
+          if (!bridge) throw new Error("session bridge unavailable");
+          const result = method === "session.queuePush"
+            ? await bridge.queuePush(params)
+            : await bridge.queuePrioritize(params);
           this.writeToChild(
             JSON.stringify({ jsonrpc: "2.0", id: msg.id, result }) + "\n",
           );

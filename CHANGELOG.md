@@ -10,6 +10,13 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 
+### Fixed
+- Pasted and attached inline images now reach omp. The omp-bridge dropped them: main sent `attachments` but the bridge forwarded only the text, so the model never saw the image.
+
+### Removed
+- The retired PI agent loop in `packages/agent-runtime` (`runtime.ts`, `sidecar.ts`, the compaction and subagent clusters, prompt fragments, trusted-extension runner) plus its `"./sidecar"` export, `bundle` script and release-script step. The shipped sidecar is `omp-bridge`; the `agent-runtime` helpers main still imports remain.
+- Trusted-extension plumbing in main, renderer and `@pi-desktop/shared` (`extensions.*` IPC, host-proxy entries, prompt dialog, "import pi extension"). omp loads extensions from its own `extensions:` directories.
+
 ### Changed
 - `pi-host` (headless remote host) now runs the omp-bridge sidecar like the desktop, so remote sessions get omp and the nine bundled Fcode agents. The bundle ships `omp-bridge/bridge.js` and `resources/{bin/omp,fcode-agents,fcode-skills}`; `--resources <dir>` overrides the lookup. It passes curated and `advanced` omp settings, approval mode and memory backend through `ompSidecarExtraEnv`, and registers `fcode_bench_*`, `fcode_studio` (`FCODE_BENCH_PATH`, `FCODE_BENCH_SITE`) and `kanban_*`. `GenerateImages`, `BrowserPreview` and `fcode_canvas*` stay desktop-only (see `apps/pi-host/README.md`). Bench and Kanban pure modules now live once in `@pi-desktop/host-runtime`.
 - omp now runs with its own agent dir, `<dataDir>/omp-agent` (`PI_CODING_AGENT_DIR`), so `~/.omp/agent` config no longer leaks into Fcode sessions. First launch imports `agent.db` (logins), `agents/` and `USER.md` once; `config.yml`, skills and sessions are not imported. User agents, `USER.md`, skills and hooks/commands are read from that dir. First launch regenerates omp's skill routing hints with model calls (cached afterwards).

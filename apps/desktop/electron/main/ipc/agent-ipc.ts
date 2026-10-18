@@ -4,7 +4,6 @@ import { expandSlashInvocation, enhancePromptDraft, summarizeSessionTitle, visio
 import { OAUTH_AUTH_KIND, type VendorOAuth } from "../oauth";
 import { appendPromptFallbackPaths, durableUserMessageId, preparePromptAttachments, type PreparedPromptAttachment } from "../prompt-attachments";
 import { executionFromResponse, resolveSessionMessageInput } from "@pi-desktop/host-runtime";
-import type { AgentExtensionBridge } from "../agent-extensions";
 import type { AgentHostBridge } from "../agent-host-bridge";
 import type { AgentSidecar } from "../agent-sidecar";
 import type { HostProcess } from "../host-process";
@@ -24,7 +23,6 @@ export type AgentIpcDependencies = {
   getAgentHostBridge: () => AgentHostBridge | null;
   logger: Pick<Logger, "app">;
   vendorOAuth: VendorOAuth;
-  agentExtensions: AgentExtensionBridge;
   cancelSessionTools: (sessionId: string, reason?: string) => void;
   persistenceOutbox: PersistenceOutbox;
   dataDir: string;
@@ -68,7 +66,6 @@ export function registerAgentIpc({
   getAgentHostBridge,
   logger,
   vendorOAuth,
-  agentExtensions,
   cancelSessionTools,
   persistenceOutbox,
   dataDir,
@@ -698,8 +695,6 @@ export function registerAgentIpc({
       )?.[0];
     let result: unknown;
     try {
-      // An open extension prompt resolves with its abort value (spec 16 §9).
-      agentExtensions.cancelPrompts(req.sessionId);
       cancelSessionTools(req.sessionId, "Session turn was aborted");
       result = await sidecar.call("agent.abort", req);
     } finally {

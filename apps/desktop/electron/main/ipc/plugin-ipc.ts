@@ -1,7 +1,6 @@
 import { dialog } from "electron";
 import { IPC, type ActivationScope } from "@pi-desktop/shared";
 import { isTemplateName, scaffold } from "@pi-desktop/plugin-devkit";
-import type { AgentExtensionBridge } from "../agent-extensions";
 import type { BrowserHost } from "../browser-host";
 import type { HostProcess } from "../host-process";
 import { BROWSER_PLUGIN_ID } from "../browser-host";
@@ -18,7 +17,6 @@ export type PluginIpcDependencies = {
   registrar: IpcRegistrar;
   getHost: () => HostProcess | null;
   plugins: PluginRuntime;
-  agentExtensions: AgentExtensionBridge;
   browserHost: BrowserHost;
   pluginViews: PluginViewHost;
   pluginScopes: Map<string, ActivationScope>;
@@ -32,7 +30,6 @@ export function registerPluginIpc({
   registrar,
   getHost,
   plugins,
-  agentExtensions,
   browserHost,
   pluginViews,
   pluginScopes,
@@ -118,19 +115,12 @@ export function registerPluginIpc({
     rememberPluginScopes(result.plugins ?? []);
     const pluginsWithSettings = await Promise.all(
       (result.plugins ?? []).map(async (plugin) => {
-        const extensionIds = plugins
-          .getAgentExtensions()
-          .filter((extension) => extension.pluginId === plugin?.id)
-          .map((extension) => extension.id);
-        const withExtension = extensionIds.length
-          ? { ...plugin, agentExtension: agentExtensions.statusForPlugin(extensionIds) }
-          : plugin;
-        if (!plugin?.settings?.length || !plugins.getLoaded(plugin.id)) return withExtension;
+        if (!plugin?.settings?.length || !plugins.getLoaded(plugin.id)) return plugin;
         try {
           const settings = await plugins.getPluginSettings(plugin.id);
-          return { ...withExtension, settings };
+          return { ...plugin, settings };
         } catch {
-          return withExtension;
+          return plugin;
         }
       }),
     );

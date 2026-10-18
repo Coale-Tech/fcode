@@ -7,7 +7,6 @@ import {
   isCommandShellCatalog,
   normalizeMode,
   resolveBindingContextWindow,
-  trustedExtensionAgentKeyFromProviderId,
   type CommandShellCatalog,
   type ModelBinding,
   type Mode,
@@ -193,9 +192,6 @@ export function createHeadlessLaunchResolver(options: HeadlessLaunchResolverOpti
     const sessionProviderId = typeof session.providerId === "string" ? session.providerId : undefined;
     const sessionModelId = typeof session.modelId === "string" ? session.modelId : undefined;
     const requestedProviderId = overrides.providerId ?? sessionProviderId;
-    if (requestedProviderId && trustedExtensionAgentKeyFromProviderId(requestedProviderId)) {
-      throw launchError("Plugin agents are not available on a headless host", ErrorCodes.MODEL_NOT_CONFIGURED);
-    }
     const defaultProviderId = typeof settings.defaultProviderId === "string" ? settings.defaultProviderId : undefined;
     const defaultModelId = typeof settings.defaultModelId === "string" ? settings.defaultModelId : undefined;
     async function admitProviderAndModel(): Promise<{

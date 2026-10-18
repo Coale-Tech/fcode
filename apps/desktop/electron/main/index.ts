@@ -29,8 +29,6 @@ import {
   type PlanExecutionFinishStatus,
 } from "@pi-desktop/shared";
 import { summarizeSessionTitle } from "@pi-desktop/agent-runtime";
-import { AgentExtensionBridge } from "./agent-extensions";
-import { registerAgentExtensionIpc } from "./agent-extensions-ipc";
 import { isTemplateName, scaffold } from "@pi-desktop/plugin-devkit";
 
 import { HostProcess } from "./host-process";
@@ -514,23 +512,6 @@ const dataDir = desktopDataDir(isDevelopmentBuild);
 // divergence D236 closes.
 process.env.PI_DESKTOP_DATA_DIR = dataDir;
 
-// Agent extensions (D387/D388, ADR 0214): plugins contribute the modules,
-// the sidecar loads them; this bridge carries commands, diagnostics, and
-// prompts between the two.
-const agentExtensions = new AgentExtensionBridge({
-  hasRenderer: () =>
-    !!mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed(),
-  onChanged: () => sendToRenderer(IPC.event.pluginChanged, { reason: "agentExtensions" }),
-  onPrompt: (prompt) => {
-    logger.app("plugin", "info", "extension prompt", {
-      sessionId: prompt.sessionId,
-      data: { promptId: prompt.promptId, kind: prompt.request.kind, extensionId: prompt.extensionId },
-    });
-    sendToRenderer(IPC.event.extensionsUiPrompt, prompt);
-  },
-  onToast: (message) => sendToRenderer(IPC.event.toast, { message }),
-  onStatus: (event) => sendToRenderer(IPC.event.extensionsStatus, event),
-});
 
 const logger = new Logger(
   dataDir,
@@ -658,7 +639,6 @@ const pluginServices = createPluginServices({
     )(...args);
   },
   vendorOAuth,
-  agentExtensions,
 });
 const {
   plugins,
@@ -1122,7 +1102,6 @@ const sidecarRuntime = createSidecarRuntime({
   superviseRestart,
   isQuitting: () => quitting,
   dataDir,
-  agentExtensions,
   vendorOAuth,
   listRuntimeProviders,
   browserHost,
@@ -1239,7 +1218,6 @@ function registerIpc() {
     listRuntimeProviders,
     enrichProviderList,
     bindingForModel,
-    agentExtensions,
     activeUserSkills,
     pluginActiveInProject,
     getWorkPanelReservationWidth: () => requestedWorkPanelReservation,

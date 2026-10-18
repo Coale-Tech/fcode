@@ -5,7 +5,6 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import { catalogs, flattenCatalog } from "@pi-desktop/i18n";
 import { bindingForCustomModel, IPC } from "@pi-desktop/shared";
-import { ExtensionPromptHost } from "../../src/components/ExtensionPromptDialog";
 import { SessionRenameDialog } from "../../src/components/SessionRenameDialog";
 import { ProjectInstructionsDialog } from "../../src/components/ProjectInstructionsDialog";
 import { ProjectMemoryDialog } from "../../src/components/ProjectMemoryDialog";
@@ -29,7 +28,6 @@ window.piDesktop = {
     return () => set.delete(listener);
   },
   async invoke(channel, ...args) {
-    if (channel === IPC.invoke.extensionsUiRespond) window.dialogFixture.responses.push(args[0]);
     return { ok: true, data: { project: { scope: "project", path, content: "Fixture instructions", exists: true },
       content: "Fixture instructions", memory: { content: "", entries: [] } } };
   },
@@ -80,7 +78,6 @@ window.dialogFixture = {
     const project = { name: long, path, groupId: "fixture-group", sessionCount: 2 };
     const props = { project, onClose: close, onSaved() {}, onError: error };
     let component;
-    if (kind === "extension") component = <ExtensionPromptHost key={++revision} />;
     if (kind === "rename") component = <SessionRenameDialog session={{ id: "s", title: long }} onClose={close} onSave={async (value) => { this.saved = value; }} onError={error} />;
     if (kind === "instructions") component = <ProjectInstructionsDialog {...props} />;
     if (kind === "memory") component = <ProjectMemoryDialog {...props} />;
@@ -95,15 +92,6 @@ window.dialogFixture = {
     if (kind === "models") component = <ModelPickerFixture key={++revision} />;
     flushSync(() => root.render(component));
     await frame();
-    if (kind === "extension") {
-      const requestKind = options.request ?? "input";
-      const request = { kind: requestKind, title: options.longTitle ? long : "Your name?",
-        placeholder: "e.g. Ann", message: long.repeat(2), options: [long, "Second option"] };
-      for (const listener of listeners.get(IPC.event.extensionsUiPrompt) ?? []) {
-        listener({ promptId: `fixture-${revision}`, sessionId: "s", extensionId: path,
-          extensionLabel: options.longTitle ? long : "greet", request });
-      }
-    }
     await frame(); await frame();
     await Promise.all(document.getAnimations().filter((animation) => animation.effect.getComputedTiming().iterations !== Infinity).map((animation) => animation.finished.catch(() => {})));
   },

@@ -1,7 +1,7 @@
 import { type CSSProperties, lazy, type ReactNode, Suspense } from "react";
 import { ChatSurface } from "../../components/ChatSurface";
 import { ConversationTopbar } from "../../components/ConversationTopbar";
-import { ExtensionPromptHost } from "../../components/ExtensionPromptDialog";
+import { ExtensionStatusLine } from "../../components/ExtensionStatusLine";
 import {
   IconNewSession,
   IconPanel,
@@ -364,7 +364,7 @@ export function AppShell() {
         ) : null}
         <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
         <ToastHost />
-        <ExtensionPromptHost />
+        <ExtensionStatusLine />
         {page === "settings" ? <UpdateBanner /> : null}
       </>
     );

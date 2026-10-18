@@ -12,7 +12,7 @@ import { useAppStore } from "../../../../stores/app-store";
 import type { ComposerDraftSnapshot } from "../../../../lib/composer-smart-stop";
 import { api } from "../../../../lib/api";
 import { draftKeyForSession } from "../../../../lib/composer-draft-cache";
-import { runExtensionCommand, runPaletteCommand } from "../../../../lib/commands";
+import { runPaletteCommand } from "../../../../lib/commands";
 import { resolveComposerCommand } from "../../../../hooks/use-composer-autocomplete";
 import {
   parseSlashSubmission,
@@ -251,17 +251,6 @@ export function useComposerSubmit({
               draft.draftSnapshot(visibleCommandBody),
             );
             if (accepted) draft.clearDraftForKey(submittedDraftKey, submittedDraftRevision, submittedDraft);
-          } catch (error) {
-            showToast(error instanceof Error ? error.message : String(error), {
-              variant: "error",
-            });
-          }
-          return;
-        }
-        if (command.kind === "extension") {
-          try {
-            await runExtensionCommand(command.name, commandBody);
-            draft.clearDraftForKey(submittedDraftKey, submittedDraftRevision, submittedDraft);
           } catch (error) {
             showToast(error instanceof Error ? error.message : String(error), {
               variant: "error",

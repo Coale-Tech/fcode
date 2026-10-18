@@ -1,7 +1,6 @@
-import { IPC, trustedExtensionCommandId, type ComposerCommand } from "@pi-desktop/shared";
+import { IPC, type ComposerCommand } from "@pi-desktop/shared";
 import { builtinSkills } from "../builtin-skills";
 import { builtinComposerCommands } from "../builtin-commands";
-import type { AgentExtensionBridge } from "../agent-extensions";
 import type { PluginRuntime } from "../plugin-runtime";
 import type { IpcRegistrar } from "./types";
 
@@ -10,7 +9,6 @@ type ComposerTemplateSource = "user" | "project";
 export type ComposerIpcDependencies = {
   registrar: IpcRegistrar;
   plugins: PluginRuntime;
-  agentExtensions: AgentExtensionBridge;
   optionalWorkspaceRoot: () => Promise<string | null>;
   activeUserSkills: (root?: string) => Promise<Array<{
     id: string;
@@ -32,7 +30,6 @@ export type ComposerCommandService = {
 
 export function createComposerCommandService({
   plugins,
-  agentExtensions,
   activeUserSkills,
   pluginActiveInProject,
   loadComposerTemplatesCached,
@@ -95,20 +92,12 @@ export function createComposerCommandService({
         ...(command.category ? { description: command.category } : {}),
         id: command.id,
       }));
-    const extensionCommands = agentExtensions.allCommands().map((command) => ({
-      name: command.name,
-      kind: "extension" as const,
-      title: `/${command.name}`,
-      description: command.description ?? command.extensionLabel,
-      id: trustedExtensionCommandId(command.name),
-    }));
     const skillCommands = await loadComposerSkillCommands(root).catch(() => []);
     const merged = new Map<string, ComposerCommand>();
     for (const command of [
       ...builtinComposerCommands(),
       ...templateCommands,
       ...pluginCommands,
-      ...extensionCommands,
       ...skillCommands,
     ]) {
       if (!merged.has(command.name)) merged.set(command.name, command);

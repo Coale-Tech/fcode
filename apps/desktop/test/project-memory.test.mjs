@@ -5,14 +5,12 @@ import { readMainSource } from "./helpers/main-source.mjs";
 
 const read = (relativePath) => readFile(new URL(relativePath, import.meta.url), "utf8");
 
-const [dialog, page, api, protocol, main, runtime, sidecar, db, groups, rpc] = await Promise.all([
+const [dialog, page, api, protocol, main, db, groups, rpc] = await Promise.all([
   read("../src/components/ProjectMemoryDialog.tsx"),
   read("../src/pages/ProjectsPage.tsx"),
   read("../src/lib/api.ts"),
   read("../../../packages/shared/src/protocol.ts"),
   readMainSource(),
-  read("../../../packages/agent-runtime/src/runtime.ts"),
-  read("../../../packages/agent-runtime/src/sidecar.ts"),
   read("../../../crates/host-core/src/db/repositories.rs"),
   read("../../../crates/host-core/src/db/project_groups.rs"),
   read("../../../crates/host-core/src/rpc/mod.rs"),
@@ -45,9 +43,6 @@ test("project memory crosses the IPC and runtime boundary", () => {
   assert.match(main, /project\.memory\.get/);
   assert.match(main, /project\.memory\.set/);
   assert.match(main, /projectMemory/);
-  assert.match(sidecar, /projectMemory: params\.projectMemory/);
-  assert.match(runtime, /projectMemoryPrompt/);
-  assert.match(runtime, /config\.projectMemory/);
   assert.match(db, /PROJECT_MEMORY_NAMESPACE/);
   assert.match(db, /MAX_PROJECT_MEMORY_BYTES/);
   assert.match(groups, /GROUP_NAMESPACE/);

@@ -129,6 +129,23 @@ const READ_ONLY_PREFIXES = [
 ] as const;
 
 /**
+ * Inline image attachments the host sends with `agent.prompt` / `agent.steer`
+ * as omp `ImageContent`. Main strips these from the prompt text (they are not
+ * given a fallback path), so dropping them here loses the image outright.
+ */
+export function ompImages(attachments: unknown): { type: "image"; data: string; mimeType: string }[] {
+  if (!Array.isArray(attachments)) return [];
+  const images: { type: "image"; data: string; mimeType: string }[] = [];
+  for (const a of attachments) {
+    const r = (a ?? {}) as Record<string, unknown>;
+    if (r.kind === "image" && typeof r.data === "string" && r.data && typeof r.mimeType === "string") {
+      images.push({ type: "image", data: r.data, mimeType: r.mimeType });
+    }
+  }
+  return images;
+}
+
+/**
  * Return true when the given `bench execute` method should be auto-approved
  * (is read-only). Segment-aware: the prefix must match at a dot boundary or
  * at the end of the string, never mid-segment (DX7).
@@ -931,7 +948,8 @@ export class OmpBridge {
 
       case "agent.steer": {
         try {
-          await this.ompCall({ type: "steer", sessionId: p.sessionId, message: p.content });
+          const images = ompImages(p.attachments);
+          await this.ompCall({ type: "steer", sessionId: p.sessionId, message: p.content, ...(images.length ? { images } : {}) });
           this.respond(id, { accepted: true });
         } catch (e) {
           this.respond(id, { accepted: false });
@@ -1348,7 +1366,8 @@ export class OmpBridge {
     const promptId = randomUUID();
     this.promptResultPending.set(promptId, { sessionId, turnId });
     this.activeTurn = { sessionId, turnId };
-    const ack = (await this.ompCall({ type: "prompt", message: content, turnId }, promptId)) as {
+    const images = ompImages(opts.params.attachments);
+    const ack = (await this.ompCall({ type: "prompt", message: content, turnId, ...(images.length ? { images } : {}) }, promptId)) as {
       agentInvoked?: boolean;
     };
     if (ack?.agentInvoked === false) {

@@ -234,10 +234,6 @@ export const IPC = {
     providersOauthCancel: "pi-desktop/providers/oauth/cancel",
     providersOauthDelete: "pi-desktop/providers/oauth/delete",
     pluginList: "pi-desktop/plugin/list",
-    /** Plugin-contributed agent extensions (D387/D388, ADR 0214). */
-    pluginImportExtension: "pi-desktop/plugin/importExtension",
-    extensionsCommandRun: "pi-desktop/extensions/commands/run",
-    extensionsUiRespond: "pi-desktop/extensions/ui/respond",
     pluginLoadDev: "pi-desktop/plugin/loadDev",
     /**
      * The answer to a development plugin's permission review. Loading a folder
@@ -606,8 +602,6 @@ export const IPC = {
     configSyncChanged: "pi-desktop/configSync/event/changed",
     /** What a running sync is doing, while it is still running. */
     configSyncProgress: "pi-desktop/configSync/event/progress",
-    extensionsUiPrompt: "pi-desktop/extensions/event/uiPrompt",
-    extensionsStatus: "pi-desktop/extensions/event/status",
     pluginLauncherShown: "pi-desktop/pluginLauncher/event/shown",
     agentMessage: "pi-desktop/agent/event/message",
     agentQueueChanged: "pi-desktop/agent/event/queueChanged",

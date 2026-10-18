@@ -84,7 +84,7 @@ test("prompt IPC persists original session text, skips slash expansion and binds
       async call(method, params) { sidecarCalls.push({ method, params }); return { accepted: true, turnId: "turn-1" }; },
     }),
     getAgentHostBridge: () => null,
-    logger: { app() {} }, vendorOAuth: {}, agentExtensions: {}, cancelSessionTools() {},
+    logger: { app() {} }, vendorOAuth: {}, cancelSessionTools() {},
     persistenceOutbox: {}, dataDir: "/unused-for-no-attachments",
     activeTurns: new Map(), activeTurnUsages: new Map(), approvedExecutionIdsBySession: new Map(), claimedExecutionSessions: new Map(),
     resolveAgentRuntimeLaunch: async () => ({

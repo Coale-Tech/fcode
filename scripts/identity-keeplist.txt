@@ -86,7 +86,6 @@ apps/desktop/build/
 # These test files reference PI-Desktop as test fixtures/data and will be updated
 # by their respective lanes; only the five specific R-lane test files are ours to change
 apps/desktop/test/plugin-panel-window.test.mjs:
-apps/desktop/test/agent-extensions.test.mjs:
 apps/desktop/test/release-asar.test.mjs:
 apps/desktop/test/macos-signing-watchdog.test.mjs:
 apps/desktop/test/updater-releases-url.test.mjs:

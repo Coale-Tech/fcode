@@ -50,7 +50,6 @@ import { PluginViewHost } from "../plugin-view-host";
 import { BrowserPane } from "../browser-view";
 import { BrowserHost, BROWSER_PLUGIN_ID } from "../browser-host";
 import { OAUTH_AUTH_KIND, type VendorOAuth } from "../oauth";
-import type { AgentExtensionBridge } from "../agent-extensions";
 import type { ClipboardHistory } from "../clipboard-history";
 import type { TurnEndedPayload } from "../runtime/session-coordination";
 import type { HostProcess } from "../host-process";
@@ -77,7 +76,6 @@ export type PluginServicesDependencies = {
   getWorkspacePath: () => string | null;
   resolveAgentRuntimeLaunch: (...args: any[]) => Promise<any>;
   vendorOAuth: VendorOAuth;
-  agentExtensions: AgentExtensionBridge;
 };
 
 export function createPluginServices({
@@ -98,7 +96,6 @@ export function createPluginServices({
   getWorkspacePath,
   resolveAgentRuntimeLaunch,
   vendorOAuth,
-  agentExtensions,
 }: PluginServicesDependencies) {
   // A plugin request can lose its race with host shutdown or restart.
   const isHostUnavailable = (error: unknown): boolean =>
@@ -603,8 +600,6 @@ export function createPluginServices({
      * runtime has not launched yet, which falls back to the visible workspace.
      */
     getWorkspacePathForSession: (sessionId) => sessionProjects.get(sessionId) ?? null,
-    agentExtensionsChanged: () =>
-      sendToRenderer(IPC.event.pluginChanged, { reason: "agentExtensions" }),
     browser: {
       navigate: (input, sessionId) => browserHost.navigate(input, sessionId),
       action: (action) => browserHost.action(action),

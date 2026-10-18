@@ -13,9 +13,8 @@ import { resolveLocalFile } from "../browser-view";
 import { AgentSidecar } from "../agent-sidecar";
 import { relaxedNetworkPolicyEnabled } from "../endpoint-policy";
 import type { VendorOAuth } from "../oauth";
-import type { AgentExtensionBridge } from "../agent-extensions";
 import { withAgentCanvasOwnership, type BrowserHost } from "../browser-host";
-import { ompProviderEnv, type InflightCheckpointer, type ProcessExitHandler } from "@pi-desktop/host-runtime";
+import { ompProviderEnv, type SidecarSessionBridge, type InflightCheckpointer, type ProcessExitHandler } from "@pi-desktop/host-runtime";
 import { summarizeToolResult, type Logger } from "../logger";
 import type { PluginRuntime } from "../plugin-runtime";
 import type { UserMcpRuntime } from "../user-mcp";
@@ -65,7 +64,6 @@ export type SidecarRuntimeDependencies = {
   isStaleTerminalEvent: (envelope: AgentEventEnvelope) => boolean;
   isQuitting: () => boolean;
   dataDir: string;
-  agentExtensions: AgentExtensionBridge;
   vendorOAuth: VendorOAuth;
   listRuntimeProviders: (includeDisabled?: boolean) => Promise<any[]>;
   browserHost: BrowserHost;
@@ -101,7 +99,6 @@ export function createSidecarRuntime({
   superviseRestart,
   isQuitting,
   dataDir,
-  agentExtensions,
   vendorOAuth,
   listRuntimeProviders,
   browserHost,
@@ -509,47 +506,8 @@ export function createSidecarRuntime({
       return instructions;
     }
   });
-    // Request auth for a vendor account (ADR 0098). The sidecar names a provider
-  // row it was launched with; main resolves that row's account and returns a
-  // short-lived `ModelAuth`. The refresh token never crosses this boundary.
-  s.setTrustedExtensionBridge({
-    publishCommands: (params) =>
-      agentExtensions.publishCommands(
-        String(params.sessionId ?? ""),
-        Array.isArray(params.commands) ? (params.commands as any[]) : [],
-      ),
-    publishDiagnostics: (params) =>
-      agentExtensions.publishDiagnostics(
-        String(params.sessionId ?? ""),
-        Array.isArray(params.diagnostics) ? (params.diagnostics as any[]) : [],
-        Array.isArray(params.reports) ? (params.reports as any[]) : [],
-      ),
-    requestUi: (params) => agentExtensions.requestUi(params as any),
-    configureModel: async (params) => {
-      if (!runtimeState.host) throw new Error("host unavailable");
-      const sessionId = String(params.sessionId ?? "").trim();
-      const result = await runtimeState.host.call<{ session?: {
-        providerId?: string;
-        modelId?: string;
-        thinkingLevel?: string;
-      } | null }>("session.configure", {
-        id: sessionId,
-        mode: String(params.mode ?? "agent"),
-        providerId: String(params.providerId ?? ""),
-        modelId: String(params.modelId ?? ""),
-        thinkingLevel: typeof params.thinkingLevel === "string" ? params.thinkingLevel : undefined,
-      });
-      if (result.session) {
-        plugins.broadcastEvent("session:modelChanged", [{
-          sessionId,
-          modelKey: result.session.providerId && result.session.modelId
-            ? `${result.session.providerId}/${result.session.modelId}`
-            : null,
-          thinkingLevel: result.session.thinkingLevel,
-        }]);
-      }
-      return { ok: Boolean(result.session), session: result.session ?? null };
-    },
+    // Session queue bridge: omp can push or prioritize turns via host-proxy (D386).
+  s.setSessionBridge({
     queuePush: async (params) => {
       if (!runtimeState.agentHostBridge) throw new Error("agent host unavailable");
       return runtimeState.agentHostBridge.queue.push({

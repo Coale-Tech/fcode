@@ -4,17 +4,15 @@ export type CommandItem = {
   title: string;
   category?: string;
   keywords?: string[];
-  source: "builtin" | "plugin" | "extension";
+  source: "builtin" | "plugin";
   pluginId?: string;
-  /** Trusted extension that registered the command (`source: "extension"`). */
-  extensionId?: string;
 };
 
 /** One entry of the composer "/" menu, merged from command and skill sources (D123). */
 export type ComposerCommand = {
   /** Slash name typed after "/"; unique across the merged list. */
   name: string;
-  kind: "template" | "builtin" | "plugin" | "extension" | "skill";
+  kind: "template" | "builtin" | "plugin" | "skill";
   /** Display title (templates use their name). */
   title: string;
   description?: string;

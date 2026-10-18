@@ -13,7 +13,6 @@ export type {
   LocalToolResult,
   ProjectInstructionResolver,
   SidecarNotificationHandler,
-  TrustedExtensionSidecarBridge,
   VendorAuthResolver,
 } from "@pi-desktop/host-runtime";
 
