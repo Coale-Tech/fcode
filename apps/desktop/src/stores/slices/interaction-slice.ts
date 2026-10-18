@@ -37,12 +37,15 @@ export function createInteractionSlice({
   | "setPage"
   | "setSettingsTab"
   | "setSettingsAnchor"
+  | "setPageCrumb"
   | "setBenchLogFollowTail"
+  | "setViewedBench"
   | "toggleBenchLogFollowTail"
   | "setShowKanbanSessions"
   | "setKanbanEnabled"
   | "setRavenEnabled"
   | "toggleTerminal"
+  | "openTuiTerminal"
   | "canNavBack"
   | "canNavForward"
   | "navBack"
@@ -95,13 +98,17 @@ export function createInteractionSlice({
       }));
     },
     setSettingsAnchor: (settingsAnchor) => set({ settingsAnchor }),
+    setPageCrumb: (pageCrumb) => set({ pageCrumb }),
     setBenchLogFollowTail: (benchLogFollowTail) => set({ benchLogFollowTail }),
     toggleBenchLogFollowTail: () =>
       set((state) => ({ benchLogFollowTail: !state.benchLogFollowTail })),
+    setViewedBench: (viewedBenchPath, viewedBenchSiteCount) =>
+      set({ viewedBenchPath, viewedBenchSiteCount }),
     setShowKanbanSessions: (showKanbanSessions) => set({ showKanbanSessions }),
     setKanbanEnabled: (kanbanEnabled) => set({ kanbanEnabled }),
     setRavenEnabled: (ravenEnabled) => set({ ravenEnabled }),
     toggleTerminal: () => set((state) => ({ terminalOpen: !state.terminalOpen })),
+    openTuiTerminal: (cmd) => set({ page: "chat", terminalOpen: true, pendingTuiCommand: cmd }),
     canNavBack: () => get().navIndex > 0,
     canNavForward: () => get().navIndex < get().navStack.length - 1,
 

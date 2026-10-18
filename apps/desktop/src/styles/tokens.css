@@ -44,7 +44,7 @@
   --ds-bg-chip: var(--surface-alpha-gray-2);
 
   /* Text */
-  --ds-text-primary:   var(--ink-gray-9);
+  --ds-text-primary:   var(--ink-gray-8);
   --ds-text-secondary: var(--ink-gray-7);
   --ds-text-muted:     var(--ink-gray-5);
   --ds-text-faint:     var(--ink-gray-4);
@@ -68,17 +68,16 @@
 
   /* Settings / fields */
   --ds-settings-field-bg:   var(--surface-elevation-1);
-  --ds-settings-nav-active:           var(--surface-elevation-3);  /* FD2 restyle → Raven active */
+  --ds-settings-nav-active:           var(--da-sub);  /* F01: blue tint (design D.css:387-390) */
   /* Settings-specific design tokens — Raven restyle (F/S1).
      FD3: numeric --radius-N steps only inside Settings; global named scale untouched.
      FD5: settings rail keeps macOS vibrancy via .sidebar-surface on darwin (allowed mismatch). */
   --ds-settings-nav-item-hover-bg:    var(--surface-gray-3);
-  --ds-settings-nav-item-active-bg:   var(--surface-elevation-3);
-  --ds-settings-nav-item-shadow:      var(--shadow-sm);
+  --ds-settings-nav-item-active-bg:   var(--da-sub);  /* F01: blue tint (matches --ds-settings-nav-active) */
+  --ds-settings-nav-item-shadow:      var(--elevation-sm);
   --ds-settings-nav-group-ink:        var(--ink-gray-5);
   --ds-settings-nav-label-ink:        var(--ink-gray-6);
-  --ds-settings-nav-label-active-ink: var(--ink-gray-8);
-  --ds-settings-separator:            var(--outline-gray-2);
+  --ds-settings-nav-label-active-ink: var(--da-txt);  /* F01: blue ink (D.css:388-389) */
   --ds-settings-header-ink:           var(--ink-gray-8);
   --ds-settings-desc-ink:             var(--ink-gray-6);
   --ds-settings-section-ink:          var(--ink-gray-5);
@@ -87,7 +86,6 @@
   --ds-settings-header-desc-ink:      var(--ink-gray-6);
   /* Radii: numeric steps, no named --radius-sm/-md/-lg (FD3) */
   --ds-settings-radius-item:          var(--radius-1);  /* 4px — nav items, controls */
-  --ds-settings-radius-ctrl:          var(--radius-1);  /* 4px — buttons, inputs, selects */
   --ds-field-inset-bg:      var(--surface-gray-2);
   --ds-field-inset-focus-bg:var(--surface-elevation-2);
 
@@ -124,10 +122,11 @@
   --ds-success:          var(--ink-green-8);
   --ds-warning:          var(--ink-amber-9);
   --ds-error:            var(--ink-red-8);
-  /* Accent = FileBird's sky blue (Tailwind sky-600/500/400), same in both themes. */
-  --ds-accent:           #0284c7;
-  --ds-accent-hover:     #0ea5e9;
-  --ds-accent-soft:      #38bdf8;
+  /* Accent = FileBird blue (Direction D). Light fill is the mockup's hover step
+     (#2578AB): the mockup's #2E8AC2 is 3.8:1 with a white label. */
+  --ds-accent:           #2578ab;
+  --ds-accent-hover:     #1f6fa3;
+  --ds-accent-soft:      #4f9ccb;
   --ds-accent-blue:      var(--ds-accent);
   --ds-text-tertiary:    var(--ink-gray-3);
   --ds-main-pane-min-width: 450px;
@@ -140,30 +139,20 @@
   --ds-elevation-stroke: 0 0 0 0.5px var(--outline-gray-2);
 
   /* Shadows */
-  --ds-shadow-dialog:      var(--shadow-2xl);
+  --ds-shadow-dialog:      var(--shadow-xl);  /* F09: elevation-xl per D.css:1033 */
   --ds-shadow-model-menu:  var(--shadow-2xl);
   --ds-shadow-composer:    var(--shadow);
 
   /* Geometry tokens (not colours; kept as-is) */
   --ds-sidebar-width:              256px;
   --ds-settings-nav-width:         224px;  /* FD2: Raven w-56 = 224px (was 275px) */
-  --ds-toolbar-height:             46px;
   --ds-control-size:               28px;
-  /* Buttons follow Espresso's frappe-ui Button: md = its default `sm`
-     (h-7 text-base px-2 rounded-4), sm = its `xs` (h-6 text-xs px-1.5
-     rounded-3). Every labelled action (Button / .btn) uses these. */
-  --ds-btn-height:                 28px;
+  /* Button geometry — d-tokens.css redirects the pad/font/weight values below so
+     only the height-sm and tracking/leading fallbacks live here (not shadowed). */
   --ds-btn-height-sm:              24px;
-  --ds-btn-pad-x:                  8px;
-  --ds-btn-pad-x-sm:               6px;
-  --ds-btn-font-size:              var(--text-base);
-  --ds-btn-font-size-sm:           var(--text-xs);
-  --ds-btn-font-weight:            var(--text-base--font-weight);
   --ds-btn-tracking:               var(--text-base--letter-spacing);
   --ds-btn-leading:                var(--text-base--line-height);
-  --ds-btn-radius:                 var(--radius-4);
-  --ds-btn-radius-sm:              var(--radius-3);
-  --ds-field-height:               calc(18px + var(--text-base) * var(--leading-body));
+  /* --ds-field-height now live in d-tokens.css as var(--d-ctrl) */
   --ds-work-panel-toggle-size:     28px;
   --ds-work-panel-toggle-inset:    12px;
   --ds-work-panel-control-gap:     4px;
@@ -173,7 +162,6 @@
   --ds-window-controls-width: 120px;
   --ds-traffic-light-edge: 0px;
   --ds-traffic-light-gap: 12px;
-  --ds-window-lead-inset: 0px;
   /* Composer radius: 20px (--radius-xl in the Fcode Apple ladder) */
   --ds-composer-radius:    var(--radius-xl);
   --ds-composer-radius-lg: var(--radius-xl);
@@ -204,24 +192,26 @@
   --ds-settings-rail-bg: var(--ds-bg-under);
   --ds-bg-sidebar: var(--ds-settings-rail-bg, var(--ds-bg-under));
 
-  /* Sidebar glass tint (darwin vibrancy overlay) — ≤60% to let material through */
-  --ds-sidebar-glass-tint:         color-mix(in oklab, var(--ds-bg-sidebar) 40%, transparent);
-  --ds-sidebar-glass-sheen-top:    color-mix(in oklab, var(--white) 7%, transparent);
-  --ds-sidebar-glass-sheen-bottom: color-mix(in oklab, var(--white) 4%, transparent);
+  /* Sidebar glass tint lives in d-tokens.css (Direction D theme blocks) */
 
   /* Scrim: ~45% black over dark content */
   --ds-scrim: color-mix(in oklab, var(--black) 45%, transparent);
   /* Modal/permission veil */
   --ds-modal-veil: color-mix(in oklab, var(--surface-base) 78%, transparent);
 
-  /* Switch track/knob (each token must appear exactly twice: once per theme) */
-  --ds-switch-track-off:       var(--surface-alpha-gray-2);
-  --ds-switch-track-off-hover: var(--surface-alpha-gray-3);
-  --ds-switch-knob-off:        var(--ink-gray-6);
-  --ds-switch-knob-on:         var(--white);
+  /* Switch track/knob: track-off/knob-off live in d-tokens.css per-theme; knob-on stays here */
+  /* knob-on must pass 3:1 on --ds-accent (#42a2d9); white is 2.84:1 (fail).
+     --ds-accent-foreground (#0a1f2e) gives 5.93:1 (pass). */
+  --ds-switch-knob-on:         var(--ds-accent-foreground);
 
   /* Mermaid diagram canvas */
   --ds-mermaid-canvas: var(--surface-base);
+
+  /* Accent = FileBird's exact dark blues; dark label because white is 2.8:1 here. */
+  --ds-accent:            #42a2d9;
+  --ds-accent-hover:      #56b9f2;
+  --ds-accent-soft:       #92d2f8;
+  --ds-accent-foreground: #0a1f2e;
 }
 
 /* ─── Light-theme specifics ─── */
@@ -230,10 +220,7 @@
   --ds-settings-rail-bg: var(--surface-gray-2);
   --ds-bg-sidebar: var(--ds-settings-rail-bg);
 
-  /* Sidebar glass tint (darwin vibrancy overlay) — ≤60% to let material through */
-  --ds-sidebar-glass-tint:         color-mix(in oklab, var(--ds-bg-sidebar) 40%, transparent);
-  --ds-sidebar-glass-sheen-top:    color-mix(in oklab, var(--white) 7%, transparent);
-  --ds-sidebar-glass-sheen-bottom: color-mix(in oklab, var(--white) 4%, transparent);
+  /* Sidebar glass tint lives in d-tokens.css (Direction D theme blocks) */
 
   /* Scrim: ~28% near-black — lighter so white dialogs stay readable (issue #341) */
   --ds-scrim: color-mix(in oklab, var(--black) 28%, transparent);
@@ -243,10 +230,7 @@
   /* Work panel inset — a token, so contributed themes can move it (D418) */
   --ds-bg-dock:       var(--surface-gray-1);
 
-  /* Switch track/knob (each token must appear exactly twice: once per theme) */
-  --ds-switch-track-off:       var(--surface-alpha-gray-2);
-  --ds-switch-track-off-hover: var(--surface-alpha-gray-3);
-  --ds-switch-knob-off:        var(--ink-gray-6);
+  /* Switch track/knob: track-off/knob-off live in d-tokens.css per-theme; knob-on stays here */
   --ds-switch-knob-on:         var(--surface-base);
 
   /* Mermaid diagram canvas */
@@ -308,7 +292,7 @@
     feature works without a page reload. Other Espresso text-* are fixed px;
     only Fcode-specific steps and the base are scaled here.
   */
-  --text-base: calc(14px * var(--font-scale));
+  --text-base: calc(13px * var(--font-scale));
   --text-3xs:       calc(10.5px * var(--font-scale));
   --text-xs-plus:   calc(11.5px * var(--font-scale));
   --text-sm-plus:   calc(12.5px * var(--font-scale));

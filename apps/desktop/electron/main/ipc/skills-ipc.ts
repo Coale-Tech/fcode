@@ -1,6 +1,5 @@
 import { dialog, shell } from "electron";
-import { ErrorCodes, IPC, type ActivationScope, type AgentCapabilityMove, type AgentCapabilityQuery, type UserSkillRecord, type UserSubagentRecord } from "@pi-desktop/shared";
-import { loadSubagentDefinitions, type UserSubagentDocument } from "@pi-desktop/agent-runtime";
+import { ErrorCodes, IPC, type ActivationScope, type AgentCapabilityMove, type AgentCapabilityQuery, type UserSkillRecord } from "@pi-desktop/shared";
 import type { HostProcess } from "../host-process";
 import type { Logger } from "../logger";
 import {
@@ -19,10 +18,6 @@ import type { IpcRegistrar } from "./types";
 export type SkillsIpcDependencies = {
   registrar: IpcRegistrar;
   getHost: () => HostProcess | null;
-  optionalWorkspaceRoot: () => Promise<string | null>;
-  activeUserSubagentDocuments: (projectPath: string | undefined) => Promise<UserSubagentDocument[]>;
-  /** Handles whose shipped definition the user turned off (builtin activation). */
-  disabledBuiltinSubagents: () => Promise<string[]>;
   stripWinLongPrefix: (path: string) => string;
   sendToRenderer: (channel: string, payload?: unknown) => void;
   searchSkillMarket: (query: string, sources: { id: string; name: string; url: string }[]) => Promise<SkillMarketSearchResult>;
@@ -34,9 +29,6 @@ export type SkillsIpcDependencies = {
 export function registerSkillsIpc({
   registrar,
   getHost,
-  optionalWorkspaceRoot,
-  activeUserSubagentDocuments,
-  disabledBuiltinSubagents,
   stripWinLongPrefix,
   sendToRenderer,
   searchSkillMarket,
@@ -279,126 +271,4 @@ export function registerSkillsIpc({
       return { ok: true };
     },
   );
-
-  // --- Subagents the user owns ----------------------------------------------
-
-  handle(IPC.invoke.subagentList, async () => {
-    if (!host) throw new Error("host unavailable");
-    return host.call("agents.list");
-  });
-
-  /**
-   * The effective catalog: what `Task` would actually offer right now, merged
-   * across builtin and registry documents. The renderer needs this to list the
-   * shipped defaults and to name the definition that wins each handle.
-   *
-   * `builtins` carries a switched-off builtin too, with `enabled: false`, so the
-   * page can keep its row and let the user turn it back on; `subagents` is the
-   * delegation catalog and never lists one.
-   */
-  handle(IPC.invoke.subagentCatalog, async () => {
-    const projectPath = (await optionalWorkspaceRoot()) ?? undefined;
-    const disabled = await disabledBuiltinSubagents();
-    const { definitions, builtins, diagnostics } = await loadSubagentDefinitions(
-      projectPath,
-      {
-        userDocuments: await activeUserSubagentDocuments(projectPath),
-        disabledBuiltins: disabled,
-      },
-    );
-    const off = new Set(disabled);
-    return {
-      subagents: definitions,
-      builtins: builtins.map((definition) => ({
-        ...definition,
-        enabled: !off.has(definition.name),
-      })),
-      diagnostics,
-      projectPath: projectPath ?? null,
-    };
-  });
-
-  handle(IPC.invoke.subagentCreate, async (subagent: Record<string, unknown>) => {
-    if (!host) throw new Error("host unavailable");
-    const res = await host.call("agents.create", { subagent });
-    sendToRenderer(IPC.event.pluginChanged,{ reason: "subagent" });
-    return res;
-  });
-
-  handle(
-    IPC.invoke.subagentUpdate,
-    async (payload: { id: string } & Record<string, unknown>) => {
-      if (!host) throw new Error("host unavailable");
-      const { id, ...subagent } = payload;
-      const res = await host.call("agents.update", { id, subagent });
-      sendToRenderer(IPC.event.pluginChanged,{ reason: "subagent" });
-      return res;
-    },
-  );
-
-  handle(IPC.invoke.subagentRead, async (id: string) => {
-    if (!host) throw new Error("host unavailable");
-    return host.call("agents.read", { id });
-  });
-
-  handle(IPC.invoke.subagentRemove, async (id: string) => {
-    if (!host) throw new Error("host unavailable");
-    const res = await host.call("agents.remove", { id });
-    sendToRenderer(IPC.event.pluginChanged,{ reason: "subagent" });
-    return res;
-  });
-
-  handle(
-    IPC.invoke.subagentSetEnabled,
-    async (payload: { id: string; enabled: boolean }) => {
-      if (!host) throw new Error("host unavailable");
-      const res = await host.call("agents.setEnabled", payload);
-      sendToRenderer(IPC.event.pluginChanged,{ reason: "subagent" });
-      return res;
-    },
-  );
-
-  /**
-   * Turn one shipped default off, or back on. The row owns no document:
-   * host-core keeps the handle in app-local state, and the exclusion lands on
-   * the next catalog load — this prompt's catalog if it has not launched yet.
-   */
-  handle(
-    IPC.invoke.subagentSetBuiltinEnabled,
-    async (payload: { id: string; enabled: boolean }) => {
-      if (!host) throw new Error("host unavailable");
-      const res = await host.call("agents.setBuiltinEnabled", payload);
-      sendToRenderer(IPC.event.pluginChanged, { reason: "subagent" });
-      return res;
-    },
-  );
-
-  handle(
-    IPC.invoke.subagentSetScope,
-    async (payload: { id: string; scope: ActivationScope }) => {
-      if (!host) throw new Error("host unavailable");
-      const res = await host.call("agents.setScope", payload);
-      sendToRenderer(IPC.event.pluginChanged,{ reason: "subagent" });
-      return res;
-    },
-  );
-
-  /**
-   * Show a definition document in the OS file manager. The path always comes
-   * from the host registry: a renderer-supplied path is never handed to the
-   * shell, so this channel cannot be used to reveal arbitrary locations.
-   */
-  handle(IPC.invoke.subagentReveal, async (payload: { id?: string; path?: string }) => {
-    if (!host) throw new Error("host unavailable");
-    if (!payload.id) throw new Error("subagent id required");
-    const res = await host.call<{ subagent: UserSubagentRecord | null }>(
-      "agents.read",
-      { id: payload.id },
-    );
-    const path = res.subagent?.path;
-    if (!path) throw new Error("subagent not found");
-    shell.showItemInFolder(stripWinLongPrefix(path));
-    return { ok: true };
-  });
-
 }

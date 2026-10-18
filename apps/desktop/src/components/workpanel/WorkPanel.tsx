@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type ComponentType,
@@ -17,7 +18,9 @@ import {
 } from "../../lib/work-panel-tab-reorder";
 import {
   ACTIVITY_TAB,
+  browserPluginTab,
   FILE_MANAGER_PLUGIN_TAB,
+  fileManagerPluginTab,
   hasPluginView,
   isKnownWorkPanelTab,
   LEGACY_FILE_MANAGER_PLUGIN_TAB,
@@ -51,6 +54,7 @@ import {
   IconFolder,
 } from "../icons";
 import { ReviewTab } from "./ReviewTab";
+import { reviewChangesFromMessages } from "../../lib/workspace-review";
 import { OmpActivityTab } from "../../features/work-panel/OmpActivityTab";
 import { FilesTab } from "./FilesTab";
 import { PluginViewTab } from "./PluginViewTab";
@@ -271,6 +275,35 @@ export function WorkPanel({
       (tab, index) => [tab.id, subagentDisplayLabels[index]] as const,
     ),
   );
+  // Direction D: review badge count + fixed 4-tab activation
+  const messages = useAppStore((s) => s.messages);
+  const reviewCount = useMemo(
+    () => reviewChangesFromMessages(messages).length,
+    [messages],
+  );
+  // Stable tab IDs for ARIA linkage (pure, deterministic calls)
+  const REVIEW_TAB_ID = toolWorkPanelTab("review").id;
+  const BROWSER_TAB_ID = browserPluginTab().id;
+  const TOOLS_TAB_ID = TOOLS_TAB.id;
+  const FILES_TAB_ID = fileManagerPluginTab().id;
+
+  const activateDTab = useCallback(
+    (kind: "review" | "browser" | "tools" | "files") => {
+      const spec: WorkPanelTab =
+        kind === "review" ? toolWorkPanelTab("review") :
+        kind === "browser" ? browserPluginTab() :
+        kind === "tools" ? TOOLS_TAB :
+        fileManagerPluginTab();
+      const existing = tabs.find((tab) => tab.id === spec.id);
+      if (existing) {
+        activateTab(existing.id);
+      } else {
+        openWorkPanelTab(spec);
+      }
+    },
+    [tabs, activateTab, openWorkPanelTab],
+  );
+
 
   const [panelDragWidth, setPanelDragWidth] = useState<number | null>(null);
   const panelResizeState = useRef<WorkPanelResizeState | null>(null);
@@ -279,11 +312,6 @@ export function WorkPanel({
   const suppressedTabClickPointerIdsRef = useRef<Set<number>>(new Set());
   const tabButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const newTabButtonRef = useRef<HTMLButtonElement | null>(null);
-  const [draggingTabId, setDraggingTabId] = useState<string | null>(null);
-  const [dropIndicator, setDropIndicator] = useState<{
-    tabId: string;
-    insertAfter: boolean;
-  } | null>(null);
   const [nativeSurfaceReadyForExit, setNativeSurfaceReadyForExit] =
     useState(false);
 
@@ -357,8 +385,6 @@ export function WorkPanel({
       }
       tabReorderState.current = null;
     }
-    setDraggingTabId(null);
-    setDropIndicator(null);
     document.documentElement.removeAttribute("data-work-panel-tab-reordering");
   }, []);
 
@@ -457,14 +483,12 @@ export function WorkPanel({
           : null;
         if (!target || !strip?.contains(target)) {
           state.targetTabId = null;
-          setDropIndicator(null);
           return;
         }
 
         const targetTabId = target.dataset.workPanelTabId;
         if (!targetTabId || targetTabId === state.sourceTabId) {
           state.targetTabId = null;
-          setDropIndicator(null);
           return;
         }
         const rect = target.getBoundingClientRect();
@@ -475,7 +499,6 @@ export function WorkPanel({
         );
         state.targetTabId = targetTabId;
         state.insertAfter = insertAfter;
-        setDropIndicator({ tabId: targetTabId, insertAfter });
       };
 
       const startAutoScroll = (state: WorkPanelTabReorderState) => {
@@ -546,7 +569,6 @@ export function WorkPanel({
             "data-work-panel-tab-reordering",
             "true",
           );
-          setDraggingTabId(state.sourceTabId);
         }
 
         moveEvent.preventDefault();
@@ -850,92 +872,20 @@ export function WorkPanel({
         onDoubleClick={onPanelResizeReset}
       />
       <div className="work-panel-main">
-        <header className="work-panel-header">
-          <div className="work-panel-tab-strip-wrap no-drag">
-              <div
-                ref={tabStripRef}
-                className="work-panel-tab-strip"
-                role="tablist"
-                aria-label={t("panel.tabsLabel")}
-                onWheel={onTabStripWheel}
-              >
-                {tabs.map((tab) => {
-                  const label =
-                    tab.kind === "subagent"
-                      ? (subagentLabelById.get(tab.id) ?? t("panel.tabs.subagent"))
-                      : tabLabel(tab, t, pluginViews);
-                  const selected = tab.id === activeTabId;
-                  const Icon =
-                    tab.kind === "plugin"
-                      ? pluginViewIcon(
-                          pluginViews.find((view) => view.ref === tab.resource)?.icon,
-                        ) ?? TAB_ICONS.plugin
-                      : TAB_ICONS[tab.kind];
-                  return (
-                    <div
-                      className={cx(
-                        "work-panel-tab",
-                        selected && "active",
-                        draggingTabId === tab.id && "is-dragging",
-                        dropIndicator?.tabId === tab.id &&
-                          (dropIndicator.insertAfter ? "is-drop-after" : "is-drop-before"),
-                      )}
-                      data-work-panel-tab-id={tab.id}
-                      key={tab.id}
-                    >
-                      <button
-                        ref={(node) => {
-                          tabButtonRefs.current[tab.id] = node;
-                        }}
-                        type="button"
-                        role="tab"
-                        id={`work-panel-tab-${tab.id}`}
-                        aria-selected={selected}
-                        aria-controls={`work-panel-surface-${tab.id}`}
-                        tabIndex={selected ? 0 : -1}
-                        aria-grabbed={draggingTabId === tab.id}
-                        aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight"
-                        className="work-panel-tab-button"
-                        title={tab.kind === "subagent" ? label : tab.resource ?? label}
-                        onPointerDown={(event) => beginTabReorder(event, tab.id)}
-                        onDragStart={(event) => event.preventDefault()}
-                        onClick={() => activateTab(tab.id)}
-                        onAuxClick={(event) => {
-                          if (event.button !== 1) return;
-                          event.preventDefault();
-                          closeTabAndFocus(tab.id);
-                        }}
-                        onKeyDown={(event) => onTabKeyDown(event, tab.id)}
-                      >
-                        <Icon size={14} />
-                        <span className="work-panel-tab-label">{label}</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="work-panel-tab-close"
-                        aria-label={t("panel.closeTab", { name: label })}
-                        title={t("panel.closeTab", { name: label })}
-                        onPointerDown={(event) => event.stopPropagation()}
-                        onClick={() => closeTabAndFocus(tab.id)}
-                      >
-                        <IconClose size={12} />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-          </div>
-          <div className="work-panel-actions no-drag">
-              <TooltipButton
-                ref={newTabButtonRef}
-                type="button"
-                className="work-panel-new-tab"
-                tooltip={t("panel.new.open")}
-                ariaLabel={t("panel.new.open")}
-                onClick={openNewWorkPanelTab}
-              >
-                <IconPlus size={16} />
-              </TooltipButton>
+        {/* Direction D: mini-head (title + actions) */}
+        <div className="wp-mini-head">
+          <span className="wp-mini-title">{activeTab?.kind === "activity" ? t("panel.tabs.activity") : t("panel.title")}</span>
+          <div className="wp-mini-acts no-drag">
+            <TooltipButton
+              ref={newTabButtonRef}
+              type="button"
+              className="work-panel-new-tab"
+              tooltip={t("panel.new.open")}
+              ariaLabel={t("panel.new.open")}
+              onClick={openNewWorkPanelTab}
+            >
+              <IconPlus size={16} />
+            </TooltipButton>
             <TooltipButton
               type="button"
               className="work-panel-maximize"
@@ -951,7 +901,67 @@ export function WorkPanel({
               )}
             </TooltipButton>
           </div>
-        </header>
+        </div>
+        {/* Direction D: fixed 4-tab strip — Review / Browser / Tools / Files
+             Hidden when Activity tab is active (OmpActivityTab renders its own
+             Todos / Timeline / Changes sub-tabs in that case, matching ref D1/D2/D3). */}
+        {activeTab?.kind !== "activity" && (
+        <div className="wp-d-tabs no-drag" role="tablist" aria-label={t("panel.tabsLabel")}>
+          <button
+            type="button"
+            id="wp-d-tab-review"
+            role="tab"
+            aria-selected={activeTab?.id === REVIEW_TAB_ID}
+            aria-controls={`work-panel-surface-${REVIEW_TAB_ID}`}
+            tabIndex={activeTab?.id === REVIEW_TAB_ID ? 0 : -1}
+            className={cx("wp-d-tab", activeTab?.id === REVIEW_TAB_ID && "is-active")}
+            onClick={() => activateDTab("review")}
+          >
+            {t("panel.tabs.review", "Review")}
+            {reviewCount > 0 && (
+              <span className="wp-d-tab-count" aria-label={`${reviewCount} changes`}>
+                {reviewCount}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            id="wp-d-tab-browser"
+            role="tab"
+            aria-selected={activeTab?.id === BROWSER_TAB_ID}
+            aria-controls={`work-panel-surface-${BROWSER_TAB_ID}`}
+            tabIndex={activeTab?.id === BROWSER_TAB_ID ? 0 : -1}
+            className={cx("wp-d-tab", activeTab?.id === BROWSER_TAB_ID && "is-active")}
+            onClick={() => activateDTab("browser")}
+          >
+            {t("panel.tabs.browser", "Browser")}
+          </button>
+          <button
+            type="button"
+            id="wp-d-tab-tools"
+            role="tab"
+            aria-selected={activeTab?.id === TOOLS_TAB_ID}
+            aria-controls={`work-panel-surface-${TOOLS_TAB_ID}`}
+            tabIndex={activeTab?.id === TOOLS_TAB_ID ? 0 : -1}
+            className={cx("wp-d-tab", activeTab?.id === TOOLS_TAB_ID && "is-active")}
+            onClick={() => activateDTab("tools")}
+          >
+            {t("panel.tabs.tools")}
+          </button>
+          <button
+            type="button"
+            id="wp-d-tab-files"
+            role="tab"
+            aria-selected={activeTab?.id === FILES_TAB_ID}
+            aria-controls={`work-panel-surface-${FILES_TAB_ID}`}
+            tabIndex={activeTab?.id === FILES_TAB_ID ? 0 : -1}
+            className={cx("wp-d-tab", activeTab?.id === FILES_TAB_ID && "is-active")}
+            onClick={() => activateDTab("files")}
+          >
+            {t("panel.tabs.file", "Files")}
+          </button>
+        </div>
+        )}
         <div className="work-panel-body">
           {activeTab?.kind === "activity" && (
             <div

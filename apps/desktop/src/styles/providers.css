@@ -199,37 +199,48 @@
   background: color-mix(in oklab, var(--ds-error) 20%, transparent);
 }
 
-/* D297: a tinted pill track; the active item is raised on it by shadow. */
+/* F05: segmented — gap1/pad10/gray2 track/elevation1/da-txt ink (D.css:780-815) */
 .settings-segment {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 1px;
   padding: 2px;
+  height: var(--d-segment-track);
   border-radius: var(--radius-full);
-  background: color-mix(in oklab, var(--ds-text-primary) 6%, transparent);
+  background: var(--surface-gray-2);
+}
+
+/* Dark: raised2 track (D.css:1558) */
+:root[data-theme="dark"] .settings-segment {
+  background: var(--surface-elevation-2);
 }
 
 .settings-segment-item {
   appearance: none;
   border: 0;
   background: transparent;
-  color: var(--ds-text-secondary);
+  color: var(--ink-gray-6);
   border-radius: var(--radius-full);
-  padding: 6px 12px;
-  font-size: var(--text-sm); /* Espresso TabButtons: text-sm, medium when active */
+  height: var(--d-segment-item);
+  padding: 0 var(--d-seg-pad);
+  font-size: var(--d-text-sm);
+  font-weight: var(--font-weight-medium);
+  display: flex;
+  align-items: center;
+  gap: var(--d-seg-gap);
   line-height: var(--leading-tighter);
   transition: background var(--motion-duration-fast) var(--motion-ease-out), color var(--motion-duration-fast) var(--motion-ease-out);
 }
 
 .settings-segment-item:hover {
-  color: var(--ds-text-primary);
+  color: var(--ink-gray-8);
 }
 
 .settings-segment-item.active {
-  background: var(--ds-raised);
-  color: var(--ds-text-primary);
-  box-shadow: var(--ds-raised-shadow);
-  font-weight: var(--font-weight-medium);
+  background: var(--surface-elevation-1);
+  color: var(--da-txt);
+  box-shadow: var(--elevation-sm);
+  font-weight: var(--font-weight-medium);  /* same as base; kept explicit for clarity */
 }
 
 @media (max-width: 980px) {

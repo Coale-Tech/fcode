@@ -10,6 +10,8 @@ import { buildToolPresentation } from "../lib/tool-presentation";
 import { ToolDetailBlocks } from "./ToolDetails";
 import { Button } from "./ui";
 import { DestructiveActionDialog } from "./DestructiveActionDialog";
+import { IconTriangleAlert } from "./icons";
+import { splitInlineCode } from "../lib/inline-code";
 
 export function PermissionCard({
   permission,
@@ -30,6 +32,10 @@ export function PermissionCard({
   );
   const [resolving, setResolving] = useState(false);
   const timeoutHandled = useRef(false);
+  // If the card mounts with the timer already at 0 (e.g. app was closed and
+  // reopened with a stale permission in state), don't auto-deny silently —
+  // the user never saw the card during its live countdown.
+  const mountedExpired = useRef(permissionSecondsLeft(permission.receivedAt) === 0);
   // fcode_bench_run and fcode_bench_execute use DestructiveActionDialog (T8, D14:
   // no auto-deny timer; names site, command and consequence explicitly).
   // fcode_bench_execute_read is auto-approved and never reaches this card.
@@ -37,6 +43,14 @@ export function PermissionCard({
     permission.toolName === "fcode_bench_run" ||
     permission.toolName === "fcode_bench_execute" ||
     permission.toolName === "fcode_studio";
+
+  // Derive card title from tool name: file-editing tools get a specific label.
+  const cardTitle = useMemo(() => {
+    if (permission.toolName === "Edit" || permission.toolName === "Write") {
+      return t("permission.approveEdit");
+    }
+    return t("permission.title");
+  }, [permission.toolName, t]);
 
   const restoreComposerFocus = () => {
     window.requestAnimationFrame(() => {
@@ -63,6 +77,7 @@ export function PermissionCard({
 
   useEffect(() => {
     timeoutHandled.current = false;
+    mountedExpired.current = permissionSecondsLeft(permission.receivedAt) === 0;
     const update = () => setSecondsLeft(permissionSecondsLeft(permission.receivedAt));
     update();
     const timer = window.setInterval(update, 1000);
@@ -71,11 +86,14 @@ export function PermissionCard({
 
   useEffect(() => {
     // Bench-destructive tools use DestructiveActionDialog; no timer here.
-    if (isBenchDestructive) return;
+    // Also skip auto-deny if the card was already expired on mount —
+    // the user never saw the countdown so we cannot silently deny.
+    if (isBenchDestructive || mountedExpired.current) return;
     if (secondsLeft > 0 || timeoutHandled.current || resolving) return;
     timeoutHandled.current = true;
     void resolve("deny");
   }, [isBenchDestructive, resolving, secondsLeft]);
+
 
   // Same structured presentation as the transcript tool rows: a command reads
   // as shell, file content as code, everything else as labeled fields.
@@ -119,6 +137,7 @@ export function PermissionCard({
         site={site}
         command={rawCommand}
         consequence={consequence}
+        agentName={permission.agentName ?? undefined}
         onConfirm={() => { restoreComposerFocus(); void resolve("allow-once"); }}
         onCancel={() => { restoreComposerFocus(); void resolve("deny"); }}
       />
@@ -131,7 +150,7 @@ export function PermissionCard({
     <section
       className={`permission-card risk-${risk}`}
       role="region"
-      aria-label={t("permission.title")}
+      aria-label={cardTitle}
     >
       <div
         className="permission-card-timer-bar"
@@ -139,9 +158,10 @@ export function PermissionCard({
         aria-hidden="true"
       />
       <div className="permission-card-header">
-        <span className="permission-card-title" role="status" aria-live="polite">
-          {t("permission.title")}
-        </span>
+          <span className="permission-card-title" role="status" aria-live="polite">
+            <IconTriangleAlert size={14} className="permission-card-alert-icon" aria-hidden />
+            {cardTitle}
+          </span>
         {queued > 0 ? (
           <span className="permission-card-queued">
             {t("permission.queued", { count: queued })}
@@ -164,27 +184,41 @@ export function PermissionCard({
         />
       </div>
       {permission.reason ? (
-        <div className="permission-card-reason">{permission.reason}</div>
-      ) : null}
-      {argBlocks.length > 0 ? (
-        <div className="permission-card-args">
-          <ToolDetailBlocks blocks={argBlocks} />
+        <div className="permission-card-reason">
+          {splitInlineCode(permission.reason).map((part, i) =>
+            part.code ? (
+              <code key={i} className="chat-inline-code">{part.text}</code>
+            ) : (
+              part.text
+            ),
+          )}
         </div>
       ) : null}
-      <div className="permission-card-meta">
-        <span title={workspace}>
-          {t("permission.workspace", {
-            workspace: workspace || t("permission.temporarySession"),
-          })}
-        </span>
-        <span role="timer">
-          {t("permission.countdown", { seconds: secondsLeft })}
-        </span>
-      </div>
+      <details className="permission-card-details">
+        <summary className="permission-card-details-summary">
+          {t("permission.details")}
+        </summary>
+        {argBlocks.length > 0 ? (
+          <div className="permission-card-args">
+            <ToolDetailBlocks blocks={argBlocks} />
+          </div>
+        ) : null}
+        <div className="permission-card-meta">
+          <span title={workspace}>
+            {t("permission.workspace", {
+              workspace: workspace || t("permission.temporarySession"),
+            })}
+          </span>
+          <span role="timer">
+            {t("permission.countdown", { seconds: secondsLeft })}
+          </span>
+        </div>
+      </details>
       <div className="permission-card-actions">
         <div className="permission-action-item">
           <Button
             variant="primary"
+            size="sm"
             disabled={resolving}
             onClick={() => void resolve("allow-once")}
           >
@@ -195,6 +229,7 @@ export function PermissionCard({
         <div className="permission-action-item">
           <Button
             variant="secondary"
+            size="sm"
             disabled={resolving}
             onClick={() => void resolve("allow-session")}
           >
@@ -205,6 +240,7 @@ export function PermissionCard({
         <div className="permission-action-item">
           <Button
             variant="ghost"
+            size="sm"
             className="permission-deny-btn"
             disabled={resolving}
             onClick={() => void resolve("deny")}

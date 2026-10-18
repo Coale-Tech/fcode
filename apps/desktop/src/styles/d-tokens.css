@@ -1,0 +1,284 @@
+/* Direction D — dimensions, type scale and the re-pointing of the existing ladder.
+   Values come from design kit-d/D-SPEC.md. Loaded right after tokens.css so
+   theme-overrides.css (plugin themes) still wins. */
+
+/* ── Blue semantic ramp (F01): remap espresso violet → FileBird blue ─── */
+/* Light theme (and :root default): overrides espresso.css purple violet* */
+:root {
+  --surface-violet-1: #F2F9FD;
+  --surface-violet-2: #E4F2FB;
+  --outline-violet-1: #D5EAF7;
+  --outline-violet-2: #BFDFF2;
+  --outline-violet-3: #9CCDEA;
+  --outline-violet-4: #6BB3DF;
+  --ink-violet-5:     #4F9CCB;
+  --ink-violet-6:     #2E8AC2;
+  --ink-violet-7:     #1F6FA3;
+  --ink-violet-8:     #165A88;
+
+  /* da* = direction-accent aliases used by D primitives and page fragments */
+  --da:     var(--ds-accent);        /* approved fill: #2578ab (light) */
+  --da-h:   var(--ds-accent-hover);  /* approved hover: #1f6fa3 (light) */
+  --da-sub: var(--surface-violet-2); /* selection tint: #E4F2FB (light) */
+  --da-txt: var(--ink-violet-8);     /* selection ink:  #165A88 (light) */
+  --da-bdr: var(--outline-violet-3); /* selection ring: #9CCDEA (light) */
+
+  /* Direction D component dimensions */
+  --d-navbar-h: 48px;
+  --d-ph-h: 48px;
+  --d-mini-h: 32px;
+  --d-status-h: 28px;
+  --d-rail-w: 50px;
+  --d-rail-island: 60px;
+  --d-rail-exp: 220px;       /* D2 rail expanded state (D.css:28,334) */
+  --d-gap: 12px;
+  --d-rail-item-mx:  6px;          /* item horizontal margin (D.css:373 margin:1px 6px) */
+  --d-rail-item-gap: 2px;          /* expanded icon→label gap (D.css:413) */
+  --d-rail-divider-gap: 4px;       /* divider vertical margin (D.css:364) */
+  --d-rail-label-max: 160px;       /* expanded label max-width (D.css:413) */
+  --d-rail-dot-inset: 4px;          /* memory-status dot top/right offset inside the button */
+  /* Island (D3) rail — D3-shell.html */
+  --d-rail-island-label: calc(10px * var(--font-scale)); /* D3-shell.html:99 label size */
+  --d-rail-island-item-w: 52px;    /* D3-shell.html:75 item width */
+  --d-rail-island-item-h: 46px;    /* D3-shell.html:76 item min-height */
+  --d-rail-island-item-gap: 3px;   /* D3-shell.html:78 icon→label gap */
+  --d-rail-island-item-pb: 5px;    /* D3-shell.html:77 bottom padding */
+  --d-rail-island-icon: 20px;      /* D3-shell.html:95-96 icon box size */
+  --d-island-sb: 256px;            /* D3-shell.html:119 context sidebar */
+  --d-sessions-w: 280px;           /* chat fragment .cf-sessions (pages-d/chat) */
+  --d-ctrl: 28px;
+  --d-ctrl-lg: 32px;
+  --d-row-h: 30px;
+  --d-r: 12px;
+  --d-r-ctrl: 8px;
+  --d-r-sm: 4px;
+  --d-text:      var(--text-base);                      /* 13px × --font-scale (F12) */
+  --d-text-sm:   calc(12px * var(--font-scale));         /* F12: scale-aware */
+  --d-text-xs:   calc(11px * var(--font-scale));         /* F12: scale-aware */
+  --d-text-chat: calc(14px * var(--font-scale));         /* F12: scale-aware */
+
+  /* Component metrics (tokenised so component CSS uses var() not literals) */
+  /* F06: 32×18 track / 14px knob / 2px inset / translate = 32-14-4 = 14px */
+  --d-toggle-w:      32px;
+  --d-toggle-h:      18px;
+  --d-toggle-knob:   14px;
+  --d-toggle-inset:   2px;
+  --d-segment-track: 28px;
+  --d-segment-item:  24px;
+  --d-checkbox:      14px;
+  --d-textarea-min:  64px;
+
+  /* Redirect design-system ladder to Direction D values */
+  --ds-toolbar-height:        var(--d-navbar-h);
+  --ds-btn-height:            var(--d-ctrl);
+  --ds-btn-radius:            var(--d-r-ctrl);
+  --ds-btn-radius-sm:         var(--d-r-ctrl);  /* F03: sm also r8 */
+  --ds-btn-gap:               5px;              /* F03: gap5 */
+  --ds-btn-pad-x:             10px;             /* F03: pad10 */
+  --ds-btn-pad-x-sm:          7px;              /* F03: small pad7 */
+  --ds-btn-font-size:         var(--d-text);
+  --ds-btn-font-size-sm:      var(--d-text-sm);
+  --ds-btn-font-weight:       var(--font-weight-medium);
+  --ds-field-height:          var(--d-ctrl);
+  --ds-settings-radius-ctrl:  var(--d-r-ctrl);
+  /* Border tokens (D.css:40-41) */
+  --d-border:                 var(--outline-gray-2);
+  --d-border-ctrl:            var(--outline-gray-3);
+  /* F11/C03: nl-picker card dimensions — nav layout picker (fragment-d2.html:35-59) */
+  --d-canvas-bg:              var(--surface-gray-2);  /* thumbnail bg (light) */
+  --d-nl-card-w:              178px;
+  --d-nl-thumb-h:             88px;
+  --d-nl-card-r:              10px;
+  --d-nl-check:               16px;
+  --d-nl-gap:                 10px;
+  --d-nl-section-pb:          14px;   /* nl-section bottom padding */
+  --d-nl-card-bw:             2px;    /* card border-width + focus outline */
+  --d-nl-ring-w:              3px;    /* selected ring spread */
+  --d-nl-foot-py:             7px;    /* nl-foot top/bottom padding */
+  --d-nl-foot-gap:            6px;    /* nl-foot label/badge gap */
+  --d-nl-glyph:               9px;    /* check-mark SVG size */
+  /* wf thumbnail sketch metrics (fragment-d2.html:43-59) */
+  --d-wf-nb-h:                13px;
+  --d-wf-rail-sm:             9px;
+  --d-wf-rail-lg:             13px;
+  /* D1 nav-tab pill metrics — D.css:146-178, D1-shell.html:98-107 */
+  --d-nav-tab-h:              var(--d-ctrl);    /* 28px pill height */
+  --d-nav-tab-pad-x:          11px;             /* D.css:161 padding: 0 11px */
+  --d-nav-tab-gap:            6px;              /* D.css:155 icon-label gap */
+  --d-nav-tab-icon:           13px;             /* D.css icon size */
+  --d-nav-tab-label-max:      12ch;             /* truncation cap */
+  --d-nav-tab-strip-gap:      2px;              /* D.css:148 gap between pills */
+  --d-wf-ri:                  5px;
+  --d-wf-sidebar:             30px;
+  --d-wf-dot:                 4px;
+  --d-wf-pill-h:              6px;
+  --d-wf-bar-h:               3px;
+  --d-wf-micro:               2px;
+  --d-wf-sm:                  3px;
+  --d-wf-island-r:            5px;
+  --d-wf-pill-a:              22px;   /* tabs active pill width */
+  --d-wf-pill-ml:             5px;    /* tabs active pill margin-left */
+  --d-wf-pill-b:              18px;
+  --d-wf-pill-c:              16px;
+  --d-wf-sb-tall:             5px;    /* island sidebar "on" bar height */
+  /* C03: field horizontal padding (ui-kit.css:78) */
+  --d-field-px:               8px;
+  /* C06: component metric tokens replacing bare literals */
+  --d-seg-gap:                5px;    /* segment-item icon/label gap (D.css:807) */
+  --d-row-desc-mt:            1px;    /* settings row desc margin-top (fragment-d2.html:29) */
+  --d-focus-ring:             2px;    /* trigger/field focus ring spread (D.css:762-763) */
+  --d-checkbox-gap:           6px;    /* checkbox wrapper label gap */
+  --d-checkbox-glyph:         10px;   /* ds-checkbox check-mark glyph size (D.css:857) */
+  --d-nl-focus-offset: 2px;   /* C03: nl-card focus outline offset */
+  --d-nl-caption-pt:   4px;   /* C03: nl-caption section top padding */
+  --d-wf-border:       1px;   /* C03: wireframe non-hairline border/pad (1px) */
+  /* C03: wireframe icon radius */
+  --d-wf-ri-r:         1px;   /* .wf-ri border-radius (D wireframe 1px precision) */
+  /* C06: settings row */
+  --d-settings-row-h:  44px;  /* ordinary settings-row height (D.css:959-971) — differs from --d-row-h:30px nav row */
+  --d-settings-row-pad: 12px; /* settings-row gap and horizontal padding */
+  /* C06: segment item */
+  --d-seg-pad:         10px;  /* segment-item horizontal padding (D.css:807) */
+  /* C06: close button */
+  --d-close-btn:       28px;  /* session/dialog close icon-btn size */
+  /* C06: badge */
+  --d-badge-h:         20px;  /* badge height (D.css:628) */
+  --d-badge-r:         10px;  /* badge border-radius (D.css:628) */
+  --d-badge-pad:        7px;  /* badge horizontal padding (D.css:628) */
+  /* C06: dialog geometry */
+  --d-dialog-w:       480px;  /* dialog max-width (D.css:1027) */
+  --d-dialog-max-h:   80vh;   /* dialog max-height (D.css:1027) */
+  --d-dialog-head-pad: 14px 16px 12px; /* dialog-head padding (D.css:1039) */
+  --d-dialog-head-font: 14px; /* dialog-head font-size (D.css:1039) */
+  --d-dialog-head-gap:  8px;  /* dialog-head icon/title gap (D.css:1039) */
+  --d-dialog-body-pad: 16px;  /* dialog-body padding (D.css:1051) */
+  --d-dialog-foot-pad: 10px 16px; /* dialog-foot padding (D.css:1059) */
+  --d-dialog-foot-gap:  6px;  /* dialog-foot action gap (D.css:1059) */
+  /* T10: chat/composer/activity metric tokens (F06 tokenise) */
+  --d-composer-input-min-h: 56px;   /* D.css:1482 textarea min-height */
+  --d-composer-outer-pt:    9px;    /* D.css:1449 .d-composer padding-top */
+  --d-composer-outer-px:   14px;    /* D.css:1449 .d-composer padding left/right */
+  --d-tool-node-size:  30px;         /* D.css:1383 .d-tool-node w/h */
+  --d-tool-icon-size:  12px;         /* D.css:1396 .d-tool-node svg w/h */
+  --d-tool-conn-left:  14px;         /* D.css:1373 connector: left = node-size/2 */
+  --d-perm-menu-w:    260px;         /* state-perm-menu.html:39 .cf-perm-menu */
+  --d-model-menu-w:   300px;         /* state-model-picker.html:33 .cf-model-menu */
+  --d-chip-h:          24px;         /* state-perm-menu.html:77 .cf-mode-chip h */
+  --d-chip-r:           6px;         /* state-perm-menu.html:78 .cf-mode-chip r */
+  --d-act-lpad:        10px;         /* cf-act-scroll side padding */
+  --d-act-label-pt:     8px;         /* .cf-act-sec padding-top */
+  --d-act-label-pb:     4px;         /* .cf-act-sec padding-bottom */
+  /* C07: bench detail 3-column widths (D2 bench: 224px | flex | 252px) */
+  --d-bfd-left-w:     224px;
+  --d-bfd-right-w:    252px;
+}
+
+/* ── Terminal palette (bench log, code panels; always-dark) */
+:root {
+  --d-terminal-bg: #181818;  /* near-black background */
+  --d-terminal-fg: #d4d4d4;  /* light-gray foreground */
+  /* bench log line palette (pages-d/bench/fragment-detail.html .bfd-log-*) */
+  --d-term-ts:    #4a5568;
+  --d-term-proc:  #63b3ed;
+  --d-term-text:  #d1d5db;
+  --d-term-green: #6ee7b7;
+  --d-term-amber: #fbbf24;
+  --d-term-red:   #f87171;
+  --d-term-muted: #6b7280;
+}
+
+/* Dark theme: remap violet to FileBird dark blues */
+:root[data-theme="dark"] {
+  --surface-violet-1: #152F43;
+  --surface-violet-2: #1D4764;
+  --outline-violet-1: #1F4A66;
+  --outline-violet-2: #27597A;
+  --outline-violet-3: #327198;
+  --outline-violet-4: #3F86B3;
+  --ink-violet-5:     #4A9FD0;
+  --ink-violet-6:     #56B9F2;
+  --ink-violet-7:     #7CC6F2;
+  --ink-violet-8:     #92D2F8;
+  /* off-state switch track: solid surface-gray-3 (F06; D.css:826-828) */
+  --ds-switch-track-off:       var(--surface-gray-3);
+  --ds-switch-track-off-hover: var(--surface-gray-4);
+  /* knob-off stays base (near-black in dark) */
+  --ds-switch-knob-off:        var(--surface-base);
+  /* thumbnail bg: dark uses surface-base (D.css:66) */
+  --d-canvas-bg:               var(--surface-base);
+  /* Sidebar glass tint (darwin vibrancy overlay) — ≤60% to let material through */
+  --ds-sidebar-glass-tint:         color-mix(in oklab, var(--ds-bg-sidebar) 40%, transparent);
+  --ds-sidebar-glass-sheen-top:    color-mix(in oklab, var(--white) 7%, transparent);
+  --ds-sidebar-glass-sheen-bottom: color-mix(in oklab, var(--white) 4%, transparent);
+}
+
+/* Light theme: blue ramp + switch tokens (each appears exactly once per theme) */
+:root[data-theme="light"] {
+  --surface-violet-1: #F2F9FD;
+  --surface-violet-2: #E4F2FB;
+  --outline-violet-1: #D5EAF7;
+  --outline-violet-2: #BFDFF2;
+  --outline-violet-3: #9CCDEA;
+  --outline-violet-4: #6BB3DF;
+  --ink-violet-5:     #4F9CCB;
+  --ink-violet-6:     #2E8AC2;
+  --ink-violet-7:     #1F6FA3;
+  --ink-violet-8:     #165A88;
+  /* F06: off-track = gray3 (D.css:827) / knob = base (D.css:837) */
+  --ds-switch-track-off:       var(--surface-gray-3);
+  --ds-switch-track-off-hover: var(--surface-gray-4);
+  --ds-switch-knob-off:        var(--surface-base);
+  /* Sidebar glass tint (darwin vibrancy overlay) — ≤60% to let material through */
+  --ds-sidebar-glass-tint:         color-mix(in oklab, var(--ds-bg-sidebar) 40%, transparent);
+  --ds-sidebar-glass-sheen-top:    color-mix(in oklab, var(--white) 7%, transparent);
+  --ds-sidebar-glass-sheen-bottom: color-mix(in oklab, var(--white) 4%, transparent);
+}
+
+/* lane T12 — kanban + notifications page dimensions */
+:root {
+  --d-kd-col-w:        210px;                             /* kanban column width */
+  --d-kd-board-gap:    10px;                              /* kanban board column gap */
+  --d-kd-col-h:        32px;                              /* kanban column header height */
+  --d-kd-chip-font:    calc(10px * var(--font-scale));    /* kanban card chip font-size */
+  --d-kd-drawer-w:     420px;                             /* kanban drawer width */
+  --d-notif-icon:      28px;                              /* notification row icon size */
+  --d-notif-dot:        7px;                              /* notification unread dot */
+  --d-text-2xs:        calc(10px * var(--font-scale));    /* fragment 10px counts and durations */
+}
+
+/* lane T12 — page layout dimensions (tokenised per F09) */
+:root {
+  --d-sch-detail:      340px;   /* Scheduled right detail panel width */
+  --d-pr-detail:       320px;   /* Pull Requests right detail panel width */
+  --d-plg-nav:         220px;   /* Plugins left nav width */
+  --d-sch-health-h:     28px;   /* Scheduled health strip height */
+  --d-sch-dot:           6px;   /* health strip live dot */
+  --d-pr-col-branch:   170px;   /* PR Branch column width */
+  --d-pr-col-ci:        70px;   /* PR CI column width */
+  --d-pr-col-author:    80px;   /* PR Author column width */
+  --d-pr-col-actions:  140px;   /* PR Actions column width */
+  --d-pill-sm-h:        16px;   /* inline status pill: PR rows, scheduled runs (fragment.html:169, :301) */
+  --d-pill-sm-text:     var(--d-text-2xs);
+  --d-pr-icon:          22px;   /* PR row status tile (fragment.html:161) */
+  --d-pr-icon-r:         5px;
+  --d-pr-icon-col:      28px;   /* icon column the tile sits in */
+  --d-tab-h:            34px;   /* panel tab underline height (D.css:565) */
+}
+/* lane t13: settings nav D-metrics, command palette */
+:root {
+  /* Settings nav rail width (fragment-d1.html: 240px panel) */
+  --ds-settings-nav-width:  240px;
+  /* Nav item border-radius (sn-item: 6px from fragment) */
+  --ds-settings-radius-item: 6px;
+  /* Settings nav item/group font dimensions (fragment-d1.html:13-18) */
+  --d-sn-item-h:    28px;
+  --d-sn-icon:      13px;
+  --d-sn-grp-label: 10px;
+  /* Command palette card width: fragment.html:55 overrides D.css generic 560px → 580px */
+  --d-cmdpal-w: 580px;
+}
+
+/* lane t13: overlay/scrim token (D.css:1159) */
+:root {
+  --d-overlay-scrim: rgba(0, 0, 0, .42);
+}

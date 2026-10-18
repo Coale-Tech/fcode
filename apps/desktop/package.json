@@ -24,7 +24,7 @@
     "lint": "node ../../scripts/check-style-tokens.mjs",
     "clean": "node -e \"fs.rmSync('out',{recursive:true,force:true});fs.rmSync('dist',{recursive:true,force:true})\"",
     "build:host-release": "cargo build --release --manifest-path ../../Cargo.toml -p host-core",
-    "bundle:runtime": "node ../../scripts/build-omp.mjs && pnpm -C ../../packages/omp-bridge bundle",
+    "bundle:runtime": "node ../../scripts/build-omp.mjs && node ../../scripts/fetch-ruff.mjs && pnpm -C ../../packages/omp-bridge bundle",
     "pack": "pnpm run build:deps && pnpm run build:host-release && pnpm run bundle:runtime && electron-vite build && electron-builder --dir",
     "dist": "pnpm run build:deps && pnpm run build:host-release && pnpm run bundle:runtime && electron-vite build && node ../../scripts/build-desktop-release.mjs",
     "dist:mac": "pnpm run build:deps && pnpm run build:host-release && pnpm run bundle:runtime && electron-vite build && electron-builder --mac --publish never",
@@ -158,6 +158,10 @@
         "to": "skill-packs"
       },
       {
+        "from": "resources/omp-lsp-defaults.json",
+        "to": "omp-lsp-defaults.json"
+      },
+      {
         "from": "../filebird/out/preload",
         "to": "filebird/preload"
       },
@@ -202,6 +206,14 @@
         {
           "from": "resources/bin/omp-darwin-${arch}",
           "to": "bin/omp"
+        },
+        {
+          "from": "resources/tools/darwin-${arch}/ruff",
+          "to": "tools/ruff"
+        },
+        {
+          "from": "resources/tools/LICENSE-ruff",
+          "to": "tools/LICENSE-ruff"
         }
       ],
       "extraDistFiles": [
@@ -268,6 +280,14 @@
         {
           "from": "resources/bin/omp-win32-${arch}.exe",
           "to": "bin/omp.exe"
+        },
+        {
+          "from": "resources/tools/win32-${arch}/ruff.exe",
+          "to": "tools/ruff.exe"
+        },
+        {
+          "from": "resources/tools/LICENSE-ruff",
+          "to": "tools/LICENSE-ruff"
         }
       ]
     },
@@ -325,6 +345,14 @@
         {
           "from": "resources/bin/omp-linux-${arch}",
           "to": "bin/omp"
+        },
+        {
+          "from": "resources/tools/linux-${arch}/ruff",
+          "to": "tools/ruff"
+        },
+        {
+          "from": "resources/tools/LICENSE-ruff",
+          "to": "tools/LICENSE-ruff"
         }
       ]
     },

@@ -10,6 +10,8 @@ export type AppNotification = {
   sessionTitle: string;
   turnId: string;
   errorCode?: string;
+  /** Optional rich body text for the notification row (capture-rig can supply it). */
+  body?: string;
   createdAt: string;
   readAt?: string | null;
 };
@@ -63,6 +65,19 @@ export type ProjectGroupContext = {
   memory: ProjectMemory;
 };
 
+export type PullRequestCheck = {
+  name: string;
+  state: "success" | "failure" | "pending" | "skipped";
+  durationSeconds?: number;
+  /** Optional short detail text shown after the check name (e.g. "142 passed"). */
+  details?: string;
+  /** Where the check's logs live (CheckRun `detailsUrl` / status `targetUrl`). */
+  url?: string;
+};
+
+/** `gh` problems the user can fix themselves; other failures keep their raw message. */
+export type PullsErrorKind = "GH_NOT_INSTALLED" | "GH_NOT_AUTHENTICATED" | "NOT_GITHUB_REPO";
+
 export type PullRequestSummary = {
   number: number;
   title: string;
@@ -70,8 +85,21 @@ export type PullRequestSummary = {
   author?: string;
   headRefName?: string;
   baseRefName?: string;
+  /** ISO timestamp of last update. */
   updatedAt?: string;
+  /** ISO timestamp when the PR was originally opened (distinct from updatedAt). */
+  openedAt?: string;
   isDraft?: boolean;
+  /** PR body / description text */
+  body?: string;
+  /** Number of changed files */
+  changedFiles?: number;
+  /** Lines added */
+  additions?: number;
+  /** Lines deleted */
+  deletions?: number;
+  /** CI check runs */
+  checks?: PullRequestCheck[];
 };
 
 /**

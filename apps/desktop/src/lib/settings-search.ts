@@ -22,6 +22,8 @@ export type SettingsTabId =
   | "aiExtensions"
   | "kanban"
   | "raven"
+  | "ompAdvanced"
+  | "ompTools"
   | "about";
 
 export type SettingsNavGroupId =
@@ -69,6 +71,12 @@ export const SETTINGS_NAV: SettingsNavEntry[] = [
       "settings.languageAuto",
       "settings.font",
       "settings.fontSize",
+      "settings.navLayout",
+      "settings.navLayoutDesc",
+      "settings.navLayoutTabs",
+      "settings.navLayoutRail",
+      "settings.navLayoutIsland",
+      "settings.navLayoutCaption",
       "settings.closeBehaviorTitle",
       "settings.closeBehaviorTray",
       "settings.closeBehaviorQuit",
@@ -135,22 +143,6 @@ export const SETTINGS_NAV: SettingsNavEntry[] = [
     ],
   },
   {
-    id: "voice",
-    labelKey: "settings.nav.voice",
-    titleKey: "settings.voice",
-    group: "preferences",
-    developerOnly: true,
-    experimentalBadgeKey: "settings.voiceExperimental",
-    keywordKeys: [
-      "settings.voiceEnable",
-      "settings.voiceMicrophone",
-      "settings.voiceLanguages",
-      "settings.voiceChineseVariant",
-      "settings.voiceModel",
-      "settings.voiceLocalModels",
-    ],
-  },
-  {
     id: "shortcuts",
     labelKey: "settings.nav.shortcuts",
     titleKey: "settings.shortcuts",
@@ -161,6 +153,21 @@ export const SETTINGS_NAV: SettingsNavEntry[] = [
       "settings.shortcutAction.openCommandPalette",
       "settings.shortcutAction.toggleSidebar",
       "settings.shortcutAction.openWorkPanel",
+    ],
+  },
+  {
+    id: "voice",
+    labelKey: "settings.nav.voice",
+    titleKey: "settings.voice",
+    group: "preferences",
+    experimentalBadgeKey: "settings.voiceExperimental",
+    keywordKeys: [
+      "settings.voiceEnable",
+      "settings.voiceMicrophone",
+      "settings.voiceLanguages",
+      "settings.voiceChineseVariant",
+      "settings.voiceModel",
+      "settings.voiceLocalModels",
     ],
   },
   {
@@ -299,6 +306,8 @@ export const SETTINGS_NAV: SettingsNavEntry[] = [
       "settings.ompAgentModelOverridesDesc",
       "settings.ompAgentModelOverridesDefault",
       "settings.ompWorktreesGroup",
+      "settings.ompAgentAllTools",
+      "settings.ompAgentModelOverridesLoading",
     ],
   },
   {
@@ -365,6 +374,7 @@ export const SETTINGS_NAV: SettingsNavEntry[] = [
       "kanban.settings.maxRuntimeSeconds",
       "kanban.settings.maxAgentCardsPerSession",
       "kanban.settings.maxDailySpawns",
+      "kanban.settings.maxWorkersPerProject",
       "kanban.dispatcher.pause",
       "kanban.dispatcher.resume",
     ],
@@ -375,6 +385,27 @@ export const SETTINGS_NAV: SettingsNavEntry[] = [
     titleKey: "raven.settings.title",
     group: "ai",
     keywordKeys: ["raven.settings.enabled", "raven.settings.url", "raven.title"],
+  },
+  {
+    id: "ompAdvanced",
+    labelKey: "settings.nav.ompAdvanced",
+    titleKey: "settings.nav.ompAdvanced",
+    group: "ai",
+    keywordKeys: [
+      "settings.ompAdvancedSearch",
+      "settings.ompAdvancedModifiedOnly",
+    ],
+  },
+  {
+    id: "ompTools",
+    labelKey: "settings.nav.ompTools",
+    titleKey: "settings.nav.ompTools",
+    group: "ai",
+    keywordKeys: [
+      "ompTools.command",
+      "ompTools.run",
+      "ompTools.output",
+    ],
   },
   {
     id: "about",

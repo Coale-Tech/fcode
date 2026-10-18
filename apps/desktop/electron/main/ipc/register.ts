@@ -1,5 +1,6 @@
 import { join } from "node:path";
-import { dialog, type BrowserWindow, type IpcMain, type IpcMainInvokeEvent } from "electron";
+import { writeFileSync } from "node:fs";
+import { dialog, shell, type BrowserWindow, type IpcMain, type IpcMainInvokeEvent } from "electron";
 import { err, ErrorCodes, IPC, ok, type Result } from "@pi-desktop/shared";
 import type { AgentHostBridge } from "../agent-host-bridge";
 import type { AgentSidecar } from "../agent-sidecar";
@@ -42,11 +43,15 @@ import { registerHindsightLocalIpc } from "./hindsight-local-ipc";
 import { registerApprovalModeIpc } from "./approval-mode-ipc";
 import { registerOmpSettingsIpc } from "./omp-settings-ipc";
 import { registerExtensionsMgmtIpc } from "./extensions-mgmt-ipc";
+import { registerHooksCommandsIpc } from "./hooks-commands-ipc";
+import { registerMaintenanceIpc } from "./maintenance-ipc";
 import type { createTraySessions } from "../tray-sessions";
 import type { createTaskbarUnreadBadge } from "../taskbar-unread-badge";
 import { registerKanbanIpc, type KanbanIpcDependencies } from "./kanban-ipc";
 import { registerFileBirdIpc } from "./filebird-ipc";
 import { registerRavenIpc } from "./raven-ipc";
+import { registerOmpCliIpc } from "./omp-cli-ipc";
+import { registerOmpNonRpcIpc } from "./omp-acp";
 
 export type RegisterIpcDependencies = {
   isQuitting: () => boolean;
@@ -67,8 +72,6 @@ export type RegisterIpcDependencies = {
   getBackendRouter?: () => BackendRouter | null;
   getNotificationViewingSessionId: () => string | null;
   setNotificationViewingSessionId: (sessionId: string | null) => void;
-  activeUserSubagentDocuments: (...args: any[]) => Promise<any>;
-  disabledBuiltinSubagents: () => Promise<string[]>;
   mcpOAuth?: McpOAuthManager;
   [name: string]: any;
   /** Optional kanban board deps; absent when kanban runner is not wired yet. */
@@ -136,8 +139,6 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     bindingForModel,
     agentExtensions,
     activeUserSkills,
-    activeUserSubagentDocuments,
-    disabledBuiltinSubagents,
     pluginActiveInProject,
     getWorkPanelReservationWidth,
     setWorkPanelReservationWidth,
@@ -258,6 +259,7 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     getViewingSessionId: getNotificationViewingSessionId,
     setViewingSessionId: setNotificationViewingSessionId,
     sendToRenderer,
+    dataDir,
   });
   registerSessionIpc({
     registrar,
@@ -397,6 +399,7 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
       const result = window ? await dialog.showOpenDialog(window, options) : await dialog.showOpenDialog(options);
       return result.canceled ? null : (result.filePaths[0] ?? null);
     },
+    revealPath: (p: string) => { shell.showItemInFolder(p); },
   });
   registerBuildIpc({ registrar, mainWindow: getMainWindow, browserPane: dependencies.browserPane });
   registerOmpIpc({
@@ -431,17 +434,37 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     dataDir,
     restartSidecar: async () => dependencies.onProviderMutation?.(),
   });
+  // G15: native binary picker — saves override path to disk and restarts sidecar.
+  handle(IPC.invoke.ompPickBinaryPath, async () => {
+    const owner = getMainWindow();
+    const options = { title: "Choose omp binary", properties: ["openFile" as const] };
+    const result = owner
+      ? await dialog.showOpenDialog(owner, options)
+      : await dialog.showOpenDialog(options);
+    if (result.canceled || !result.filePaths[0]) return { picked: false };
+    writeFileSync(join(dataDir, "omp-bin-override.txt"), result.filePaths[0]);
+    await dependencies.onProviderMutation?.();
+    return { picked: true, path: result.filePaths[0] };
+  });
   registerExtensionsMgmtIpc({
     registrar,
     dataDir,
     restartSidecar: async () => dependencies.onProviderMutation?.(),
   });
+  registerOmpNonRpcIpc({ registrar, dataDir, getHost, listRuntimeProviders });
+  registerHooksCommandsIpc({
+    registrar,
+    dataDir,
+    restartSidecar: async () => dependencies.onProviderMutation?.(),
+  });
+  registerMaintenanceIpc({ registrar, getSidecar });
   registerRavenIpc({
     registrar,
     dataDir,
     pane: dependencies.ravenPane,
     getMainWindow,
     sendChanged: () => sendToRenderer(IPC.event.ravenChanged, {}),
+    sendToRenderer,
   });
   registerFileBirdIpc({ registrar, dataDir, getMainWindow, sendToRenderer });
 
@@ -502,6 +525,7 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     optionalWorkspaceRoot,
     composerCommandService,
     loadComposerTemplatesCached,
+    onAgentStop: (sessionId) => dependencies.kanban?.runner.notifyWorkerStopped(sessionId),
   });
 
   registerPluginIpc({
@@ -536,9 +560,6 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     getHost,
     searchSkillMarket,
     fetchSkillMarketDocument,
-    optionalWorkspaceRoot,
-    activeUserSubagentDocuments,
-    disabledBuiltinSubagents,
     stripWinLongPrefix,
     sendToRenderer,
     logger,
@@ -592,6 +613,8 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     isDeveloperMode,
     getMainWindow,
   });
+
+  registerOmpCliIpc({ registrar, sendToRenderer });
 
 
   return async (channel: string, args: readonly unknown[] = []) => {

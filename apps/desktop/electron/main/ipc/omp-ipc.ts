@@ -39,10 +39,16 @@ import type {
   OmpWorktreeAddResult,
   OmpUserProfileGetResult,
   OmpUserProfileSetResult,
+  OmpAgentListResult,
+  OmpAgentSource,
+  OmpSessionGetTreeResult,
+  OmpSessionMessagesResult,
+  OmpSessionMessagesPageResult,
+  OmpNewSessionResult,
+  OmpSwitchSessionResult,
 } from "@pi-desktop/shared";
 import type { OmpSkillCuratorStatusResult, OmpSkillCuratorMutateResult, OmpSkillProposalListResult, OmpSkillProposalActResult, OmpSkillJourneyResult } from "@pi-desktop/shared";
-import { existsSync } from "node:fs";
-import { readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { execFile } from "node:child_process";
@@ -50,25 +56,16 @@ import { promisify } from "node:util";
 import { shell } from "electron";
 import type { AgentSidecar } from "../agent-sidecar";
 import { desktopDataDir } from "../data-paths.ts";
+import { ompAgentDir } from "../omp-agent-dir.js";
+import { resolveOmpBin, ompChildEnv, appResourcesPath } from "../omp-binary";
 import { skillPackDiscard, skillPackOpenPr, skillPackStatus } from "../skill-packs";
 import { curatorPin, curatorRestore, curatorStatus } from "../skill-curator.ts";
 import { approveProposal, getJourneyEvents, listPendingProposals, rejectProposal } from "../skill-review.ts";
+import type { OmpLspListResult, OmpLspSaveInput } from "@pi-desktop/shared";
+import { listLspServers, removeLspServer, saveLspServer } from "../omp-lsp-config";
 import type { IpcRegistrar } from "./types";
 
 const execFileP = promisify(execFile);
-
-/**
- * Resolve the omp binary path using the same priority order as the bridge:
- * OMP_BIN env → <resourcesPath>/bin/omp → "omp" on PATH.
- */
-function resolveOmpBin(): string {
-  if (process.env.OMP_BIN) return process.env.OMP_BIN;
-  const rp = process.resourcesPath ?? "";
-  for (const p of [join(rp, "bin", "omp"), join(rp, "bin", "omp.exe")]) {
-    if (existsSync(p)) return p;
-  }
-  return "omp";
-}
 
 /** Parse a skills.json; returns empty record on missing/invalid file. */
 async function readSkillsManifest(file: string): Promise<Record<string, string>> {
@@ -212,6 +209,149 @@ export async function writeUserProfile(
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
 }
+
+const PROJECT_MEMORY_MAX_CHARS = 16 * 1024; // 16 KiB — larger than USER.md
+const PROJECT_MEMORY_FILE = "MEMORY.md";
+const PROJECT_MEMORY_DIR = ".omp";
+
+/**
+ * Write project memory to `<workspaceDir>/.omp/MEMORY.md` atomically (temp+rename).
+ * Creates `.omp/` if absent. Content truncated to PROJECT_MEMORY_MAX_CHARS.
+ */
+async function writeProjectMemory(
+  workspaceDir: string,
+  text: string,
+): Promise<OmpUserProfileSetResult> {
+  const ompDir = join(workspaceDir, PROJECT_MEMORY_DIR);
+  const dest   = join(ompDir, PROJECT_MEMORY_FILE);
+  const tmp    = `${dest}.tmp.${Date.now()}`;
+  try {
+    await mkdir(ompDir, { recursive: true });
+    await writeFile(tmp, text.slice(0, PROJECT_MEMORY_MAX_CHARS), "utf8");
+    await rename(tmp, dest);
+    return { ok: true };
+  } catch (e) {
+    rm(tmp, { force: true }).catch(() => { /* ignore */ });
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+// ── Agent list (F1: effective agent list across all sources) ──────────────────
+
+/** omp's five bundled agents; descriptions from omp/packages/coding-agent/src/task/agents.ts. */
+const OMP_BUNDLED_AGENTS: ReadonlyArray<{ name: string; description: string; tools: string[]; model?: string }> = [
+  { name: "task",             description: "General-purpose subagent with full capabilities for delegated multi-step tasks", tools: [], model: "@task" },
+  { name: "sonic",            description: "Low-reasoning agent for strictly mechanical updates or data collection only", tools: [], model: "@smol" },
+  { name: "scout",            description: "MUST be used for exploratory codebase research, rapid code analysis, and broad pattern searches. Fast read-only scout returning compressed context for handoff.", tools: ["read", "find", "grep", "glob", "web_search"], model: "@smol" },
+  { name: "reviewer",         description: "Code review specialist for quality/security analysis", tools: ["read", "find", "grep", "glob", "bash", "lsp", "web_search", "ast_grep"] },
+  { name: "security-reviewer", description: "Read-only security specialist for evidence-backed repository vulnerability discovery", tools: ["read", "find", "grep", "glob", "lsp", "ast_grep"] },
+];
+
+/** Minimal YAML frontmatter parser — mirrors fcode-agents.test.mjs parseFrontmatter. */
+function parseFrontmatterFields(content: string): Record<string, unknown> | null {
+  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!match) return null;
+  const yaml = match[1]!;
+  const result: Record<string, unknown> = {};
+  let currentList: string[] | null = null;
+  for (const line of yaml.split(/\r?\n/)) {
+    const listItem = line.match(/^[ \t]+-[ \t]+(.+)$/);
+    if (listItem && currentList !== null) {
+      currentList.push(listItem[1]!.trim().replace(/^["']|["']$/g, ""));
+      continue;
+    }
+    const inlineArr = line.match(/^(\w[\w-]*):\s*\[([^\]]*)\]\s*$/);
+    if (inlineArr) {
+      currentList = null;
+      result[inlineArr[1]!] = inlineArr[2]!.split(",").map((s) => s.trim().replace(/^["']|["']$/g, "")).filter(Boolean);
+      continue;
+    }
+    const kv = line.match(/^(\w[\w-]*):\s*(.*)$/);
+    if (kv) {
+      currentList = null;
+      const val = kv[2]!.trim();
+      if (val === "") { result[kv[1]!] = []; currentList = result[kv[1]!] as string[]; }
+      else { result[kv[1]!] = val.replace(/^["']|["']$/g, ""); }
+    }
+  }
+  return result;
+}
+
+/** Read all .md agent files from a directory; returns [] when dir is absent. */
+async function readAgentDir(dir: string, source: OmpAgentSource): Promise<OmpAgentListResult["agents"]> {
+  let files: string[];
+  try { files = (await readdir(dir)).filter((f) => f.endsWith(".md")); }
+  catch { return []; }
+  const agents: OmpAgentListResult["agents"] = [];
+  for (const file of files) {
+    try {
+      const content = await readFile(join(dir, file), "utf8");
+      const fm = parseFrontmatterFields(content);
+      if (!fm) continue;
+      const name = typeof fm["name"] === "string" ? fm["name"].trim() : "";
+      if (!name) continue;
+      const description = typeof fm["description"] === "string" ? fm["description"].trim() : "";
+      const tools = Array.isArray(fm["autoloadSkills"]) ? [] :
+        Array.isArray(fm["tools"]) ? fm["tools"] as string[] : [];
+      const model = typeof fm["model"] === "string" ? fm["model"].trim() : undefined;
+      agents.push({ name, description, tools, ...(model ? { model } : {}), source });
+    } catch { /* skip unreadable files */ }
+  }
+  return agents;
+}
+
+/**
+ * Build the effective agent list across all four sources.
+ * Precedence: project > user > fcode > omp bundled.
+ * Agents with the same name from lower-priority sources are marked `shadowed`.
+ */
+export async function listEffectiveAgents(projectPath: string | null): Promise<OmpAgentListResult> {
+  const fcodeAgentsDir = join(appResourcesPath(), "fcode-agents", "agents");
+
+  const [projectAgents, userAgents, fcodeAgents] = await Promise.all([
+    projectPath ? readAgentDir(join(projectPath, ".omp", "agents"), "project") : Promise.resolve([]),
+    readAgentDir(join(ompAgentDir(), "agents"), "user"),
+    readAgentDir(fcodeAgentsDir, "fcode"),
+  ]);
+
+  const ompAgents: OmpAgentListResult["agents"] = OMP_BUNDLED_AGENTS.map((a) => ({ ...a, source: "omp" as OmpAgentSource }));
+
+  // All agents in precedence order; first occurrence of a name wins.
+  const all = [...projectAgents, ...userAgents, ...fcodeAgents, ...ompAgents];
+  const seen = new Set<string>();
+  return {
+    agents: all.map((agent) => {
+      if (seen.has(agent.name)) return { ...agent, shadowed: true };
+      seen.add(agent.name);
+      return agent;
+    }),
+  };
+}
+
+/**
+ * Add a git worktree under ~/.omp/wt/. With `create` (kanban workers) it is idempotent per branch:
+ * a live worktree already on `branch` is reused, else the worktree is added, creating the branch
+ * if missing — so a retried card resumes its own worktree instead of colliding with it.
+ */
+export async function addWorktree(repoPath: string, branch: string, create = false): Promise<OmpWorktreeAddResult> {
+  try {
+    if (create) {
+      const { stdout } = await execFileP("git", ["-C", repoPath, "worktree", "list", "--porcelain"], { timeout: 10_000 });
+      for (const block of stdout.split("\n\n")) {
+        const lines = block.split("\n");
+        const live = lines.includes(`branch refs/heads/${branch}`) && !lines.some((l) => l.startsWith("prunable"));
+        const existing = live ? lines.find((l) => l.startsWith("worktree "))?.slice(9) : undefined;
+        if (existing) return { ok: true, path: existing };
+      }
+    }
+    const wtPath = join(homedir(), ".omp", "wt", `${branch.replace(/[^a-zA-Z0-9._-]/g, "-")}-${Date.now()}`);
+    const branchExists = !create || await execFileP("git", ["-C", repoPath, "rev-parse", "--verify", "--quiet", `refs/heads/${branch}`]).then(() => true, () => false);
+    await execFileP("git", ["-C", repoPath, "worktree", "add", ...(branchExists ? [wtPath, branch] : ["-b", branch, wtPath])], { timeout: 30_000 });
+    return { ok: true, path: wtPath };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 
 /** Register all omp IPC channels. */
 export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpcDependencies): void {
@@ -372,10 +512,47 @@ export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpc
     return sidecar.call<OmpSessionBranchMessagesResult>("omp.session.branchMessages");
   });
 
+  // ── omp.session.getTree ────────────────────────────────────────────────────
+  handle(IPC.invoke.ompSessionGetTree, async () => {
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<OmpSessionGetTreeResult>("omp.session.getTree");
+  });
+
+  // ── omp.session.getMessages ────────────────────────────────────────────────
+  handle(IPC.invoke.ompSessionGetMessages, async () => {
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<OmpSessionMessagesResult>("omp.session.getMessages");
+  });
+
+  // ── omp.session.getMessagesPage ────────────────────────────────────────────
+  handle(IPC.invoke.ompSessionGetMessagesPage, async (input: { cursor?: unknown; limit?: unknown } = {}) => {
+    const sidecar = getSidecar() ?? unavailable();
+    const params: Record<string, unknown> = {};
+    if (typeof input.cursor === "string" && input.cursor) params.cursor = input.cursor;
+    if (typeof input.limit === "number" && input.limit > 0) params.limit = Math.floor(input.limit);
+    return sidecar.call<OmpSessionMessagesPageResult>("omp.session.getMessagesPage", params);
+  });
+
+  // ── omp.session.newSession ─────────────────────────────────────────────────
+  handle(IPC.invoke.ompNewSession, async (input: { parentSession?: unknown } = {}) => {
+    const sidecar = getSidecar() ?? unavailable();
+    const params: Record<string, unknown> = {};
+    if (typeof input.parentSession === "string" && input.parentSession) params.parentSession = input.parentSession;
+    return sidecar.call<OmpNewSessionResult>("omp.session.newSession", params);
+  });
+
+  // ── omp.session.switchSession ──────────────────────────────────────────────
+  handle(IPC.invoke.ompSwitchSession, async (input: { sessionPath?: unknown } = {}) => {
+    const sessionPath = typeof input?.sessionPath === "string" ? input.sessionPath.trim() : "";
+    if (!sessionPath) invalid("sessionPath required");
+    const sidecar = getSidecar() ?? unavailable();
+    return sidecar.call<OmpSwitchSessionResult>("omp.session.switchSession", { sessionPath });
+  });
+
   // ── omp.skills.installed.list ──────────────────────────────────────────────
-  // Reads ~/.omp/agent/skills.json + skills.lock.json directly — no omp RPC.
+  // Reads <agentDir>/skills.json + skills.lock.json directly — no omp RPC.
   handle(IPC.invoke.ompInstalledSkillsList, async (): Promise<OmpInstalledSkillsListResult> => {
-    const agentDir = join(homedir(), ".omp", "agent");
+    const agentDir = ompAgentDir();
     const [manifest, lock] = await Promise.all([
       readSkillsManifest(join(agentDir, "skills.json")),
       readSkillsLock(join(agentDir, "skills.lock.json")),
@@ -435,7 +612,7 @@ export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpc
   // Shells out to `omp stats --json` and returns a compact subset.
   handle(IPC.invoke.ompHistoricalStats, async (): Promise<OmpHistoricalStatsResult> => {
     const bin = resolveOmpBin();
-    const { stdout } = await execFileP(bin, ["stats", "--json"], { timeout: 30_000 });
+    const { stdout } = await execFileP(bin, ["stats", "--json"], { timeout: 30_000, env: ompChildEnv() });
     // omp stats --json emits one JSON object to stdout after syncing sessions.
     // It may also write sync progress to stderr; we ignore that.
     const raw = JSON.parse(stdout.trim()) as {
@@ -576,16 +753,7 @@ export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpc
     const branch   = typeof input?.branch   === "string" ? input.branch.trim()   : "";
     if (!repoPath) invalid("repoPath required");
     if (!branch)   invalid("branch required");
-    const wtName = `${branch.replace(/[^a-zA-Z0-9._-]/g, "-")}-${Date.now()}`;
-    const wtPath = join(homedir(), ".omp", "wt", wtName);
-    try {
-      await execFileP("git", ["-C", repoPath, "worktree", "add", wtPath, branch], {
-        timeout: 30_000,
-      });
-      return { ok: true, path: wtPath };
-    } catch (e) {
-      return { ok: false, error: e instanceof Error ? e.message : String(e) };
-    }
+    return addWorktree(repoPath, branch);
   });
 
 
@@ -712,18 +880,67 @@ export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpc
   });
 
   // ── omp.user-profile.get ──────────────────────────────────────────────────
-  // Reads ~/.omp/agent/USER.md; returns empty string when absent.
+  // Reads <agentDir>/USER.md; returns empty string when absent.
   handle(IPC.invoke.ompUserProfileGet, async (): Promise<OmpUserProfileGetResult> => {
-    const text = await readUserProfile(join(homedir(), ".omp", "agent"));
+    const text = await readUserProfile(ompAgentDir());
     return { text };
   });
 
   // ── omp.user-profile.set ──────────────────────────────────────────────────
-  // Writes ~/.omp/agent/USER.md atomically (temp+rename); caps at 1024 chars.
+  // Writes <agentDir>/USER.md atomically (temp+rename); caps at 1024 chars.
   handle(IPC.invoke.ompUserProfileSet, async (
     input: { text?: unknown } = {},
   ): Promise<OmpUserProfileSetResult> => {
     if (typeof input?.text !== "string") invalid("text (string) required");
-    return writeUserProfile(join(homedir(), ".omp", "agent"), input.text as string);
+    return writeUserProfile(ompAgentDir(), input.text as string);
+  });
+
+  // ── omp.lsp.* ─────────────────────────────────────────────────────────────
+  // Settings → LSP: built-in + user servers (~/.omp/agent/lsp.json), add/override, remove.
+  handle(IPC.invoke.ompLspList, async (): Promise<OmpLspListResult> => listLspServers());
+  handle(IPC.invoke.ompLspSave, async (input?: Partial<OmpLspSaveInput>) => {
+    if (typeof input?.name !== "string") invalid("name (string) required");
+    return saveLspServer(input as OmpLspSaveInput);
+  });
+  handle(IPC.invoke.ompLspRemove, async (input?: { name?: unknown }) => {
+    if (typeof input?.name !== "string") invalid("name (string) required");
+    return removeLspServer(input.name);
+  });
+
+  // ── omp.project-memory.get ────────────────────────────────────────────────
+  // Reads <workspace>/.omp/MEMORY.md; returns empty string when absent.
+  handle(IPC.invoke.ompProjectMemoryGet, async (
+    input: { workspacePath?: unknown } = {},
+  ): Promise<OmpUserProfileGetResult> => {
+    if (typeof input?.workspacePath !== "string" || !input.workspacePath) return { text: "" };
+    try {
+      const text = await readFile(
+        join(input.workspacePath as string, PROJECT_MEMORY_DIR, PROJECT_MEMORY_FILE),
+        "utf8",
+      );
+      return { text: text.trim() };
+    } catch {
+      return { text: "" };
+    }
+  });
+
+  // ── omp.project-memory.set ────────────────────────────────────────────────
+  // Writes <workspace>/.omp/MEMORY.md atomically; caps at 16 KiB.
+  handle(IPC.invoke.ompProjectMemorySet, async (
+    input: { workspacePath?: unknown; text?: unknown } = {},
+  ): Promise<OmpUserProfileSetResult> => {
+    if (typeof input?.workspacePath !== "string" || !input.workspacePath) invalid("workspacePath (string) required");
+    if (typeof input?.text !== "string") invalid("text (string) required");
+    return writeProjectMemory(input.workspacePath as string, input.text as string);
+  });
+
+  // ── omp.agents.list ──────────────────────────────────────────────────────
+  // Reads agent .md files from all four sources, applies precedence ordering
+  // (project > user > fcode > omp bundled), and marks shadowed entries.
+  handle(IPC.invoke.ompAgentList, async (
+    input: { projectPath?: unknown } = {},
+  ): Promise<OmpAgentListResult> => {
+    const projectPath = typeof input?.projectPath === "string" ? input.projectPath.trim() : "";
+    return listEffectiveAgents(projectPath || null);
   });
 }

@@ -65,10 +65,6 @@ test("empty home keeps the primary task surface focused", () => {
   assert.notEqual(onboardingAt, -1);
   assert.notEqual(composerAt, -1);
   assert.ok(onboardingAt < composerAt, "onboarding must precede composer in markup");
-  assert.match(
-    emptyBlock,
-    /<div className="home-scroll">[\s\S]*?<\/div>\s*<div className="home-composer-wrap">/,
-  );
   assert.doesNotMatch(emptyBlock, /empty-hero-copy/);
   assert.doesNotMatch(
     emptyBlock,
@@ -84,11 +80,18 @@ test("short windows keep the empty stack scrollable rather than overlapping", ()
 });
 
 test("empty home keeps the composer in a bottom region", () => {
+  // Structural: home-composer-wrap is flex:0 0 auto (fixed bottom, not scrollable)
   assert.match(
     styles,
-    /\.home-composer-wrap\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?padding:\s*0 24px 16px;/,
+    /\.home-composer-wrap\s*\{[\s\S]*?flex:\s*0 0 auto;/,
   );
+  // D: composer-dock-home is relative (home mode placement)
   assert.match(styles, /\.composer-dock-home\s*\{[\s\S]*?position:\s*relative;/);
+  // D.css: both home and docked have a border-top separator above the composer
+  assert.match(
+    styles,
+    /\.composer-dock-home\s*\{[\s\S]*?border-top:\s*1px solid/,
+  );
   assert.doesNotMatch(
     styles,
     /\.home-quick-actions|\.home-quick-action|\.home-suggestion-card|\.home-starters|\.home-starter-card/,
@@ -106,8 +109,16 @@ test("home and docked composers share one width envelope", () => {
   const homeStack =
     styles.match(/\.composer-dock-home \.composer-stack\s*\{[^}]*\}/)?.[0] ?? "";
   assert.match(homeComposer, /width:\s*100%/);
-  assert.match(homeComposer, /padding:\s*0 24px 16px/);
-  assert.match(dockedComposer, /padding:\s*0 24px 16px/);
+  // Behavioral: home wrap and docked dock share the same outer padding (envelope parity).
+  // Exact value not pinned — design authority updates the value, test catches divergence.
+  const homePad = homeComposer.match(/padding:\s*([^;]+)/)?.[1]?.trim() ?? "";
+  const dockedPad = dockedComposer.match(/padding:\s*([^;]+)/)?.[1]?.trim() ?? "";
+  assert.ok(homePad.length > 0, "home-composer-wrap must have a padding rule");
+  assert.strictEqual(
+    homePad,
+    dockedPad,
+    `home-composer-wrap and composer-dock-docked must share padding (got '${homePad}' vs '${dockedPad}')`,
+  );
   assert.match(
     homeStack,
     /width:\s*min\(100%,\s*var\(--chat-composer-max-width,\s*768px\)\)/,

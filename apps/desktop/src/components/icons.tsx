@@ -1,6 +1,7 @@
 import type { CSSProperties, SVGProps } from "react";
 import {
   Activity,
+  BarChart2,
   Columns,
   AppWindow,
   Archive,
@@ -21,6 +22,7 @@ import {
   ChevronRight,
   CircleAlert,
   CircleCheck,
+  CircleX,
   CircleHelp,
   ClipboardPaste,
   Clock,
@@ -35,6 +37,7 @@ import {
   EyeOff,
   FileDiff,
   FileSpreadsheet,
+  File,
   FileText,
   Folder,
   FolderOpen,
@@ -47,8 +50,10 @@ import {
   Image,
   Info,
   Keyboard,
+  Key,
   KeyRound,
   Link,
+  List,
   ListChecks,
   LogOut,
   Mic,
@@ -60,6 +65,8 @@ import {
   Moon,
   MoreHorizontal,
   Music,
+  Package,
+  Pause,
   Palette,
   PanelLeft,
   PanelRight,
@@ -76,15 +83,19 @@ import {
   RefreshCcw,
   RefreshCw,
   RotateCw,
+  RotateCcw,
   Search,
   Server,
   Settings,
   Shield,
   SlidersHorizontal,
+  Signal,
   Slash,
   Smile,
   Sparkles,
   Square,
+  SquareCheck,
+  SquarePen,
   Star,
   Sun,
   Target,
@@ -93,11 +104,15 @@ import {
   Trash2,
   TriangleAlert,
   UserRound,
+  Users,
   Undo2,
+  Upload,
   Video,
   Webhook,
   Workflow,
   Wrench,
+  Paperclip,
+  SendHorizontal,
   X,
   type LucideIcon,
   type LucideProps,
@@ -206,6 +221,9 @@ export const IconArrowUpRight = icon(ArrowUpRight);
 export const IconUndo2 = icon(Undo2);
 export const IconCloudDown = icon(CloudDownload);
 export const IconDownload = icon(Download);
+export const IconUpload = icon(Upload);
+/* D kit `ic-edit`: square with pencil, the row/detail "Edit task" glyph. */
+export const IconSquarePen = icon(SquarePen);
 export const IconImage = icon(Image);
 export const IconCamera = icon(Camera);
 /* Composer attachment chips: one glyph per file family. */
@@ -233,6 +251,16 @@ export const IconPalette = icon(Palette);
 export const IconPerson = icon(Smile);
 export const IconInfo = icon(Info);
 export const IconServer = icon(Server);
+export const IconBarChart2 = icon(BarChart2);
+/* Bench detail (D-kit bench fragment): app glyphs and one-shot command icons. */
+export const IconSignal = icon(Signal);
+export const IconUsers = icon(Users);
+export const IconKeySimple = icon(Key);
+export const IconList = icon(List);
+export const IconRotateCcw = icon(RotateCcw);
+export const IconFile = icon(File);
+/** Reload an embedded canvas (Build tab). */
+export const IconReload = icon(RefreshCw);
 export const IconSun = icon(Sun);
 export const IconMoon = icon(Moon);
 export const IconMonitor = icon(Monitor);
@@ -247,14 +275,22 @@ export const IconStar = icon(Star);
 /* Toast status glyphs (see ToastHost) */
 export const IconCircleCheck = icon(CircleCheck);
 export const IconCircleAlert = icon(CircleAlert);
+export const IconCircleX = icon(CircleX);
 export const IconTriangleAlert = icon(TriangleAlert);
 /* Password field reveal toggle (see PasswordInput). */
 export const IconEye = icon(Eye);
 export const IconEyeOff = icon(EyeOff);
 export const IconKanban = icon(Columns);
+export const IconPackage = icon(Package);
+export const IconPause = icon(Pause);
+export const IconSquareCheck = icon(SquareCheck);
 /** Raven team chat destination (nav rail + settings). */
 export const IconRaven = icon(MessagesSquare);
 /** FileBird SFTP file manager destination (nav rail). */
+/** Composer attach button (D-chat fragment). */
+export const IconPaperclip = icon(Paperclip);
+/** Composer send button (D-chat fragment). */
+export const IconSend = icon(SendHorizontal);
 export const IconFileBird = icon(FolderSync);
 
 export function IconStop({ size = 16, style, ...props }: IconProps) {

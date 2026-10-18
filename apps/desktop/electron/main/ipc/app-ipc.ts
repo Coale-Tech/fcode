@@ -1,3 +1,5 @@
+import { userInfo } from "node:os";
+
 import { app, BrowserWindow } from "electron";
 import { dirname, join, resolve } from "node:path";
 import { existsSync, statSync } from "node:fs";
@@ -93,6 +95,19 @@ export function registerAppIpc({
     if (!host) throw new Error("host unavailable");
     return host.call("app.health");
   });
+
+  handle(IPC.invoke.appGetUserInfo, async () => {
+    try {
+      const info = userInfo();
+      // gecos (Linux/macOS) may carry the full name in slot 0; narrow safely.
+      const gecosField = "gecos" in info && typeof info.gecos === "string" ? info.gecos : "";
+      const fullName = (gecosField.split(",")[0] ?? "").trim() || info.username || "";
+      return { fullName };
+    } catch {
+      return { fullName: "" };
+    }
+  });
+
 
   handle(IPC.invoke.appGetOnboarding, async () => {
     const host = getHost();

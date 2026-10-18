@@ -142,7 +142,6 @@ test("all build IPC invoke channels are registered", () => {
     IPC.invoke.buildCanvasNavigate,
     IPC.invoke.buildCanvasSetBounds,
     IPC.invoke.buildCanvasSetVisible,
-    IPC.invoke.buildCanvasGetState,
     IPC.invoke.buildCanvasAction,
     IPC.invoke.buildStartWatcher,
     IPC.invoke.buildStopWatcher,

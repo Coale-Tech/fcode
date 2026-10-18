@@ -124,16 +124,9 @@ function RenameDialog({
         aria-describedby={`${dialogId}-description`}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="session-rename-dialog-head">
-          <div className="session-rename-dialog-heading">
-            <h2 id={`${dialogId}-title`} className="session-rename-dialog-title">
-              <IconPencil size={16} aria-hidden />
-              {title}
-            </h2>
-            <p id={`${dialogId}-description`} className="session-rename-dialog-description">
-              {description}
-            </p>
-          </div>
+        <div className="dialog-head">
+          <IconPencil size={16} aria-hidden />
+          <span id={`${dialogId}-title`} className="session-rename-dialog-title-text">{title}</span>
           <TooltipButton
             type="button"
             className="session-rename-dialog-close"
@@ -146,30 +139,35 @@ function RenameDialog({
           </TooltipButton>
         </div>
         <form onSubmit={(event) => void save(event)}>
-          <label className="session-rename-dialog-label" htmlFor={inputId}>
-            {label}
-          </label>
-          <input
-            className="field-input"
-            ref={inputRef}
-            id={inputId}
-            value={draft}
-            onChange={(event) =>
-              setDraft(Array.from(event.target.value).slice(0, maxLength).join(""))
-            }
-            aria-label={label}
-            spellCheck={false}
-            autoCorrect="off"
-            autoCapitalize="off"
-            disabled={saving}
-          />
-          <div className="session-rename-dialog-meta">
-            <span>{hint}</span>
-            <span>
-              {Array.from(draft).length}/{maxLength}
-            </span>
+          <div className="dialog-body">
+            {description ? (
+              <p id={`${dialogId}-description`} className="session-rename-dialog-description">{description}</p>
+            ) : null}
+            <label className="session-rename-dialog-label" htmlFor={inputId}>
+              {label}
+            </label>
+            <input
+              className="field-input"
+              ref={inputRef}
+              id={inputId}
+              value={draft}
+              onChange={(event) =>
+                setDraft(Array.from(event.target.value).slice(0, maxLength).join(""))
+              }
+              aria-label={label}
+              spellCheck={false}
+              autoCorrect="off"
+              autoCapitalize="off"
+              disabled={saving}
+            />
+            <div className="session-rename-dialog-meta">
+              <span>{hint}</span>
+              <span>
+                {Array.from(draft).length}/{maxLength}
+              </span>
+            </div>
           </div>
-          <div className="session-rename-dialog-actions">
+          <div className="dialog-foot">
             <Button type="button" variant="ghost" disabled={saving} onClick={onClose}>
               {cancelLabel}
             </Button>

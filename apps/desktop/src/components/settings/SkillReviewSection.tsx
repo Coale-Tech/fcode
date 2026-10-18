@@ -133,37 +133,64 @@ export function SkillReviewSection() {
           </p>
           <ul className="model-provider-list">
             {proposals.map((p) => (
-              <li key={p.id} className="model-provider-row">
-                <div className="model-provider-name" style={{ flex: 1 }}>
-                  <span className="font-mono text-sm">{p.name}</span>
-                  {" "}
-                  <Badge tone="neutral">{t("settings.skillReviewPendingBadge")}</Badge>
-                  <span className="settings-row-desc" style={{ marginLeft: 8 }}>
-                    {new Date(p.stagedAt).toLocaleDateString()}
-                  </span>
-                  {p.description && (
-                    <p className="settings-row-desc" style={{ marginTop: 2, marginBottom: 0 }}>
-                      {p.description}
-                    </p>
-                  )}
+              <li key={p.id} style={{ flexDirection: "column", alignItems: "flex-start" }} className="model-provider-row">
+                <div style={{ display: "flex", width: "100%", alignItems: "center", gap: "8px" }}>
+                  <div className="model-provider-name" style={{ flex: 1 }}>
+                    <span className="font-mono text-sm">{p.name}</span>
+                    {" "}
+                    <Badge tone="neutral">{t("settings.skillReviewPendingBadge")}</Badge>
+                    <span className="settings-row-desc" style={{ marginLeft: 8 }}>
+                      {new Date(p.stagedAt).toLocaleDateString()}
+                    </span>
+                    {p.description && (
+                      <p className="settings-row-desc" style={{ marginTop: 2, marginBottom: 0 }}>
+                        {p.description}
+                      </p>
+                    )}
+                  </div>
+                  <div className="model-provider-actions">
+                    <Button
+                      size="sm"
+                      disabled={busy === p.id}
+                      onClick={() => void act(p.id, () => api.ompSkillProposalApprove(p.id))}
+                    >
+                      {t("settings.skillReviewApprove")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={busy === p.id}
+                      onClick={() => void act(p.id, () => api.ompSkillProposalReject(p.id))}
+                    >
+                      {t("settings.skillReviewReject")}
+                    </Button>
+                  </div>
                 </div>
-                <div className="model-provider-actions">
-                  <Button
-                    size="sm"
-                    disabled={busy === p.id}
-                    onClick={() => void act(p.id, () => api.ompSkillProposalApprove(p.id))}
-                  >
-                    {t("settings.skillReviewApprove")}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    disabled={busy === p.id}
-                    onClick={() => void act(p.id, () => api.ompSkillProposalReject(p.id))}
-                  >
-                    {t("settings.skillReviewReject")}
-                  </Button>
-                </div>
+                {p.body && (
+                  <details style={{ width: "100%", marginTop: "6px" }}>
+                    <summary
+                      className="settings-row-desc"
+                      style={{ cursor: "pointer", userSelect: "none" }}
+                    >
+                      {t("settings.skillReviewBodyPreview", "Preview body")}
+                    </summary>
+                    <pre
+                      style={{
+                        marginTop: "4px",
+                        padding: "8px",
+                        background: "var(--color-surface-raised, rgba(0,0,0,.05))",
+                        borderRadius: "4px",
+                        fontSize: "0.78em",
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+                        maxHeight: "320px",
+                        overflow: "auto",
+                      }}
+                    >
+                      {p.body}
+                    </pre>
+                  </details>
+                )}
               </li>
             ))}
           </ul>

@@ -27,6 +27,10 @@ export type KanbanTask = {
   projectPath: string;
   sessionId?: string;
   modelOverride?: string;
+  /** Agent name the router chose for this card; undefined = generic worker. */
+  agent?: string;
+  /** Git worktree this run was given, when it is not the first worker in projectPath. */
+  worktreePath?: string;
   blockKind?: KanbanBlockKind;
   blockReason?: string;
   result?: string;
@@ -84,4 +88,5 @@ export type KanbanSettings = {
   maxRuntimeSeconds: number;
   maxAgentCardsPerSession: number;
   maxDailySpawns: number;
+  maxWorkersPerProject: number;
 };

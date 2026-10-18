@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { loadStyles } from "./helpers/styles.mjs";
 
@@ -11,63 +10,6 @@ function pluginsSection(source) {
   return source.slice(start);
 }
 
-test("plugins page styles use design tokens in both themes", () => {
-  const section = pluginsSection(stylesSource);
-
-  // No blue-slate hardcodes / non-ds fallbacks from the old market CSS.
-  for (const bad of [
-    "#4f7cff",
-    "#2a3144",
-    "#9aa6bf",
-    "#e8eefc",
-    "#121826",
-    "#0b1020",
-    "#8df0c2",
-    "var(--accent",
-    "var(--text-primary",
-    "var(--border-subtle",
-    "var(--bg-elevated",
-    "color-mix(in srgb",
-  ]) {
-    assert.equal(section.includes(bad), false, `leftover ${bad}`);
-  }
-
-  assert.match(section, /\.plugins-segment-btn\.active\s*\{[\s\S]*?--ds-text-primary/);
-  assert.match(section, /\.plugins-header-menu\s*\{[^}]*background:\s*var\(--plugins-tile\)/);
-  assert.match(section, /\.plugins-search\s*\{[\s\S]*?--ds-text-primary/);
-  assert.match(section, /\.plugins-modal\s*\{[\s\S]*?--ds-bg-elevated-opaque/);
-  assert.match(section, /\.plugins-installed-mark\s*\{[\s\S]*?--ds-success/);
-  // The permission-review veil is a token now (issue #341): light's 32% ink sits
-  // in the light token block instead of a literal `:root[data-theme]` override,
-  // and dark reads the same token from the base rule.
-  assert.match(
-    section,
-    /\.plugins-modal-backdrop\s*\{[^}]*background:\s*var\(--ds-modal-veil\)/,
-  );
-  assert.equal((stylesSource.match(/^\s*--ds-modal-veil:/gm) ?? []).length, 2);
-  assert.doesNotMatch(stylesSource, /:root\[data-theme="light"\] \.plugins-modal-backdrop/);
-  // D296: the header, title glyph and segmented control carry tone, not rules.
-  assert.doesNotMatch(section, /\.plugins-page-header\s*\{[^}]*border-bottom/);
-  assert.match(section, /\.plugins-title-icon\s*\{[^}]*background:\s*var\(--plugins-tile-deep\)/);
-  assert.doesNotMatch(section, /\.plugins-title-icon\s*\{[^}]*border:/);
-  assert.match(section, /\.plugins-segment\s*\{[^}]*border-radius:\s*var\(--radius-full\)/);
-  assert.doesNotMatch(section, /\.plugins-segment\s*\{[^}]*(border:|box-shadow:)/);
-  assert.match(section, /\.plugins-segment-btn\.active\s*\{[^}]*box-shadow:\s*var\(--plugins-raised-shadow\)/);
-
-  assert.match(section, /\.plugins-title-icon\s*\{[\s\S]*?width:\s*24px[\s\S]*?height:\s*24px/);
-  assert.match(section, /\.plugins-title-copy \.page-title\s*\{[\s\S]*?font-size:\s*var\(--text-lg\)[\s\S]*?font-weight:\s*var\(--font-weight-medium-plus\)/);
-  assert.match(section, /\.plugins-header-menu:focus-visible\s*\{[\s\S]*?box-shadow:/);
-
-  assert.match(
-    stylesSource,
-    /\.btn-primary\s*\{[\s\S]*?background:\s*var\(--ds-accent\);[\s\S]*?color:\s*var\(--ds-bg-primary\);/,
-  );
-  assert.match(
-    stylesSource,
-    /\.btn-secondary\s*\{[\s\S]*?background:\s*var\(--ds-bg-secondary\);[\s\S]*?color:\s*var\(--ds-text-primary\);[\s\S]*?--ds-border-default/,
-  );
-});
-
 test("plugins page styles tier permission risk with semantic tokens", () => {
   const section = pluginsSection(stylesSource);
 
@@ -78,40 +20,6 @@ test("plugins page styles tier permission risk with semantic tokens", () => {
   assert.match(section, /@media \(prefers-reduced-motion: reduce\)/);
 });
 
-// D296: installed rows are separate soft tiles stacked with a gap, not one
-// hairline-separated panel. Nothing clips, so the row overflow menu can overhang
-// the tile below. AnchoredMenu owns viewport clamping for rows near the bottom.
-test("plugins installed rows are stacked tiles that let row menus overhang", () => {
-  const section = pluginsSection(stylesSource);
-
-  assert.match(section, /\.plugins-list\s*\{[^}]*display:\s*flex[^}]*gap:\s*6px/);
-  assert.doesNotMatch(section, /\.plugins-list\s*\{[^}]*overflow:\s*hidden/);
-  assert.match(section, /\.plugins-row\s*\{[^}]*border-radius:\s*var\(--radius-md-plus\)[^}]*background:\s*var\(--plugins-tile\)/);
-  assert.doesNotMatch(section, /\.plugins-row \+ \.plugins-row/);
-  assert.doesNotMatch(section, /\.plugins-row:(first|last)-child/);
-  assert.match(section, /\.plugins-menu\s*\{[\s\S]*?position:\s*fixed;/);
-  assert.doesNotMatch(section, /\.plugins-menu\.is-up/);
-});
-
-// D296: the whole page is divider-free. In-flow rules — border-top/bottom,
-// inset hairline rings — are gone from plugins.css; the only stroke left is the
-// tooltip's, a floating layer. Menu groups are separated by space, not a line.
-test("extensions page draws no in-flow dividers", async () => {
-  const pluginsCss = await readFile(new URL("../src/styles/plugins.css", import.meta.url), "utf8");
-
-  assert.doesNotMatch(pluginsCss, /border-(top|bottom):\s*1px/);
-  assert.doesNotMatch(pluginsCss, /inset 0 0 0 0\.5px/);
-  assert.doesNotMatch(pluginsCss, /\[data-tip\]|content:\s*attr\(data-tip\)/);
-  assert.match(stylesSource, /\.ui-tooltip\s*\{[\s\S]*?border:\s*1px solid/);
-  assert.match(pluginsCss, /\.plugins-menu-sep\s*\{[^}]*height:\s*6px/);
-  assert.doesNotMatch(pluginsCss, /\.plugins-menu-sep\s*\{[^}]*background/);
-  assert.match(pluginsCss, /\.plugins-sheet-cta\s*\{[^}]*border-radius/);
-  assert.doesNotMatch(pluginsCss, /\.plugins-sheet-section\s*\{[^}]*border/);
-  assert.match(pluginsCss, /\.plugins-card-foot\s*\{[^}]*padding:\s*2px 14px 12px/);
-  assert.doesNotMatch(pluginsCss, /\.plugins-card-foot\s*\{[^}]*border/);
-  assert.match(pluginsCss, /\.plugins-empty\s*\{[^}]*background:\s*var\(--plugins-tile\)/);
-  assert.match(pluginsCss, /\.plugins-market-settings\s*\{[^}]*background:\s*var\(--plugins-tile\)/);
-});
 
 test("installed rows default to a calm summary with accessible details", () => {
   const section = pluginsSection(stylesSource);

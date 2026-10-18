@@ -27,6 +27,11 @@ const SUMMARY_KEYS: Record<ToolAction, string[]> = {
   use: [
     "command",
     "cmd",
+    "method",
+    "action",
+    "title",
+    "summary",
+    "reason",
     "path",
     "file_path",
     "filePath",

@@ -15,11 +15,11 @@
   height: 100%;
   min-height: 0;
   z-index: 20;
-  /* The dock is a step lighter than the conversation pane, and that tone
-     change is its only edge (D297): no divider against the chat column.
-     `--ds-bg-dock` is a token, not a literal, so a contributed theme can move
-     the whole column (D419). */
+  /* lane T11: canvas island surface (D.css:.d-panel) */
   background: var(--ds-bg-dock);
+  border-radius: var(--d-r);
+  border: 1px solid var(--outline-elevation-1);
+  box-shadow: var(--elevation-base);
   /*
    * Animate the allocated dock width as well as its small compositor slide.
    * Transform-only feedback used to leave the flex item at full width before
@@ -129,21 +129,12 @@
 .work-panel-header {
   position: relative;
   display: flex;
-  height: var(--ds-toolbar-height);
+  height: var(--d-mini-h); /* lane T11: 32px mini-head (D.css:.d-mini-head) */
   flex: 0 0 auto;
   align-items: center;
   gap: var(--ds-work-panel-control-gap);
   background: var(--ds-bg-dock-raised);
-  /* Keep the fixed work-panel toggle in its own hit-target lane. The reserve is
-     spent from the toggle's size/inset tokens plus the header's own control
-     gap, so the last panel control ends exactly one button gap before the
-     toggle instead of behind a divider. */
-  padding: 0
-    calc(
-      var(--ds-work-panel-toggle-size) + var(--ds-work-panel-toggle-inset) +
-        var(--ds-work-panel-control-gap)
-    )
-    0 12px;
+  padding: 0 12px;
   -webkit-app-region: drag;
 }
 
@@ -1205,21 +1196,19 @@
   gap: 0;
 }
 
-/* Section label row — uppercase 11px heading, same pattern as act-s in design */
+/* Section label row — uppercase 11px heading, per D fragment .cf-act-sec */
 .activity-section-label {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  padding: 0 10px 5px;
-  color: var(--ds-text-muted);
-  font-size: var(--text-xs);
+  padding: var(--d-act-label-pt) var(--d-act-lpad) var(--d-act-label-pb); /* D: 8px top/4px bottom/10px sides */
+  color: var(--ds-text-faint); /* D: cf-act-sec color = --ink-gray-4 = --ds-text-faint */
+  font-size: var(--d-text-xs); /* D: cf-act-sec 11px */
   font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
+  letter-spacing: 0.06em;      /* D: cf-act-sec letter-spacing .06em */
 }
-
-/* ── Decision block ────────────────────────────────────────────────────────── */
 
 .activity-decision {
   margin: 0 10px;
@@ -1408,3 +1397,316 @@
 .activity-count-del {
   color: var(--ds-error);
 }
+
+/* ── Session section (TUI + Collab; ruled into Activity, no D design home) ── */
+
+.activity-session {
+  margin-top: 8px;
+  border-top: 1px solid var(--ds-border-default);
+  padding-top: 4px;
+}
+
+/* ── Activity inner sub-tab strip (design: fragment.html:459-463 .d-panel-tabs) ── */
+
+.activity-inner-tabs {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 4px var(--d-act-lpad) 0;
+  border-bottom: 1px solid var(--ds-border-default);
+}
+
+.activity-inner-tab {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px 5px;
+  border: 0;
+  background: transparent;
+  color: var(--ds-text-muted);
+  font-size: var(--d-text-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  transition: color var(--motion-duration-fast) var(--motion-ease-out);
+}
+
+.activity-inner-tab:hover {
+  color: var(--ds-text-primary);
+}
+
+.activity-inner-tab.is-active {
+  color: var(--da);
+  border-bottom-color: var(--da);
+  font-weight: var(--font-weight-semibold);
+}
+
+.activity-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 14px;
+  padding: 0 4px;
+  border-radius: 7px;
+  background: color-mix(in oklab, var(--ds-text-muted) 18%, transparent);
+  color: var(--ds-text-muted);
+  font-size: var(--d-text-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.activity-inner-tab.is-active .activity-tab-count {
+  background: color-mix(in oklab, var(--da) 18%, transparent);
+  color: var(--da);
+}
+
+.activity-tab-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Decision block — actions row (Allow / Deny buttons) ── */
+
+.activity-decision-desc {
+  font-size: var(--text-sm);
+  color: var(--ds-text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  padding: 2px 0;
+}
+
+.activity-decision-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+/* ── Todo status time badge ── */
+
+.activity-todo-time {
+  flex-shrink: 0;
+  font-size: var(--d-text-xs);
+  color: var(--ds-text-muted);
+  white-space: nowrap;
+}
+
+/* ── Recent activity event rows (design: fragment.html:495-519 .cf-event) ── */
+
+.activity-event-row {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 3px var(--d-act-lpad);
+  font-size: var(--text-sm);
+  min-width: 0;
+}
+
+.activity-event-dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--ds-border-default);
+  align-self: center;
+}
+
+.activity-event-dot.status-ok {
+  background: var(--surface-green-6);
+}
+
+.activity-event-dot.status-running {
+  background: var(--surface-amber-6);
+}
+
+.activity-event-dot.status-error {
+  background: var(--surface-red-6);
+}
+
+.activity-event-body {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ds-text-secondary);
+}
+
+.activity-event-body strong {
+  color: var(--ds-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.activity-event-time {
+  flex-shrink: 0;
+  font-size: var(--d-text-xs);
+  color: var(--ds-text-muted);
+  white-space: nowrap;
+}
+
+/* ── lane T11-r2: Direction D work-panel mini-head + 4-tab strip ── */
+
+.wp-mini-head {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  height: 32px; /* var(--d-mini-h) */
+  padding: 0 12px 0 14px;
+  gap: 4px;
+  background: var(--surface-gray-1);
+  border-bottom: 1px solid var(--outline-elevation-1);
+  -webkit-app-region: drag;
+}
+.wp-mini-title {
+  flex: 1;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--ink-gray-7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wp-mini-acts { display: flex; gap: 2px; flex-shrink: 0; }
+
+.wp-d-tabs {
+  display: flex;
+  flex-shrink: 0;
+  height: 34px;
+  align-items: stretch;
+  border-bottom: 1px solid var(--outline-elevation-1);
+  padding: 0 10px;
+  background: var(--ds-bg-dock-raised);
+  -webkit-app-region: drag;
+}
+.wp-d-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  border: none;
+  background: none;
+  color: var(--ink-gray-5);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-app-region: no-drag;
+}
+.wp-d-tab:hover { color: var(--ink-gray-9); }
+.wp-d-tab.is-active { color: var(--ink-gray-9); }
+.wp-d-tab.is-active::after {
+  position: absolute;
+  right: 2px; bottom: 0; left: 2px;
+  height: 2px;
+  background: var(--ds-accent);
+  content: "";
+  border-radius: var(--radius-round) var(--radius-round) 0 0;
+}
+.wp-d-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  background: var(--surface-accent-1);
+  color: var(--ink-accent-8);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* ── lane T11-r2: Direction D Review diff — bordered file cards, numbered diff ── */
+
+/* Summary bar (Keep all / Revert all) */
+.wp-diff-summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  font-size: 11px;
+  color: var(--ink-gray-5);
+  flex-shrink: 0;
+}
+.wp-diff-summary strong { color: var(--ink-gray-8); font-weight: 600; }
+.wp-diff-summary .diff-adds { color: var(--ds-success); font-weight: 600; }
+.wp-diff-summary .diff-dels { color: var(--ds-error); font-weight: 600; }
+.wp-diff-summary-spacer { flex: 1; }
+
+/* Bordered file card (Direction D review panel) */
+.wp-review-file {
+  border: 1px solid var(--outline-elevation-1);
+  border-radius: var(--radius-8, 8px);
+  background: var(--surface-gray-1);
+  overflow: hidden;
+  margin: 0 8px 6px;
+}
+.wp-review-file-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 8px;
+  background: var(--ds-bg-dock-raised);
+  border-bottom: 1px solid var(--outline-elevation-1);
+  font-size: 12px;
+}
+.wp-review-file-path {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+  text-align: left;
+  color: var(--ink-gray-7);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.wp-review-file-head .badge {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.wp-review-file-head .badge.badge-add { background: var(--surface-green-2); color: var(--ink-green-8); }
+.wp-review-file-head .badge.badge-del { background: var(--surface-red-2);   color: var(--ink-red-8); }
+.wp-review-file-acts { display: flex; gap: 4px; flex-shrink: 0; }
+
+/* Diff hunk with numbered gutters */
+.wp-diff-hunk {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.55;
+  overflow-x: auto;
+}
+.wp-hunk-meta {
+  background: var(--surface-blue-1, color-mix(in srgb, var(--blue-500, #3b82f6) 8%, transparent));
+  color: var(--ink-blue-6, #2563eb);
+  padding: 2px 10px;
+  font-size: 10.5px;
+  letter-spacing: .01em;
+}
+.wp-hunk-line { display: flex; overflow: hidden; }
+.wp-hunk-line .ln {
+  width: 30px;
+  text-align: right;
+  padding: 0 6px 0 4px;
+  color: var(--ink-gray-3);
+  user-select: none;
+  flex-shrink: 0;
+}
+.wp-hunk-line .sigil { width: 12px; flex-shrink: 0; }
+.wp-hunk-line .code { flex: 1; padding: 0 6px; white-space: pre; overflow: hidden; text-overflow: ellipsis; }
+.wp-hunk-line.add  { background: color-mix(in srgb, var(--green-500, #22c55e) 10%, transparent); }
+.wp-hunk-line.del  { background: color-mix(in srgb, var(--red-500, #ef4444) 10%, transparent); }
+.wp-hunk-line.add .ln    { color: var(--ink-green-7, #15803d); }
+.wp-hunk-line.del .ln    { color: var(--ink-red-7, #b91c1c); }
+.wp-hunk-line.add .sigil { color: var(--ink-green-7, #15803d); font-weight: 700; }
+.wp-hunk-line.del .sigil { color: var(--ink-red-7, #b91c1c); font-weight: 700; }
+.wp-review-file.is-collapsed .wp-diff-hunk { display: none; }

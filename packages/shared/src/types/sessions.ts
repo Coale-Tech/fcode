@@ -46,6 +46,12 @@ export type SessionSummary = {
   /** Effective image-input capability for this session's exact model. */
   supportsVision?: boolean;
   supportedThinkingLevels?: ThinkingLevel[];
+  /**
+   * True when no Fcode provider is resolved for this session and the omp sidecar
+   * will handle prompts using its own credentials. Set by the main process in
+   * enrichSession; absent for sessions that have a configured Fcode provider.
+   */
+  ompFallbackReady?: boolean;
   updatedAt: string;
   createdAt: string;
 };

@@ -49,29 +49,6 @@ test("the caret becomes a pointer target beside the copy control", () => {
   assert.match(styles, /\.tool-row-caret\.is-toggle \{[^}]*width: 20px/);
 });
 
-test("a run row states what the command did, not what the call did", () => {
-  assert.match(transcript, /className=\{`tool-row-state \$\{statusTone\}`\}/);
-  // The outcome comes from the shell's exit code first (D227), so a command
-  // that exits 1 inside a call that came back fine still reads as failed.
-  assert.match(transcript, /const run = action === "run" \? runOutcome\(message\) : null/);
-  assert.match(transcript, /run === "running" \|\| \(!run && status === "running"\)\s*\?\s*"is-running"/);
-  assert.match(transcript, /: "is-done"/);
-  assert.match(styles, /\.tool-row-state\.is-done \.tool-row-state-dot \{\s*background: var\(--ds-success\)/);
-  assert.match(styles, /\.tool-row-state\.is-error \.tool-row-state-dot \{\s*background: var\(--ds-error\)/);
-  // A row with nothing to claim says nothing rather than claiming success, and
-  // hands the announcement back to the hidden live region.
-  assert.match(transcript, /\{runHead && statusLabel \? \(/);
-  assert.match(transcript, /\{runHead && statusLabel \? null : \(\s*<span className="sr-only" role="status"/);
-  assert.match(
-    styles,
-    /\.tool-row-state\.is-running \.tool-row-state-dot \{[^}]*animation: tool-row-state-pulse/,
-  );
-  assert.match(
-    styles,
-    /@media \(prefers-reduced-motion: reduce\) \{\s*\.tool-row-state\.is-running \.tool-row-state-dot \{\s*animation: none;/,
-  );
-});
-
 test("the body is the output, with no card around it", () => {
   assert.match(transcript, /<ToolDetailBlocks blocks=\{blocks\} plain=\{runHead\} \/>/);
   // No heading, no frame — but the channel keeps a name, so stderr is not told

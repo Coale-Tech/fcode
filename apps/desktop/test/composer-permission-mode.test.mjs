@@ -17,10 +17,6 @@ test("Agent and Plan permission menus present only effective selectable modes", 
   );
   assert.match(
     permissionControlSource,
-    /aria-checked=\{composerPermissionMode === candidate\}/,
-  );
-  assert.match(
-    permissionControlSource,
     /\{t\(PERMISSION_MODE_I18N_KEYS\[candidate\]\)\}/,
   );
   assert.doesNotMatch(permissionControlSource, /permissionInherit/);

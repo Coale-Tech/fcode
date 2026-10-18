@@ -31,10 +31,14 @@
  * aria-live so screen-reader users know they entered a web page.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { IPC, type Result } from "@pi-desktop/shared";
 import { buildChecks, checksFor, failing } from "../lib/build-checks";
 import { useAppStore } from "../stores/app-store";
-import { Button } from "../components/ui";
+import { Button, SegmentedControl } from "../components/ui";
+import { IconMore, IconReview, IconTriangleAlert } from "../components/icons";
+import { ContextMenu, useContextMenu } from "../components/ContextMenu";
+import { api } from "../lib/api";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -59,6 +63,7 @@ async function invoke<T>(channel: string, args?: unknown): Promise<T> {
 export function BuildPage() {
   const [canvas, setCanvas] = useState<Canvas>("studio");
   const setPage = useAppStore((s) => s.setPage);
+  const viewedBenchPath = useAppStore((s) => s.viewedBenchPath);
 
   // Bench status (polled every 2s)
   const [benchStatus, setBenchStatus] = useState<BenchStatus>("stopped");
@@ -104,6 +109,18 @@ export function BuildPage() {
     let cancelled = false;
     const poll = async () => {
       if (cancelled) return;
+      // Capture-rig override: mirrors the same pattern as BenchPage/use-bench-context.
+      if (window.__PI_CAPTURE__) {
+        const override = window.__PI_BENCH_OVERRIDE__;
+        if (override !== undefined && override !== null) {
+          if (!cancelled) {
+            setBenchStatus(override.status as BenchStatus);
+            setBenchPath(override.benchPath);
+            setSite(override.site);
+          }
+          return;
+        }
+      }
       try {
         const s = await invoke<{ status: BenchStatus; benchPath: string | null; site: string | null }>(IPC.invoke.benchStatus);
         if (!cancelled) {
@@ -113,11 +130,14 @@ export function BuildPage() {
         }
       } catch { /* ignore */ }
     };
+    const onBenchUpdate = () => { void poll(); };
+    document.addEventListener("pi:bench-update", onBenchUpdate);
     poll();
     const id = setInterval(poll, 2_000);
     return () => {
       cancelled = true;
       clearInterval(id);
+      document.removeEventListener("pi:bench-update", onBenchUpdate);
     };
   }, []);
 
@@ -126,6 +146,14 @@ export function BuildPage() {
   const loadApps = useCallback(async () => {
     setListAppsStatus("loading");
     setListAppsError(null);
+    // Capture-rig: seed Studio + Builder as installed so the sidebar shows ● green dots.
+    if (window.__PI_CAPTURE__) {
+      setInstalledApps(["studio", "builder", "frappe", "erpnext", "hrms", "raven"]);
+      setWebserverPort(8000);
+      setBuilderPath("builder");
+      setListAppsStatus("loaded");
+      return;
+    }
     try {
       const data = await invoke<{
         apps: string[];
@@ -149,18 +177,36 @@ export function BuildPage() {
   }, []);
 
   useEffect(() => {
+    const pathForDetail = benchPath ?? viewedBenchPath;
     if (benchStatus === "running") {
       void loadApps();
+    } else if (pathForDetail) {
+      // Bench stopped but known: read app names from disk so the sidebar shows real apps.
+      invoke<{ apps: Array<{ name: string; version: string }> }>(IPC.invoke.benchDetail, { benchPath: pathForDetail })
+        .then(({ apps }) => {
+          setInstalledApps(apps.map((a) => a.name));
+          setListAppsStatus("loaded");
+        })
+        .catch(() => {
+          setInstalledApps([]);
+          setListAppsStatus("loading");
+        });
     } else {
       setListAppsStatus("loading");
       setInstalledApps([]);
     }
-  }, [benchStatus, loadApps]);
+  }, [benchStatus, benchPath, viewedBenchPath, loadApps]);
 
   // ── Studio preconditions ─────────────────────────────────────────────────
 
   useEffect(() => {
     if (benchStatus !== "running" || !installedApps.includes("studio")) return;
+    // Capture-rig: seed dev mode = false (shows "developer_mode is off" banner like reference).
+    if (window.__PI_CAPTURE__) {
+      setDeveloperMode(false);
+      setWatchdogOk(true);
+      return;
+    }
     // Check developer_mode and watchdog in parallel
     void invoke<{ developerMode: boolean }>(IPC.invoke.buildCheckDeveloperMode)
       .then((r) => setDeveloperMode(r.developerMode))
@@ -178,8 +224,9 @@ export function BuildPage() {
       : `http://localhost:${webserverPort}/${builderPath}`
     : null;
 
-  // Acquire canvas and set initial bounds on mount
+  // Acquire canvas and set initial bounds on mount (skip in capture mode — no live canvas).
   useEffect(() => {
+    if (window.__PI_CAPTURE__) return;
     void invoke(IPC.invoke.buildCanvasAcquire).then(() => setCanvasOwned(true));
     return () => {
       void invoke(IPC.invoke.buildCanvasRelease);
@@ -285,11 +332,18 @@ export function BuildPage() {
       installedApps.includes("studio");
 
     if (shouldWatch) {
+      // Capture mode: seed watcher as running from __PI_CAPTURE_BUILD_WATCHER__
+      if (window.__PI_CAPTURE__) {
+        const watcher = window.__PI_CAPTURE_BUILD_WATCHER__;
+        setWatcherStatus("running");
+        setWatcherLastImport(watcher?.lastImport ?? new Date().toLocaleTimeString());
+        return;
+      }
       setWatcherStatus("starting");
       void invoke(IPC.invoke.buildStartWatcher).catch(() => setWatcherStatus("failed"));
     } else {
       setWatcherStatus("stopped");
-      void invoke(IPC.invoke.buildStopWatcher);
+      if (!window.__PI_CAPTURE__) void invoke(IPC.invoke.buildStopWatcher);
     }
     return () => {
       if (canvas === "studio") void invoke(IPC.invoke.buildStopWatcher);
@@ -378,9 +432,13 @@ export function BuildPage() {
   const checks = checksFor(canvas, allChecks);
   const problems = failing(checks);
   const firstProblem = problems[0];
-  const showBanner = firstProblem !== undefined && !dismissed.includes(firstProblem.key);
+  // Bench-down is communicated through the canvas empty-state overlay (Start bench CTA).
+  // Suppressing the "bench" key banner avoids a redundant red banner in stopped state.
+  const showBanner = firstProblem !== undefined && !dismissed.includes(firstProblem.key) && firstProblem.key !== "bench";
   const benchDown = allChecks[0].state === "fail";
-  const benchName = benchPath?.split(/[\\/]/).filter(Boolean).pop() ?? null;
+  // Use supervisor benchPath when running; fall back to last-viewed bench from store.
+  const effectiveBenchPath = benchPath ?? viewedBenchPath;
+  const benchName = effectiveBenchPath?.split(/[\\/]/).filter(Boolean).pop() ?? null;
   const problemKeys = problems.map((p) => p.key).join(",");
   useEffect(() => {
     setDismissed((d) => d.filter((k) => problemKeys.split(",").includes(k)));
@@ -397,6 +455,63 @@ export function BuildPage() {
     void invoke(IPC.invoke.buildCanvasAction, { action: "reload" });
   };
 
+  const { contextMenu, openContextMenu, closeContextMenu } = useContextMenu();
+
+  const openBenchOptions = (e: React.MouseEvent<HTMLElement>) => {
+    openContextMenu(e, {
+      label: "Bench options",
+      items: [
+        {
+          id: "go-bench",
+          label: "Open in Bench tab",
+          onSelect: () => goBench(),
+        },
+        ...(effectiveBenchPath
+          ? [
+              {
+                id: "show-finder",
+                label: "Show in Finder",
+                onSelect: () => void api.benchReveal(effectiveBenchPath),
+              },
+              {
+                id: "copy-path",
+                label: "Copy bench path",
+                onSelect: () => void navigator.clipboard.writeText(effectiveBenchPath),
+              },
+            ]
+          : []),
+      ],
+    });
+  };
+
+  const openMoreActions = (e: React.MouseEvent<HTMLElement>) => {
+    openContextMenu(e, {
+      label: "More actions",
+      items: [
+        {
+          id: "reload",
+          label: "Reload canvas",
+          disabled: benchStatus !== "running",
+          onSelect: () => handleReload(),
+        },
+        ...(effectiveBenchPath
+          ? [
+              {
+                id: "show-finder",
+                label: "Show in Finder",
+                onSelect: () => void api.benchReveal(effectiveBenchPath),
+              },
+              {
+                id: "copy-path",
+                label: "Copy bench path",
+                onSelect: () => void navigator.clipboard.writeText(effectiveBenchPath),
+              },
+            ]
+          : []),
+      ],
+    });
+  };
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   const benchBadge = BENCH_BADGES[benchStatus];
@@ -406,92 +521,142 @@ export function BuildPage() {
 
   return (
     <main className="wb-page build-page" aria-label="Build">
-      {/* Context sidebar: the apps installed on the supervised bench */}
+      {/* Direction D: Left sidebar — bench hero card + Studio Apps / Other Apps list */}
       <aside className="context-sidebar">
-        <div className="wb-sidebar-nav">
-          {listAppsStatus === "loaded" ? (
-            <ul className="wb-list">
-              {(["studio", "builder"] as const).map((app) => (
-                <li key={app} className="wb-row is-static">
-                  <span className="wb-row-top">
-                    <span className={`wb-dot wb-dot-${installedApps.includes(app) ? "green" : "gray"}`} aria-hidden="true" />
-                    <span className="wb-row-name">{app}</span>
-                    {!installedApps.includes(app) && <span className="wb-muted">not installed</span>}
-                  </span>
-                </li>
-              ))}
+        {/* Bench hero card */}
+        <div className="wb-panel d-panel" style={{ flex: "none" }}>
+          <div className="d-mini-head">
+            <span className="d-mini-title wb-truncate">{benchName ?? "No bench"}</span>
+            <div className="d-mini-act">
+              <button type="button" className="icon-btn icon-btn-square" title="Bench options" aria-label="Bench options" onClick={openBenchOptions}>
+                <IconMore size={12} aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+          <div className="wb-build-hero-body">
+            <div className="wb-build-hero-row">
+              <span className={`bf-dot ${benchBadge.hue === "green" ? "g" : benchBadge.hue === "amber" ? "am" : "gr"}`} aria-hidden="true" />
+              <span className="wb-build-hero-name">{site ?? benchName ?? "—"}</span>
+              <span className={`d-pill ${benchBadge.hue === "green" ? "green" : benchBadge.hue === "amber" ? "amber" : "gray"}`} style={{ fontSize: 10, height: 16, padding: "0 5px", flexShrink: 0 }}>
+                <span className="d-pill-dot" />
+                {benchBadge.label}
+              </span>
+            </div>
+            <div className="wb-build-meta">
+              {benchStatus === "running" && (
+                <span className="wb-build-meta-row">
+                  <span aria-hidden="true" style={{ fontSize: 10 }}>↕</span>
+                  Port :{webserverPort ?? 8000}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* App list: Studio Apps + Other Apps */}
+        <div className="wb-panel d-panel" style={{ flex: "none", overflow: "hidden" }}>
+          <div className="wb-app-section">Studio Apps</div>
+          {(["studio", "builder"] as const).map((app) => {
+            const installed = installedApps.includes(app);
+            return (
+              <button
+                key={app}
+                type="button"
+                className={`wb-app-row${canvas === app && installed ? " is-selected" : ""}${!installed ? " is-muted" : ""}`}
+                onClick={() => { if (installed) setCanvas(app as Canvas); }}
+                disabled={!installed || listAppsStatus !== "loaded"}
+                title={!installed ? `${app} not installed` : undefined}
+              >
+                <span className={`wb-dot wb-dot-${installed ? "green" : "gray"}`} aria-hidden="true" />
+                {app}
+                {!installed && <span className="wb-muted" style={{ marginLeft: "auto", fontSize: 11 }}>not installed</span>}
+              </button>
+            );
+          })}
+          {otherApps.length > 0 && (
+            <>
+              <div className="wb-app-section is-sep">Other Apps</div>
               {otherApps.map((app) => (
-                <li key={app} className="wb-row is-static build-app-other">
-                  <span className="wb-row-name wb-muted">{app}</span>
-                </li>
+                <div key={app} className="wb-app-row is-muted">
+                  <span className="wb-dot wb-dot-gray" aria-hidden="true" />
+                  {app}
+                </div>
               ))}
-            </ul>
-          ) : (
-            <p className="wb-sidebar-note">
-              {benchStatus !== "running" ? "Bench not running" : listAppsStatus === "error" ? "Could not read installed apps." : "Checking installed apps…"}
+            </>
+          )}
+          {listAppsStatus === "loading" && (
+            <p className="wb-sidebar-note" style={{ padding: "8px 10px", fontSize: 11, color: "var(--ink-gray-5)" }}>
+              {benchStatus !== "running" ? "Bench not running" : "Checking installed apps…"}
+            </p>
+          )}
+          {listAppsStatus === "error" && (
+            <p className="wb-sidebar-note" style={{ padding: "8px 10px", fontSize: 11, color: "var(--ink-red-8)" }}>
+              Could not read installed apps.
             </p>
           )}
         </div>
       </aside>
 
       <section className="island">
-        {/* Header: bench context + the one action that fits the current state */}
-        <div className="build-hd">
-          <span className="build-bench" title={benchPath ?? undefined}>{benchName ?? "No bench"}</span>
-          {site && <span className="wb-note wb-muted">on {site}</span>}
-          {benchStatus === "running" && listAppsStatus === "loaded" && (
-            <span className="wb-note wb-muted">:{webserverPort}</span>
+        {/* Direction D: "Build" title header — d-page-head */}
+        <div className="d-page-head">
+          <span className="d-page-title">Build</span>
+          {site && benchStatus === "running" && (
+            <span style={{ fontSize: 11, color: "var(--ink-gray-5)" }}>{site} · :{webserverPort ?? 8000}</span>
           )}
-          <span className={`wb-badge wb-badge-${benchBadge.hue}`}>
-            <span className={`wb-dot wb-dot-${benchBadge.hue}`} aria-hidden="true" />
+          <span className={`d-pill ${benchBadge.hue === "green" ? "green" : benchBadge.hue === "amber" ? "amber" : "gray"}`}>
+            <span className="d-pill-dot" />
             {benchBadge.label}
           </span>
-          <span className="wb-spacer" />
-          {benchDown ? (
-            <Button variant="primary" size="sm" onClick={goBench}>
-              Start bench
-            </Button>
-          ) : problems.length > 0 ? (
-            <Button variant="primary" size="sm" onClick={() => setDismissed([])}>
-              Fix {problems.length} issue{problems.length === 1 ? "" : "s"}
-            </Button>
-          ) : canvas === "builder" ? (
-            <Button
-              variant="primary"
-              size="sm"
-              disabled={syncStatus === "loading" || !builderInstalled || benchStatus !== "running"}
-              onClick={() => void doSync()}
-              aria-label="Sync Builder files to site database"
-            >
-              {syncStatus === "loading" ? "Syncing…" : "Sync files → site"}
-            </Button>
-          ) : null}
-        </div>
-
-        {/* Studio / Builder underline tabs */}
-        <div className="wb-tabs">
-          <div role="group" aria-label="Canvas" className="wb-tab-group">
-            <button
-              type="button"
-              className={`wb-tab${canvas === "studio" ? " is-active" : ""}${!studioInstalled && listAppsStatus === "loaded" ? " is-dimmed" : ""}`}
-              aria-pressed={canvas === "studio"}
-              disabled={listAppsStatus === "loading"}
-              onClick={() => setCanvas("studio")}
-              title={!studioInstalled && listAppsStatus === "loaded" ? "Studio not installed" : undefined}
-            >
-              Studio
-            </button>
-            <button
-              type="button"
-              className={`wb-tab${canvas === "builder" ? " is-active" : ""}${!builderInstalled && listAppsStatus === "loaded" ? " is-dimmed" : ""}`}
-              aria-pressed={canvas === "builder"}
-              disabled={listAppsStatus === "loading"}
-              onClick={() => setCanvas("builder")}
-              title={!builderInstalled && listAppsStatus === "loaded" ? "Builder not installed" : undefined}
-            >
-              Builder
+          <div className="d-page-head-actions">
+            {benchDown ? (
+              <Button variant="primary" size="sm" onClick={goBench}>
+                Start bench
+              </Button>
+            ) : problems.length > 0 ? (
+              <Button variant="primary" size="sm" onClick={() => setDismissed([])}>
+                Fix {problems.length} issue{problems.length === 1 ? "" : "s"}
+              </Button>
+            ) : canvas === "builder" ? (
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={syncStatus === "loading" || !builderInstalled || benchStatus !== "running"}
+                onClick={() => void doSync()}
+                aria-label="Sync Builder files to site database"
+              >
+                {syncStatus === "loading" ? "Syncing…" : "Sync files → site"}
+              </Button>
+            ) : null}
+            <button type="button" className="icon-btn icon-btn-square" title="More actions" aria-label="More actions" onClick={openMoreActions}>
+              <IconMore size={13} aria-hidden="true" />
             </button>
           </div>
+        </div>
+
+        {/* Direction D: SegmentedControl (Studio | Builder) + Reload */}
+        <div className="wb-tabs">
+          <SegmentedControl
+            value={canvas}
+            onChange={(v) => setCanvas(v as Canvas)}
+            options={[
+              {
+                value: "studio",
+                label: "Studio",
+                id: "canvas-tab-studio",
+                controls: "canvas-region",
+              },
+              {
+                value: "builder",
+                label: "Builder",
+                id: "canvas-tab-builder",
+                controls: "canvas-region",
+              },
+            ]}
+            label="Canvas"
+            role="tablist"
+            disabled={listAppsStatus === "loading"}
+          />
           <span className="wb-spacer" />
 
           {/* Agent is actively driving the shared canvas (E13) */}
@@ -506,11 +671,7 @@ export function BuildPage() {
             <span className="wb-note wb-text-amber" aria-live="polite">
               Still loading — the site may not be running.{" "}
               {benchStatus !== "running" && (
-                <button
-                  type="button"
-                  className="wb-link-btn"
-                  onClick={() => setPage("bench")}
-                >
+                <button type="button" className="wb-link-btn" onClick={() => setPage("bench")}>
                   Start bench
                 </button>
               )}
@@ -529,21 +690,24 @@ export function BuildPage() {
             onClick={handleReload}
             aria-label="Reload canvas"
           >
-            ⟳ Reload
+            <IconReview size={12} aria-hidden="true" /> Reload
           </Button>
         </div>
 
-        {/* Problem banner: the first failing check, with its fix */}
+        {/* Problem banner: framed inset block per design .d-banner */}
         {showBanner && (
           <div className={`build-banner ${firstProblem.key === "bench" ? "is-red" : "is-amber"}`} role="alert">
-            <strong>{firstProblem.problem}</strong>
+            <IconTriangleAlert size={14} aria-hidden="true" style={{ flexShrink: 0 }} />
+            <span><strong>{firstProblem.problem}</strong></span>
             <code className="build-banner-cmd">{firstProblem.remedy}</code>
-            <Button variant="ghost" size="sm" onClick={() => void copyRemedy(firstProblem.remedy)}>
-              {copied ? "Copied" : "Copy"}
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setDismissed((d) => [...d, firstProblem.key])}>
-              Dismiss
-            </Button>
+            <div style={{ marginLeft: "auto", display: "flex", gap: 4, flexShrink: 0 }}>
+              <Button variant="ghost" size="sm" onClick={() => void copyRemedy(firstProblem.remedy)}>
+                {copied ? "Copied" : "Copy"}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setDismissed((d) => [...d, firstProblem.key])}>
+                Dismiss
+              </Button>
+            </div>
           </div>
         )}
 
@@ -571,6 +735,7 @@ export function BuildPage() {
             builderInstalled={builderInstalled}
             syncDimmed={syncStatus === "loading"}
             onRetryApps={() => void loadApps()}
+            onGoBench={goBench}
           />
         </div>
 
@@ -611,7 +776,12 @@ export function BuildPage() {
               {checks.map((c) => (
                 <li key={c.key} className={`build-check is-${c.state}`}>
                   <span
-                    className={`wb-dot wb-dot-${c.state === "ok" ? "green" : c.state === "fail" ? "red" : "gray"}`}
+                    className={`wb-dot wb-dot-${
+                      c.state === "ok" ? "green"
+                      : c.state === "fail" && (c.key === "bench" || c.key === "studio") ? "red"
+                      : c.state === "fail" ? "amber"
+                      : "gray"
+                    }`}
                     aria-hidden="true"
                   />
                   {c.short}
@@ -633,6 +803,7 @@ export function BuildPage() {
           )}
         </div>
       </section>
+      <ContextMenu state={contextMenu} onClose={closeContextMenu} />
     </main>
   );
 }
@@ -648,6 +819,7 @@ function CanvasOverlay({
   builderInstalled,
   syncDimmed,
   onRetryApps,
+  onGoBench,
 }: {
   canvas: Canvas;
   benchStatus: BenchStatus;
@@ -657,15 +829,31 @@ function CanvasOverlay({
   builderInstalled: boolean;
   syncDimmed: boolean;
   onRetryApps: () => void;
+  /** Navigate to bench page so user can start the bench. */
+  onGoBench: () => void;
 }) {
-  // Bench not running → the header action and banner carry the CTA
+  const { t } = useTranslation();
+  // Bench not running → Direction D: icon + help text + Start bench CTA
   if (benchStatus !== "running") {
     return (
       <div className="wb-overlay">
-        <p className="wb-empty-title">Bench not running</p>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--ink-gray-3)" strokeWidth="1.5" aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <path d="m10 8 6 4-6 4V8z"/>
+        </svg>
+        <p className="wb-empty-title" style={{ marginTop: 8 }}>
+          {t("build.benchNotRunning")}
+        </p>
+        <p className="wb-muted" style={{ fontSize: 13, maxWidth: 280, textAlign: "center" }}>
+          {t("build.benchNotRunningDesc")}
+        </p>
+        <Button variant="primary" size="sm" onClick={onGoBench} style={{ marginTop: 12 }}>
+          Start bench
+        </Button>
       </div>
     );
   }
+
 
   // list-apps loading
   if (listAppsStatus === "loading") {

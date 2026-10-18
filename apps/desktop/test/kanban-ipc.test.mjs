@@ -58,7 +58,7 @@ test("kanban event channel is in IPC.event", () => {
 test("all kanban channels exist in IPC.invoke", () => {
   const expectedKeys = [
     "kanbanList", "kanbanCreate", "kanbanMove", "kanbanLink",
-    "kanbanComment", "kanbanArchive", "kanbanListRuns",
+    "kanbanComment", "kanbanArchive",
     "kanbanSettingsGet", "kanbanSettingsSet", "kanbanSetPaused", "kanbanNudge",
   ];
   for (const key of expectedKeys) {

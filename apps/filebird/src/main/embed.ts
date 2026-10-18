@@ -35,6 +35,8 @@ export interface FileBirdHost {
   send: (channel: string, payload: unknown) => void
   setTerminalFocus: (focused: boolean) => void
   pickPrivateKey: () => Promise<string | null>
+  /** Called when the SFTP connection state visible in Fcode's header pill changes. */
+  onStatusChange?: (status: 'connected' | 'idle') => void
   /** Pages allowed to call FileBird's IPC. An embedding host shares ipcMain with other pages; the standalone app omits it. */
   isTrustedSender?: (sender: WebContents) => boolean
 }
@@ -69,6 +71,7 @@ export function installFileBird(host: FileBirdHost): FileBird {
       // A terminal on a connection that has gone cannot carry on.
       terminals?.closeForConnection(event.connectionId)
       host.send(IPC_EVENTS.SFTP_CONNECTION_CLOSED, event)
+      host.onStatusChange?.('idle')
     }
   })
   registerSftpIpc(connections, {
@@ -96,7 +99,7 @@ export function installFileBird(host: FileBirdHost): FileBird {
     new SshConfigImporter({ home: host.home, localUser: userInfo().username, localHost: hostname() }),
     profiles
   )
-  registerConnectionsIpc({ profiles, imports, pickPrivateKey: host.pickPrivateKey })
+  registerConnectionsIpc({ profiles, imports, pickPrivateKey: host.pickPrivateKey, onConnected: () => host.onStatusChange?.('connected') })
 
   transfers = new TransferQueue({
     connections: {

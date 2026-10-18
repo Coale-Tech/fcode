@@ -1,7 +1,7 @@
 /** omp settings groups (task/eval/browser/collab) IPC: get/set persisted host-side values. */
 import { IPC } from "@pi-desktop/shared";
-import type { OmpSettingsValues } from "@pi-desktop/shared";
-import { readOmpSettings, validateOmpSettings, writeOmpSettings } from "../omp-settings-config";
+import type { OmpSettingDescriptor, OmpSettingsValues } from "@pi-desktop/shared";
+import { loadManifest, readOmpSettings, validateOmpSettings, writeOmpSettings } from "../omp-settings-config";
 import type { IpcRegistrar } from "./types";
 
 export type OmpSettingsIpcDependencies = {
@@ -24,4 +24,6 @@ export function registerOmpSettingsIpc({ registrar, dataDir, restartSidecar }: O
     await restartSidecar();
     return merged;
   });
+
+  handle(IPC.invoke.ompSettingsManifest, async (): Promise<OmpSettingDescriptor[]> => loadManifest());
 }

@@ -3,7 +3,7 @@ import type { TFunction } from "i18next";
 import type { GlobalPermissionMode, Mode } from "@pi-desktop/shared";
 import { AnchoredMenu } from "../../../components/settings/AnchoredMenu";
 import { TooltipButton } from "../../../components/ui";
-import { IconCheck, IconChevronDown } from "../../../components/icons";
+import { IconCheck, IconChevronDown, IconShield, IconPencil, IconWrench } from "../../../components/icons";
 import { PERMISSION_MODE_I18N_KEYS } from "../../../lib/permission-mode-labels";
 
 /** Controlled permission UI shared by conversations and task drafts. */
@@ -63,25 +63,38 @@ export function ComposerPermissionPicker({t, mode, composerPermissionMode,
             </TooltipButton>
           )}
         >
-          {(["ask", "accept-edits", "auto"] as const).map((candidate) => (
-            <button
-              key={candidate}
-              type="button"
-              role="menuitemradio"
-              aria-checked={composerPermissionMode === candidate}
-              disabled={controlsBlocked}
-              className={`composer-plus-item ${composerPermissionMode === candidate ? "active" : ""}`}
-              onClick={async () => {
-                setPermissionOpen(false);
-                await onSelect(candidate);
-              }}
-            >
-              <span className="flex-1 text-left">
-                {t(PERMISSION_MODE_I18N_KEYS[candidate])}
-              </span>
-              {composerPermissionMode === candidate ? <IconCheck size={13} /> : null}
-            </button>
-          ))}
+          {(["ask", "accept-edits", "auto"] as const).map((candidate) => {
+            const isActive = composerPermissionMode === candidate;
+            /* D: state-perm-menu.html — icon tile, name, description, check */
+            const Icon = candidate === "ask" ? IconShield : candidate === "accept-edits" ? IconPencil : IconWrench;
+            const descKey =
+              candidate === "ask" ? "chat.permissionAskDesc" :
+              candidate === "accept-edits" ? "chat.permissionAcceptEditsDesc" :
+              "chat.permissionAutoDesc";
+            return (
+              <button
+                key={candidate}
+                type="button"
+                role="menuitemradio"
+                aria-checked={isActive}
+                disabled={controlsBlocked}
+                className={`composer-plus-item composer-perm-item${isActive ? " active" : ""}`}
+                onClick={async () => {
+                  setPermissionOpen(false);
+                  await onSelect(candidate);
+                }}
+              >
+                <span className={`composer-perm-icon${isActive ? " is-active" : ""}`} aria-hidden>
+                  <Icon size={12} />
+                </span>
+                <span className="composer-perm-label">
+                  <span className="composer-perm-name">{t(PERMISSION_MODE_I18N_KEYS[candidate])}</span>
+                  <span className="composer-perm-desc">{t(descKey)}</span>
+                </span>
+                {isActive ? <IconCheck size={13} className="composer-perm-check" aria-hidden /> : null}
+              </button>
+            );
+          })}
         </AnchoredMenu>
   );
 }

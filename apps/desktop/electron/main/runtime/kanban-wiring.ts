@@ -1,8 +1,8 @@
 import { IPC } from "@pi-desktop/shared";
-import type { KanbanBoard } from "./kanban-core";
+import { loadBoard, saveBoard, type KanbanBoard } from "@pi-desktop/host-runtime";
 import { createKanbanRunner } from "./kanban-runner";
+import type { RoutableAgent } from "./kanban-router";
 import { readKanbanSettings } from "./kanban-settings";
-import { loadBoard, saveBoard } from "./kanban-store";
 
 type KanbanLabels = {
   kanban: { notify: { blocked: string; done: string; dailyCap: string } };
@@ -18,6 +18,8 @@ export function createKanbanWiring(deps: {
   sendToRenderer: (channel: string, payload: unknown) => void;
   getLabels: () => KanbanLabels;
   logError: (error: unknown) => void;
+  listAgents?: () => Promise<RoutableAgent[]>;
+  createWorktree?: (repoPath: string, branch: string) => Promise<{ ok: boolean; path?: string; error?: string }>;
 }) {
   const { dataDir, getHost, sendToRenderer, getLabels, logError } = deps;
 
@@ -116,6 +118,8 @@ export function createKanbanWiring(deps: {
     },
     sendChanged: () => sendToRenderer(IPC.event.kanbanChanged, {}),
     report: logError,
+    listAgents: deps.listAgents,
+    createWorktree: deps.createWorktree,
     onBoardMutation: emitKanbanMutation,
   });
 

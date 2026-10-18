@@ -445,16 +445,64 @@ export const ToolRow = memo(function ToolRow({
             >
               <ToolActionIcon action={action} />
             </span>
-            <span
-              className={`tool-row-name ${status === "running" ? "running" : ""}`}
-            >
-              {lifecycle
-                ? t(
-                    (status === "running"
-                      ? LIFECYCLE_RUNNING_KEYS
-                      : LIFECYCLE_LABEL_KEYS)[lifecycle],
-                  )
-                : actionLabel}
+            {/* F05: tool-row-label stacks name and path in a column (D: .d-tool-info) */}
+            <span className="tool-row-label">
+              <span className="tool-row-name-line">
+                <span
+                  className={`tool-row-name ${status === "running" ? "running" : ""}`}
+                >
+                  {lifecycle
+                    ? t(
+                        (status === "running"
+                          ? LIFECYCLE_RUNNING_KEYS
+                          : LIFECYCLE_LABEL_KEYS)[lifecycle],
+                      )
+                    : rawName.toLowerCase()}
+                </span>
+                {status === "error" ? (
+                  <span
+                    className="tool-row-status error"
+                    aria-label={t("chat.toolFailed")}
+                  >
+                    <IconCircleAlert size={13} />
+                    {t("chat.toolFailed")}
+                  </span>
+                ) : status === "denied" ? (
+                  <span className="tool-row-status">{t("chat.toolDenied")}</span>
+                ) : !lifecycle && statusLabel ? (
+                  <span
+                    className={`tool-row-state ${statusTone}`}
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <span className="tool-row-state-dot" aria-hidden />
+                    {statusTone === "is-running" ? t("chat.toolRunning") : statusLabel}
+                  </span>
+                ) : null}
+              </span>
+              {summary ? (
+                <span
+                  className={`tool-row-summary${previewTarget ? " linked" : ""}`}
+                  title={
+                    previewTarget
+                      ? previewTarget.kind === "file"
+                        ? t("chat.previewFile")
+                        : t("chat.previewUrl")
+                      : undefined
+                  }
+                  onClick={
+                    previewTarget
+                      ? (e) => {
+                          // Open the preview target instead of toggling details.
+                          e.stopPropagation();
+                          openTarget(previewTarget);
+                        }
+                      : undefined
+                  }
+                >
+                  {summary}
+                </span>
+              ) : null}
             </span>
             {lifecycle && roster.length > 0 ? (
               <span className="tool-row-agent is-count">
@@ -466,52 +514,7 @@ export const ToolRow = memo(function ToolRow({
                 {agentName}
               </span>
             ) : null}
-            {summary ? (
-              <span
-                className={`tool-row-summary${previewTarget ? " linked" : ""}`}
-                title={
-                  previewTarget
-                    ? previewTarget.kind === "file"
-                      ? t("chat.previewFile")
-                      : t("chat.previewUrl")
-                    : undefined
-                }
-                onClick={
-                  previewTarget
-                    ? (e) => {
-                        // Open the preview target instead of toggling details.
-                        e.stopPropagation();
-                        openTarget(previewTarget);
-                      }
-                    : undefined
-                }
-              >
-                {summary}
-              </span>
-            ) : null}
             <ToolChips chips={chips} />
-            {runHead && statusLabel ? (
-              <span
-                className={`tool-row-state ${statusTone}`}
-                role="status"
-                aria-live="polite"
-              >
-                <span className="tool-row-state-dot" aria-hidden />
-                {statusLabel}
-              </span>
-            ) : status === "running" ? (
-              <span className="tool-spinner" aria-label={t("chat.running")} />
-            ) : status === "error" ? (
-              <span
-                className="tool-row-status error"
-                aria-label={t("chat.toolFailed")}
-              >
-                <IconCircleAlert size={13} />
-                {t("chat.toolFailed")}
-              </span>
-            ) : status === "denied" ? (
-              <span className="tool-row-status">{t("chat.toolDenied")}</span>
-            ) : null}
             {runHead && statusLabel ? null : (
               <span className="sr-only" role="status" aria-live="polite">
                 {statusLabel}

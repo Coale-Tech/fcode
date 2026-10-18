@@ -3,9 +3,8 @@
   the overlay/dialog base used by every floating surface.
 */
 
-/* Surfaces and fields carry tone, not strokes (D297): a card is a soft tile,
-   a field is a filled well that lifts and gains an accent ring only while
-   focused. Both themes share the formula through the tile tokens. */
+/* Direction D: panel-card has 1px border + --d-r radius; fields are 28px tall
+   with border-default ring and gain a solid 2px accent ring on focus. */
 .ui-tooltip {
   position: fixed;
   z-index: 1000;
@@ -61,36 +60,58 @@
 .ui-help-icon:focus-visible {
   color: var(--ds-text-secondary);
 }
+/* F09: flat card — base/r8/outline3 (D.css:901-907) */
 .panel-card {
-  border-radius: var(--radius-lg);
-  background: var(--ds-tile);
+  border-radius: var(--d-r-ctrl);
+  border: 1px solid var(--d-border-ctrl);
+  background: var(--surface-base);
 }
 
+/* F09: dark flat Panel — elevation1/outline2 (D.css:1536) */
+:root[data-theme="dark"] .panel-card {
+  background: var(--surface-elevation-1);
+  border-color: var(--outline-gray-2);
+}
+
+/* F04: framed fields — base fill / outline3 / pad0×8 / 13px / r8 (D.css:734-764) */
 .field-input,
 .field-select,
 .field-textarea {
   width: 100%;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: var(--ds-tile-hover);
-  padding: 9px 11px;
-  /* The whole field vocabulary pins to one height, so a native select (whose
-     closed box resolves ~2px shorter on its own) and an input that asks for a
-     smaller font (`text-sm-plus`) still line up with the plain input beside
-     them. Compact surfaces that own a smaller scale override the minimum. */
+  border: 1px solid var(--d-border-ctrl);
+  border-radius: var(--d-r-ctrl);
+  background: var(--surface-base);
+  padding: 0 var(--d-field-px);
+  height: var(--d-ctrl);
   min-height: var(--ds-field-height);
-  color: var(--ds-text-primary);
+  color: var(--ink-gray-8);
+  font-size: var(--d-text);
   outline: none;
   transition:
-    background var(--motion-duration-fast) var(--motion-ease-out),
+    border-color var(--motion-duration-fast) var(--motion-ease-out),
     box-shadow var(--motion-duration-fast) var(--motion-ease-out);
 }
 
+.field-textarea {
+  height: auto;
+  min-height: var(--d-textarea-min);
+  padding: 6px 8px;
+}
+
+/* Focus: accent border + 2px blue-outline ring (D.css:761-764) */
 .field-input:focus,
 .field-select:focus,
 .field-textarea:focus {
-  background: var(--ds-raised);
-  box-shadow: 0 0 0 2px color-mix(in oklab, var(--ds-accent) 22%, transparent);
+  border-color: var(--da);
+  box-shadow: 0 0 0 2px var(--da-bdr);
+}
+
+/* Dark: raised2 fill / outline2 border (D.css:1542-1545) */
+:root[data-theme="dark"] .field-input,
+:root[data-theme="dark"] .field-select,
+:root[data-theme="dark"] .field-textarea {
+  background: var(--surface-elevation-2);
+  border-color: var(--outline-gray-2);
 }
 
 .field-input:read-only,
@@ -138,12 +159,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--ds-btn-gap, 5px);
   height: var(--ds-btn-height);
   flex-shrink: 0;
   white-space: nowrap;
   padding: 0 var(--ds-btn-pad-x);
-  border: 0;
+  border: 1px solid transparent;
   border-radius: var(--ds-btn-radius);
   font-family: inherit;
   font-size: var(--ds-btn-font-size);
@@ -153,8 +174,8 @@
   transition:
     background var(--motion-duration-fast) var(--motion-ease-out),
     color var(--motion-duration-fast) var(--motion-ease-out),
-    opacity var(--motion-duration-fast) var(--motion-ease-out),
-    transform var(--motion-duration-fast) var(--motion-ease-out);
+    border-color var(--motion-duration-fast) var(--motion-ease-out),
+    opacity var(--motion-duration-fast) var(--motion-ease-out);
 }
 
 .btn-sm {
@@ -164,38 +185,42 @@
   font-size: var(--ds-btn-font-size-sm);
 }
 
+/* F03: .45 disabled opacity per D.css:678; no press-scale (D.css has no active transform). */
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
-.btn:active:not(:disabled) {
-  transform: scale(0.98);
-}
 
+/* F02: primary = surface-gray10 fill / ink-base label / matching border (D.css:682-687) */
 .btn-primary {
-  background: var(--ds-accent);
-  color: var(--ds-accent-foreground);
+  background: var(--surface-gray-10);
+  color: var(--ink-base);
+  border-color: var(--surface-gray-10);
 }
 .btn-primary:hover:not(:disabled) {
-  background: var(--ds-accent-hover);
-  opacity: 1;
+  background: var(--ink-gray-8);
+  border-color: var(--ink-gray-8);
 }
 
+/* F02: secondary = gray2 fill / ink-gray8 / outline3 border / gray3 hover (D.css:689-695) */
 .btn-secondary {
-  background: var(--ds-tile-hover);
-  color: var(--ds-text-primary);
+  background: var(--surface-gray-2);
+  color: var(--ink-gray-8);
+  border-color: var(--d-border-ctrl);
 }
 .btn-secondary:hover:not(:disabled) {
-  background: var(--ds-tile-deep);
+  background: var(--surface-gray-3);
 }
 
+/* F03: ghost keeps 1px transparent border (D.css:698-703); removed border:0 */
 .btn-ghost {
-  color: var(--ds-text-secondary);
+  border-color: transparent;
+  color: var(--ink-gray-7);
 }
 .btn-ghost:hover:not(:disabled) {
-  background: var(--ds-bg-hover);
-  color: var(--ds-text-primary);
+  background: var(--surface-gray-2);
+  color: var(--ink-gray-9);
 }
 
 .btn-danger {
@@ -219,29 +244,42 @@
   padding: 0;
 }
 
+/* F08: badge — 20px/r10/11px/500/pad7/semantic 1px outlines (D.css:628-654) */
 .badge {
   display: inline-flex;
   align-items: center;
-  border-radius: var(--radius-full);
-  padding: 2px 8px;
-  font-size: var(--text-xs);
-  line-height: var(--leading-normal);
+  height: var(--d-badge-h);
+  border-radius: var(--d-badge-r);
+  padding: 0 var(--d-badge-pad);
+  font-size: var(--d-text-xs);
+  font-weight: 500;
+  white-space: nowrap;
+  border: 1px solid transparent;
 }
 .badge-neutral {
-  background: color-mix(in oklab, var(--ds-text-primary) 8%, transparent);
-  color: var(--ds-text-secondary);
+  background: var(--surface-gray-2);
+  color: var(--ink-gray-6);
+  border-color: var(--d-border);
 }
 .badge-success {
-  background: color-mix(in oklab, var(--ds-success) 16%, transparent);
-  color: var(--ds-success);
+  background: var(--surface-green-2);
+  color: var(--ink-green-8);
+  border-color: var(--outline-green-2);
 }
 .badge-error {
-  background: color-mix(in oklab, var(--ds-error) 16%, transparent);
-  color: var(--ds-error);
+  background: var(--surface-red-2);
+  color: var(--ink-red-8);
+  border-color: var(--outline-red-2);
 }
 .badge-warning {
-  background: color-mix(in oklab, var(--ds-warning) 16%, transparent);
-  color: var(--ds-warning);
+  background: var(--surface-amber-2);
+  color: var(--ink-amber-8);
+  border-color: var(--outline-amber-2);
+}
+.badge-accent {
+  background: var(--da-sub);
+  color: var(--da-txt);
+  border-color: var(--da-bdr);
 }
 
 #pi-desktop-overlays {
@@ -267,17 +305,62 @@
   animation: overlay-in var(--motion-duration-normal) var(--motion-ease-out) both;
 }
 
+/* F09: dialog — 480/r12/elevation1/outline-elevation1/80vh (D.css:1027-1060) */
 .dialog {
-  width: min(100%, 440px);
-  /* Overlay is a flex box; auto min-width would let wide content overflow it. */
+  width: min(100%, var(--d-dialog-w));
   min-width: 0;
   max-width: 100%;
-  border: 1px solid var(--ds-border-default);
-  border-radius: var(--radius-lg-plus);
-  background: var(--ds-bg-elevated-opaque);
+  max-height: var(--d-dialog-max-h);
+  border: 1px solid var(--outline-elevation-1);
+  border-radius: var(--d-r);
+  background: var(--surface-elevation-1);
   box-shadow: var(--ds-shadow-dialog);
-  padding: 18px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   animation: surface-in var(--motion-duration-normal) var(--motion-ease-out) both;
+}
+
+/* F09: dark — elevation-1 bg (auto via token) / outline-gray-2 border (D.css:1551) */
+:root[data-theme="dark"] .dialog {
+  border-color: var(--outline-gray-2);
+}
+
+/* Optional head/body/foot sub-element classes (D.css:1039-1059) */
+.dialog-head {
+  padding: var(--d-dialog-head-pad);
+  border-bottom: 1px solid var(--d-border);
+  font-size: var(--d-dialog-head-font);
+  font-weight: 600;
+  color: var(--ink-gray-9);
+  display: flex;
+  align-items: center;
+  gap: var(--d-dialog-head-gap);
+  flex-shrink: 0;
+}
+.dialog-body {
+  padding: var(--d-dialog-body-pad);
+  overflow-y: auto;
+  flex: 1;
+  font-size: var(--d-text);
+}
+.dialog-foot {
+  padding: var(--d-dialog-foot-pad);
+  border-top: 1px solid var(--d-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--d-dialog-foot-gap);
+  background: var(--surface-gray-1);
+  flex-shrink: 0;
+}
+/* F09: when head/body/foot are wrapped in a form, the form must also flex so
+   body scrolls and foot stays pinned (D-components.html:421-429). */
+.dialog > form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 /* Pointer-anchored right-click menu (see components/ContextMenu.tsx). It is
    measured before it is revealed, so `is-open` gates a surface that would
@@ -369,40 +452,55 @@
   background: var(--ds-border-subtle);
 }
 
-/* ---- Checkbox: high-contrast custom draw (dark + light) ---- */
+/* Checkbox wrapper: flex row with gap; label gap stays 6px per kanban override. */
+.ui-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--d-checkbox-gap);
+  cursor: pointer;
+  font-size: var(--d-text);
+  color: var(--ds-text-primary);
+  user-select: none;
+}
+
+/* F07: checkbox — 14px/r4/outline3/base treatment; 10px check glyph (D.css:843-857).
+   Dark glyph (#0a1f2e) is the R12 approved deviation: 5.93:1 on #42a2d9. */
 .ds-checkbox {
   appearance: none;
   -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
+  width: var(--d-checkbox);
+  height: var(--d-checkbox);
   flex: 0 0 auto;
-  border-radius: var(--radius-3xs);
-  border: 1.5px solid var(--ds-text-secondary);
-  background: transparent;
+  border-radius: var(--d-r-sm);
+  border: 1px solid var(--d-border-ctrl);
+  background: var(--surface-base);
   cursor: pointer;
-  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition:
     background var(--motion-duration-fast) var(--motion-ease-out),
     border-color var(--motion-duration-fast) var(--motion-ease-out);
 }
-
 .ds-checkbox:checked {
   background: var(--ds-accent);
   border-color: var(--ds-accent);
 }
-
+/* glyph size uses --d-checkbox-glyph (10px); centred in 14px box via mask-image (D.css:857) */
 .ds-checkbox:checked::after {
   content: "";
-  position: absolute;
-  top: 2px;
-  left: 5px;
-  width: 4px;
-  height: 8px;
-  border: solid var(--ds-accent-foreground);
-  border-width: 0 1.5px 1.5px 0;
-  transform: rotate(45deg);
+  display: block;
+  width: var(--d-checkbox-glyph);
+  height: var(--d-checkbox-glyph);
+  background-color: var(--ds-accent-foreground);
+  /* Light: #ffffff on #2578ab = 4.82:1 ✓; Dark: #0a1f2e on #42a2d9 = 5.93:1 ✓ (R12) */
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5L4 7.5L8.5 2' stroke='black' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5L4 7.5L8.5 2' stroke='black' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  -webkit-mask-size: var(--d-checkbox-glyph) var(--d-checkbox-glyph);
+  mask-size: var(--d-checkbox-glyph) var(--d-checkbox-glyph);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
 }
-
 .ds-checkbox:disabled {
   opacity: 0.4;
   cursor: not-allowed;

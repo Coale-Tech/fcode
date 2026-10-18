@@ -36,8 +36,10 @@ import {
   IconPlug,
   IconWorkflow,
   IconWrench,
+  IconShield,
   IconKanban as IconColumns,
   IconRaven,
+  IconTerminal,
 } from "../../components/icons";
 import { Badge, Button, cx, SegmentedControl, SettingsToggle } from "../../components/ui";
 import { ModelConfigPage } from "../../components/settings/ModelConfigPage";
@@ -45,6 +47,7 @@ import { KeyboardShortcutsSection } from "../../components/settings/KeyboardShor
 import { FontFamilyRow } from "../../components/settings/FontFamilyRow";
 import { ThinkingDisplayModeRow } from "../../components/settings/ThinkingDisplayModeRow";
 import { FontSizeRow } from "../../components/settings/FontSizeRow";
+import { NavLayoutRow } from "../../components/settings/NavLayoutRow";
 import { LanguageRow } from "../../components/settings/LanguageRow";
 import { MemoryTab, memoryHealth } from "./MemoryTab";
 import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect";
@@ -70,6 +73,8 @@ import { ConfigSyncPage } from "../../components/settings/ConfigSyncPage";
 import { OmpSettingsSections } from "./omp-settings-sections";
 import { KanbanSettingsSection } from "./KanbanSettingsSection";
 import { RavenSettingsSection } from "./RavenSettingsSection";
+import { OmpAdvancedSettings } from "./OmpAdvancedSettings";
+import { OmpToolsPage } from "../omp-tools/OmpToolsPage";
 
 type SettingsTab = ReturnType<typeof useAppStore.getState>["settingsTab"];
 
@@ -111,6 +116,15 @@ export function SettingsPage() {
   const [extensions, setExtensions] = useState<PluginScenicThemesDestinationMeta[]>([]);
   const [activeExtension, setActiveExtension] = useState<PluginScenicThemesDestinationMeta | null>(null);
   const [toolApprovalMode, setToolApprovalMode] = useState<ToolApprovalMode>("always-ask");
+  // lane t13: dirty bar state — track pending AI-tab permission changes
+  // (R11h: dirty Save/Discard for fields explicitly shown dirty in the mock)
+  const [pendingAiChanges, setPendingAiChanges] = useState<Partial<AppSettings> & { toolApprovalMode?: ToolApprovalMode }>({});
+  // D: Network & Proxy and Power collapsed by default (fragment-d1.html spec)
+  const [netExpanded, setNetExpanded] = useState(false);
+  const [powerExpanded, setPowerExpanded] = useState(false);
+  const [promptEnhancementExpanded, setPromptEnhancementExpanded] = useState(false);
+  const [themeDisplayExpanded, setThemeDisplayExpanded] = useState(false);
+  const isDirty = Object.keys(pendingAiChanges).length > 0;
   const seenSettingsTabNonce = useRef(settingsTabNonce);
   // setSettingsTab means "show this built-in category", even when the tab id
   // does not change. Dismiss a plugin page before paint; an anchor-only deep
@@ -226,6 +240,25 @@ export function SettingsPage() {
     await refreshProviders();
   };
 
+  // lane t13: dirty bar — save and discard helpers for AI permissions tab
+  const saveDirty = async () => {
+    if (!isDirty) return;
+    const { toolApprovalMode: tam, ...rest } = pendingAiChanges;
+    if (Object.keys(rest).length > 0) await saveSettings(rest);
+    if (tam !== undefined) {
+      // Propagate failure — pending state must not clear on error.
+      await api.toolApprovalModeSet(tam);
+      setToolApprovalMode(tam);
+    }
+    setPendingAiChanges({});
+  };
+  const discardDirty = () => {
+    // Reset toolApprovalMode local state to current saved value
+    if (pendingAiChanges.toolApprovalMode !== undefined)
+      void api.toolApprovalModeGet().then(setToolApprovalMode).catch(() => undefined);
+    setPendingAiChanges({});
+  };
+
   const selectPluginTheme = async (theme: string) => {
     await saveSettings({ theme: theme as AppSettings["theme"] });
   };
@@ -252,6 +285,8 @@ export function SettingsPage() {
       aiExtensions: <IconPlug size={14} />,
       kanban: <IconColumns size={14} />,
       raven: <IconRaven size={14} />,
+      ompAdvanced: <IconSliders size={14} />,
+      ompTools: <IconTerminal size={14} />,
       about: <IconInfo size={14} />,
     };
     return navEntries.map((entry) => ({
@@ -399,7 +434,19 @@ export function SettingsPage() {
               {!activeExtension && activeNavItem?.experimentalBadgeKey ? (
                 <Badge tone="warning">{t(activeNavItem.experimentalBadgeKey)}</Badge>
               ) : null}
+              {isDirty && (
+                <span className="d-pill amber" style={{ fontWeight: 400, fontSize: 11 }}>
+                  <span className="d-pill-dot" />
+                  {t("settings.unsavedChanges")}
+                </span>
+              )}
             </h1>
+            {isDirty && (
+              <div className="settings-dirty-bar">
+                <Button variant="secondary" size="sm" onClick={discardDirty}>{t("common.discard")}</Button>
+                <Button variant="primary" size="sm" onClick={() => void saveDirty()}>{t("common.save")}</Button>
+              </div>
+            )}
             {activeDescription ? <p className="settings-section-desc">{activeDescription}</p> : null}
           </header>
 
@@ -427,39 +474,68 @@ export function SettingsPage() {
 
           {tab === "general" && settings && (
             <div className="settings-stack">
-              <SettingsCard title={t("settings.appearance")}>
+              <SettingsCard title={t("settings.appearance")} icon={<IconPalette size={13} />}>
                 <ThemeRow settings={settings} saveSettings={saveSettings} />
-                <LanguageRow settings={settings} saveSettings={saveSettings} />
+                <NavLayoutRow settings={settings} saveSettings={saveSettings} />
                 <FontFamilyRow settings={settings} saveSettings={saveSettings} />
                 <FontSizeRow settings={settings} saveSettings={saveSettings} />
+                <LanguageRow settings={settings} saveSettings={saveSettings} />
               </SettingsCard>
 
-              <NetworkProxySection settings={settings} saveSettings={saveSettings} />
+              {/* D: Network & Proxy — collapsed by default (fragment-d1.html:304-311) */}
+              <div className="settings-card-block">
+                <button
+                  className="sf-sec-btn"
+                  type="button"
+                  aria-expanded={netExpanded}
+                  onClick={() => setNetExpanded((v) => !v)}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden style={{ color: "var(--ink-gray-5)", flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                  {t("settings.network")}
+                  <svg className={`sf-chevron${netExpanded ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                {netExpanded && <NetworkProxySection settings={settings} saveSettings={saveSettings} />}
+              </div>
 
-              <SettingsCard title={t("settings.power")}>
-                <SettingsRow
-                  title={t("settings.keepAwakeWhileRunning")}
-                  description={t("settings.keepAwakeWhileRunningDesc")}
+              {/* D: Power — collapsed by default (fragment-d1.html:313-320) */}
+              <div className="settings-card-block">
+                <button
+                  className="sf-sec-btn"
+                  type="button"
+                  aria-expanded={powerExpanded}
+                  onClick={() => setPowerExpanded((v) => !v)}
                 >
-                  <SettingsToggle
-                    checked={settings.keepAwakeWhileRunning === true}
-                    label={t("settings.keepAwakeWhileRunning")}
-                    onChange={() => void saveSettings({
-                      keepAwakeWhileRunning: settings.keepAwakeWhileRunning !== true,
-                    })}
-                  />
-                </SettingsRow>
-                <SettingsRow
-                  title={t("settings.preventScreenSleep")}
-                  description={t("settings.preventScreenSleepDesc")}
-                >
-                  <SettingsToggle
-                    checked={settings.preventScreenSleep === true}
-                    label={t("settings.preventScreenSleep")}
-                    onChange={() => void saveSettings({ preventScreenSleep: !settings.preventScreenSleep })}
-                  />
-                </SettingsRow>
-              </SettingsCard>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden style={{ color: "var(--ink-gray-5)", flexShrink: 0 }}><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+                  {t("settings.power")}
+                  <svg className={`sf-chevron${powerExpanded ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                {powerExpanded && (
+                  <div className="settings-panel">
+                    <SettingsRow
+                      title={t("settings.keepAwakeWhileRunning")}
+                      description={t("settings.keepAwakeWhileRunningDesc")}
+                    >
+                      <SettingsToggle
+                        checked={settings.keepAwakeWhileRunning === true}
+                        label={t("settings.keepAwakeWhileRunning")}
+                        onChange={() => void saveSettings({
+                          keepAwakeWhileRunning: settings.keepAwakeWhileRunning !== true,
+                        })}
+                      />
+                    </SettingsRow>
+                    <SettingsRow
+                      title={t("settings.preventScreenSleep")}
+                      description={t("settings.preventScreenSleepDesc")}
+                    >
+                      <SettingsToggle
+                        checked={settings.preventScreenSleep === true}
+                        label={t("settings.preventScreenSleep")}
+                        onChange={() => void saveSettings({ preventScreenSleep: !settings.preventScreenSleep })}
+                      />
+                    </SettingsRow>
+                  </div>
+                )}
+              </div>
 
               {platform !== "darwin" && <CloseBehaviorSection />}
             </div>
@@ -467,42 +543,49 @@ export function SettingsPage() {
 
           {tab === "ai" && settings && (
             <div className="settings-stack">
-              <SettingsCard title={t("settings.permissions")}>
+              <SettingsCard title={t("settings.permissions")} icon={<IconShield size={13} />}>
+                {/* lane t13: pending dirty state — row highlight when value differs from saved */}
                 <SettingsRow
+                  className={(pendingAiChanges.defaultPermissionMode !== undefined &&
+                    pendingAiChanges.defaultPermissionMode !== (settings.defaultPermissionMode ?? "ask"))
+                    ? "sf-dirty-row" : ""}
                   title={t("settings.permissionMode")}
                   description={t("settings.permissionModeDesc")}
                 >
                   <SettingsMenuSelect
                     className="settings-permission-select"
                     label={t("settings.permissionMode")}
-                    value={settings.defaultPermissionMode ?? "ask"}
-                    onChange={(mode) =>
-                      void saveSettings({
-                        defaultPermissionMode: mode as GlobalPermissionMode,
-                      })
-                    }
+                    value={pendingAiChanges.defaultPermissionMode ?? settings.defaultPermissionMode ?? "ask"}
+                    onChange={(mode) => {
+                      const saved = settings.defaultPermissionMode ?? "ask";
+                      setPendingAiChanges((p) => {
+                        if (mode === saved) { const { defaultPermissionMode: _, ...rest } = p; return rest; }
+                        return { ...p, defaultPermissionMode: mode as GlobalPermissionMode };
+                      });
+                    }}
                     options={[
                       { id: "ask", label: t("settings.permissionModeAsk") },
-                      {
-                        id: "accept-edits",
-                        label: t("settings.permissionModeAcceptEdits"),
-                      },
+                      { id: "accept-edits", label: t("settings.permissionModeAcceptEdits") },
                       { id: "auto", label: t("settings.permissionModeAuto") },
                     ]}
                   />
                 </SettingsRow>
                 <SettingsRow
+                  className={(pendingAiChanges.toolApprovalMode !== undefined &&
+                    pendingAiChanges.toolApprovalMode !== toolApprovalMode)
+                    ? "sf-dirty-row" : ""}
                   title={t("settings.toolApprovalMode")}
                   description={t("settings.toolApprovalModeDesc")}
                 >
                   <SettingsMenuSelect
                     className="settings-permission-select"
                     label={t("settings.toolApprovalMode")}
-                    value={toolApprovalMode}
+                    value={pendingAiChanges.toolApprovalMode ?? toolApprovalMode}
                     onChange={(mode) => {
-                      const m = mode as ToolApprovalMode;
-                      setToolApprovalMode(m);
-                      void api.toolApprovalModeSet(m).catch(() => undefined);
+                      setPendingAiChanges((p) => {
+                        if (mode === toolApprovalMode) { const { toolApprovalMode: _, ...rest } = p; return rest; }
+                        return { ...p, toolApprovalMode: mode as ToolApprovalMode };
+                      });
                     }}
                     options={[
                       { id: "always-ask", label: t("settings.toolApprovalModeAlwaysAsk") },
@@ -513,7 +596,7 @@ export function SettingsPage() {
                 </SettingsRow>
               </SettingsCard>
 
-              <SettingsCard title={t("settings.defaultsTitle")}>
+              <SettingsCard title={t("settings.defaultsTitle")} icon={<IconSliders size={13} />}>
                 <SettingsRow title={t("settings.mode")} description={t("settings.modeDesc")}>
                   <SegmentedControl
                     value={settings.defaultMode ?? "agent"}
@@ -528,12 +611,6 @@ export function SettingsPage() {
                   />
                 </SettingsRow>
                 <CommandShellRow settings={settings} saveSettings={saveSettings} />
-                <LinkOpenTargetRow settings={settings} saveSettings={saveSettings} />
-                <ThinkingDisplayModeRow settings={settings} saveSettings={saveSettings} />
-                <ContextUsageDisplayRow
-                  settings={settings}
-                  saveSettings={saveSettings}
-                />
                 <SettingsRow
                   title={t("settings.enterToSend")}
                   description={t("settings.enterToSendDesc")}
@@ -542,6 +619,21 @@ export function SettingsPage() {
                     checked={settings.enterToSend}
                     label={t("settings.enterToSend")}
                     onChange={() => void saveSettings({ enterToSend: !settings.enterToSend })}
+                  />
+                </SettingsRow>
+                <ThinkingDisplayModeRow settings={settings} saveSettings={saveSettings} />
+                <ContextUsageDisplayRow
+                  settings={settings}
+                  saveSettings={saveSettings}
+                />
+                <SettingsRow
+                  title={t("settings.smoothStreaming")}
+                  description={t("settings.smoothStreamingDesc")}
+                >
+                  <SettingsToggle
+                    checked={settings.smoothStreaming !== false}
+                    label={t("settings.smoothStreaming")}
+                    onChange={() => void saveSettings({ smoothStreaming: !(settings.smoothStreaming !== false) })}
                   />
                 </SettingsRow>
                 <SettingsRow
@@ -554,26 +646,49 @@ export function SettingsPage() {
                     onChange={() => void saveSettings({ infiniteProviderRetry: settings.infiniteProviderRetry !== true })}
                   />
                 </SettingsRow>
-                <SettingsRow
-                  title={t("settings.smoothStreaming")}
-                  description={t("settings.smoothStreamingDesc")}
-                >
-                  <SettingsToggle
-                    checked={settings.smoothStreaming !== false}
-                    label={t("settings.smoothStreaming")}
-                    onChange={() => void saveSettings({ smoothStreaming: !(settings.smoothStreaming !== false) })}
-                  />
-                </SettingsRow>
                 <LargePasteThresholdRow
                   settings={settings}
                   saveSettings={saveSettings}
                 />
               </SettingsCard>
 
-              <PromptEnhancementCard
-                settings={settings}
-                saveSettings={saveSettings}
-              />
+              {/* D: Prompt Enhancement — collapsed by default (settings-permissions ref) */}
+              <div className="settings-card-block">
+                <button
+                  className="sf-sec-btn"
+                  type="button"
+                  aria-expanded={promptEnhancementExpanded}
+                  onClick={() => setPromptEnhancementExpanded((v) => !v)}
+                >
+                  <IconSparkles size={13} style={{ color: "var(--ink-gray-5)", flexShrink: 0 }} aria-hidden />
+                  {t("settings.promptEnhancementTitle")}
+                  <svg className={`sf-chevron${promptEnhancementExpanded ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                {promptEnhancementExpanded && (
+                  <PromptEnhancementCard settings={settings} saveSettings={saveSettings} />
+                )}
+              </div>
+              {/* D: Theme & Display — collapsed by default */}
+              <div className="settings-card-block">
+                <button
+                  className="sf-sec-btn"
+                  type="button"
+                  aria-expanded={themeDisplayExpanded}
+                  onClick={() => setThemeDisplayExpanded((v) => !v)}
+                >
+                  <IconPalette size={13} style={{ color: "var(--ink-gray-5)", flexShrink: 0 }} aria-hidden />
+                  {t("settings.themeDisplay")}
+                  <svg className={`sf-chevron${themeDisplayExpanded ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                {themeDisplayExpanded && settings && (
+                  <div className="settings-panel">
+                    <ThemeRow settings={settings} saveSettings={saveSettings} />
+                    <NavLayoutRow settings={settings} saveSettings={saveSettings} />
+                    <FontFamilyRow settings={settings} saveSettings={saveSettings} />
+                    <FontSizeRow settings={settings} saveSettings={saveSettings} />
+                  </div>
+                )}
+              </div>
               <OmpSettingsSections part="defaults" />
             </div>
           )}
@@ -657,6 +772,8 @@ export function SettingsPage() {
           )}
           {tab === "kanban" && <KanbanSettingsSection />}
           {tab === "raven" && <RavenSettingsSection />}
+          {tab === "ompAdvanced" && <OmpAdvancedSettings />}
+          {tab === "ompTools" && <OmpToolsPage />}
           </>}
 
           </div>

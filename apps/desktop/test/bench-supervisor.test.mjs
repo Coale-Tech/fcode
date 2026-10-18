@@ -16,7 +16,6 @@ const {
   classifyBenchFailure,
   BENCH_FAILURE_CODES,
   WATCHER_MAX_RESTARTS,
-  shouldAutoApproveVerb,
   benchFailureText,
 } = await import("../electron/main/bench/supervisor.ts");
 
@@ -77,48 +76,6 @@ test("WATCHER_MAX_RESTARTS is a finite positive number", () => {
       WATCHER_MAX_RESTARTS > 0 &&
       Number.isFinite(WATCHER_MAX_RESTARTS),
   );
-});
-
-// ── E4: Verb allow-list (no start/console/serve) ─────────────────────────────
-
-test("shouldAutoApproveVerb: start is NOT allowed (footgun guard)", () => {
-  assert.ok(!shouldAutoApproveVerb("start"));
-});
-
-test("shouldAutoApproveVerb: console is NOT allowed", () => {
-  assert.ok(!shouldAutoApproveVerb("console"));
-});
-
-test("shouldAutoApproveVerb: migrate is allowed", () => {
-  assert.ok(shouldAutoApproveVerb("migrate"));
-});
-
-test("shouldAutoApproveVerb: clear-cache is allowed", () => {
-  assert.ok(shouldAutoApproveVerb("clear-cache"));
-});
-
-test("shouldAutoApproveVerb: build is allowed", () => {
-  assert.ok(shouldAutoApproveVerb("build"));
-});
-
-test("shouldAutoApproveVerb: list-apps is allowed", () => {
-  assert.ok(shouldAutoApproveVerb("list-apps"));
-});
-
-test("shouldAutoApproveVerb: install-app is allowed", () => {
-  assert.ok(shouldAutoApproveVerb("install-app"));
-});
-
-test("shouldAutoApproveVerb: build-studio-app is allowed", () => {
-  assert.ok(shouldAutoApproveVerb("build-studio-app"));
-});
-
-test("shouldAutoApproveVerb: serve is NOT allowed", () => {
-  assert.ok(!shouldAutoApproveVerb("serve"));
-});
-
-test("shouldAutoApproveVerb: unknown verb is NOT allowed", () => {
-  assert.ok(!shouldAutoApproveVerb("rm -rf /"));
 });
 
 // ── T6 Gap 1 & 5: failure includes logTail; warning emitted for port conflicts ─

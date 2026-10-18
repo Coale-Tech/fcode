@@ -25,9 +25,10 @@
 
 import { spawn, type ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { ErrorCodes, readNdjsonLines, type OmpSettingsValues } from "@pi-desktop/shared";
 import { capNdjsonLine, reassembleChunk } from "./chunks.js";
 import { resolveSkillPackDirs, syncSkillPacksInBackground } from "./skill-packs.js";
@@ -42,6 +43,8 @@ import { PROMPT_BASH_PATTERNS, READ_ONLY_BASH_PATTERNS } from "./read-only-comma
 import type { CuratorConfig } from "./skill-curator.js";
 import { DEFAULT_CURATOR_CONFIG, extractSkillName, promptPinnedSkills, recordSkillUse } from "./skill-curator.js";
 import { SkillReviewTrigger } from "./skill-review.js";
+import { overlayAdvancedLines } from "./overlay-advanced.js";
+import { SESSION_RPC_FORWARD } from "./session-rpc.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Binary resolution (T7 / DX6)
@@ -50,29 +53,44 @@ import { SkillReviewTrigger } from "./skill-review.js";
 interface ResolveBinaryOptions {
   resourcesPath: string;
   env: Record<string, string | undefined>;
+  /** Dev staged binary dir: where to look for `omp-<platform>-<arch>` when packaged binary is absent. */
+  devBinDir?: string;
 }
 
-/** All three probed paths, in order, for sidecar.fatal reporting (T7). */
-export function ompBinaryCandidates(resourcesPath: string): string[] {
-  return [
+/** All candidate paths in resolution order, for sidecar.fatal reporting (T7). */
+export function ompBinaryCandidates(resourcesPath: string, devBinDir?: string): string[] {
+  const candidates: string[] = [
     join(resourcesPath, "bin", "omp"),
     join(resourcesPath, "bin", "omp.exe"),
-    "omp",
   ];
+  if (devBinDir) candidates.push(join(devBinDir, `omp-${process.platform}-${process.arch}`));
+  candidates.push("omp");
+  return candidates;
 }
 
 /**
  * Resolve the omp binary path.
- * Order: OMP_BIN env → resourcesPath/bin/omp (file-exists check) → "omp" on PATH.
+ * Order: OMP_BIN env → resourcesPath/bin/omp (packaged) → devBinDir/omp-<platform>-<arch>
+ *        (dev staged, as built by scripts/build-omp.mjs) → "omp" on PATH (last resort, warns).
  * Never throws — callers check the return value themselves for sidecar.fatal.
  */
 export function resolveOmpBinary(opts: ResolveBinaryOptions): string {
   if (opts.env.OMP_BIN) return opts.env.OMP_BIN;
-  const candidates = ompBinaryCandidates(opts.resourcesPath);
-  for (const c of candidates.slice(0, -1)) {
+  // Check packaged binary (production: resourcesPath/bin/omp)
+  for (const c of [join(opts.resourcesPath, "bin", "omp"), join(opts.resourcesPath, "bin", "omp.exe")]) {
     if (existsSync(c)) return c;
   }
-  return "omp"; // PATH fallback
+  // Check dev staged binary (dev builds: apps/desktop/resources/bin/omp-<platform>-<arch>)
+  if (opts.devBinDir) {
+    const devBin = join(opts.devBinDir, `omp-${process.platform}-${process.arch}`);
+    if (existsSync(devBin)) return devBin;
+  }
+  // PATH fallback — only valid if omp is on the developer's PATH; warns so it is visible.
+  process.stderr.write(
+    `[omp-bridge] WARNING: omp binary not found in resources or dev staging dir; falling back to PATH 'omp'. ` +
+    `Set OMP_BIN env var to specify the path explicitly.\n`,
+  );
+  return "omp";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -255,7 +273,20 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
         ]
       : []),
     ...(hindsightLines.length > 0 ? ["", "hindsight:", ...hindsightLines] : []),
-    ...(opts.defaultModel ? ["", "modelRoles:", `  default: ${JSON.stringify(opts.defaultModel)}`] : []),
+    ...(opts.defaultModel
+      ? [
+          "",
+          "modelRoles:",
+          // Map roles proved to be used by bundled subagents so they run on the Fcode-configured
+          // backend, not whatever ~/.omp/agent/config.yml has.
+          // Proved from omp/packages/coding-agent/src/task/agents.ts and prompts/agents/:
+          //   task agent → @task, sonic/scout/prewalk → @smol, reviewer → @slow, main session → @default.
+          `  default: ${JSON.stringify(opts.defaultModel)}`,
+          `  task: ${JSON.stringify(opts.defaultModel)}`,
+          `  smol: ${JSON.stringify(opts.defaultModel)}`,
+          `  slow: ${JSON.stringify(opts.defaultModel)}`,
+        ]
+      : []),
     // extensions: bundled fcode-agents root prepended; user-configured extensions
     // (from omp-settings.json via ompSettings) merged after so they are preserved.
     // Precedence: project .omp/agents > user ~/.omp/agents > extension agents (omp rule).
@@ -265,6 +296,17 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
     ...(s["extensions"] ?? []).map((e) => `  - ${JSON.stringify(e)}`),
     // Task / isolation / eval / collab / LSP / IDA / MCP / commands settings
     ...ompSettingsYaml(s),
+    // Generic advanced settings: dotted ids not handled by the curated writer above.
+    // Curated keys (anything configured in s except "advanced") are skipped to prevent
+    // duplicate YAML keys; the curated writer always wins for those.
+    ...overlayAdvancedLines(
+      s.advanced ?? {},
+      Object.fromEntries(
+        (Object.keys(s) as string[])
+          .filter((k) => k !== "advanced")
+          .map((k) => [k, true as const]),
+      ),
+    ),
   ].join("\n");
 }
 
@@ -421,6 +463,26 @@ function ompSettingsYaml(s: OmpSettingsValues): string[] {
     lines.push("", "theme:");
     if (themeDark  !== undefined && themeDark  !== "") lines.push(`  dark: ${JSON.stringify(themeDark)}`);
     if (themeLight !== undefined && themeLight !== "") lines.push(`  light: ${JSON.stringify(themeLight)}`);
+  }
+
+  // autolearn section (omp/packages/coding-agent/src/autolearn/settings.ts)
+  const autolearnEnabled = s["autolearn.enabled"];
+  if (autolearnEnabled !== undefined) {
+    lines.push("", "autolearn:", `  enabled: ${autolearnEnabled}`);
+  }
+
+  // opt-in tools (astGrep / checkpoint / github / security; default off in omp)
+  if (s["astGrep.enabled"] !== undefined) {
+    lines.push("", "astGrep:", `  enabled: ${s["astGrep.enabled"]}`);
+  }
+  if (s["checkpoint.enabled"] !== undefined) {
+    lines.push("", "checkpoint:", `  enabled: ${s["checkpoint.enabled"]}`);
+  }
+  if (s["github.enabled"] !== undefined) {
+    lines.push("", "github:", `  enabled: ${s["github.enabled"]}`);
+  }
+  if (s["security.enabled"] !== undefined) {
+    lines.push("", "security:", `  enabled: ${s["security.enabled"]}`);
   }
 
   // NOTE: `disabledExtensions` (OmpSettingsValues key) is NOT written to the
@@ -616,7 +678,11 @@ const HOST_TOOL_SCHEMAS = [
  * (runtime/sidecar.ts); worker-only tools are guarded there by session→card.
  */
 const KANBAN_TOOL_SCHEMAS = [
-  { name: "kanban_show", description: "Kanban worker: show your card, its parent results and comments.", parameters: { type: "object", properties: {} } },
+  {
+    name: "kanban_show",
+    description: "Kanban worker: show your card, its parent results and comments. Pass taskId to read another card's result and comments instead.",
+    parameters: { type: "object", properties: { taskId: { type: "string" } } },
+  },
   {
     name: "kanban_complete",
     description: "Kanban worker: mark your card done. Call this when the task is finished.",
@@ -636,8 +702,8 @@ const KANBAN_TOOL_SCHEMAS = [
   },
   {
     name: "kanban_comment",
-    description: "Kanban worker: add a comment to your card.",
-    parameters: { type: "object", properties: { body: { type: "string" } }, required: ["body"] },
+    description: "Kanban worker: add a comment to your card, or to another card when taskId is given.",
+    parameters: { type: "object", properties: { body: { type: "string" }, taskId: { type: "string" } }, required: ["body"] },
   },
   {
     name: "kanban_create",
@@ -663,7 +729,7 @@ const KANBAN_TOOL_SCHEMAS = [
       required: ["parentId", "childId"],
     },
   },
-  { name: "kanban_list", description: "List the user's Kanban cards (chat sessions only).", parameters: { type: "object", properties: {} } },
+  { name: "kanban_list", description: "List the user's Kanban cards.", parameters: { type: "object", properties: {} } },
   {
     name: "kanban_unblock",
     description: "Move a blocked Kanban card back to ready (chat sessions only).",
@@ -684,6 +750,8 @@ export class OmpBridge {
   private pendingUiRequests = new Map<string, { sessionId: string; toolCallId: string; toolName: string; viaSelect: boolean }>();
   /** Per-session most-recent open tool_execution_start (args kept for risk classification) */
   private openTools = new Map<string, { toolCallId: string; toolName: string; args?: unknown }>();
+  /** Delegates between lifecycle `started` and a terminal status, by omp subagent id. */
+  private runningSubagents = new Map<string, { agent: string; parentToolCallId?: string }>();
   /** Whether the kanban tools are currently registered with omp. */
   private hostToolsKanban = false;
   /** Tracks in-flight `prompt` calls awaiting their terminal prompt_result frame. */
@@ -968,8 +1036,12 @@ export class OmpBridge {
       case "native.session.list":
       case "native.session.search":
       case "native.session.get":
-      case "native.session.fork":
         this.respond(id, { sessions: [], error: "native bridging unsupported" });
+        break;
+      // D2: omp has no fork RPC. Use omp.session.branch with an entryId to
+      // branch history at a message point; omp.session.newSession for a clean start.
+      case "native.session.fork":
+        this.respond(id, { error: "fork is not a native omp RPC command; use omp.session.branch (entryId) to branch history or omp.session.newSession for a fresh start" });
         break;
 
       // omp sidecar methods (DX14 / step 9 channel table).
@@ -1056,6 +1128,33 @@ export class OmpBridge {
         this.ompCallAndForward(id, { type: "get_branch_messages" });
         break;
 
+      // Session surface (slice D) — forwarded via SESSION_RPC_FORWARD map.
+      case "omp.session.getTree":
+        this.ompCallAndForward(id, { type: SESSION_RPC_FORWARD["omp.session.getTree"] });
+        break;
+      case "omp.session.getMessages":
+        this.ompCallAndForward(id, { type: SESSION_RPC_FORWARD["omp.session.getMessages"] });
+        break;
+      case "omp.session.getMessagesPage":
+        this.ompCallAndForward(id, {
+          type: SESSION_RPC_FORWARD["omp.session.getMessagesPage"],
+          ...(p.cursor ? { cursor: p.cursor } : {}),
+          ...(p.limit != null ? { limit: Number(p.limit) } : {}),
+        });
+        break;
+      case "omp.session.newSession":
+        this.ompCallAndForward(id, {
+          type: SESSION_RPC_FORWARD["omp.session.newSession"],
+          ...(p.parentSession ? { parentSession: p.parentSession } : {}),
+        });
+        break;
+      case "omp.session.switchSession": {
+        const sessionPath = typeof p.sessionPath === "string" ? p.sessionPath.trim() : "";
+        if (!sessionPath) { this.respondError(id, "sessionPath required"); break; }
+        this.ompCallAndForward(id, { type: SESSION_RPC_FORWARD["omp.session.switchSession"], sessionPath });
+        break;
+      }
+
 
       // Session-scoped mode controls (queue modes, fast mode, retry)
       case "omp.modes.setSteeringMode":
@@ -1140,6 +1239,14 @@ export class OmpBridge {
         // null = receive all events; string[] = allowlist of event type names.
         const events = Array.isArray(p.events) ? (p.events as string[]) : null;
         this.ompCallAndForward(id, { type: "set_event_filter", events });
+        break;
+      }
+
+      case "omp.autoresearch": {
+        // Dispatch /autoresearch [goal] to the active session; toggling off passes "off".
+        const goal = typeof p.goal === "string" ? p.goal.trim() : "";
+        const message = goal ? `/autoresearch ${goal}` : "/autoresearch";
+        this.ompCallAndForward(id, { type: "prompt", message });
         break;
       }
 
@@ -1609,6 +1716,11 @@ export class OmpBridge {
     });
 
     const { type, ...request } = mapped;
+    // omp's ui request names no asker. `task` returns at once and the delegate
+    // runs on, so with no parent tool open a request comes from the delegate;
+    // ponytail: only attributable when exactly one runs, else left unattributed.
+    const [only] = this.runningSubagents.size === 1 && !openTool ? this.runningSubagents.values() : [];
+    if (only) Object.assign(request, { agentName: only.agent, ...(only.parentToolCallId ? { parentToolCallId: only.parentToolCallId } : {}) });
     this.notify("agent.event", {
       sessionId,
       ts: Date.now(),
@@ -1656,6 +1768,7 @@ export class OmpBridge {
       const status = String(payload.status ?? "");
 
       if (status === "started") {
+        this.runningSubagents.set(toolCallId, { agent: agentName, parentToolCallId });
         this.notify("agent.event", {
           sessionId,
           ts: Date.now(),
@@ -1669,6 +1782,7 @@ export class OmpBridge {
           },
         });
       } else {
+        this.runningSubagents.delete(toolCallId);
         // completed, failed, aborted
         this.notify("agent.event", {
           sessionId,
@@ -1778,6 +1892,72 @@ export class OmpBridge {
     });
   }
 }
+// ─────────────────────────────────────────────────────────────────────────────
+// Config isolation (G1) — dedicated omp agent dir under Fcode's data dir
+// ─────────────────────────────────────────────────────────────────────────────
+
+const FCODE_AGENT_SENTINEL = ".fcode-initialized";
+
+/**
+ * Ensure `fcodeAgentDir` exists and, on first run, import needed files from the
+ * user's `~/.omp/agent` so OAuth logins, user agents, and user profile survive
+ * isolation (G1).
+ *
+ * What we import once (only if missing at dest):
+ *   agent.db — auth store; holds OAuth tokens for providers like Anthropic claude.ai.
+ *   agents/  — custom user agents; Fcode's agent list UI reads from this dir.
+ *   USER.md  — user profile memory; user may have written this via Fcode's UI.
+ *
+ * What we do NOT import:
+ *   config.yml — Fcode overrides all settings via overlay and env.
+ *   skills.json / skills.lock.json — Fcode manages skills via customDirectories overlay.
+ *   sessions/ — Fcode owns session storage under omp-threads/.
+ *   managed-skills/ — recreated naturally by omp autolearn.
+ *
+ * Exported for unit testing.
+ */
+export function initFcodeAgentDir(fcodeAgentDir: string, sourceAgentDir?: string): void {
+  mkdirSync(fcodeAgentDir, { recursive: true });
+  const sentinel = join(fcodeAgentDir, FCODE_AGENT_SENTINEL);
+  if (existsSync(sentinel)) return; // already initialized
+  const src = sourceAgentDir ?? join(homedir(), ".omp", "agent");
+  // agent.db — OAuth credentials
+  const srcDb = join(src, "agent.db");
+  const destDb = join(fcodeAgentDir, "agent.db");
+  if (existsSync(srcDb) && !existsSync(destDb)) {
+    try {
+      copyFileSync(srcDb, destDb);
+      process.stderr.write(`[omp-bridge] imported agent.db from ${srcDb} into isolated agent dir\n`);
+    } catch {
+      process.stderr.write(`[omp-bridge] WARNING: could not import agent.db from ${srcDb}; OAuth logins may be lost\n`);
+    }
+  }
+  // agents/ — custom user agents; Fcode's agent list reads from here
+  const srcAgents = join(src, "agents");
+  const destAgents = join(fcodeAgentDir, "agents");
+  if (existsSync(srcAgents) && !existsSync(destAgents)) {
+    try {
+      cpSync(srcAgents, destAgents, { recursive: true });
+      process.stderr.write(`[omp-bridge] imported agents/ from ${srcAgents} into isolated agent dir\n`);
+    } catch {
+      process.stderr.write(`[omp-bridge] WARNING: could not import agents/ from ${srcAgents}\n`);
+    }
+  }
+  // USER.md — user profile memory; may have been written via Fcode's UI
+  const srcUser = join(src, "USER.md");
+  const destUser = join(fcodeAgentDir, "USER.md");
+  if (existsSync(srcUser) && !existsSync(destUser)) {
+    try {
+      copyFileSync(srcUser, destUser);
+      process.stderr.write(`[omp-bridge] imported USER.md from ${srcUser} into isolated agent dir\n`);
+    } catch {
+      process.stderr.write(`[omp-bridge] WARNING: could not import USER.md from ${srcUser}\n`);
+    }
+  }
+  // Write sentinel so we do not re-import on subsequent launches.
+  try { writeFileSync(sentinel, new Date().toISOString() + "\n", "utf8"); } catch { /* non-fatal */ }
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Entry point (when run as a standalone process)
@@ -1803,7 +1983,14 @@ async function main(): Promise<void> {
   const bridge = new OmpBridge();
   const resourcesPath = process.env.FCODE_RESOURCES_PATH ?? process.env.RESOURCES_PATH ?? "";
   const dataDir = process.env.FCODE_DATA_DIR ?? join(homedir(), ".fcode-dev");
-  const ompBinary = resolveOmpBinary({ resourcesPath, env: process.env as Record<string, string | undefined> });
+  // Dev staged binary dir: 3 levels up from this file → repo root → apps/desktop/resources/bin.
+  // In production the packaged binary is found first; this path is never reached.
+  const bridgeDir = dirname(fileURLToPath(import.meta.url));
+  const devBinDir = join(bridgeDir, "../../../apps/desktop/resources/bin");
+  const ompBinary = resolveOmpBinary({ resourcesPath, env: process.env as Record<string, string | undefined>, devBinDir });
+  // G1: isolated agent dir — keeps Fcode's omp state separate from ~/.omp/agent.
+  const fcodeAgentDir = join(dataDir, "omp-agent");
+  initFcodeAgentDir(fcodeAgentDir);
 
   const rawMode = process.env.FCODE_TOOL_APPROVAL_MODE;
   const approvalMode: "always-ask" | "write" | "yolo" =
@@ -1909,6 +2096,8 @@ async function main(): Promise<void> {
     cwd,
     env: {
       ...process.env,
+      // G1: isolate omp's user agent dir so ~/.omp/agent config does not leak into Fcode.
+      PI_CODING_AGENT_DIR: fcodeAgentDir,
       ...(process.env.PUPPETEER_EXECUTABLE_PATH
         ? { PUPPETEER_EXECUTABLE_PATH: process.env.PUPPETEER_EXECUTABLE_PATH }
         : {}),

@@ -95,11 +95,15 @@ export class BrowserPane {
 
   /** Separate partitions keep cookies apart (Raven's `sid` never reaches the agent-driven pane). */
   private readonly partition: string;
+  /** Human-readable owner tag for bounds diagnostics (e.g. "build-canvas", "raven", "filebird"). */
+  private readonly ownerTag: string;
 
-  constructor(onState: (state: BrowserState) => void, partition = "persist:work-browser") {
+  constructor(onState: (state: BrowserState) => void, partition = "persist:work-browser", ownerTag = "browser-pane") {
     this.onState = onState;
     this.partition = partition;
+    this.ownerTag = ownerTag;
   }
+
 
   /**
    * Attempt to acquire exclusive ownership of the canvas (E13).
@@ -273,7 +277,23 @@ export class BrowserPane {
       height: Math.max(0, Math.round(Number(bounds.height) || 0)),
     };
     this.bounds = safe;
-    if (this.view && this.visible) this.view.setBounds(safe);
+    if (this.view && this.visible) {
+      this.view.setBounds(safe);
+      /* Step 3 — capture-gated bounds diagnostics (PI_DESKTOP_CAPTURE only).
+       * Compares the renderer host rect passed in from getBoundingClientRect()
+       * against what Electron reports back via view.getBounds(); a delta >1px
+       * indicates the native view has drifted from its host div. */
+      if (process.env.PI_DESKTOP_CAPTURE || process.env.PI_DESKTOP_BENCH_BOUNDS) {
+        const vb = this.view.getBounds();
+        const dx = Math.abs(vb.x - safe.x);
+        const dy = Math.abs(vb.y - safe.y);
+        const dw = Math.abs(vb.width - safe.width);
+        const dh = Math.abs(vb.height - safe.height);
+        const tag = `[${this.ownerTag}-bounds]`;
+        console.log(tag, "host=", safe, "view=", vb, "delta=", { dx, dy, dw, dh });
+        if (Math.max(dx, dy, dw, dh) > 1) console.warn(tag, ">1px delta — view drifted from host div");
+      }
+    }
   }
 
   setVisible(visible: boolean): void {

@@ -56,6 +56,15 @@ function loadNotificationIpc() {
       if (id === "../notification-policy") {
         return { shouldShowNativeNotification: () => true };
       }
+      if (id === "./notification-read-store") {
+        return {
+          readNotificationReadStore: () => ({ readBefore: null, readIds: [] }),
+          writeNotificationReadStore() {},
+          storeWithReadId: (s) => s,
+          storeWithReadBefore: (s) => s,
+          overlayReadStore: (n) => n,
+        };
+      }
       throw new Error(`unexpected dependency: ${id}`);
     },
     module.exports,

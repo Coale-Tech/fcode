@@ -1,42 +1,76 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { IPC } from "@pi-desktop/shared";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "../stores/app-store";
 import { memoryHealth } from "../features/settings/MemoryTab";
 import {
+  IconBarChart2,
+  IconChevronLeft,
+  IconChevronRight,
   IconChat,
   IconClock,
   IconFileBird,
   IconKanban,
-  IconMonitor,
   IconPlug,
+  IconPullRequest,
   IconRaven,
-  IconServer,
   IconSettings,
+  IconTerminal,
 } from "./icons";
 import { NotificationCenter } from "./NotificationCenter";
 import { TooltipButton, cx } from "./ui";
+import { resolveNavLayout } from "../lib/nav-layout";
+import { navItems } from "./nav-items";
+import type { NavItemId, NavItem } from "./nav-items";
 
 /**
- * E frame: the global 60px icon rail at the window's left edge. Destinations
- * on top, daily footer actions (settings, plugins, scheduled, notifications)
- * at the bottom. The top band is a window drag region that also keeps the
- * macOS traffic lights clear; every button opts out with `no-drag`.
- *
- * Primary nav items (Chat, Code, Build, Bench) show a visible text label
- * below the icon; no tooltip is needed for labelled items and none is shown.
- * Footer items remain icon-only with tooltips.
+ * Icon map for every nav-item id.  Uses the approved D2 glyphs:
+ *   Build → BarChart2 (ic-build: ascending bars, D2-shell.html:36)
+ *   Bench → Terminal  (ic-bench: prompt chevron, D2-shell.html:37)
+ * Exported so Task 8/9 can reference the canonical icon set without duplication.
  */
-export function NavRail() {
+export const NAV_ICONS = {
+  chat:      IconChat,
+  build:     IconBarChart2,
+  bench:     IconTerminal,
+  scheduled: IconClock,
+  kanban:    IconKanban,
+  raven:     IconRaven,
+  filebird:  IconFileBird,
+  plugins:   IconPlug,
+  pulls:     IconPullRequest,
+} satisfies Record<NavItemId, unknown>;
+
+type NavRailProps = {
+  /** Called whenever the expanded state changes; useAppShellRuntime uses this
+   *  to keep shellChromeWidth accurate for the three-column budget. */
+  onExpandChange?: (expanded: boolean) => void;
+};
+
+/**
+ * D2 icon rail: left 50px strip (collapsed) or 220px (expanded).
+ *
+ * Structure per D2-shell.html:115-181:
+ *   - .nav-rail-scroll   upper scrollable area: primary / utility / developer groups
+ *                        separated by .nav-rail-divider elements
+ *   - .nav-rail-foot     non-scrolling footer: NotificationCenter, Settings, divider, toggle
+ *
+ * All scroll items use TooltipButton + .nav-rail-icon wrapper for the 28×28 icon
+ * box (D.css:394-401).  Labels are hidden (opacity/max-width transition) in
+ * collapsed rail mode and revealed on .expanded (d-shell.css).
+ */
+export function NavRail({ onExpandChange }: NavRailProps = {}) {
   const { t } = useTranslation();
   const page = useAppStore((s) => s.page);
   const setPage = useAppStore((s) => s.setPage);
   const navBack = useAppStore((s) => s.navBack);
   const canNavBack = useAppStore((s) => s.canNavBack);
   const memStatus = useAppStore((s) => s.memoryStatus);
+  const navLayout = resolveNavLayout(useAppStore((s) => s.settings?.navLayout));
+  const [expanded, setExpanded] = useState(false);
+
   const mHealth = memoryHealth(memStatus);
-  // Fetch on mount + re-fetch on kanbanChanged; stored in AppState so other
-  // consumers can subscribe without their own fetch.
+
   const kanbanEnabled = useAppStore((s) => s.kanbanEnabled);
   const setKanbanEnabled = useAppStore((s) => s.setKanbanEnabled);
   useEffect(() => {
@@ -49,6 +83,7 @@ export function NavRail() {
     if (!bridge?.on) return;
     return bridge.on(IPC.event.kanbanChanged, () => { void fetchEnabled(); });
   }, [setKanbanEnabled]);
+
   const ravenEnabled = useAppStore((s) => s.ravenEnabled);
   const setRavenEnabled = useAppStore((s) => s.setRavenEnabled);
   useEffect(() => {
@@ -62,126 +97,95 @@ export function NavRail() {
     return bridge.on(IPC.event.ravenChanged, () => { void fetchEnabled(); });
   }, [setRavenEnabled]);
 
+  const items = navItems({ kanban: kanbanEnabled, raven: ravenEnabled });
+  const primary   = items.filter((i) => i.group === "primary");
+  const utility   = items.filter((i) => i.group === "utility");
+  const developer = items.filter((i) => i.group === "developer");
+
+  /** Toggle expand state and propagate to the shell budget. */
+  function handleToggle() {
+    const next = !expanded;
+    setExpanded(next);
+    onExpandChange?.(next);
+  }
+
+  /** Render a scroll-group nav item. */
+  function renderItem(item: NavItem) {
+    const Icon = NAV_ICONS[item.id];
+    const handleClick =
+      item.id === "plugins"
+        ? () => (page === "plugins" ? (canNavBack() ? navBack() : setPage("chat")) : setPage("plugins"))
+        : () => setPage(item.page);
+    const fullLabel = t(item.labelKey);
+    const visibleLabel = navLayout === "island" && item.shortLabelKey ? t(item.shortLabelKey) : fullLabel;
+    return (
+      <TooltipButton
+        key={item.id}
+        type="button"
+        className={cx("nav-rail-btn nav-rail-labeled", page === item.page && "active")}
+        data-nav={item.dataNav}
+        tooltip={fullLabel}
+        ariaLabel={fullLabel}
+        onClick={handleClick}
+        aria-pressed={page === item.page}
+      >
+        <span className="nav-rail-icon"><Icon size={16} aria-hidden /></span>
+        <span className="nav-rail-label">{visibleLabel}</span>
+      </TooltipButton>
+    );
+  }
+
   return (
-    <nav className="nav-rail sidebar-surface" aria-label="Primary">
-      <div className="nav-rail-group no-drag">
-        {/* Labelled primary destinations — no tooltip needed */}
-        <button
-          type="button"
-          className={cx("nav-rail-btn nav-rail-labeled", page === "chat" && "active")}
-          data-nav="chat"
-          aria-label="Chat"
-          aria-pressed={page === "chat"}
-          onClick={() => setPage("chat")}
-        >
-          <IconChat size={16} aria-hidden />
-          <span className="nav-rail-label">Chat</span>
-        </button>
-        <button
-          type="button"
-          className={cx("nav-rail-btn nav-rail-labeled", page === "build" && "active")}
-          data-nav="build-canvas"
-          aria-label="Build"
-          aria-pressed={page === "build"}
-          onClick={() => setPage("build")}
-        >
-          <IconMonitor size={16} aria-hidden />
-          <span className="nav-rail-label">Build</span>
-        </button>
-        <button
-          type="button"
-          className={cx("nav-rail-btn nav-rail-labeled", page === "bench" && "active")}
-          data-nav="bench"
-          aria-label="Bench"
-          aria-pressed={page === "bench"}
-          onClick={() => setPage("bench")}
-        >
-          <IconServer size={16} aria-hidden />
-          <span className="nav-rail-label">Bench</span>
-        </button>
+    <nav className={cx("nav-rail", expanded && "expanded")} aria-label="Primary">
+      {/* D3 island: Fcode logo mark above the scroll (D3-shell.html:351-354) */}
+      {navLayout === "island" && (
+        <div className="nav-rail-logo" aria-hidden>
+          <div className="nav-rail-logo-mark">fc</div>
+        </div>
+      )}
+      {/* Upper scrollable section: all page destinations with dividers */}
+      <div id="nav-rail-scroll" className="nav-rail-scroll no-drag">
+        {primary.map(renderItem)}
+        <div className="nav-rail-divider" role="separator" />
+        {utility.map(renderItem)}
+        <div className="nav-rail-divider" role="separator" />
+        {developer.map(renderItem)}
       </div>
 
-      <div className="nav-rail-group nav-rail-footer no-drag">
-        {/* Footer items: icon-only with tooltips */}
+      {/* Footer: notifications + settings + expand toggle (D2-shell.html:167-181)
+           In island (D3) mode: no expand toggle (hidden via CSS nav-rail-toggle). */}
+      <div className="nav-rail-foot no-drag">
+        <NotificationCenter navRailLabel={navLayout === "island" ? t("notifications.short") : t("notifications.title")} />
         <TooltipButton
           type="button"
-          className={cx("nav-rail-btn", page === "scheduled" && "active")}
-          data-nav="scheduled"
-          tooltip={t("scheduled.title")}
-          ariaLabel={t("scheduled.title")}
-          onClick={() => setPage("scheduled")}
-          aria-pressed={page === "scheduled"}
-        >
-          <IconClock size={16} aria-hidden />
-        </TooltipButton>
-        {kanbanEnabled && (
-          <TooltipButton
-            type="button"
-            className={cx("nav-rail-btn", page === "kanban" && "active")}
-            data-nav="kanban"
-            tooltip={t("kanban.title")}
-            ariaLabel={t("kanban.title")}
-            onClick={() => setPage("kanban")}
-            aria-pressed={page === "kanban"}
-          >
-            <IconKanban size={16} aria-hidden />
-          </TooltipButton>
-        )}
-        {ravenEnabled && (
-          <TooltipButton
-            type="button"
-            className={cx("nav-rail-btn", page === "raven" && "active")}
-            data-nav="raven"
-            tooltip={t("raven.title")}
-            ariaLabel={t("raven.title")}
-            onClick={() => setPage("raven")}
-            aria-pressed={page === "raven"}
-          >
-            <IconRaven size={16} aria-hidden />
-          </TooltipButton>
-        )}
-        <TooltipButton
-          type="button"
-          className={cx("nav-rail-btn", page === "filebird" && "active")}
-          data-nav="filebird"
-          tooltip={t("fileBird.title")}
-          ariaLabel={t("fileBird.title")}
-          onClick={() => setPage("filebird")}
-          aria-pressed={page === "filebird"}
-        >
-          <IconFileBird size={16} aria-hidden />
-        </TooltipButton>
-        <TooltipButton
-          type="button"
-          className={cx("nav-rail-btn", page === "plugins" && "active")}
-          data-nav="plugins"
-          tooltip={t("nav.plugins")}
-          ariaLabel={t("nav.plugins")}
-          onClick={() =>
-            page === "plugins"
-              ? (canNavBack() ? navBack() : setPage("chat"))
-              : setPage("plugins")
-          }
-          aria-pressed={page === "plugins"}
-        >
-          <IconPlug size={16} aria-hidden />
-        </TooltipButton>
-        <NotificationCenter />
-        <TooltipButton
-          type="button"
-          className={cx("nav-rail-btn", page === "settings" && "active")}
+          className={cx("nav-rail-btn nav-rail-labeled", page === "settings" && "active")}
           data-nav="settings"
           tooltip={t("nav.settings")}
           ariaLabel={t("nav.settings")}
           onClick={() => setPage("settings")}
           aria-pressed={page === "settings"}
         >
-          <IconSettings size={16} aria-hidden />
+          <span className="nav-rail-icon"><IconSettings size={16} aria-hidden /></span>
+          <span className="nav-rail-label">{t("nav.settings")}</span>
           <span
             className="memory-status-dot memory-status-dot-rail"
             data-health={mHealth}
             aria-label={t(`settings.memoryStatus${mHealth[0].toUpperCase()}${mHealth.slice(1)}`)}
           />
+        </TooltipButton>
+        <div className="nav-rail-divider" role="separator" />
+        <TooltipButton
+          type="button"
+          className="nav-rail-toggle"
+          aria-expanded={expanded}
+          aria-controls="nav-rail-scroll"
+          tooltip={expanded ? t("nav.collapseRail") : t("nav.expandRail")}
+          ariaLabel={expanded ? t("nav.collapseRail") : t("nav.expandRail")}
+          onClick={handleToggle}
+        >
+          {expanded
+            ? <IconChevronLeft size={14} aria-hidden />
+            : <IconChevronRight size={14} aria-hidden />}
         </TooltipButton>
       </div>
     </nav>

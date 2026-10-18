@@ -12,7 +12,7 @@
  *   may contain spaces until its closing quote.
  */
 
-export type ComposerTriggerMode = "slash" | "file";
+export type ComposerTriggerMode = "slash" | "file" | "skill";
 
 export type ComposerTrigger = {
   mode: ComposerTriggerMode;
@@ -124,12 +124,35 @@ export function detectTrigger(
     };
   }
 
+  // Skill mode: mid-sentence `/name` at a word boundary (preceded by whitespace
+  // or at char 0, but NOT when the draft itself starts with "/" — that is slash
+  // mode above). Rejects path tokens that contain "/" (e.g. /usr/bin).
+  // Accepted completions insert `/skill:<name> ` so omp's SKILL_TOKEN_RE matches.
+  if (
+    token.startsWith("/") &&
+    !token.slice(1).includes("/") &&
+    start > 0 &&
+    isBoundary(value, start)
+  ) {
+    return {
+      mode: "skill",
+      query: token.slice(1),
+      tokenStart: start,
+      tokenEnd: cursor,
+    };
+  }
+
   return null;
 }
 
 /** Insertion text for an accepted slash command: `/name ` ready for args. */
 export function formatCommandInsert(name: string): string {
   return `/${name} `;
+}
+
+/** Insertion text for an accepted skill: `/skill:<name> ` matches omp's SKILL_TOKEN_RE. */
+export function formatSkillInsert(name: string): string {
+  return `/skill:${name} `;
 }
 
 /**

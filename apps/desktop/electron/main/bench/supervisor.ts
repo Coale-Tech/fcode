@@ -19,21 +19,6 @@ import { minimalChildEnv } from "../child-process-env";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-/** Verbs the fcode_bench_run host tool may invoke. "start" stays in BenchPage. */
-export const ALLOWED_BENCH_VERBS = new Set([
-  "migrate",
-  "clear-cache",
-  "build",
-  "build-studio-app",
-  "list-apps",
-  "install-app",
-]);
-
-/** Returns true when the verb is safe for the fcode_bench_run host tool. */
-export function shouldAutoApproveVerb(verb: string): boolean {
-  return ALLOWED_BENCH_VERBS.has(verb);
-}
-
 /** Maximum automatic restarts for the studio watcher (E21). */
 export const WATCHER_MAX_RESTARTS = 5;
 
@@ -309,6 +294,11 @@ export class BenchSupervisor extends EventEmitter {
     return this.processes.get(processName)?.buffer.all() ?? [];
   }
 
+  /** PID of the `bench start` child process, or null when not running. */
+  getMainPid(): number | null {
+    return this.processes.get("start")?.child?.pid ?? null;
+  }
+
   /**
    * Start `bench start` in the active bench (E4: argv spawn, shell:false).
    */
@@ -402,7 +392,8 @@ export class BenchSupervisor extends EventEmitter {
     }
     this.stopWatcher();
     this.status = "stopped";
-    this.activeBenchPath = null;
+    // Keep activeBenchPath so the status bar keeps showing the bench name after
+    // stop (WorkspaceBar shows "stopped" state). It is overwritten by start().
     this.activeSite = null;
     this.startedAt = null;
     this.emit("status", this.status);

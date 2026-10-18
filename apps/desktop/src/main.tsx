@@ -3,7 +3,7 @@ import ReactDOM from "react-dom/client";
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import { catalogs, flattenCatalog, resolveLocale } from "@pi-desktop/i18n";
-import { MAC_TRAFFIC_LIGHT_EDGE_DIP } from "@pi-desktop/shared";
+import { MAC_TRAFFIC_LIGHT_EDGE_DIP, DEFAULT_NAV_LAYOUT } from "@pi-desktop/shared";
 import App from "./App";
 import { PluginLauncher } from "./components/PluginLauncher";
 import { initLanguageSync, resolveOsLocale } from "./lib/app-language";
@@ -13,6 +13,7 @@ import "./styles/globals.css";
 const rendererSurface = new URLSearchParams(window.location.search).get("surface");
 if (rendererSurface) document.documentElement.dataset.surface = rendererSurface;
 document.documentElement.dataset.theme = "dark";
+document.documentElement.dataset.navLayout = DEFAULT_NAV_LAYOUT;
 // Window-chrome layout differs per OS (traffic lights left on macOS,
 // controls overlay right on Windows/Linux); set before first paint.
 document.documentElement.dataset.platform =

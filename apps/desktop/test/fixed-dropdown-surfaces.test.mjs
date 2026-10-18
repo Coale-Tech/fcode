@@ -13,7 +13,6 @@ const anchoredSurfaceSources = await Promise.all(
   [
     "../src/pages/ProjectsPage.tsx",
     readPluginsSource(),
-    "../src/components/settings/AgentCapabilityLayout.tsx",
     "../src/components/extensions/ScopeControl.tsx",
     readComposerSource(),
     "../src/components/ComposerAutocomplete.tsx",
@@ -34,7 +33,7 @@ const dropdownSurfaces = [
   "model-default-menu",
   "provider-model-multi-menu",
   "provider-model-menu",
-  "notification-popover",
+  // notification-popover removed: notifications promoted to full inbox page (T12 D-design)
   "sidebar-row-menu",
   "sidebar-popover",
   "projects-menu",

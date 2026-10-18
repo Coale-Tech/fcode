@@ -37,6 +37,7 @@
   align-items: center;
   gap: 16px;
   margin: 0;
+  min-height: var(--d-ph-h);
   padding: 0 0 2px;
 }
 
@@ -286,8 +287,8 @@
 
 .plugins-group-label {
   margin: 0;
-  color: var(--ds-text-muted);
-  font-size: var(--text-xs);
+  color: var(--ds-text-tertiary);
+  font-size: var(--d-text-xs);
   font-weight: var(--font-weight-medium);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
@@ -592,7 +593,7 @@
   flex: 0 0 auto;
   border-radius: var(--radius-full);
   padding: 1px 8px 1px 6px;
-  font-size: var(--text-3xs);
+  font-size: var(--d-text-sm);
   line-height: var(--leading-relaxed);
   color: var(--ds-text-secondary);
   background: var(--plugins-tile-hover);
@@ -2073,3 +2074,354 @@
     transition: none;
   }
 }
+
+/* ── Direction D Plugins page (pages-d/plugins/fragment.html) ────────────────
+ * The page is the canvas (D.css .d-canvas): a 220px groups nav card and the
+ * main list card. AppShell renders the pane as a transparent host with no
+ * titlebar band for this page. */
+
+.plg-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  /* D.css leaves body line-height at normal; the app body uses 1.45. */
+  line-height: normal;
+}
+:root[data-nav-layout="tabs"] .plg-page {
+  background: var(--d-canvas-bg);
+}
+
+/* fragment.html:61-67 */
+.plg-layout {
+  display: flex;
+  flex: 1;
+  gap: var(--d-gap);
+  width: 100%;
+  min-height: 0;
+  padding: var(--d-gap);
+}
+/* D3: the island already pads its gray mini-canvas by --d-gap. */
+:root[data-nav-layout="island"] .plg-layout {
+  padding: 0;
+}
+/* .d-panel (workbench.css, imported later) sets flex: 1; pin the nav column. */
+.d-panel.plg-nav-panel {
+  flex: 0 0 var(--d-plg-nav);
+  width: var(--d-plg-nav);
+  min-height: 0;
+}
+.plg-main {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.plg-head-note { font-size: var(--d-text-xs); color: var(--ink-gray-4); }
+
+/* ── Left nav panel items (fragment.html:76-120) ─────────────────────────── */
+.plg-nav-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px;
+  min-height: 0;
+}
+.plg-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 9px;
+  border-radius: var(--d-r-ctrl);
+  font-size: var(--d-text);
+  font-weight: 500;
+  color: var(--ink-gray-7);
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  margin-bottom: 1px;
+  font-family: inherit;
+  transition: background .1s, color .1s;
+}
+.plg-nav-item:hover { background: var(--surface-gray-2); color: var(--ink-gray-9); }
+.plg-nav-item.active { background: var(--da-sub); color: var(--da-txt); }
+.plg-nav-item.active svg { color: var(--da-txt); }
+.plg-nav-item.muted { opacity: .6; }
+.plg-nav-badge {
+  margin-left: auto;
+  font-size: var(--d-text-xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  background: var(--surface-gray-3);
+  color: var(--ink-gray-5);
+  border-radius: var(--d-r-ctrl);
+  padding: 0 5px;
+  height: 16px;
+  line-height: 16px;
+  min-width: 18px;
+  text-align: center;
+}
+.plg-nav-item.active .plg-nav-badge { background: var(--da-sub); color: var(--da-txt); }
+.plg-nav-item.danger { color: var(--ink-red-7); }
+.plg-nav-item.danger .plg-nav-badge { background: var(--surface-red-2); color: var(--ink-red-7); }
+.plg-nav-item.warn { color: var(--ink-amber-7); }
+.plg-nav-item.warn .plg-nav-badge { background: var(--surface-amber-2); color: var(--ink-amber-8); }
+.plg-nav-divider { height: 1px; background: var(--outline-gray-1); margin: 5px 3px; }
+
+/* Installed / Marketplace segment counts (fragment.html:381,385) */
+.plg-seg-count {
+  margin-left: 6px;
+  font-size: var(--d-text-xs);
+  background: var(--surface-gray-3);
+  color: var(--ink-gray-5);
+  border-radius: var(--d-r-ctrl);
+  padding: 0 5px;
+  height: 16px;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Amber update banner (fragment.html:288-299) ────────────────────────── */
+.plg-banner-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background: var(--surface-amber-1);
+  border-bottom: 1px solid var(--outline-amber-2);
+  font-size: var(--d-text);
+  color: var(--ink-amber-8);
+  flex-shrink: 0;
+}
+.plg-banner-icon { color: var(--ink-amber-7); flex-shrink: 0; }
+.plg-banner-copy { min-width: 0; }
+.plg-banner-copy strong { font-weight: 600; }
+.plg-banner-detail { color: var(--ink-amber-6); margin-left: 6px; font-size: var(--d-text-sm); }
+.plg-banner-btn.btn { margin-left: auto; border-color: var(--outline-amber-3); color: var(--ink-amber-8); }
+
+/* ── Install-from-spec row (fragment.html:302-311) ──────────────────────── */
+.plg-install-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--outline-gray-1);
+  background: var(--surface-gray-1);
+  flex-shrink: 0;
+  margin: 0;
+}
+.plg-install-icon { color: var(--ink-gray-4); flex-shrink: 0; }
+.plg-install-input {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  font-size: var(--d-text-sm);
+  font-family: var(--font-mono);
+  border: 1px solid var(--d-border-ctrl);
+  border-radius: var(--d-r-ctrl);
+  padding: 0 8px;
+  background: var(--surface-elevation-1);
+  color: var(--ink-gray-8);
+}
+.plg-install-input::placeholder { color: var(--ink-gray-4); }
+.plg-install-input:focus { outline: none; border-color: var(--da); box-shadow: 0 0 0 2px var(--da-bdr); }
+
+/* ── Scrollable groups (fragment.html:418) ──────────────────────────────── */
+.plg-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* ── Group heads (fragment.html:123-155) ────────────────────────────────── */
+.plg-group-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 12px;
+  background: var(--surface-gray-1);
+  border-top: 1px solid var(--outline-gray-1);
+  border-bottom: 1px solid var(--outline-gray-1);
+  font-size: var(--d-text-xs);
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--ink-gray-5);
+  position: sticky;
+  top: 0;
+  z-index: 4;
+}
+.plg-group:first-child .plg-group-head { border-top-color: transparent; }
+.plg-group-label { margin: 0; font: inherit; color: inherit; letter-spacing: inherit; }
+.plg-group-icon-ok { color: var(--ink-green-6); }
+.plg-group-head.danger { color: var(--ink-red-7); background: var(--surface-red-1); border-color: var(--outline-red-1); }
+.plg-group-head.warn   { color: var(--ink-amber-7); background: var(--surface-amber-1); border-color: var(--outline-amber-1); }
+.plg-group-count {
+  font-size: var(--d-text-xs);
+  background: var(--surface-gray-3);
+  color: var(--ink-gray-5);
+  border-radius: var(--d-r-ctrl);
+  padding: 0 5px;
+  height: 14px;
+  line-height: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.plg-group-head.danger .plg-group-count { background: var(--surface-red-2); color: var(--ink-red-7); }
+.plg-group-head.warn .plg-group-count   { background: var(--surface-amber-2); color: var(--ink-amber-8); }
+
+/* ── Plugin rows (fragment.html:157-243) ─────────────────────────────────── */
+.plg-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--outline-gray-1);
+  transition: background .1s;
+}
+.plg-row:hover,
+.plg-row.menu-open { background: var(--surface-gray-1); }
+.plg-row.is-open,
+.plg-row.is-open:hover { background: var(--surface-violet-1); }
+.plg-row.off { opacity: .65; }
+
+.plg-glyph {
+  width: var(--d-ctrl-lg);
+  height: var(--d-ctrl-lg);
+  border-radius: var(--d-r-ctrl);
+  background: var(--surface-gray-2);
+  border: 1px solid var(--outline-gray-2);
+  color: var(--ink-gray-5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.plg-glyph.broken { background: var(--surface-red-2); border-color: var(--outline-red-2); color: var(--ink-red-7); }
+.plg-glyph.update { background: var(--surface-amber-2); border-color: var(--outline-amber-2); color: var(--ink-amber-7); }
+.plg-glyph.active-glyph { background: var(--surface-elevation-1); border-color: var(--da-bdr); color: var(--da-txt); }
+
+.plg-copy { flex: 1; min-width: 0; }
+.plg-name-row { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+.plg-name {
+  font-size: var(--d-text);
+  font-weight: 600;
+  color: var(--ink-gray-9);
+  font-family: var(--font-mono);
+}
+.plg-tag {
+  font-size: var(--d-kd-chip-font);
+  font-weight: 600;
+  background: var(--da-sub);
+  color: var(--da-txt);
+  border-radius: var(--d-r-sm);
+  padding: 0 5px;
+  height: 16px;
+  line-height: 16px;
+}
+.plg-tag.npm { background: var(--surface-gray-2); color: var(--ink-gray-6); }
+.plg-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: var(--d-text-sm);
+  color: var(--ink-gray-5);
+  font-variant-numeric: tabular-nums;
+}
+.plg-meta .sep { color: var(--ink-gray-3); }
+.plg-version-new { color: var(--ink-amber-7); font-weight: 600; }
+.plg-status-error { color: var(--ink-red-7); }
+.plg-error {
+  margin: 4px 0 0;
+  font-size: var(--d-text-sm);
+  color: var(--ink-red-7);
+  line-height: 1.4;
+}
+.plg-error code { font-family: var(--font-mono); font-size: var(--d-text-xs); }
+.plg-error strong { font-weight: 600; }
+
+.plg-controls {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding-top: 1px;
+}
+.plg-uninstall.btn {
+  background: var(--surface-red-2);
+  color: var(--ink-red-7);
+  border-color: var(--outline-red-2);
+}
+.plg-uninstall.btn:hover:not(:disabled) { background: var(--surface-red-3); }
+
+/* Details expander inside a row (fragment.html:246-285) */
+.plg-row .plugins-row-details { margin-top: 6px; }
+.plg-row .plugins-row-details-toggle {
+  padding: 0;
+  font-size: var(--d-text-sm);
+  font-weight: 500;
+  color: var(--ink-gray-5);
+  background: none;
+}
+.plg-row .plugins-row-details-toggle:hover { background: none; color: var(--ink-gray-8); }
+.plg-row .plugins-row-details[open] .plugins-row-details-toggle > svg { transform: rotate(90deg); }
+/* fragment.html:428-620: collapsed rows show no Details line; the toggle stays in
+ * the tab order (visually hidden) and appears on row hover or keyboard focus. */
+.plg-row:not(.is-open):not(:hover):not(:focus-within) .plugins-row-details { margin-top: 0; }
+.plg-row:not(.is-open):not(:hover):not(:focus-within) .plugins-row-details-toggle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.plg-row .plugins-row-details-body {
+  margin-top: 8px;
+  padding: 0;
+  gap: 6px;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+.plg-row .plugins-row-detail { align-items: flex-start; gap: 8px; }
+.plg-row .plugins-row-detail-label {
+  flex: 0 0 80px;
+  padding-top: 2px;
+  font-size: var(--d-text-xs);
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--ink-gray-4);
+}
+.plg-row .plugins-cap-chip,
+.plg-row .plugins-perm-chip,
+.plg-row .plugins-service-chip {
+  height: 18px;
+  padding: 0 6px;
+  gap: 3px;
+  border-radius: var(--d-r-sm);
+  font-size: var(--d-text-xs);
+  font-weight: 500;
+  line-height: 18px;
+}
+.plg-row .plugins-cap-chip { background: var(--da-sub); color: var(--da-txt); }
+.plg-row .plugins-perm-chip { background: var(--surface-gray-2); color: var(--ink-gray-6); }
+.plg-row .plugins-perm-chip.risk-high { background: var(--surface-red-2); color: var(--ink-red-8); }
+.plg-row .plugins-perm-chip.risk-medium { background: var(--surface-amber-2); color: var(--ink-amber-8); }
+.plg-row .plugins-perm-chip.is-more { background: none; color: var(--ink-gray-4); }
+.plg-row .plugins-service-chip { background: var(--surface-green-2); color: var(--ink-green-8); }
+.plg-row .plugins-service-chip.is-failed { background: var(--surface-red-2); color: var(--ink-red-8); }
+.plg-row .plugins-service-dot { display: none; }
+.plg-row .plugins-service-state,
+.plg-row .plugins-service-restarts { color: inherit; text-transform: lowercase; }
+.plg-row .plugins-service-state::before,
+.plg-row .plugins-service-restarts::before { content: "· "; }
+.plg-row .plugins-fs-chip,
+.plg-row .plugins-fs-chip.risk-medium { background: var(--surface-gray-2); color: var(--ink-gray-6); }
+.plg-row .plugins-fs-chip.risk-high { background: var(--surface-red-2); color: var(--ink-red-8); }
+.plg-row .plugins-fs-mode { text-transform: lowercase; }

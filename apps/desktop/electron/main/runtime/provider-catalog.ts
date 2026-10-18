@@ -3,6 +3,7 @@ import {
   SESSION_THINKING_LEVELS,
   defaultCommandShellForPlatform,
   isCommandShellId,
+  isNavLayout,
   resolveBindingContextWindow,
   validateNetworkProxy,
   validateSpeechSettings,
@@ -82,30 +83,6 @@ export function createProviderCatalogRuntime({
       baseUrl: provider.baseUrl,
       modelId,
     });
-
-  /**
-   * Apply the exact provider/model binding before exposing a model to a
-   * subagent. The catalog supplies the baseline, but an explicit binding owns
-   * the effective thinking capability for the endpoint.
-   */
-  const effectiveSubagentModelConfig = (
-    provider: Pick<RuntimeProvider, "models">,
-    modelId: string,
-    catalogModelConfig: Parameters<typeof modelConfigWithBinding>[0],
-  ) => {
-    const resolved = resolveBindingContextWindow(
-      catalogModelConfig,
-      bindingForModel(provider, modelId),
-    );
-    const modelConfig = modelConfigWithBinding(
-      resolved.catalogConfig,
-      resolved.binding,
-    );
-    return {
-      modelConfig,
-      capabilities: capabilitiesFromModelConfig(modelConfig),
-    };
-  };
 
   const enrichProvider = <T extends RuntimeProvider>(
     provider: T,
@@ -205,6 +182,7 @@ export function createProviderCatalogRuntime({
       defaultCommandShell?: unknown;
       infiniteProviderRetry?: unknown;
       keepAwakeWhileRunning?: unknown;
+      navLayout?: unknown;
       networkProxy?: unknown;
     };
     if (
@@ -228,6 +206,14 @@ export function createProviderCatalogRuntime({
       typeof value.keepAwakeWhileRunning !== "boolean"
     ) {
       throw Object.assign(new Error("keepAwakeWhileRunning is invalid"), {
+        errorCode: ErrorCodes.INVALID_PARAMS,
+      });
+    }
+    if (
+      Object.prototype.hasOwnProperty.call(value, "navLayout") &&
+      !isNavLayout(value.navLayout)
+    ) {
+      throw Object.assign(new Error("navLayout is invalid"), {
         errorCode: ErrorCodes.INVALID_PARAMS,
       });
     }
@@ -330,6 +316,7 @@ export function createProviderCatalogRuntime({
     if (!target) {
       return {
         ...session,
+        ompFallbackReady: true,
         supportsReasoning: false,
         supportsVision: false,
         supportedThinkingLevels: ["off"],
@@ -359,7 +346,6 @@ export function createProviderCatalogRuntime({
   return {
     bindingForModel,
     modelsDevModelFor,
-    effectiveSubagentModelConfig,
     enrichProvider,
     normalizeThinkingLevel,
     normalizeSettings,

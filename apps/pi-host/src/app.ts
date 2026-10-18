@@ -1,5 +1,4 @@
 import { mkdir } from "node:fs/promises";
-import { join } from "node:path";
 
 import { AgentHost, type ApprovalPort } from "@pi-desktop/agent-host";
 import {
@@ -12,6 +11,30 @@ import {
   createHostQueueStore,
   createHostSessionPort,
   listPendingToolRequests,
+  ompProviderEnv,
+  ompSidecarExtraEnv,
+  runBenchOneShot,
+  shouldAutoApproveVerb,
+  ALLOWED_BENCH_VERBS,
+  isReadOnlyBenchMethod,
+  pythonLiteral,
+  studioExpression,
+  buildRunTestsArgs,
+  runTestsReport,
+  SITE_RE,
+  loadBoard,
+  saveBoard,
+  addComment as kanbanAddComment,
+  addLink as kanbanAddLink,
+  agentCardCountForSession,
+  createTask as kanbanCreateTask,
+  completeTask as kanbanCompleteTask,
+  blockTask as kanbanBlockTask,
+  moveTask as kanbanMoveTask,
+  recomputeReady as kanbanRecomputeReady,
+  type HostProviderRecord,
+  type KanbanBoard,
+  type KanbanBlockKind,
 } from "@pi-desktop/host-runtime";
 import { DeviceTokenAuthenticator, RacpServer, bindRacpWebSocket, type RacpHostOperations, type WsBinding } from "@pi-desktop/racp";
 import { APP_VERSION, type AgentEventEnvelope } from "@pi-desktop/shared";
@@ -60,6 +83,12 @@ export async function startPiHost(config: PiHostConfig, options: { log?: HostLog
 
   const approvals: ApprovalPort = {
     async resolveTool(requestId, decision) {
+      // omp asks for approval itself, so host-core has no record of the request:
+      // the sidecar answers when it owns the id, host-core otherwise.
+      const viaSidecar = await getSidecar()
+        ?.call<{ handled?: boolean }>("tool_permission.resolve", { requestId, decision })
+        .catch(() => undefined);
+      if (viaSidecar?.handled) return;
       const host = getHost();
       if (!host) throw new Error("host unavailable");
       await host.call("permissions.resolve", { requestId, decision });
@@ -148,8 +177,31 @@ export async function startPiHost(config: PiHostConfig, options: { log?: HostLog
     log("info", "host-core handshake ok", { generation: host.generation });
   };
   const startSidecar = async () => {
+    // omp-bridge reaches the user's providers through env: keys never touch disk.
+    const host = getHost();
+    const providerEnv = host
+      ? await host
+          .call<{ providers: HostProviderRecord[] }>("providers.list", { includeDisabled: false })
+          .then(({ providers }) => ompProviderEnv(host, providers, config.dataDir))
+          .catch((error: unknown) => {
+            log("warn", "provider injection failed; omp starts without Fcode providers", { error: String(error) });
+            return {};
+          })
+      : {};
+    if (!config.resourcesPath) log("warn", "no resources directory found; omp binary and fcode agents are unavailable (set --resources or PI_HOST_RESOURCES)");
     const sidecar = new AgentSidecar({
-      launch: { command: config.nodeBinary, args: [config.sidecarEntry], env: { ...process.env, PI_DESKTOP_DATA_DIR: config.dataDir } },
+      launch: {
+        command: config.nodeBinary,
+        args: [config.sidecarEntry],
+        env: {
+          ...process.env,
+          FCODE_DATA_DIR: config.dataDir,
+          ...(config.resourcesPath ? { FCODE_RESOURCES_PATH: config.resourcesPath } : {}),
+          ...providerEnv,
+          // omp settings, approval mode, memory backend — parity with desktop sidecar
+          ...ompSidecarExtraEnv(config.dataDir),
+        },
+      },
       onStderr: log.child("agent"),
     });
     sidecar.onExit(({ intentional, code, signal, stderrTail }) => {
@@ -190,10 +242,173 @@ export async function startPiHost(config: PiHostConfig, options: { log?: HostLog
         }),
       queuePrioritize: async (params) => agentHost.prioritizeTurn({ subject: "extension", roles: ["controller"] }, String(params.id ?? "")),
     });
+
+    // ── Bench host tools — headless-portable ───────────────────────────────
+    // fcode_bench_path: process env (user sets FCODE_BENCH_PATH before starting pi-host).
+    // fcode_bench_site: process env (user sets FCODE_BENCH_SITE, or pass site in tool args).
+    const getBenchPath = () => process.env.FCODE_BENCH_PATH ?? null;
+    const getBenchSite = () => process.env.FCODE_BENCH_SITE ?? null;
+    const noBench = (name: string) => ({ ok: false as const, isError: true, content: `${name}: no active bench (set FCODE_BENCH_PATH)` });
+    const failText = (r: { exitCode: number; output: string }) => r.output.trim() || `bench exited with code ${r.exitCode}`;
+
+    sidecar.setLocalTool("fcode_bench_execute", async ({ args }) => {
+      const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+      const method = typeof a.method === "string" ? a.method : "";
+      if (!method) return { ok: false, isError: true, content: "fcode_bench_execute: method is required" };
+      const bp = getBenchPath();
+      if (!bp) return noBench("fcode_bench_execute");
+      const site = a.site != null ? String(a.site) : getBenchSite();
+      const result = await runBenchOneShot(bp, site, "execute", [method, "--kwargs", pythonLiteral(a.kwargs ?? {})]);
+      return result.exitCode !== 0 ? { ok: false, isError: true, content: failText(result) } : { ok: true, content: result.output };
+    });
+
+    sidecar.setLocalTool("fcode_bench_execute_read", async ({ args }) => {
+      const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+      const method = typeof a.method === "string" ? a.method : "";
+      if (!method) return { ok: false, isError: true, content: "fcode_bench_execute_read: method is required" };
+      if (!isReadOnlyBenchMethod(method)) return { ok: false, isError: true, content: `fcode_bench_execute_read: '${method}' is not a read-only method. Use fcode_bench_execute for mutating calls.` };
+      const bp = getBenchPath();
+      if (!bp) return noBench("fcode_bench_execute_read");
+      const site = a.site != null ? String(a.site) : getBenchSite();
+      const result = await runBenchOneShot(bp, site, "execute", [method, "--kwargs", pythonLiteral(a.kwargs ?? {})]);
+      return result.exitCode !== 0 ? { ok: false, isError: true, content: failText(result) } : { ok: true, content: result.output };
+    });
+
+    sidecar.setLocalTool("fcode_bench_run", async ({ args }) => {
+      const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+      const command = typeof a.command === "string" ? a.command : "";
+      if (!command) return { ok: false, isError: true, content: "fcode_bench_run: command is required" };
+      if (command !== "run-tests" && !shouldAutoApproveVerb(command)) {
+        return { ok: false, isError: true, content: `fcode_bench_run: '${command}' is not allowed. Allowed verbs: ${[...ALLOWED_BENCH_VERBS, "run-tests"].join(", ")}` };
+      }
+      const bp = getBenchPath();
+      if (!bp) return noBench("fcode_bench_run");
+      if (command === "run-tests") {
+        const site = a.site != null ? String(a.site) : getBenchSite();
+        if (!site || !SITE_RE.test(site)) return { ok: false, isError: true, content: `fcode_bench_run: run-tests needs a valid site (got ${JSON.stringify(site ?? null)})` };
+        const built = buildRunTestsArgs(a as Record<string, unknown>);
+        if (!built.ok) return { ok: false, isError: true, content: `fcode_bench_run: ${built.error}` };
+        const result = await runBenchOneShot(bp, site, "run-tests", built.args);
+        const { summary, content } = runTestsReport(result.output, result.exitCode);
+        return { ok: summary.status === "passed" || summary.status === "no_tests", isError: summary.status !== "passed" && summary.status !== "no_tests", content };
+      }
+      const site = a.site != null ? String(a.site) : getBenchSite();
+      const extraArgs = Array.isArray(a.args) ? a.args.map(String) : [];
+      const result = await runBenchOneShot(bp, site, command, extraArgs);
+      return result.exitCode !== 0 ? { ok: false, isError: true, content: failText(result) } : { ok: true, content: result.output };
+    });
+
+    sidecar.setLocalTool("fcode_studio", async ({ args }) => {
+      const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+      const str = (k: string) => (a[k] != null ? String(a[k]) : undefined);
+      const built = studioExpression({ action: str("action") ?? "", app: str("app"), page: str("page"), target_app: str("target_app") });
+      if (!built.ok) return { ok: false, isError: true, content: `fcode_studio: ${built.error}` };
+      const bp = getBenchPath();
+      if (!bp) return noBench("fcode_studio");
+      const result = await runBenchOneShot(bp, str("site") ?? getBenchSite(), "execute", [built.expression]);
+      return result.exitCode !== 0 ? { ok: false, isError: true, content: failText(result) } : { ok: true, content: result.output.trim() || "OK" };
+    });
+
+    // ── Kanban host tools — headless-portable (file-backed board) ──────────
+    // Board is loaded from disk on startup and kept in memory; each mutation
+    // is written back atomically. sessionToCard is derived from the board's
+    // running runs (no separate KanbanRunner needed for headless mode).
+    let kanbanBoard: KanbanBoard = loadBoard(config.dataDir);
+    const updateKb = (next: KanbanBoard) => { kanbanBoard = next; saveBoard(config.dataDir, next); };
+    const kbErr = (msg: string) => ({ ok: false as const, isError: true, content: msg });
+    // Find the task a session is currently running (via an open run row).
+    const sessionTaskId = (sessionId: string) =>
+      kanbanBoard.runs.find((r) => r.sessionId === sessionId && r.status === "running")?.taskId;
+
+    sidecar.setLocalTool("kanban_show", async ({ sessionId, args }) => {
+      const own = sessionTaskId(sessionId);
+      if (!own) return kbErr("kanban_show: only callable from a kanban worker session");
+      const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+      const taskId = String(a.taskId ?? "").trim() || own;
+      const task = kanbanBoard.tasks.find((t) => t.id === taskId);
+      if (!task) return kbErr("kanban_show: task not found");
+      const comments = kanbanBoard.comments.filter((c) => c.taskId === taskId);
+      if (taskId !== own) return { ok: true, content: JSON.stringify({ task, comments }) };
+      const parents = kanbanBoard.links.filter((l) => l.childId === taskId).map((l) => kanbanBoard.tasks.find((t) => t.id === l.parentId)).filter((t) => t != null);
+      return { ok: true, content: JSON.stringify({ task, parents, comments }) };
+    });
+
+    sidecar.setLocalTool("kanban_complete", async ({ sessionId, args }) => {
+      const taskId = sessionTaskId(sessionId);
+      if (!taskId) return kbErr("kanban_complete: only callable from a kanban worker session");
+      const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+      updateKb(kanbanCompleteTask(kanbanBoard, taskId, a.summary != null ? String(a.summary) : undefined, a.result != null ? String(a.result) : undefined));
+      return { ok: true, content: "Task marked complete." };
+    });
+
+    sidecar.setLocalTool("kanban_block", async ({ sessionId, args }) => {
+      const taskId = sessionTaskId(sessionId);
+      if (!taskId) return kbErr("kanban_block: only callable from a kanban worker session");
+      const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+      const reason = String(a.reason ?? "blocked");
+      const validKinds: Record<string, true> = { dependency: true, needs_input: true, capability: true, transient: true, gave_up: true };
+      const kind = (typeof a.kind === "string" && validKinds[a.kind] ? a.kind : "needs_input") as KanbanBlockKind;
+      updateKb(kanbanBlockTask(kanbanBoard, taskId, reason, kind));
+      return { ok: true, content: "Task blocked." };
+    });
+
+    sidecar.setLocalTool("kanban_comment", async ({ sessionId, args }) => {
+      const own = sessionTaskId(sessionId);
+      if (!own) return kbErr("kanban_comment: only callable from a kanban worker session");
+      const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+      const taskId = String(a.taskId ?? "").trim() || own;
+      const body = String(a.body ?? "").trim();
+      if (!body) return kbErr("kanban_comment: body required");
+      if (!kanbanBoard.tasks.some((t) => t.id === taskId && !t.archived)) return kbErr("kanban_comment: task not found");
+      updateKb(kanbanAddComment(kanbanBoard, taskId, `worker:${sessionId.slice(0, 8)}`, body));
+      return { ok: true, content: "Comment added." };
+    });
+
+    sidecar.setLocalTool("kanban_create", async ({ sessionId, args }) => {
+      const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+      const title = String(a.title ?? "").trim();
+      const projectPath = String(a.projectPath ?? "").trim();
+      if (!title || !projectPath) return kbErr("kanban_create: title and projectPath required");
+      if (agentCardCountForSession(kanbanBoard, sessionId) >= 20) return kbErr("kanban_create: per-session card limit reached (20)");
+      const { board: next, taskId } = kanbanCreateTask(kanbanBoard, {
+        title, body: String(a.body ?? ""),
+        projectPath, createdBy: "agent",
+        modelOverride: a.modelOverride != null ? String(a.modelOverride) : undefined,
+        parentIds: Array.isArray(a.parentIds) ? a.parentIds.map(String) : [],
+      });
+      updateKb(next);
+      return { ok: true, content: JSON.stringify({ taskId }) };
+    });
+
+    sidecar.setLocalTool("kanban_link", async ({ args }) => {
+      const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+      const parentId = String(a.parentId ?? "").trim();
+      const childId = String(a.childId ?? "").trim();
+      if (!parentId || !childId) return kbErr("kanban_link: parentId and childId required");
+      const next = kanbanAddLink(kanbanBoard, parentId, childId);
+      if (!next) return kbErr("kanban_link: cycle detected or invalid task ids");
+      updateKb(kanbanRecomputeReady(next));
+      return { ok: true, content: "Link added." };
+    });
+
+    sidecar.setLocalTool("kanban_list", async () => {
+      return { ok: true, content: JSON.stringify(kanbanBoard.tasks.filter((t) => !t.archived)) };
+    });
+
+    sidecar.setLocalTool("kanban_unblock", async ({ sessionId, args }) => {
+      if (sessionTaskId(sessionId)) return kbErr("kanban_unblock: not callable from a worker session");
+      const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+      const taskId = String(a.taskId ?? "").trim();
+      if (!taskId) return kbErr("kanban_unblock: taskId required");
+      const task = kanbanBoard.tasks.find((t) => t.id === taskId);
+      if (!task || task.status !== "blocked") return kbErr("kanban_unblock: task not found or not blocked");
+      updateKb(kanbanMoveTask(kanbanBoard, taskId, "ready"));
+      return { ok: true, content: "Task unblocked." };
+    });
     state.sidecar = sidecar;
     runtime.attachSidecar(sidecar);
     if (state.host) sidecar.setHost(state.host);
-    await sidecar.call("sidecar.configure", { hostBinary: config.hostCoreBinary, dataDir: config.dataDir });
+    await sidecar.call("sidecar.configure", { hostBinary: config.hostCoreBinary, dataDir: config.dataDir, resourcesPath: config.resourcesPath });
     log("info", "agent sidecar configured");
   };
   const supervisor = new RuntimeSupervisor({

@@ -3,7 +3,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
-import { app, dialog, shell, WebContentsView, type BrowserWindow } from "electron";
+import { app, BrowserWindow, dialog, shell, WebContentsView } from "electron";
 import { IPC } from "@pi-desktop/shared";
 import type { FileBird } from "@pi-desktop/filebird/src/main/embed";
 import { applyContentSecurityPolicy, guardNavigation } from "@pi-desktop/filebird/src/main/security";
@@ -77,6 +77,11 @@ export function registerFileBirdIpc({ registrar, dataDir, getMainWindow, sendToR
           const result = window ? await dialog.showOpenDialog(window, options) : await dialog.showOpenDialog(options);
           return result.canceled ? null : (result.filePaths[0] ?? null);
         },
+        // T14: forward SFTP connection status changes to the Fcode renderer
+        // so FileBirdPage can show the green/amber connected pill.
+        onStatusChange: (status) => {
+          sendToRenderer(IPC.event.fileBirdStatus, { status });
+        },
       });
       // Kill every PTY before Electron tears down (node-pty aborts on a late exit).
       // will-quit, not before-quit: before-quit also fires for a quit the user then
@@ -134,6 +139,17 @@ export function registerFileBirdIpc({ registrar, dataDir, getMainWindow, sendToR
       height: Math.max(0, Math.min(Math.round(next.height), content.height - y)),
     };
     view?.setBounds(bounds);
+    /* Capture-gated bounds diagnostics: compare host rect vs view.getBounds()
+     * to confirm native view tracks the renderer's surfaceRef within 1px. */
+    if ((process.env.PI_DESKTOP_CAPTURE || process.env.PI_DESKTOP_BENCH_BOUNDS) && view && !view.webContents.isDestroyed()) {
+      const vb = view.getBounds();
+      const dx = Math.abs(vb.x - bounds.x);
+      const dy = Math.abs(vb.y - bounds.y);
+      const dw = Math.abs(vb.width - bounds.width);
+      const dh = Math.abs(vb.height - bounds.height);
+      console.log("[filebird-bounds] host=", bounds, "view=", vb, "delta=", { dx, dy, dw, dh });
+      if (Math.max(dx, dy, dw, dh) > 1) console.warn("[filebird-bounds] >1px delta — view drifted from host div");
+    }
     return { ok: true };
   });
 
@@ -145,10 +161,40 @@ export function registerFileBirdIpc({ registrar, dataDir, getMainWindow, sendToR
       return { ok: true };
     }
     if (!fileBird) return { ok: false };
+    // Renderer not built → show the unavailable card rather than a blank WCV hole.
+    if (!existsSync(join(fileBirdOut(), "renderer/index.html"))) return { ok: false };
     const pane = ensureView();
     // Re-adding moves the view to the top, above any plugin view attached since.
     window.contentView.addChildView(pane);
     pane.setBounds(bounds);
+    return { ok: true };
+  });
+
+  registrar.handle(IPC.invoke.fileBirdReload, async () => {
+    if (view && !view.webContents.isDestroyed()) {
+      view.webContents.reload();
+      return { ok: true };
+    }
+    return { ok: false };
+  });
+
+  registrar.handle(IPC.invoke.fileBirdOpenWindow, async () => {
+    const out = fileBirdOut();
+    const win = new BrowserWindow({
+      width: 1200,
+      height: 800,
+      title: "FileBird",
+      webPreferences: {
+        preload: join(out, "preload/preload.js"),
+        partition: "persist:filebird",
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: true,
+        webSecurity: true,
+      },
+    });
+    void win.webContents.loadFile(join(out, "renderer/index.html"), { query: { embedded: "0" } });
+    win.show();
     return { ok: true };
   });
 }

@@ -274,20 +274,45 @@
 }
 
 .sidebar-session-group-body.standalone {
-  /* Five compact 28px rows plus the four 1px gaps between them, and the 2px
-     label inset, before the list starts scrolling internally. */
-  max-height: 146px;
+  /* D3 island: compact — shares space with pinned pages and projects. */
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: contain;
-  /* 2px below the section label, matching every label-to-content pair. */
   padding: 2px 2px 0;
+}
+
+/* D1/D2 (tabs/rail): standalone sessions fill available sidebar height. */
+:root:not([data-nav-layout="island"]) .sidebar-session-group-body.standalone {
+  max-height: none;
+  flex: 1 1 auto;
+}
+
+/* D3 island: keep compact max-height. */
+:root[data-nav-layout="island"] .sidebar-session-group-body.standalone {
+  max-height: 146px;
+}
+
+/* D design: "Sessions" label uses title-case (not uppercase) in D1/D2. */
+.sidebar-standalone-sessions .sidebar-list-label {
+  font-size: var(--text-sm);
+  color: var(--ds-text-primary);
+  letter-spacing: normal;
+  text-transform: none;
+  font-weight: var(--font-weight-medium);
+}
+
+/* D3 island: hide the sessions label — the bench card above already labels it */
+:root[data-nav-layout="island"] .sidebar-standalone-sessions .sidebar-list-toolbar {
+  display: none;
 }
 
 .sidebar-standalone-sessions {
   min-width: 0;
-  flex: 0 0 auto;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .sidebar-session-empty {
@@ -340,3 +365,25 @@
 }
 
 
+/* ── First-run empty state (D onboarding, before any sessions) ── */
+.sidebar.is-first-run .sidebar-list-toolbar,
+.sidebar.is-first-run .sidebar-list,
+.sidebar.is-first-run .d3-sb-pinned-pages {
+  display: none;
+}
+.sidebar-first-run-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  color: var(--ds-text-muted);
+  text-align: center;
+}
+.sidebar-first-run-empty p {
+  font-size: var(--text-md);
+  line-height: 1.4;
+  margin: 0;
+}

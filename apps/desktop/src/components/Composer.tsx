@@ -16,7 +16,6 @@ import type {
 import {
   initialThinkingLevelForBinding,
   imageGenerationBindings,
-  isImageGenerationModel,
   normalizeLargePasteThreshold,
   stripInlineComposerFileReferenceTokens,
 } from "@pi-desktop/shared";
@@ -38,6 +37,7 @@ import { AskToolCard } from "./AskToolCard";
 import {
   COMPOSER_MAX_VISIBLE_ROWS,
   COMPOSER_MIN_HEIGHT_PX,
+  isComposerModelReady,
   PLACEHOLDER_KEYS,
   cssPixels,
   isPermissionMode,
@@ -422,13 +422,14 @@ export function Composer({
     controlsBlocked,
     ompSession: true,
   });
-  const modelReady = nativeSession
-    ? activeSessionSummary.capabilities?.canPrompt === true
-    : !!provider &&
-      provider.enabled &&
-      !!modelId &&
-      !isImageGenerationModel(imageGenerationCandidates, provider.id, modelId) &&
-      (provider.hasSecret || provider.authKind === "none");
+  const modelReady = isComposerModelReady({
+    nativeSession,
+    canPrompt: activeSessionSummary?.capabilities?.canPrompt,
+    provider,
+    modelId,
+    ompFallbackReady: activeSessionSummary?.ompFallbackReady,
+    imageGenerationCandidates,
+  });
   const enterToSend = settings?.enterToSend ?? true;
   const hasDraftContent = Boolean(value.trim() || activeFileReferences.length);
 
@@ -576,7 +577,7 @@ export function Composer({
           </div>
         ) : null}
         <ExtWidget sessionId={activeSessionId ?? undefined} />
-        <GitControlBar disabled={sendBlocked} />
+        {/* D design: git bar removed — branch/pull/push live in the navbar menu (notes.md) */}
         <ComposerStatus
           t={t}
           queuedPrompts={queuedPrompts}

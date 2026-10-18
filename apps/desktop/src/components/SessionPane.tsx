@@ -7,9 +7,7 @@ import { ACTIVITY_TAB } from "../lib/work-panel-tabs";
 import { useTranscriptView } from "../hooks/use-transcript-view";
 import { TranscriptDisclosureProvider } from "../features/chat/transcript/disclosure";
 import { OmpSubagentsList } from "../features/chat/transcript/OmpSubagentsList";
-import { OmpTodoPanel } from "../features/chat/transcript/OmpTodoPanel";
 import { DapPanel } from "../features/chat/transcript/DapPanel";
-import { OmpCollabPanel } from "../features/chat/transcript/OmpCollabPanel";
 
 // ponytail: session ids only; grows by one string per session, never cleared.
 const activityAutoOpened = new Set<string>();
@@ -50,9 +48,6 @@ export const SessionPane = memo(function SessionPane({
     Boolean(headAsk(state.pendingAsks, sessionId)),
   );
   const planningState = useAppStore((state) => state.planningStates[sessionId]);
-  const isOmpSession = useAppStore((state) =>
-    state.sessions.find((s) => s.id === sessionId)?.source !== "pi-native",
-  );
   const searchTarget = useMemo(
     () =>
       transcript.focus && transcript.parentMessage
@@ -110,9 +105,7 @@ export const SessionPane = memo(function SessionPane({
         />
       </TranscriptDisclosureProvider>
       {visible ? <OmpSubagentsList sessionId={sessionId} /> : null}
-      {visible ? <OmpTodoPanel sessionId={sessionId} /> : null}
       {visible ? <DapPanel sessionId={sessionId} /> : null}
-      {visible && isOmpSession ? <OmpCollabPanel sessionId={sessionId} /> : null}
     </div>
   );
 });

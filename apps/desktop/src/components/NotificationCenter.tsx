@@ -1,13 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type KeyboardEvent as ReactKeyboardEvent,
-} from "react";
-import { portalToBody } from "../lib/portal-visibility";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AppNotification } from "@pi-desktop/shared";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "../stores/app-store";
@@ -15,60 +6,107 @@ import {
   inboxNotifications,
   inboxUnreadCount,
 } from "../lib/notification-inbox";
+import { notificationAge } from "../lib/notification-time";
 import {
   IconBell,
-  IconCheckCheck,
-  IconCircleAlert,
   IconCircleCheck,
+  IconCircleX,
+  IconCheckCheck,
+  IconExternal,
   IconTrash,
 } from "./icons";
-import { TooltipButton } from "./ui";
+import { Button, TooltipButton } from "./ui";
 
 type NotificationFilter = "all" | "unread";
 
-function formatRelativeTime(value: string, locale: string, justNow: string): string {
-  const timestamp = Date.parse(value);
-  if (!Number.isFinite(timestamp)) return justNow;
+/** Group a sorted notification list into Today / Yesterday / dated buckets. */
+function groupByDate(
+  notifications: AppNotification[],
+  today: string,
+  yesterday: string,
+  locale: string,
+): { key: string; label: string; items: AppNotification[] }[] {
+  const now = new Date();
+  const todayStr = now.toDateString();
+  const yestDate = new Date(now);
+  yestDate.setDate(yestDate.getDate() - 1);
+  const yestStr = yestDate.toDateString();
+  const dayFormat = new Intl.DateTimeFormat(locale || undefined, { weekday: "long", month: "short", day: "numeric" });
 
-  const delta = timestamp - Date.now();
-  const absoluteDelta = Math.abs(delta);
-  if (absoluteDelta < 45_000) return justNow;
-
-  try {
-    const formatter = new Intl.RelativeTimeFormat(locale || undefined, {
-      numeric: "auto",
-    });
-    if (absoluteDelta < 60 * 60_000) {
-      return formatter.format(Math.round(delta / 60_000), "minute");
-    }
-    if (absoluteDelta < 24 * 60 * 60_000) {
-      return formatter.format(Math.round(delta / (60 * 60_000)), "hour");
-    }
-    if (absoluteDelta < 7 * 24 * 60 * 60_000) {
-      return formatter.format(Math.round(delta / (24 * 60 * 60_000)), "day");
-    }
-    return new Intl.DateTimeFormat(locale || undefined, {
-      month: "short",
-      day: "numeric",
-      year:
-        new Date(timestamp).getFullYear() === new Date().getFullYear()
-          ? undefined
-          : "numeric",
-    }).format(timestamp);
-  } catch {
-    return justNow;
+  const groups: { key: string; label: string; items: AppNotification[] }[] = [];
+  for (const n of notifications) {
+    const date = new Date(n.createdAt);
+    const key = date.toDateString();
+    const label = key === todayStr ? today : key === yestStr ? yesterday : dayFormat.format(date);
+    const last = groups[groups.length - 1];
+    if (last?.key === key) last.items.push(n);
+    else groups.push({ key, label, items: [n] });
   }
+  return groups;
 }
 
+/**
+ * Bell trigger shown in the nav rail footer.
+ * Clicking navigates to the full Notifications inbox page (R11g).
+ * The badge reflects the unread count.
+ */
 export function NotificationCenter({
   onBeforeOpen,
+  navRailLabel,
 }: {
   onBeforeOpen?: () => void;
+  /** When set, renders the trigger as a .nav-rail-labeled item with a visible label
+   *  (shown on .expanded rail) and wraps the icon in .nav-rail-icon. */
+  navRailLabel?: string;
 }) {
+  const { t } = useTranslation();
+  const storedNotifications = useAppStore((state) => state.notifications);
+  const unreadCount = useMemo(
+    () => inboxUnreadCount(storedNotifications),
+    [storedNotifications],
+  );
+  const setPage = useAppStore((state) => state.setPage);
+
+  const unreadLabel =
+    unreadCount > 0
+      ? t("notifications.openUnread", { count: unreadCount })
+      : t("notifications.open");
+
+  return (
+    <div className="notification-center">
+      <TooltipButton
+        type="button"
+        className={`footer-notification notification-trigger${navRailLabel ? " nav-rail-labeled" : ""}`}
+        tooltip={unreadLabel}
+        ariaLabel={unreadLabel}
+        onClick={() => {
+          onBeforeOpen?.();
+          setPage("notifications");
+        }}
+      >
+        {navRailLabel ? (
+          <span className="nav-rail-icon"><IconBell size={16} aria-hidden /></span>
+        ) : (
+          <IconBell size={14} aria-hidden />
+        )}
+        {unreadCount > 0 ? (
+          <span className="notification-badge" aria-hidden>
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        ) : null}
+        {navRailLabel && <span className="nav-rail-label">{navRailLabel}</span>}
+      </TooltipButton>
+    </div>
+  );
+}
+
+/**
+ * Full-page Notifications inbox (Direction D, R11g).
+ * Rendered as a routed page via AppShell when page === "notifications".
+ */
+export function NotificationsPage() {
   const { t, i18n } = useTranslation();
   const storedNotifications = useAppStore((state) => state.notifications);
-  // Successful completions are hidden here; they still drive the sidebar
-  // outcome badge and native notifications from the unfiltered store.
   const notifications = useMemo(
     () => inboxNotifications(storedNotifications),
     [storedNotifications],
@@ -79,317 +117,193 @@ export function NotificationCenter({
   );
   const allUnreadCount = useAppStore((state) => state.unreadNotificationCount);
   const refreshNotifications = useAppStore((state) => state.refreshNotifications);
-  const markAllNotificationsRead = useAppStore(
-    (state) => state.markAllNotificationsRead,
-  );
-  const clearNotifications = useAppStore((state) => state.clearNotifications);
-  const openNotification = useAppStore((state) => state.openNotification);
-  const showToast = useAppStore((state) => state.showToast);
+  const markAllNotificationsRead = useAppStore((s) => s.markAllNotificationsRead);
+  const clearNotifications = useAppStore((s) => s.clearNotifications);
+  const openNotification = useAppStore((s) => s.openNotification);
+  const showToast = useAppStore((s) => s.showToast);
 
-  const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [filter, setFilter] = useState<NotificationFilter>("all");
-  const [popoverPos, setPopoverPos] = useState<{ bottom: number; left: number } | null>(null);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const popoverRef = useRef<HTMLDivElement>(null);
+  const mounted = useRef(true);
 
-  const visibleNotifications = useMemo(
-    () =>
-      filter === "unread"
-        ? notifications.filter((notification) => !notification.readAt)
-        : notifications,
+  useEffect(() => {
+    mounted.current = true;
+    setBusy(true);
+    void refreshNotifications()
+      .catch(() => showToast(t("notifications.actionFailed"), { variant: "error" }))
+      .finally(() => { if (mounted.current) setBusy(false); });
+    return () => { mounted.current = false; };
+  }, [refreshNotifications, showToast, t]);
+
+  const visible = useMemo(
+    () => filter === "unread" ? notifications.filter((n) => !n.readAt) : notifications,
     [filter, notifications],
   );
 
-  const closePopover = useCallback((restoreFocus = true) => {
-    setOpen(false);
-    if (restoreFocus) {
-      requestAnimationFrame(() => triggerRef.current?.focus());
-    }
-  }, []);
+  const locale = i18n.resolvedLanguage || i18n.language;
 
-  useLayoutEffect(() => {
-    if (!open) {
-      setPopoverPos(null);
-      return;
-    }
-    const place = () => {
-      const rect = triggerRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const width = Math.min(360, window.innerWidth - 24);
-      const left = Math.max(12, Math.min(rect.left, window.innerWidth - width - 12));
-      setPopoverPos({
-        bottom: Math.max(12, window.innerHeight - rect.top + 8),
-        left,
-      });
-    };
-    place();
-    window.addEventListener("resize", place);
-    return () => window.removeEventListener("resize", place);
-  }, [open]);
+  const groups = useMemo(
+    () => groupByDate(visible, t("notifications.today"), t("notifications.yesterday"), locale),
+    [visible, t, locale],
+  );
 
-  useEffect(() => {
-    if (!open) return;
-    setBusy(true);
-    void refreshNotifications()
-      .catch(() =>
-        showToast(t("notifications.actionFailed"), { variant: "error" }),
-      )
-      .finally(() => {
-        setBusy(false);
-        requestAnimationFrame(() => {
-          popoverRef.current
-            ?.querySelector<HTMLButtonElement>(
-              ".notification-item.unread, .notification-item, .notification-filter.active",
-            )
-            ?.focus();
-        });
-      });
-  }, [open, refreshNotifications, showToast, t]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onMouseDown = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (rootRef.current?.contains(target)) return;
-      if (popoverRef.current?.contains(target)) return;
-      closePopover(false);
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      event.preventDefault();
-      closePopover();
-    };
-    window.addEventListener("mousedown", onMouseDown);
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      window.removeEventListener("mousedown", onMouseDown);
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [closePopover, open]);
-
-  const onPopoverKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
-    const buttons = Array.from(
-      event.currentTarget.querySelectorAll<HTMLButtonElement>(
-        ".notification-item:not(:disabled)",
-      ),
-    );
-    if (!buttons.length) return;
-    event.preventDefault();
-    const current = buttons.indexOf(document.activeElement as HTMLButtonElement);
-    let next = 0;
-    if (event.key === "End") next = buttons.length - 1;
-    else if (event.key === "ArrowUp") {
-      next = Math.max(0, current < 0 ? 0 : current - 1);
-    } else if (event.key === "ArrowDown") {
-      next = Math.min(buttons.length - 1, current < 0 ? 0 : current + 1);
-    }
-    buttons[next]?.focus();
-  };
-
-  const focusActiveFilter = () => {
-    requestAnimationFrame(() => {
-      popoverRef.current
-        ?.querySelector<HTMLButtonElement>(".notification-filter.active")
-        ?.focus();
-    });
-  };
-
-  const runToolbarAction = async (action: () => Promise<void>) => {
-    setBusy(true);
-    try {
-      await action();
-      focusActiveFilter();
-    } catch {
-      showToast(t("notifications.actionFailed"), { variant: "error" });
-    } finally {
-      setBusy(false);
+  /** "just now" / "2 m ago" / "2 h ago" / "Yesterday 07:30" / "Oct 11, 08:00". */
+  const ageLabel = (value: string) => {
+    const age = notificationAge(new Date(value), new Date(), locale);
+    switch (age.kind) {
+      case "now": return t("notifications.justNow");
+      case "minutes": return t("notifications.minutesAgo", { minutes: age.minutes });
+      case "hours": return t("notifications.hoursAgo", { hours: age.hours });
+      case "yesterday": return t("notifications.yesterdayAt", { time: age.time });
+      case "today":
+      case "tomorrow": return age.time;
+      case "date": return age.text;
     }
   };
 
-  const activateNotification = async (notification: AppNotification) => {
-    closePopover();
-    try {
-      await openNotification(notification.id);
-    } catch {
-      showToast(t("notifications.actionFailed"), { variant: "error" });
-    }
-  };
+  const runAction = useCallback(
+    async (action: () => Promise<void>) => {
+      setBusy(true);
+      try { await action(); }
+      catch { showToast(t("notifications.actionFailed"), { variant: "error" }); }
+      finally { if (mounted.current) setBusy(false); }
+    },
+    [showToast, t],
+  );
 
-  const unreadLabel =
-    unreadCount > 0
-      ? t("notifications.openUnread", { count: unreadCount })
-      : t("notifications.open");
-  const emptyUnread = filter === "unread";
+  const activateNotification = useCallback(
+    async (notification: AppNotification) => {
+      try { await openNotification(notification.id); }
+      catch { showToast(t("notifications.actionFailed"), { variant: "error" }); }
+    },
+    [openNotification, showToast, t],
+  );
 
   return (
-    <div className="notification-center" ref={rootRef}>
-      <TooltipButton
-        ref={triggerRef}
-        type="button"
-        className={`footer-notification notification-trigger ${open ? "active" : ""}`}
-        tooltip={unreadLabel}
-        ariaLabel={unreadLabel}
-        aria-haspopup="dialog"
-        aria-controls="notification-popover"
-        aria-expanded={open}
-        onClick={() => {
-          if (open) closePopover();
-          else {
-            onBeforeOpen?.();
-            setOpen(true);
-          }
-        }}
-      >
-        <IconBell size={14} aria-hidden />
-        {unreadCount > 0 ? (
-          <span className="notification-badge" aria-hidden>
-            {unreadCount > 99 ? "99+" : unreadCount}
+    <div className="notifications-page">
+      <div className="notifications-card">
+      {/* Page head — labeled actions (T12-F07) */}
+      <div className="d-page-head">
+        <IconBell size={16} aria-hidden className="notifications-page-bell" />
+        <span className="d-page-title">{t("notifications.title")}</span>
+        {unreadCount > 0 && (
+          <span className="d-pill violet" aria-live="polite">
+            <span className="d-pill-dot" aria-hidden />
+            {t("notifications.unreadCount", { count: unreadCount })}
           </span>
-        ) : null}
-      </TooltipButton>
-      <span className="sr-only" role="status" aria-live="polite">
-        {unreadLabel}
-      </span>
-
-      {open && popoverPos && typeof document !== "undefined"
-        ? portalToBody(
-            <div
-              ref={popoverRef}
-              id="notification-popover"
-              className="notification-popover notification-popover-portaled"
-              role="dialog"
-              aria-labelledby="notification-title"
-              onKeyDown={onPopoverKeyDown}
-              style={{ bottom: popoverPos.bottom, left: popoverPos.left }}
-            >
-          <header className="notification-header">
-            <h2 id="notification-title">{t("notifications.title")}</h2>
-            <div className="notification-actions">
-              <TooltipButton
-                type="button"
-                className="notification-action"
-                tooltip={t("notifications.markAllRead")}
-                ariaLabel={t("notifications.markAllRead")}
-                disabled={busy || allUnreadCount === 0}
-                onClick={() => void runToolbarAction(markAllNotificationsRead)}
-              >
-                <IconCheckCheck size={15} aria-hidden />
-              </TooltipButton>
-              <TooltipButton
-                type="button"
-                className="notification-action"
-                tooltip={t("notifications.clearAll")}
-                ariaLabel={t("notifications.clearAll")}
-                disabled={busy || storedNotifications.length === 0}
-                onClick={() => void runToolbarAction(clearNotifications)}
-              >
-                <IconTrash size={15} aria-hidden />
-              </TooltipButton>
-            </div>
-          </header>
-
-          <div
-            className="notification-filters"
-            role="group"
-            aria-label={t("notifications.title")}
+        )}
+        <div className="d-page-head-actions">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={busy || allUnreadCount === 0}
+            onClick={() => void runAction(markAllNotificationsRead)}
+            aria-label={t("notifications.markAllRead")}
           >
-            {(["all", "unread"] as const).map((value) => (
-              <button
-                key={value}
-                type="button"
-                className={`notification-filter ${filter === value ? "active" : ""}`}
-                aria-pressed={filter === value}
-                onClick={() => setFilter(value)}
-              >
-                {t(`notifications.${value}`)}
-              </button>
-            ))}
-          </div>
+            <IconCheckCheck size={13} aria-hidden />
+            {t("notifications.markAllRead")}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={busy || storedNotifications.length === 0}
+            onClick={() => void runAction(clearNotifications)}
+            aria-label={t("notifications.clearAll")}
+          >
+            <IconTrash size={13} aria-hidden />
+            {t("notifications.clearAll")}
+          </Button>
+        </div>
+      </div>
 
-          {visibleNotifications.length > 0 ? (
-            <ul className="notification-list">
-              {visibleNotifications.map((notification) => {
-                const failed = notification.kind === "task.failed";
-                const sessionTitle = notification.sessionTitle || t("chat.untitledTask");
-                const title = t(
-                  failed
-                    ? "notifications.failedTitle"
-                    : "notifications.completedTitle",
-                  { sessionTitle },
-                );
-                const body = failed
-                  ? notification.errorCode
-                    ? t("notifications.failedBodyWithCode", {
-                        code: notification.errorCode,
-                      })
-                    : t("notifications.failedBody")
-                  : t("notifications.completedBody");
-                return (
-                  <li key={notification.id}>
-                    <button
-                      type="button"
-                      className={`notification-item ${notification.readAt ? "" : "unread"}`}
-                      data-notification-id={notification.id}
-                      disabled={busy}
-                      onClick={() => void activateNotification(notification)}
-                    >
-                      <span
-                        className={`notification-kind-icon ${failed ? "failed" : ""}`}
-                        aria-hidden
+      {/* All / Unread filter using existing settings-segment primitive */}
+      <div className="notifications-filter-bar" role="group" aria-label={t("notifications.title")}>
+        <div className="settings-segment" role="radiogroup" aria-label={t("notifications.title")}>
+          {(["all", "unread"] as const).map((value) => (
+            <button
+              key={value}
+              type="button"
+              role="radio"
+              aria-checked={filter === value}
+              className={`settings-segment-item${filter === value ? " active" : ""}`}
+              onClick={() => setFilter(value)}
+            >
+              {t(`notifications.${value}`)}
+              {value === "all" && notifications.length > 0 && (
+                <span className="notifications-filter-count">{notifications.length}</span>
+              )}
+              {value === "unread" && unreadCount > 0 && (
+                <span className="notifications-filter-count">{unreadCount}</span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Notification list with date groups (T12-F07) */}
+      <div className="notifications-body" role="main">
+        {visible.length > 0 ? (
+          <ul className="notifications-list">
+            {groups.map((group) => (
+              <Fragment key={group.key}>
+                <li role="presentation">
+                  <div className="notifications-date-head">{group.label}</div>
+                </li>
+                {group.items.map((notification) => {
+                  const failed = notification.kind === "task.failed";
+                  const sessionTitle = notification.sessionTitle || t("chat.untitledTask");
+                  const title = failed
+                    ? t("notifications.failedTitle", { sessionTitle })
+                    : t("notifications.completedTitle", { sessionTitle });
+                  const body = notification.body ?? (failed
+                    ? (notification.errorCode
+                        ? t("notifications.failedBodyWithCode", { code: notification.errorCode })
+                        : t("notifications.failedBody"))
+                    : t("notifications.completedBody"));
+
+
+                  return (
+                    <li key={notification.id}>
+                      <button
+                        type="button"
+                        className={`notifications-page-row${notification.readAt ? "" : " unread"}`}
+                        data-notification-id={notification.id}
+                        data-kind={notification.kind}
+                        disabled={busy}
+                        onClick={() => void activateNotification(notification)}
                       >
-                        {failed ? (
-                          <IconCircleAlert size={17} />
-                        ) : (
-                          <IconCircleCheck size={17} />
-                        )}
-                      </span>
-                      <span className="notification-copy">
-                        <span className="notification-item-title">{title}</span>
-                        <span className="notification-item-body">{body}</span>
-                      </span>
-                      <time
-                        className="notification-time"
-                        dateTime={notification.createdAt}
-                      >
-                        {formatRelativeTime(
-                          notification.createdAt,
-                          i18n.resolvedLanguage || i18n.language,
-                          t("notifications.justNow"),
-                        )}
-                      </time>
-                      {!notification.readAt ? (
-                        <span className="notification-unread-dot" aria-hidden />
-                      ) : null}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <div className="notification-empty" role="status">
-              <IconBell size={22} aria-hidden />
-              <strong>
-                {t(
-                  emptyUnread
-                    ? "notifications.emptyUnreadTitle"
-                    : "notifications.emptyTitle",
-                )}
-              </strong>
-              <span>
-                {t(
-                  emptyUnread
-                    ? "notifications.emptyUnreadBody"
-                    : "notifications.emptyBody",
-                )}
-              </span>
-            </div>
-          )}
-            </div>,
-          )
-        : null}
+                        <span className={`notif-page-icon ${failed ? "failed" : "ok"}`} aria-hidden>
+                          {failed ? <IconCircleX size={14} /> : <IconCircleCheck size={14} />}
+                        </span>
+                        <span className="notif-page-copy">
+                          <span className="notif-page-title">{title}</span>
+                          <span className="notif-page-body">{body}</span>
+                        </span>
+                        <time className="notif-page-time" dateTime={notification.createdAt}>
+                          {ageLabel(notification.createdAt)}
+                        </time>
+                        <span className="notif-page-link" aria-hidden>
+                          <IconExternal size={12} />
+                        </span>
+                        {!notification.readAt && <span className="notif-page-unread-dot" aria-hidden />}
+                      </button>
+                    </li>
+                  );
+                })}
+              </Fragment>
+            ))}
+          </ul>
+        ) : (
+          <div className="notifications-page-empty" role="status">
+            <IconBell size={22} aria-hidden />
+            <strong>{t(filter === "unread" ? "notifications.emptyUnreadTitle" : "notifications.emptyTitle")}</strong>
+            <span>{t(filter === "unread" ? "notifications.emptyUnreadBody" : "notifications.emptyBody")}</span>
+          </div>
+        )}
+      </div>
+      </div>
     </div>
   );
 }

@@ -71,6 +71,15 @@ export function RemoteHostsPage() {
 
   useEffect(() => {
     void refresh();
+    // Refresh on window focus so the online badge stays current when the user
+    // switches back to Fcode after pairing or rebooting a remote host.
+    window.addEventListener("focus", refresh);
+    // Also poll every 30 s while the page is mounted.
+    const id = setInterval(() => void refresh(), 30_000);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      clearInterval(id);
+    };
   }, [refresh]);
 
   const submit = useCallback(

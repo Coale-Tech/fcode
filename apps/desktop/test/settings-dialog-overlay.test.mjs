@@ -11,7 +11,6 @@ const overlaySources = [
   "../src/components/settings/VendorPickerDialog.tsx",
   "../src/components/settings/OAuthLoginDialog.tsx",
   "../src/components/settings/SkillEditorSheet.tsx",
-  "../src/components/settings/SubagentEditorSheet.tsx",
   "../src/components/extensions/McpEditorSheet.tsx",
 ];
 

@@ -65,6 +65,14 @@ export function MemoryTab() {
   const [profileSaved, setProfileSaved] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
   const USER_PROFILE_MAX = 1024;
+  // ── Project memory state (G8) ─────────────────────────────────────────────
+  const [projectMemory, setProjectMemory] = useState("");
+  const [projectMemoryDraft, setProjectMemoryDraft] = useState("");
+  const [projectMemorySaving, setProjectMemorySaving] = useState(false);
+  const [projectMemorySaved, setProjectMemorySaved] = useState(false);
+  const [projectMemoryError, setProjectMemoryError] = useState<string | null>(null);
+  const PROJECT_MEMORY_MAX = 16 * 1024;
+  const activeProjectPath = useAppStore((s) => s.activeProjectPath);
 
 
 
@@ -94,6 +102,14 @@ export function MemoryTab() {
       }
     });
   }, []);
+
+  // Load project MEMORY.md when project path changes (G8)
+  useEffect(() => {
+    if (!activeProjectPath) return;
+    void api.ompProjectMemoryGet(activeProjectPath)
+      .then((r) => { setProjectMemory(r.text); setProjectMemoryDraft(r.text); })
+      .catch(() => undefined);
+  }, [activeProjectPath]);
 
   // Load mental models when viewing the Hindsight config.
   useEffect(() => {
@@ -155,6 +171,27 @@ export function MemoryTab() {
       setProfileError(e instanceof Error ? e.message : String(e));
     } finally {
       setProfileSaving(false);
+    }
+  };
+
+  const saveProjectMemory = async () => {
+    if (!activeProjectPath) return;
+    setProjectMemorySaving(true);
+    setProjectMemoryError(null);
+    setProjectMemorySaved(false);
+    try {
+      const result = await api.ompProjectMemorySet(activeProjectPath, projectMemoryDraft);
+      if (result.ok) {
+        setProjectMemory(projectMemoryDraft);
+        setProjectMemorySaved(true);
+        setTimeout(() => setProjectMemorySaved(false), 3_000);
+      } else {
+        setProjectMemoryError(result.error ?? "Save failed");
+      }
+    } catch (e) {
+      setProjectMemoryError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setProjectMemorySaving(false);
     }
   };
 
@@ -281,6 +318,20 @@ export function MemoryTab() {
             value={String(omp["memory.injectMaxChars"] ?? 6000)}
             onChange={(e) => setOmp((prev) => ({ ...prev, "memory.injectMaxChars": Number(e.target.value) }))}
             onBlur={(e) => void saveOmp({ "memory.injectMaxChars": Number(e.target.value) })}
+            onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+          />
+        </SettingsRow>
+        <SettingsRow
+          title={t("settings.memoryFrozenMaxChars", "Project memory cap (chars)")}
+          description={t("settings.memoryFrozenMaxCharsDesc", "Maximum chars from each frozen memory file (USER.md / MEMORY.md) injected per session. 0 = disabled. Default: 2000.")}
+        >
+          <Input
+            type="number"
+            min={0}
+            max={200000}
+            value={String(omp["memory.frozen.maxChars"] ?? 2000)}
+            onChange={(e) => setOmp((prev) => ({ ...prev, "memory.frozen.maxChars": Number(e.target.value) }))}
+            onBlur={(e) => void saveOmp({ "memory.frozen.maxChars": Number(e.target.value) })}
             onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
           />
         </SettingsRow>
@@ -514,6 +565,57 @@ export function MemoryTab() {
           </div>
         </SettingsRow>
       </SettingsCard>
+
+      {/* ── Project memory card (G8) ─────────────────────────────────────── */}
+      {activeProjectPath && (
+        <SettingsCard title={t("settings.memoryProjectMemoryTitle", "Project Memory")}>
+          <SettingsRow
+            title={t("settings.memoryProjectMemoryLabel", "Project memory (MEMORY.md)")}
+            description={t("settings.memoryProjectMemoryDesc", "Contents of .omp/MEMORY.md in the current project, injected at session start")}
+          >
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px", width: "100%" }}>
+              <textarea
+                data-testid="project-memory-textarea"
+                value={projectMemoryDraft}
+                maxLength={PROJECT_MEMORY_MAX}
+                rows={6}
+                style={{ width: "100%", resize: "vertical", boxSizing: "border-box" }}
+                onChange={(e) => {
+                  setProjectMemoryDraft(e.target.value.slice(0, PROJECT_MEMORY_MAX));
+                  setProjectMemorySaved(false);
+                }}
+              />
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "0.8em", opacity: 0.6 }}>
+                  {t("settings.memoryProjectMemoryCounter", "{{count}} / {{max}} chars", {
+                    count: projectMemoryDraft.length,
+                    max: PROJECT_MEMORY_MAX,
+                  })}
+                </span>
+                <Button
+                  type="button"
+                  variant="primary"
+                  data-testid="project-memory-save"
+                  disabled={projectMemorySaving || projectMemoryDraft === projectMemory}
+                  onClick={() => void saveProjectMemory()}
+                >
+                  {projectMemorySaving
+                    ? t("settings.memoryProjectMemorySaving", "Saving…")
+                    : t("settings.memoryProjectMemorySave", "Save")}
+                </Button>
+              </div>
+              {projectMemorySaved && (
+                <div role="status" data-testid="project-memory-saved">
+                  {t("settings.memoryProjectMemorySaved", "Saved")}
+                </div>
+              )}
+              {projectMemoryError && (
+                <div role="alert">{projectMemoryError}</div>
+              )}
+            </div>
+          </SettingsRow>
+        </SettingsCard>
+      )}
 
       {/* ── Bench bootstrap card ─────────────────────────────────────────── */}
       <SettingsCard title={t("settings.memoryBenchBootstrapTitle")}>
@@ -826,6 +928,20 @@ export function MemoryTab() {
           </details>
         </section>
       )}
+
+      {/* ── Auto-Learn (G9) ──────────────────────────────────────────────── */}
+      <SettingsCard title={t("settings.memoryAutoLearnTitle", "Auto-Learn")}>
+        <SettingsRow
+          title={t("settings.memoryAutoLearnEnabled", "Auto-Learn (experimental)")}
+          description={t("settings.memoryAutoLearnEnabledDesc", "After the agent stops, nudge it to capture lessons to memory and create/enhance isolated managed skills")}
+        >
+          <SettingsToggle
+            checked={omp["autolearn.enabled"] === true}
+            label={t("settings.memoryAutoLearnEnabled", "Auto-Learn (experimental)")}
+            onChange={() => void saveOmp({ "autolearn.enabled": !(omp["autolearn.enabled"] === true) })}
+          />
+        </SettingsRow>
+      </SettingsCard>
       <OmpSettingsSections part="memory" />
     </div>
   );

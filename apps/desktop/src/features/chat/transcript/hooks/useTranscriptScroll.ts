@@ -108,6 +108,11 @@ export function useTranscriptScroll({
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "auto") => {
     const el = scrollRef.current;
     if (!el || !transcriptHasLayout(el)) return;
+    if ((window as unknown as Record<string, unknown>).__PI_CAPTURE__ &&
+        (window as unknown as Record<string, unknown>).__PI_CAPTURE_SCROLL_TOP__) {
+      el.scrollTop = 0;
+      return;
+    }
     const targetTop = Math.max(0, el.scrollHeight - el.clientHeight);
     el.scrollTo({ top: targetTop, behavior });
     // `scrollTo({ behavior: "auto" })` is synchronous. Record the position the

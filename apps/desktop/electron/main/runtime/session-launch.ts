@@ -15,19 +15,15 @@ import {
   type Risk,
   type SessionThinkingLevel,
   type UserSkillRecord,
-  type UserSubagentRecord,
 } from "@pi-desktop/shared";
 import {
   capabilitiesFromModelConfig,
   clampThinkingLevel,
   loadCustomSystemPrompt,
   loadInstructionChain,
-  loadSubagentDefinitions,
   modelConfigWithBinding,
   optionalProviderHeaders,
-  resolveSubagentProviders,
   visionFromModelConfig,
-  type UserSubagentDocument,
 } from "@pi-desktop/agent-runtime";
 import { builtinSkills } from "../builtin-skills";
 import { OAUTH_AUTH_KIND, type VendorOAuth } from "../oauth";
@@ -80,14 +76,6 @@ export type SessionLaunchRuntimeDependencies = {
     provider: Pick<RuntimeProvider, "models">,
     modelId: string,
   ) => ModelBinding | undefined;
-  effectiveSubagentModelConfig: (
-    provider: Pick<RuntimeProvider, "models">,
-    modelId: string,
-    catalogModelConfig: Parameters<typeof modelConfigWithBinding>[0],
-  ) => {
-    modelConfig: ReturnType<typeof modelConfigWithBinding>;
-    capabilities: ReturnType<typeof capabilitiesFromModelConfig>;
-  };
   normalizeThinkingLevel: (value: unknown) => SessionThinkingLevel;
 };
 
@@ -103,7 +91,6 @@ export function createSessionLaunchRuntime({
   getWorkspacePath,
   pluginActiveInProject,
   bindingForModel,
-  effectiveSubagentModelConfig,
   normalizeThinkingLevel,
 }: SessionLaunchRuntimeDependencies) {
   const isHostUnavailable = (error: unknown): boolean =>
@@ -146,76 +133,6 @@ export function createSessionLaunchRuntime({
     } catch (error) {
       if (!isHostUnavailable(error)) {
         logger.app("plugin", "warn", "skills list failed", { data: String(error) });
-      }
-      return [];
-    }
-  }
-
-  /**
-   * The user's own subagent definitions, filtered to the ones a session on this
-   * project sees, as documents the runtime can parse (D202).
-   *
-   * host-core owns the registry and the activation scope; the document text is
-   * read here because this is where the other two definition sources are read
-   * too, so all three reach `loadSubagentDefinitions` in the same shape.
-   */
-  async function activeUserSubagentDocuments(
-    projectPath: string | undefined,
-  ): Promise<UserSubagentDocument[]> {
-    if (!runtimeState.host?.isAvailable()) return [];
-    let records: UserSubagentRecord[] = [];
-    try {
-      const result = await runtimeState.host!.call<{ subagents: UserSubagentRecord[] }>(
-        "agents.active",
-        { projectPath: projectPath ?? null },
-      );
-      records = result.subagents ?? [];
-    } catch (error) {
-      if (!isHostUnavailable(error)) {
-        logger.app("plugin", "warn", "subagent list failed", { data: String(error) });
-      }
-      return [];
-    }
-    const documents: UserSubagentDocument[] = [];
-    const { readFile } = await import("node:fs/promises");
-    for (const record of records) {
-      try {
-        documents.push({
-          id: record.id,
-          document: await readFile(record.path, "utf8"),
-          filePath: record.path,
-        });
-      } catch (error) {
-        // A document deleted behind the registry's back is one lost delegate,
-        // never a lost turn.
-        logger.app("plugin", "warn", "subagent document unreadable", {
-          data: { id: record.id, error: String(error) },
-        });
-      }
-    }
-    return documents;
-  }
-
-  /**
-   * Handles whose shipped definition the user turned off (D202 activation for
-   * builtins, which are constants and so have no document to scan).
-   *
-   * host-core owns the state. An unavailable host, or a failed read, contributes
-   * no exclusions: losing a delegate the user kept is worse than offering one
-   * they switched off.
-   */
-  async function disabledBuiltinSubagents(): Promise<string[]> {
-    if (!runtimeState.host?.isAvailable()) return [];
-    try {
-      const result = await runtimeState.host!.call<{ disabled: string[] }>(
-        "agents.disabledBuiltins",
-      );
-      return result.disabled ?? [];
-    } catch (error) {
-      if (!isHostUnavailable(error)) {
-        logger.app("plugin", "warn", "builtin subagent state failed", {
-          data: String(error),
-        });
       }
       return [];
     }
@@ -510,150 +427,12 @@ export function createSessionLaunchRuntime({
         description: skill.description,
       })),
     ];
-    // Subagents (ADR 0062): definitions are re-read per launch so editing
-    // `~/.agents/subagents` or the registry takes effect on the next prompt, and every
-    // pinned model is resolved here because credentials and the models.dev catalog
-    // live on this side. The user's own definitions (D202) are scope-filtered like the
-    // skills above; a delegate the model can see is one it will try to call.
-    const subagentCatalog = await loadSubagentDefinitions(projectPath, {
-      userDocuments: await activeUserSubagentDocuments(projectPath),
-      // A switched-off builtin is dropped from what this prompt may delegate to.
-      disabledBuiltins: await disabledBuiltinSubagents(),
-    });
-    const subagentBindings = await resolveSubagentProviders({
-      definitions: subagentCatalog.definitions,
-      providers: providers.providers,
-      getSecret: async (id: string) =>
-        (await runtimeState.host!.call<{ value?: string }>("providers.getSecret", { id })).value,
-      resolveVendorBinding: (pinned, pinnedModelId) =>
-        vendorOAuth.bindingFor(pinned.id, pinnedModelId),
-      resolveModel: async (pinned, pinnedModelId) => {
-        const catalogModelConfig = catalogModelConfigFor(modelsDevCatalog, {
-          vendorKey: pinned.vendorKey,
-          baseUrl: pinned.baseUrl,
-          apiStyle: pinned.apiStyle,
-          modelId: pinnedModelId,
-        });
-        const configuredProvider = providers.providers.find(
-          (candidate) => candidate.id === pinned.id,
-        );
-        return configuredProvider
-          ? effectiveSubagentModelConfig(
-              configuredProvider,
-              pinnedModelId,
-              catalogModelConfig,
-            )
-          : {
-              modelConfig: catalogModelConfig,
-              capabilities: capabilitiesFromModelConfig(catalogModelConfig),
-            };
-      },
-    });
-    // Delegation model catalog: every model binding flagged
-    // `availableForSubagents` is pre-resolved so the system prompt can list
-    // them and the parent agent can pass them to `Task.model` without an
-    // extra RPC round-trip. Statically pinned entries from definitions take
-    // precedence — they were resolved above with stricter diagnostics.
-    const subagentModelKeys: string[] = [];
-    for (const row of providers.providers) {
-      if (!row.enabled) continue;
-      for (const binding of row.models ?? []) {
-        if (!binding.availableForSubagents) continue;
-        let key = `${row.vendorKey ?? row.name}/${binding.id}`;
-        // Two provider rows can share a vendor alias. Opting in one row must
-        // not authorize the credential-bearing pin resolved from another row.
-        if (subagentBindings.providers[key]?.id && subagentBindings.providers[key].id !== row.id) {
-          key = `${row.id}/${binding.id}`;
-        }
-        if (subagentBindings.providers[key]) {
-          subagentModelKeys.push(key);
-          continue; // already resolved, and independently opted in
-        }
-        const isVendorAccount = row.authKind === OAUTH_AUTH_KIND;
-        let apiKey = "";
-        if (!isVendorAccount && row.authKind !== "none") {
-          try {
-            apiKey =
-              (
-                await runtimeState.host!.call<{ value?: string }>("providers.getSecret", {
-                  id: row.id,
-                })
-              ).value ?? "";
-          } catch {
-            continue; // skip if secret unavailable
-          }
-          if (!apiKey) continue;
-        }
-        let catalogModelConfig: Parameters<typeof modelConfigWithBinding>[0];
-        if (isVendorAccount) {
-          const vb = await vendorOAuth.bindingFor(row.id, binding.id);
-          if (!vb) continue;
-          catalogModelConfig =
-            vb.modelConfig ?? catalogModelConfigFor(modelsDevCatalog, {
-              vendorKey: row.vendorKey,
-              baseUrl: vb.baseUrl ?? row.baseUrl,
-              apiStyle: vb.apiStyle ?? row.apiStyle,
-              modelId: binding.id,
-            });
-        } else {
-          catalogModelConfig = catalogModelConfigFor(modelsDevCatalog, {
-            vendorKey: row.vendorKey,
-            baseUrl: row.baseUrl,
-            apiStyle: row.apiStyle,
-            modelId: binding.id,
-          });
-        }
-        const effective = effectiveSubagentModelConfig(
-          row,
-          binding.id,
-          catalogModelConfig,
-        );
-        const mc = effective.modelConfig;
-        const caps = effective.capabilities;
-        subagentBindings.providers[key] = {
-          id: row.id,
-          name: row.name,
-          ...(row.vendorKey ? { vendorKey: row.vendorKey } : {}),
-          ...(row.baseUrl ? { baseUrl: row.baseUrl } : {}),
-          modelId: binding.id,
-          apiKey,
-          ...(row.authKind ? { authKind: row.authKind } : {}),
-          ...(row.apiStyle ? { apiStyle: row.apiStyle } : {}),
-          ...optionalProviderHeaders(row.headers),
-          supportsReasoning: caps.supportsReasoning,
-          supportedThinkingLevels: [...caps.supportedThinkingLevels],
-          ...(mc ? { modelConfig: mc } : {}),
-        };
-        subagentModelKeys.push(key);
-      }
-    }
-
-    const subagentDiagnostics = [
-      ...subagentCatalog.diagnostics,
-      ...subagentBindings.diagnostics,
-    ];
-    if (subagentDiagnostics.length > 0) {
-      logger.app("session", "warn", "subagent definitions have problems", {
-        sessionId,
-        data: { diagnostics: subagentDiagnostics },
-      });
-    }
-    // Bind the vendor-account rows this turn is allowed to sign requests with:
-    // the session's own provider plus any row a pinned subagent resolved to. The
-    // sidecar may then ask main for request auth, but only for a row named here,
-    // and the set is rewritten on every launch.
+    // Bind the vendor-account row this turn may sign requests with: the
+    // session's own provider. The sidecar may ask main for request auth, but
+    // only for a row named here, and the set is rewritten on every launch.
     sidecarForSession(runtimeState, sessionId)?.setVendorAuthBindings(
       sessionId,
-      [
-        provider.id,
-        ...Object.values(subagentBindings.providers).map((binding) => binding.id),
-      ]
-        .map((id) => providers.providers.find((row) => row.id === id))
-        .flatMap((row) =>
-          row?.authKind === OAUTH_AUTH_KIND
-            ? [{ providerId: row.id }]
-            : [],
-        ),
+      provider.authKind === OAUTH_AUTH_KIND ? [{ providerId: provider.id }] : [],
     );
     return {
       providerId: provider.id,
@@ -728,9 +507,6 @@ export function createSessionLaunchRuntime({
             source: "plugin" as const,
             root: extension.root,
           })),
-        subagents: subagentCatalog.definitions,
-        subagentProviders: subagentBindings.providers,
-        subagentModelKeys,
       },
     };
   }
@@ -738,8 +514,6 @@ export function createSessionLaunchRuntime({
   return {
     refreshUserMcp,
     activeUserSkills,
-    activeUserSubagentDocuments,
-    disabledBuiltinSubagents,
     loadUserSkillBody,
     resolveEffectiveCommandShell,
     resolveAgentRuntimeLaunch,

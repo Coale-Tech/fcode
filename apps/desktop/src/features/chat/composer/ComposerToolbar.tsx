@@ -13,12 +13,14 @@ import { ComposerPermissionPicker } from "./ComposerPermissionPicker";
 import { ContextUsageInspector } from "../../../components/ContextUsageInspector";
 import { TooltipButton } from "../../../components/ui";
 import {
-  IconArrowUp,
-  IconPlus,
+  IconFolder,
+  IconPaperclip,
+  IconSend,
   IconSparkles,
   IconStop,
   IconUndo2,
 } from "../../../components/icons";
+import { useBenchContext } from "../../../hooks/use-bench-context";
 import { ModeIcon } from "./ComposerModeIcon";
 import { VoiceMicButton } from "../../voice/VoiceMicButton";
 import { ComposerModelPicker } from "./ComposerModelPicker";
@@ -127,6 +129,8 @@ export function ComposerToolbar({
 }: ComposerToolbarProps) {
   const platform = (window.piDesktop?.platform ?? "darwin") as ShortcutPlatform;
   const steeringShortcut = keybindingDisplayParts("Alt+Enter", platform).join("+");
+  const bench = useBenchContext();
+  const benchName = bench.kind !== "empty" ? bench.benchName : null;
   return (
     <div className="composer-toolbar">
       <div className="composer-left">
@@ -142,7 +146,20 @@ export function ComposerToolbar({
               void pickAndAttach();
             }}
           >
-            <IconPlus size={15} aria-hidden="true" />
+            <IconPaperclip size={13} aria-hidden="true" />
+          </TooltipButton>
+          <TooltipButton
+            type="button"
+            className="icon-btn icon-btn-square"
+            tooltip={t("chat.addContext", { defaultValue: "Add context" })}
+            ariaLabel={t("chat.addContext", { defaultValue: "Add context" })}
+            disabled={controlsBlocked}
+            onClick={() => {
+              setPermissionOpen(false);
+              document.dispatchEvent(new CustomEvent("pi:open-search"));
+            }}
+          >
+            <IconFolder size={13} aria-hidden="true" />
           </TooltipButton>
         </div>
         {voiceEnabled && (
@@ -223,6 +240,12 @@ export function ComposerToolbar({
           controlsBlocked={controlsBlocked}
           onCloseOtherMenus={() => setPermissionOpen(false)}
         />
+        {benchName ? (
+          <>
+            <span className="composer-meta-sep" aria-hidden>·</span>
+            <span className="composer-bench-label">{benchName}</span>
+          </>
+        ) : null}
         <TooltipButton
           type="button"
           className={`icon-btn icon-btn-square composer-enhance-btn${enhancingPrompt ? " is-loading" : ""}`}
@@ -288,7 +311,7 @@ export function ComposerToolbar({
             }
             onClick={() => void submit()}
           >
-            <IconArrowUp size={15} />
+            <IconSend size={14} />
           </TooltipButton>
         )}
       </div>

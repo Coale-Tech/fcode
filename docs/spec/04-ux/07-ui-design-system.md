@@ -1427,3 +1427,167 @@ is reserved for non-Settings contexts where OS-level rendering is acceptable.
   individual tiles. No per-kind scan card, no tinted group band, no second
   copy of the settings row scaffold
 - Light destination cards use white elevated plates (not flat gray fills)
+
+## Direction D — shell chrome and navigation layouts
+
+Direction D replaces the legacy fixed-sidebar layout with three user-selectable
+navigation variants. The choice is persisted as `AppSettings.navLayout` and
+applied at boot by writing `data-nav-layout` on `<html>`.
+
+### D-shell token contract
+
+All Direction D values come from `kit-d/D.css` variables and must not be
+hardcoded in component CSS.
+
+| Token | Light | Dark | Usage |
+|-------|-------|------|-------|
+| `--da` | `#2578ab` | `#42a2d9` | Primary accent (FileBird blue) |
+| `--da-sub` | alpha tint of `--da` | alpha tint | Active-item background fill |
+| `--da-txt` | `#165a88` | `#92d2f8` | Text on selection tint (`--da-sub`) |
+| `--da-bdr` | alpha tint | alpha tint | Accent ring / focus outline |
+| `--d-border` | `#e5e7eb` | `#2a2a2a` | Panel/card separator |
+| `--d-border-ctrl` | `#d1d5db` | `#3a3a3a` | Control border (inputs, selects) |
+| `--d-canvas-bg` | `#f0f2f5` | `#111111` | App canvas behind panels |
+| `--d-r-ctrl` | `8px` | `8px` | Control border-radius |
+| `--d-text` | `13px` | `13px` | Base text size in shell chrome |
+| `--d-navbar-h` | `48px` | `48px` | Shell navbar height |
+| `--surface-elevation-1` | `#ffffff` | `#1c1c1c` | Panel / settings card surface |
+| `--surface-gray-1` | `#f8f9fa` | `#242424` | Panel header fill |
+| `--ink-gray-8` | `#1a1a1a` | `#e8e8e8` | Primary label text |
+| `--ink-gray-5` | `#6b7280` | `#8a8a8a` | Secondary / description text |
+| `--ink-gray-4` | `#9ca3af` | `#666666` | Placeholder / icon fill |
+
+> **Token notes**: The Espresso violet ramp is remapped to FileBird blue; no violet
+> default is in use. Dark accent `--da = #42a2d9`; `--da-txt` is text on selection tint
+> (`--da-sub`), not on the solid accent fill — on-accent fill text uses
+> `--ds-accent-foreground` (`#ffffff` light / `#0a1f2e` dark, approved deviation for
+> 5.93:1 contrast). Dark switch knob on-state follows `--ds-accent-foreground`.
+
+### Layout variants
+
+Three variants are shipped. The `navLayout` setting selects the active variant
+instantly; the value is written to `data-nav-layout` on `<html>` and read by
+CSS selectors and the `resolveNavLayout()` helper.
+
+| Value | Name | Rail width | Description |
+|-------|------|-----------|-------------|
+| `tabs` | D1 — Top tabs | 0px rail | 48px navbar hosts brand logo, full `<NavTabs>` strip, centred awesomebar, right cluster. No persistent sidebar; pages fill full width. |
+| `rail` | D2 — Icon rail | 50px | 48px navbar shows breadcrumb; 50px icon rail at left edge holds page icons + notification bell at foot. Right cluster (bench chip + bell + settings + avatar) in navbar. |
+| `island` | D3 — Island sidebar | 60px + 256px | Same 50px rail + 256px island panel floated as a card inside the canvas. Settings page renders its own nav inside the island space; content pane shrinks to ~820px. |
+
+#### Shell chrome metrics (from `nav-layout.ts`)
+
+| Layout | Traffic-light reserve | Shell navbar | Rail width | Island width |
+|--------|----------------------|-------------|-----------|-------------|
+| `tabs` | 78px | 48px | — | — |
+| `rail` | 56px | 48px | 50px | — |
+| `island` | 56px | 48px | 60px | 256px |
+
+### Shell navbar right cluster
+
+All three layouts render the same right-end cluster in `ShellNavbar`:
+
+1. **Bench chip** — shown only when `useBenchContext().kind !== "empty"`;
+   displays bench name, running/stopped dot, `IconChevronDown`; navigates to
+   Bench page on click.
+2. **Notification bell** — `<NotificationCenter>` component.
+3. **Settings button** — `IconSettings`, navigates to Settings page.
+4. **User avatar** — `shell-navbar-avatar` 24×24 button showing two-letter
+   initials derived from `displayName` (IPC `appGetUserInfo`) or OS login name
+   as fallback. The capture rig seeds `userInitials: "JK"` via `ensureVisualFixtures`.
+
+D1 (`tabs`) additionally shows the brand logo and `<NavTabs>` in the start
+slot. D2/D3 (`rail`/`island`) show a breadcrumb: `Fcode / PageName / TabName`.
+
+### Settings nav panel (all layouts)
+
+The Settings page always renders its own 240px navigation panel regardless of
+the active shell layout. In D3 (island), this panel sits alongside the 256px
+global island sidebar.
+
+#### Nav groups and items (Direction D reference)
+
+| Group | Items |
+|-------|-------|
+| **Preferences** | General · Shortcuts · Voice *(Beta)* |
+| **AI** | AI Defaults · Instructions · Models & Providers · Memory · AI Agents · AI Tools · Extensions · Kanban · Raven · Advanced omp · omp Tools |
+| **Workspace** | Import · Projects |
+| **System** | About |
+
+Cloud sync and Remote hosts are `developerOnly` and hidden unless
+`AppSettings.developerMode === true`.
+
+Voice is visible to all users (experimentalBadge: "Beta").
+
+### Font size presets
+
+The Appearance section exposes four font-scale presets via a segmented control.
+Labels match the numeric px values as displayed to the user:
+
+| Key | Value | Scale |
+|-----|-------|-------|
+| `settings.fontSizeSmall` | `"12"` | `FONT_SCALE_PRESETS.small` |
+| `settings.fontSizeDefault` | `"13"` | `FONT_SCALE_PRESETS.default` |
+| `settings.fontSizeLarge` | `"14"` | `FONT_SCALE_PRESETS.large` |
+| `settings.fontSizeXl` | `"15"` | `FONT_SCALE_PRESETS.xl` |
+
+The slider and percentage readout present in pre-D versions are removed; the
+segmented control is the sole font-size control (`FontSizeRow.tsx`).
+
+### Capture rig API (capture-rig.ts)
+
+Key `window.__PI_DESKTOP__` methods relevant to settings and shell fixtures:
+
+| Method | Effect |
+|--------|--------|
+| `seedOmpSettings()` | Mocks `api.ompSettingsManifest`, `ompSettingsGet`, `ompAgentList`, `ompWorktreeList` so Advanced omp page reaches "ready" state without a live sidecar. Fake manifest uses tabs `general / tools / agents / memory / features` with groups `Core / Startup & Lifecycle / Storage / Network / Experimental` — these are design-approved capture groups, not the real omp binary manifest structure. |
+| `seedBenchStatus(opts)` | Seeds bench chip and status-bar via `pi:bench-update` event. |
+| `clearOpenProjects()` | Clears `openProjectPaths: []` so PROJECTS section collapses. |
+| `ensureVisualFixtures()` | Seeds English session titles, `userInitials: "JK"`, kanban/raven enabled, 3 notifications. Must run once per Electron session. |
+| `seedEmptyHome()` | Clears sessions and open-project paths; sets `onboarding.showChecklist: true` for empty-home capture. |
+| `seedCommandPaletteExtras()` | Seeds FILES, BENCHES, COMMANDS sections in the palette (capture only). |
+
+> **Advanced omp manifest vs real omp groups**: The real `omp-settings-manifest.json`
+> generated by the omp binary uses different group names from the capture-rig fake manifest
+> (e.g. domain-based groups like `task / eval / browser / collab`). The product code
+> (`OmpAdvancedSettings.tsx`) renders whatever tab/group the live manifest provides;
+> the fake manifest is for screenshot fidelity only. If the omp binary is installed and
+> `omp-settings-manifest.json` is present, the real groups will appear.
+
+### Onboarding (pages-d/onboarding)
+
+#### Step 1 — Connect provider
+
+Design reference: `pages-d/onboarding/variant-D1.png`, `variant-D2.png`, `variant-D3.png`.
+
+A capture of the full Step 1 wizard (Step 1 of 4, Back / Continue → buttons, API key field
+with "Verify") exists at the design references above. The capture rig's
+`seedOnboardingChecklist()` can also trigger the checklist overlay (`.ob-wrap`) as an
+alternative entry point for screenshot purposes.
+
+#### Steps 2–4 and legacy migration dialog — NEEDS DESIGN REVIEW
+
+> **⚠ NEEDS DESIGN REVIEW**: No approved design mock exists for onboarding steps 2–4 or
+> for the long migrated (legacy first-run) dialog. These remain open.
+> Items below have been restyled with Direction D tokens only and await final design
+> sign-off before implementation details are locked.
+>
+> - **Step 2 — Pick a bench**: select or create a Frappe bench; bench list panel.
+>   Tokens applied: `--da`, `--da-sub`, `--d-panel`, `--d-border`, `--surface-elevation-1`.
+>   Layout: same 4-step wizard chrome; content panel TBD by design.
+>
+> - **Step 3 — Permissions mode**: choose Ask / Auto / Plan mode.
+>   Tokens applied: same shell chrome as Step 1.
+>   Content: three mode cards (`Ask every time` / `Auto-approve read-only` / `Agent plan`).
+>   Layout: same 4-step wizard chrome; card visual TBD by design.
+>
+> - **Step 4 — You're ready**: completion screen with "Start coding" CTA.
+>   Tokens applied: same chrome.
+>   Content: success illustration, bench + provider summary.
+>   Layout: TBD by design.
+>
+> - **Legacy migration dialog**: the long first-run dialog migrated from the pre-D design
+>   has no approved Direction D mock. Retokenised only; visual structure pending sign-off.
+>
+> Action required: UX team to deliver approved mocks for steps 2–4 and the migration
+> dialog before these screens can be considered implementation-complete.

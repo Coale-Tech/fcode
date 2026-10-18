@@ -55,7 +55,7 @@
   right: auto;
   bottom: auto;
   z-index: 40;
-  width: min(120px, calc(100vw - 24px));
+  width: min(var(--d-perm-menu-w), calc(100vw - 24px)); /* D: state-perm-menu.html 260px */
   max-height: min(520px, calc(100vh - 92px));
   overflow-y: auto;
   padding: 6px;
@@ -76,7 +76,7 @@
   right: auto;
   bottom: auto;
   z-index: 40;
-  width: min(240px, calc(100vw - 24px));
+  width: min(var(--d-model-menu-w), calc(100vw - 24px)); /* D: state-model-picker.html 300px */
   max-height: min(520px, calc(100vh - 92px));
   overflow-y: auto;
   padding: 5px;
@@ -595,12 +595,12 @@
 }
 
 .composer-plus-item.active {
-  background: var(--ds-bg-active);
+  background: var(--da-sub); /* D: .cf-perm-item.active / .cf-model-item.active background */
   border-radius: var(--radius-sm);
 }
 
 .composer-plus-item.active span:last-child {
-  color: var(--ds-text-primary);
+  color: var(--da-txt); /* D: .cf-perm-label-name.active / .cf-model-name.active color */
 }
 
 /* Keyboard highlight mirrors hover; both can coexist with .active. */
@@ -609,9 +609,60 @@
 }
 
 .composer-plus-item.active.kb-active {
-  background: var(--ds-bg-active);
+  background: color-mix(in oklab, var(--ds-accent) 20%, transparent);
 }
 
+
+/* D: state-perm-menu.html — permission items with icon tile, name, description */
+.composer-perm-item {
+  align-items: flex-start; /* override flex-center from .composer-plus-item */
+  gap: 8px;
+  padding: 7px 8px;
+}
+.composer-perm-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  background: var(--ds-bg-inset);
+  color: var(--ds-text-muted);
+}
+.composer-perm-icon.is-active {
+  background: var(--da);
+  color: white;
+}
+.composer-perm-label {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.composer-perm-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ds-text-primary);
+}
+.composer-perm-item.active .composer-perm-name {
+  color: var(--da-txt);
+}
+.composer-perm-desc {
+  font-size: 11px;
+  color: var(--ds-text-secondary);
+  line-height: 1.35;
+}
+.composer-perm-item.active .composer-perm-desc {
+  color: var(--da-txt);
+  opacity: 0.75;
+}
+.composer-perm-check {
+  flex-shrink: 0;
+  margin-top: 4px;
+  color: var(--da);
+}
 .composer-model-check {
   flex: 0 0 auto;
   color: var(--ds-accent) !important;
@@ -707,4 +758,13 @@
 .plan-approval-menu-item svg {
   flex: 0 0 auto;
   margin-left: auto;
+}
+
+/* D chip geometry (state-perm-menu.html:77-80 / state-model-picker.html:76-79):
+   24px height / 6px radius / 12px font. Supersedes theme-overrides competing values. */
+.mode-chip {
+  height: var(--d-chip-h) !important;          /* D: .cf-mode-chip h=24px */
+  border-radius: var(--d-chip-r) !important;   /* D: .cf-mode-chip r=6px */
+  font-size: var(--d-text-sm) !important;      /* D: 12px */
+  padding: 0 8px !important;
 }

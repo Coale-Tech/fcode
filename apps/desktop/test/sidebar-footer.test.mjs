@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { register } from "node:module";
 import test from "node:test";
 import { loadStyles } from "./helpers/styles.mjs";
 
+register(new URL("./helpers/ts-import-hooks.mjs", import.meta.url));
+const { navItems } = await import("../src/components/nav-items.ts");
+
 const sidebarSource = await readFile(
   new URL("../src/components/Sidebar.tsx", import.meta.url),
-  "utf8",
-);
-const railSource = await readFile(
-  new URL("../src/components/NavRail.tsx", import.meta.url),
   "utf8",
 );
 const globalStyles = await loadStyles();
@@ -36,40 +36,15 @@ test("the sidebar footer is an action bar, not a fabricated identity", () => {
 });
 
 test("the nav rail exposes settings, plugins, scheduled tasks and notifications", () => {
-  assert.match(railSource, /data-nav="settings"/);
-  assert.match(railSource, /data-nav="plugins"/);
-  assert.doesNotMatch(railSource, /data-nav="theme"/);
-  assert.match(railSource, /<NotificationCenter \/>/);
-  // Logs live in Settings → About; the rail stays down to daily controls.
-  assert.doesNotMatch(railSource, /openLogs/);
-  // The footer keeps only the build chip; destinations moved to the rail.
+  // Behavioral: production registry includes the required destinations.
+  const ids = navItems({ kanban: true, raven: true }).map((i) => i.id);
+  assert.ok(ids.includes("plugins"), "registry includes plugins");
+  assert.ok(ids.includes("scheduled"), "registry includes scheduled");
+  // Notifications and Settings live in the footer; they are not registry items.
+  assert.ok(!ids.includes("notifications"), "notifications is a footer control, not a nav item");
+  assert.ok(!ids.includes("settings"), "settings is a footer control, not a nav item");
+  // The sidebar footer must not re-host nav destinations that moved to the rail.
   assert.doesNotMatch(sidebarSource, /data-nav="(?:settings|plugins|scheduled|code|bench|build-canvas)"/);
-  // Every action is icon-only, so each needs a label for pointer and AT users.
-  const actions = railSource.split("<TooltipButton").slice(1);
-  for (const action of actions) {
-    const attrs = action.slice(0, action.indexOf(">"));
-    assert.match(attrs, /tooltip=/);
-    assert.match(attrs, /ariaLabel=/);
-  }
-  // Plugins toggles back on a second activation instead of re-entering itself.
-  assert.match(
-    railSource,
-    /page === "plugins"\s*\? \(canNavBack\(\) \? navBack\(\) : setPage\("chat"\)\)\s*: setPage\("plugins"\)/,
-  );
-  // All footer destinations report their active state to assistive tech; the
-  // Plugins button also reports the Back toggle a second activation performs.
-  const footerAttributes = (marker) => {
-    const at = railSource.indexOf(marker);
-    if (at < 0) return "";
-    return railSource.slice(
-      Math.max(railSource.lastIndexOf("<TooltipButton", at), railSource.lastIndexOf("<button", at)),
-      railSource.indexOf("</", at),
-    );
-  };
-  for (const nav of ["chat", "bench", "settings", "plugins", "scheduled"]) {
-    assert.match(footerAttributes(`data-nav="${nav}"`), new RegExp(`aria-pressed=\\{page === "${nav}"\\}`));
-  }
-  assert.match(footerAttributes('data-nav="build-canvas"'), /aria-pressed=\{page === "build"\}/);
 });
 
 test("footer sits on the sidebar content grid without a hairline", () => {
@@ -82,12 +57,6 @@ test("footer sits on the sidebar content grid without a hairline", () => {
   assert.match(globalStyles, /\.footer-build\s*\{[^}]*padding:\s*5px 8px/s);
 });
 
-test("rail buttons share the notification trigger's hit target", () => {
-  const block = globalStyles.match(/\.nav-rail-btn,\s*\.nav-rail \.notification-trigger\s*\{[^}]+\}/)?.[0] ?? "";
-  assert.match(block, /width:\s*32px/);
-  assert.match(block, /height:\s*32px/);
-  assert.match(block, /transition:[^;]*var\(--motion-duration-fast\)/);
-});
 
 test("build chip surfaces the version and only dots an actionable update", () => {
   assert.match(sidebarSource, /const update = useUpdateState\(\)/);

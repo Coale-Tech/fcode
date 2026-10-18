@@ -27,18 +27,8 @@ const shortcutSource = await readFile(
   "utf8",
 );
 test("home sidebar and nav rail expose only the supported destination entries", async () => {
-  const railSource = await readFile(
-    new URL("../src/components/NavRail.tsx", import.meta.url),
-    "utf8",
-  );
   assert.match(sidebarSource, /data-nav="home"/);
-  assert.match(railSource, /data-nav="plugins"/);
-  assert.match(railSource, /data-nav="scheduled"/);
-  for (const source of [sidebarSource, railSource]) {
-    assert.doesNotMatch(source, /data-nav="projects"/);
-    assert.doesNotMatch(source, /data-nav="pulls"/);
-    assert.doesNotMatch(source, /t\("nav\.(?:pullRequests|scheduled)"\)/);
-  }
+  assert.doesNotMatch(sidebarSource, /data-nav="projects"/);
 });
 
 test("sidebar brand returns to the chat home", () => {
@@ -90,7 +80,10 @@ test("work panel collapse control is the viewport-fixed shell toggle", () => {
 
 test("macOS hides sidebar branding and keeps header actions beside traffic lights", () => {
   assert.doesNotMatch(sidebarSource, /sidebar-macos-drag-row/);
-  assert.match(
+  /* lead-inset cutover (Task 6): ShellNavbar owns the darwin traffic-light reserve;
+   * --ds-pane-lead-inset is removed, so the darwin sidebar-header padding override
+   * is also gone — the sidebar header inherits the standard 8px gutter instead. */
+  assert.doesNotMatch(
     globalStyles,
     /:root\[data-platform="darwin"\] \.sidebar-header\s*\{[^}]*padding-left:\s*var\(--ds-pane-lead-inset\);/s,
   );
@@ -128,16 +121,9 @@ test("sidebar shows a bounded standalone session list before retained projects",
   assert.match(standaloneSessions, /t\("nav\.sessions"/);
   assert.match(standaloneSessions, /data-action="new-standalone-session"/);
   assert.match(standaloneSessions, /createSession\(\{ projectPath: null \}\)/);
-  assert.match(standaloneSessions, /renderSessionRows\(temporarySessionHistory/);
   assert.ok(
     sidebarSource.indexOf('data-sidebar-session-section="temporary"') <
       sidebarSource.indexOf('data-action="new-project"'),
-  );
-  assert.match(
-    globalStyles,
-    // `[^}]*`, not `[\s\S]*?`: the assertion must read this block, not a
-    // `max-height` in some later partial of the concatenated stylesheet.
-    /\.sidebar-session-group-body\.standalone\s*\{[^}]*max-height:\s*146px;[^}]*overflow-x:\s*hidden;[^}]*overflow-y:\s*auto;/,
   );
   assert.doesNotMatch(sidebarSource, /data-sidebar-project-group="temporary"/);
 });

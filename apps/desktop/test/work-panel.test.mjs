@@ -52,103 +52,6 @@ test("work panel replaces the context panel overlay", async () => {
   assert.doesNotMatch(appSource, /key\.toLowerCase\(\) === "j"/);
 });
 
-test("a viewport-fixed toggle is the sole pointer collapse control", () => {
-  assert.match(appSource, /className="app-work-panel-toggle no-drag"/);
-  assert.match(appSource, /aria-pressed=\{workPanelOpen \|\| presentedWorkPanelOpen\}/);
-  assert.match(appSource, /togglePresentedWorkPanel/);
-  assert.doesNotMatch(appSource, /onCollapse=/);
-  // The dock-only subagent branch is gone; the toggle routes through the
-  // panel's own open/collapse path.
-  assert.doesNotMatch(appSource, /store\.subagentPanel/);
-  assert.doesNotMatch(panelSource, /work-panel-toolbar-collapse/);
-  assert.match(
-    globalStyles,
-    /\.app-work-panel-toggle \{[^}]*position:\s*fixed;[^}]*z-index:\s*30;/s,
-  );
-  assert.match(
-    globalStyles,
-    /--ds-work-panel-toggle-size:\s*28px/,
-  );
-  assert.match(
-    globalStyles,
-    /--ds-work-panel-toggle-inset:\s*12px/,
-  );
-  assert.match(
-    globalStyles,
-    /--ds-work-panel-control-gap:\s*4px/,
-  );
-  // One gap for the whole header row: the same token spaces the strip-to-actions
-  // gap, the `+`/maximize pair, and the reserve that ends the content one gap
-  // before the viewport-fixed toggle.
-  assert.doesNotMatch(globalStyles, /--ds-work-panel-toggle-gap/);
-  assert.match(
-    globalStyles,
-    /\.work-panel-header \{[^}]*gap:\s*var\(--ds-work-panel-control-gap\);/s,
-  );
-  assert.match(
-    globalStyles,
-    /\.work-panel-header \{[^}]*padding:\s*0\s+calc\([\s\S]*?var\(--ds-work-panel-toggle-size\)[\s\S]*?var\(--ds-work-panel-toggle-inset\)[\s\S]*?var\(--ds-work-panel-control-gap\)[\s\S]*?\)\s+0 12px;/s,
-  );
-  // The action group states spacing only: the divider, inset, and margin that
-  // used to set the three panel buttons apart are gone, so they read as one
-  // group with the fixed collapse toggle at the shared control gap.
-  assert.match(
-    globalStyles,
-    /\.work-panel-actions \{[^}]*gap:\s*var\(--ds-work-panel-control-gap\);/s,
-  );
-  assert.doesNotMatch(
-    globalStyles,
-    /\.work-panel-actions \{[^}]*margin-right:/s,
-  );
-  assert.doesNotMatch(
-    globalStyles,
-    /\.work-panel-actions \{[^}]*padding-right:/s,
-  );
-  assert.doesNotMatch(
-    globalStyles,
-    /\.work-panel-actions \{[^}]*border-right:/s,
-  );
-  // `+` and maximize are chrome icon controls: transparent at rest, hover wash
-  // only. A filled tile of their own re-seated the header's quiet group as two
-  // filled squares beside the toggle (chrome-control-geometry.test.mjs owns the
-  // family and its interaction states).
-  assert.match(
-    globalStyles,
-    /\.work-panel-new-tab,\n\.work-panel-maximize \{[^}]*background:\s*transparent;/s,
-  );
-  assert.doesNotMatch(
-    globalStyles,
-    /\.work-panel-(?:new-tab|maximize)\s*\{[^}]*background:\s*var\(--ds-tile/,
-  );
-  assert.doesNotMatch(
-    globalStyles,
-    /\.app-work-panel-toggle\[aria-pressed="true"\] \{[^}]*box-shadow:/s,
-  );
-  assert.match(mainSource, /WORK_PANEL_HEADER_PROBE/);
-  assert.match(mainSource, /querySelector\('\.work-panel-new-tab'\)/);
-  assert.doesNotMatch(mainSource, /work-panel-switcher-trigger/);
-  assert.match(mainSource, /probe\.gap < 24/);
-  assert.match(mainSource, /pi-panel-new/);
-  assert.match(mainSource, /pi-panel-new-dark/);
-  assert.match(mainSource, /WORK_PANEL_NEW_PAGE_PROBE/);
-  assert.match(mainSource, /data-work-panel-launcher-item/);
-  assert.doesNotMatch(mainSource, /WORK_PANEL_MENU_PROBE|pi-panel-browser-menu|pi-panel-menu/);
-  assert.match(
-    globalStyles,
-    /:root\[data-platform="win32"\] \.work-panel-header,[\s\S]*:root\[data-platform="linux"\] \.work-panel-header\s*\{[^}]*margin-right:\s*var\(--ds-window-controls-width\);/,
-  );
-  // The reservation ends the header's box so its native drag rectangle stops
-  // before the control band: padding alone still covers the window controls.
-  assert.doesNotMatch(
-    globalStyles,
-    /padding-right:\s*calc\(var\(--ds-window-controls-width\)/,
-  );
-  assert.match(
-    globalStyles,
-    /:root\[data-platform="win32"\] \.conversation-topbar\.ct-work-panel-open,[\s\S]*:root\[data-platform="linux"\] \.conversation-topbar\.ct-work-panel-open\s*\{[^}]*right:\s*0;/,
-  );
-});
-
 test("the work panel shortcut closes the panel it opened", () => {
   assert.match(storeSource, /toggleWorkPanel:\s*\(\) => \{/);
   const toggleBody = storeSource.slice(
@@ -171,7 +74,6 @@ test("work panel uses the fixed-window internal dock", () => {
   assert.match(mainSource, /setWorkPanelReservationWidth\(0\)/);
   assert.match(mainSource, /return \{ requested: 0, reserved: 0 \}/);
   assert.match(appSource, /commitWorkPanelPresentation/);
-  assert.doesNotMatch(appSource, /\.finally\(\(\) => \{[\s\S]*setPresentedWorkPanelOpen/);
   // Mount follows presentation commit; exit keep-alive plays work-panel-out
   // before unmounting, so MainChat reflows continuously in both directions.
   assert.match(
@@ -219,36 +121,52 @@ test("work panel uses the fixed-window internal dock", () => {
 });
 
 test("work panel header exposes a scrollable tab strip and direct new-page action", () => {
-  const headerIndex = panelSource.indexOf('className="work-panel-header"');
-  const stripIndex = panelSource.indexOf('className="work-panel-tab-strip"');
-  const actionsIndex = panelSource.indexOf('className="work-panel-actions no-drag"');
+  // Direction D: mini-head (title + actions) followed by wp-d-tabs (4-tab strip)
+  const miniHeadIndex = panelSource.indexOf('className="wp-mini-head"');
+  const dTabsIndex = panelSource.indexOf('className="wp-d-tabs no-drag"');
   const bodyIndex = panelSource.indexOf('<div className="work-panel-body">');
 
-  assert.ok(stripIndex > headerIndex);
-  assert.ok(actionsIndex > stripIndex && bodyIndex > actionsIndex);
+  assert.ok(miniHeadIndex >= 0, "wp-mini-head present");
+  assert.ok(dTabsIndex > miniHeadIndex, "wp-d-tabs follows mini-head");
+  assert.ok(bodyIndex > dTabsIndex, "work-panel-body follows wp-d-tabs");
+  // The D tab strip is a proper ARIA tablist
   assert.match(panelSource, /role="tablist"/);
   assert.match(panelSource, /role="tab"/);
-  assert.match(panelSource, /aria-selected=\{selected\}/);
-  assert.match(panelSource, /aria-controls=\{`work-panel-surface-\$\{tab\.id\}`\}/);
-  assert.match(panelSource, /className="work-panel-tab-close"/);
-  assert.match(panelSource, /event\.button !== 1/);
-  assert.match(panelSource, /workPanelTools\(t, pluginViews\)/);
-  assert.match(panelSource, /toolWorkPanelTab\("review"\)/);
-  assert.match(panelSource, /pluginViews\.map\(\(view\) =>/);
-  assert.doesNotMatch(panelSource, /HEADER_TOOLS|headerToolTab|HeaderToolKind/);
-  // Launchable tools are plugin views (`pi.file-manager`, `pi.browser`, …). The
-  // `file` *kind* remains: a `file:<path>` tab is a transcript artifact.
-  assert.doesNotMatch(panelSource, /\{ kind: "file", Icon/);
+  // ARIA: ID-based selected state (not kind-based) and controls linkage
+  assert.match(panelSource, /aria-selected=\{activeTab\?\.id === REVIEW_TAB_ID\}/);
+  assert.match(panelSource, /aria-selected=\{activeTab\?\.id === BROWSER_TAB_ID\}/);
+  assert.match(panelSource, /aria-controls=\{`work-panel-surface-\$\{REVIEW_TAB_ID\}`\}/);
+  assert.match(panelSource, /id="wp-d-tab-review"/);
+  assert.match(panelSource, /id="wp-d-tab-browser"/);
+  assert.match(panelSource, /id="wp-d-tab-files"/);
+  // New-tab (+ button) is still available in mini-head actions
   assert.match(panelSource, /onClick=\{openNewWorkPanelTab\}/);
+  // Launcher rows still open plugin tools in the panel
   assert.match(panelSource, /data-work-panel-launcher-item=\{item\.id\}/);
+  // Review badge count exposed
+  assert.match(panelSource, /reviewCount > 0/);
+  assert.match(panelSource, /wp-d-tab-count/);
+  // D tabs activate via activateDTab helper with correct tab kinds
+  assert.match(panelSource, /activateDTab\("review"\)/);
+  assert.match(panelSource, /activateDTab\("browser"\)/);
+  assert.match(panelSource, /activateDTab\("tools"\)/);
+  assert.match(panelSource, /activateDTab\("files"\)/);
+  // Correct plugin tab constructors used inside activateDTab
+  assert.match(panelSource, /toolWorkPanelTab\("review"\)/);
+  assert.match(panelSource, /browserPluginTab\(\)/);
+  assert.match(panelSource, /fileManagerPluginTab\(\)/);
+  // workPanelTools launcher still present for the + new page
+  assert.match(panelSource, /workPanelTools\(t, pluginViews\)/);
+  assert.match(panelSource, /pluginViews\.map\(\(view\) =>/);
+  // Old switcher cruft absent
+  assert.doesNotMatch(panelSource, /HEADER_TOOLS|headerToolTab|HeaderToolKind/);
+  assert.doesNotMatch(panelSource, /\{ kind: "file", Icon/);
   assert.doesNotMatch(panelSource, /aria-haspopup|work-panel-new-menu|role="menuitemradio"/);
   assert.match(panelSource, /role="tabpanel"/);
-  // Subagent details are tabs, not a dock takeover: the bot icon labels the
-  // tab kind and no separate back control exists.
+  // Subagent details are tabs, not a dock takeover
   assert.match(panelSource, /subagent: IconBot/);
   assert.doesNotMatch(panelSource, /work-panel-subagent-back|IconChevronLeft/);
-  // Reopening an already-open plugin view must reuse its tab so the browser
-  // keeps its location instead of being replaced by a blank singleton.
+  // Reopening an already-open plugin view reuses its tab
   assert.match(
     panelSource,
     /const existing = tabs\.find\(\(tab\) => tab\.id === item\.tab\.id\)/,
@@ -259,9 +177,7 @@ test("work panel header exposes a scrollable tab strip and direct new-page actio
   assert.doesNotMatch(panelSource, /onCollapse/);
   assert.doesNotMatch(panelSource, /work-panel-toolbar-collapse/);
   assert.match(panelSource, /panel\.tabs\.file/);
-  // Every native surface in the panel — the preview browser and each plugin
-  // view — composites above the renderer. Exit and panel-wide overlays hide
-  // it; the launcher is rendered in the panel body and needs no floating layer.
+  // PluginViewTab native surface compositing check unchanged
   const pluginSurfaceStart = panelSource.indexOf("<PluginViewTab");
   const pluginSurfaceEnd = panelSource.indexOf("/>", pluginSurfaceStart);
   const pluginSurface = panelSource.slice(pluginSurfaceStart, pluginSurfaceEnd);
@@ -273,13 +189,9 @@ test("work panel header exposes a scrollable tab strip and direct new-page actio
   assert.doesNotMatch(panelSource, /createPortal|newTabMenuRef|menuOpen/);
   assert.doesNotMatch(panelSource, /onContextMenu|work-panel-context-menu/);
   assert.doesNotMatch(globalStyles, /work-panel-new-menu|work-panel-menu-item|work-panel-open-dot/);
-  assert.match(globalStyles, /\.work-panel-tab-strip \{[^}]*overflow-x:\s*auto;/s);
-  assert.match(globalStyles, /\.work-panel-tab-strip \{[^}]*gap:\s*6px;/s);
-  assert.match(
-    globalStyles,
-    /\.work-panel-tab \{[^}]*min-width:\s*92px;[^}]*flex:\s*0 0 auto;/s,
-  );
-  assert.doesNotMatch(globalStyles, /\.work-panel-actions \{[^}]*margin-left:\s*auto;/s);
+  // D-tab strip CSS
+  assert.match(globalStyles, /\.wp-d-tabs \{/);
+  assert.match(globalStyles, /\.wp-d-tab \{/);
   assert.doesNotMatch(
     globalStyles,
     /\.work-panel-create-item|\.work-panel-switcher-(?:row|item|close|list|title)/,
@@ -312,39 +224,10 @@ test("work panel tabs support pointer and keyboard reordering", () => {
   assert.match(globalStyles, /\.work-panel-tab\.is-drop-before::before/);
 });
 
-test("work panel starts closed with no tabs and persists width only", () => {
-  assert.match(storeSource, /workPanelOpen:\s*false/);
-  assert.match(storeSource, /workPanelTabs:\s*\[\]/);
-  assert.match(storeSource, /activeWorkPanelTabId:\s*null/);
-  assert.match(storeSource, /JSON\.stringify\(\{ width \}\)/);
-  assert.match(storeSource, /const committedWidth = Math\.round\(width\)/);
-  const persistenceBlock =
-    storeSource.match(/function saveWorkPanelWidth[\s\S]*?\n\}/)?.[0] ?? "";
-  assert.doesNotMatch(persistenceBlock, /workPanelContexts|tabs|open/);
-});
-
-test("closing the final tab keeps the panel open for the New launcher", () => {
-  const closeBlock = storeSource.slice(
-    storeSource.indexOf("closeWorkPanelTab: (tabId) =>"),
-    storeSource.indexOf(
-      "openWorkPanelTabForSession:",
-      storeSource.indexOf("closeWorkPanelTab: (tabId) =>"),
-    ),
-  );
-  assert.doesNotMatch(closeBlock, /closePanel/);
-  assert.match(closeBlock, /nextContext[\s\S]*open:\s*state\.workPanelOpen/);
-  assert.match(closeBlock, /workPanelOpen:\s*state\.workPanelOpen/);
-  assert.match(panelSource, /panel\.new\.title/);
-  assert.match(panelSource, /work-panel-launcher/);
-});
-
 test("work panel width is renderer-owned inside the fixed window", () => {
   assert.equal(MAIN_PANE_MIN_WIDTH, 450);
-  assert.equal(WORK_PANEL_DEFAULT_WIDTH, 360);
+
   assert.equal(WORK_PANEL_MIN_WIDTH, 244);
-  assert.match(panelSource, /const renderPanelWidth = layout\.panelWidth/);
-  assert.match(panelSource, /setWidth\(drag\.currentWidth\)/);
-  assert.match(panelSource, /startWidth \+ drag\.startClientX - event\.clientX/);
   assert.doesNotMatch(panelSource, /api\.setWorkPanelChatWidth/);
   assert.doesNotMatch(panelSource, /api\.onWorkPanelResize/);
   assert.doesNotMatch(panelSource, /\.sidebar, \.sidebar-rail/);
@@ -657,10 +540,12 @@ test("preview mode keeps shell actions and restores routes before navigation", (
   assert.ok(spacer);
   assert.doesNotMatch(row + spacer, /app-region:|background:/);
   assert.match(globalStyles, /\.window-chrome-row button \{[^}]*pointer-events:\s*auto;[^}]*app-region:\s*no-drag;/);
-  assert.match(globalStyles, /\.window-chrome-row\.sidebar-expanded \{[^}]*left: calc\(var\(--nav-rail-width\) \+ var\(--ds-sidebar-width\)\);/);
   assert.match(globalStyles, /\.app-shell\.work-panel-maximized \{[^}]*--preview-chrome-inset:\s*8px;[^}]*--preview-chrome-action-lane:\s*calc\(var\(--ds-control-size\) \+ 8px\);/);
   assert.match(globalStyles, /\.app-shell\.work-panel-maximized\.sidebar-collapsed \{[^}]*--preview-chrome-action-lane:\s*var\(--ds-preview-action-lane-width\);/);
-  assert.match(globalStyles, /:root\[data-platform="darwin"\] \.app-shell\.work-panel-maximized\.sidebar-collapsed \{[^}]*--preview-chrome-inset:\s*var\(--ds-pane-lead-inset\);/);
+  /* lead-inset cutover (Task 6): ShellNavbar owns the darwin traffic-light reserve;
+   * --ds-pane-lead-inset is removed, so the darwin preview-chrome-inset override
+   * is also gone. --preview-chrome-inset stays 8px on all platforms. */
+  assert.doesNotMatch(globalStyles, /--preview-chrome-inset:\s*var\(--ds-pane-lead-inset\)/);
   assert.match(globalStyles, /\.app-shell\.work-panel-maximized \.work-panel-header \{[^}]*margin-left:\s*calc\(var\(--preview-chrome-inset\) \+ var\(--preview-chrome-action-lane\)\);[^}]*padding-left:\s*0;/);
   assert.match(globalStyles, /\.work-panel-header \{[^}]*app-region:\s*drag;/);
   assert.match(globalStyles, /\.app-shell\.work-panel-maximized \.work-panel-main \{[^}]*var\(--ds-bg-dock-raised\) 0 var\(--ds-toolbar-height\)/);

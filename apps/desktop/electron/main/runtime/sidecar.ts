@@ -1,42 +1,36 @@
-import { writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { setTimeout as delay } from "node:timers/promises";
 import { MEMORY_TOKEN_SECRET_REF, memoryEnv, readMemoryConfig } from "../memory-config";
 import { approvalModeEnv, readApprovalMode } from "../approval-mode-config";
 import { ompSettingsEnv, readOmpSettings } from "../omp-settings-config";
 import { join } from "node:path";
 import { IPC, type AgentEventEnvelope, type UiMessage } from "@pi-desktop/shared";
-import {
-  findSubagentProviderSource,
-  loadInstructionChain,
-  modelConfigWithBinding,
-  subagentProviderLookupError,
-} from "@pi-desktop/agent-runtime";
+import { loadInstructionChain } from "@pi-desktop/agent-runtime";
 import { loadBuiltinSkillBody } from "../builtin-skills";
 import { createImageGenerationTool } from "../services/image-generation-service";
 import { registerPluginDevTools } from "../plugin-dev-tools";
 import { resolveLocalFile } from "../browser-view";
-import { catalogModelConfigFor } from "../models-dev-catalog";
 import { AgentSidecar } from "../agent-sidecar";
 import { relaxedNetworkPolicyEnabled } from "../endpoint-policy";
-import { OAUTH_AUTH_KIND, type VendorOAuth } from "../oauth";
+import type { VendorOAuth } from "../oauth";
 import type { AgentExtensionBridge } from "../agent-extensions";
 import { withAgentCanvasOwnership, type BrowserHost } from "../browser-host";
-import type { InflightCheckpointer, ProcessExitHandler } from "@pi-desktop/host-runtime";
+import { ompProviderEnv, type InflightCheckpointer, type ProcessExitHandler } from "@pi-desktop/host-runtime";
 import { summarizeToolResult, type Logger } from "../logger";
-import type { ModelsDevCatalog } from "../models-dev-catalog";
 import type { PluginRuntime } from "../plugin-runtime";
 import type { UserMcpRuntime } from "../user-mcp";
 import type { RuntimeState } from "./context";
 import type { FinishTurn } from "./plans";
-import { benchSupervisor, ALLOWED_BENCH_VERBS, benchFailureText } from "../bench/supervisor";
-import { isReadOnlyBenchMethod } from "../bench/approval";
-import { studioExpression } from "../bench/studio-actions";
-import { buildRunTestsArgs, runTestsReport, SITE_RE } from "../bench/run-tests";
-import { pythonLiteral } from "../bench/python-literal";
-import { shell } from "electron";
-import { parseAllowedExternalUrl } from "../safe-open-external";
-import type { KanbanBoard } from "./kanban-core";
+import { benchSupervisor, benchFailureText } from "../bench/supervisor";
 import {
+  ALLOWED_BENCH_VERBS,
+  isReadOnlyBenchMethod,
+  studioExpression,
+  buildRunTestsArgs,
+  runTestsReport,
+  SITE_RE,
+  pythonLiteral,
+  type KanbanBoard,
   createTask as kanbanCreateTask,
   completeTask as kanbanCompleteTask,
   blockTask as kanbanBlockTask,
@@ -46,7 +40,9 @@ import {
   agentCardCountForSession,
   recomputeReady as kanbanRecomputeReady,
   type KanbanBlockKind,
-} from "./kanban-core";
+} from "@pi-desktop/host-runtime";
+import { shell } from "electron";
+import { parseAllowedExternalUrl } from "../safe-open-external";
 
 export type SidecarRuntimeDependencies = {
   runtimeState: RuntimeState;
@@ -72,8 +68,6 @@ export type SidecarRuntimeDependencies = {
   agentExtensions: AgentExtensionBridge;
   vendorOAuth: VendorOAuth;
   listRuntimeProviders: (includeDisabled?: boolean) => Promise<any[]>;
-  modelsDevCatalog: ModelsDevCatalog;
-  effectiveSubagentModelConfig: (...args: any[]) => any;
   browserHost: BrowserHost;
   plugins: PluginRuntime;
   sessionProjects: Map<string, string | null>;
@@ -110,8 +104,6 @@ export function createSidecarRuntime({
   agentExtensions,
   vendorOAuth,
   listRuntimeProviders,
-  modelsDevCatalog,
-  effectiveSubagentModelConfig,
   browserHost,
   plugins,
   sessionProjects,
@@ -127,65 +119,6 @@ export function createSidecarRuntime({
   startWorkerSidecar: (sessionId: string, cwd: string) => Promise<void>;
   releaseWorkerSidecar: (sessionId: string) => Promise<void>;
 } {
-
-// ── Fcode provider injection ─────────────────────────────────────────────────
-
-/** Map Fcode apiStyle values → omp's `api` field. */
-const FCODE_API_STYLE_MAP: Record<string, string> = {
-  anthropic_messages: "anthropic-messages",
-  chat_completions: "openai-completions",
-  responses: "openai-responses",
-  openai_codex_responses: "openai-codex-responses",
-  google_generative_ai: "google-generative-ai",
-};
-
-/**
- * Collect Fcode provider secrets and build the fcode-providers.yml content.
- * The YAML stores env var NAMES (not values) as apiKey so keys are never
- * written to disk. The actual secrets are returned in `providerEnv`.
- */
-async function buildFcodeProvidersConfig(
-  host: { call: <T>(method: string, params?: unknown) => Promise<T> },
-  providers: Array<{
-    id: string;
-    baseUrl?: string;
-    apiStyle?: string;
-    models?: Array<{ id: string }>;
-    authKind?: string;
-    hasOauth?: boolean;
-    enabled?: boolean;
-  }>,
-): Promise<{ yaml: string; providerEnv: Record<string, string> } | null> {
-  const providerEnv: Record<string, string> = {};
-  const lines = ["# Fcode-injected providers — generated on each launch, do not edit.", "providers:"];
-  let any = false;
-  for (const p of providers) {
-    if (p.hasOauth) continue;
-    const keyless = p.authKind === "none";
-    const envKey = `FCODE_PROVIDER_${p.id.toUpperCase().replace(/[^A-Z0-9]/g, "_")}_KEY`;
-    if (!keyless) {
-      let secret: string | undefined;
-      try {
-        const r = await host.call<{ value?: string }>("providers.getSecret", { id: p.id });
-        secret = r.value;
-      } catch { continue; }
-      if (!secret) continue;
-      providerEnv[envKey] = secret;
-    }
-    lines.push(`  fcode-${p.id}:`);
-    if (p.baseUrl) lines.push(`    baseUrl: "${p.baseUrl}"`);
-    const api = FCODE_API_STYLE_MAP[p.apiStyle ?? "chat_completions"] ?? "openai-completions";
-    lines.push(`    api: ${api}`);
-    lines.push(keyless ? "    auth: none" : `    apiKey: ${envKey}`);
-    const models = p.models ?? [];
-    if (models.length) {
-      lines.push(`    models:`);
-      for (const m of models) lines.push(`      - id: "${m.id}"`);
-    }
-    any = true;
-  }
-  return any ? { yaml: lines.join("\n") + "\n", providerEnv } : null;
-}
 
   const emitAgentEvent = (envelope: AgentEventEnvelope) => {
     // A terminal event for a turn that no longer owns its session must not clear
@@ -496,25 +429,12 @@ async function buildFcodeProvidersConfig(
   const launchSidecar = async (
     opts: { workerSessionId?: string; cwd?: string } = {},
   ): Promise<AgentSidecar> => {
-  // Inject Fcode providers into omp via --models-config. Secrets go into env
-  // vars (FCODE_PROVIDER_<ID>_KEY); the config file only stores var names so
-  // keys are never written to disk.
+  // Fcode providers reach omp as env vars (secrets) plus a names-only models
+  // config, so keys are never written to disk.
   let providerEnv: Record<string, string> = {};
   if (runtimeState.host) {
     try {
-      const allProviders = await listRuntimeProviders(false);
-      const injected = await buildFcodeProvidersConfig(runtimeState.host, allProviders);
-      if (injected) {
-        const configPath = join(dataDir, "fcode-providers.yml");
-        writeFileSync(configPath, injected.yaml, "utf8");
-        providerEnv = { ...injected.providerEnv, FCODE_MODELS_CONFIG: configPath };
-        // Start omp on Fcode's default model, not whichever model omp discovers first.
-        const settings = await runtimeState.host.call<{ defaultProviderId?: string; defaultModelId?: string }>("settings.get");
-        const { defaultProviderId: id, defaultModelId: model } = settings ?? {};
-        if (id && model && injected.yaml.includes(`\n  fcode-${id}:\n`)) {
-          providerEnv.FCODE_DEFAULT_MODEL = `fcode-${id}/${model}`;
-        }
-      }
+      providerEnv = await ompProviderEnv(runtimeState.host, await listRuntimeProviders(false), dataDir);
     } catch {
       // Non-fatal — omp starts without Fcode provider injection.
     }
@@ -537,6 +457,13 @@ async function buildFcodeProvidersConfig(
   providerEnv = { ...providerEnv, ...approvalModeEnv(readApprovalMode(dataDir)) };
   // omp settings groups (task / eval / browser / collab).
   providerEnv = { ...providerEnv, ...ompSettingsEnv(readOmpSettings(dataDir)) };
+  // "Choose binary…" override (written by ompPickBinaryPath).
+  try {
+    const bin = readFileSync(join(dataDir, "omp-bin-override.txt"), "utf8").trim();
+    if (bin) providerEnv = { ...providerEnv, OMP_BIN: bin };
+  } catch {
+    // No override picked.
+  }
   // Set omp's working directory: a worker's is its card's folder; the shared
   // sidecar's is the active bench, so the bash RPC and session path context use
   // the correct project root instead of the user home directory.
@@ -640,79 +567,6 @@ async function buildFcodeProvidersConfig(
   s.setVendorAuthResolver(async ({ providerId }) =>
     vendorOAuth.resolveAuth(providerId),
   );
-  s.setSubagentModelResolver(async (key: string) => {
-    const slash = key.indexOf("/");
-    if (slash < 1) throw new Error("invalid model key");
-    const providerPart = key.slice(0, slash);
-    const modelId = key.slice(slash + 1);
-    if (!modelId) throw new Error("empty model id");
-
-    const allProviders = await listRuntimeProviders(false);
-    const provider = findSubagentProviderSource(providerPart, allProviders);
-    if (!provider) {
-      throw new Error(subagentProviderLookupError(providerPart, allProviders));
-    }
-
-    // Check if the model has availableForSubagents enabled
-    const binding = provider.models?.find(
-      (m: any) => m.id === modelId || m.id.toLowerCase() === modelId.toLowerCase(),
-    );
-    if (!binding?.availableForSubagents) {
-      throw new Error(
-        `model "${modelId}" on provider "${provider.name}" is not enabled for delegation`,
-      );
-    }
-
-    const isVendorAccount = provider.authKind === OAUTH_AUTH_KIND;
-    let apiKey = "";
-    if (!isVendorAccount && provider.authKind !== "none") {
-      const secret = await runtimeState.host!.call<{ value?: string }>(
-        "providers.getSecret",
-        { id: provider.id },
-      );
-      apiKey = secret?.value ?? "";
-      if (!apiKey) throw new Error(`provider "${provider.name}" has no API key`);
-    }
-
-    await modelsDevCatalog.ensureLoaded();
-    let catalogModelConfig: Parameters<typeof modelConfigWithBinding>[0];
-    if (isVendorAccount) {
-      const vendorBinding = await vendorOAuth.bindingFor(provider.id, modelId);
-      if (!vendorBinding) throw new Error(`vendor "${provider.name}" does not offer "${modelId}"`);
-      catalogModelConfig =
-        vendorBinding.modelConfig ?? catalogModelConfigFor(modelsDevCatalog, {
-          vendorKey: provider.vendorKey,
-          baseUrl: vendorBinding.baseUrl ?? provider.baseUrl,
-          apiStyle: vendorBinding.apiStyle ?? provider.apiStyle,
-          modelId,
-        });
-    } else {
-      catalogModelConfig = catalogModelConfigFor(modelsDevCatalog, {
-        vendorKey: provider.vendorKey,
-        baseUrl: provider.baseUrl,
-        apiStyle: provider.apiStyle,
-        modelId,
-      });
-    }
-    const { modelConfig, capabilities } = effectiveSubagentModelConfig(
-      provider,
-      modelId,
-      catalogModelConfig,
-    );
-
-    return {
-      id: provider.id,
-      name: provider.name,
-      ...(provider.baseUrl ? { baseUrl: provider.baseUrl } : {}),
-      modelId,
-      apiKey,
-      ...(provider.authKind ? { authKind: provider.authKind } : {}),
-      ...(provider.apiStyle ? { apiStyle: provider.apiStyle } : {}),
-      supportsReasoning: capabilities.supportsReasoning,
-      supportedThinkingLevels: [...capabilities.supportedThinkingLevels],
-      ...(modelConfig ? { modelConfig } : {}),
-    };
-  });
   // Agent-driven work panel preview (D100): open a workspace HTML file in
   // the embedded browser; live reload keeps it current through later edits.
   s.setLocalTool("GenerateImages", createImageGenerationTool({
@@ -1105,19 +959,22 @@ async function buildFcodeProvidersConfig(
 
     const updateBoard = (board: KanbanBoard) => { kb.saveBoard(board); kb.sendChanged(); };
 
-    // kanban_show — worker only: returns the card and parent results
-    s.setLocalTool("kanban_show", async ({ sessionId }) => {
+    // kanban_show — worker only: own card + parent results, or another card's result + comments by taskId
+    s.setLocalTool("kanban_show", async ({ sessionId, args }) => {
       if (!kb.enabled()) return notEnabled();
-      const taskId = kb.sessionToCard().get(sessionId);
-      if (!taskId) return notWorker("kanban_show");
+      const own = kb.sessionToCard().get(sessionId);
+      if (!own) return notWorker("kanban_show");
+      const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+      const taskId = String(a.taskId ?? "").trim() || own;
       const board = kb.getBoard();
       const task = board.tasks.find((t) => t.id === taskId);
       if (!task) return kbError("kanban_show: task not found");
+      const comments = board.comments.filter((c) => c.taskId === taskId);
+      if (taskId !== own) return { ok: true, content: JSON.stringify({ task, comments }) };
       const parents = board.links
         .filter((l) => l.childId === taskId)
         .map((l) => board.tasks.find((t) => t.id === l.parentId))
         .filter((t) => t != null);
-      const comments = board.comments.filter((c) => c.taskId === taskId);
       return { ok: true, content: JSON.stringify({ task, parents, comments }) };
     });
 
@@ -1144,14 +1001,16 @@ async function buildFcodeProvidersConfig(
       return { ok: true, content: "Task blocked." };
     });
 
-    // kanban_comment — worker only (author forced from session's card id)
+    // kanban_comment — worker only; own card by default, or another live card by taskId (author forced from session)
     s.setLocalTool("kanban_comment", async ({ sessionId, args }) => {
       if (!kb.enabled()) return notEnabled();
-      const taskId = kb.sessionToCard().get(sessionId);
-      if (!taskId) return notWorker("kanban_comment");
+      const own = kb.sessionToCard().get(sessionId);
+      if (!own) return notWorker("kanban_comment");
       const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+      const taskId = String(a.taskId ?? "").trim() || own;
       const body = String(a.body ?? "").trim();
       if (!body) return kbError("kanban_comment: body required");
+      if (!kb.getBoard().tasks.some((t) => t.id === taskId && !t.archived)) return kbError("kanban_comment: task not found");
       updateBoard(kanbanAddComment(kb.getBoard(), taskId, `worker:${sessionId.slice(0, 8)}`, body));
       return { ok: true, content: "Comment added." };
     });
@@ -1189,10 +1048,9 @@ async function buildFcodeProvidersConfig(
       return { ok: true, content: "Link added." };
     });
 
-    // kanban_list — non-worker chat sessions
-    s.setLocalTool("kanban_list", async ({ sessionId }) => {
+    // kanban_list — any session (workers read the board as a blackboard)
+    s.setLocalTool("kanban_list", async () => {
       if (!kb.enabled()) return notEnabled();
-      if (kb.sessionToCard().has(sessionId)) return kbError("kanban_list: use kanban_show from a worker session");
       const visible = kb.getBoard().tasks.filter((t) => !t.archived);
       return { ok: true, content: JSON.stringify(visible) };
     });

@@ -7,9 +7,11 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { OmpModel, OmpSettingsValues } from "@pi-desktop/shared";
+import type { OmpAgentEntry, OmpAcpInfoResult, OmpModel, OmpSettingsValues, OmpWorktreeEntry } from "@pi-desktop/shared";
+import { useAppStore } from "../../stores/app-store";
 import { api } from "../../lib/api";
 import { Button, Input, SettingsToggle } from "../../components/ui";
+import { IconBot, IconGlobe } from "../../components/icons";
 import { SettingsMenuSelect } from "../../components/settings/SettingsMenuSelect";
 import { SettingsCard, SettingsRow } from "./primitives";
 import { OmpSkillsSection } from "../../components/settings/OmpSkillsSection";
@@ -20,29 +22,94 @@ import { SkillJourneySection } from "../../components/settings/SkillJourneySecti
 import { OmpUsageSection } from "../../components/settings/OmpUsageSection";
 import { OmpWorktreeSection } from "../../components/settings/OmpWorktreeSection";
 import { OmpExtensionsSection } from "../../components/settings/OmpExtensionsSection";
-
-/** Bundled omp agent names (from omp/packages/coding-agent/src/task/agents.ts). */
-const BUNDLED_AGENTS = ["task", "sonic", "scout", "reviewer", "security-reviewer"] as const;
+import { LspServersCard } from "./LspServersCard";
+import { HooksSection } from "./HooksSection";
+import { CommandsSection } from "./CommandsSection";
+import { MaintenanceSection } from "./MaintenanceSection";
 
 export type OmpSettingsPart = "defaults" | "agents" | "tools" | "extensions" | "memory";
 
-/** Renders one slice of omp settings; the Settings rail splits AI into several pages. */
+/** ACP (Agent Client Protocol) server info card — shows launch command and editor snippets. */
+function AcpInfoSection() {
+  const { t } = useTranslation();
+  const [info, setInfo] = useState<OmpAcpInfoResult | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
+
+  const load = async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      setInfo(await api.ompAcpInfo());
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copy = (text: string, key: string) => {
+    void navigator.clipboard.writeText(text).then(() => {
+      setCopied(key);
+      setTimeout(() => setCopied(null), 1500);
+    });
+  };
+
+  return (
+    <SettingsCard title={t("nonRpcModes.acpTitle")}>
+      <SettingsRow title={t("nonRpcModes.acpTitle")} description={t("nonRpcModes.acpDesc")}>
+        <Button type="button" size="sm" variant="secondary" disabled={loading} onClick={() => void load()}>
+          {loading ? "…" : "Load info"}
+        </Button>
+      </SettingsRow>
+      {info && (
+        <>
+          <SettingsRow title={t("nonRpcModes.acpCopyCommand")} description={info.command}>
+            <Button type="button" size="sm" variant="secondary" onClick={() => copy(info.command, "cmd")}>
+              {copied === "cmd" ? t("nonRpcModes.acpCopied") : t("nonRpcModes.acpCopyCommand")}
+            </Button>
+          </SettingsRow>
+          <SettingsRow title={t("nonRpcModes.acpCopyZed")} description="">
+            <Button type="button" size="sm" variant="secondary" onClick={() => copy(info.zedSnippet, "zed")}>
+              {copied === "zed" ? t("nonRpcModes.acpCopied") : t("nonRpcModes.acpCopyZed")}
+            </Button>
+          </SettingsRow>
+          <SettingsRow title={t("nonRpcModes.acpCopyJetBrains")} description="">
+            <Button type="button" size="sm" variant="secondary" onClick={() => copy(info.jetbrainsSnippet, "jb")}>
+              {copied === "jb" ? t("nonRpcModes.acpCopied") : t("nonRpcModes.acpCopyJetBrains")}
+            </Button>
+          </SettingsRow>
+        </>
+      )}
+    </SettingsCard>
+  );
+}
+
 export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
   const { t } = useTranslation();
+  const projectPath = useAppStore((s) => s.workspace?.path ?? null);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
   const [omp, setOmp] = useState<OmpSettingsValues>({});
+  const [queueExpanded, setQueueExpanded] = useState(false);
+  const [worktreeExpanded, setWorktreeExpanded] = useState(false);
   const [ompModels, setOmpModels] = useState<OmpModel[]>([]);
-
+  const [agents, setAgents] = useState<OmpAgentEntry[]>([]);
+  const [worktreeCount, setWorktreeCount] = useState<number | null>(null);
   const load = useCallback(() => {
     setLoadState("loading");
-    Promise.all([api.ompSettingsGet(), api.ompModelsList()])
-      .then(([settings, models]) => {
+    Promise.all([
+      api.ompSettingsGet(),
+      api.ompModelsList(),
+      api.ompAgentList(projectPath ?? undefined),
+      api.ompWorktreeList().catch((): { worktrees: OmpWorktreeEntry[] } => ({ worktrees: [] })),
+    ])
+      .then(([settings, models, agentList, wtList]) => {
         setOmp(settings);
         setOmpModels(models.models);
+        setAgents(agentList.agents);
+        setWorktreeCount(wtList.worktrees.length);
         setLoadState("ready");
       })
       .catch(() => setLoadState("error"));
-  }, []);
+  }, [projectPath]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -81,7 +148,7 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
       {part === "agents" && (
         <>
         {/* ── Task Subagents ───────────────────────────────────────── */}
-        <SettingsCard title={t("settings.ompTaskGroup")}>
+        <SettingsCard title={t("settings.ompTaskGroup")} icon={<IconBot size={13} />}>
           <SettingsRow title={t("settings.ompTaskIsolation")} description={t("settings.ompTaskIsolationDesc")}>
             <SettingsToggle
               checked={omp["task.isolation.enabled"] === true}
@@ -145,10 +212,15 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
               ]}
             />
           </SettingsRow>
+          {agents.filter((a) => !a.shadowed).length > 0 && (
+            <div className="settings-agent-overrides-head">
+              <span>{t("settings.ompAgentModelOverridesSection")}</span>
+            </div>
+          )}
           {/* ── Agent model overrides ─────────────────────────────── */}
-          {BUNDLED_AGENTS.map((agent) => {
-            const current = omp["task.agentModelOverrides"]?.[agent] ?? "";
-            const modelOptions = [
+          {agents.filter((a) => !a.shadowed).map((agent) => {
+            const current = omp["task.agentModelOverrides"]?.[agent.name] ?? "";
+            const modelOpts = [
               { id: "", label: t("settings.ompAgentModelOverridesDefault") },
               ...ompModels.map((m) => {
                 const fullId = `${m.provider.id}/${m.id}`;
@@ -156,25 +228,29 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
                 return { id: fullId, label, title: fullId };
               }),
             ];
+            const toolSummary = agent.tools.length > 0
+              ? `${agent.tools.length} tool${agent.tools.length === 1 ? "" : "s"}`
+              : null;
+            const desc = agent.description
+              ? (toolSummary ? `${agent.description} · ${toolSummary}` : agent.description)
+              : (toolSummary ?? t("settings.ompAgentAllTools", "all tools"));
             return (
               <SettingsRow
-                key={agent}
-                title={agent}
-                description={t("settings.ompAgentModelOverridesDesc")}
+                key={`${agent.source}:${agent.name}`}
+                title={agent.name}
+                description={desc}
+                detail={<span className="agent-source">{agent.source}</span>}
               >
                 <SettingsMenuSelect
-                  label={agent}
+                  label={agent.name}
                   value={current}
                   onChange={(v) => {
                     const overrides = { ...(omp["task.agentModelOverrides"] ?? {}) };
-                    if (v === "") {
-                      delete overrides[agent];
-                    } else {
-                      overrides[agent] = v;
-                    }
+                    if (v === "") { delete overrides[agent.name]; }
+                    else { overrides[agent.name] = v; }
                     void save({ "task.agentModelOverrides": overrides });
                   }}
-                  options={modelOptions}
+                  options={modelOpts}
                 />
               </SettingsRow>
             );
@@ -299,7 +375,7 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
       {part === "agents" && (
         <>
         {/* ── Collab ───────────────────────────────────────────────── */}
-        <SettingsCard title={t("settings.ompCollabGroup")}>
+        <SettingsCard title={t("settings.ompCollabGroup")} icon={<IconGlobe size={13} />}>
           <SettingsRow title={t("settings.ompCollabRelayUrl")} description={t("settings.ompCollabRelayUrlDesc")}>
             <Input
               type="text"
@@ -351,54 +427,68 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
 
       {part === "agents" && (
         <>
-        {/* ── Queue Modes ──────────────────────────────────────────── */}
-        <SettingsCard title={t("settings.ompQueueModesGroup")}>
-          <SettingsRow title={t("settings.ompSteeringMode")} description={t("settings.ompSteeringModeDesc")}>
-            <SettingsMenuSelect
-              label={t("settings.ompSteeringMode")}
-              value={omp["steeringMode"] ?? "one-at-a-time"}
-              onChange={(v) => void save({ steeringMode: v as OmpSettingsValues["steeringMode"] })}
-              options={[
-                { id: "one-at-a-time", label: t("settings.ompQueueModeOneAtATime") },
-                { id: "all", label: t("settings.ompQueueModeAll") },
-              ]}
-            />
-          </SettingsRow>
-          <SettingsRow title={t("settings.ompFollowUpMode")} description={t("settings.ompFollowUpModeDesc")}>
-            <SettingsMenuSelect
-              label={t("settings.ompFollowUpMode")}
-              value={omp["followUpMode"] ?? "one-at-a-time"}
-              onChange={(v) => void save({ followUpMode: v as OmpSettingsValues["followUpMode"] })}
-              options={[
-                { id: "one-at-a-time", label: t("settings.ompQueueModeOneAtATime") },
-                { id: "all", label: t("settings.ompQueueModeAll") },
-              ]}
-            />
-          </SettingsRow>
-          <SettingsRow title={t("settings.ompInterruptMode")} description={t("settings.ompInterruptModeDesc")}>
-            <SettingsMenuSelect
-              label={t("settings.ompInterruptMode")}
-              value={omp["interruptMode"] ?? "immediate"}
-              onChange={(v) => void save({ interruptMode: v as OmpSettingsValues["interruptMode"] })}
-              options={[
-                { id: "immediate", label: t("settings.ompInterruptModeImmediate") },
-                { id: "wait", label: t("settings.ompInterruptModeWait") },
-              ]}
-            />
-          </SettingsRow>
-          <SettingsRow title={t("settings.ompLoopMode")} description={t("settings.ompLoopModeDesc")}>
-            <SettingsMenuSelect
-              label={t("settings.ompLoopMode")}
-              value={omp["loop.mode"] ?? "prompt"}
-              onChange={(v) => void save({ "loop.mode": v as OmpSettingsValues["loop.mode"] })}
-              options={[
-                { id: "prompt", label: t("settings.ompLoopModePrompt") },
-                { id: "compact", label: t("settings.ompLoopModeCompact") },
-                { id: "reset", label: t("settings.ompLoopModeReset") },
-              ]}
-            />
-          </SettingsRow>
-        </SettingsCard>
+        {/* ── Queue Modes — collapsed by default, count badge 4 (settings-ai/notes.md) */}
+        <div className="settings-card-block">
+          <button
+            className="sf-sec-btn"
+            type="button"
+            aria-expanded={queueExpanded}
+            onClick={() => setQueueExpanded((v) => !v)}
+          >
+            {t("settings.ompQueueModesGroup")}
+            <span className="sn-badge" style={{ marginLeft: "auto", marginRight: 4 }}>4</span>
+            <svg className={`sf-chevron${queueExpanded ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          {queueExpanded && (
+            <div className="settings-panel">
+              <SettingsRow title={t("settings.ompSteeringMode")} description={t("settings.ompSteeringModeDesc")}>
+                <SettingsMenuSelect
+                  label={t("settings.ompSteeringMode")}
+                  value={omp["steeringMode"] ?? "one-at-a-time"}
+                  onChange={(v) => void save({ steeringMode: v as OmpSettingsValues["steeringMode"] })}
+                  options={[
+                    { id: "one-at-a-time", label: t("settings.ompQueueModeOneAtATime") },
+                    { id: "all", label: t("settings.ompQueueModeAll") },
+                  ]}
+                />
+              </SettingsRow>
+              <SettingsRow title={t("settings.ompFollowUpMode")} description={t("settings.ompFollowUpModeDesc")}>
+                <SettingsMenuSelect
+                  label={t("settings.ompFollowUpMode")}
+                  value={omp["followUpMode"] ?? "one-at-a-time"}
+                  onChange={(v) => void save({ followUpMode: v as OmpSettingsValues["followUpMode"] })}
+                  options={[
+                    { id: "one-at-a-time", label: t("settings.ompQueueModeOneAtATime") },
+                    { id: "all", label: t("settings.ompQueueModeAll") },
+                  ]}
+                />
+              </SettingsRow>
+              <SettingsRow title={t("settings.ompInterruptMode")} description={t("settings.ompInterruptModeDesc")}>
+                <SettingsMenuSelect
+                  label={t("settings.ompInterruptMode")}
+                  value={omp["interruptMode"] ?? "immediate"}
+                  onChange={(v) => void save({ interruptMode: v as OmpSettingsValues["interruptMode"] })}
+                  options={[
+                    { id: "immediate", label: t("settings.ompInterruptModeImmediate") },
+                    { id: "wait", label: t("settings.ompInterruptModeWait") },
+                  ]}
+                />
+              </SettingsRow>
+              <SettingsRow title={t("settings.ompLoopMode")} description={t("settings.ompLoopModeDesc")}>
+                <SettingsMenuSelect
+                  label={t("settings.ompLoopMode")}
+                  value={omp["loop.mode"] ?? "prompt"}
+                  onChange={(v) => void save({ "loop.mode": v as OmpSettingsValues["loop.mode"] })}
+                  options={[
+                    { id: "prompt", label: t("settings.ompLoopModePrompt") },
+                    { id: "compact", label: t("settings.ompLoopModeCompact") },
+                    { id: "reset", label: t("settings.ompLoopModeReset") },
+                  ]}
+                />
+              </SettingsRow>
+            </div>
+          )}
+        </div>
         </>
       )}
 
@@ -435,6 +525,7 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
             />
           </SettingsRow>
         </SettingsCard>
+        <LspServersCard />
         </>
       )}
 
@@ -484,6 +575,43 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
         </SettingsCard>
         </>
       )}
+
+      {part === "tools" && (
+        <>
+        {/* ── Opt-in Tools ─────────────────────────────────────────── */}
+        <SettingsCard title={t("settings.ompOptInToolsGroup")}>
+          <SettingsRow title="AST Grep" description="Structural AST search using ast-grep patterns. Default off; enable if the model should perform structural code searches.">
+            <SettingsToggle
+              checked={omp["astGrep.enabled"] === true}
+              label="AST Grep"
+              onChange={() => void save({ "astGrep.enabled": !(omp["astGrep.enabled"] === true) })}
+            />
+          </SettingsRow>
+          <SettingsRow title="Checkpoint / Rewind" description="Let the agent save and restore conversation checkpoints. Default off; useful for exploratory sessions.">
+            <SettingsToggle
+              checked={omp["checkpoint.enabled"] === true}
+              label="Checkpoint / Rewind"
+              onChange={() => void save({ "checkpoint.enabled": !(omp["checkpoint.enabled"] === true) })}
+            />
+          </SettingsRow>
+          <SettingsRow title="GitHub CLI" description="GitHub operations (issues, PRs, Actions, search, checkout). Default off; requires gh CLI in PATH.">
+            <SettingsToggle
+              checked={omp["github.enabled"] === true}
+              label="GitHub CLI"
+              onChange={() => void save({ "github.enabled": !(omp["github.enabled"] === true) })}
+            />
+          </SettingsRow>
+          <SettingsRow title="Security Scan" description="OMP-native security scan planning and the security:// resource namespace. Default off.">
+            <SettingsToggle
+              checked={omp["security.enabled"] === true}
+              label="Security Scan"
+              onChange={() => void save({ "security.enabled": !(omp["security.enabled"] === true) })}
+            />
+          </SettingsRow>
+        </SettingsCard>
+        </>
+      )}
+
 
       {part === "tools" && (
         <>
@@ -692,8 +820,29 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
 
       {part === "agents" && (
         <>
-        {/* ── Agent Worktrees ──────────────────────────────────────── */}
-        <OmpWorktreeSection />
+        {/* ── Agent Worktrees — collapsed by default (settings-ai/notes.md) */}
+        <div className="settings-card-block">
+          <button
+            className="sf-sec-btn"
+            type="button"
+            aria-expanded={worktreeExpanded}
+            onClick={() => setWorktreeExpanded((v) => !v)}
+          >
+            {t("settings.ompWorktreesGroup")}
+            {worktreeCount !== null && worktreeCount > 0 && (
+              <span className="sn-badge" style={{ marginLeft: "auto", marginRight: 4 }}>{worktreeCount}</span>
+            )}
+            <svg className={`sf-chevron${worktreeExpanded ? " open" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          {worktreeExpanded && <OmpWorktreeSection />}
+        </div>
+        </>
+      )}
+
+      {part === "agents" && (
+        <>
+        {/* ── Maintenance: cleanse + autoresearch ──────────────────── */}
+        <MaintenanceSection />
         </>
       )}
 
@@ -701,6 +850,15 @@ export function OmpSettingsSections({ part }: { part: OmpSettingsPart }) {
         <>
         {/* ── Extensions ───────────────────────────────────────────── */}
         <OmpExtensionsSection />
+        </>
+      )}
+
+      {part === "extensions" && (
+        <>
+        {/* ── Hooks & Commands ─────────────────────────────────────── */}
+        <HooksSection />
+        <CommandsSection />
+        <AcpInfoSection />
         </>
       )}
     </>

@@ -34,6 +34,8 @@ export type BenchSummary = {
   path: string;
   version: BenchVersion;
   sites: BenchSite[];
+  /** Installed app names from the bench's apps/ directory (real filesystem read). */
+  apps: string[];
 };
 
 /**
@@ -121,7 +123,7 @@ function readSites(benchPath: string): BenchSite[] {
   }
 
   try {
-    return readdirSync(sitesDir, { withFileTypes: true })
+    const sites = readdirSync(sitesDir, { withFileTypes: true })
       .filter((d) => d.isDirectory() && !d.name.startsWith(".") && d.name !== "assets" && existsSync(join(sitesDir, d.name, "site_config.json")))
       .map((d) => {
         let webserverPort = sharedWebserverPort ?? 8000;
@@ -140,6 +142,12 @@ function readSites(benchPath: string): BenchSite[] {
           webserverPort,
         };
       });
+    // If no explicit default (no currentsite.txt) and there is exactly one site,
+    // that site is implicitly the default — mark it so the UI never shows an empty name.
+    if (sites.length === 1 && !sites[0].isDefault) {
+      sites[0] = { ...sites[0], isDefault: true };
+    }
+    return sites;
   } catch {
     return [];
   }
@@ -150,6 +158,78 @@ function readSites(benchPath: string): BenchSite[] {
  */
 function isBench(dir: string): boolean {
   return existsSync(join(dir, "apps")) && existsSync(join(dir, "sites"));
+}
+
+/**
+ * Read installed app names from a bench's apps/ directory.
+ * Exported so bench-ipc.ts can call it without re-importing discovery.
+ */
+export function readBenchApps(benchPath: string): string[] {
+  try {
+    return readdirSync(join(benchPath, "apps"), { withFileTypes: true })
+      .filter((e) => e.isDirectory() && !e.name.startsWith("."))
+      .map((e) => e.name)
+      .sort();
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Read an installed app's version string from standard Frappe locations.
+ * Tries __version__.py, then pyproject.toml, then setup.py (in that order).
+ */
+export function readAppVersion(benchPath: string, appName: string): string {
+  const base = join(benchPath, "apps", appName);
+  // Try __version__.py (most common Frappe pattern)
+  try {
+    const content = readFileSync(join(base, appName, "__version__.py"), "utf8");
+    const m = content.match(/(?:__version__|version)\s*=\s*["']([^"']+)["']/);
+    if (m) return m[1];
+  } catch { /* try next */ }
+  // Try pyproject.toml
+  try {
+    const content = readFileSync(join(base, "pyproject.toml"), "utf8");
+    const m = content.match(/^\s*version\s*=\s*["']([^"']+)["']/m);
+    if (m) return m[1];
+  } catch { /* try next */ }
+  // Try setup.py
+  try {
+    const content = readFileSync(join(base, "setup.py"), "utf8");
+    const m = content.match(/version\s*=\s*["']([^"']+)["']/);
+    if (m) return m[1];
+  } catch { /* not found */ }
+  return "";
+}
+
+/** App with version; returned by benchDetail IPC for the left panel. */
+export type AppWithVersion = { name: string; version: string };
+
+/**
+ * Read installed apps with their versions from a bench's apps/ directory.
+ */
+export function readBenchAppsWithVersions(benchPath: string): AppWithVersion[] {
+  return readBenchApps(benchPath).map((name) => ({
+    name,
+    version: readAppVersion(benchPath, name),
+  }));
+}
+
+/**
+ * Parse Procfile process names from a bench directory (definition order).
+ * Exported so bench-ipc.ts can include them in the detail response.
+ */
+export function readProcfileEntries(benchPath: string): string[] {
+  try {
+    const content = readFileSync(join(benchPath, "Procfile"), "utf8");
+    return content
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith("#") && line.includes(":"))
+      .map((line) => line.split(":")[0].trim());
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -241,6 +321,7 @@ async function scanRoot(
       path: fullPath,
       version,
       sites,
+      apps: readBenchApps(fullPath),
     });
   }
 

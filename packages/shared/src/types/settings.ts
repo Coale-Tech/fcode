@@ -9,6 +9,7 @@ import type { GlobalPermissionMode } from "./permissions.js";
 import type { PluginMarketSource } from "./plugins.js";
 import type { SpeechSettings } from "./speech.js";
 import type { ThinkingLevel } from "./models.js";
+import type { NavLayout } from "../nav-layout.js";
 
 export type ThemePreference = "system" | "light" | "dark" | `plugin:${string}`;
 
@@ -76,6 +77,12 @@ export type AppSettings = {
   /** UI language; `auto` (and absent) follows the OS locale. */
   language?: "auto" | "en" | "zh-CN" | "zh-TW" | "tr" | "de" | "es" | "fr" | "ko" | "pt-BR";
   /**
+   * User display name shown as avatar initials in the shell header.
+   * Absent falls back to the OS full name resolved at startup.
+   */
+  displayName?: string;
+
+  /**
    * Global UI font stack (CSS `font-family` value). Absent means the built-in
    * token stack; bundled open-source families and installed system families
    * are offered by the settings picker.
@@ -88,6 +95,8 @@ export type AppSettings = {
   fontScale?: number;
   /** Transcript presentation only; absent means detailed. Reasoning is retained. */
   thinkingDisplayMode?: "detailed" | "compact";
+  /** Window navigation shell: top tabs, icon rail, or labelled rail + sessions island. Absent means "rail". */
+  navLayout?: NavLayout;
   /**
    * @deprecated Unreleased D343 px field. Reads migrate into `fontScale`
    * as `px / 14`; new writes persist `fontScale` instead.

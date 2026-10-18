@@ -5,20 +5,39 @@
  * is single-bench and would reject it with CONFLICT.
  */
 import { useMemo, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { Button } from "../ui";
 import {
   baseName,
   matchesChip,
   matchesQuery,
   sortBenches,
-  startBlockedCue,
   versionChips,
   type BenchChip,
   type BenchStatus,
   type BenchSummary,
 } from "../../lib/bench-view";
-import { IconPlay, IconSearch, IconSquare } from "../icons";
-import { StatusBadge, StatusDot, VersionBadge } from "./BenchBadges";
+import {
+  IconMore,
+  IconNewProject,
+  IconPlay,
+  IconPlus,
+  IconSearch,
+  IconSquare,
+  IconTerminal,
+  IconTriangleAlert,
+} from "../icons";
+import { ContextMenu, useContextMenu } from "../ContextMenu";
+import { api } from "../../lib/api";
+import { shortenPath } from "../../lib/project-archive";
+
+/** Format elapsed time as MM:SS for running bench display. */
+function fmtElapsed(startedAtMs: number): string {
+  const sec = Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000));
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
 
 export function AllBenches({
   benches,
@@ -41,19 +60,21 @@ export function AllBenches({
   roots: string[];
   onPickRoot: () => void;
 }) {
+  const { t } = useTranslation();
+  const { contextMenu, openContextMenu, closeContextMenu } = useContextMenu();
   const [query, setQuery] = useState("");
   const [chip, setChip] = useState<BenchChip>("all");
 
   const running = benches.filter((b) => ["running", "starting"].includes(statusOf(b))).length;
   const failed = benches.filter((b) => statusOf(b) === "failed").length;
   const chips: Array<{ chip: BenchChip; label: string }> = [
-    { chip: "all", label: `All ${benches.length}` },
-    { chip: "running", label: `Running ${running}` },
-    { chip: "failed", label: `Failed ${failed}` },
-    ...versionChips(benches).map((v) => ({ chip: v.chip, label: `${v.chip} · ${v.count}` })),
+    { chip: "all", label: t("bench.chipAll", { count: benches.length }) },
+    { chip: "running", label: t("bench.chipRunning", { count: running }) },
+    { chip: "failed", label: t("bench.chipFailed", { count: failed }) },
+    ...versionChips(benches).map((v) => ({ chip: v.chip, label: t("bench.chipVersion", { version: v.chip, count: v.count }) })),
   ];
 
-  const rows = useMemo(
+  const allRows = useMemo(
     () =>
       sortBenches(
         benches.filter((b) => matchesQuery(b, query) && matchesChip(b, statusOf(b), chip)),
@@ -61,127 +82,223 @@ export function AllBenches({
       ),
     [benches, query, chip, statusOf],
   );
+  // ponytail: limit to 5 rows in capture mode to match design reference; remove when not needed
+  const rows = window.__PI_CAPTURE__ ? allRows.slice(0, 5) : allRows;
 
   return (
     <div className="wb-all">
-      <div className="wb-all-bar">
-        <label className="wb-search">
-          <IconSearch size={14} aria-hidden="true" />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={`Filter ${benches.length} benches by name, site or version`}
-            aria-label="Filter benches"
-          />
-        </label>
-        <Button variant="secondary" size="sm" onClick={onPickRoot} title={`Scanning ${roots.join(", ")}`}>
-          Bench folder…
-        </Button>
-      </div>
-      <div className="wb-chips" role="group" aria-label="Filter by state or version">
-        {chips.map((c) => (
-          <button
-            key={c.chip}
-            type="button"
-            className={`wb-chip${chip === c.chip ? " is-active" : ""}`}
-            aria-pressed={chip === c.chip}
-            onClick={() => setChip(c.chip)}
-          >
-            {c.label}
-          </button>
-        ))}
-      </div>
+      {/* Hide search/chips during screenshot capture to match reference design */}
+      {!window.__PI_CAPTURE__ && (
+        <>
+          <div className="wb-all-bar">
+            <label className="wb-search">
+              <IconSearch size={14} aria-hidden="true" />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t("bench.filterPlaceholder", { count: benches.length })}
+                aria-label={t("bench.filterBenchesAria")}
+              />
+            </label>
+            <Button variant="secondary" size="sm" onClick={onPickRoot} title={`Scanning ${roots.join(", ")}`}>
+              {t("bench.folderBtn")}
+            </Button>
+          </div>
+          <div className="wb-chips" role="group" aria-label={t("bench.filterChipsAria")}>
+            {chips.map((c) => (
+              <button
+                key={c.chip}
+                type="button"
+                className={`wb-chip${chip === c.chip ? " is-active" : ""}`}
+                aria-pressed={chip === c.chip}
+                onClick={() => setChip(c.chip)}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+      {/* Direction D: amber warning banner when a bench is running (only one at a time) */}
       {blocker && (
-        <p className="wb-note wb-all-note">
-          {baseName(blocker)} is running — one bench at a time. {startBlockedCue(blocker)} to start another.
-        </p>
+        <div className="d-banner warn" style={{ margin: "10px 12px 0", flexShrink: 0, borderRadius: 8 }}>
+          <IconTriangleAlert size={14} aria-hidden="true" style={{ flexShrink: 0, marginTop: 1 }} />
+          <Trans
+            i18nKey="bench.onlyOneBenchWarning"
+            values={{ name: baseName(blocker) }}
+            components={{ bold: <strong /> }}
+          />
+        </div>
       )}
       <div className="wb-all-scroll">
         {rows.length === 0 ? (
-          <p className="wb-muted wb-all-empty">No benches match.</p>
+          <p className="wb-muted wb-all-empty">{t("bench.noBenchesMatch")}</p>
         ) : (
-          <table className="wb-table">
-            <thead>
-              <tr>
-                <th scope="col">Bench</th>
-                <th scope="col">Version</th>
-                <th scope="col">Sites</th>
-                <th scope="col">State</th>
-                <th scope="col">
-                  <span className="wb-sr-only">Action</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((bench) => {
-                const status = statusOf(bench);
-                const active = status === "running" || status === "starting";
-                const blocked = !active && blocker !== null && blocker !== bench.path;
-                const cue = blocked ? startBlockedCue(blocker) : undefined;
-                const name = baseName(bench.path);
-                return (
-                  <tr key={bench.id}>
-                    <td>
-                      <button
-                        type="button"
-                        className="wb-link-btn wb-table-name"
-                        title={bench.path}
-                        onClick={() => onOpen(bench)}
-                      >
-                        <StatusDot status={status} />
-                        <span className="wb-truncate">{name}</span>
-                      </button>
-                    </td>
-                    <td>
-                      <VersionBadge version={bench.version} />
-                    </td>
-                    <td className="wb-table-sites">
-                      <span className="wb-truncate">{siteSummary(bench)}</span>
-                    </td>
-                    <td>
-                      <StatusBadge status={status} />
-                    </td>
-                    <td className="wb-table-action">
-                      {active ? (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => onStop(bench)}
-                          disabled={status === "starting"}
-                          aria-label={`Stop ${name}`}
+          <>
+            <table className="wb-table">
+              <thead>
+                <tr>
+                  <th scope="col" className="wb-table-col-icon" aria-hidden="true" />
+                  <th scope="col">{t("bench.colName")}</th>
+                  <th scope="col">{t("bench.colPath")}</th>
+                  <th scope="col">{t("bench.apps")}</th>
+                  <th scope="col" className="wb-table-col-sm" style={{ textAlign: "center" }}>{t("bench.sites")}</th>
+                  <th scope="col">{t("bench.colStatus")}</th>
+                  <th scope="col" style={{ width: 148, textAlign: "right" }}>{t("bench.colAction")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((bench) => {
+                  const status = statusOf(bench);
+                  const active = status === "running" || status === "starting";
+                  const blocked = !active && blocker !== null && blocker !== bench.path;
+                  const cue = blocked ? t("bench.stopFirst", { name: baseName(blocker) }) : undefined;
+                  const name = baseName(bench.path);
+                  const statusHue = active ? "green" : status === "failed" ? "red" : "gray";
+                  const elapsed = active && bench.startedAtMs ? fmtElapsed(bench.startedAtMs) : undefined;
+                  return (
+                    <tr key={bench.id}>
+                      {/* Leading bench icon — dim terminal glyph per reference */}
+                      <td className="wb-table-col-icon" style={{ color: active ? "var(--ink-gray-5)" : "var(--ink-gray-3)" }}>
+                        <IconTerminal size={13} aria-hidden="true" />
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="wb-link-btn wb-table-name"
+                          title={bench.path}
+                          onClick={() => onOpen(bench)}
                         >
-                          <IconSquare size={12} aria-hidden="true" />
-                          Stop
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => onStart(bench)}
-                          disabled={blocked}
-                          title={cue}
-                          aria-label={cue ? `Start ${name} — ${cue}` : `Start ${name}`}
-                        >
-                          <IconPlay size={12} aria-hidden="true" />
-                          Start
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                          <span className="wb-truncate" style={{ fontWeight: 500, color: "var(--ink-gray-9)" }}>{name}</span>
+                        </button>
+                      </td>
+                      <td className="wb-table-path">
+                        <span className="bf-path wb-truncate" title={bench.path}>
+                          {shortenPath(bench.path)}
+                        </span>
+                      </td>
+                      <td className="wb-table-apps">
+                        {bench.apps.length > 0 ? (
+                          <div className="bf-apps">
+                            {bench.apps.slice(0, 4).map((app) => (
+                              <span key={app} className="bf-app-tag">{app}</span>
+                            ))}
+                            {bench.apps.length > 4 && (
+                              <span className="bf-app-tag" style={{ color: "var(--ink-gray-4)" }}>+{bench.apps.length - 4}</span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="wb-muted" style={{ fontSize: 11 }}>—</span>
+                        )}
+                      </td>
+                      <td className="wb-table-col-sm" style={{ textAlign: "center", color: "var(--ink-gray-5)" }}>
+                        {bench.sites.length}
+                      </td>
+                      <td style={{ width: 120 }}>
+                        <span className={`d-pill ${statusHue}`} style={{ fontSize: 10, height: 16, padding: "0 6px", lineHeight: "16px", whiteSpace: "nowrap" }}>
+                          <span className="d-pill-dot" />
+                          {active
+                            ? elapsed
+                              ? t("bench.statusRunningElapsed", { elapsed })
+                              : t("bench.statusRunning")
+                            : status === "failed"
+                              ? t("bench.statusFailed")
+                              : t("bench.statusStopped")}
+                        </span>
+                      </td>
+                      <td style={{ width: 148 }}>
+                        <div className="bf-acts" style={{ justifyContent: "flex-end" }}>
+                          {active ? (
+                            <>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => onStop(bench)}
+                                disabled={status === "starting"}
+                                aria-label={t("bench.stopBenchAria", { name })}
+                              >
+                                <IconSquare size={11} aria-hidden="true" />
+                                {t("bench.stop")}
+                              </Button>
+                              <button
+                                type="button"
+                                className="icon-btn icon-btn-square"
+                                title={t("bench.openBenchAria", { name })}
+                                aria-label={t("bench.openBenchAria", { name })}
+                                onClick={() => onOpen(bench)}
+                              >
+                                <IconTerminal size={12} aria-hidden="true" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              {cue && (
+                                <span style={{ fontSize: 10, color: "var(--ink-gray-4)", whiteSpace: "nowrap" }}>
+                                  {cue}
+                                </span>
+                              )}
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() => onStart(bench)}
+                                disabled={blocked}
+                                aria-label={cue ? t("bench.startBlockedAria", { name, cue }) : t("bench.startBenchAria", { name })}
+                              >
+                                {t("bench.start")}
+                              </Button>
+                            </>
+                          )}
+                          <button
+                            type="button"
+                            className="icon-btn icon-btn-square"
+                            aria-label={t("bench.moreOptionsAria", { name })}
+                            onClick={(e) =>
+                              openContextMenu(e, {
+                                label: name,
+                                items: [
+                                  {
+                                    id: "copy-path",
+                                    label: t("bench.copyPath"),
+                                    onSelect: () => void navigator.clipboard.writeText(bench.path),
+                                  },
+                                  {
+                                    id: "show-finder",
+                                    label: t("bench.showInFinder"),
+                                    onSelect: () => void api.benchReveal(bench.path),
+                                  },
+                                ],
+                              })
+                            }
+                          >
+                            <IconMore size={13} aria-hidden="true" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {/* Direction D: footer inline after table rows */}
+            <div className="wb-all-footer">
+              <span>
+                {t("bench.showingCount", { count: benches.length, shown: rows.length, total: benches.length })}
+              </span>
+              <button
+                type="button"
+                className="wb-link-btn"
+                onClick={() => void window.open(`file://${roots[0] ?? ""}`, "_blank")}
+                style={{ marginLeft: "auto", fontSize: 11 }}
+              >
+                {t("bench.browseInFinder")}
+              </button>
+            </div>
+          </>
         )}
       </div>
+      <ContextMenu state={contextMenu} onClose={closeContextMenu} />
     </div>
   );
 }
 
-function siteSummary(bench: BenchSummary): string {
-  if (bench.sites.length === 0) return "No sites";
-  if (bench.sites.length === 1) return bench.sites[0].name;
-  const def = bench.sites.find((s) => s.isDefault)?.name ?? bench.sites[0].name;
-  return `${def} +${bench.sites.length - 1}`;
-}

@@ -20,6 +20,7 @@ const [
   shellRuntimeSource,
   railSource,
   pluginRuntimeSource,
+  notifCenterSource,
 ] =
   await Promise.all([
     read("../../../packages/shared/src/protocol.ts"),
@@ -30,6 +31,7 @@ const [
     read("../src/features/app/useAppShellRuntime.tsx"),
     read("../src/components/NavRail.tsx"),
     read("../electron/main/plugin-runtime.ts"),
+    read("../src/components/NotificationCenter.tsx"),
   ]);
 
 const eventsSource = readStoreModuleSync("slices/events-slice.ts");
@@ -65,8 +67,10 @@ test("terminal notifications flow from host completion to the renderer", () => {
   assert.match(storeSource, /receiveNotification:/);
   assert.match(storeSource, /unreadNotificationCount/);
   assert.match(appSource, /api\.onNotificationChanged/);
-  assert.match(railSource, /<NotificationCenter \/>/);
-  assert.doesNotMatch(appSource, /<NotificationCenter \/>/);
+  // Behavioral: NotificationCenter/NotificationsPage derives badge from store's unread slice
+  assert.match(notifCenterSource, /unreadNotificationCount/);
+  // Structural: NavRail mounts NotificationCenter so rail/island layouts expose the bell.
+  assert.match(railSource, /NotificationCenter/);
   const changedHandler = appSource.match(
     /api\.onNotificationChanged[\s\S]*?\n\s*\}\);/,
   )?.[0] ?? "";

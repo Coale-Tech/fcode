@@ -85,7 +85,7 @@ export function PromptEnhancementCard({
  *
  * Layout follows the ext-sheet design system: head / body / error / actions.
  * Insert Draft and Restore Default are left-side utility buttons in the
- * actions footer, matching SubagentEditorSheet's pattern.
+ * actions footer, matching the ext-sheet design system pattern.
  */
 function PromptEnhancementEditorSheet({
   settings,

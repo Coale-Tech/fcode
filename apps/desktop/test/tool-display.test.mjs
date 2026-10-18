@@ -102,3 +102,23 @@ test("formats processing time in the compact transcript style", () => {
   assert.equal(formatToolDuration(3_665), "1h 1m 5s");
   assert.equal(formatToolDuration(5_400), "1h 30m");
 });
+
+test("fcode and kanban tools resolve concise structured summaries", () => {
+  // fcode_bench_run: command arg is the verb ("migrate", "clear-cache", etc.)
+  assert.equal(getToolSummary("fcode_bench_run", { command: "migrate", site: "mysite.localhost" }), "migrate");
+  // fcode_bench_execute: method arg is the primary identifier
+  assert.equal(getToolSummary("fcode_bench_execute", { method: "frappe.client.set_value", site: "mysite.localhost" }), "frappe.client.set_value");
+  // fcode_canvas: action is the primary verb (url still shown in expanded body)
+  assert.equal(getToolSummary("fcode_canvas", { action: "navigate", url: "http://localhost:8000/app" }), "navigate");
+  assert.equal(getToolSummary("fcode_canvas", { action: "click", uid: "btn-save" }), "click");
+  // fcode_studio: action describes the operation
+  assert.equal(getToolSummary("fcode_studio", { action: "publish_app", app: "myapp" }), "publish_app");
+  // kanban_create: title is the user-visible card name
+  assert.equal(getToolSummary("kanban_create", { title: "Build the feature", projectPath: "/projects/myapp" }), "Build the feature");
+  // kanban_block: reason is the key context
+  assert.equal(getToolSummary("kanban_block", { reason: "Waiting on API", kind: "dependency" }), "Waiting on API");
+  // All fcode_* and kanban_* tools stay in "use" action (no special delegation/run treatment)
+  assert.equal(getToolAction("fcode_bench_run"), "use");
+  assert.equal(getToolAction("kanban_create"), "use");
+  assert.equal(getToolAction("fcode_studio"), "use");
+});

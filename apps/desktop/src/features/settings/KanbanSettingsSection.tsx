@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { KanbanSettings } from "@pi-desktop/shared";
+import { IPC, type KanbanSettings } from "@pi-desktop/shared";
 import { api } from "../../lib/api";
 import { SettingsCard, SettingsRow } from "./primitives";
 import { Input, SettingsToggle } from "../../components/ui";
@@ -10,10 +10,15 @@ export function KanbanSettingsSection() {
   const [settings, setSettings] = useState<KanbanSettings | null>(null);
   const [paused, setPaused] = useState(false);
 
-  useEffect(() => {
+  const fetchAll = useCallback(() => {
     void api.kanbanSettingsGet().then((r) => setSettings(r.settings)).catch(() => {});
     void api.kanbanList().then((r) => setPaused(r.paused)).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    fetchAll();
+    return window.piDesktop?.on?.(IPC.event.kanbanChanged, fetchAll);
+  }, [fetchAll]);
 
   const save = async (patch: Partial<KanbanSettings>) => {
     if (!settings) return;
@@ -45,6 +50,13 @@ export function KanbanSettingsSection() {
             type="number" min={1} max={10}
             defaultValue={settings.maxInProgress}
             onBlur={(e) => void save({ maxInProgress: Number(e.target.value) })}
+          />
+        </SettingsRow>
+        <SettingsRow title={t("kanban.settings.maxWorkersPerProject")}>
+          <Input
+            type="number" min={1} max={5}
+            defaultValue={settings.maxWorkersPerProject}
+            onBlur={(e) => void save({ maxWorkersPerProject: Number(e.target.value) })}
           />
         </SettingsRow>
         <SettingsRow title={t("kanban.settings.maxRuntimeSeconds")}>

@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { RavenSettings } from "@pi-desktop/shared";
+import { IPC, type RavenSettings } from "@pi-desktop/shared";
 import { api } from "../../lib/api";
 import { SettingsCard, SettingsRow } from "./primitives";
 import { Input, SettingsToggle } from "../../components/ui";
@@ -9,9 +9,14 @@ export function RavenSettingsSection() {
   const { t } = useTranslation();
   const [settings, setSettings] = useState<RavenSettings | null>(null);
 
-  useEffect(() => {
+  const fetchSettings = useCallback(() => {
     void api.ravenSettingsGet().then((r) => setSettings(r.settings)).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    fetchSettings();
+    return window.piDesktop?.on?.(IPC.event.ravenChanged, fetchSettings);
+  }, [fetchSettings]);
 
   // Optimistic, then reconciled: main rejects non-http(s) URLs and disables Raven without one.
   const save = async (patch: Partial<RavenSettings>) => {

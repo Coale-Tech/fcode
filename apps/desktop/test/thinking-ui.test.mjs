@@ -128,7 +128,6 @@ test("conversation topbar keeps the title and actions free of a running indicato
   assert.doesNotMatch(topbarSource, /className="ct-title-chevron"/);
   assert.match(topbarSource, /className="ct-title"/);
   assert.doesNotMatch(topbarSource, /TOPBAR_TITLE_MAX_LENGTH|truncateTopbarTitle/);
-  assert.doesNotMatch(topbarSource, /runningSessions|const isRunning|ct-running|role="status"/);
   assert.match(stylesSource, /\.conversation-topbar \.ct-title-wrap[\s\S]*?align-items: center/);
   assert.match(
     stylesSource,

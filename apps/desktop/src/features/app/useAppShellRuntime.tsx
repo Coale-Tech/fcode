@@ -22,6 +22,7 @@ import {
 } from "../../lib/sidebar-preferences";
 import { sidebarWidthBudget } from "../../lib/sidebar-resize";
 import { commitWorkPanelPresentation } from "../../lib/work-panel-presentation";
+import { userIdentityFromName } from "../../lib/user-identity";
 import {
   MAIN_PANE_MIN_WIDTH,
   workPanelWidthForSidebarReopen,
@@ -31,6 +32,7 @@ import { useAppStore } from "../../stores/app-store";
 import { useSidebarTransition } from "./useSidebarTransition";
 import { useStartupWatchdog } from "./useStartupWatchdog";
 import { useTraySessions } from "./useTraySessions";
+import { resolveNavLayout, shellChromeWidth } from "../../lib/nav-layout";
 
 const MODIFIER_ONLY_KEYS = new Set([
   "Alt",
@@ -41,8 +43,6 @@ const MODIFIER_ONLY_KEYS = new Set([
 ]);
 
 const PLUGIN_THEME_STYLE_ID = "pi-plugin-theme";
-/** `--nav-rail-width` (60px) plus the Island's 8px margin on both sides (chrome.css, chat-shell.css). */
-const SHELL_CHROME_WIDTH = 60 + 16;
 
 export function useAppShellRuntime() {
   const { t } = useTranslation();
@@ -59,6 +59,9 @@ export function useAppShellRuntime() {
   const handlePlansChanged = useAppStore((s) => s.handlePlansChanged);
   const abort = useAppStore((s) => s.abort);
   const settings = useAppStore((s) => s.settings);
+  const navLayout = resolveNavLayout(settings?.navLayout);
+  const navLayoutRef = useRef(navLayout);
+  navLayoutRef.current = navLayout;
   const workPanelOpen = useAppStore((s) => s.workPanelOpen);
   const workPanelWidth = useAppStore((s) => s.workPanelWidth);
   const pluginThemes = useAppStore((s) => s.pluginThemes);
@@ -75,6 +78,7 @@ export function useAppShellRuntime() {
     ready && page !== "settings",
   );
   const [shellWidth, setShellWidth] = useState(0);
+  const [railExpanded, setRailExpanded] = useState(false);
   const appShellRef = useRef<HTMLDivElement>(null);
   const sidebarCollapsedRef = useRef(sidebarCollapsed);
   const sidebarWidthRef = useRef(sidebarWidth);
@@ -89,6 +93,8 @@ export function useAppShellRuntime() {
   const workPanelOpenRef = useRef(workPanelVisible);
   const workPanelMaximizedRef = useRef(false);
   const autoCollapsedSidebarRef = useRef(false);
+  const railExpandedRef = useRef(false);
+  railExpandedRef.current = railExpanded;
   sidebarCollapsedRef.current = sidebarCollapsed;
   sidebarWidthRef.current = sidebarWidth;
   shellWidthRef.current = shellWidth;
@@ -96,11 +102,10 @@ export function useAppShellRuntime() {
   workPanelOpenRef.current = workPanelVisible;
 
   // The shell is a fixed client area: the three-column budget needs its real
-  // measured width, not the native window bounds, because the reservation seam
-  // stays at zero. The E frame's nav rail and the Island's 8px inset on each
-  // side are never available to the columns.
+  // measured width, not the native window bounds. shellChromeWidth() accounts
+  // for the nav chrome reservation (rail/island) per the active layout.
   const columnsWidth = (shell: HTMLElement) =>
-    Math.max(0, Math.round(shell.clientWidth) - SHELL_CHROME_WIDTH);
+    Math.max(0, Math.round(shell.clientWidth) - shellChromeWidth(navLayoutRef.current, railExpandedRef.current));
   useLayoutEffect(() => {
     const shell = appShellRef.current;
     if (!shell) return;
@@ -113,7 +118,12 @@ export function useAppShellRuntime() {
     const observer = new ResizeObserver(update);
     observer.observe(shell);
     return () => observer.disconnect();
-  }, []);
+  }, [navLayout]);
+  // Re-apply budget when the D2 rail expands/collapses (no outer shell resize fires).
+  useLayoutEffect(() => {
+    const shell = appShellRef.current;
+    if (shell) setShellWidth(columnsWidth(shell));
+  }, [railExpanded]);
   const resolveSidebarMax = () =>
     sidebarWidthBudget({
       containerWidth: (appShellRef.current && columnsWidth(appShellRef.current)) || shellWidthRef.current,
@@ -160,19 +170,29 @@ export function useAppShellRuntime() {
   }, []);
   useTraySessions({ setSearchOpen, reopenSidebar });
 
+  // Composer toolbar "Add context" button dispatches this to open the search dialog.
+  useEffect(() => {
+    const handler = () => setSearchOpen(true);
+    document.addEventListener("pi:open-search", handler);
+    return () => document.removeEventListener("pi:open-search", handler);
+  }, []);
+
   // Stable identity: the keydown and native-menu handlers register once and
   // must never capture a stale `sidebarCollapsed`. Every invocation is a user
   // action, so it clears an automatic-collapse record before toggling.
+  // Island sidebar is permanent: block collapse (keyboard, click) and auto-collapse.
   const toggleSidebar = useCallback(() => {
+    if (navLayoutRef.current === "island") return;
     autoCollapsedSidebarRef.current = false;
     if (sidebarCollapsedRef.current) reopenSidebar();
     else setSidebarCollapsed(true);
   }, [reopenSidebar]);
 
   // The layout, not the user, yields the sidebar when the panel would push
-  // MainChat under its floor. The record is remembered only until the panel
-  // closes.
+  // MainChat under its floor. In island mode the sidebar is permanent so
+  // this auto-collapse must also be suppressed.
   const autoCollapseSidebar = useCallback(() => {
+    if (navLayoutRef.current === "island") return;
     if (sidebarCollapsedRef.current) return;
     autoCollapsedSidebarRef.current = true;
     setSidebarCollapsed(true);
@@ -535,6 +555,24 @@ export function useAppShellRuntime() {
     }
   }, [settings?.fontFamily]);
 
+  // Chat author identity (chatUserName + userInitials): settings.displayName
+  // first, then the OS full name from main process.
+  useEffect(() => {
+    const computeAndSet = (name: string) => {
+      const identity = userIdentityFromName(name);
+      if (identity) useAppStore.setState(identity);
+    };
+
+    if (settings?.displayName) {
+      computeAndSet(settings.displayName);
+    } else if (ready) {
+      void api.getUserInfo().then((r) => {
+        if (r?.fullName) computeAndSet(r.fullName);
+      }).catch(() => { /* non-fatal */ });
+    }
+  }, [settings?.displayName, ready]);
+
+
   // Global type scale: Settings persists a multiplier in
   // `AppSettings.fontScale`; the `--text-*` ramp multiplies from `--font-scale`.
   useEffect(() => {
@@ -543,6 +581,12 @@ export function useAppShellRuntime() {
       String(resolveFontScale(settings ?? {})),
     );
   }, [settings?.fontScale, settings?.fontSize]);
+
+  // Nav-layout attribute drives CSS layout switching (rail, tabs, island).
+  // Separate from the theme effect so a plugin-theme change cannot skip it.
+  useEffect(() => {
+    document.documentElement.dataset.navLayout = navLayout;
+  }, [navLayout]);
 
   useEffect(() => {
     if (bootstrapStartedRef.current) return;
@@ -879,6 +923,14 @@ export function useAppShellRuntime() {
   ]);
 
   useEffect(() => installRendererApi(), []);
+  // Capture-mode: dispatch CustomEvent("pi-backend-clear") from CDP to clear the backend banner.
+  useEffect(() => {
+    const clear = () => setBackendDown(null);
+    window.addEventListener("pi-backend-clear", clear);
+    return () => window.removeEventListener("pi-backend-clear", clear);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   useEffect(() => {
     if (!ready) return;
@@ -1012,5 +1064,7 @@ export function useAppShellRuntime() {
     startupRetrying,
     sidebarToggleShortcut,
     workPanelToggleTooltip,
+    onRailExpandChange: setRailExpanded,
+    navLayout,
   };
 }

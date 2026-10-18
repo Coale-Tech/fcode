@@ -75,6 +75,11 @@ export const PERMISSION_RISK: Record<string, RiskTier> = {
   "ui.microphone": "medium",
   "ui.theme": "low",
   notify: "low",
+  // Design-variant permission keys used by the fragment reference (colon-notation and exec_process).
+  // They map to the same risk tiers as their dot-notation equivalents.
+  "net:outbound": "medium",
+  "fs:read": "low",
+  "exec_process": "high",
 };
 
 /** Display order for capability badges: what it adds before what it runs. */

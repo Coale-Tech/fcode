@@ -74,6 +74,7 @@ import type {
   ProjectMemoryEntry,
   ProjectWorkspace,
   PullRequestSummary,
+  PullsErrorKind,
   ScheduledTask,
   ProviderCreateInput,
   ProviderPublic,
@@ -90,9 +91,6 @@ import type {
   ToolPermissionResolution,
   UserSkillInput,
   UserSkillRecord,
-  UserSubagentInput,
-  UserSubagentRecord,
-  SubagentDefinition,
   WorkspaceDiff,
   AppMenuCommand,
   AppNotification,
@@ -143,6 +141,7 @@ import type {
   HindsightLocalState,
   ToolApprovalMode,
   OmpSettingsValues,
+  OmpSettingDescriptor,
   OmpSessionStatsResult,
   OmpShareResult,
   OmpSubagentListResult,
@@ -167,20 +166,40 @@ import type {
   OmpBashResult,
   OmpUserProfileGetResult,
   OmpUserProfileSetResult,
+  OmpLspListResult,
+  OmpLspSaveInput,
   KanbanBoard,
   KanbanSettings,
-  KanbanRun,
   RavenSettings,
+  OmpAgentListResult,
   OmpSkillCuratorStatusResult,
   OmpSkillCuratorMutateResult,
   OmpSkillProposalListResult,
   OmpSkillProposalActResult,
   OmpSkillJourneyResult,
+  OmpSessionGetTreeResult,
+  OmpSessionMessagesResult,
+  OmpSessionMessagesPageResult,
+  OmpNewSessionResult,
+  OmpSwitchSessionResult,
+  OmpHooksListResult,
+  OmpHookMutateResult,
+  OmpCommandMutateResult,
+  OmpCommandReadResult,
+  OmpCleanseResult,
+  OmpAutoresearchResult,
+  OmpCliSubcommand,
+  OmpCliRunResult,
+  OmpCliOutputEvent,
+  OmpCliDoneEvent,
+  OmpTuiOpenResult,
+  OmpAcpInfoResult,
 } from "@pi-desktop/shared";
 import {
   defaultCommandShellForPlatform,
   IPC,
   isCommandShellId,
+  isNavLayout,
   normalizeLargePasteThreshold,
   normalizeMode,
   normalizeNetworkProxy,
@@ -444,6 +463,11 @@ export function validateSettingsWrite(settings: AppSettings): AppSettings {
       errorCode: "INVALID_PARAMS",
     });
   }
+  if (settings.navLayout !== undefined && !isNavLayout(settings.navLayout)) {
+    throw Object.assign(new Error("navLayout is invalid"), {
+      errorCode: "INVALID_PARAMS",
+    });
+  }
   const value = settings as AppSettings & {
     defaultCommandShell?: unknown;
     largePasteThreshold?: unknown;
@@ -574,6 +598,7 @@ function normalizePlansChangedEvent(value: unknown): PlanningStateEvent {
 export const api = {
   getVersion: () => invoke<AppVersionInfo>(IPC.invoke.appGetVersion),
   health: () => invoke<HostHealth>(IPC.invoke.appHealth),
+  getUserInfo: () => invoke<{ fullName: string }>(IPC.invoke.appGetUserInfo),
   getOnboarding: () => invoke<OnboardingState>(IPC.invoke.appGetOnboarding),
   dismissOnboarding: () => invoke(IPC.invoke.appDismissOnboarding),
   updatesGetState: () => invoke<UpdateState>(IPC.invoke.updatesGetState),
@@ -888,7 +913,7 @@ export const api = {
   setProject: (path: string) =>
     invoke<{ workspace: ProjectWorkspace | null }>(IPC.invoke.projectSet, path),
   listPullRequests: () =>
-    invoke<{ pulls: PullRequestSummary[]; error?: string }>(IPC.invoke.pullsList),
+    invoke<{ pulls: PullRequestSummary[]; error?: string; errorKind?: PullsErrorKind }>(IPC.invoke.pullsList),
   /** Local branches of the current workspace repo; `error` when there is no workspace or git failed. */
   listGitBranches: () =>
     invoke<{ branches: string[]; error?: "NO_WORKSPACE" | "GIT_FAILED" }>(IPC.invoke.gitBranchList),
@@ -1205,51 +1230,6 @@ export const api = {
   revealUserSkill: (id: string, query?: Partial<AgentCapabilityQuery>) =>
     invoke(IPC.invoke.skillReveal, { id, ...query }),
 
-  // --- Subagents the user owns ----------------------------------------------
-  listUserSubagents: (query?: Pick<AgentCapabilityQuery, "level">) =>
-    invoke<{ subagents: UserSubagentRecord[] }>(IPC.invoke.subagentList, query),
-  /**
-   * What `Task` would offer right now, merged across the shipped builtins and
-   * the registry. `builtins` keeps a switched-off default in the list, flagged
-   * `enabled: false`, so Settings can still show that row and its switch.
-   */
-  subagentCatalog: () =>
-    invoke<{
-      subagents: SubagentDefinition[];
-      builtins: Array<SubagentDefinition & { enabled: boolean }>;
-      diagnostics: string[];
-      projectPath: string | null;
-    }>(IPC.invoke.subagentCatalog),
-  createUserSubagent: (subagent: UserSubagentInput) =>
-    invoke<{ subagent: UserSubagentRecord }>(IPC.invoke.subagentCreate, subagent),
-  updateUserSubagent: (id: string, subagent: Omit<UserSubagentInput, "id">) =>
-    invoke<{ subagent: UserSubagentRecord }>(IPC.invoke.subagentUpdate, {
-      id,
-      ...subagent,
-    }),
-  /** The record plus the document body, for the editor. */
-  readUserSubagent: (id: string) =>
-    invoke<{ subagent: UserSubagentRecord | null; body?: string }>(
-      IPC.invoke.subagentRead,
-      id,
-    ),
-  removeUserSubagent: (id: string) => invoke(IPC.invoke.subagentRemove, id),
-  setUserSubagentEnabled: (id: string, enabled: boolean) =>
-    invoke(IPC.invoke.subagentSetEnabled, { id, enabled }),
-  /**
-   * Turn one shipped default off, or back on. The id is the `Task` handle
-   * (`explorer`), never a document id: a builtin has no file to switch.
-   */
-  setBuiltinSubagentEnabled: (id: string, enabled: boolean) =>
-    invoke<{ id: string; enabled: boolean }>(IPC.invoke.subagentSetBuiltinEnabled, {
-      id,
-      enabled,
-    }),
-  setUserSubagentScope: (id: string, scope: ActivationScope) =>
-    invoke(IPC.invoke.subagentSetScope, { id, scope }),
-  /** Registry entries reveal by id; project documents pass their own path. */
-  revealSubagent: (target: { id?: string; path?: string }) =>
-    invoke(IPC.invoke.subagentReveal, target),
   openPluginPanel: (id: string) => invoke(IPC.invoke.pluginOpenPanel, id),
   togglePluginLauncher: () => invoke(IPC.invoke.pluginLauncherToggle),
   dismissPluginLauncher: () => invoke(IPC.invoke.pluginLauncherDismiss),
@@ -1717,6 +1697,9 @@ export const api = {
   /** Seed the active memory backend with identity facts from the active Frappe bench. */
   benchBootstrapMemory: () =>
     invoke<BenchBootstrapResult>(IPC.invoke.benchBootstrapMemory),
+  /** Reveal the bench folder in the system file manager (Finder / Explorer). */
+  benchReveal: (benchPath: string) =>
+    invoke<{ ok: boolean; error?: string }>(IPC.invoke.benchReveal, { benchPath }),
   /** Write reflect/retain mission text to the active Hindsight bank and persist locally. */
   hindsightSetBankMission: (bankMission: string, retainMission: string) =>
     invoke<HindsightSetBankMissionResult>(IPC.invoke.hindsightSetBankMission, { bankMission, retainMission }),
@@ -1728,6 +1711,8 @@ export const api = {
   /** Persist omp settings groups (task/eval/browser/collab); restarts the agent sidecar. */
   ompSettingsSet: (patch: OmpSettingsValues) =>
     invoke<OmpSettingsValues>(IPC.invoke.ompSettingsSet, patch as Record<string, unknown>),
+  /** Full omp settings manifest — descriptor array generated at build time by slice A. */
+  ompSettingsManifest: () => invoke<OmpSettingDescriptor[]>(IPC.invoke.ompSettingsManifest),
   /** List login providers known to omp. */
   ompLoginProviders: () =>
     invoke<OmpLoginProvidersResult>(IPC.invoke.ompLoginProviders),
@@ -1886,6 +1871,30 @@ export const api = {
   /** Enable or disable an extension. Updates disabledExtensions and restarts sidecar. */
   ompExtensionSetEnabled: (id: string, enabled: boolean) =>
     invoke<OmpSettingsValues>(IPC.invoke.ompExtensionSetEnabled, { id, enabled }),
+  /** List hooks from user and optionally project omp config dirs. */
+  ompHooksList: (projectPath?: string) =>
+    invoke<OmpHooksListResult>(IPC.invoke.ompHooksList, { projectPath }),
+  /** Create a hook script in the user or project omp config dir. */
+  ompHooksCreate: (tool: string, hookType: "pre" | "post", ext: string, content: string, scope: "user" | "project", projectPath?: string) =>
+    invoke<OmpHookMutateResult>(IPC.invoke.ompHooksCreate, { tool, hookType, ext, content, scope, projectPath }),
+  /** Edit (overwrite) an existing hook script. */
+  ompHooksEdit: (path: string, content: string, scope: "user" | "project", projectPath?: string) =>
+    invoke<OmpHookMutateResult>(IPC.invoke.ompHooksEdit, { path, content, scope, projectPath }),
+  /** Delete a hook script. */
+  ompHooksDelete: (path: string, scope: "user" | "project", extensionId?: string, projectPath?: string) =>
+    invoke<OmpHookMutateResult>(IPC.invoke.ompHooksDelete, { path, scope, extensionId, projectPath }),
+  /** Create a user slash-command markdown file. */
+  ompCommandsCreate: (name: string, content: string, scope: "user" | "project", projectPath?: string) =>
+    invoke<OmpCommandMutateResult>(IPC.invoke.ompCommandsCreate, { name, content, scope, projectPath }),
+  /** Edit (overwrite) a slash-command markdown file. */
+  ompCommandsEdit: (name: string, content: string, scope: "user" | "project", projectPath?: string) =>
+    invoke<OmpCommandMutateResult>(IPC.invoke.ompCommandsEdit, { name, content, scope, projectPath }),
+  /** Delete a slash-command markdown file. */
+  ompCommandsDelete: (name: string, scope: "user" | "project", projectPath?: string) =>
+    invoke<OmpCommandMutateResult>(IPC.invoke.ompCommandsDelete, { name, scope, projectPath }),
+  /** Read the markdown content of a user/project slash-command file (for edit pre-fill). */
+  ompCommandRead: (name: string, scope: "user" | "project", projectPath?: string) =>
+    invoke<OmpCommandReadResult>(IPC.invoke.ompCommandRead, { name, scope, projectPath }),
   /** Run a shell command in omp's session cwd; bridge emits output as a transcript system block. */
   ompBash: (command: string) =>
     invoke<OmpBashResult>(IPC.invoke.ompBash, { command }),
@@ -1927,9 +1936,9 @@ export const api = {
   /** Kanban: archive or unarchive a task. */
   kanbanArchive: (taskId: string, archived: boolean) =>
     invoke<{ board: KanbanBoard }>(IPC.invoke.kanbanArchive, { taskId, archived }),
-  /** Kanban: list runs for a given task. */
-  kanbanListRuns: (taskId: string) =>
-    invoke<{ runs: KanbanRun[] }>(IPC.invoke.kanbanListRuns, { taskId }),
+  /** G15: open native file picker to choose omp binary; saves path, restarts sidecar. */
+  ompPickBinaryPath: () =>
+    invoke<{ picked: boolean; path?: string }>(IPC.invoke.ompPickBinaryPath),
   /** Kanban: get current settings (enabled, caps). */
   kanbanSettingsGet: () =>
     invoke<{ settings: KanbanSettings }>(IPC.invoke.kanbanSettingsGet),
@@ -1947,12 +1956,18 @@ export const api = {
     invoke(IPC.invoke.ravenSetBounds, bounds),
   /** Raven pane: show on the Raven route, hide when leaving it. */
   ravenSetVisible: (visible: boolean) => invoke(IPC.invoke.ravenSetVisible, { visible }),
+  /** Raven pane: reload the WebContentsView in place. */
+  ravenReload: () => invoke<{ ok: boolean }>(IPC.invoke.ravenReload),
   /** FileBird pane: place it over the page's hole (window-content coordinates). */
   fileBirdSetBounds: (bounds: { x: number; y: number; width: number; height: number }) =>
     invoke(IPC.invoke.fileBirdSetBounds, bounds),
   /** FileBird pane: show on the FileBird route; `ok: false` while its services are unavailable. */
   fileBirdSetVisible: (visible: boolean) =>
     invoke<{ ok: boolean }>(IPC.invoke.fileBirdSetVisible, { visible }),
+  /** FileBird pane: reload the WebContentsView in place. */
+  fileBirdReload: () => invoke<{ ok: boolean }>(IPC.invoke.fileBirdReload),
+  /** FileBird pane: open the renderer in a new standalone BrowserWindow. */
+  fileBirdOpenWindow: () => invoke<{ ok: boolean }>(IPC.invoke.fileBirdOpenWindow),
   /**
    * Integrated terminal, served by FileBird's TerminalService. Its handlers
    * return raw values and reject with a JSON `{code, message}` error, so these
@@ -1977,4 +1992,69 @@ export const api = {
   /** Write cross-project user profile to ~/.omp/agent/USER.md (server caps at 1024 chars). */
   ompUserProfileSet: (text: string) =>
     invoke<OmpUserProfileSetResult>(IPC.invoke.ompUserProfileSet, { text }),
+  /** Settings → LSP: omp's built-in servers merged with ~/.omp/agent/lsp.json, each with where its command resolves. */
+  ompLspList: () =>
+    invoke<OmpLspListResult>(IPC.invoke.ompLspList),
+  /** Add a server or change/override one in ~/.omp/agent/lsp.json. */
+  ompLspSave: (input: OmpLspSaveInput) =>
+    invoke<OmpUserProfileSetResult>(IPC.invoke.ompLspSave, input),
+  /** Remove a server's lsp.json entry (a built-in reverts to its default). */
+  ompLspRemove: (name: string) =>
+    invoke<OmpUserProfileSetResult>(IPC.invoke.ompLspRemove, { name }),
+  /** Effective agent list merged from all sources (project/.omp/agents, user ~/.omp/agent/agents, fcode bundled, omp bundled). */
+  ompAgentList: (projectPath?: string) =>
+    invoke<OmpAgentListResult>(IPC.invoke.ompAgentList, { projectPath }),
+  /** Read project-scoped memory from <workspace>/.omp/MEMORY.md. */
+  ompProjectMemoryGet: (workspacePath: string) =>
+    invoke<OmpUserProfileGetResult>(IPC.invoke.ompProjectMemoryGet, { workspacePath }),
+  /** Write project-scoped memory to <workspace>/.omp/MEMORY.md (server caps at 16 KiB). */
+  ompProjectMemorySet: (workspacePath: string, text: string) =>
+    invoke<OmpUserProfileSetResult>(IPC.invoke.ompProjectMemorySet, { workspacePath, text }),
+  /** Get the hierarchical session tree (all branches and child sessions). */
+  ompSessionGetTree: () =>
+    invoke<OmpSessionGetTreeResult>(IPC.invoke.ompSessionGetTree),
+  /** Get all messages in the current omp session (no paging). */
+  ompSessionGetMessages: () =>
+    invoke<OmpSessionMessagesResult>(IPC.invoke.ompSessionGetMessages),
+  /** Get one page of messages from the current omp session. */
+  ompSessionGetMessagesPage: (params?: { cursor?: string; limit?: number }) =>
+    invoke<OmpSessionMessagesPageResult>(IPC.invoke.ompSessionGetMessagesPage, params ?? {}),
+  /** Start a new omp session. parentSession: optional session dir path to branch from. */
+  ompNewSession: (params?: { parentSession?: string }) =>
+    invoke<OmpNewSessionResult>(IPC.invoke.ompNewSession, params ?? {}),
+  /** Switch the current omp session to a different session directory. */
+  ompSwitchSession: (sessionPath: string) =>
+    invoke<OmpSwitchSessionResult>(IPC.invoke.ompSwitchSession, { sessionPath }),
+  /** Run `omp cleanse [args]` in the workspace via bundled binary; resolves when done. */
+  ompCleanse: (workspace: string, opts: { request?: string; all?: boolean } = {}) =>
+    invoke<OmpCleanseResult>(IPC.invoke.ompCleanse, { workspace, ...opts }),
+  /** Dispatch `/autoresearch [goal]` to the active session (goal="off" to disable). */
+  ompAutoresearch: (goal?: string) =>
+    invoke<OmpAutoresearchResult>(IPC.invoke.ompAutoresearch, { goal }),
+  /** Start an allowlisted omp CLI subcommand; returns { runId }. Output arrives via onOmpCliOutput events. */
+  ompCliRun: (subcommand: OmpCliSubcommand, args: string[]) =>
+    invoke<OmpCliRunResult>(IPC.invoke.ompCliRun, { subcommand, args }),
+  /** Cancel an in-flight omp CLI run by runId. */
+  ompCliCancel: (runId: string) =>
+    invoke<void>(IPC.invoke.ompCliCancel, { runId }),
+  /** Subscribe to stdout/stderr chunks from an omp CLI run. */
+  onOmpCliOutput: (listener: (event: OmpCliOutputEvent) => void) => {
+    if (!window.piDesktop?.on) return () => undefined;
+    return window.piDesktop.on(IPC.event.ompCliOutput, (payload) =>
+      listener(payload as OmpCliOutputEvent),
+    );
+  },
+  /** Subscribe to omp CLI run completion. */
+  onOmpCliDone: (listener: (event: OmpCliDoneEvent) => void) => {
+    if (!window.piDesktop?.on) return () => undefined;
+    return window.piDesktop.on(IPC.event.ompCliDone, (payload) =>
+      listener(payload as OmpCliDoneEvent),
+    );
+  },
+  /** Open omp TUI in the integrated terminal, resuming the given session. */
+  ompTuiOpen: (input: { sessionId: string; projectPath?: string }) =>
+    invoke<OmpTuiOpenResult>(IPC.invoke.ompTuiOpen, input),
+  /** Get ACP launch info: command and editor config snippets for Zed/JetBrains. */
+  ompAcpInfo: () =>
+    invoke<OmpAcpInfoResult>(IPC.invoke.ompAcpInfo),
 };

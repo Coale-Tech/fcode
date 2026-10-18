@@ -7,8 +7,9 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { ErrorCodes, IPC } from "@pi-desktop/shared";
-import { defaultRoots, discoverBenches } from "../bench/discovery";
-import { benchSupervisor, shouldAutoApproveVerb } from "../bench/supervisor";
+import { defaultRoots, discoverBenches, readBenchAppsWithVersions, readProcfileEntries } from "../bench/discovery";
+import { shouldAutoApproveVerb } from "@pi-desktop/host-runtime";
+import { benchSupervisor } from "../bench/supervisor";
 import type { IpcRegistrar } from "./types";
 import type { BrowserWindow } from "electron";
 
@@ -21,6 +22,8 @@ export type BenchIpcDependencies = {
   dataDir?: string;
   /** Native folder picker; resolves null when cancelled. */
   pickDirectory?: () => Promise<string | null>;
+  /** Reveal a path in the system file manager (shell.showItemInFolder). Optional dep so tests need not supply it. */
+  revealPath?: (path: string) => void;
 };
 
 /** The picked folder(s); empty when none was picked or the file is unreadable. */
@@ -40,6 +43,7 @@ export function registerBenchIpc({
   discover = (options = {}) => discoverBenches({ roots: defaultRoots(readSavedRoots(dataDir)), ...options }),
   dataDir,
   pickDirectory,
+  revealPath,
 }: BenchIpcDependencies): void {
   const { handle } = registrar;
 
@@ -220,4 +224,54 @@ export function registerBenchIpc({
       return result;
     },
   );
+
+  // Bench detail: real installed apps + Procfile entries + port + main PID
+  handle(IPC.invoke.benchDetail, async (input: { benchPath?: string } = {}) => {
+    const benchPath = String(input.benchPath ?? "").trim();
+    if (!benchPath) {
+      throw Object.assign(new Error("benchPath is required"), {
+        errorCode: ErrorCodes.INVALID_ARGUMENT,
+      });
+    }
+    const apps = readBenchAppsWithVersions(benchPath);
+    const procfileEntries = readProcfileEntries(benchPath);
+    const mainPid = benchSupervisor.activeBenchPath === benchPath
+      ? benchSupervisor.getMainPid()
+      : null;
+    // Port from common_site_config.json (same as discovery)
+    let port: number | null = null;
+    try {
+      const cfg = JSON.parse(
+        readFileSync(join(benchPath, "sites", "common_site_config.json"), "utf8"),
+      ) as Record<string, unknown>;
+      port = typeof cfg.webserver_port === "number" ? cfg.webserver_port : 8000;
+    } catch {
+      port = null;
+    }
+    // Per-process PIDs from config/pids/<name>.pid (created by foreman/honcho)
+    const workerPids: Record<string, number | null> = {};
+    for (const entry of procfileEntries) {
+      try {
+        const raw = readFileSync(join(benchPath, "config", "pids", `${entry}.pid`), "utf8").trim();
+        const pid = parseInt(raw, 10);
+        workerPids[entry] = Number.isFinite(pid) ? pid : null;
+      } catch {
+        workerPids[entry] = null;
+      }
+    }
+    return { apps, procfileEntries, port, mainPid, workerPids };
+  });
+
+  // T14: Reveal the bench root in the system file manager (Finder / Explorer).
+  // Restricted to bench roots — never reveals arbitrary renderer-supplied paths.
+  handle(IPC.invoke.benchReveal, async (input: { benchPath?: string } = {}) => {
+    const benchPath = String(input.benchPath ?? "").trim();
+    if (!benchPath) return { ok: false as const, error: "benchPath is required" };
+    // Only allow paths that are real bench roots (present in the discovered list).
+    const { benches } = await discover();
+    const isBenchRoot = benches.some((b) => resolve(b.path) === resolve(benchPath));
+    if (!isBenchRoot) return { ok: false as const, error: "Path is not a known bench root" };
+    revealPath?.(benchPath);
+    return { ok: true as const };
+  });
 }

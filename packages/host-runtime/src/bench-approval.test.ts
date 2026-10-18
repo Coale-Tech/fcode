@@ -1,0 +1,124 @@
+/**
+ * E5 — Segment-aware read-only prefix matcher.
+ * The matcher suppresses approval prompts (not form a security boundary);
+ * the approval dialog is the boundary because omp's own bash tool can invoke
+ * bench regardless.
+ */
+import assert from "node:assert/strict";
+import { test } from "vitest";
+import { isReadOnlyBenchMethod } from "./bench-approval.js";
+
+test("frappe.client.get is read-only", () => {
+  assert.ok(isReadOnlyBenchMethod("frappe.client.get"));
+});
+
+test("frappe.client.get_list is read-only", () => {
+  assert.ok(isReadOnlyBenchMethod("frappe.client.get_list"));
+});
+
+test("frappe.db.get_value is read-only", () => {
+  assert.ok(isReadOnlyBenchMethod("frappe.db.get_value"));
+});
+
+test("frappe.db.count is read-only", () => {
+  assert.ok(isReadOnlyBenchMethod("frappe.db.count"));
+});
+
+test("frappe.client.get_value and get_count are read-only", () => {
+  assert.ok(isReadOnlyBenchMethod("frappe.client.get_value"));
+  assert.ok(isReadOnlyBenchMethod("frappe.client.get_count"));
+});
+
+test("frappe.utils.now is read-only", () => {
+  assert.ok(isReadOnlyBenchMethod("frappe.utils.now"));
+});
+
+test("frappe.utils.today is read-only", () => {
+  assert.ok(isReadOnlyBenchMethod("frappe.utils.today"));
+});
+
+test("frappe.utils.get_url is read-only", () => {
+  assert.ok(isReadOnlyBenchMethod("frappe.utils.get_url"));
+});
+
+test("studio.api.get_app is read-only", () => {
+  assert.ok(isReadOnlyBenchMethod("studio.api.get_app"));
+});
+
+test("builder.api.list_pages is read-only", () => {
+  assert.ok(isReadOnlyBenchMethod("builder.api.list_pages"));
+});
+
+// Segment-aware: prefix that shares characters but not a full segment must NOT match.
+test("frappe.client.get_list_evil is NOT read-only (segment check)", () => {
+  assert.ok(!isReadOnlyBenchMethod("frappe.client.get_list_evil"));
+});
+
+test("frappe.client.set_value is NOT read-only", () => {
+  assert.ok(!isReadOnlyBenchMethod("frappe.client.set_value"));
+});
+
+test("frappe.db.delete is NOT read-only", () => {
+  assert.ok(!isReadOnlyBenchMethod("frappe.db.delete"));
+});
+
+test("studio.api.save_page is NOT read-only", () => {
+  assert.ok(!isReadOnlyBenchMethod("studio.api.save_page"));
+});
+
+test("empty string is NOT read-only", () => {
+  assert.ok(!isReadOnlyBenchMethod(""));
+});
+
+// `bench execute` eval()s any non-importable method string, so an expression
+// that merely starts with an approved prefix must never skip the prompt.
+test("expression that starts with an approved prefix is NOT read-only (eval bypass)", () => {
+  assert.ok(!isReadOnlyBenchMethod("frappe.utils.now() and __import__('os').system('id')"));
+  assert.ok(!isReadOnlyBenchMethod("frappe.client.get\n.x"));
+});
+
+// B5: blanket frappe.utils prefix was removed; dangerous sub-modules must be denied.
+test("frappe.utils.safe_exec.safe_exec is NOT read-only (B5)", () => {
+  assert.ok(!isReadOnlyBenchMethod("frappe.utils.safe_exec.safe_exec"));
+});
+
+test("frappe.utils.background_jobs.enqueue is NOT read-only (B5)", () => {
+  assert.ok(!isReadOnlyBenchMethod("frappe.utils.background_jobs.enqueue"));
+});
+
+test("frappe.utils.install.before_install is NOT read-only (B5)", () => {
+  assert.ok(!isReadOnlyBenchMethod("frappe.utils.install.before_install"));
+});
+
+test("frappe.utils (bare namespace) is NOT read-only (B5)", () => {
+  assert.ok(!isReadOnlyBenchMethod("frappe.utils"));
+});
+
+test("frappe.utils.unknown_method is NOT read-only (B5)", () => {
+  assert.ok(!isReadOnlyBenchMethod("frappe.utils.unknown_method"));
+});
+
+// ── Expression / suffix bypass (bench execute eval()s the method string) ───────
+for (const m of [
+  "frappe.utils.now.__globals__['frappe'].db.set_value('User','Administrator','enabled',0)",
+  "frappe.utils.now.__globals__",
+  "frappe.utils.now.",
+  "frappe.client.get.__globals__",
+  "frappe.client.get_list.__globals__",
+  "frappe.db.count.__self__",
+  "frappe.utils.today ",
+  "frappe.utils.today;1",
+  "studio.api.get_app.__globals__",
+  "studio.api.get_x or __import__('os').system('id')",
+  "builder.api.list_pages()",
+  "studio.api.get.x",
+]) {
+  test(`expression/suffix is NOT read-only: ${m}`, () => {
+    assert.ok(!isReadOnlyBenchMethod(m));
+  });
+}
+
+test("studio.api.get / builder.api.list (bare) stay read-only", () => {
+  assert.ok(isReadOnlyBenchMethod("studio.api.get"));
+  assert.ok(isReadOnlyBenchMethod("builder.api.list"));
+});

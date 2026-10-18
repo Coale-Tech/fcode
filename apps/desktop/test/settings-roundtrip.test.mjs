@@ -34,3 +34,16 @@ test("invalid retry writes stay rejected at both boundaries", () => {
     assert.throws(() => main.validateSettingsWrite(settings), /infiniteProviderRetry is invalid/);
   }
 });
+
+test("invalid navLayout writes are rejected at both renderer and main-process boundaries", () => {
+  for (const value of ["dock", "side", null, 0, {}]) {
+    const settings = { navLayout: value };
+    assert.throws(() => renderer.validateSettingsWrite(settings), /navLayout is invalid/);
+    assert.throws(() => main.validateSettingsWrite(settings), /navLayout is invalid/);
+  }
+  // valid values pass both boundaries
+  for (const value of ["tabs", "rail", "island"]) {
+    assert.doesNotThrow(() => renderer.validateSettingsWrite({ navLayout: value }));
+    assert.doesNotThrow(() => main.validateSettingsWrite({ navLayout: value }));
+  }
+});

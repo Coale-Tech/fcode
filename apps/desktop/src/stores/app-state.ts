@@ -174,25 +174,37 @@ export type AppState = {
   /** Latest immutable Plan checkpoint/execution snapshot per session. */
   planCheckpoints: Record<string, PlanProposal>;
   toasts: ToastItem[];
+  /** D design: current user display name shown in message avatars (null = no avatar). */
+  chatUserName: string | null;
   notifications: AppNotification[];
   unreadNotificationCount: number;
-  page: "chat" | "pulls" | "scheduled" | "plugins" | "settings" | "build" | "bench" | "kanban" | "raven" | "filebird";
+  page: "chat" | "pulls" | "scheduled" | "plugins" | "settings" | "build" | "bench" | "kanban" | "raven" | "filebird" | "notifications";
   /** Whether [kanban] worker sessions are shown in the sidebar. Default false (hidden). */
   showKanbanSessions: boolean;
   /** Whether the kanban feature is enabled (mirrored from KanbanSettings.enabled). */
   kanbanEnabled: boolean;
   /** Whether the Raven destination is enabled (mirrored from RavenSettings.enabled). */
   ravenEnabled: boolean;
+  /** User initials for the navbar avatar; undefined shows the placeholder icon. Seeded by capture rig in __PI_CAPTURE__ mode. */
+  userInitials?: string;
   /** Integrated terminal panel under chat; Ctrl+` and the workspace bar toggle it. */
   terminalOpen: boolean;
+  /** Pending command to run in a new integrated-terminal tab; consumed by TerminalPanel. */
+  pendingTuiCommand: string | null;
   /** Bench log view follows new output while true; toggleFollowLog (Mod+Shift+B) flips it. */
   benchLogFollowTail: boolean;
+  /** Path of the bench currently open in the Bench detail tab (even if not running). Used by WorkspaceBar. */
+  viewedBenchPath: string | null;
+  /** Site count of the currently viewed bench; 0 if not loaded. */
+  viewedBenchSiteCount: number;
   /** Tab ids come from the shared settings index. */
   settingsTab: SettingsTabId;
   /** Pending row anchor (i18n key) to flash after landing on a settings tab. */
   settingsAnchor: string | null;
   /** Bumped by every setSettingsTab so a same-tab navigation is observable. */
   settingsTabNonce: number;
+  /** Detail segment a page appends to the D2/D3 breadcrumb (e.g. the open Kanban card id). */
+  pageCrumb: string | null;
   /** Latest polled omp memory status; null when agent is not running or not yet polled. */
   memoryStatus: OmpMemoryStatusResult | null;
   /** Current todo phases per session, driven by todo_reminder / todo_auto_clear / todo tool events. */
@@ -357,12 +369,15 @@ export type AppState = {
   setPage: (page: AppState["page"], opts?: { record?: boolean }) => void;
   setSettingsTab: (tab: AppState["settingsTab"]) => void;
   setSettingsAnchor: (key: string | null) => void;
+  setPageCrumb: (crumb: string | null) => void;
   setBenchLogFollowTail: (follow: boolean) => void;
+  setViewedBench: (path: string | null, siteCount: number) => void;
   toggleBenchLogFollowTail: () => void;
   setShowKanbanSessions: (show: boolean) => void;
   setKanbanEnabled: (enabled: boolean) => void;
   setRavenEnabled: (enabled: boolean) => void;
   toggleTerminal: () => void;
+  openTuiTerminal: (cmd: string) => void;
   navBack: () => void;
   navForward: () => void;
   canNavBack: () => boolean;

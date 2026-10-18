@@ -9,7 +9,7 @@ import { register } from "node:module";
 register(new URL("./helpers/ts-import-hooks.mjs", import.meta.url));
 
 const { registerKanbanIpc } = await import("../electron/main/ipc/kanban-ipc.ts");
-const { emptyBoard } = await import("../electron/main/runtime/kanban-core.ts");
+const { emptyBoard } = await import("@pi-desktop/host-runtime");
 const { IPC } = await import("../../../packages/shared/src/protocol.ts");
 
 function setup(initial) {
@@ -53,8 +53,6 @@ test("create then move returns the updated board", async () => {
   const { taskId } = await k.call(IPC.invoke.kanbanCreate, { title: "t", body: "", projectPath: "/p" });
   const { board } = await k.call(IPC.invoke.kanbanMove, { taskId, status: "blocked" });
   assert.equal(board.tasks.find((t) => t.id === taskId).status, "blocked");
-  const { runs } = await k.call(IPC.invoke.kanbanListRuns, { taskId });
-  assert.deepEqual(runs, []);
 });
 
 test("update edits title/body/priority; blank title and negative priority are guarded", async () => {

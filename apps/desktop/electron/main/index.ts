@@ -123,8 +123,9 @@ import { createSessionLaunchRuntime } from "./runtime/session-launch";
 import { createSessionCoordination } from "./runtime/session-coordination";
 import { createScheduledRuntime } from "./runtime/scheduled";
 import { createKanbanWiring } from "./runtime/kanban-wiring";
+import { addWorktree, listEffectiveAgents } from "./ipc/omp-ipc";
 import { readKanbanSettings, writeKanbanSettings } from "./runtime/kanban-settings";
-import { loadBoard, saveBoard } from "./runtime/kanban-store";
+import { loadBoard, saveBoard } from "@pi-desktop/host-runtime";
 import { createDesktopServices } from "./services/desktop-services";
 import { createPluginServices } from "./services/plugin-services";
 import { wirePluginThemeRuntimeServices } from "./plugin-theme-services";
@@ -674,7 +675,7 @@ const {
   speech,
 } = pluginServices;
 // Raven's own partition keeps the Frappe `sid` away from the work browser.
-const ravenPane = new BrowserPane(() => undefined, "persist:raven");
+const ravenPane = new BrowserPane(() => undefined, "persist:raven", "raven");
 const { rememberPluginScopes, pluginActiveInProject, broadcastPluginPanelEvent, setCurrentWorkspacePath } =
   createWorkspaceScopeRuntime({
     pluginScopes,
@@ -690,7 +691,6 @@ const providerCatalogRuntime = createProviderCatalogRuntime({
 });
 const {
   bindingForModel,
-  effectiveSubagentModelConfig,
   enrichProvider,
   enrichProviderList,
   sessionCapabilityContext,
@@ -713,15 +713,12 @@ const createdSessionLaunchRuntime = createSessionLaunchRuntime({
   getWorkspacePath: currentWorkspacePath,
   pluginActiveInProject,
   bindingForModel,
-  effectiveSubagentModelConfig,
   normalizeThinkingLevel,
 });
 sessionLaunchRuntime = createdSessionLaunchRuntime;
 const {
   refreshUserMcp,
   activeUserSkills,
-  activeUserSubagentDocuments,
-  disabledBuiltinSubagents,
   loadUserSkillBody,
   resolveEffectiveCommandShell,
   resolveAgentRuntimeLaunch,
@@ -1103,6 +1100,8 @@ const { kanbanRunner, emitKanbanMutation, bindInvoke: bindKanbanInvoke, bindWork
   sendToRenderer,
   getLabels: () => catalogs[resolveLocale(updaterLocale)],
   logError: (error) => logger.app("runtime", "error", String(error)),
+  listAgents: async () => (await listEffectiveAgents(null)).agents,
+  createWorktree: (repoPath, branch) => addWorktree(repoPath, branch, true),
 });
 _kanbanTurnEnd = (sessionId) => kanbanRunner.onTurnEnd(sessionId);
 
@@ -1126,8 +1125,6 @@ const sidecarRuntime = createSidecarRuntime({
   agentExtensions,
   vendorOAuth,
   listRuntimeProviders,
-  modelsDevCatalog,
-  effectiveSubagentModelConfig,
   browserHost,
   plugins,
   sessionProjects,
@@ -1282,8 +1279,6 @@ function registerIpc() {
     mcpOAuth,
     refreshUserMcp,
     describeError,
-    activeUserSubagentDocuments,
-    disabledBuiltinSubagents,
     pluginViews,
     pluginScopes,
     rememberPluginScopes,

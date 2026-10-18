@@ -32,7 +32,7 @@ function setup() {
   let changed = 0;
   let alive = false;
   const pane = {
-    getWebContents: () => (alive ? {} : null),
+    getWebContents: () => (alive ? { once: () => {} } : null),
     setWindow: (w) => log.push(["setWindow", w?.id ?? null]),
     navigate: (url) => {
       alive = true;

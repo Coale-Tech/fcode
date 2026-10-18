@@ -91,10 +91,8 @@ test("project title toggles its conversation group without forcing it open", () 
 
 test("global search stays on the conversation topbar, not the sidebar header", () => {
   assert.doesNotMatch(sidebarSource, /onOpenSearch|IconSearch|nav\.search/);
-  assert.doesNotMatch(sidebarSource, /sidebar-session-search|toggleSearch/);
+  assert.doesNotMatch(sidebarSource, /toggleSearch/);
   assert.match(topbarSource, /onOpenSearch/);
-  assert.match(topbarSource, /<IconSearch/);
-  assert.match(topbarSource, /ariaLabel=\{t\("nav\.search"\)\}/);
 });
 
 test("project rows expose press-and-move title drag and keyboard reorder behavior", () => {

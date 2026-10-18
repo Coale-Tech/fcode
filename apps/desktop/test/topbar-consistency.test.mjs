@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { loadStyles } from "./helpers/styles.mjs";
+import { loadStyles, resolveThemeToken } from "./helpers/styles.mjs";
 
 const stylesSource = await loadStyles();
 
@@ -26,7 +26,10 @@ test("window chrome reserves the same titlebar height and native control band", 
   assert.match(controls, /height:\s*var\(--ds-toolbar-height\);/);
   assert.match(controls, /width:\s*var\(--ds-window-controls-width\);/);
   assert.match(stylesSource, /--ds-window-controls-width:\s*120px;/);
-  assert.match(stylesSource, /--ds-toolbar-height:\s*46px;/);
+  // Direction D: --ds-toolbar-height is overridden by d-tokens.css to --d-navbar-h (48px).
+  // Verify the effective resolved value, not the superseded base token.
+  assert.equal(resolveThemeToken(stylesSource, "dark", "--ds-toolbar-height"), "48px",
+    "--ds-toolbar-height must resolve to 48px (--d-navbar-h) in dark theme");
 });
 
 test("window control band draws no boundary of its own", () => {
@@ -37,8 +40,8 @@ test("window control band draws no boundary of its own", () => {
   assert.match(controls, /background:\s*var\(--ds-bg-primary\);/);
 });
 
-test("sidebar and work-panel headers use the shared toolbar metric", () => {
+test("sidebar header uses the shared toolbar metric", () => {
   assert.match(styleBlock("\\.sidebar-header"), /height:\s*var\(--ds-toolbar-height\);/);
   assert.match(styleBlock("\\.sidebar-header"), /flex:\s*0 0 var\(--ds-toolbar-height\);/);
-  assert.match(styleBlock("\\.work-panel-header"), /height:\s*var\(--ds-toolbar-height\);/);
+  /* work-panel-header: T11 uses --d-mini-h (32px) — source-pin deleted per AGENTS.md §no-CSS-pins */
 });

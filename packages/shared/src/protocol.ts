@@ -53,6 +53,8 @@ export const IPC = {
     appGetVersion: "pi-desktop/app/getVersion",
     appOpenFeedback: "pi-desktop/app/openFeedback",
     appHealth: "pi-desktop/app/health",
+    /** OS user full name (gecos) or username; used to derive avatar initials. */
+    appGetUserInfo: "pi-desktop/app/getUserInfo",
     appGetOnboarding: "pi-desktop/app/getOnboarding",
     appDismissOnboarding: "pi-desktop/app/dismissOnboarding",
     /**
@@ -297,16 +299,6 @@ export const IPC = {
     skillTransfer: "pi-desktop/skill/transfer",
     skillRead: "pi-desktop/skill/read",
     skillReveal: "pi-desktop/skill/reveal",
-    subagentList: "pi-desktop/subagent/list",
-    subagentCatalog: "pi-desktop/subagent/catalog",
-    subagentCreate: "pi-desktop/subagent/create",
-    subagentUpdate: "pi-desktop/subagent/update",
-    subagentRead: "pi-desktop/subagent/read",
-    subagentRemove: "pi-desktop/subagent/remove",
-    subagentSetEnabled: "pi-desktop/subagent/setEnabled",
-    subagentSetScope: "pi-desktop/subagent/setScope",
-    subagentSetBuiltinEnabled: "pi-desktop/subagent/setBuiltinEnabled",
-    subagentReveal: "pi-desktop/subagent/reveal",
     marketRefresh: "pi-desktop/market/refresh",
     marketSearch: "pi-desktop/market/search",
     marketGetDetail: "pi-desktop/market/getDetail",
@@ -387,6 +379,8 @@ export const IPC = {
     /** omp settings groups (task/eval/browser/collab) persisted host-side. */
     ompSettingsGet: "pi-desktop/omp-settings/get",
     ompSettingsSet: "pi-desktop/omp-settings/set",
+    /** Full omp settings manifest — descriptor array generated at build time. Owned by slice A. */
+    ompSettingsManifest: "pi-desktop/omp-settings/manifest",
     ompSessionStats: "pi-desktop/omp/session/stats",
     /** List all live subagents in the active omp session. */
     ompSubagentList: "pi-desktop/omp/subagent/list",
@@ -449,6 +443,10 @@ export const IPC = {
     benchStop: "pi-desktop/bench/stop",
     benchStatus: "pi-desktop/bench/status",
     benchRun: "pi-desktop/bench/run",
+    /** Bench detail: installed apps, procfile process names, port, main PID for a bench path. */
+    benchDetail: "pi-desktop/bench/detail",
+    /** Reveal a bench folder in the system file manager (Finder on macOS). */
+    benchReveal: "pi-desktop/bench/revealPath",
     /** Build tab: query installed apps on the active bench/site. */
     buildListApps: "pi-desktop/build/listApps",
     /** Build tab canvas — acquire exclusive ownership of the shared BrowserPane. */
@@ -461,8 +459,6 @@ export const IPC = {
     buildCanvasSetBounds: "pi-desktop/build/canvas/setBounds",
     /** Build tab canvas — show or hide the WebContentsView. */
     buildCanvasSetVisible: "pi-desktop/build/canvas/setVisible",
-    /** Build tab canvas — get the current BrowserState. */
-    buildCanvasGetState: "pi-desktop/build/canvas/getState",
     /** Build tab canvas — back/forward/reload/stop action. */
     buildCanvasAction: "pi-desktop/build/canvas/action",
     /** Build tab — start the watch-studio watcher for live Studio sync. */
@@ -497,6 +493,16 @@ export const IPC = {
     ompSessionEntries: "pi-desktop/omp/session/entries",
     /** Get preview messages for the current branch. */
     ompSessionBranchMessages: "pi-desktop/omp/session/branchMessages",
+    /** Get the hierarchical session tree (get_tree RPC). */
+    ompSessionGetTree: "pi-desktop/omp/session/getTree",
+    /** Get all messages in the current omp session (get_messages RPC). */
+    ompSessionGetMessages: "pi-desktop/omp/session/getMessages",
+    /** Get one page of messages from the current omp session (get_messages_page RPC). */
+    ompSessionGetMessagesPage: "pi-desktop/omp/session/getMessagesPage",
+    /** Start a new omp session, optionally branched from a parent session (new_session RPC). */
+    ompNewSession: "pi-desktop/omp/session/newSession",
+    /** Switch the omp session to a different session directory (switch_session RPC). */
+    ompSwitchSession: "pi-desktop/omp/session/switchSession",
     /** Trigger /share slash command and return the snapshot URL. */
     ompShare: "pi-desktop/omp/share",
     /** List installed omp extensions (npm + marketplace plugins) via omp plugin list --json. */
@@ -513,6 +519,10 @@ export const IPC = {
     ompAbortBash: "pi-desktop/omp/abort-bash",
     /** Set the omp event filter (null = all events; string[] = allowlist). */
     ompSetEventFilter: "pi-desktop/omp/set-event-filter",
+    /** Effective agent list: omp bundled + fcode extension + user ~/.omp/agent/agents + project .omp/agents. */
+    ompAgentList: "pi-desktop/omp/agents/list",
+    /** Open a native file picker to choose the omp binary; saves override and restarts sidecar. */
+    ompPickBinaryPath: "pi-desktop/omp/pickBinaryPath",
     /** Kanban board: list all tasks, links, comments, runs. */
     kanbanList: "pi-desktop/kanban/list",
     /** Kanban board: create a user card (lands in triage/todo/ready per rules). */
@@ -529,8 +539,6 @@ export const IPC = {
     kanbanComment: "pi-desktop/kanban/comment",
     /** Kanban board: archive or unarchive a task. */
     kanbanArchive: "pi-desktop/kanban/archive",
-    /** Kanban board: list runs for a task. */
-    kanbanListRuns: "pi-desktop/kanban/listRuns",
     /** Kanban board: get + set settings (enabled, caps). */
     kanbanSettingsGet: "pi-desktop/kanban/settings/get",
     /** Kanban board: get + set settings. */
@@ -543,15 +551,59 @@ export const IPC = {
     ompUserProfileGet: "pi-desktop/omp/user-profile/get",
     /** Write the cross-project user-profile text to ~/.omp/agent/USER.md (cap 1024 chars). */
     ompUserProfileSet: "pi-desktop/omp/user-profile/set",
+    /** List language servers (omp built-ins merged with ~/.omp/agent/lsp.json) and whether each resolves. */
+    ompLspList: "pi-desktop/omp/lsp/list",
+    /** Add or change a server in ~/.omp/agent/lsp.json. */
+    ompLspSave: "pi-desktop/omp/lsp/save",
+    /** Remove a server's entry from ~/.omp/agent/lsp.json (a built-in reverts to its default). */
+    ompLspRemove: "pi-desktop/omp/lsp/remove",
+    /** Read project-scoped memory from <workspace>/.omp/MEMORY.md. */
+    ompProjectMemoryGet: "pi-desktop/omp/project-memory/get",
+    /** Write project-scoped memory to <workspace>/.omp/MEMORY.md (cap 16 KiB). */
+    ompProjectMemorySet: "pi-desktop/omp/project-memory/set",
     /** Raven chat destination: get + set settings (enabled, site URL). */
     ravenSettingsGet: "pi-desktop/raven/settings/get",
     ravenSettingsSet: "pi-desktop/raven/settings/set",
     /** Raven pane: renderer-reported hole rect and visibility (full-width Raven route only). */
     ravenSetBounds: "pi-desktop/raven/setBounds",
     ravenSetVisible: "pi-desktop/raven/setVisible",
+    /** Reload the Raven WebContentsView (navigate the live pane). */
+    ravenReload: "pi-desktop/raven/reload",
     /** FileBird pane: renderer-reported hole rect and visibility (full-width FileBird route only). */
     fileBirdSetBounds: "pi-desktop/filebird/setBounds",
     fileBirdSetVisible: "pi-desktop/filebird/setVisible",
+    /** Reload the FileBird WebContentsView. */
+    fileBirdReload: "pi-desktop/filebird/reload",
+    /** Open the FileBird renderer in a new standalone window. */
+    fileBirdOpenWindow: "pi-desktop/filebird/openWindow",
+    /** List hook scripts from ~/.omp/agent/hooks/ and .omp/hooks/ (slice E1). */
+    ompHooksList: "pi-desktop/omp/hooks/list",
+    /** Create a hook script in the user or project omp config dir. */
+    ompHooksCreate: "pi-desktop/omp/hooks/create",
+    /** Overwrite an existing hook script (validated by path allowlist). */
+    ompHooksEdit: "pi-desktop/omp/hooks/edit",
+    /** Delete a hook script (must be inside omp config dirs). */
+    ompHooksDelete: "pi-desktop/omp/hooks/delete",
+    /** Create a user slash-command markdown file under ~/.omp/agent/commands/ or .omp/commands/. */
+    ompCommandsCreate: "pi-desktop/omp/commands/create",
+    /** Overwrite an existing user slash-command markdown file. */
+    ompCommandsEdit: "pi-desktop/omp/commands/edit",
+    /** Delete a user slash-command markdown file. */
+    ompCommandsDelete: "pi-desktop/omp/commands/delete",
+    /** Read the markdown content of a user slash-command file (for edit pre-fill). */
+    ompCommandRead: "pi-desktop/omp/commands/read",
+    /** Open omp TUI for the current session in the integrated terminal (Slice I). */
+    ompTuiOpen: "pi-desktop/omp/tui/open",
+    /** Get ACP launch info: command and editor config snippets (Slice I). */
+    ompAcpInfo: "pi-desktop/omp/acp/info",
+    /** Start an allowlisted omp CLI subcommand; returns { runId } immediately. Output arrives via ompCliOutput events. */
+    ompCliRun: "pi-desktop/omp/cli/run",
+    /** Cancel an in-flight omp CLI run by runId. */
+    ompCliCancel: "pi-desktop/omp/cli/cancel",
+    /** Run `omp cleanse [args]` in the current workspace via bundled binary; returns output when done. */
+    ompCleanse: "pi-desktop/omp/cleanse",
+    /** Dispatch `/autoresearch [goal]` to the active omp session (toggles autoresearch mode). */
+    ompAutoresearch: "pi-desktop/omp/autoresearch",
     /**
      * Integrated terminal: FileBird's own terminal channels and handlers
      * (apps/filebird/src/main/ipc/terminal.ipc.ts), which validate every field.
@@ -614,15 +666,22 @@ export const IPC = {
     sidecarFatal: "pi-desktop/sidecar/event/fatal",
     /** omp setStatus / setWidget / setTitle forwarded from the omp bridge. */
     sidecarExtUi: "pi-desktop/sidecar/event/extUi",
-    /** Managed local Hindsight server state changed. */
     hindsightLocalStatus: "pi-desktop/hindsight-local/event/status",
     /** Kanban board changed (tasks/runs/links updated by dispatcher or user). */
     kanbanChanged: "pi-desktop/kanban/event/changed",
     /** Raven settings changed (nav-rail button visibility, site URL). */
     ravenChanged: "pi-desktop/raven/event/changed",
+    /** Raven pane finished loading (WebContentsView did-finish-load). Payload: `{ url: string }`. */
+    ravenConnected: "pi-desktop/raven/event/connected",
     /** Output of every terminal session (`{ id, data }`); listeners filter by id. */
     terminalData: "terminal:data",
     terminalExit: "terminal:exit",
+    /** Stdout/stderr chunk from an omp CLI run (`{ runId, chunk, stream }`). */
+    ompCliOutput: "pi-desktop/omp/cli/output",
+    /** omp CLI run completed (`{ runId, exitCode, killed }`). */
+    ompCliDone: "pi-desktop/omp/cli/done",
+    /** FileBird SFTP service status change (`{ status: "connected"|"idle"|"disconnected" }`). */
+    fileBirdStatus: "pi-desktop/filebird/event/status",
   },
 } as const;
 

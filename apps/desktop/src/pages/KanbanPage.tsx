@@ -1,10 +1,11 @@
 /**
- * KanbanPage — Hermes-style board (Triage → Done): filter bar, column headers
- * with dot/count/add/subtitle, card chips, multi-select + bulk bar, and a
- * right-side drawer (features/kanban/KanbanDrawer).
+ * KanbanPage — Direction D board (pages-d/kanban/fragment.html): one canvas
+ * card with the page head, a filter row, six status columns and the
+ * dispatcher footer; a right-side drawer (features/kanban/KanbanDrawer)
+ * opens a card. Cmd/Ctrl-click and Shift-click select cards for the bulk bar.
  *
  * HD4: [kanban] sessions are filtered out of the sidebar by default.
- * HD2: "Needs approval" badge shown on running cards that emit tool_permission_request.
+ * HD2: "Needs approval" chip on running cards whose worker session has a queued permission request.
  *
  * Ponytail: native HTML5 drag-and-drop; no external DnD library.
  */
@@ -13,29 +14,46 @@ import { useTranslation } from "react-i18next";
 import type { KanbanBoard, KanbanStatus, KanbanTask } from "@pi-desktop/shared";
 import { IPC } from "@pi-desktop/shared";
 import { useAppStore } from "../stores/app-store";
+import { useBenchContext } from "../hooks/use-bench-context";
 import { api } from "../lib/api";
-import { formatUpdated } from "../lib/project-archive";
-import { IconPlus, IconKanban, IconChat } from "../components/icons";
-import { Button, Input, Select, Textarea, Checkbox, portalOverlay } from "../components/ui";
+import {
+  IconChat,
+  IconPause,
+  IconPlay,
+  IconPlus,
+  IconRefresh,
+  IconSearch,
+  IconSquareCheck,
+} from "../components/icons";
+import { Button, Input, Select, Textarea, Checkbox, cx, portalOverlay } from "../components/ui";
 import { KanbanDrawer } from "../features/kanban/KanbanDrawer";
 import {
   KANBAN_COLUMNS,
   NO_FILTERS,
+  agoParts,
   boardProjects,
+  boardSummary,
   canMoveTo,
   childProgress,
   commentCount,
   filterTasks,
   filtersActive,
-  linkCounts,
+  formatDuration,
   projectName,
   rangeBetween,
   shortId,
+  sortForColumn,
   type KanbanFilters,
 } from "../features/kanban/kanban-model";
 
 /** Columns whose "+" creates a card (the dispatcher owns Running; Blocked/Done are outcomes). */
 const CREATE_COLUMNS: KanbanStatus[] = ["triage", "todo", "ready"];
+/** Columns a dragged card can land in from the board (Running is dispatcher-owned). */
+const DROP_COLUMNS: KanbanStatus[] = ["triage", "todo", "ready", "blocked"];
+/** A drop target is drawn under the cards while the column is still short. */
+const DROP_HINT_BELOW = 3;
+/** Done keeps the latest few on the board; the rest sit behind "+ N more". */
+const DONE_PREVIEW = 3;
 
 function useKanbanBoard() {
   const [board, setBoard] = useState<KanbanBoard | null>(null);
@@ -74,6 +92,7 @@ function KanbanCard({
   task,
   board,
   selected,
+  open,
   needsApproval,
   onOpen,
   onSelect,
@@ -81,21 +100,22 @@ function KanbanCard({
   task: KanbanTask;
   board: KanbanBoard;
   selected: boolean;
+  open: boolean;
   needsApproval: boolean;
   onOpen: (taskId: string) => void;
   onSelect: (taskId: string, mode: "toggle" | "range") => void;
 }) {
   const { t, i18n } = useTranslation();
   const progress = childProgress(board, task.id);
-  const links = linkCounts(board, task.id);
   const comments = commentCount(board, task.id);
-  const linkTotal = links.parents + links.children;
+  const ago = agoParts(task.createdAt, Date.now());
 
   return (
     <div
-      className={`kanban-card${selected ? " kanban-card-selected" : ""}`}
+      className={cx("kanban-card", selected && "kanban-card-selected", open && "kanban-card-open")}
       role="button"
       tabIndex={0}
+      aria-pressed={selected || undefined}
       aria-label={`${task.title} — ${shortId(task.id)} — ${t(`kanban.columns.${task.status}`)}`}
       draggable={task.status !== "running"}
       onDragStart={() => { dragTaskId = task.id; }}
@@ -109,28 +129,21 @@ function KanbanCard({
         if (e.target !== e.currentTarget) return;
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          onOpen(task.id);
+          if (e.metaKey || e.ctrlKey) onSelect(task.id, "toggle");
+          else onOpen(task.id);
         }
       }}
       data-status={task.status}
       data-archived={task.archived || undefined}
       data-blocked={task.blockKind ?? undefined}
     >
-      <div className="kanban-card-row">
-        <input
-          type="checkbox"
-          className="kanban-card-check"
-          checked={selected}
-          aria-label={t("kanban.card.select", { id: shortId(task.id) })}
-          onClick={(e) => e.stopPropagation()}
-          onChange={() => onSelect(task.id, "toggle")}
-        />
+      <div className="kanban-card-chips">
         <span className="kanban-card-id">{shortId(task.id)}</span>
         {needsApproval && (
-          <span className="kanban-badge kanban-badge-approval">{t("kanban.card.needsApproval")}</span>
+          <span className="kanban-chip kanban-chip-approval">{t("kanban.card.needsApproval")}</span>
         )}
         {task.blockKind === "gave_up" && (
-          <span className="kanban-badge kanban-badge-gave-up">{t("kanban.card.gaveUp")}</span>
+          <span className="kanban-chip kanban-chip-gave-up">{t("kanban.card.gaveUp")}</span>
         )}
         {task.priority > 0 && (
           <span className="kanban-chip kanban-chip-priority" title={t("kanban.card.priority", { count: task.priority })}>
@@ -138,9 +151,14 @@ function KanbanCard({
           </span>
         )}
         <span className="kanban-chip" title={task.projectPath}>{projectName(task.projectPath)}</span>
+        {task.agent && (
+          <span className="kanban-chip kanban-chip-agent" title={t("kanban.card.agent", { agent: task.agent })}>
+            {task.agent}
+          </span>
+        )}
         {progress && (
           <span
-            className={`kanban-chip kanban-chip-progress${progress.done === progress.total ? " kanban-chip-full" : ""}`}
+            className={cx("kanban-chip kanban-chip-progress", progress.done === progress.total && "kanban-chip-full")}
             title={t("kanban.card.progress", progress)}
           >
             {progress.done}/{progress.total}
@@ -151,18 +169,15 @@ function KanbanCard({
 
       <div className="kanban-card-title">{task.title}</div>
 
-      <div className="kanban-card-row kanban-card-meta">
+      <div className="kanban-card-meta">
         <span>{t(task.createdBy === "agent" ? "kanban.card.byAgent" : "kanban.card.byUser")}</span>
         {comments > 0 && (
           <span className="kanban-count" title={t("kanban.card.comments", { count: comments })}>
-            <IconChat size={11} aria-hidden /> {comments}
+            <IconChat size={10} aria-hidden /> {comments}
           </span>
         )}
-        {linkTotal > 0 && (
-          <span className="kanban-count" title={t("kanban.card.links", links)}>↔ {linkTotal}</span>
-        )}
         <span className="kanban-card-ago" title={new Date(task.createdAt).toLocaleString(i18n.language)}>
-          {formatUpdated(task.createdAt, i18n.language)}
+          {t(`kanban.card.${ago.key}`, { count: ago.count })}
         </span>
       </div>
     </div>
@@ -176,32 +191,39 @@ function KanbanColumn({
   tasks,
   board,
   selected,
+  openId,
   needsApprovalSet,
+  showArchived,
   onOpen,
   onSelect,
-  onSelectAll,
   onAdd,
   onDropTo,
+  onShowArchived,
 }: {
   status: KanbanStatus;
   tasks: KanbanTask[];
   board: KanbanBoard;
   selected: Set<string>;
+  openId: string | null;
   needsApprovalSet: Set<string>;
+  showArchived: boolean;
   onOpen: (taskId: string) => void;
   onSelect: (taskId: string, mode: "toggle" | "range") => void;
-  onSelectAll: (ids: string[], on: boolean) => void;
   onAdd: (status: KanbanStatus) => void;
   onDropTo: (taskId: string, status: KanbanStatus) => void;
+  onShowArchived: () => void;
 }) {
   const { t } = useTranslation();
   const [over, setOver] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const label = t(`kanban.columns.${status}`);
-  const allSelected = tasks.length > 0 && tasks.every((x) => selected.has(x.id));
+  const collapsible = status === "done" && !expanded && tasks.length > DONE_PREVIEW;
+  const shown = collapsible ? tasks.slice(0, DONE_PREVIEW) : tasks;
+  const dropHint = DROP_COLUMNS.includes(status) && tasks.length < DROP_HINT_BELOW;
 
   return (
     <section
-      className={`kanban-column${over ? " kanban-column-over" : ""}`}
+      className={cx("kanban-column", over && "kanban-column-over")}
       data-column={status}
       onDragOver={(e) => { e.preventDefault(); setOver(true); }}
       onDragLeave={() => setOver(false)}
@@ -213,16 +235,8 @@ function KanbanColumn({
       aria-label={label}
     >
       <div className="kanban-column-header">
-        <input
-          type="checkbox"
-          className="kanban-card-check"
-          checked={allSelected}
-          disabled={tasks.length === 0}
-          aria-label={t("kanban.column.selectAll", { column: label })}
-          onChange={() => onSelectAll(tasks.map((x) => x.id), !allSelected)}
-        />
-        <span className="kanban-dot" data-status={status} aria-hidden />
-        <span className="kanban-column-title">{label}</span>
+        {status === "running" && <span className="kanban-run-dot" aria-hidden />}
+        <span className="kanban-column-title" title={t(`kanban.columnHelp.${status}`)}>{label}</span>
         <span className="kanban-column-count" title={t("kanban.column.count", { count: tasks.length })}>
           {tasks.length}
         </span>
@@ -234,25 +248,68 @@ function KanbanColumn({
             title={t("kanban.column.add", { column: label })}
             onClick={() => onAdd(status)}
           >
-            <IconPlus size={12} aria-hidden />
+            <IconPlus size={11} aria-hidden />
           </button>
         )}
       </div>
-      <div className="kanban-column-sub">{t(`kanban.columnHelp.${status}`)}</div>
       <div className="kanban-column-cards">
-        {tasks.map((task) => (
+        {shown.map((task) => (
           <KanbanCard
             key={task.id}
             task={task}
             board={board}
             selected={selected.has(task.id)}
+            open={openId === task.id}
             needsApproval={needsApprovalSet.has(task.id)}
             onOpen={onOpen}
             onSelect={onSelect}
           />
         ))}
-        {tasks.length === 0 && <div className="kanban-column-empty">{t("kanban.column.empty")}</div>}
+        {collapsible && (
+          <div className="kanban-column-more">
+            <button type="button" className="kanban-column-more-btn" onClick={() => setExpanded(true)}>
+              {t("kanban.column.more", { count: tasks.length - DONE_PREVIEW })}
+            </button>
+            {!showArchived && (
+              <>
+                <span aria-hidden> · </span>
+                <button type="button" className="kanban-column-more-btn" onClick={onShowArchived}>
+                  {t("kanban.column.showArchived")}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+        {dropHint && (
+          <div className="kanban-column-drop">
+            {status !== "blocked" && <IconSquareCheck size={16} aria-hidden />}
+            {t("kanban.column.drop")}
+          </div>
+        )}
       </div>
+    </section>
+  );
+}
+
+// ── Active-worker roster ──────────────────────────────────────────────────────
+
+function KanbanRoster({ board }: { board: KanbanBoard }) {
+  const { t } = useTranslation();
+  const running = board.tasks.filter((x) => x.status === "running" && !x.archived);
+  if (running.length === 0) return null;
+  return (
+    <section className="kanban-roster" aria-label={t("kanban.roster.title")}>
+      <strong className="kanban-roster-title">{t("kanban.roster.title")}</strong>
+      {running.map((task) => {
+        const run = board.runs.find((r) => r.taskId === task.id && r.endedAt == null);
+        return (
+          <span key={task.id} className="kanban-roster-item" title={task.title}>
+            <span className="kanban-roster-agent">{task.agent ?? t("kanban.roster.generic")}</span>
+            <span className="kanban-roster-task">{task.title}</span>
+            {run && <span className="kanban-roster-time">{formatDuration(Date.now() - run.startedAt)}</span>}
+          </span>
+        );
+      })}
     </section>
   );
 }
@@ -290,7 +347,7 @@ function NewCardSheet({
         projectPath: projectPath.trim(),
         priority: Number(priority) || 0,
         parentIds: parent ? [parent] : [],
-        status: status === "triage" || status === "todo" ? status : undefined,
+        status: status === null ? "triage" : status === "triage" || status === "todo" ? status : undefined,
       });
       onDone();
     } catch (e) {
@@ -356,6 +413,7 @@ export function KanbanPage() {
   const { t } = useTranslation();
   const showToast = useAppStore((s) => s.showToast);
   const workspacePath = useAppStore((s) => s.workspace?.path ?? "");
+  const bench = useBenchContext();
   const { board, error, refresh, paused, setPaused } = useKanbanBoard();
   const [newCard, setNewCard] = useState<{ status: KanbanStatus | null } | null>(null);
   const [filters, setFilters] = useState<KanbanFilters>(NO_FILTERS);
@@ -363,40 +421,18 @@ export function KanbanPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [bulkPriority, setBulkPriority] = useState("");
   const anchor = useRef<string | null>(null);
-  // taskId → true for tasks whose running session needs approval
-  const [needsApproval, setNeedsApproval] = useState<Set<string>>(new Set());
-
-  // HD2: listen for permission_request events and map sessionId → taskId
-  useEffect(() => {
-    if (!board) return;
-    const sessionToTask = new Map<string, string>(
-      board.tasks
-        .filter((t: KanbanTask): t is KanbanTask & { sessionId: string } => typeof t.sessionId === "string")
-        .map((t: KanbanTask & { sessionId: string }) => [t.sessionId, t.id]),
-    );
-    const bridge = window.piDesktop;
-    if (!bridge?.on) return;
-    const off = bridge.on(IPC.event.agentMessage, (payload) => {
-      if (
-        payload &&
-        typeof payload === "object" &&
-        "event" in payload &&
-        "sessionId" in payload
-      ) {
-        const ev = payload as { event: { type?: string }; sessionId: string };
-        if (ev.event?.type === "tool_permission_request") {
-          const taskId = sessionToTask.get(ev.sessionId);
-          if (taskId) setNeedsApproval((prev: Set<string>) => new Set<string>([...prev, taskId]));
-        }
-        // Clear when session ends (agent_end / error)
-        if (ev.event?.type === "agent_end" || ev.event?.type === "error") {
-          const taskId = sessionToTask.get(ev.sessionId);
-          if (taskId) setNeedsApproval((prev: Set<string>) => { const n = new Set<string>(prev); n.delete(taskId); return n; });
-        }
-      }
-    });
-    return off;
-  }, [board]);
+  // HD2: a running card needs approval while its worker session has a queued
+  // tool permission request (the store keeps one queue per session until answered).
+  const pendingPermissions = useAppStore((s) => s.pendingPermissions);
+  const needsApproval = useMemo(
+    () =>
+      new Set(
+        (board?.tasks ?? [])
+          .filter((x) => x.status === "running" && x.sessionId && pendingPermissions[x.sessionId]?.length)
+          .map((x) => x.id),
+      ),
+    [board, pendingPermissions],
+  );
 
   // Drop selection / drawer for cards that no longer exist.
   useEffect(() => {
@@ -405,6 +441,13 @@ export function KanbanPage() {
     setSelected((prev) => (prev.size === 0 || [...prev].every((id) => ids.has(id)) ? prev : new Set([...prev].filter((id) => ids.has(id)))));
     setOpenId((id) => (id && !ids.has(id) ? null : id));
   }, [board]);
+
+  // D3: the open card's id becomes the breadcrumb's detail segment.
+  const setPageCrumb = useAppStore((s) => s.setPageCrumb);
+  useEffect(() => {
+    setPageCrumb(openId ? shortId(openId) : null);
+    return () => setPageCrumb(null);
+  }, [openId, setPageCrumb]);
 
   /** Run an IPC mutation: toast failures, then refresh. */
   const act = useCallback(async (fn: () => Promise<unknown>) => {
@@ -426,13 +469,14 @@ export function KanbanPage() {
 
   const visibleTasks = useMemo(() => (board ? filterTasks(board.tasks, filters) : []), [board, filters]);
   const tasksByColumn = useMemo(() => {
-    const sorted = [...visibleTasks].sort((a, b) => b.priority - a.priority || a.createdAt - b.createdAt);
+    const sorted = sortForColumn(visibleTasks);
     return Object.fromEntries(
       KANBAN_COLUMNS.map((col) => [col, sorted.filter((x) => x.status === col)]),
     ) as Record<KanbanStatus, KanbanTask[]>;
   }, [visibleTasks]);
   const visibleOrder = useMemo(() => KANBAN_COLUMNS.flatMap((c) => tasksByColumn[c].map((x) => x.id)), [tasksByColumn]);
   const projects = useMemo(() => (board ? boardProjects(board.tasks) : []), [board]);
+  const summary = useMemo(() => boardSummary(board?.tasks ?? []), [board]);
 
   const onSelect = useCallback((taskId: string, mode: "toggle" | "range") => {
     setSelected((prev) => {
@@ -447,17 +491,6 @@ export function KanbanPage() {
       return next;
     });
   }, [visibleOrder]);
-
-  const onSelectAll = useCallback((ids: string[], on: boolean) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      for (const id of ids) {
-        if (on) next.add(id);
-        else next.delete(id);
-      }
-      return next;
-    });
-  }, []);
 
   const selectedTasks = board ? board.tasks.filter((x) => selected.has(x.id)) : [];
 
@@ -486,7 +519,9 @@ export function KanbanPage() {
   if (error) {
     return (
       <main className="wb-page kanban-page" aria-label={t("kanban.title")}>
-        <div className="kanban-error">{error}</div>
+        <div className="d-panel kanban-panel">
+          <div className="kanban-error">{error}</div>
+        </div>
       </main>
     );
   }
@@ -494,114 +529,188 @@ export function KanbanPage() {
   if (!board) {
     return (
       <main className="wb-page kanban-page" aria-label={t("kanban.title")}>
-        <div className="kanban-loading" aria-busy />
+        <div className="d-panel kanban-panel">
+          <div className="kanban-loading" aria-busy />
+        </div>
       </main>
     );
   }
 
   const openTask = openId ? board.tasks.find((x) => x.id === openId) : undefined;
+  // Footer scope: the filtered project, else the active bench, else the workspace.
+  const footProject = filters.project
+    ? projectName(filters.project)
+    : bench.kind !== "empty" ? bench.benchName : projectName(workspacePath);
 
   return (
     <main className="wb-page kanban-page" aria-label={t("kanban.title")}>
-      <header className="kanban-toolbar">
-        <span className="kanban-toolbar-title">
-          <IconKanban size={16} aria-hidden />
-          {t("kanban.title")}
-        </span>
-        <div className="kanban-toolbar-actions">
-          <Button
-            variant="ghost"
-            onClick={() => void togglePause()}
-            aria-pressed={paused}
-          >
-            {paused ? t("kanban.dispatcher.resume") : t("kanban.dispatcher.pause")}
-          </Button>
-          <Button onClick={() => setNewCard({ status: null })}>
-            <IconPlus size={14} aria-hidden />
-            {t("kanban.addCard")}
-          </Button>
-        </div>
-      </header>
+      <div className={cx("d-panel kanban-panel", openTask && "is-drawer-open")}>
+        <header className="d-page-head">
+          <span className="d-page-title">{t("kanban.title")}</span>
+          {paused ? (
+            <span className="d-pill amber"><span className="d-pill-dot" />{t("kanban.pausedPill")}</span>
+          ) : (
+            <span className="d-pill green">
+              <span className="d-pill-dot" />
+              {t("kanban.runningCount", { count: summary.running })}
+            </span>
+          )}
+          <div className="d-page-head-actions">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => void togglePause()}
+              aria-pressed={paused}
+            >
+              {paused ? <IconPlay size={11} aria-hidden /> : <IconPause size={11} aria-hidden />}
+              {paused ? t("kanban.dispatcher.resume") : t("kanban.dispatcher.pause")}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => void act(() => api.kanbanNudge())}
+              title={t("kanban.toolbar.nudgeHint")}
+            >
+              {t("kanban.toolbar.nudge")}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => void refresh()}>
+              <IconRefresh size={12} aria-hidden />
+              {t("kanban.toolbar.refresh")}
+            </Button>
+            <Button size="sm" variant="primary" onClick={() => setNewCard({ status: null })}>
+              <IconPlus size={12} aria-hidden />
+              {t("kanban.addCard")}
+            </Button>
+          </div>
+        </header>
 
-      <div className="kanban-filters">
-        <label className="kanban-filter kanban-filter-search">
-          <span>{t("kanban.filter.search")}</span>
-          <Input
-            value={filters.search}
-            placeholder={t("kanban.filter.searchPlaceholder")}
-            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-          />
-        </label>
-        <label className="kanban-filter">
-          <span>{t("kanban.filter.project")}</span>
-          <Select value={filters.project} onChange={(e) => setFilters({ ...filters, project: e.target.value })}>
+        <div className="kanban-filters">
+          <label className="kanban-search">
+            <IconSearch size={12} aria-hidden />
+            <input
+              type="search"
+              value={filters.search}
+              placeholder={t("kanban.filter.searchPlaceholder")}
+              aria-label={t("kanban.filter.search")}
+              spellCheck={false}
+              autoCorrect="off"
+              autoCapitalize="off"
+              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+            />
+          </label>
+          <Select
+            className="kanban-project"
+            value={filters.project}
+            aria-label={t("kanban.filter.project")}
+            onChange={(e) => setFilters({ ...filters, project: e.target.value })}
+          >
             <option value="">{t("kanban.filter.allProjects")}</option>
             {projects.map((p) => (
               <option key={p} value={p}>{projectName(p)}</option>
             ))}
           </Select>
-        </label>
-        <Checkbox
-          label={t("kanban.filter.showArchived")}
-          checked={filters.showArchived}
-          onChange={(e) => setFilters({ ...filters, showArchived: e.target.checked })}
-        />
-        <span className="kanban-filters-spacer" />
-        <Button size="sm" onClick={() => void act(() => api.kanbanNudge())} title={t("kanban.toolbar.nudgeHint")}>
-          {t("kanban.toolbar.nudge")}
-        </Button>
-        <Button size="sm" onClick={() => void refresh()}>{t("kanban.toolbar.refresh")}</Button>
-        {filtersActive(filters) && (
-          <Button size="sm" variant="ghost" onClick={() => setFilters(NO_FILTERS)}>
-            {t("kanban.filter.clear")}
-          </Button>
-        )}
-      </div>
-
-      {selected.size > 0 && (
-        <div className="kanban-bulk" role="toolbar" aria-label={t("kanban.bulk.label")}>
-          <strong className="kanban-bulk-count">{t("kanban.bulk.selected", { count: selected.size })}</strong>
-          <Button size="sm" onClick={() => moveSelected("todo")}>{t("kanban.action.toTodo")}</Button>
-          <Button size="sm" onClick={() => moveSelected("ready")}>{t("kanban.action.toReady")}</Button>
-          <Button size="sm" onClick={() => moveSelected("blocked")}>{t("kanban.action.block")}</Button>
-          <Button size="sm" onClick={() => moveSelected("ready", "blocked")}>{t("kanban.action.unblock")}</Button>
-          <Button size="sm" onClick={() => moveSelected("done")}>{t("kanban.action.complete")}</Button>
-          <Button
-            size="sm"
-            onClick={() => {
-              const ids = [...selected];
-              setSelected(new Set());
-              void actAll(ids, (id) => api.kanbanArchive(id, true));
-            }}
-          >
-            {t("kanban.card.archive")}
-          </Button>
-          <Input
-            className="kanban-bulk-priority"
-            type="number"
-            min={0}
-            value={bulkPriority}
-            placeholder={t("kanban.bulk.priorityPlaceholder")}
-            onChange={(e) => setBulkPriority(e.target.value)}
+          <Checkbox
+            label={t("kanban.filter.showArchived")}
+            checked={filters.showArchived}
+            onChange={(e) => setFilters({ ...filters, showArchived: e.target.checked })}
           />
-          <Button
-            size="sm"
-            disabled={bulkPriority === ""}
-            onClick={() => {
-              const priority = Number(bulkPriority) || 0;
-              setBulkPriority("");
-              void actAll([...selected], (id) => api.kanbanUpdate(id, { priority }));
-            }}
-          >
-            {t("kanban.bulk.setPriority")}
-          </Button>
-          <span className="kanban-filters-spacer" />
-          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set(visibleOrder))}>
-            {t("kanban.bulk.selectAllVisible")}
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>{t("kanban.bulk.clear")}</Button>
+          {filtersActive(filters) && (
+            <Button variant="ghost" size="sm" onClick={() => setFilters(NO_FILTERS)}>
+              {t("kanban.filter.clear")}
+            </Button>
+          )}
         </div>
-      )}
+
+        {selected.size > 0 && (
+          <div className="kanban-bulk" role="toolbar" aria-label={t("kanban.bulk.label")}>
+            <strong className="kanban-bulk-count">{t("kanban.bulk.selected", { count: selected.size })}</strong>
+            <Button size="sm" onClick={() => moveSelected("todo")}>{t("kanban.action.toTodo")}</Button>
+            <Button size="sm" onClick={() => moveSelected("ready")}>{t("kanban.action.toReady")}</Button>
+            <Button size="sm" onClick={() => moveSelected("blocked")}>{t("kanban.action.block")}</Button>
+            <Button size="sm" onClick={() => moveSelected("ready", "blocked")}>{t("kanban.action.unblock")}</Button>
+            <Button size="sm" onClick={() => moveSelected("done")}>{t("kanban.action.complete")}</Button>
+            <Button
+              size="sm"
+              onClick={() => {
+                const ids = [...selected];
+                setSelected(new Set());
+                void actAll(ids, (id) => api.kanbanArchive(id, true));
+              }}
+            >
+              {t("kanban.card.archive")}
+            </Button>
+            <Input
+              className="kanban-bulk-priority"
+              type="number"
+              min={0}
+              value={bulkPriority}
+              placeholder={t("kanban.bulk.priorityPlaceholder")}
+              onChange={(e) => setBulkPriority(e.target.value)}
+            />
+            <Button
+              size="sm"
+              disabled={bulkPriority === ""}
+              onClick={() => {
+                const priority = Number(bulkPriority) || 0;
+                setBulkPriority("");
+                void actAll([...selected], (id) => api.kanbanUpdate(id, { priority }));
+              }}
+            >
+              {t("kanban.bulk.setPriority")}
+            </Button>
+            <span className="kanban-filters-spacer" />
+            <Button size="sm" variant="ghost" onClick={() => setSelected(new Set(visibleOrder))}>
+              {t("kanban.bulk.selectAllVisible")}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>{t("kanban.bulk.clear")}</Button>
+          </div>
+        )}
+
+        <KanbanRoster board={board} />
+
+        <div className="kanban-board">
+          {KANBAN_COLUMNS.map((col) => (
+            <KanbanColumn
+              key={col}
+              status={col}
+              tasks={tasksByColumn[col]}
+              board={board}
+              selected={selected}
+              openId={openTask?.id ?? null}
+              needsApprovalSet={needsApproval}
+              showArchived={filters.showArchived}
+              onOpen={setOpenId}
+              onSelect={onSelect}
+              onAdd={(status) => setNewCard({ status })}
+              onDropTo={onDropTo}
+              onShowArchived={() => setFilters({ ...filters, showArchived: true })}
+            />
+          ))}
+        </div>
+
+        <footer className="kanban-foot">
+          <span className="kanban-foot-dot" data-paused={paused || undefined} aria-hidden />
+          <span>
+            {paused
+              ? t("kanban.dispatcher.footerPaused")
+              : t("kanban.dispatcher.footerRunning", { count: summary.running })}
+          </span>
+          <span className="kanban-foot-sep" aria-hidden />
+          <span>
+            {t("kanban.dispatcher.summary", {
+              open: summary.open,
+              blocked: summary.blocked,
+              done: summary.done,
+            })}
+          </span>
+          {footProject && (
+            <>
+              <span className="kanban-foot-sep" aria-hidden />
+              <span className="kanban-foot-end">{footProject}</span>
+            </>
+          )}
+        </footer>
+      </div>
 
       {newCard && (
         <NewCardSheet
@@ -611,24 +720,6 @@ export function KanbanPage() {
           onDone={() => { setNewCard(null); void refresh(); }}
         />
       )}
-
-      <div className="kanban-board">
-        {KANBAN_COLUMNS.map((col) => (
-          <KanbanColumn
-            key={col}
-            status={col}
-            tasks={tasksByColumn[col]}
-            board={board}
-            selected={selected}
-            needsApprovalSet={needsApproval}
-            onOpen={setOpenId}
-            onSelect={onSelect}
-            onSelectAll={onSelectAll}
-            onAdd={(status) => setNewCard({ status })}
-            onDropTo={onDropTo}
-          />
-        ))}
-      </div>
 
       {openTask && (
         <KanbanDrawer

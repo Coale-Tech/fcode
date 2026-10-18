@@ -24,6 +24,7 @@ async function main(): Promise<void> {
         "  --pairing-lifetime-ms <n> pairing token lifetime (default 600000)",
         "  --host-core <path>        pi-desktop-host-core binary",
         "  --sidecar <path>          agent sidecar entry",
+        "  --resources <dir>         omp resources: bin/omp, fcode-agents/, fcode-skills/",
         "  --browse-root <dir>       folder-picker root (default home)",
         "  --log-level <level>       info | warn | error",
         "",

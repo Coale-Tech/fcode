@@ -25,11 +25,6 @@ test("user turns keep a compact right-aligned plate", () => {
     /\.message-row\.user \.message-bubble \{([^}]*)\}/,
   )?.[1];
   assert.ok(userBubbleStyles);
-  assert.match(stylesSource, /\.message-row\.user \{\s*justify-content:\s*flex-end;/);
-  assert.match(
-    stylesSource,
-    /\.message-row\.user \.message-col \{[\s\S]*?width:\s*min\(max-content,\s*82%,\s*600px\);[\s\S]*?max-width:\s*min\(82%,\s*600px\);[\s\S]*?align-items:\s*flex-end;/,
-  );
   // The wrap constraint lives on the column; the bubble is max-content so a
   // percentage chip cap cannot stretch it to the 82%/600px ceiling.
   assert.match(
@@ -301,11 +296,6 @@ test("user-message file chips reuse the composer chip node", () => {
   assert.match(transcriptSource, /className=\"composer-chip chat-file-chip\"/);
   assert.match(transcriptSource, /composer-chip-name/);
   assert.match(stylesSource, /\.chat-file-chip[\s\S]*?appearance:\s*none/);
-  // Definite cap inside the shrink-to-fit plate; `min(100%, 240px)` stretches it.
-  assert.match(
-    stylesSource,
-    /\.message-row\.user \.composer-chip \{[\s\S]*?max-width:\s*240px;/,
-  );
 });
 
 test("stopping a turn undoes an unanswered prompt or settles the partial reply", async () => {

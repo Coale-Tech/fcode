@@ -1,6 +1,5 @@
 import { readMainModule, readMainSource } from "./helpers/source-contracts.mjs";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { loadStyles } from "./helpers/styles.mjs";
 
@@ -16,10 +15,6 @@ const macOptions =
   mainWindowBlock.match(
     /\.\.\.\(process\.platform === "darwin"[\s\S]*?\n      : \{[\s\S]*?\n        \}\),/,
   )?.[0] ?? "";
-
-function styleBlock(selector) {
-  return stylesSource.match(new RegExp(`${selector}\\s*\\{[^}]*\\}`))?.[0] ?? "";
-}
 
 function functionSource(source, name) {
   const start = source.indexOf(`function ${name}(`);
@@ -121,37 +116,6 @@ test("the macOS startup splash shares the sidebar glass tint and sheen", () => {
     stylesSource,
     /:root\[data-platform="darwin"\] \.app-shell\.is-booting:has\(\.startup-splash\.is-exiting\)\s*>\s*:not\(\.startup-splash\)\s*\{\s*opacity:\s*1;\s*transition:\s*opacity/,
   );
-});
-
-test("only macOS sidebar and splash surfaces receive the translucent glass treatment", () => {
-  const macGlassBlock =
-    stylesSource.match(
-      /:root\[data-platform="darwin"\] \.startup-splash,\n:root\[data-platform="darwin"\] \.sidebar-surface,\n:root\[data-platform="darwin"\] \.sidebar-rail\s*\{[^}]*\}/,
-    )?.[0] ?? "";
-  assert.match(macGlassBlock, /background-color:\s*var\(--ds-sidebar-glass-tint\)/);
-  // Sheen, not a flat tint — this is what keeps the material reading as glass.
-  assert.match(macGlassBlock, /var\(--ds-sidebar-glass-sheen-top\)/);
-  assert.match(macGlassBlock, /var\(--ds-sidebar-glass-sheen-bottom\)/);
-  // No dock seam on any platform (D297): neither the macOS glass rule nor the
-  // base `.sidebar` rule draws a right edge, so the glass meets the opaque main
-  // pane flush and no transparent override is needed.
-  assert.doesNotMatch(macGlassBlock, /border-right/);
-  const baseSidebarBlock = stylesSource.match(/\n\.sidebar\s*\{[^}]*\}/)?.[0] ?? "";
-  assert.doesNotMatch(baseSidebarBlock, /border-right/);
-
-  const macAncestorBlock =
-    stylesSource.match(
-      /:root\[data-platform="darwin"\],\n:root\[data-platform="darwin"\] body,\n:root\[data-platform="darwin"\] #root,\n:root\[data-platform="darwin"\] \.app-shell,\n:root\[data-platform="darwin"\] \.settings-shell\s*\{[^}]*\}/,
-    )?.[0] ?? "";
-  assert.match(macAncestorBlock, /background:\s*transparent/);
-
-  const mainPaneBlock = styleBlock("\\.main-pane");
-  const mainTitlebarBlock = styleBlock("\\.main-titlebar");
-  const conversationTopbarBlock = styleBlock("\\.conversation-topbar");
-  for (const block of [mainPaneBlock, mainTitlebarBlock, conversationTopbarBlock]) {
-    assert.match(block, /background:\s*var\(--ds-bg-primary\)/);
-    assert.doesNotMatch(block, /transparent/);
-  }
 });
 
 test("the sidebar glass tint stays thin enough to reveal the vibrancy material", () => {

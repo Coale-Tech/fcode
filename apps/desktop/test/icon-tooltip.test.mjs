@@ -33,13 +33,10 @@ test("icon-only actions expose localized hover tooltips", () => {
     ["components/ProjectInstructionsDialog.tsx", "settings.cancel"],
     ["components/extensions/McpEditorSheet.tsx", "common.close"],
     ["components/settings/SkillEditorSheet.tsx", "common.close"],
-    ["components/settings/SubagentEditorSheet.tsx", "common.close"],
     ["components/extensions/ScopeControl.tsx", "common.close"],
-    ["components/settings/AgentCapabilityLayout.tsx", "settings.clearSearch"],
     ["components/Sidebar.tsx", "nav.sessionActions"],
     ["components/Sidebar.tsx", "project.openActions"],
     ["components/Sidebar.tsx", "nav.sortSessions"],
-    ["pages/PullRequestsPage.tsx", "pulls.open"],
     ["components/workpanel/FilesTab.tsx", "panel.files.back"],
     ["components/workpanel/FilesTab.tsx", "panel.files.reveal"],
   ]) {

@@ -70,7 +70,9 @@ export const ledgerPath  = (d: string) => join(d, "skills", ".curator", "ledger.
 export const archivePath = (d: string) => join(d, "skills", ".curator", "archive");
 
 const FRAPPESKILLS_CLONE_NAME = "frappeskills"; // pack name under <dataDir>/skills/
-const ompManagedSkillsDir = () => join(homedir(), ".omp", "agent", "managed-skills");
+const ompManagedSkillsDir = () => process.env.FCODE_DATA_DIR
+  ? join(process.env.FCODE_DATA_DIR, "omp-agent", "managed-skills")
+  : join(homedir(), ".omp", "agent", "managed-skills");
 
 // ── JSON helpers ──────────────────────────────────────────────────────────────
 

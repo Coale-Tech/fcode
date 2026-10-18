@@ -21,8 +21,103 @@
   overflow-clip-margin: 8px;
 }
 
+/* D design: user messages left-aligned with avatar + sender meta when chatUserName is set. */
 .message-row.user {
-  justify-content: flex-end;
+  justify-content: flex-start;
+}
+
+/* Legacy: no avatar — keep old shrink-wrap for message-bubble (backward compat) */
+.message-row.user:not(.d-msg-row) .message-col {
+  width: min(max-content, 82%, 600px);
+  max-width: min(82%, 600px);
+  align-items: flex-end;
+  margin-left: auto;
+}
+
+/* D design user row: full-width, left-aligned */
+.message-row.user.d-msg-row {
+  align-items: flex-start;
+}
+.message-row.user.d-msg-row .message-col {
+  width: 100%;
+  max-width: 100%;
+  align-items: flex-start;
+}
+
+/* D design shared: avatar circle (D.css .d-msg-avatar) */
+.d-msg-avatar {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--surface-gray-3);
+  color: var(--ink-gray-6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0;
+  margin-top: 2px;
+}
+.d-msg-avatar.user {
+  background: var(--surface-gray-10);
+  color: var(--ink-base);
+}
+.d-msg-avatar.ai {
+  background: var(--da-sub);
+  color: var(--da-txt);
+  font-size: 9px;
+}
+
+/* D design: sender meta row (name + time) */
+.d-msg-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.d-msg-sender {
+  font-size: var(--d-text);
+  font-weight: 600;
+  color: var(--ink-gray-9);
+}
+.d-msg-time {
+  font-size: var(--d-text-xs);
+  color: var(--ink-gray-4);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Inline `code` in user prose (D.css .d-msg-body code) */
+.chat-inline-code {
+  font-family: var(--font-mono);
+  font-size: var(--d-text-sm);
+  background: var(--surface-gray-2);
+  border-radius: var(--d-r-sm);
+  padding: 1px 4px;
+  color: var(--ink-gray-9);
+}
+
+/* D design: message content column (next to avatar) */
+.d-msg-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+/* D design message row: avatar + content side by side */
+.message-row.d-msg-row .message-col {
+  flex-direction: row;
+  gap: 10px;
+}
+
+/* D design: message bubble loses rounded-all style, becomes flat text */
+.message-row.user.d-msg-row .message-bubble {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  max-width: 100%;
 }
 
 .message-col {
@@ -33,20 +128,7 @@
   gap: 4px;
 }
 
-.message-row.user .message-col {
-  /* `min(max-content, …)` is a definite shrink-wrap. `fit-content` includes
-     the stretch size, so a descendant with `max-width: 100%` (file chips)
-     inflated the plate to the 82%/600px cap after a paste. */
-  width: min(max-content, 82%, 600px);
-  max-width: min(82%, 600px);
-  align-items: flex-end;
-}
-
-/* Composer chips use `max-width: min(100%, 240px)` so they shrink in a
-   definite composer. Inside this shrink-to-fit plate the percentage
-   containing block is the available thread width, which stretches the
-   bubble. A definite 240px cap keeps short chip+text prompts compact. */
-.message-row.user .composer-chip {
+.message-row.user:not(.d-msg-row) .composer-chip {
   max-width: 240px;
 }
 
@@ -55,6 +137,21 @@
 .message-row.tool .message-col {
   width: min(100%, var(--chat-prose-max-width, 720px));
   align-items: flex-start;
+}
+
+/* D design assistant message row: full-width with avatar */
+.message-row.assistant.d-msg-row .message-col {
+  width: 100%;
+  max-width: 100%;
+  flex-direction: row;
+  gap: 10px;
+  align-items: flex-start;
+}
+.message-row.assistant.d-msg-row .message-bubble {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  max-width: 100%;
 }
 
 /* Decision cards are soft tiles (D297): risk rides in the tint and the risk
@@ -1004,6 +1101,8 @@
   line-height: var(--leading-normal);
 }
 
+/* Allow once: black primary CTA per design (chat/notes.md:13; D-SPEC black primary rule). */
+
 /* Deny button: danger-tinted ghost */
 .permission-deny-btn.btn-ghost {
   color: var(--ds-error);
@@ -1100,6 +1199,11 @@
 
 .copy-btn.danger:hover {
   background: color-mix(in oklab, var(--ds-error) 10%, transparent);
+  color: var(--ds-error);
+}
+
+.copy-btn.danger.is-armed {
+  background: color-mix(in oklab, var(--ds-error) 14%, transparent);
   color: var(--ds-error);
 }
 
@@ -1547,6 +1651,7 @@
   border-radius: var(--radius-lg-plus);
   padding: 10px 14px;
   line-height: var(--leading-chat);
+  font-size: var(--d-text-chat); /* D: .d-msg-body 14px */
 }
 
 .message-user-text {
@@ -2362,6 +2467,19 @@
   width: 100%;
   min-width: 0;
   margin: 3px 0;
+  position: relative; /* F05: connector positioning context */
+}
+
+/* F05: vertical connector line between consecutive tool nodes (D.css .d-tool-node::before) */
+.tool-row + .tool-row .tool-row-header::before {
+  content: "";
+  position: absolute;
+  left: var(--d-tool-conn-left); /* 14px = node-size/2 - 1px */
+  top: -9px;
+  width: 2px;
+  height: 9px;
+  background: var(--d-border-ctrl);
+  pointer-events: none;
 }
 
 .tool-row-header {
@@ -2377,6 +2495,7 @@
   color: var(--ds-text-secondary);
   font-size: var(--text-sm-plus);
   text-align: left;
+  position: relative; /* F05: needed for ::before connector */
 }
 
 .tool-row-header:disabled {
@@ -2531,15 +2650,42 @@
   background: transparent;
 }
 
+/* D: 30px circle tool node (R11e; replaces bare icon). */
 .tool-row-icon {
   display: inline-flex;
   flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--d-border-ctrl);
+  background: var(--ds-bg-inset);
+  align-items: center;
+  justify-content: center;
   color: var(--ds-text-muted);
+  flex-shrink: 0;
+  margin-top: 2px;
+  z-index: 1;
 }
-
-/* A lifecycle row is a subagent row (D268): it carries the same accent the
-   topology node's avatar uses, so scanning the transcript groups it with the
-   Task card it reports on rather than with the file tools around it. */
+.tool-row-icon svg {
+  width: 12px;
+  height: 12px;
+}
+/* Status-based node colours matching D.css .d-tool-node variants. */
+.tool-row.status-running .tool-row-icon:not(.is-subagent) {
+  border-color: var(--outline-amber-3);
+  background: var(--surface-amber-2);
+  color: var(--ink-amber-8);
+}
+.tool-row.status-success .tool-row-icon:not(.is-subagent) {
+  border-color: var(--outline-green-3);
+  background: var(--surface-green-2);
+  color: var(--ink-green-8);
+}
+.tool-row.status-error .tool-row-icon:not(.is-subagent) {
+  border-color: var(--outline-red-3);
+  background: var(--surface-red-2);
+  color: var(--ink-red-8);
+}
 .tool-row-icon.is-subagent {
   color: var(--ds-accent);
 }
@@ -2565,6 +2711,15 @@
 .tool-row.open > .tool-row-head > .tool-row-header > .tool-row-caret,
 .tool-row.open > .tool-row-head > .tool-row-caret {
   transform: rotate(90deg);
+}
+
+/* F05: name+path column wrapper (D: .d-tool-info) */
+.tool-row-label {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  gap: 1px;
 }
 
 .tool-row-name {
@@ -2595,13 +2750,13 @@
 }
 
 .tool-row-summary {
-  flex: 1;
+  /* Now inside .tool-row-label column — fills its row, no longer the h-stretch item */
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: var(--font-mono);
-  font-size: var(--text-xs-plus);
+  font-size: var(--d-text-sm); /* D: .d-tool-sub 12px mono path */
   color: var(--ds-text-muted);
 }
 
@@ -3258,4 +3413,9 @@
   max-width: 100%;
   max-height: 480px;
   object-fit: contain;
+}
+
+/* D: 14px chat prose — higher specificity overrides prose.css .prose-chat base (lane T10). */
+.message-row .prose-chat {
+  font-size: var(--d-text-chat);
 }

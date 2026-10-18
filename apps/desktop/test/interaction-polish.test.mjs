@@ -12,7 +12,7 @@ test("high-traffic chrome uses shared motion tokens on hover fills", () => {
     ".composer-plus-item",
     ".search-item",
     ".nav-rail-btn",
-    ".notification-item",
+    ".notifications-page-row",
     ".work-panel-tab-close",
   ]) {
     // Match the selector anywhere in a rule's selector list, and require the
