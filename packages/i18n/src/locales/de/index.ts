@@ -3197,6 +3197,7 @@ sklm: {
       "comments": "{{count}} Kommentare",
       "links": "{{parents}} übergeordnete, {{children}} untergeordnete. Untergeordnete warten, bis die übergeordnete Karte erledigt ist.",
       "byUser": "von Ihnen",
+      "agent": "An Agent {{agent}} weitergeleitet",
       "byAgent": "von Agent"
     },
     "drawer": {
@@ -3209,6 +3210,9 @@ sklm: {
       "created": "Erstellt",
       "started": "Gestartet",
       "completed": "Abgeschlossen",
+      "agent": "Agent",
+      "agentRecord": "Agent-Bilanz",
+      "worktree": "Worktree",
       "blockReason": "Blockierungsgrund",
       "description": "Beschreibung",
       "edit": "Bearbeiten",
@@ -3256,7 +3260,12 @@ sklm: {
       "maxInProgress": "Max. in Bearbeitung",
       "maxRuntimeSeconds": "Max. Laufzeit (Sekunden)",
       "maxAgentCardsPerSession": "Max. Agentenkarten pro Sitzung",
+      "maxWorkersPerProject": "Max. Worker pro Projekt (weitere nutzen Git-Worktrees)",
       "maxDailySpawns": "Max. tägliche Starts"
+    },
+    "roster": {
+      "title": "Aktive Worker",
+      "generic": "Allzweck-Worker"
     },
     "sidebar": {
       "showWorkers": "Arbeitersitzungen anzeigen",

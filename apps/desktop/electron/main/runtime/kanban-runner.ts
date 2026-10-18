@@ -17,6 +17,8 @@ import {
   incrementNudge,
 } from "@pi-desktop/host-runtime";
 import type { KanbanSettings } from "./kanban-settings";
+import { agentOutcomes } from "@pi-desktop/shared";
+import { pickAgent, type RoutableAgent } from "./kanban-router";
 
 export type KanbanRunnerDeps = {
   getSettings: () => KanbanSettings;
@@ -36,6 +38,13 @@ export type KanbanRunnerDeps = {
   onBoardMutation?: (prev: KanbanBoard, next: KanbanBoard) => void;
   /** Called once a worker's card is closed, so its omp process can stop. */
   releaseWorker?: (sessionId: string) => void;
+  /** Effective agent catalog used to route cards; omitted → no routing. */
+  listAgents?: () => Promise<RoutableAgent[]>;
+  /** Create (or reuse) an isolated git worktree for a 2nd+ worker in one project. */
+  createWorktree?: (
+    repoPath: string,
+    branch: string,
+  ) => Promise<{ ok: boolean; path?: string; error?: string }>;
 };
 
 /** Nudge prompt sent to a worker that ended without kanban_complete/kanban_block. */
@@ -169,10 +178,15 @@ export function createKanbanRunner(deps: KanbanRunnerDeps): KanbanRunner {
         .filter((t) => t.status === "ready" && !t.archived)
         .sort((a, b) => b.priority - a.priority || a.createdAt - b.createdAt);
 
+      const catalog = deps.listAgents && ready.length > 0
+        ? await deps.listAgents().catch((err) => { report(err); return []; })
+        : [];
+      const outcomes = agentOutcomes(board.tasks, board.runs);
       for (const t of ready) {
         if (sessionToCardId.size >= settings.maxInProgress) break;
-        // HD1: one worker per dir
-        if ((runningByPath.get(t.projectPath) ?? 0) >= 1) continue;
+        // Per-project worker cap (default 1). Workers beyond the first run in git worktrees.
+        const perProject = settings.maxWorkersPerProject ?? 1;
+        if ((runningByPath.get(t.projectPath) ?? 0) >= perProject) continue;
         // Re-check daily cap after each claim (board was updated by claimTask)
         const todaySpawnedNow = board.dailyStats.find((s) => s.date === d)?.spawned ?? 0;
         if (todaySpawnedNow >= settings.maxDailySpawns) {
@@ -181,16 +195,30 @@ export function createKanbanRunner(deps: KanbanRunnerDeps): KanbanRunner {
         }
 
         const runId = randomUUID();
+        let runCwd = t.projectPath;
+        let worktreePath: string | undefined;
+        if (t.worktreePath || (runningByPath.get(t.projectPath) ?? 0) > 0) {
+          // 2nd+ worker in this project, or a retry of a card that already has a worktree: isolate it, or leave the card ready.
+          if (!deps.createWorktree) continue;
+          const wt = await deps.createWorktree(t.projectPath, `kanban/${t.id.slice(0, 8)}`);
+          if (!wt.ok || !wt.path) {
+            report(new Error(`kanban: worktree for ${t.id} failed: ${wt.error ?? "no path returned"}`));
+            continue;
+          }
+          runCwd = wt.path;
+          worktreePath = wt.path;
+        }
+        const agent = pickAgent(t, catalog, outcomes);
         const sessionTitle = `[kanban] ${t.title}`;
         let sessionId: string;
         try {
-          sessionId = await createSession({ title: sessionTitle, projectPath: t.projectPath });
+          sessionId = await createSession({ title: sessionTitle, projectPath: runCwd });
         } catch (err) {
           report(err);
           continue;
         }
 
-        board = claimTask(board, t.id, sessionId, runId);
+        board = claimTask(board, t.id, sessionId, runId, { agent, worktreePath });
         sessionToCardId.set(sessionId, t.id);
         runStartedAt.set(t.id, Date.now());
         runningByPath.set(t.projectPath, (runningByPath.get(t.projectPath) ?? 0) + 1);
@@ -199,7 +227,7 @@ export function createKanbanRunner(deps: KanbanRunnerDeps): KanbanRunner {
         dailyCapNotified = false;
 
         // Build worker prompt from card
-        const workerPrompt = buildWorkerPrompt(t, board);
+        const workerPrompt = buildWorkerPrompt(board.tasks.find((x) => x.id === t.id) ?? t, board);
         try {
           await prompt(sessionId, workerPrompt);
         } catch (err) {
@@ -288,10 +316,32 @@ function buildWorkerPrompt(task: KanbanTask, board: KanbanBoard): string {
       parents.map((p) => `- ${p!.title}: ${p!.result ?? "(no result)"}`).join("\n")
     : "";
 
+  const cwd = task.worktreePath ?? task.projectPath;
+  const worktree = task.worktreePath
+    ? `You are in an isolated git worktree of \`${task.projectPath}\` on its own branch. ` +
+      "Stay inside it; other workers are active in the main checkout.\n\n"
+    : "";
+  const delegation = task.agent
+    ? `**Delegation:** this card matches the \`${task.agent}\` agent. Do the work by calling the ` +
+      `\`task\` tool with \`agent: "${task.agent}"\`, passing this card's full description and ` +
+      "working directory, then verify its result before completing.\n\n"
+    : "";
+  const blackboard =
+    "**Board:** call `kanban_list` to see sibling cards, `kanban_show` with a `taskId` to read " +
+    "another card's result and comments, and `kanban_comment` with a `taskId` to leave a note " +
+    "other workers can read.\n\n";
+  const decisions =
+    "**Binding decisions:** if `docs/adr/` exists, read the ADRs relevant to your change first. " +
+    "Accepted ADRs are binding unless a later ADR supersedes them.\n\n";
+
   return (
     `# Kanban task: ${task.title}\n\n` +
     `${task.body ?? ""}${parentContext}\n\n` +
-    `**Working directory:** ${task.projectPath}\n\n` +
+    `**Working directory:** ${cwd}\n\n` +
+    worktree +
+    delegation +
+    blackboard +
+    decisions +
     "When done, call `kanban_complete` with a brief summary. " +
     "If blocked, call `kanban_block` with reason and kind. " +
     "Do not end your turn without calling one of these tools."

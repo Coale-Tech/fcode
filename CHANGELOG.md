@@ -19,6 +19,9 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - `scripts/e2e-remote-host.mjs` drives the omp-bridge sidecar; a provider-less turn is now admitted and settles instead of failing closed at admission.
 
 ### Added
+- Kanban routes each ready card to the best-matching agent (name and description match against the project, user, Fcode and omp agents, scaled by that agent's record once it has three finished runs). The card shows an agent chip, a roster above the board lists running workers, and the drawer shows the agent's record. The worker is told to delegate with the `task` tool. See ADR 0310.
+- Kanban setting "Max workers per project" (1–5, default 1). Extra workers run in their own git worktree under `~/.omp/wt` on branch `kanban/<id>`, reused if the card is retried; a card whose worktree cannot be created stays Ready and the error is logged.
+- Kanban workers can read the board: `kanban_list` is open to workers, and `kanban_show` / `kanban_comment` take a `taskId` for another live card. Worker prompts name `docs/adr/` as binding decisions.
 - Settings > Agents lists every agent omp will load (project, user, Fcode bundled, omp built-ins) with source badge, tool count and a per-agent model override; shadowed duplicates are flagged. New IPC `ompAgentList`.
 - Settings > Skills: Browse Market, New/Edit/Remove skill. Settings > Extensions: MCP market. Skill curator controls and a proposal body preview in skill review.
 - Settings > Memory: frozen-memory cap, project `.omp/MEMORY.md` editor, Auto-Learn toggle.

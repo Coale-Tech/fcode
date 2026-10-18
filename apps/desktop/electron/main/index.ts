@@ -123,6 +123,7 @@ import { createSessionLaunchRuntime } from "./runtime/session-launch";
 import { createSessionCoordination } from "./runtime/session-coordination";
 import { createScheduledRuntime } from "./runtime/scheduled";
 import { createKanbanWiring } from "./runtime/kanban-wiring";
+import { addWorktree, listEffectiveAgents } from "./ipc/omp-ipc";
 import { readKanbanSettings, writeKanbanSettings } from "./runtime/kanban-settings";
 import { loadBoard, saveBoard } from "@pi-desktop/host-runtime";
 import { createDesktopServices } from "./services/desktop-services";
@@ -1099,6 +1100,8 @@ const { kanbanRunner, emitKanbanMutation, bindInvoke: bindKanbanInvoke, bindWork
   sendToRenderer,
   getLabels: () => catalogs[resolveLocale(updaterLocale)],
   logError: (error) => logger.app("runtime", "error", String(error)),
+  listAgents: async () => (await listEffectiveAgents(null)).agents,
+  createWorktree: (repoPath, branch) => addWorktree(repoPath, branch, true),
 });
 _kanbanTurnEnd = (sessionId) => kanbanRunner.onTurnEnd(sessionId);
 

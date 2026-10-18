@@ -92,6 +92,53 @@
   width: 72px;
 }
 
+/* ── Active-worker roster ── */
+
+.kanban-roster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px 0;
+}
+
+.kanban-roster-title {
+  font-size: var(--text-3xs);
+  color: var(--ds-text-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.kanban-roster-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 320px;
+  padding: 2px 8px;
+  font-size: var(--text-xs);
+  background: var(--ds-bg-chip);
+  border: 1px solid var(--ds-border-subtle);
+  border-radius: var(--radius-full);
+}
+
+.kanban-roster-agent {
+  font-family: var(--font-mono);
+  color: var(--ds-accent);
+}
+
+.kanban-roster-task {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ds-text-secondary);
+}
+
+.kanban-roster-time {
+  font-family: var(--font-mono);
+  color: var(--ds-text-muted);
+}
+
 /* ── Board + columns ── */
 
 .kanban-board {
@@ -306,6 +353,11 @@
 .kanban-chip-full {
   color: var(--ds-success);
   border-color: var(--ds-success);
+}
+
+.kanban-chip-agent {
+  color: var(--ds-accent);
+  border-color: var(--ds-accent);
 }
 
 .kanban-badge {

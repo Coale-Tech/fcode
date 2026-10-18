@@ -118,6 +118,18 @@ test("claim moves ready to running and opens a run", () => {
   assert.ok(b2.runs.some((r) => r.id === "run-1" && r.status === "running"));
 });
 
+test("claim records routing meta and a re-claim without meta clears it", () => {
+  const { board: b1, taskId } = makeTask(emptyBoard());
+  const b2 = claimTask(b1, taskId, "s1", "r1", { agent: "frappe-dev", worktreePath: "/wt/a" });
+  assert.equal(taskById(b2, taskId).agent, "frappe-dev");
+  assert.equal(taskById(b2, taskId).worktreePath, "/wt/a");
+
+  // reclaim returns the card to ready; the next run is the first worker and has no worktree
+  const b3 = claimTask(reclaimTask(b2, taskId), taskId, "s2", "r2");
+  assert.equal(taskById(b3, taskId).agent, undefined);
+  assert.equal(taskById(b3, taskId).worktreePath, undefined);
+});
+
 test("claim on non-ready card is a no-op", () => {
   let board = emptyBoard();
   const { board: b1, taskId } = makeTask(board, { flagTriage: true }); // triage

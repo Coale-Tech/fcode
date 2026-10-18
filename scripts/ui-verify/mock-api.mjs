@@ -226,14 +226,15 @@ const MOCK_KANBAN_BOARD = {
     { id: "t1", title: "Design new onboarding flow", body: "", status: "triage", priority: 0, projectPath: "/projects/app", workspaceKind: "dir", workspacePath: "/projects/app", branchName: null, modelOverride: null, createdBy: "user", createdAt: Date.now() - 86400000, startedAt: null, completedAt: null, result: null, blockKind: null, blockRecurrences: 0, consecutiveFailures: 0, maxRuntimeSeconds: 1800, maxRetries: 2, sessionId: null, currentRunId: null, archived: false },
     { id: "t2", title: "Write unit tests for auth module", body: "Cover all edge cases", status: "todo", priority: 1, projectPath: "/projects/app", workspaceKind: "dir", workspacePath: "/projects/app", branchName: null, modelOverride: null, createdBy: "user", createdAt: Date.now() - 72000000, startedAt: null, completedAt: null, result: null, blockKind: null, blockRecurrences: 0, consecutiveFailures: 0, maxRuntimeSeconds: 1800, maxRetries: 2, sessionId: null, currentRunId: null, archived: false },
     { id: "t3", title: "Refactor settings API", body: "", status: "ready", priority: 2, projectPath: "/projects/app", workspaceKind: "dir", workspacePath: "/projects/app", branchName: null, modelOverride: null, createdBy: "user", createdAt: Date.now() - 36000000, startedAt: null, completedAt: null, result: null, blockKind: null, blockRecurrences: 0, consecutiveFailures: 0, maxRuntimeSeconds: 1800, maxRetries: 2, sessionId: null, currentRunId: null, archived: false },
-    { id: "t4", title: "Implement dark mode toggle", body: "User story: as a user I want dark mode", status: "running", priority: 1, projectPath: "/projects/app", workspaceKind: "dir", workspacePath: "/projects/app", branchName: null, modelOverride: null, createdBy: "user", createdAt: Date.now() - 7200000, startedAt: Date.now() - 3600000, completedAt: null, result: null, blockKind: null, blockRecurrences: 0, consecutiveFailures: 0, maxRuntimeSeconds: 1800, maxRetries: 2, sessionId: "sess-001", currentRunId: "run-001", archived: false },
+    { id: "t4", title: "Implement dark mode toggle", body: "User story: as a user I want dark mode", status: "running", priority: 1, projectPath: "/projects/app", workspaceKind: "dir", workspacePath: "/projects/app", branchName: null, modelOverride: null, agent: "frappe-dev", createdBy: "user", createdAt: Date.now() - 7200000, startedAt: Date.now() - 3600000, completedAt: null, result: null, blockKind: null, blockRecurrences: 0, consecutiveFailures: 0, maxRuntimeSeconds: 1800, maxRetries: 2, sessionId: "sess-001", currentRunId: "run-001", archived: false },
     { id: "t5", title: "Fix login redirect bug", body: "Reproduces on Safari", status: "blocked", priority: 3, projectPath: "/projects/app", workspaceKind: "dir", workspacePath: "/projects/app", branchName: null, modelOverride: null, createdBy: "user", createdAt: Date.now() - 86400000 * 2, startedAt: Date.now() - 86400000, completedAt: null, result: null, blockKind: "needs_input", blockRecurrences: 1, consecutiveFailures: 1, maxRuntimeSeconds: 1800, maxRetries: 2, sessionId: null, currentRunId: null, archived: false },
-    { id: "t6", title: "Update README with setup instructions", body: "", status: "done", priority: 0, projectPath: "/projects/app", workspaceKind: "dir", workspacePath: "/projects/app", branchName: null, modelOverride: null, createdBy: "user", createdAt: Date.now() - 86400000 * 3, startedAt: Date.now() - 86400000 * 3, completedAt: Date.now() - 3600000, result: "README updated with full setup guide", blockKind: null, blockRecurrences: 0, consecutiveFailures: 0, maxRuntimeSeconds: 1800, maxRetries: 2, sessionId: null, currentRunId: null, archived: false },
+    { id: "t6", title: "Update README with setup instructions", body: "", status: "done", priority: 0, projectPath: "/projects/app", workspaceKind: "dir", workspacePath: "/projects/app", branchName: null, modelOverride: null, agent: "frappe-tester", worktreePath: "/Users/dev/.omp/wt/kanban-t6-1700000000000", createdBy: "user", createdAt: Date.now() - 86400000 * 3, startedAt: Date.now() - 86400000 * 3, completedAt: Date.now() - 3600000, result: "README updated with full setup guide", blockKind: null, blockRecurrences: 0, consecutiveFailures: 0, maxRuntimeSeconds: 1800, maxRetries: 2, sessionId: null, currentRunId: null, archived: false },
   ],
   links: [],
   comments: [],
   runs: [
     { id: "run-001", taskId: "t4", sessionId: "sess-001", status: "running", outcome: null, summary: null, error: null, startedAt: Date.now() - 3600000, endedAt: null },
+    { id: "run-000", taskId: "t6", sessionId: "sess-000", status: "done", outcome: null, summary: null, error: null, startedAt: Date.now() - 86400000 * 3, endedAt: Date.now() - 3600000 },
   ],
   events: [],
   dailyStats: [],
@@ -245,6 +246,7 @@ const MOCK_KANBAN_SETTINGS = {
   maxRuntimeSeconds: 1800,
   maxAgentCardsPerSession: 20,
   maxDailySpawns: 20,
+  maxWorkersPerProject: 2,
 };
 
 

@@ -11,6 +11,8 @@ export type KanbanSettings = {
   maxAgentCardsPerSession: number;
   /** Max card spawns per calendar day. */
   maxDailySpawns: number;
+  /** Max concurrent workers per project folder; the 2nd and later run in git worktrees. */
+  maxWorkersPerProject: number;
 };
 
 const SETTINGS_FILE = "kanban-settings.json";
@@ -20,6 +22,7 @@ const DEFAULTS: KanbanSettings = {
   maxRuntimeSeconds: 1800,
   maxAgentCardsPerSession: 20,
   maxDailySpawns: 20,
+  maxWorkersPerProject: 1,
 };
 
 export function readKanbanSettings(dataDir: string): KanbanSettings {
@@ -48,5 +51,8 @@ export function validateKanbanSettings(input: unknown): KanbanSettings {
       ? (s.maxAgentCardsPerSession as number) : DEFAULTS.maxAgentCardsPerSession,
     maxDailySpawns: Number.isInteger(s.maxDailySpawns) && (s.maxDailySpawns as number) > 0
       ? (s.maxDailySpawns as number) : DEFAULTS.maxDailySpawns,
+    maxWorkersPerProject: Number.isInteger(s.maxWorkersPerProject)
+      && (s.maxWorkersPerProject as number) >= 1 && (s.maxWorkersPerProject as number) <= 5
+      ? (s.maxWorkersPerProject as number) : DEFAULTS.maxWorkersPerProject,
   };
 }

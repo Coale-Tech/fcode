@@ -959,19 +959,22 @@ export function createSidecarRuntime({
 
     const updateBoard = (board: KanbanBoard) => { kb.saveBoard(board); kb.sendChanged(); };
 
-    // kanban_show — worker only: returns the card and parent results
-    s.setLocalTool("kanban_show", async ({ sessionId }) => {
+    // kanban_show — worker only: own card + parent results, or another card's result + comments by taskId
+    s.setLocalTool("kanban_show", async ({ sessionId, args }) => {
       if (!kb.enabled()) return notEnabled();
-      const taskId = kb.sessionToCard().get(sessionId);
-      if (!taskId) return notWorker("kanban_show");
+      const own = kb.sessionToCard().get(sessionId);
+      if (!own) return notWorker("kanban_show");
+      const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+      const taskId = String(a.taskId ?? "").trim() || own;
       const board = kb.getBoard();
       const task = board.tasks.find((t) => t.id === taskId);
       if (!task) return kbError("kanban_show: task not found");
+      const comments = board.comments.filter((c) => c.taskId === taskId);
+      if (taskId !== own) return { ok: true, content: JSON.stringify({ task, comments }) };
       const parents = board.links
         .filter((l) => l.childId === taskId)
         .map((l) => board.tasks.find((t) => t.id === l.parentId))
         .filter((t) => t != null);
-      const comments = board.comments.filter((c) => c.taskId === taskId);
       return { ok: true, content: JSON.stringify({ task, parents, comments }) };
     });
 
@@ -998,14 +1001,16 @@ export function createSidecarRuntime({
       return { ok: true, content: "Task blocked." };
     });
 
-    // kanban_comment — worker only (author forced from session's card id)
+    // kanban_comment — worker only; own card by default, or another live card by taskId (author forced from session)
     s.setLocalTool("kanban_comment", async ({ sessionId, args }) => {
       if (!kb.enabled()) return notEnabled();
-      const taskId = kb.sessionToCard().get(sessionId);
-      if (!taskId) return notWorker("kanban_comment");
+      const own = kb.sessionToCard().get(sessionId);
+      if (!own) return notWorker("kanban_comment");
       const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+      const taskId = String(a.taskId ?? "").trim() || own;
       const body = String(a.body ?? "").trim();
       if (!body) return kbError("kanban_comment: body required");
+      if (!kb.getBoard().tasks.some((t) => t.id === taskId && !t.archived)) return kbError("kanban_comment: task not found");
       updateBoard(kanbanAddComment(kb.getBoard(), taskId, `worker:${sessionId.slice(0, 8)}`, body));
       return { ok: true, content: "Comment added." };
     });
@@ -1043,10 +1048,9 @@ export function createSidecarRuntime({
       return { ok: true, content: "Link added." };
     });
 
-    // kanban_list — non-worker chat sessions
-    s.setLocalTool("kanban_list", async ({ sessionId }) => {
+    // kanban_list — any session (workers read the board as a blackboard)
+    s.setLocalTool("kanban_list", async () => {
       if (!kb.enabled()) return notEnabled();
-      if (kb.sessionToCard().has(sessionId)) return kbError("kanban_list: use kanban_show from a worker session");
       const visible = kb.getBoard().tasks.filter((t) => !t.archived);
       return { ok: true, content: JSON.stringify(visible) };
     });

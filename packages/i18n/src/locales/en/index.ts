@@ -3243,6 +3243,7 @@ importConfirm: "Imported extensions run inside the agent process with the same a
       comments: "{{count}} comments",
       links: "{{parents}} parents, {{children}} children. Children wait until their parent is done.",
       byUser: "by you",
+      agent: "Routed to the {{agent}} agent",
       byAgent: "by agent",
     },
     drawer: {
@@ -3255,6 +3256,9 @@ importConfirm: "Imported extensions run inside the agent process with the same a
       created: "Created",
       started: "Started",
       completed: "Completed",
+      agent: "Agent",
+      agentRecord: "Agent record",
+      worktree: "Worktree",
       blockReason: "Block reason",
       description: "Description",
       edit: "Edit",
@@ -3302,7 +3306,12 @@ importConfirm: "Imported extensions run inside the agent process with the same a
       maxInProgress: "Max in progress",
       maxRuntimeSeconds: "Max runtime (seconds)",
       maxAgentCardsPerSession: "Max agent cards per session",
+      maxWorkersPerProject: "Max workers per project (extra workers use git worktrees)",
       maxDailySpawns: "Max daily spawns",
+    },
+    roster: {
+      title: "Active workers",
+      generic: "general worker",
     },
     sidebar: {
       showWorkers: "Show worker sessions",

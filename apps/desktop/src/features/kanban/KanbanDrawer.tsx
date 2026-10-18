@@ -6,6 +6,7 @@
  */
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { agentOutcomes } from "@pi-desktop/shared";
 import type { KanbanBoard, KanbanStatus, KanbanTask } from "@pi-desktop/shared";
 import { api } from "../../lib/api";
 import { formatUpdated } from "../../lib/project-archive";
@@ -157,6 +158,8 @@ export function KanbanDrawer({
     </div>
   );
 
+  const record = task.agent ? agentOutcomes(board.tasks, board.runs).get(task.agent) : undefined;
+
   const prop = (label: string, value: React.ReactNode) => (
     <>
       <dt>{label}</dt>
@@ -212,6 +215,9 @@ export function KanbanDrawer({
               ),
             )}
             {task.modelOverride && prop(t("kanban.drawer.model"), task.modelOverride)}
+            {task.agent && prop(t("kanban.drawer.agent"), task.agent)}
+            {record && prop(t("kanban.drawer.agentRecord"), `✓ ${record.done} · ✗ ${record.failed}`)}
+            {task.worktreePath && prop(t("kanban.drawer.worktree"), task.worktreePath)}
             {prop(t("kanban.drawer.createdBy"), t(task.createdBy === "agent" ? "kanban.card.byAgent" : "kanban.card.byUser"))}
             {prop(t("kanban.drawer.created"), ago(task.createdAt))}
             {task.startedAt && prop(t("kanban.drawer.started"), ago(task.startedAt))}

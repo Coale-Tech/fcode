@@ -3226,6 +3226,7 @@ importConfirm: "İçe aktarılan uzantılar ajan sürecinde, ajanın kendi araç
       "comments": "{{count}} yorum",
       "links": "{{parents}} üst, {{children}} alt. Alt kartlar üst tamamlanana kadar bekler.",
       "byUser": "sizin tarafınızdan",
+      "agent": "{{agent}} ajanına yönlendirildi",
       "byAgent": "ajan tarafından",
     },
     "drawer": {
@@ -3238,6 +3239,9 @@ importConfirm: "İçe aktarılan uzantılar ajan sürecinde, ajanın kendi araç
       "created": "Oluşturuldu",
       "started": "Başladı",
       "completed": "Tamamlandı",
+      "agent": "Ajan",
+      "agentRecord": "Ajan sicili",
+      "worktree": "Worktree",
       "blockReason": "Engelleme nedeni",
       "description": "Açıklama",
       "edit": "Düzenle",
@@ -3285,7 +3289,12 @@ importConfirm: "İçe aktarılan uzantılar ajan sürecinde, ajanın kendi araç
       "maxInProgress": "Maks. süren görev",
       "maxRuntimeSeconds": "Maks. çalışma süresi (saniye)",
       "maxAgentCardsPerSession": "Oturum başına maks. ajan kartı",
+      "maxWorkersPerProject": "Proje başına maks. çalışan (ek çalışanlar git worktree kullanır)",
       "maxDailySpawns": "Günlük maks. başlatma",
+    },
+    "roster": {
+      "title": "Etkin çalışanlar",
+      "generic": "genel çalışan",
     },
     "sidebar": {
       "showWorkers": "Çalışan oturumlarını göster",

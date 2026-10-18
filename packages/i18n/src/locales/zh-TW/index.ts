@@ -3185,6 +3185,7 @@ sklm: {
       "comments": "{{count}} 則評論",
       "links": "{{parents}} 個父層，{{children}} 個子層。子卡片需等待父卡片完成。",
       "byUser": "由您",
+      "agent": "已分配給 {{agent}} 代理",
       "byAgent": "由代理"
     },
     "drawer": {
@@ -3197,6 +3198,9 @@ sklm: {
       "created": "建立時間",
       "started": "開始時間",
       "completed": "完成時間",
+      "agent": "代理",
+      "agentRecord": "代理戰績",
+      "worktree": "工作樹",
       "blockReason": "阻塞原因",
       "description": "描述",
       "edit": "編輯",
@@ -3244,7 +3248,12 @@ sklm: {
       "maxInProgress": "最大進行中數量",
       "maxRuntimeSeconds": "最大執行時長（秒）",
       "maxAgentCardsPerSession": "每會話最大代理卡片數",
+      "maxWorkersPerProject": "每專案最大工作者數（額外工作者使用 git worktree）",
       "maxDailySpawns": "每日最大啟動次數"
+    },
+    "roster": {
+      "title": "活躍工作者",
+      "generic": "通用工作者"
     },
     "sidebar": {
       "showWorkers": "顯示工作階段",

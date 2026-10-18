@@ -3151,6 +3151,7 @@ export const ptBR = {
       "comments": "{{count}} comentários",
       "links": "{{parents}} pais, {{children}} filhos. Filhos aguardam até o pai ser concluído.",
       "byUser": "por você",
+      "agent": "Direcionado ao agente {{agent}}",
       "byAgent": "por agente",
     },
     "drawer": {
@@ -3163,6 +3164,9 @@ export const ptBR = {
       "created": "Criado",
       "started": "Iniciado",
       "completed": "Concluído",
+      "agent": "Agente",
+      "agentRecord": "Histórico do agente",
+      "worktree": "Worktree",
       "blockReason": "Motivo do bloqueio",
       "description": "Descrição",
       "edit": "Editar",
@@ -3210,7 +3214,12 @@ export const ptBR = {
       "maxInProgress": "Máx. em andamento",
       "maxRuntimeSeconds": "Tempo máx. de execução (segundos)",
       "maxAgentCardsPerSession": "Máx. cartões de agente por sessão",
+      "maxWorkersPerProject": "Máx. workers por projeto (extras usam git worktrees)",
       "maxDailySpawns": "Máx. inicializações diárias",
+    },
+    "roster": {
+      "title": "Workers ativos",
+      "generic": "worker geral",
     },
     "sidebar": {
       "showWorkers": "Mostrar sessões de trabalho",

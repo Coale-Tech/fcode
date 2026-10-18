@@ -678,7 +678,11 @@ const HOST_TOOL_SCHEMAS = [
  * (runtime/sidecar.ts); worker-only tools are guarded there by session→card.
  */
 const KANBAN_TOOL_SCHEMAS = [
-  { name: "kanban_show", description: "Kanban worker: show your card, its parent results and comments.", parameters: { type: "object", properties: {} } },
+  {
+    name: "kanban_show",
+    description: "Kanban worker: show your card, its parent results and comments. Pass taskId to read another card's result and comments instead.",
+    parameters: { type: "object", properties: { taskId: { type: "string" } } },
+  },
   {
     name: "kanban_complete",
     description: "Kanban worker: mark your card done. Call this when the task is finished.",
@@ -698,8 +702,8 @@ const KANBAN_TOOL_SCHEMAS = [
   },
   {
     name: "kanban_comment",
-    description: "Kanban worker: add a comment to your card.",
-    parameters: { type: "object", properties: { body: { type: "string" } }, required: ["body"] },
+    description: "Kanban worker: add a comment to your card, or to another card when taskId is given.",
+    parameters: { type: "object", properties: { body: { type: "string" }, taskId: { type: "string" } }, required: ["body"] },
   },
   {
     name: "kanban_create",
@@ -725,7 +729,7 @@ const KANBAN_TOOL_SCHEMAS = [
       required: ["parentId", "childId"],
     },
   },
-  { name: "kanban_list", description: "List the user's Kanban cards (chat sessions only).", parameters: { type: "object", properties: {} } },
+  { name: "kanban_list", description: "List the user's Kanban cards.", parameters: { type: "object", properties: {} } },
   {
     name: "kanban_unblock",
     description: "Move a blocked Kanban card back to ready (chat sessions only).",
