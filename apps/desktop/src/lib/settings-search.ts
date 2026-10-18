@@ -374,6 +374,7 @@ export const SETTINGS_NAV: SettingsNavEntry[] = [
       "kanban.settings.maxRuntimeSeconds",
       "kanban.settings.maxAgentCardsPerSession",
       "kanban.settings.maxDailySpawns",
+      "kanban.settings.maxWorkersPerProject",
       "kanban.dispatcher.pause",
       "kanban.dispatcher.resume",
     ],

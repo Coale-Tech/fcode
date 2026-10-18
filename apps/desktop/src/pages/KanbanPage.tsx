@@ -38,6 +38,7 @@ import {
   commentCount,
   filterTasks,
   filtersActive,
+  formatDuration,
   projectName,
   rangeBetween,
   shortId,
@@ -150,6 +151,11 @@ function KanbanCard({
           </span>
         )}
         <span className="kanban-chip" title={task.projectPath}>{projectName(task.projectPath)}</span>
+        {task.agent && (
+          <span className="kanban-chip kanban-chip-agent" title={t("kanban.card.agent", { agent: task.agent })}>
+            {task.agent}
+          </span>
+        )}
         {progress && (
           <span
             className={cx("kanban-chip kanban-chip-progress", progress.done === progress.total && "kanban-chip-full")}
@@ -281,6 +287,29 @@ function KanbanColumn({
           </div>
         )}
       </div>
+    </section>
+  );
+}
+
+// ── Active-worker roster ──────────────────────────────────────────────────────
+
+function KanbanRoster({ board }: { board: KanbanBoard }) {
+  const { t } = useTranslation();
+  const running = board.tasks.filter((x) => x.status === "running" && !x.archived);
+  if (running.length === 0) return null;
+  return (
+    <section className="kanban-roster" aria-label={t("kanban.roster.title")}>
+      <strong className="kanban-roster-title">{t("kanban.roster.title")}</strong>
+      {running.map((task) => {
+        const run = board.runs.find((r) => r.taskId === task.id && r.endedAt == null);
+        return (
+          <span key={task.id} className="kanban-roster-item" title={task.title}>
+            <span className="kanban-roster-agent">{task.agent ?? t("kanban.roster.generic")}</span>
+            <span className="kanban-roster-task">{task.title}</span>
+            {run && <span className="kanban-roster-time">{formatDuration(Date.now() - run.startedAt)}</span>}
+          </span>
+        );
+      })}
     </section>
   );
 }
@@ -636,6 +665,8 @@ export function KanbanPage() {
             <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>{t("kanban.bulk.clear")}</Button>
           </div>
         )}
+
+        <KanbanRoster board={board} />
 
         <div className="kanban-board">
           {KANBAN_COLUMNS.map((col) => (

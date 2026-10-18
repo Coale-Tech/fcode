@@ -3416,6 +3416,7 @@ importConfirm: "가져온 확장은 에이전트 프로세스 안에서 에이�
       "comments": "댓글 {{count}}개",
       "links": "상위 {{parents}}개, 하위 {{children}}개. 하위 카드는 상위 카드가 완료될 때까지 대기합니다.",
       "byUser": "본인 작성",
+      "agent": "{{agent}} 에이전트에 배정됨",
       "byAgent": "에이전트 작성",
       "agoNow": "방금",
       "agoMinutes": "{{count}}분 전",
@@ -3432,6 +3433,9 @@ importConfirm: "가져온 확장은 에이전트 프로세스 안에서 에이�
       "created": "생성됨",
       "started": "시작됨",
       "completed": "완료됨",
+      "agent": "에이전트",
+      "agentRecord": "에이전트 실적",
+      "worktree": "워크트리",
       "blockReason": "차단 이유",
       "description": "설명",
       "edit": "편집",
@@ -3496,7 +3500,12 @@ importConfirm: "가져온 확장은 에이전트 프로세스 안에서 에이�
       "maxInProgress": "최대 진행 중 수",
       "maxRuntimeSeconds": "최대 실행 시간(초)",
       "maxAgentCardsPerSession": "세션당 최대 에이전트 카드 수",
+      "maxWorkersPerProject": "프로젝트당 최대 워커 수 (추가 워커는 git worktree 사용)",
       "maxDailySpawns": "일일 최대 생성 수"
+    },
+    "roster": {
+      "title": "활성 워커",
+      "generic": "범용 워커"
     },
     "sidebar": {
       "showWorkers": "워커 세션 표시",

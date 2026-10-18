@@ -270,3 +270,79 @@ test("a worker is released when its prompt fails", async () => {
   await state.runner.tick();
   assert.deepEqual(released, [state.sessions[0].id]);
 });
+
+// ── Agent routing + worktree workers ──────────────────────────────────────────
+
+const settingsWith = (extra) => () => ({
+  enabled: true, maxInProgress: 5, maxRuntimeSeconds: 1800, maxAgentCardsPerSession: 20, maxDailySpawns: 20, ...extra,
+});
+const taskOf = (state, id) => state.board.tasks.find((t) => t.id === id);
+
+test("a card is routed to the matching agent and the worker is told to delegate", async () => {
+  const state = makeRunner({
+    listAgents: async () => [{ name: "migrator", description: "runs database migrations", shadowed: false }],
+  });
+  const hit = addReadyTask(state, { title: "Run the migrator on staging", projectPath: "/p1" });
+  const miss = addReadyTask(state, { title: "Tidy the readme", projectPath: "/p2" });
+  await state.runner.tick();
+  assert.equal(taskOf(state, hit).agent, "migrator");
+  assert.equal(taskOf(state, miss).agent, undefined);
+  const prompt = (id) => state.prompts.find((p) => p.sessionId === taskOf(state, id).sessionId).content;
+  assert.match(prompt(hit), /agent: "migrator"/);
+  assert.doesNotMatch(prompt(miss), /Delegation/);
+});
+
+test("a second card in the same project waits when no worktree creator is wired", async () => {
+  const state = makeRunner({ getSettings: settingsWith({ maxWorkersPerProject: 2 }) });
+  addReadyTask(state, { projectPath: "/same" });
+  const second = addReadyTask(state, { projectPath: "/same" });
+  await state.runner.tick();
+  assert.equal(state.sessions.length, 1);
+  assert.equal(taskOf(state, second).status, "ready");
+});
+
+test("the second worker in a project runs in its own worktree", async () => {
+  const calls = [];
+  const state = makeRunner({
+    getSettings: settingsWith({ maxWorkersPerProject: 2 }),
+    createWorktree: async (repo, branch) => { calls.push({ repo, branch }); return { ok: true, path: "/wt/second" }; },
+  });
+  const first = addReadyTask(state, { projectPath: "/same" });
+  const second = addReadyTask(state, { projectPath: "/same" });
+  await state.runner.tick();
+  assert.equal(state.sessions.length, 2);
+  assert.deepEqual(state.sessions.map((s) => s.projectPath), ["/same", "/wt/second"]);
+  assert.deepEqual(calls, [{ repo: "/same", branch: `kanban/${second.slice(0, 8)}` }]);
+  assert.equal(taskOf(state, first).worktreePath, undefined);
+  assert.equal(taskOf(state, second).worktreePath, "/wt/second");
+  assert.match(state.prompts[1].content, /\*\*Working directory:\*\* \/wt\/second/);
+});
+
+test("a failed worktree leaves the card unclaimed and is reported once", async () => {
+  const errors = [];
+  const state = makeRunner({
+    getSettings: settingsWith({ maxWorkersPerProject: 2 }),
+    createWorktree: async () => ({ ok: false, error: "not a git repository" }),
+    report: (err) => errors.push(String(err)),
+  });
+  addReadyTask(state, { projectPath: "/same" });
+  const second = addReadyTask(state, { projectPath: "/same" });
+  await state.runner.tick();
+  assert.equal(state.sessions.length, 1);
+  assert.equal(taskOf(state, second).status, "ready");
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /worktree.*not a git repository/);
+});
+
+test("a retried card with a worktree runs there even as the only worker", async () => {
+  const calls = [];
+  const state = makeRunner({
+    createWorktree: async (repo, branch) => { calls.push({ repo, branch }); return { ok: true, path: "/wt/old" }; },
+  });
+  const id = addReadyTask(state, { projectPath: "/solo" });
+  state.board = { ...state.board, tasks: state.board.tasks.map((t) => (t.id === id ? { ...t, worktreePath: "/wt/old" } : t)) };
+  await state.runner.tick();
+  assert.deepEqual(calls, [{ repo: "/solo", branch: `kanban/${id.slice(0, 8)}` }]);
+  assert.deepEqual(state.sessions.map((s) => s.projectPath), ["/wt/old"]);
+  assert.equal(taskOf(state, id).worktreePath, "/wt/old");
+});

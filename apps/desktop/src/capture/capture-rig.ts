@@ -1358,7 +1358,7 @@ export function installCaptureRig(): CaptureRig {
       // Enable kanban and raven so rail + sidebar show all feature items.
       // Patch the IPC fetch so NavRail's useEffect cannot overwrite the enabled state.
       useAppStore.setState({ kanbanEnabled: true, ravenEnabled: true });
-      api.kanbanSettingsGet = async () => ({ settings: { enabled: true, maxInProgress: 3, maxRuntimeSeconds: 3600, maxAgentCardsPerSession: 10, maxDailySpawns: 20 } });
+      api.kanbanSettingsGet = async () => ({ settings: { enabled: true, maxInProgress: 3, maxWorkersPerProject: 1, maxRuntimeSeconds: 3600, maxAgentCardsPerSession: 10, maxDailySpawns: 20 } });
       api.ravenSettingsGet = async () => ({ settings: { enabled: true, url: "https://coale.frappe.cloud/raven" } });
       // Seed 3 notifications for bell badge.
       methods.seedNotifications(3);

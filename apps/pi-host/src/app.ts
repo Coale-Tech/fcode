@@ -320,13 +320,16 @@ export async function startPiHost(config: PiHostConfig, options: { log?: HostLog
     const sessionTaskId = (sessionId: string) =>
       kanbanBoard.runs.find((r) => r.sessionId === sessionId && r.status === "running")?.taskId;
 
-    sidecar.setLocalTool("kanban_show", async ({ sessionId }) => {
-      const taskId = sessionTaskId(sessionId);
-      if (!taskId) return kbErr("kanban_show: only callable from a kanban worker session");
+    sidecar.setLocalTool("kanban_show", async ({ sessionId, args }) => {
+      const own = sessionTaskId(sessionId);
+      if (!own) return kbErr("kanban_show: only callable from a kanban worker session");
+      const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+      const taskId = String(a.taskId ?? "").trim() || own;
       const task = kanbanBoard.tasks.find((t) => t.id === taskId);
       if (!task) return kbErr("kanban_show: task not found");
-      const parents = kanbanBoard.links.filter((l) => l.childId === taskId).map((l) => kanbanBoard.tasks.find((t) => t.id === l.parentId)).filter((t) => t != null);
       const comments = kanbanBoard.comments.filter((c) => c.taskId === taskId);
+      if (taskId !== own) return { ok: true, content: JSON.stringify({ task, comments }) };
+      const parents = kanbanBoard.links.filter((l) => l.childId === taskId).map((l) => kanbanBoard.tasks.find((t) => t.id === l.parentId)).filter((t) => t != null);
       return { ok: true, content: JSON.stringify({ task, parents, comments }) };
     });
 
@@ -350,11 +353,13 @@ export async function startPiHost(config: PiHostConfig, options: { log?: HostLog
     });
 
     sidecar.setLocalTool("kanban_comment", async ({ sessionId, args }) => {
-      const taskId = sessionTaskId(sessionId);
-      if (!taskId) return kbErr("kanban_comment: only callable from a kanban worker session");
+      const own = sessionTaskId(sessionId);
+      if (!own) return kbErr("kanban_comment: only callable from a kanban worker session");
       const a = (args && typeof args === "object" ? args : {}) as Record<string, unknown>;
+      const taskId = String(a.taskId ?? "").trim() || own;
       const body = String(a.body ?? "").trim();
       if (!body) return kbErr("kanban_comment: body required");
+      if (!kanbanBoard.tasks.some((t) => t.id === taskId && !t.archived)) return kbErr("kanban_comment: task not found");
       updateKb(kanbanAddComment(kanbanBoard, taskId, `worker:${sessionId.slice(0, 8)}`, body));
       return { ok: true, content: "Comment added." };
     });
@@ -386,8 +391,7 @@ export async function startPiHost(config: PiHostConfig, options: { log?: HostLog
       return { ok: true, content: "Link added." };
     });
 
-    sidecar.setLocalTool("kanban_list", async ({ sessionId }) => {
-      if (sessionTaskId(sessionId)) return kbErr("kanban_list: use kanban_show from a worker session");
+    sidecar.setLocalTool("kanban_list", async () => {
       return { ok: true, content: JSON.stringify(kanbanBoard.tasks.filter((t) => !t.archived)) };
     });
 

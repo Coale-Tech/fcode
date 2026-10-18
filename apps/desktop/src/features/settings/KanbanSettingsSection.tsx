@@ -52,6 +52,13 @@ export function KanbanSettingsSection() {
             onBlur={(e) => void save({ maxInProgress: Number(e.target.value) })}
           />
         </SettingsRow>
+        <SettingsRow title={t("kanban.settings.maxWorkersPerProject")}>
+          <Input
+            type="number" min={1} max={5}
+            defaultValue={settings.maxWorkersPerProject}
+            onBlur={(e) => void save({ maxWorkersPerProject: Number(e.target.value) })}
+          />
+        </SettingsRow>
         <SettingsRow title={t("kanban.settings.maxRuntimeSeconds")}>
           <Input
             type="number" min={60} max={86400}

@@ -19,6 +19,10 @@ export type KanbanTask = {
   priority: number;
   projectPath: string;
   modelOverride?: string;
+  /** Agent name the router chose for this card; undefined = generic worker. */
+  agent?: string;
+  /** Git worktree this run was given, when it is not the first worker in projectPath. */
+  worktreePath?: string;
   createdBy: KanbanCreator;
   createdAt: number;
   startedAt?: number;
@@ -213,7 +217,13 @@ export function recomputeReady(board: KanbanBoard): KanbanBoard {
 // ── claim ─────────────────────────────────────────────────────────────────────
 
 /** Claim a ready task: ready → running; opens a run row. */
-export function claimTask(board: KanbanBoard, taskId: string, sessionId: string, runId: string): KanbanBoard {
+export function claimTask(
+  board: KanbanBoard,
+  taskId: string,
+  sessionId: string,
+  runId: string,
+  meta?: { agent?: string; worktreePath?: string },
+): KanbanBoard {
   const t = task(board, taskId);
   if (!t || t.status !== "ready") return board;
 
@@ -232,6 +242,9 @@ export function claimTask(board: KanbanBoard, taskId: string, sessionId: string,
     sessionId,
     currentRunId: runId,
     startedAt: Date.now(),
+    // Per-run routing: overwritten on every claim so a re-claim never inherits a stale worktree/agent.
+    agent: meta?.agent,
+    worktreePath: meta?.worktreePath,
     // consecutiveFailures accumulates across runs; only completeTask resets it
   }));
   next = { ...next, runs: [...next.runs, run] };

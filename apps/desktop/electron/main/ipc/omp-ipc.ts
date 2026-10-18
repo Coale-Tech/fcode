@@ -302,7 +302,7 @@ async function readAgentDir(dir: string, source: OmpAgentSource): Promise<OmpAge
  * Precedence: project > user > fcode > omp bundled.
  * Agents with the same name from lower-priority sources are marked `shadowed`.
  */
-async function listEffectiveAgents(projectPath: string | null): Promise<OmpAgentListResult> {
+export async function listEffectiveAgents(projectPath: string | null): Promise<OmpAgentListResult> {
   const fcodeAgentsDir = join(appResourcesPath(), "fcode-agents", "agents");
 
   const [projectAgents, userAgents, fcodeAgents] = await Promise.all([
@@ -323,6 +323,31 @@ async function listEffectiveAgents(projectPath: string | null): Promise<OmpAgent
       return agent;
     }),
   };
+}
+
+/**
+ * Add a git worktree under ~/.omp/wt/. With `create` (kanban workers) it is idempotent per branch:
+ * a live worktree already on `branch` is reused, else the worktree is added, creating the branch
+ * if missing — so a retried card resumes its own worktree instead of colliding with it.
+ */
+export async function addWorktree(repoPath: string, branch: string, create = false): Promise<OmpWorktreeAddResult> {
+  try {
+    if (create) {
+      const { stdout } = await execFileP("git", ["-C", repoPath, "worktree", "list", "--porcelain"], { timeout: 10_000 });
+      for (const block of stdout.split("\n\n")) {
+        const lines = block.split("\n");
+        const live = lines.includes(`branch refs/heads/${branch}`) && !lines.some((l) => l.startsWith("prunable"));
+        const existing = live ? lines.find((l) => l.startsWith("worktree "))?.slice(9) : undefined;
+        if (existing) return { ok: true, path: existing };
+      }
+    }
+    const wtPath = join(homedir(), ".omp", "wt", `${branch.replace(/[^a-zA-Z0-9._-]/g, "-")}-${Date.now()}`);
+    const branchExists = !create || await execFileP("git", ["-C", repoPath, "rev-parse", "--verify", "--quiet", `refs/heads/${branch}`]).then(() => true, () => false);
+    await execFileP("git", ["-C", repoPath, "worktree", "add", ...(branchExists ? [wtPath, branch] : ["-b", branch, wtPath])], { timeout: 30_000 });
+    return { ok: true, path: wtPath };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
 }
 
 
@@ -726,16 +751,7 @@ export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpc
     const branch   = typeof input?.branch   === "string" ? input.branch.trim()   : "";
     if (!repoPath) invalid("repoPath required");
     if (!branch)   invalid("branch required");
-    const wtName = `${branch.replace(/[^a-zA-Z0-9._-]/g, "-")}-${Date.now()}`;
-    const wtPath = join(homedir(), ".omp", "wt", wtName);
-    try {
-      await execFileP("git", ["-C", repoPath, "worktree", "add", wtPath, branch], {
-        timeout: 30_000,
-      });
-      return { ok: true, path: wtPath };
-    } catch (e) {
-      return { ok: false, error: e instanceof Error ? e.message : String(e) };
-    }
+    return addWorktree(repoPath, branch);
   });
 
 

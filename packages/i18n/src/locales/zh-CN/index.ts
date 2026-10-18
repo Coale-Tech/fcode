@@ -3367,6 +3367,7 @@ sklm: {
       "comments": "{{count}} 条评论",
       "links": "{{parents}} 个父级，{{children}} 个子级。子卡片需等待父卡片完成。",
       "byUser": "由你",
+      "agent": "已分配给 {{agent}} 代理",
       "byAgent": "由代理",
       "agoNow": "刚刚",
       "agoMinutes": "{{count}} 分钟前",
@@ -3383,6 +3384,9 @@ sklm: {
       "created": "创建时间",
       "started": "开始时间",
       "completed": "完成时间",
+      "agent": "代理",
+      "agentRecord": "代理战绩",
+      "worktree": "工作树",
       "blockReason": "阻塞原因",
       "description": "描述",
       "edit": "编辑",
@@ -3447,7 +3451,12 @@ sklm: {
       "maxInProgress": "最大进行中数量",
       "maxRuntimeSeconds": "最大运行时长（秒）",
       "maxAgentCardsPerSession": "每会话最大代理卡片数",
+      "maxWorkersPerProject": "每项目最大工作者数（额外工作者使用 git worktree）",
       "maxDailySpawns": "每日最大启动次数"
+    },
+    "roster": {
+      "title": "活跃工作者",
+      "generic": "通用工作者"
     },
     "sidebar": {
       "showWorkers": "显示工作会话",

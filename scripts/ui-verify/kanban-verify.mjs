@@ -92,7 +92,7 @@ async function waitReady(page) {
 async function shot(page, name) {
   await page.waitForTimeout(300);
   const path = join(SHOTS_DIR, `${name}.png`);
-  await page.screenshot({ path, fullPage: false });
+  await page.screenshot({ path, fullPage: false, animations: "disabled" });
   console.log(`  📸 ${name}`);
   if (page.crashes.length) throw new Error(`crash: ${page.crashes[0]}`);
   return path;
