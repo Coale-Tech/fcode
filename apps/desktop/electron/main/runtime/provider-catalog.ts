@@ -316,6 +316,7 @@ export function createProviderCatalogRuntime({
     if (!target) {
       return {
         ...session,
+        ompFallbackReady: true,
         supportsReasoning: false,
         supportsVision: false,
         supportedThinkingLevels: ["off"],

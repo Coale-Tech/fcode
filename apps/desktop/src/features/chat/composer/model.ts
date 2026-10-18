@@ -1,4 +1,5 @@
 import type {
+  ImageGenerationBinding,
   ModelInfo,
   Mode,
   PermissionMode,
@@ -7,6 +8,7 @@ import type {
   ThinkingLevel,
 } from "@pi-desktop/shared";
 import {
+  isImageGenerationModel,
   isSessionThinkingLevel,
   PERMISSION_MODES,
   sessionThinkingMenuLevels,
@@ -152,3 +154,41 @@ export function cssPixels(value: string): number {
 }
 
 export { sessionThinkingMenuLevels };
+
+/**
+ * Readiness rule for the composer send button and submit guard.
+ *
+ * - Native (pi-native) sessions: ready when `capabilities.canPrompt` is set.
+ * - Sessions with a configured Fcode provider: ready when the provider is enabled,
+ *   a model is selected, the model is not an image-generation model, and the
+ *   provider has credentials.
+ * - Sessions with no Fcode provider (`provider === undefined`): ready when the
+ *   main process flagged the session as `ompFallbackReady` — meaning the omp
+ *   sidecar will resolve its own model and credentials.  A brand-new draft
+ *   (no session yet) never carries this flag and correctly shows the
+ *   add-provider affordance.
+ */
+export function isComposerModelReady({
+  nativeSession,
+  canPrompt,
+  provider,
+  modelId,
+  ompFallbackReady,
+  imageGenerationCandidates,
+}: {
+  nativeSession: boolean;
+  canPrompt?: boolean;
+  provider?: Pick<ProviderPublic, "enabled" | "id" | "hasSecret" | "authKind"> | null;
+  modelId?: string;
+  ompFallbackReady?: boolean;
+  imageGenerationCandidates: readonly ImageGenerationBinding[];
+}): boolean {
+  if (nativeSession) return canPrompt === true;
+  if (!provider) return ompFallbackReady === true;
+  return (
+    provider.enabled &&
+    !!modelId &&
+    !isImageGenerationModel(imageGenerationCandidates, provider.id, modelId) &&
+    (provider.hasSecret || provider.authKind === "none")
+  );
+}
