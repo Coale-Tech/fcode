@@ -293,7 +293,7 @@
   width: 20px; height: 20px; border-radius: 4px;
   background: var(--surface-gray-10);
   display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; color: #fff;
+  flex-shrink: 0; color: var(--ink-base);
 }
 .shell-navbar-brand-name { white-space: nowrap; }
 
@@ -314,9 +314,9 @@
   width: 6px; height: 6px; border-radius: 50%;
   flex-shrink: 0; background: var(--ink-gray-4);
 }
-.shell-navbar-bench-dot[data-bench-status="running"] { background: #16a34a; }
-.shell-navbar-bench-dot[data-bench-status="starting"] { background: #ca8a04; }
-.shell-navbar-bench-dot[data-bench-status="failed"]   { background: #dc2626; }
+.shell-navbar-bench-dot[data-bench-status="running"] { background: var(--ds-success); }
+.shell-navbar-bench-dot[data-bench-status="starting"] { background: var(--ds-warning); }
+.shell-navbar-bench-dot[data-bench-status="failed"]   { background: var(--ds-danger); }
 
 /* ── Avatar — D1-shell.html:133, D.css:307-320 ── */
 .shell-navbar-avatar {

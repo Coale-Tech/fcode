@@ -194,21 +194,26 @@ export function PermissionCard({
           )}
         </div>
       ) : null}
-      {argBlocks.length > 0 ? (
-        <div className="permission-card-args">
-          <ToolDetailBlocks blocks={argBlocks} />
+      <details className="permission-card-details">
+        <summary className="permission-card-details-summary">
+          {t("permission.details")}
+        </summary>
+        {argBlocks.length > 0 ? (
+          <div className="permission-card-args">
+            <ToolDetailBlocks blocks={argBlocks} />
+          </div>
+        ) : null}
+        <div className="permission-card-meta">
+          <span title={workspace}>
+            {t("permission.workspace", {
+              workspace: workspace || t("permission.temporarySession"),
+            })}
+          </span>
+          <span role="timer">
+            {t("permission.countdown", { seconds: secondsLeft })}
+          </span>
         </div>
-      ) : null}
-      <div className="permission-card-meta">
-        <span title={workspace}>
-          {t("permission.workspace", {
-            workspace: workspace || t("permission.temporarySession"),
-          })}
-        </span>
-        <span role="timer">
-          {t("permission.countdown", { seconds: secondsLeft })}
-        </span>
-      </div>
+      </details>
       <div className="permission-card-actions">
         <div className="permission-action-item">
           <Button

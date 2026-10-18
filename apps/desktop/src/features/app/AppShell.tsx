@@ -338,11 +338,12 @@ export function AppShell() {
                 )}
 
                 <Suspense fallback={<RoutePending />}>
-                  {page === "settings" && navLayout === "island" ? (
+                  {navLayout === "island" && page === "settings" ? (
                     <div className="route-surface route-page">
                       <SettingsPage />
                     </div>
-                  ) : page === "pulls" ? (
+                  ) : null}
+                  {page === "pulls" ? (
                     <div className="route-surface route-page">
                       <PullRequestsPage />
                     </div>

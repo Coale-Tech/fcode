@@ -312,11 +312,6 @@ export function WorkPanel({
   const suppressedTabClickPointerIdsRef = useRef<Set<number>>(new Set());
   const tabButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const newTabButtonRef = useRef<HTMLButtonElement | null>(null);
-  const [draggingTabId, setDraggingTabId] = useState<string | null>(null);
-  const [dropIndicator, setDropIndicator] = useState<{
-    tabId: string;
-    insertAfter: boolean;
-  } | null>(null);
   const [nativeSurfaceReadyForExit, setNativeSurfaceReadyForExit] =
     useState(false);
 
@@ -390,8 +385,6 @@ export function WorkPanel({
       }
       tabReorderState.current = null;
     }
-    setDraggingTabId(null);
-    setDropIndicator(null);
     document.documentElement.removeAttribute("data-work-panel-tab-reordering");
   }, []);
 
@@ -490,14 +483,12 @@ export function WorkPanel({
           : null;
         if (!target || !strip?.contains(target)) {
           state.targetTabId = null;
-          setDropIndicator(null);
           return;
         }
 
         const targetTabId = target.dataset.workPanelTabId;
         if (!targetTabId || targetTabId === state.sourceTabId) {
           state.targetTabId = null;
-          setDropIndicator(null);
           return;
         }
         const rect = target.getBoundingClientRect();
@@ -508,7 +499,6 @@ export function WorkPanel({
         );
         state.targetTabId = targetTabId;
         state.insertAfter = insertAfter;
-        setDropIndicator({ tabId: targetTabId, insertAfter });
       };
 
       const startAutoScroll = (state: WorkPanelTabReorderState) => {
@@ -579,7 +569,6 @@ export function WorkPanel({
             "data-work-panel-tab-reordering",
             "true",
           );
-          setDraggingTabId(state.sourceTabId);
         }
 
         moveEvent.preventDefault();

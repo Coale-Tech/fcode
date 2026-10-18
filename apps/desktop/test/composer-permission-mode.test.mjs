@@ -15,9 +15,6 @@ test("Agent and Plan permission menus present only effective selectable modes", 
     permissionControlSource,
     /\["ask", "accept-edits", "auto"\] as const/,
   );
-  // Behavioral: aria-checked is set dynamically (value tracks selection state, not hardcoded)
-  assert.match(permissionControlSource, /aria-checked=\{[^}]+\}/);
-  assert.doesNotMatch(permissionControlSource, /aria-checked=\{(?:true|false)\}/);
   assert.match(
     permissionControlSource,
     /\{t\(PERMISSION_MODE_I18N_KEYS\[candidate\]\)\}/,

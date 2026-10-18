@@ -107,14 +107,16 @@ export function BuildPage() {
     const poll = async () => {
       if (cancelled) return;
       // Capture-rig override: mirrors the same pattern as BenchPage/use-bench-context.
-      const override = window.__PI_BENCH_OVERRIDE__;
-      if (override !== undefined && override !== null) {
-        if (!cancelled) {
-          setBenchStatus(override.status as BenchStatus);
-          setBenchPath(override.benchPath);
-          setSite(override.site);
+      if (window.__PI_CAPTURE__) {
+        const override = window.__PI_BENCH_OVERRIDE__;
+        if (override !== undefined && override !== null) {
+          if (!cancelled) {
+            setBenchStatus(override.status as BenchStatus);
+            setBenchPath(override.benchPath);
+            setSite(override.site);
+          }
+          return;
         }
-        return;
       }
       try {
         const s = await invoke<{ status: BenchStatus; benchPath: string | null; site: string | null }>(IPC.invoke.benchStatus);

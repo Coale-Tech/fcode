@@ -87,7 +87,7 @@ export function ShellNavbar({
             <NavTabs />
           </>
         ) : (
-          <nav className="shell-navbar-breadcrumb" aria-label="Location">
+          <nav className="shell-navbar-breadcrumb" aria-label={t("nav.location")}>
             <span className="shell-navbar-crumb-root">{t("app.shellName")}</span>
             <span className="shell-navbar-crumb-sep" aria-hidden="true">/</span>
             <span className="shell-navbar-crumb-page">{page === "chat" && Boolean(onboarding?.showChecklist) ? t("onboarding.welcomeBreadcrumb") : t(PAGE_LABEL_KEY[page])}</span>

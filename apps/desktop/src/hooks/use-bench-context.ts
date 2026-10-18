@@ -11,7 +11,9 @@ import {
  * Capture override: set `window.__PI_BENCH_OVERRIDE__` to a bench-status data object. */
 export function useBenchContext(): WorkspaceBarState {
   const [state, setState] = useState<WorkspaceBarState>(() => {
-    const override = (typeof window !== "undefined" ? window.__PI_BENCH_OVERRIDE__ : undefined) ?? undefined;
+    const override = typeof window !== "undefined" && window.__PI_CAPTURE__
+      ? window.__PI_BENCH_OVERRIDE__ ?? undefined
+      : undefined;
     return override ? formatWorkspaceBarState(override) : { kind: "empty" };
   });
 
@@ -25,7 +27,7 @@ export function useBenchContext(): WorkspaceBarState {
       const ev = e as CustomEvent<BenchStatusInput>; // Event→CustomEvent: unexpressible DOM library type
       setState(formatWorkspaceBarState(ev.detail));
     };
-    window.addEventListener("pi-bench-override", onOverride);
+    if (window.__PI_CAPTURE__) window.addEventListener("pi-bench-override", onOverride);
 
     const poll = async () => {
       if (cancelled) return;
@@ -61,7 +63,7 @@ export function useBenchContext(): WorkspaceBarState {
       clearInterval(intervalId);
       document.removeEventListener("visibilitychange", onVisible);
       document.removeEventListener("pi:bench-update", onBenchUpdate);
-      window.removeEventListener("pi-bench-override", onOverride);
+      if (window.__PI_CAPTURE__) window.removeEventListener("pi-bench-override", onOverride);
     };
   }, []);
 

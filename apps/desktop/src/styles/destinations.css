@@ -379,7 +379,7 @@
   height: 20px; padding: 0 8px;
   border-radius: 10px;
   background: var(--surface-gray-2); border: 1px solid var(--d-border);
-  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-family: var(--font-mono);
   font-size: var(--d-text-xs); color: var(--ink-gray-6);
 }
 /* PR rows (fragment.html:159-185: d-list-row, padding 8px 10px, centred) */
@@ -410,13 +410,13 @@
 .pr-row-body { flex: 2; min-width: 0; }
 .pr-row-title { display: flex; align-items: center; gap: 6px; font-size: var(--d-text); font-weight: 500; color: var(--ink-gray-9); flex-wrap: nowrap; min-width: 0; }
 .pr-row.selected .pr-row-title { color: var(--da-txt); }
-.pr-num { font-family: ui-monospace, SFMono-Regular, monospace; font-size: var(--d-text-xs); color: var(--ink-gray-4); font-weight: 400; flex-shrink: 0; }
+.pr-num { font-family: var(--font-mono); font-size: var(--d-text-xs); color: var(--ink-gray-4); font-weight: 400; flex-shrink: 0; }
 .pr-row.selected .pr-num { color: var(--da-txt); opacity: .7; }
 .pr-row-title .pr-row-pill { flex-shrink: 0; height: var(--d-pill-sm-h); font-size: var(--d-pill-sm-text); }
 .pr-row-meta { font-size: var(--d-text-xs); color: var(--ink-gray-4); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .pr-row-actions { display: flex; gap: 4px; align-items: center; flex-shrink: 0; flex: 0 0 var(--d-pr-col-actions); justify-content: flex-end; }
 /* Branch / CI / Author column cells — match d-list-head widths */
-.pr-row-branch { flex: 0 0 var(--d-pr-col-branch); font-family: ui-monospace, SFMono-Regular, monospace; font-size: var(--d-text-xs); color: var(--ink-gray-5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; align-self: center; }
+.pr-row-branch { flex: 0 0 var(--d-pr-col-branch); font-family: var(--font-mono); font-size: var(--d-text-xs); color: var(--ink-gray-5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; align-self: center; }
 .pr-row-ci    { flex: 0 0 var(--d-pr-col-ci);     font-size: var(--d-text-xs); color: var(--ink-gray-4); align-self: center; }
 .pr-row-author{ flex: 0 0 var(--d-pr-col-author);  font-size: var(--d-text-xs); color: var(--ink-gray-5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; align-self: center; }
 .pr-row.selected .pr-row-branch,
@@ -425,7 +425,7 @@
 .pr-detail-label { font-size: var(--d-text-xs); font-weight: 500; color: var(--ink-gray-4); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
 .pr-detail-value { font-size: var(--d-text); color: var(--ink-gray-8); line-height: 1.45; }
 /* Branch flow */
-.pr-branch-flow { display: flex; align-items: center; gap: 6px; font-family: ui-monospace, SFMono-Regular, monospace; font-size: var(--d-text-sm); color: var(--ink-gray-7); }
+.pr-branch-flow { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--d-text-sm); color: var(--ink-gray-7); }
 .pr-branch-chip { background: var(--surface-gray-2); border: 1px solid var(--d-border); border-radius: var(--d-r-sm); padding: 1px 6px; }
 /* CI badge in PR row (✓ 3/3, ● 2/3, ✗) */
 .pr-ci-badge { display: inline-flex; align-items: center; gap: 3px; font-size: var(--d-text-xs); font-weight: 500; }
@@ -450,7 +450,7 @@
 .pr-check-row.pr-check-failure .pr-check-icon { color: var(--ink-red-8); }
 .pr-check-row.pr-check-pending .pr-check-icon { color: var(--ink-amber-8); }
 /* PR row sub-line (branch+author meta below title) */
-.pr-row-sub { font-family: ui-monospace, SFMono-Regular, monospace; font-size: var(--d-text-xs); color: var(--ink-gray-4); overflow-wrap: anywhere; margin-top: 2px; }
+.pr-row-sub { font-family: var(--font-mono); font-size: var(--d-text-xs); color: var(--ink-gray-4); overflow-wrap: anywhere; margin-top: 2px; }
 .pr-row.selected .pr-row-sub { color: var(--da-txt); opacity: .8; }
 /* "Updated just now" timestamp in filter bar */
 .pr-updated-meta { margin-left: auto; font-size: var(--d-text-xs); color: var(--ink-gray-4); white-space: nowrap; }
@@ -485,7 +485,7 @@
 .pr-author-row .pr-detail-value { font-size: var(--d-text-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* Inline code in PR description */
 .pr-inline-code {
-  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-family: var(--font-mono);
   font-size: var(--d-text-xs);
   background: var(--surface-gray-2); border: 1px solid var(--d-border);
   border-radius: 3px; padding: 0 4px;

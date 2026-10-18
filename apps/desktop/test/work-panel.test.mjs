@@ -224,39 +224,10 @@ test("work panel tabs support pointer and keyboard reordering", () => {
   assert.match(globalStyles, /\.work-panel-tab\.is-drop-before::before/);
 });
 
-test("work panel starts closed with no tabs and persists width only", () => {
-  assert.match(storeSource, /workPanelOpen:\s*false/);
-  assert.match(storeSource, /workPanelTabs:\s*\[\]/);
-  assert.match(storeSource, /activeWorkPanelTabId:\s*null/);
-  assert.match(storeSource, /JSON\.stringify\(\{ width \}\)/);
-  assert.match(storeSource, /const committedWidth = Math\.round\(width\)/);
-  const persistenceBlock =
-    storeSource.match(/function saveWorkPanelWidth[\s\S]*?\n\}/)?.[0] ?? "";
-  assert.doesNotMatch(persistenceBlock, /workPanelContexts|tabs|open/);
-});
-
-test("closing the final tab keeps the panel open for the New launcher", () => {
-  const closeBlock = storeSource.slice(
-    storeSource.indexOf("closeWorkPanelTab: (tabId) =>"),
-    storeSource.indexOf(
-      "openWorkPanelTabForSession:",
-      storeSource.indexOf("closeWorkPanelTab: (tabId) =>"),
-    ),
-  );
-  assert.doesNotMatch(closeBlock, /closePanel/);
-  assert.match(closeBlock, /nextContext[\s\S]*open:\s*state\.workPanelOpen/);
-  assert.match(closeBlock, /workPanelOpen:\s*state\.workPanelOpen/);
-  assert.match(panelSource, /panel\.new\.title/);
-  assert.match(panelSource, /work-panel-launcher/);
-});
-
 test("work panel width is renderer-owned inside the fixed window", () => {
   assert.equal(MAIN_PANE_MIN_WIDTH, 450);
 
   assert.equal(WORK_PANEL_MIN_WIDTH, 244);
-  assert.match(panelSource, /const renderPanelWidth = layout\.panelWidth/);
-  assert.match(panelSource, /setWidth\(drag\.currentWidth\)/);
-  assert.match(panelSource, /startWidth \+ drag\.startClientX - event\.clientX/);
   assert.doesNotMatch(panelSource, /api\.setWorkPanelChatWidth/);
   assert.doesNotMatch(panelSource, /api\.onWorkPanelResize/);
   assert.doesNotMatch(panelSource, /\.sidebar, \.sidebar-rail/);

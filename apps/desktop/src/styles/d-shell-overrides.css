@@ -310,12 +310,34 @@
 }
 
 /* ── PermissionCard = D.css .d-approval-box ── */
-.permission-card-meta,
-.permission-card-prompt,
-.permission-card-args,
-.permission-card-timer-bar,
-.permission-risk,
-.permission-action-hint { display: none !important; }
+/* timer bar: 2px amber stripe */
+.permission-card-timer-bar {
+  height: 2px;
+  background: var(--amber-400);
+  transition: width 1s linear;
+  border-radius: var(--d-r-ctrl) var(--d-r-ctrl) 0 0;
+}
+/* prompt: compact D text */
+.permission-card-prompt {
+  margin-top: 0;
+  font-size: var(--d-text-sm);
+  color: var(--ink-amber-9);
+}
+/* risk badge: smaller pill */
+.permission-risk { padding: 1px 5px; font-size: 10px; }
+/* disclosure: args + workspace + countdown one click away */
+.permission-card-details { margin: 2px 0 0; }
+.permission-card-details-summary {
+  font-size: var(--d-text-sm);
+  color: var(--ink-amber-8);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+.permission-card-details-summary::-webkit-details-marker { display: none; }
+.permission-card-args { margin-top: 4px; max-height: 120px; }
+.permission-card-meta { margin-top: 4px; gap: 6px; font-size: var(--d-text-sm); }
+.permission-action-hint { font-size: 10px; }
 .permission-card,
 .permission-card:is(.risk-high, .risk-medium, .risk-low) {
   display: flex;

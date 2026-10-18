@@ -125,7 +125,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   // Capture mode: load rig-seeded session entries for the SESSIONS palette section.
   useEffect(() => {
     if (!open) return;
-    setPaletteSessions(window.__PI_PALETTE_SESSIONS__ ?? []);
+    setPaletteSessions(window.__PI_CAPTURE__ ? (window.__PI_PALETTE_SESSIONS__ ?? []) : []);
   }, [open]);
 
   // Capture mode: load rig-seeded file entries for the FILES palette section.
@@ -143,23 +143,26 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
       setPaletteBenches(window.__PI_PALETTE_BENCHES__ ?? []);
       return;
     }
-    // Normal mode: load real bench list from IPC.
+    // Normal mode: load real bench list from IPC; derive running status from bench-status IPC.
     const bridge = window.piDesktop;
     if (!bridge) return;
     type BenchItem = { id: string; path: string };
     type BenchListResult = { benches: BenchItem[] };
-    bridge
-      .invoke<BenchListResult>(IPC.invoke.benchList)
-      .then((res) => {
-        if (!res?.ok) return;
-        const running = window.__PI_BENCH_OVERRIDE__?.benchPath ?? null;
-        setPaletteBenches(
-          (res.data as BenchListResult).benches.map((b: BenchItem) => ({
-            id: b.id,
-            path: b.path,
-            status: (running === b.path ? "running" : "stopped") as "running" | "stopped",
-          })),
-        );
+    type BenchStatusResult = { benchPath: string | null; status: string };
+    void bridge.invoke<BenchListResult>(IPC.invoke.benchList)
+      .then((listRes) => {
+        if (!listRes?.ok) return;
+        return bridge.invoke<BenchStatusResult>(IPC.invoke.benchStatus)
+          .then((statusRes) => {
+            const running = statusRes?.ok ? (statusRes.data as BenchStatusResult).benchPath : null;
+            setPaletteBenches(
+              (listRes.data as BenchListResult).benches.map((b: BenchItem) => ({
+                id: b.id,
+                path: b.path,
+                status: (running === b.path ? "running" : "stopped") as "running" | "stopped",
+              })),
+            );
+          });
       })
       .catch(() => undefined);
   }, [open]);
@@ -407,7 +410,11 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
     if (commandIndex >= 0 && commandIndex < commandHits.length) {
       return void runCommand(commandHits[commandIndex]);
     }
-    // Bench hits: switch bench context (TODO: wire to IPC when bench-switch lands).
+    const benchIndex = active - benchBase;
+    if (benchIndex >= 0 && benchIndex < benchHits.length) {
+      setPage("bench");
+      onClose();
+    }
   };
 
   return (
@@ -732,7 +739,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
                     aria-selected={active === optionIndex}
                     className={`search-item ${active === optionIndex ? "active" : ""}`}
                     onMouseEnter={() => setActive(optionIndex)}
-                    onClick={() => {}}
+                    onClick={() => { setPage("bench"); onClose(); }}
                   >
                     <span
                       className={`search-bench-dot ${bench.status === "running" ? "on" : "off"}`}

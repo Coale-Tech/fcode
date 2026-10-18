@@ -1441,14 +1441,14 @@ hardcoded in component CSS.
 
 | Token | Light | Dark | Usage |
 |-------|-------|------|-------|
-| `--da` | `#2578ab` *(approved deviation)* | `#2578ab` | Primary accent |
+| `--da` | `#2578ab` | `#42a2d9` | Primary accent (FileBird blue) |
 | `--da-sub` | alpha tint of `--da` | alpha tint | Active-item background fill |
-| `--da-txt` | `#ffffff` | `#0a1f2e` *(approved deviation)* | Text on accent fill |
+| `--da-txt` | `#165a88` | `#92d2f8` | Text on selection tint (`--da-sub`) |
 | `--da-bdr` | alpha tint | alpha tint | Accent ring / focus outline |
 | `--d-border` | `#e5e7eb` | `#2a2a2a` | Panel/card separator |
 | `--d-border-ctrl` | `#d1d5db` | `#3a3a3a` | Control border (inputs, selects) |
 | `--d-canvas-bg` | `#f0f2f5` | `#111111` | App canvas behind panels |
-| `--d-r-ctrl` | `6px` | `6px` | Control border-radius |
+| `--d-r-ctrl` | `8px` | `8px` | Control border-radius |
 | `--d-text` | `13px` | `13px` | Base text size in shell chrome |
 | `--d-navbar-h` | `48px` | `48px` | Shell navbar height |
 | `--surface-elevation-1` | `#ffffff` | `#1c1c1c` | Panel / settings card surface |
@@ -1457,10 +1457,11 @@ hardcoded in component CSS.
 | `--ink-gray-5` | `#6b7280` | `#8a8a8a` | Secondary / description text |
 | `--ink-gray-4` | `#9ca3af` | `#666666` | Placeholder / icon fill |
 
-> **Approved deviations from kit-d/D.css defaults**: light accent `--da = #2578ab`
-> (instead of default violet `#6d28d9`); dark on-accent `--da-txt = #0a1f2e`
-> (instead of white); dark switch knob colour follows `--da-txt`.
-> All other tokens match kit-d/D.css verbatim.
+> **Token notes**: The Espresso violet ramp is remapped to FileBird blue; no violet
+> default is in use. Dark accent `--da = #42a2d9`; `--da-txt` is text on selection tint
+> (`--da-sub`), not on the solid accent fill — on-accent fill text uses
+> `--ds-accent-foreground` (`#ffffff` light / `#0a1f2e` dark, approved deviation for
+> 5.93:1 contrast). Dark switch knob on-state follows `--ds-accent-foreground`.
 
 ### Layout variants
 
@@ -1559,13 +1560,17 @@ Key `window.__PI_DESKTOP__` methods relevant to settings and shell fixtures:
 
 Design reference: `pages-d/onboarding/variant-D1.png`, `variant-D2.png`, `variant-D3.png`.
 
-The capture rig's `seedOnboardingChecklist()` triggers the checklist overlay (`.ob-wrap`) visible on the chat surface. The full wizard (Step 1 of 4, Back / Continue → buttons, API key field with "Verify") requires real first-run state: no omp settings present and `onboarding.step` driven by the wizard router. The checklist overlay is the closest capture-achievable approximation.
+A capture of the full Step 1 wizard (Step 1 of 4, Back / Continue → buttons, API key field
+with "Verify") exists at the design references above. The capture rig's
+`seedOnboardingChecklist()` can also trigger the checklist overlay (`.ob-wrap`) as an
+alternative entry point for screenshot purposes.
 
-#### Steps 2–4 — NEEDS DESIGN REVIEW
+#### Steps 2–4 and legacy migration dialog — NEEDS DESIGN REVIEW
 
-> **⚠ NEEDS DESIGN REVIEW**: No approved design mock exists for onboarding steps 2–4.
-> The items below have been restyled with Direction D tokens only and await final
-> design sign-off before implementation details are locked.
+> **⚠ NEEDS DESIGN REVIEW**: No approved design mock exists for onboarding steps 2–4 or
+> for the long migrated (legacy first-run) dialog. These remain open.
+> Items below have been restyled with Direction D tokens only and await final design
+> sign-off before implementation details are locked.
 >
 > - **Step 2 — Pick a bench**: select or create a Frappe bench; bench list panel.
 >   Tokens applied: `--da`, `--da-sub`, `--d-panel`, `--d-border`, `--surface-elevation-1`.
@@ -1581,5 +1586,8 @@ The capture rig's `seedOnboardingChecklist()` triggers the checklist overlay (`.
 >   Content: success illustration, bench + provider summary.
 >   Layout: TBD by design.
 >
-> Action required: UX team to deliver approved mocks for steps 2–4 before these
-> screens can be considered implementation-complete.
+> - **Legacy migration dialog**: the long first-run dialog migrated from the pre-D design
+>   has no approved Direction D mock. Retokenised only; visual structure pending sign-off.
+>
+> Action required: UX team to deliver approved mocks for steps 2–4 and the migration
+> dialog before these screens can be considered implementation-complete.

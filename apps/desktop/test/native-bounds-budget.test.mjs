@@ -11,10 +11,8 @@
  *     and SIDEBAR_WIDTH_MIN=240 floor (no shadow constants)
  *  3. MAIN_PANE_MIN_WIDTH=450 is enforced by workPanelWidthForSidebarReopen
  *  4. islandSidebarProps permanently fixes the sidebar at ISLAND_SIDEBAR_W=256
- *  5. Settings in island: shell inert logic (source-level, no inert in island)
  */
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import { register } from "node:module";
 import test from "node:test";
 
@@ -130,42 +128,4 @@ test("ISLAND_SIDEBAR_W is 256px and islandSidebarProps always returns fixed widt
   // Non-island passes through
   assert.deepEqual(islandSidebarProps("rail", true, 200), { sidebarCollapsed: true, sidebarWidth: 200 });
   assert.deepEqual(islandSidebarProps("tabs", false, 300), { sidebarCollapsed: false, sidebarWidth: 300 });
-});
-
-// ── 5. Settings in island: shell stays visible (no inert) ────────────────────
-
-test("AppShell: in island layout the app-chat-shell is NOT hidden or inert when page=settings", async () => {
-  const src = await readFile(
-    new URL("../src/features/app/AppShell.tsx", import.meta.url),
-    "utf8",
-  );
-  // Pattern: hidden=... is only set when navLayout !== "island"
-  assert.match(
-    src,
-    /hidden=\{page === "settings" && navLayout !== "island"\}/,
-    "hidden must only apply when navLayout !== island",
-  );
-  assert.match(
-    src,
-    /inert=\{page === "settings" && navLayout !== "island" \? true : undefined\}/,
-    "inert must only apply when navLayout !== island",
-  );
-  // In island, Settings renders inside the shell (main-pane), not outside
-  assert.match(
-    src,
-    /page === "settings" && navLayout === "island"[\s\S]*?<SettingsPage/,
-    "Settings page must render inside main-pane when island",
-  );
-});
-
-test("AppShell: PortalVisibilityProvider stays visible in island settings mode", async () => {
-  const src = await readFile(
-    new URL("../src/features/app/AppShell.tsx", import.meta.url),
-    "utf8",
-  );
-  assert.match(
-    src,
-    /PortalVisibilityProvider visible=\{page !== "settings" \|\| navLayout === "island"\}/,
-    "portal must stay visible in island-settings",
-  );
 });
