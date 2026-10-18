@@ -9,10 +9,10 @@ import type { OmpLspListResult, OmpLspServer } from "@pi-desktop/shared";
 import { api } from "../../lib/api";
 import { Badge, Button, Input, SettingsToggle } from "../../components/ui";
 import { SettingsCard, SettingsRow } from "./primitives";
+import { lspSavePayload, type LspForm } from "./lsp-form";
 
 const COLLAPSED_COUNT = 12;
-const EMPTY_FORM = { name: "", command: "", args: "", fileTypes: "" };
-const words = (s: string, sep: RegExp) => s.split(sep).map((x) => x.trim()).filter(Boolean);
+const EMPTY_FORM: LspForm = { name: "", command: "", args: "", fileTypes: "" };
 
 export function LspServersCard() {
   const { t } = useTranslation();
@@ -65,12 +65,7 @@ export function LspServersCard() {
   const submit = () => {
     if (!form) return;
     run(
-      api.ompLspSave({
-        name: form.name,
-        command: form.command,
-        args: words(form.args, /\s+/),
-        ...(form.fileTypes.trim() ? { fileTypes: words(form.fileTypes, /[\s,]+/) } : {}),
-      }),
+      api.ompLspSave(lspSavePayload(form)),
       () => setForm(null),
     );
   };

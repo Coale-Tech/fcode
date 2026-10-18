@@ -77,3 +77,16 @@ test("list merges built-ins with the user's file: custom first, resolved flag, b
   assert.ok(servers.findIndex((s) => s.name === "mine") < servers.findIndex((s) => s.name === "ruff"));
   assert.ok(servers.findIndex((s) => s.name === "ruff") < servers.findIndex((s) => s.name === "rust-analyzer"));
 });
+
+test("the Add server form's payload for a command-only built-in override never writes args, so omp keeps the built-in's own", async () => {
+  const { lspSavePayload } = await import("../src/features/settings/lsp-form.ts");
+  const f = file();
+  const payload = lspSavePayload({ name: "ruff", command: "/opt/ruff/bin/ruff", args: "  ", fileTypes: "" });
+  assert.deepEqual(payload, { name: "ruff", command: "/opt/ruff/bin/ruff" });
+  assert.deepEqual(saveLspServer(payload, f), { ok: true });
+  assert.deepEqual(read(f).servers.ruff, { command: "/opt/ruff/bin/ruff" });
+  // Given values still go through, split on spaces / commas.
+  assert.deepEqual(lspSavePayload({ name: "mine", command: "c", args: "--stdio  -v", fileTypes: "xyz, .abc" }), {
+    name: "mine", command: "c", args: ["--stdio", "-v"], fileTypes: ["xyz", ".abc"],
+  });
+});
