@@ -16,6 +16,7 @@ apps/desktop/out/
 apps/desktop/dist-electron/
 apps/desktop/release/
 apps/desktop/resources/bin/
+apps/desktop/resources/tools/
 packages/*/dist/
 packages/*/dist-bundle/
 apps/*/dist-bundle/

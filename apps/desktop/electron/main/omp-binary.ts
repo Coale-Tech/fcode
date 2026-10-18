@@ -15,6 +15,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { mergePathParts } from "./user-login-path";
 import { ompAgentDir } from "./omp-agent-dir";
 
 /**
@@ -45,6 +46,33 @@ export function resolveOmpBin(): string {
     "falling back to PATH 'omp'. Set OMP_BIN to specify the path explicitly.\n",
   );
   return "omp";
+}
+
+/**
+ * Directory holding the bundled CLI tools (ruff): `<resources>/tools` when packaged,
+ * the per-target dir scripts/fetch-ruff.mjs stages in dev. Undefined when absent.
+ */
+export function bundledToolsDir(rp = appResourcesPath()): string | undefined {
+  const exe = process.platform === "win32" ? "ruff.exe" : "ruff";
+  for (const dir of [join(rp, "tools"), join(rp, "tools", `${process.platform}-${process.arch}`)]) {
+    if (existsSync(join(dir, exe))) return dir;
+  }
+  return undefined;
+}
+
+/**
+ * `env` with the bundled tools dir appended to PATH. Appended, not prepended: a
+ * project's own or the user's ruff keeps winning, and a Dock-launched app (minimal
+ * PATH) still finds the bundled one.
+ */
+export function withBundledTools(
+  env: NodeJS.ProcessEnv,
+  dir: string | undefined,
+  win32 = process.platform === "win32",
+): NodeJS.ProcessEnv {
+  if (!dir) return env;
+  const key = (win32 && Object.keys(env).find((k) => k.toLowerCase() === "path")) || "PATH";
+  return { ...env, [key]: mergePathParts(env[key], dir) };
 }
 
 /** Build the child-process env for bundled omp spawns. */

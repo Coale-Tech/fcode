@@ -4,7 +4,7 @@ import {
   AgentSidecar as RuntimeAgentSidecar,
   type StderrHandler,
 } from "@pi-desktop/host-runtime";
-import { appResourcesPath } from "./omp-binary";
+import { appResourcesPath, bundledToolsDir, withBundledTools } from "./omp-binary";
 import { desktopDataDir } from "./data-paths";
 import { redactValue } from "./logger";
 
@@ -57,13 +57,13 @@ export class AgentSidecar extends RuntimeAgentSidecar {
         // Electron 43's Node supports the OS trust store. Keep bundled roots
         // and inherited NODE_EXTRA_CA_CERTS; never bypass TLS verification.
         args: ["--max-old-space-size=2048", "--use-system-ca", resolveSidecarEntry()],
-        env: {
+        env: withBundledTools({
           ...process.env,
           ELECTRON_RUN_AS_NODE: "1",
           FCODE_DATA_DIR: desktopDataDir(),
           FCODE_RESOURCES_PATH: appResourcesPath(),
           ...providerEnv,
-        },
+        }, bundledToolsDir()),
       },
       onStderr: onStderr ?? fallbackStderrLogger,
     });
