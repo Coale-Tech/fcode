@@ -119,6 +119,18 @@ export function createFanoutRunner(deps: FanoutRunnerDeps) {
     };
   }
 
+  /** `-c` args giving git a committer identity: the configured one, else a sentinel (CI/fresh machines have none). */
+  async function identityArgs(dir: string): Promise<string[]> {
+    const read = (key: string, fallback: string) =>
+      execFileP("git", ["-C", dir, "config", key], { timeout: 5_000 })
+        .then(({ stdout }) => stdout.trim() || fallback)
+        .catch(() => fallback);
+    return [
+      "-c", `user.name=${await read("user.name", "Fan-out")}`,
+      "-c", `user.email=${await read("user.email", "fanout@fcode.local")}`,
+    ];
+  }
+
   /**
    * Merge a finished variant's branch into `repoPath`.
    * - Refuses a dirty main checkout.
@@ -163,19 +175,12 @@ export function createFanoutRunner(deps: FanoutRunnerDeps) {
           { timeout: 10_000 },
         );
         if (wtStatus.trim()) {
-          // Resolve committer identity: use git config if set, else a sentinel fallback.
-          const userName = await execFileP("git", ["-C", variantWtPath, "config", "user.name"], { timeout: 5_000 })
-            .then(({ stdout }) => stdout.trim() || "Fan-out")
-            .catch(() => "Fan-out");
-          const userEmail = await execFileP("git", ["-C", variantWtPath, "config", "user.email"], { timeout: 5_000 })
-            .then(({ stdout }) => stdout.trim() || "fanout@fcode.local")
-            .catch(() => "fanout@fcode.local");
+          const identity = await identityArgs(variantWtPath);
           await execFileP(
             "git",
             [
               "-C", variantWtPath,
-              "-c", `user.name=${userName}`,
-              "-c", `user.email=${userEmail}`,
+              ...identity,
               "add", "-A",
             ],
             { timeout: 30_000 },
@@ -184,8 +189,7 @@ export function createFanoutRunner(deps: FanoutRunnerDeps) {
             "git",
             [
               "-C", variantWtPath,
-              "-c", `user.name=${userName}`,
-              "-c", `user.email=${userEmail}`,
+              ...identity,
               "commit", "-m", `Fan-out variant ${input.branch}`,
             ],
             { timeout: 30_000 },
@@ -207,7 +211,7 @@ export function createFanoutRunner(deps: FanoutRunnerDeps) {
       }
 
       // 4. Merge via no-ff so the contribution is a visible merge commit.
-      await execFileP("git", ["-C", input.repoPath, "merge", "--no-ff", input.branch], {
+      await execFileP("git", ["-C", input.repoPath, ...(await identityArgs(input.repoPath)), "merge", "--no-ff", input.branch], {
         timeout: 60_000,
       });
       return { merged: true };
