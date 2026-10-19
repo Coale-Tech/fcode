@@ -70,8 +70,10 @@ async function stage(target) {
   try {
     const archivePath = join(tmp, asset);
     writeFileSync(archivePath, archive);
-    // bsdtar (macOS, Windows) reads both .tar.gz and .zip.
-    const x = spawnSync("tar", ["-xf", archivePath, "-C", tmp], { stdio: "inherit" });
+    // bsdtar (macOS, Windows) reads both .tar.gz and .zip. On Windows runners PATH
+    // puts Git's GNU tar first, which reads "C:\..." as a remote host; use the system one.
+    const tar = process.platform === "win32" ? join(process.env.SystemRoot ?? "C:\\Windows", "System32", "tar.exe") : "tar";
+    const x = spawnSync(tar, ["-xf", archivePath, "-C", tmp], { stdio: "inherit" });
     if (x.status !== 0) throw new Error(`tar failed extracting ${asset} (status ${x.status})`);
     const found = findFile(tmp, exe);
     if (!found) throw new Error(`${exe} not found inside ${asset}`);
