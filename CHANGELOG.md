@@ -13,7 +13,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 ### Fixed
 
 - **Chat model picker and reasoning level.** The chip now shows the model and reasoning level omp is actually running, including omp's own providers (it stayed on "Model" and the old level before). The level you pick applies and is shown immediately.
-- **Auto and Accept edits now do what they say.** omp always asks before a tool call, and nothing answered for you, so a chat set to Auto sat waiting on a card (or on nothing at all). Auto now approves every request and Accept edits approves `edit` and `write`; anything else still asks.
+- **Auto and Accept edits now do what they say.** omp always asks before a tool call, and nothing answered for you, so a chat set to Auto sat waiting on a permission card. Auto now approves every request and Accept edits approves `edit` and `write`; anything else still asks.
 - **Extension status text is plain.** The footer line from omp extensions (for example ponytail) showed raw colour codes such as `[38;2;107;114;128m`; they are stripped now.
 - **Leaked login shells.** The PATH probe at startup could leave a `zsh -lic` process running forever when it timed out, because an interactive zsh ignores the default kill signal. It is now killed outright.
 
