@@ -257,6 +257,12 @@ test("packaging keeps only shipped locales and excludes non-runtime artifacts", 
       from: "../filebird/out/renderer",
       to: "filebird/renderer",
     },
+    // The `fcode` CLI is a single esbuild bundle run via ELECTRON_RUN_AS_NODE
+    // from a shim the app writes into userData.
+    {
+      from: "../fcode-cli/dist-bundle/cli.js",
+      to: "fcode-cli/cli.js",
+    },
   ]);
 });
 

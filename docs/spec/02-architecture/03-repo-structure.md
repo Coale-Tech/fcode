@@ -32,6 +32,7 @@ fcode/                        # repo root (GitHub Coale-Tech/fcode; local checko
 │ │ ├── electron.vite.config.ts
 │ │ └── package.json          # also holds the electron-builder config
 │ ├── filebird/               # FileBird SFTP client, its own Electron app; out/ ships inside the desktop app
+│ ├── fcode-cli/              # `fcode` CLI: drives a running desktop app over its local RACP server
 │ └── pi-host/                # headless Fcode host: host-core + omp-bridge over RACP-WS
 ├── crates/
 │ └── host-core/              # Rust privileged host (binary pi-desktop-host-core)
@@ -123,6 +124,15 @@ FileBird, a cross-platform SFTP client built as its own Electron app.
 Headless Fcode host (`pi-host` CLI): host-core plus the omp-bridge sidecar
 served over RACP-WS, bound to loopback by default. It is the remote-control
 deployment target; see the process model, section 7.
+
+### `apps/fcode-cli`
+The `fcode` command (`worktree`, `bench`, `session`, `canvas`). It is an
+esbuild bundle shipped via `extraResources`; the desktop app writes a shim at
+`<userData>/cli/bin/fcode` that sets `FCODE_ENDPOINT_FILE` and runs the bundle
+with `ELECTRON_RUN_AS_NODE=1`. It talks to the desktop-resident RACP server
+(`racp-local-server.ts`, loopback, owner-role device token in
+`<userData>/cli-endpoint.json`, mode 0600). Exit codes: 0 ok, 1 error, 2 Fcode
+not running. See [ADR](../../adr/orca-influenced-workflow-capabilities.md).
 
 ### `crates/host-core`
 Rust host services:

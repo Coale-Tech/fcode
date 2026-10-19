@@ -12,6 +12,13 @@ type HostCaller = {
   call<T = unknown>(method: string, params: unknown): Promise<T>;
 };
 
+export type WorkerSessionInput = {
+  title: string;
+  projectPath: string;
+  providerId?: string;
+  modelId?: string;
+};
+
 export function createKanbanWiring(deps: {
   dataDir: string;
   getHost: () => HostCaller | null | undefined;
@@ -78,39 +85,54 @@ export function createKanbanWiring(deps: {
     return h;
   };
 
+  /**
+   * Create a session with an omp worker process in its project directory.
+   * Also used by fan-out: pass providerId/modelId to override the session's
+   * model binding.
+   */
+  const startWorkerSession = async (input: WorkerSessionInput): Promise<string> => {
+    const res = await requireHost().call<{ session?: { id?: string } | null }>("session.create", {
+      title: input.title,
+      projectPath: input.projectPath,
+      mode: "agent",
+      ...(input.providerId ? { providerId: input.providerId } : {}),
+      ...(input.modelId ? { modelId: input.modelId } : {}),
+    });
+    const sessionId = res.session?.id;
+    if (!sessionId) throw new Error("session.create returned no id");
+    workerFolders.set(sessionId, input.projectPath);
+    try {
+      await ensureWorker(sessionId);
+    } catch (error) {
+      workerFolders.delete(sessionId);
+      throw error;
+    }
+    return sessionId;
+  };
+
+  /** Deliver a prompt to a worker session, restarting its omp process if needed. */
+  const promptWorkerSession = async (sessionId: string, content: string): Promise<void> => {
+    if (!invokeIpc) throw new Error("agent prompt handler unavailable");
+    // A worker whose process died is brought back before it is re-prompted.
+    await ensureWorker(sessionId);
+    await invokeIpc(IPC.invoke.agentPrompt, [{ sessionId, content }]);
+  };
+
+  /** Stop a worker session's omp process and forget its folder. */
+  const releaseWorkerSession = (sessionId: string): void => {
+    workerFolders.delete(sessionId);
+    void workers?.release(sessionId).catch(logError);
+  };
+
   const kanbanRunner = createKanbanRunner({
     getSettings: () => readKanbanSettings(dataDir),
     getBoard: () => loadBoard(dataDir),
     saveBoard: (board) => {
       void saveBoard(dataDir, board);
     },
-    createSession: async (input) => {
-      const res = await requireHost().call<{ session?: { id?: string } | null }>("session.create", {
-        title: input.title,
-        projectPath: input.projectPath,
-        mode: "agent",
-      });
-      const sessionId = res.session?.id;
-      if (!sessionId) throw new Error("session.create returned no id");
-      workerFolders.set(sessionId, input.projectPath);
-      try {
-        await ensureWorker(sessionId);
-      } catch (error) {
-        workerFolders.delete(sessionId);
-        throw error;
-      }
-      return sessionId;
-    },
-    prompt: async (sessionId, content) => {
-      if (!invokeIpc) throw new Error("agent prompt handler unavailable");
-      // A worker whose process died is brought back before it is re-prompted.
-      await ensureWorker(sessionId);
-      await invokeIpc(IPC.invoke.agentPrompt, [{ sessionId, content }]);
-    },
-    releaseWorker: (sessionId) => {
-      workerFolders.delete(sessionId);
-      void workers?.release(sessionId).catch(logError);
-    },
+    createSession: startWorkerSession,
+    prompt: promptWorkerSession,
+    releaseWorker: releaseWorkerSession,
     notifyDailyCap: (maxSpawns) => {
       sendToRenderer(IPC.event.toast, {
         message: getLabels().kanban.notify.dailyCap.replace("{count}", String(maxSpawns)),
@@ -123,5 +145,5 @@ export function createKanbanWiring(deps: {
     onBoardMutation: emitKanbanMutation,
   });
 
-  return { kanbanRunner, emitKanbanMutation, bindInvoke, bindWorkers };
+  return { kanbanRunner, emitKanbanMutation, bindInvoke, bindWorkers, startWorkerSession, promptWorkerSession, releaseWorkerSession };
 }

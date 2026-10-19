@@ -24,6 +24,16 @@ export function shellEnvironment(base: NodeJS.ProcessEnv): Record<string, string
     if (value !== undefined && !DROPPED_ENV.test(name)) env[name] = value
   }
   env['TERM'] = TERM_NAME
+  // Prepend the fcode CLI shim dir so agents in the integrated terminal can
+  // run `fcode` without a system-wide install (correction 12).
+  const cliDir = base['FCODE_CLI_DIR']?.trim()
+  if (cliDir) {
+    const sep = process.platform === 'win32' ? ';' : ':'
+    const existing = env['PATH'] ?? ''
+    if (!existing.split(sep).includes(cliDir)) {
+      env['PATH'] = `${cliDir}${sep}${existing}`
+    }
+  }
   return env
 }
 

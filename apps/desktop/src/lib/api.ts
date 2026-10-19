@@ -191,6 +191,9 @@ import type {
   OmpCliDoneEvent,
   OmpTuiOpenResult,
   OmpAcpInfoResult,
+  FanoutVariant,
+  FanoutRun,
+  FanoutAdoptResult,
 } from "@pi-desktop/shared";
 import {
   defaultCommandShellForPlatform,
@@ -590,6 +593,11 @@ function normalizePlansChangedEvent(value: unknown): PlanningStateEvent {
       ? {}
       : { executionState }),
   };
+}
+
+/** Sidebar worktree rows listen for this; fired after anything that creates or removes a worktree. */
+function notifyWorktreesChanged(): void {
+  window.dispatchEvent(new Event("worktree-changed"));
 }
 
 export const api = {
@@ -1320,7 +1328,8 @@ export const api = {
   /** Toggles the devtools console; rejects unless developer mode is on. */
   toggleDevTools: (open?: boolean) =>
     invoke<{ open: boolean }>(IPC.invoke.devtoolsToggle, { open }),
-  workspaceDiff: () => invoke<WorkspaceDiff>(IPC.invoke.workspaceDiff),
+  /** Diff of the active workspace, or of `path` (e.g. a fan-out worktree) when given. */
+  workspaceDiff: (path?: string) => invoke<WorkspaceDiff>(IPC.invoke.workspaceDiff, path ? { path } : undefined),
   gitScanDoctypes: (benchPath: string) =>
     invoke<{ path: string; app: string; module: string; name: string; dirty: boolean }[]>(
       IPC.invoke.gitScanDoctypes,
@@ -1666,6 +1675,9 @@ export const api = {
   /** Reveal the bench folder in the system file manager (Finder / Explorer). */
   benchReveal: (benchPath: string) =>
     invoke<{ ok: boolean; error?: string }>(IPC.invoke.benchReveal, { benchPath }),
+  /** Bench containing `path` (a bench itself, or a worktree whose parent repo lives inside one); null when none. */
+  benchForPath: (path: string) =>
+    invoke<{ benchPath: string | null }>(IPC.invoke.benchForPath, { path }),
   /** Write reflect/retain mission text to the active Hindsight bank and persist locally. */
   hindsightSetBankMission: (bankMission: string, retainMission: string) =>
     invoke<HindsightSetBankMissionResult>(IPC.invoke.hindsightSetBankMission, { bankMission, retainMission }),
@@ -1782,13 +1794,13 @@ export const api = {
     invoke<OmpWorktreeListResult>(IPC.invoke.ompWorktreeList),
   /** Clear a specific agent worktree. force=true skips dirty check. */
   ompWorktreeClear: (path: string, force = false) =>
-    invoke<OmpWorktreeClearResult>(IPC.invoke.ompWorktreeClear, { path, force }),
+    invoke<OmpWorktreeClearResult>(IPC.invoke.ompWorktreeClear, { path, force }).finally(notifyWorktreesChanged),
   /** Prune orphaned worktrees under ~/.omp/wt/. force=true skips dirty check. */
   ompWorktreePrune: (force = false) =>
-    invoke<OmpWorktreePruneResult>(IPC.invoke.ompWorktreePrune, { force }),
-  /** Add a new git worktree under ~/.omp/wt/ for repoPath + branch. */
-  ompWorktreeAdd: (repoPath: string, branch: string) =>
-    invoke<OmpWorktreeAddResult>(IPC.invoke.ompWorktreeAdd, { repoPath, branch }),
+    invoke<OmpWorktreePruneResult>(IPC.invoke.ompWorktreePrune, { force }).finally(notifyWorktreesChanged),
+  /** Add a git worktree under the worktree root for repoPath + branch; `create` makes a new branch. */
+  ompWorktreeAdd: (repoPath: string, branch: string, create = false) =>
+    invoke<OmpWorktreeAddResult>(IPC.invoke.ompWorktreeAdd, { repoPath, branch, create }).finally(notifyWorktreesChanged),
   /** Reveal an omp skill store directory in the system file manager. */
   ompSkillReveal: (id: string, version: string) =>
     invoke<{ ok: boolean }>(IPC.invoke.ompSkillReveal, { id, version }),
@@ -2023,4 +2035,10 @@ export const api = {
   /** Get ACP launch info: command and editor config snippets for Zed/JetBrains. */
   ompAcpInfo: () =>
     invoke<OmpAcpInfoResult>(IPC.invoke.ompAcpInfo),
+  /** Start a fan-out run: create N isolated worktrees and dispatch the same prompt to each. */
+  fanoutStart: (input: { repoPath: string; prompt: string; variants: FanoutVariant[] }) =>
+    invoke<FanoutRun>(IPC.invoke.fanoutStart, input).finally(notifyWorktreesChanged),
+  /** Adopt a fan-out variant: no-ff merge its branch into the main checkout. */
+  fanoutAdopt: (input: { repoPath: string; branch: string }) =>
+    invoke<FanoutAdoptResult>(IPC.invoke.fanoutAdopt, input),
 };

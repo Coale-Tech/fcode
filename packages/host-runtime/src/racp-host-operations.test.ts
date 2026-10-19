@@ -1,18 +1,19 @@
-import { mkdtemp, realpath, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { RacpError } from "@pi-desktop/agent-host";
 
-import { createHostOperations } from "./host-operations.js";
+import { createHostOperations } from "./racp-host-operations.js";
+import type { HostRpc } from "./host-ports.js";
 
 const dirs: string[] = [];
 afterEach(async () => {
   for (const dir of dirs.splice(0)) await rm(dir, { recursive: true, force: true });
 });
 
-function fakeHost(calls: Array<{ method: string; params: unknown }>, projectPath: string) {
+function fakeHost(calls: Array<{ method: string; params: unknown }>, projectPath: string): HostRpc {
   const sessions = new Map<string, Record<string, unknown>>([["s1", { id: "s1", title: "One", mode: "agent", permissionMode: "ask", projectPath }]]);
   return {
     async call<T>(method: string, params: Record<string, unknown> = {}): Promise<T> {
@@ -74,7 +75,7 @@ describe("pi-host operations over host-core", () => {
   it("registers only existing directories and browses inside the root only", async () => {
     const root = await realpath(await mkdtemp(join(tmpdir(), "pi-host-ops-")));
     dirs.push(root);
-    const { mkdir } = await import("node:fs/promises");
+
     await mkdir(join(root, "work", "app"), { recursive: true });
     await mkdir(join(root, ".hidden"), { recursive: true });
     const operations = createHostOperations({ getHost: () => fakeHost([], root), runtime: { compact: async () => ({ accepted: true }), isBusy: () => false }, browseRoot: root });
@@ -83,10 +84,10 @@ describe("pi-host operations over host-core", () => {
     await expect(operations.projects.register(join(root, "missing"))).rejects.toMatchObject({ code: "REMOTE_PATH_NOT_FOUND" });
     await expect(operations.projects.register("relative/path")).rejects.toMatchObject({ code: "INVALID_ARGUMENT" });
     const top = await operations.projects.browse();
-    expect(top.entries.map((entry) => entry.name)).toEqual(["work"]);
+    expect(top.entries.map((e) => e.name)).toEqual(["work"]);
     expect(top.parent).toBeUndefined();
     const nested = await operations.projects.browse(join(root, "work"));
-    expect(nested.entries.map((entry) => entry.name)).toEqual(["app"]);
+    expect(nested.entries.map((e) => e.name)).toEqual(["app"]);
     expect(nested.parent).toBeDefined();
     await expect(operations.projects.browse("/")).rejects.toMatchObject({ code: "REMOTE_PATH_FORBIDDEN" });
   });
@@ -94,10 +95,10 @@ describe("pi-host operations over host-core", () => {
   it("serves workspace reads against the session root and refuses escapes", async () => {
     const root = await realpath(await mkdtemp(join(tmpdir(), "pi-host-ops-")));
     dirs.push(root);
-    const { writeFile } = await import("node:fs/promises");
+
     await writeFile(join(root, "README.md"), "hello", "utf8");
     const operations = createHostOperations({ getHost: () => fakeHost([], root), runtime: { compact: async () => ({ accepted: true }), isBusy: () => false } });
-    expect((await operations.workspace.list("s1", "")).entries.map((entry) => entry.name)).toEqual(["README.md"]);
+    expect((await operations.workspace.list("s1", "")).entries.map((e) => e.name)).toEqual(["README.md"]);
     expect(await operations.workspace.read("s1", "README.md")).toMatchObject({ kind: "text", content: "hello" });
     await expect(operations.workspace.read("s1", "../../etc/passwd")).rejects.toMatchObject({ code: "REMOTE_PATH_FORBIDDEN" });
     await expect(operations.workspace.read("s1", "nope.txt")).rejects.toMatchObject({ code: "REMOTE_PATH_FORBIDDEN" });

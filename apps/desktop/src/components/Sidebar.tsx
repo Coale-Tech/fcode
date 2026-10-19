@@ -99,6 +99,7 @@ import {
   IconX,
   type IconProps,
 } from "./icons";
+import { SidebarWorktrees } from "./SidebarWorktrees";
 import { useBenchContext } from "../hooks/use-bench-context";
 const SESSION_KIND_ICONS: Record<SessionKind, ComponentType<IconProps>> = {
   chat: IconChat,
@@ -2563,6 +2564,7 @@ export function Sidebar({
             ) : null}
           </div>
         </section>
+        <SidebarWorktrees activePath={activeProjectPathState ?? workspace?.path} />
 
         {navLayout === "island" && (
           <section className="d3-sb-pinned-pages" aria-label={t("nav.pinnedPages")}>

@@ -27,6 +27,8 @@ const fsPromisesStub = `data:text/javascript,${encodeURIComponent(`
   export async function rename(src, dst) { return; }
   export async function writeFile(p, d, enc) { return; }
   export async function stat(p) { throw Object.assign(new Error("ENOENT"), { code: "ENOENT" }); }
+  export async function cp(src, dst, opts) { return; }
+  export async function symlink(target, p) { return; }
 `)}`;
 
 registerHooks({

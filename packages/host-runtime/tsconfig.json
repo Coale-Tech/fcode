@@ -12,6 +12,7 @@
   "references": [
     { "path": "../shared" },
     { "path": "../agent-host" },
-    { "path": "../agent-runtime" }
+    { "path": "../agent-runtime" },
+    { "path": "../racp" }
   ]
 }

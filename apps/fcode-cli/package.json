@@ -1,0 +1,30 @@
+{
+  "name": "@pi-desktop/fcode-cli",
+  "version": "0.21.1",
+  "private": true,
+  "type": "module",
+  "description": "fcode CLI: drive the running Fcode desktop from an agent terminal",
+  "bin": {
+    "fcode": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "bundle": "node scripts/bundle.mjs",
+    "clean": "node -e \"fs.rmSync('dist',{recursive:true,force:true});fs.rmSync('dist-bundle',{recursive:true,force:true})\""
+  },
+  "dependencies": {
+    "@pi-desktop/racp": "workspace:*",
+    "@pi-desktop/shared": "workspace:*",
+    "ws": "8.21.1"
+  },
+  "devDependencies": {
+    "@pi-desktop/agent-host": "workspace:*",
+    "@types/node": "^24.13.3",
+    "@types/ws": "^8.18.1",
+    "esbuild": "^0.25.12",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
+  }
+}

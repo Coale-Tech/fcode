@@ -563,6 +563,18 @@ export const RACP_OPERATIONS = {
   "project/register": { role: "owner", profile: "remote-host", mutation: true },
   /** List directories under a Host path, for the remote folder picker; bounded and owner-only. */
   "project/browse": { role: "owner", profile: "remote-host", mutation: false },
+  /** Worktree operations — only available when the Host supplies `RacpWorktreeControl`. */
+  "worktree/list":   { role: "viewer",     profile: "remote-host", mutation: false },
+  "worktree/add":    { role: "controller", profile: "remote-host", mutation: true  },
+  "worktree/remove": { role: "owner",      profile: "remote-host", mutation: true  },
+  /** Bench operations — only available when the Host supplies `RacpBenchControl`. */
+  "bench/list":      { role: "viewer",     profile: "remote-host", mutation: false },
+  "bench/status":    { role: "viewer",     profile: "remote-host", mutation: false },
+  "bench/run":       { role: "controller", profile: "remote-host", mutation: true  },
+  /** Canvas operations — only available when the Host supplies `RacpCanvasControl`. */
+  "canvas/snapshot":   { role: "viewer",     profile: "remote-host", mutation: false },
+  "canvas/screenshot": { role: "viewer",     profile: "remote-host", mutation: false },
+  "canvas/act":        { role: "controller", profile: "remote-host", mutation: true  },
 } as const satisfies Record<string, RacpOperationSpec>;
 export type RacpOperation = keyof typeof RACP_OPERATIONS;
 

@@ -175,6 +175,7 @@ import { createProjectSlice } from "./slices/project-slice";
 import { createCatalogSlice } from "./slices/catalog-slice";
 import { createEventsSlice } from "./slices/events-slice";
 import { createInteractionSlice } from "./slices/interaction-slice";
+import { createReviewNotesSlice } from "./slices/review-notes-slice";
 import {
   createCatalogRuntime,
   type CatalogRuntime,
@@ -537,6 +538,8 @@ export const useAppStore = create<AppState>((set, get) => {
     runtime: sessionRuntime,
     interactionRuntime,
   }),
+
+  ...createReviewNotesSlice({ get, set }),
 
   bootstrap: async () => {
     // Only the newest attempt may publish; an older in-flight one returns

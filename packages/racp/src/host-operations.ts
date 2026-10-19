@@ -2,6 +2,9 @@ import type { Principal, SessionSummary } from "@pi-desktop/agent-host";
 import type {
   FsEntry,
   FsReadResult,
+  OmpWorktreeAddResult,
+  OmpWorktreeClearResult,
+  OmpWorktreeListResult,
   RacpProjectSummary,
   WorkspaceDiff,
 } from "@pi-desktop/shared";
@@ -79,6 +82,27 @@ export interface RacpTerminalAccess {
   detach(terminalId: string): void;
 }
 
+/** Worktree control — desktop-only; absent on pi-host. */
+export interface RacpWorktreeControl {
+  list(): Promise<OmpWorktreeListResult>;
+  add(input: { repoPath: string; branch: string; create?: boolean }): Promise<OmpWorktreeAddResult>;
+  remove(input: { path: string; force?: boolean }): Promise<OmpWorktreeClearResult>;
+}
+
+/** Bench control — desktop-only; absent on pi-host. */
+export interface RacpBenchControl {
+  list(): Promise<unknown>;
+  status(): Promise<unknown>;
+  run(input: { benchPath: string; site?: string; verb: string; args?: string[] }): Promise<unknown>;
+}
+
+/** Canvas (build-canvas browser view) control — desktop-only; absent on pi-host. */
+export interface RacpCanvasControl {
+  snapshot(): Promise<{ tree: string; url: string; title: string }>;
+  screenshot(): Promise<{ mimeType: string; data: string }>;
+  act(input: { action: "navigate" | "reload" | "click" | "fill"; url?: string; uid?: string; text?: string }): Promise<{ ok: true }>;
+}
+
 export type RacpHostOperations = {
   sessions: RacpSessionCatalog;
   projects: RacpProjectCatalog;
@@ -86,4 +110,10 @@ export type RacpHostOperations = {
   terminal?: RacpTerminalAccess;
   /** Owner-only: revoke a paired device (spec `session/revoke`). */
   revokeDevice?: (deviceId: string) => Promise<boolean>;
+  /** Worktree RACP operations — desktop-resident; absent on pi-host (correction 8). */
+  worktrees?: RacpWorktreeControl;
+  /** Bench RACP operations — desktop-resident; absent on pi-host (correction 8). */
+  bench?: RacpBenchControl;
+  /** Canvas RACP operations — desktop-resident; absent on pi-host (correction 8). */
+  canvas?: RacpCanvasControl;
 };

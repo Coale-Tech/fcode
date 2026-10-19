@@ -24,7 +24,8 @@
     "lint": "node ../../scripts/check-style-tokens.mjs",
     "clean": "node -e \"fs.rmSync('out',{recursive:true,force:true});fs.rmSync('dist',{recursive:true,force:true})\"",
     "build:host-release": "cargo build --release --manifest-path ../../Cargo.toml -p host-core",
-    "bundle:runtime": "node ../../scripts/build-omp.mjs && node ../../scripts/fetch-ruff.mjs && pnpm -C ../../packages/omp-bridge bundle",
+    "bundle:runtime": "node ../../scripts/build-omp.mjs && node ../../scripts/fetch-ruff.mjs && pnpm -C ../../packages/omp-bridge bundle && pnpm -C ../fcode-cli bundle",
+    "bundle:fcode-cli": "pnpm -C ../fcode-cli bundle",
     "pack": "pnpm run build:deps && pnpm run build:host-release && pnpm run bundle:runtime && electron-vite build && electron-builder --dir",
     "dist": "pnpm run build:deps && pnpm run build:host-release && pnpm run bundle:runtime && electron-vite build && node ../../scripts/build-desktop-release.mjs",
     "dist:mac": "pnpm run build:deps && pnpm run build:host-release && pnpm run bundle:runtime && electron-vite build && electron-builder --mac --publish never",
@@ -168,6 +169,10 @@
       {
         "from": "../filebird/out/renderer",
         "to": "filebird/renderer"
+      },
+      {
+        "from": "../fcode-cli/dist-bundle/cli.js",
+        "to": "fcode-cli/cli.js"
       }
     ],
     "mac": {

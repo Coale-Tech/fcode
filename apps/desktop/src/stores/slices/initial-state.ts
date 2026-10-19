@@ -99,5 +99,6 @@ export function createInitialState(): AppStateData {
     userInitials: undefined,
     terminalOpen: false,
     pendingTuiCommand: null,
+    reviewNotes: {},
   };
 }

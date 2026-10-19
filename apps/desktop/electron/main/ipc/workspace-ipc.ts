@@ -622,15 +622,19 @@ export function registerWorkspaceIpc({
     },
   );
 
-  handle(IPC.invoke.workspaceDiff, async () => {
-    if (!host) throw new Error("host unavailable");
-    const res = (await host.call("workspace.get")) as {
-      workspace: { path: string } | null;
-    };
-    const cwd = res.workspace?.path;
-    if (!cwd) {
-      return { repo: false, clean: true, files: [] };
+  handle(IPC.invoke.workspaceDiff, async (input: { path?: unknown } = {}) => {
+    const overrideCwd = typeof input.path === "string" && input.path ? input.path : null;
+    let cwd: string | null;
+    if (overrideCwd) {
+      cwd = overrideCwd;
+    } else {
+      if (!host) throw new Error("host unavailable");
+      const res = (await host.call("workspace.get")) as {
+        workspace: { path: string } | null;
+      };
+      cwd = res.workspace?.path ?? null;
     }
+    if (!cwd) return { repo: false, clean: true, files: [] };
     return collectWorkspaceDiff(cwd);
   });
   handle(

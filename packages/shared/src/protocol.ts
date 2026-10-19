@@ -443,6 +443,8 @@ export const IPC = {
     benchDetail: "pi-desktop/bench/detail",
     /** Reveal a bench folder in the system file manager (Finder on macOS). */
     benchReveal: "pi-desktop/bench/revealPath",
+    /** Resolve the bench (apps/ + sites/ ancestor) that contains a path, e.g. a worktree's parent repo. */
+    benchForPath: "pi-desktop/bench/forPath",
     /** Build tab: query installed apps on the active bench/site. */
     buildListApps: "pi-desktop/build/listApps",
     /** Build tab canvas — acquire exclusive ownership of the shared BrowserPane. */
@@ -543,6 +545,10 @@ export const IPC = {
     kanbanSetPaused: "pi-desktop/kanban/setPaused",
     /** Kanban board: trigger an immediate dispatcher tick. */
     kanbanNudge: "pi-desktop/kanban/nudge",
+    /** Fan-out: start N parallel variants on the same prompt in isolated worktrees. */
+    fanoutStart: "pi-desktop/fanout/start",
+    /** Fan-out: no-ff merge a variant branch into the main checkout. */
+    fanoutAdopt: "pi-desktop/fanout/adopt",
     /** Read the cross-project user-profile text from ~/.omp/agent/USER.md. */
     ompUserProfileGet: "pi-desktop/omp/user-profile/get",
     /** Write the cross-project user-profile text to ~/.omp/agent/USER.md (cap 1024 chars). */

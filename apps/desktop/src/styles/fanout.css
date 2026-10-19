@@ -1,0 +1,346 @@
+/* ── Fan-out tab ─────────────────────────────────────────────────────────── */
+
+/* Setup view ---------------------------------------------------------------- */
+
+.fanout-setup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--d-gap);
+  padding: var(--d-gap);
+  height: 100%;
+  overflow-y: auto;
+}
+
+.fanout-setup-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fanout-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-gray-6);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.fanout-prompt-input {
+  resize: vertical;
+  min-height: 80px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--outline-gray-3);
+  background: var(--surface-gray-1);
+  color: var(--ink-gray-9);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.fanout-prompt-input:focus {
+  outline: none;
+  border-color: var(--outline-blue-2);
+}
+
+.fanout-variants-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fanout-stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fanout-stepper-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--outline-gray-3);
+  background: transparent;
+  color: var(--ink-gray-7);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.fanout-stepper-btn:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.fanout-stepper-val {
+  min-width: 20px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-gray-9);
+}
+
+.fanout-variant-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fanout-variant-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  padding-bottom: 4px;
+}
+
+.fanout-variant-n {
+  font-size: 12px;
+  color: var(--ink-gray-5);
+  min-width: 22px;
+}
+
+.fanout-branch-input {
+  flex: 1 1 120px;
+  min-width: 0;
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--outline-gray-3);
+  background: var(--surface-gray-1);
+  color: var(--ink-gray-9);
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+}
+
+.fanout-branch-input:focus {
+  outline: none;
+  border-color: var(--outline-blue-2);
+}
+
+.fanout-no-workspace {
+  font-size: 12px;
+  color: var(--ink-gray-5);
+}
+
+.fanout-launch-error {
+  font-size: 12px;
+  color: var(--ink-red-7);
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--ink-red-7) 10%, transparent);
+}
+
+/* Compare view -------------------------------------------------------------- */
+
+.fanout-compare {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.fanout-compare-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px var(--d-gap);
+  border-bottom: 1px solid var(--outline-gray-2);
+  flex-shrink: 0;
+}
+
+.fanout-back {
+  background: none;
+  border: none;
+  color: var(--ink-blue-7);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.fanout-prompt-preview {
+  font-size: 12px;
+  color: var(--ink-gray-6);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Columns sit side by side when the panel is wide and stack when it is narrow. */
+.fanout-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-auto-rows: minmax(280px, 1fr);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Variant column ------------------------------------------------------------ */
+
+.fanout-variant-col {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--outline-gray-2);
+  border-bottom: 1px solid var(--outline-gray-2);
+  min-height: 0;
+}
+
+.fanout-variant-col:last-child {
+  border-right: none;
+}
+
+.fanout-variant-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--outline-gray-2);
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.fanout-variant-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-gray-5);
+  flex-shrink: 0;
+}
+
+.fanout-variant-branch {
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  color: var(--ink-gray-8);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.fanout-variant-status {
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.fanout-variant-status-running { color: var(--ink-blue-7); }
+.fanout-variant-status-done    { color: var(--ink-green-7); }
+.fanout-variant-status-failed  { color: var(--ink-red-7); }
+.fanout-variant-status-pending { color: var(--ink-gray-5); }
+
+.fanout-variant-actions {
+  display: flex;
+  gap: 6px;
+  padding: 6px 10px;
+  flex-shrink: 0;
+}
+
+.fanout-adopt-error,
+.fanout-variant-error {
+  font-size: 11px;
+  color: var(--ink-red-7);
+  padding: 4px 10px;
+  flex-shrink: 0;
+}
+
+.fanout-variant-diff {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* Diff renderer ------------------------------------------------------------- */
+
+.fanout-diff {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.fanout-diff-loading,
+.fanout-diff-empty {
+  padding: 12px 10px;
+  font-size: 12px;
+  color: var(--ink-gray-5);
+}
+
+.fanout-diff-file {
+  border-bottom: 1px solid var(--outline-gray-2);
+}
+
+.fanout-diff-file-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  list-style: none;
+  background: var(--surface-gray-2);
+  font-size: 11px;
+  user-select: none;
+}
+
+.fanout-diff-file-head::-webkit-details-marker { display: none; }
+
+.fanout-diff-status { font-weight: 600; flex-shrink: 0; }
+.fanout-diff-status-added    { color: var(--ink-green-7); }
+.fanout-diff-status-modified { color: var(--ink-blue-7); }
+.fanout-diff-status-deleted  { color: var(--ink-red-7); }
+.fanout-diff-status-renamed  { color: var(--ink-gray-7); }
+.fanout-diff-status-untracked{ color: var(--ink-gray-5); }
+
+.fanout-diff-path {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-gray-8);
+}
+
+.fanout-diff-adds { color: var(--ink-green-7); flex-shrink: 0; }
+.fanout-diff-dels { color: var(--ink-red-7);   flex-shrink: 0; }
+
+.fanout-diff-toolarge {
+  padding: 4px 10px;
+  font-size: 11px;
+  color: var(--ink-gray-5);
+}
+
+.fanout-diff-hunk {
+  overflow-x: auto;
+}
+
+.fanout-diff-hunk-header {
+  padding: 2px 8px;
+  background: color-mix(in srgb, var(--ink-blue-7) 8%, transparent);
+  color: var(--ink-gray-6);
+  white-space: pre;
+}
+
+.fanout-diff-line {
+  display: flex;
+  white-space: pre;
+}
+
+.fanout-diff-line-add  { background: color-mix(in srgb, var(--ink-green-7) 8%, transparent); }
+.fanout-diff-line-del  { background: color-mix(in srgb, var(--ink-red-7)   8%, transparent); }
+
+.fanout-diff-sigil {
+  min-width: 14px;
+  padding: 0 4px;
+  color: var(--ink-gray-5);
+  user-select: none;
+}
+
+.fanout-diff-line-add .fanout-diff-sigil { color: var(--ink-green-7); }
+.fanout-diff-line-del .fanout-diff-sigil { color: var(--ink-red-7); }
+
+.fanout-diff-code {
+  flex: 1;
+  padding-right: 8px;
+  color: var(--ink-gray-9);
+  overflow: hidden;
+}

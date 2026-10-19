@@ -14,8 +14,21 @@ export function ReviewTab() {
   const summary = useMemo(() => summarizeReviewChanges(entries), [entries]);
   // Local "kept" state: snapshotIds the user has clicked Keep on (visual accept)
   const [keptIds, setKeptIds] = useState<Set<string>>(new Set());
+  const [sendingNotes, setSendingNotes] = useState(false);
 
   const rollback = useAppStore((state) => state.rollbackWorkspaceChange);
+  const sendReviewNotes = useAppStore((state) => state.sendReviewNotes);
+  const allNotes = useAppStore((state) => state.reviewNotes);
+
+  const snapshotIds = useMemo(() => entries.map((e) => e.change.snapshotId), [entries]);
+  const unresolvedNoteCount = useMemo(
+    () =>
+      snapshotIds.reduce(
+        (n, sid) => n + (allNotes[sid]?.filter((x) => !x.resolved).length ?? 0),
+        0,
+      ),
+    [snapshotIds, allNotes],
+  );
 
   const handleKeep = (snapshotId: string) => {
     setKeptIds((prev) => new Set([...prev, snapshotId]));
@@ -30,6 +43,11 @@ export function ReviewTab() {
       }
     }
   };
+  const handleSendNotes = async () => {
+    setSendingNotes(true);
+    await sendReviewNotes(snapshotIds);
+    setSendingNotes(false);
+  };
 
   if (entries.length === 0) {
     return (
@@ -42,12 +60,23 @@ export function ReviewTab() {
 
   return (
     <div className="review-tab">
-      {/* Direction D summary bar: N files changed +adds −dels / Keep all / Revert all */}
+      {/* Direction D summary bar: N files changed +adds −dels / Keep all / Revert all / Send notes */}
       <div className="wp-diff-summary">
         <strong>{t("panel.review.changes", { count: summary.changeCount })}</strong>
         {summary.additions > 0 && <span className="diff-adds">+{summary.additions}</span>}
         {summary.deletions > 0 && <span className="diff-dels">−{summary.deletions}</span>}
         <span className="wp-diff-summary-spacer" />
+        {unresolvedNoteCount > 0 && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => void handleSendNotes()}
+            disabled={sendingNotes}
+            style={{ height: 24, fontSize: 11, padding: "0 8px" }}
+          >
+            {t("panel.review.sendNotes", { count: unresolvedNoteCount })}
+          </Button>
+        )}
         <Button
           variant="primary"
           size="sm"
@@ -73,6 +102,7 @@ export function ReviewTab() {
             compact
             kept={keptIds.has(entry.change.snapshotId)}
             onKeep={() => handleKeep(entry.change.snapshotId)}
+            annotatable
           />
         ))}
       </div>

@@ -147,6 +147,7 @@ export const fr = {
     "newTemporarySession": "Nouveau chat temporaire",
     "noProjectSessions": "Aucun chat dans ce domaine projet pour l'instant",
     "noTemporarySessions": "Aucune discussion temporaire pour l'instant",
+    "worktrees": "Worktrees",
     "firstRunSessionsEmpty": "Vos sessions apparaîtront ici une fois que vous aurez configuré Fcode.",
     "newChat": "Nouvelle discussion",
     "conversation": "Conversation",
@@ -1726,6 +1727,8 @@ sklm: {
     "ompWorktreeAddSubmit": "Ajouter",
     "ompWorktreeAddError": "Échec de l'ajout de l'espace de travail : {{error}}",
     "ompWorktreeRetry": "Réessayer",
+    "ompWorktreeProvisionSummary": "Provisionné : {{linked}} liés, {{copied}} copiés",
+    "ompWorktreeProvisionSkipped": "{{count}} ignorés",
     "ompHooksGroup": "Hooks",
     "ompHooksEmpty": "Aucun hook configuré. Créez-en un pour exécuter un script avant ou après un appel d'outil.",
     "ompHookCreate": "Nouveau Hook",
@@ -2570,7 +2573,8 @@ sklm: {
     "session-tree": "Historique de session",
       "tools": "Outils",
       "activity": "Activité",
-      "worktree": "Arbres de travail"
+      "worktree": "Arbres de travail",
+      "fanout": "Fan-out"
     },
     "pluginView": {
       "failed": "Cette vue n'a pas pu être chargée. Rechargez le plugin et réessayez.",
@@ -2603,6 +2607,19 @@ sklm: {
       kept: "Kept",
       keepAll: "Keep all",
       revertAll: "Revert all",
+      noteFile: "Note file",
+      addNote: "Add note",
+      notePlaceholder: "Add a note…",
+      noteSave: "Save",
+      noteCancel: "Cancel",
+      noteEdit: "Edit",
+      noteResolve: "Resolve",
+      noteReopen: "Reopen",
+      noteResolved: "Resolved",
+      noteOutdated: "Outdated",
+      noteRemove: "Delete note",
+      sendNotes_one: "Send 1 note to agent",
+      sendNotes_other: "Send {{count}} notes to agent",
       "status": {
         "added": "Ajouté",
         "modified": "Modifié",
@@ -2642,6 +2659,43 @@ sklm: {
       "todoStatusDone": "terminé",
       "todoStatusAbandoned": "ignoré",
       "todoStatusRunning": "en cours",
+    },
+    "fanout": {
+      "setup": {
+        "prompt": "Prompt",
+        "promptPlaceholder": "Describe the task for all variants…",
+        "variants": "Variants",
+        "branchPlaceholder": "Branch (auto)",
+        "agentPlaceholder": "Default agent",
+        "noWorkspace": "Open a project to enable fan-out.",
+        "run": "Run",
+        "running": "Starting…",
+        "addVariant": "Add variant",
+        "removeVariant": "Remove variant"
+      },
+      "status": {
+        "failed": "Failed",
+        "running": "Running…",
+        "done": "Done"
+      },
+      "action": {
+        "open": "Open",
+        "adopt": "Adopt",
+        "adopting": "Adopting…",
+        "newRun": "← New run",
+        "refreshDiff": "Refresh diff"
+      },
+      "diff": {
+        "loading": "Loading diff…",
+        "noChanges": "No changes",
+        "notRepo": "Not a git repository",
+        "tooLarge": "File too large to diff"
+      },
+      "toast": {
+        "adopted": "Merged {{branch}} into main checkout",
+        "adoptFailed": "Merge failed: {{reason}}",
+        "adoptFailedDefault": "Merge failed"
+      }
     }
   },
   "palette": {
@@ -3315,6 +3369,8 @@ sklm: {
       "title": "Fcode agent not found",
       "detail": "The agent binary was not found at any of the probed paths.",
       "action": "Choose binary…",
+      "timeoutTitle": "Fcode agent is not responding",
+      "timeoutDetail": "The agent binary started but did not become ready in time. The first launch after an update can be slow; restart Fcode to retry.",
     },
     "action": {
       "openSettings": "Ouvrir les paramètres",

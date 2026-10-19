@@ -688,6 +688,17 @@ export interface OmpWorktreePruneResult {
   error?: string;
 }
 
+/** One `.worktreeinclude` / `.worktreeshare` outcome from provisioning a new worktree. */
+export interface OmpWorktreeProvisionEntry {
+  /** Repo-relative path the rule matched. */
+  path: string;
+  /** `copy` = `.worktreeinclude`, `link` = `.worktreeshare`. */
+  mode: "copy" | "link";
+  status: "done" | "skipped";
+  /** Why the entry was skipped (already exists, escapes the repo, missing source, ...). */
+  reason?: string;
+}
+
 /** Result of `ompWorktreeAdd` (add a new worktree). */
 export interface OmpWorktreeAddResult {
   ok: boolean;
@@ -695,6 +706,8 @@ export interface OmpWorktreeAddResult {
   path?: string;
   /** OS error message when ok is false. */
   error?: string;
+  /** Files copied or linked from the main checkout; absent when no rule file exists. */
+  provisioned?: OmpWorktreeProvisionEntry[];
 }
 
 /** Result of `omp.share` — snapshot URL from the `/share` slash command. */

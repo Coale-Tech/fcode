@@ -50,7 +50,7 @@ import type {
 import type { OmpSkillCuratorStatusResult, OmpSkillCuratorMutateResult, OmpSkillProposalListResult, OmpSkillProposalActResult, OmpSkillJourneyResult } from "@pi-desktop/shared";
 import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { join, resolve, sep } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { shell } from "electron";
@@ -64,6 +64,7 @@ import { approveProposal, getJourneyEvents, listPendingProposals, rejectProposal
 import type { OmpLspListResult, OmpLspSaveInput } from "@pi-desktop/shared";
 import { listLspServers, removeLspServer, saveLspServer } from "../omp-lsp-config";
 import type { IpcRegistrar } from "./types";
+import { provisionWorktree, readWorktreeLink } from "../worktree-provision.ts";
 
 const execFileP = promisify(execFile);
 
@@ -92,8 +93,9 @@ async function readSkillsLock(
 }
 
 /**
- * Classify one directory under ~/.omp/wt/ as a WorktreeEntry.
+ * Classify one directory under the worktree root as a WorktreeEntry.
  * Returns null when the dir has no recognizable worktree markers.
+ * `parentRepo` is derived from the `.git` file's `gitdir:` line.
  */
 async function classifyWorktreeDir(
   dir: string,
@@ -102,19 +104,16 @@ async function classifyWorktreeDir(
   try {
     const gs = await stat(gitEntry);
     if (gs.isFile()) {
-      // Git worktree — read HEAD to get branch name
       let branch: string | undefined;
-      try {
-        const head = await readFile(join(dir, ".git"), "utf8");
-        const m = /gitdir:\s*(.+)/.exec(head.trim());
-        if (m) {
-          const headFile = join(m[1].trim(), "HEAD");
-          const headContent = await readFile(headFile, "utf8").catch(() => "");
-          const bm = /^ref: refs\/heads\/(.+)/.exec(headContent.trim());
-          if (bm) branch = bm[1];
-        }
-      } catch { /* branch stays undefined */ }
-      return { path: dir, kind: "pr-checkout", branch };
+      let parentRepo: string | undefined;
+      const link = await readWorktreeLink(dir);
+      if (link) {
+        parentRepo = link.parentRepo;
+        const headContent = await readFile(join(link.gitdir, "HEAD"), "utf8").catch(() => "");
+        const bm = /^ref: refs\/heads\/(.+)/.exec(headContent.trim());
+        if (bm) branch = bm[1];
+      }
+      return { path: dir, kind: "pr-checkout", branch, ...(parentRepo ? { parentRepo } : {}) };
     }
   } catch { /* .git not present */ }
   // Check for task-isolation markers (m/ or merged/ subdirs)
@@ -145,6 +144,11 @@ export async function checkWorktreeDirty(
   } catch {
     return false;
   }
+}
+/** omp's `worktree.base`, env override only; see omp task/settings.ts:152. */
+function worktreeRoot(): string {
+  const override = process.env.OMP_WORKTREE_DIR?.trim();
+  return override ? resolve(override.replace(/^~(?=\/|$)/, homedir())) : join(homedir(), ".omp", "wt");
 }
 
 export type OmpIpcDependencies = {
@@ -328,9 +332,9 @@ export async function listEffectiveAgents(projectPath: string | null): Promise<O
 }
 
 /**
- * Add a git worktree under ~/.omp/wt/. With `create` (kanban workers) it is idempotent per branch:
- * a live worktree already on `branch` is reused, else the worktree is added, creating the branch
- * if missing — so a retried card resumes its own worktree instead of colliding with it.
+ * Add a git worktree under the worktree root. With `create` (kanban workers) it is idempotent per
+ * branch: a live worktree already on `branch` is reused, else the worktree is added, creating
+ * the branch if missing — so a retried card resumes its own worktree instead of colliding.
  */
 export async function addWorktree(repoPath: string, branch: string, create = false): Promise<OmpWorktreeAddResult> {
   try {
@@ -343,15 +347,82 @@ export async function addWorktree(repoPath: string, branch: string, create = fal
         if (existing) return { ok: true, path: existing };
       }
     }
-    const wtPath = join(homedir(), ".omp", "wt", `${branch.replace(/[^a-zA-Z0-9._-]/g, "-")}-${Date.now()}`);
+    const wtRoot = worktreeRoot();
+    const wtPath = join(wtRoot, `${branch.replace(/[^a-zA-Z0-9._-]/g, "-")}-${Date.now()}`);
     const branchExists = !create || await execFileP("git", ["-C", repoPath, "rev-parse", "--verify", "--quiet", `refs/heads/${branch}`]).then(() => true, () => false);
+    await mkdir(wtRoot, { recursive: true });
     await execFileP("git", ["-C", repoPath, "worktree", "add", ...(branchExists ? [wtPath, branch] : ["-b", branch, wtPath])], { timeout: 30_000 });
-    return { ok: true, path: wtPath };
+    const provisioned = await provisionWorktree(repoPath, wtPath);
+    return provisioned.length > 0 ? { ok: true, path: wtPath, provisioned } : { ok: true, path: wtPath };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
 }
 
+
+/** Read all worktrees from the worktree root. Exported for RACP adapter. */
+export async function listWorktrees(): Promise<OmpWorktreeListResult> {
+  const wtRoot = worktreeRoot();
+  let topLevel: string[];
+  try {
+    topLevel = await readdir(wtRoot);
+  } catch {
+    return { worktrees: [] };
+  }
+  const worktrees: OmpWorktreeListResult["worktrees"] = [];
+  for (const name of topLevel) {
+    const dir = join(wtRoot, name);
+    const s = await stat(dir).catch(() => null);
+    if (!s?.isDirectory()) continue;
+    const entry = await classifyWorktreeDir(dir);
+    if (entry) {
+      worktrees.push(entry);
+      continue;
+    }
+    // Legacy nesting: <root>/<encoded-project>/<branch-or-id>
+    let children: string[];
+    try { children = await readdir(dir); } catch { continue; }
+    let nested = 0;
+    for (const child of children) {
+      const childDir = join(dir, child);
+      const cs = await stat(childDir).catch(() => null);
+      if (!cs?.isDirectory()) continue;
+      const ce = await classifyWorktreeDir(childDir);
+      if (ce) { worktrees.push(ce); nested++; }
+    }
+    if (nested === 0) {
+      worktrees.push({
+        path: dir,
+        kind: children.length === 0 ? "empty" : "stray",
+        orphanReason: children.length === 0 ? "empty directory" : "no recognizable worktree contents",
+      });
+    }
+  }
+  return { worktrees };
+}
+
+/**
+ * Clear a specific worktree. Refuses paths outside the worktree root.
+ * Exported for RACP adapter.
+ */
+export async function clearWorktree(wtPath: string, force: boolean): Promise<OmpWorktreeClearResult> {
+  const resolvedRoot = resolve(worktreeRoot());
+  if (!resolve(wtPath).startsWith(resolvedRoot + sep)) {
+    return { ok: false, error: "path is outside the worktree root" };
+  }
+  if (!force && (await checkWorktreeDirty(wtPath))) {
+    return { ok: false, error: "dirty" };
+  }
+  try {
+    const parentRepo = (await readWorktreeLink(wtPath))?.parentRepo;
+    await rm(wtPath, { recursive: true, force: true });
+    // Best-effort: prune the dead entry from the parent repo (read before rm deleted the .git file).
+    if (parentRepo) await execFileP("git", ["-C", parentRepo, "worktree", "prune"], { timeout: 10_000 }).catch(() => { /* best-effort */ });
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
 
 /** Register all omp IPC channels. */
 export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpcDependencies): void {
@@ -636,46 +707,8 @@ export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpc
   });
 
   // ── omp.worktrees.list ─────────────────────────────────────────────────────
-  // Reads ~/.omp/wt/ directly — same logic as omp worktree list --json.
-  handle(IPC.invoke.ompWorktreeList, async (): Promise<OmpWorktreeListResult> => {
-    const wtRoot = join(homedir(), ".omp", "wt");
-    let topLevel: string[];
-    try {
-      topLevel = await readdir(wtRoot);
-    } catch {
-      return { worktrees: [] };
-    }
-    const worktrees: OmpWorktreeListResult["worktrees"] = [];
-    for (const name of topLevel) {
-      const dir = join(wtRoot, name);
-      const s = await stat(dir).catch(() => null);
-      if (!s?.isDirectory()) continue;
-      const entry = await classifyWorktreeDir(dir);
-      if (entry) {
-        worktrees.push(entry);
-        continue;
-      }
-      // legacy nesting: ~/.omp/wt/<encoded-project>/<branch-or-id>
-      let children: string[];
-      try { children = await readdir(dir); } catch { continue; }
-      let nested = 0;
-      for (const child of children) {
-        const childDir = join(dir, child);
-        const cs = await stat(childDir).catch(() => null);
-        if (!cs?.isDirectory()) continue;
-        const ce = await classifyWorktreeDir(childDir);
-        if (ce) { worktrees.push(ce); nested++; }
-      }
-      if (nested === 0) {
-        worktrees.push({
-          path: dir,
-          kind: children.length === 0 ? "empty" : "stray",
-          orphanReason: children.length === 0 ? "empty directory" : "no recognizable worktree contents",
-        });
-      }
-    }
-    return { worktrees };
-  });
+  // Reads the worktree root directly — same logic as omp worktree list --json.
+  handle(IPC.invoke.ompWorktreeList, listWorktrees);
 
   // ── omp.worktrees.clear ────────────────────────────────────────────────────
   // Removes a specific worktree directory. Refuses if dirty unless force=true.
@@ -685,27 +718,7 @@ export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpc
     const wtPath = typeof input?.path === "string" ? input.path.trim() : "";
     const force = input?.force === true;
     if (!wtPath) invalid("path required");
-    if (!force && (await checkWorktreeDirty(wtPath))) {
-      return { ok: false, error: "dirty" };
-    }
-    try {
-      await rm(wtPath, { recursive: true, force: true });
-      // Best-effort: prune dead entries from any parent repo.
-      try {
-        const gitFile = join(wtPath, ".git");
-        const head = await readFile(gitFile, "utf8").catch(() => "");
-        const m = /gitdir:\s*(.+)/.exec(head.trim());
-        if (m) {
-          const parentRepo = m[1].trim().replace(/\/\.git\/worktrees\/.+$/, "");
-          await execFileP("git", ["-C", parentRepo, "worktree", "prune"], {
-            timeout: 10_000,
-          }).catch(() => { /* best-effort */ });
-        }
-      } catch { /* best-effort */ }
-      return { ok: true };
-    } catch (e) {
-      return { ok: false, error: e instanceof Error ? e.message : String(e) };
-    }
+    return clearWorktree(wtPath, force);
   });
 
   // ── omp.worktrees.prune ────────────────────────────────────────────────────
@@ -715,7 +728,7 @@ export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpc
     input: { force?: unknown } = {},
   ): Promise<OmpWorktreePruneResult> => {
     const force = input?.force === true;
-    const wtRoot = join(homedir(), ".omp", "wt");
+    const wtRoot = worktreeRoot();
     let topLevel: string[];
     try { topLevel = await readdir(wtRoot); } catch { return { ok: true, pruned: [] }; }
     const pruned: string[] = [];
@@ -747,13 +760,14 @@ export function registerOmpIpc({ registrar, getSidecar, pickExportPath }: OmpIpc
   // ── omp.worktrees.add ──────────────────────────────────────────────────────
   // Creates a new git worktree under ~/.omp/wt/ for a given repo + branch.
   handle(IPC.invoke.ompWorktreeAdd, async (
-    input: { repoPath?: unknown; branch?: unknown } = {},
+    input: { repoPath?: unknown; branch?: unknown; create?: unknown } = {},
   ): Promise<OmpWorktreeAddResult> => {
     const repoPath = typeof input?.repoPath === "string" ? input.repoPath.trim() : "";
     const branch   = typeof input?.branch   === "string" ? input.branch.trim()   : "";
+    const create   = input?.create === true;
     if (!repoPath) invalid("repoPath required");
     if (!branch)   invalid("branch required");
-    return addWorktree(repoPath, branch);
+    return addWorktree(repoPath, branch, create);
   });
 
 

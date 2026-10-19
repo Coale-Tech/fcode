@@ -2,38 +2,39 @@ import { readdir, realpath, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 
-import { RacpError, type Principal, type SessionSummary } from "@pi-desktop/agent-host";
-import {
-  collectWorkspaceDiff,
-  listDir,
-  readWorkspaceFile,
-  toSessionSummary,
-  type HostRpc,
-  type HostSessionRecord,
-  type RuntimeService,
-} from "@pi-desktop/host-runtime";
+import { RacpError } from "@pi-desktop/agent-host";
+import type { Principal, SessionSummary } from "@pi-desktop/agent-host";
 import type { RacpHostOperations, RacpProjectCatalog, RacpSessionCatalog, RacpWorkspaceAccess } from "@pi-desktop/racp";
 import type { RacpProjectSummary } from "@pi-desktop/shared";
+
+import { requireHostRpc, toSessionSummary } from "./host-ports.js";
+import type { HostRpc, HostSessionRecord } from "./host-ports.js";
+import type { RuntimeService } from "./runtime-service.js";
+import { collectWorkspaceDiff } from "./workspace-diff.js";
+import { listDir, readWorkspaceFile } from "./workspace-files.js";
 
 /** A project row as host-core lists it. */
 type ProjectRow = { id: number; path: string; name: string; pinned?: boolean };
 
 /** Directory names never offered by the folder picker. */
-const HIDDEN_BROWSE_NAMES = new Set([".git", "node_modules", "__pycache__", ".Trash"]);
+const HIDDEN_BROWSE_NAMES: Record<string, true> = {
+  ".git": true,
+  "node_modules": true,
+  "__pycache__": true,
+  ".Trash": true,
+};
 const MAX_BROWSE_ENTRIES = 500;
 
 function hostError(error: unknown): never {
-  const code = (error as { errorCode?: string; data?: { errorCode?: string } })?.data?.errorCode ?? (error as { errorCode?: string })?.errorCode;
+  // error is always an object from host-core RPC; shape is well-known
+  const e = error as { errorCode?: string; data?: { errorCode?: string } };
+  const code = e?.data?.errorCode ?? e?.errorCode;
   const message = error instanceof Error ? error.message : String(error);
   if (code === "NOT_FOUND" || code === "SESSION_NOT_FOUND") throw new RacpError("NOT_FOUND", message);
   if (code === "CONFLICT" || (code && code.startsWith("PLAN_"))) throw new RacpError("CONFLICT", message, { details: { code } });
   if (code === "INVALID_PARAMS" || code === "INVALID_ARGUMENT") throw new RacpError("INVALID_ARGUMENT", message);
   if (code === "HOST_UNAVAILABLE") throw new RacpError("AGENT_UNAVAILABLE", message, { retriable: true });
   throw new RacpError("INTERNAL", message, { details: code ? { code } : undefined });
-}
-
-function projectSummary(row: ProjectRow): RacpProjectSummary {
-  return { id: String(row.id), label: row.name || basename(row.path), archived: false };
 }
 
 export type HostOperationsDeps = {
@@ -46,15 +47,10 @@ export type HostOperationsDeps = {
   browseRoot?: string;
 };
 
-function requireHost(getHost: () => HostRpc | null): HostRpc {
-  const host = getHost();
-  if (!host) throw new RacpError("AGENT_UNAVAILABLE", "host-core is not running", { retriable: true });
-  return host;
-}
-
 /** Session catalog over host-core RPC. */
 export function createSessionCatalog(deps: HostOperationsDeps): RacpSessionCatalog {
   const { getHost } = deps;
+
   async function projectPathFor(projectId: string | undefined, host: HostRpc): Promise<string | undefined> {
     if (!projectId) return undefined;
     const { projects } = await host.call<{ projects: ProjectRow[] }>("projects.list", {});
@@ -62,6 +58,7 @@ export function createSessionCatalog(deps: HostOperationsDeps): RacpSessionCatal
     if (!project) throw new RacpError("NOT_FOUND", `project ${projectId} is unknown`);
     return project.path;
   }
+
   /**
    * host-core keys a session by its project path; RACP exposes the project id
    * (spec §5.1), so the summary is decorated from the projects table. A path
@@ -80,19 +77,21 @@ export function createSessionCatalog(deps: HostOperationsDeps): RacpSessionCatal
       return projectId ? { ...summary, projectId } : summary;
     });
   }
-  async function get(host: HostRpc, sessionId: string): Promise<SessionSummary> {
+
+  async function getSession(host: HostRpc, sessionId: string): Promise<SessionSummary> {
     const result = await host.call<{ session?: HostSessionRecord | null }>("session.get", { id: sessionId, messageLimit: 1 }).catch(hostError);
     if (!result.session) throw new RacpError("NOT_FOUND", `session ${sessionId} is unknown`);
     return (await withProjectIds(host, [result.session]))[0]!;
   }
+
   return {
     async list() {
-      const host = requireHost(getHost);
+      const host = requireHostRpc(getHost);
       const result = await host.call<{ sessions: HostSessionRecord[] }>("session.list", {}).catch(hostError);
       return withProjectIds(host, result.sessions ?? []);
     },
     async create(input, _principal: Principal) {
-      const host = requireHost(getHost);
+      const host = requireHostRpc(getHost);
       const projectPath = await projectPathFor(input.projectId, host);
       const result = await host
         .call<{ session?: HostSessionRecord | null }>("session.create", {
@@ -110,12 +109,12 @@ export function createSessionCatalog(deps: HostOperationsDeps): RacpSessionCatal
           .call("session.configure", { id: result.session.id, mode: result.session.mode ?? input.mode ?? "agent", permissionMode: input.permissionMode })
           .catch(hostError);
       }
-      return get(host, result.session.id);
+      return getSession(host, result.session.id);
     },
     async configure(sessionId, input) {
-      const host = requireHost(getHost);
+      const host = requireHostRpc(getHost);
       if (deps.runtime.isBusy(sessionId)) throw new RacpError("CONFLICT", "the session has an active turn");
-      const current = await get(host, sessionId);
+      const current = await getSession(host, sessionId);
       await host
         .call("session.configure", {
           id: sessionId,
@@ -126,10 +125,10 @@ export function createSessionCatalog(deps: HostOperationsDeps): RacpSessionCatal
           ...(input.permissionMode !== undefined ? { permissionMode: input.permissionMode } : {}),
         })
         .catch(hostError);
-      return get(host, sessionId);
+      return getSession(host, sessionId);
     },
     async fork(sessionId, input) {
-      const host = requireHost(getHost);
+      const host = requireHostRpc(getHost);
       const result = await host
         .call<{ session?: HostSessionRecord | null }>("session.fork", {
           sessionId,
@@ -138,14 +137,14 @@ export function createSessionCatalog(deps: HostOperationsDeps): RacpSessionCatal
         })
         .catch(hostError);
       if (!result.session) throw new RacpError("INTERNAL", "session.fork returned no session");
-      return get(host, result.session.id);
+      return getSession(host, result.session.id);
     },
     async rename(sessionId, title) {
-      await requireHost(getHost).call("session.rename", { id: sessionId, title }).catch(hostError);
+      await requireHostRpc(getHost).call("session.rename", { id: sessionId, title }).catch(hostError);
     },
     async delete(sessionId) {
       if (deps.runtime.isBusy(sessionId)) throw new RacpError("CONFLICT", "the session has an active turn");
-      await requireHost(getHost).call("session.delete", { id: sessionId }).catch(hostError);
+      await requireHostRpc(getHost).call("session.delete", { id: sessionId }).catch(hostError);
       await deps.disposeSession?.(sessionId).catch(() => undefined);
     },
     async compact(sessionId) {
@@ -177,16 +176,17 @@ export function createProjectCatalog(deps: HostOperationsDeps): RacpProjectCatal
   const browseRoot = resolve(deps.browseRoot ?? homedir());
   return {
     async list() {
-      const host = requireHost(getHost);
+      const host = requireHostRpc(getHost);
       const result = await host.call<{ projects: ProjectRow[] }>("projects.list", {}).catch(hostError);
-      return (result.projects ?? []).map(projectSummary);
+      return (result.projects ?? []).map((row) => ({ id: String(row.id), label: row.name || basename(row.path), archived: false }));
     },
     async register(path) {
-      const host = requireHost(getHost);
+      const host = requireHostRpc(getHost);
       const real = await canonicalDirectory(path);
       const result = await host.call<{ project?: ProjectRow | null }>("projects.create", { path: real }).catch(hostError);
       if (!result.project) throw new RacpError("INTERNAL", "projects.create returned no project");
-      return { ...projectSummary(result.project), path: result.project.path };
+      const row = result.project;
+      return { id: String(row.id), label: row.name || basename(row.path), archived: false, path: row.path };
     },
     async browse(path) {
       const target = path ? await canonicalDirectory(path) : browseRoot;
@@ -198,7 +198,7 @@ export function createProjectCatalog(deps: HostOperationsDeps): RacpProjectCatal
         throw new RacpError("REMOTE_PATH_FORBIDDEN", `cannot read ${target}`);
       });
       const entries = dirents
-        .filter((dirent) => dirent.isDirectory() && !HIDDEN_BROWSE_NAMES.has(dirent.name) && !dirent.name.startsWith("."))
+        .filter((dirent) => dirent.isDirectory() && !HIDDEN_BROWSE_NAMES[dirent.name] && !dirent.name.startsWith("."))
         .map((dirent) => ({ name: dirent.name, path: join(target, dirent.name) }))
         .sort((a, b) => a.name.localeCompare(b.name))
         .slice(0, MAX_BROWSE_ENTRIES);
@@ -211,29 +211,36 @@ export function createProjectCatalog(deps: HostOperationsDeps): RacpProjectCatal
 /** Workspace reads against the session's durable root, on the Host's filesystem. */
 export function createWorkspaceAccess(deps: HostOperationsDeps): RacpWorkspaceAccess {
   const { getHost } = deps;
+
   async function sessionRoot(sessionId: string): Promise<string> {
-    const host = requireHost(getHost);
+    const host = requireHostRpc(getHost);
     const result = await host.call<{ session?: HostSessionRecord | null }>("session.get", { id: sessionId, messageLimit: 1 }).catch(hostError);
     if (!result.session) throw new RacpError("NOT_FOUND", `session ${sessionId} is unknown`);
     const root = result.session.projectPath?.trim();
     if (!root) throw new RacpError("CONFLICT", "the session has no project root");
     return root;
   }
-  const forbidden = (error: unknown): never => {
+
+  function asForbidden(error: unknown): never {
     const message = error instanceof Error ? error.message : String(error);
     if (/escapes workspace root|outside allowed roots/.test(message)) throw new RacpError("REMOTE_PATH_FORBIDDEN", message);
-    if ((error as NodeJS.ErrnoException)?.code === "ENOENT") throw new RacpError("REMOTE_PATH_NOT_FOUND", message);
+    if (error != null && typeof error === "object" && "code" in error) {
+      // ErrnoException is the well-known Node.js syscall error shape; property presence verified above
+      const errno = error as NodeJS.ErrnoException;
+      if (errno.code === "ENOENT") throw new RacpError("REMOTE_PATH_NOT_FOUND", message);
+    }
     if (/not a file/.test(message)) throw new RacpError("INVALID_ARGUMENT", message);
     throw new RacpError("INTERNAL", message);
-  };
+  }
+
   return {
     async list(sessionId, path) {
       const root = await sessionRoot(sessionId);
-      return { entries: await listDir(root, path).catch(forbidden) };
+      return { entries: await listDir(root, path).catch(asForbidden) };
     },
     async read(sessionId, path) {
       const root = await sessionRoot(sessionId);
-      return readWorkspaceFile(root, path).catch(forbidden);
+      return readWorkspaceFile(root, path).catch(asForbidden);
     },
     async diff(sessionId) {
       return collectWorkspaceDiff(await sessionRoot(sessionId));

@@ -19,6 +19,7 @@ import {
 import {
   ACTIVITY_TAB,
   browserPluginTab,
+  FANOUT_TAB,
   FILE_MANAGER_PLUGIN_TAB,
   fileManagerPluginTab,
   hasPluginView,
@@ -52,6 +53,7 @@ import {
   IconPlus,
   IconWrench,
   IconFolder,
+  IconWorkflow,
 } from "../icons";
 import { ReviewTab } from "./ReviewTab";
 import { reviewChangesFromMessages } from "../../lib/workspace-review";
@@ -62,6 +64,7 @@ import { SubagentTranscriptTab } from "./SubagentTranscriptTab";
 import { OmpSessionTreeTab } from "../../features/work-panel/OmpSessionTreeTab";
 import { OmpWorktreeTab } from "../../features/work-panel/OmpWorktreeTab";
 import { ToolsPanelTab } from "../../features/work-panel/ToolsPanelTab";
+import { FanoutTab } from "../../features/work-panel/FanoutTab";
 import { WorkTabEmpty } from "./WorkTabEmpty";
 import {
   MAIN_PANE_MIN_WIDTH,
@@ -83,6 +86,7 @@ const TAB_ICONS = {
   tools: IconWrench,
   activity: IconActivity,
   worktree: IconFolder,
+  fanout: IconWorkflow,
 } as const;
 
 type WorkPanelResizeState = {
@@ -184,6 +188,12 @@ function workPanelTools(
       tab: WORKTREE_TAB,
       label: t("panel.tabs.worktree"),
       icon: IconFolder,
+    },
+    {
+      id: "fanout",
+      tab: FANOUT_TAB,
+      label: t("panel.tabs.fanout"),
+      icon: IconWorkflow,
     },
     ...pluginViews.map((view) => {
       const Icon = pluginViewIcon(view.icon);
@@ -1022,6 +1032,16 @@ export function WorkPanel({
               aria-labelledby={`work-panel-tab-${activeTab.id}`}
             >
               <OmpWorktreeTab />
+            </div>
+          )}
+          {activeTab?.kind === "fanout" && (
+            <div
+              id={`work-panel-surface-${activeTab.id}`}
+              className="work-panel-tabpane"
+              role="tabpanel"
+              aria-labelledby={`work-panel-tab-${activeTab.id}`}
+            >
+              <FanoutTab />
             </div>
           )}
           {activeTab?.kind === "file" && (

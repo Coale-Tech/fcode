@@ -37,6 +37,9 @@ import {
   ensureCrashDumpsDirectory,
   reportPreviousCrashDumps,
 } from "../crash-report";
+import type { BrowserHost } from "../browser-host";
+import { startLocalRacpServer, type LocalRacpServer } from "../racp-local-server";
+import { createDesktopHostOperations } from "../racp-host-operations";
 
 type IpcInvoker = (
   channel: string,
@@ -114,8 +117,9 @@ export type StartupDependencies = {
   onSessionQueueChange?: () => void;
   /** True once shutdown is committed; the scheduler stops dispatching then. */
   isQuitting: () => boolean;
+  /** Optional: canvas for RACP canvas operations; canvas capability absent when null/undefined. */
+  getBrowserHost?: () => BrowserHost | null;
 };
-
 /**
  * Register the Electron-ready boot sequence. The sequence remains deliberately
  * ordered here, while its mutable process resources are supplied by the main
@@ -173,6 +177,7 @@ export function registerApplicationStartup(deps: StartupDependencies): void {
       bootHostStatus,
       flushPendingApplicationMenuCommands,
       isQuitting,
+      getBrowserHost,
     } = deps;
 
     // A launch that lost the single-instance lock is already quitting. Never
@@ -311,6 +316,36 @@ export function registerApplicationStartup(deps: StartupDependencies): void {
         });
       });
     }
+    // Start the local RACP server so the integrated terminal's `fcode` CLI
+    // can drive the running app (correction 12). Failures are logged and never
+    // prevent app startup.
+    let localRacpServer: LocalRacpServer | null = null;
+    if (!bootError && state.agentHostBridge) {
+      void (async () => {
+        try {
+          const operations = createDesktopHostOperations({
+            getHost,
+            isSessionBusy,
+            compact: async (sessionId: string) => {
+              const result = await invokeIpc(IPC.invoke.agentCompact, [{ sessionId }]);
+              return result as { accepted: boolean };
+            },
+            bench: { dataDir },
+            browserHost: getBrowserHost?.() ?? null,
+          });
+          localRacpServer = await startLocalRacpServer({
+            agentHost: state.agentHostBridge!.agentHost,
+            operations,
+            log: (level, message, data) => logger.app("runtime", level, message, { data }),
+          });
+        } catch (error) {
+          logger.app("runtime", "warn", "local RACP server failed to start", { data: String(error) });
+        }
+      })();
+    }
+    app.once("will-quit", () => {
+      void localRacpServer?.close();
+    });
     const host = getHost();
     if (host) {
       try {

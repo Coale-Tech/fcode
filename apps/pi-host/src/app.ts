@@ -41,7 +41,7 @@ import { APP_VERSION, type AgentEventEnvelope } from "@pi-desktop/shared";
 
 import type { PiHostConfig } from "./config.js";
 import { FileCredentialStore, loadOrCreateHostId } from "./credentials.js";
-import { createHostOperations } from "./host-operations.js";
+import { createHostOperations } from "@pi-desktop/host-runtime";
 import { createLogger, type HostLogger } from "./logger.js";
 import { TerminalService, loadPty } from "./terminal.js";
 

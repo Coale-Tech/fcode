@@ -1047,8 +1047,8 @@ const {
   dispatchExecutionForProposal,
 } = planRuntime;
 
-// Mutable ref for kanban turn-end callback (late-bound after runner creation).
-let _kanbanTurnEnd: ((sessionId: string) => void) | undefined;
+// Turn-end listeners (Kanban runner, fan-out runner), registered after their owners are built.
+const turnEndListeners: ((sessionId: string) => void)[] = [];
 
 const eventPersistence = createEventPersistence({
   runtimeState,
@@ -1069,12 +1069,12 @@ const eventPersistence = createEventPersistence({
   isStaleTerminalEvent,
   finishApprovedExecution,
   emitAgentEvent: (envelope) => emitAgentEvent(envelope),
-  onTurnEnd: (sessionId) => _kanbanTurnEnd?.(sessionId),
+  onTurnEnd: (sessionId) => turnEndListeners.forEach((listener) => listener(sessionId)),
 });
 const { persistAgentEvent } = eventPersistence;
 
 // ── Kanban runner + notifications (see runtime/kanban-wiring.ts) ─────────────
-const { kanbanRunner, emitKanbanMutation, bindInvoke: bindKanbanInvoke, bindWorkers: bindKanbanWorkers } = createKanbanWiring({
+const { kanbanRunner, emitKanbanMutation, bindInvoke: bindKanbanInvoke, bindWorkers: bindKanbanWorkers, startWorkerSession, promptWorkerSession, releaseWorkerSession } = createKanbanWiring({
   dataDir,
   getHost: () => host,
   sendToRenderer,
@@ -1083,7 +1083,7 @@ const { kanbanRunner, emitKanbanMutation, bindInvoke: bindKanbanInvoke, bindWork
   listAgents: async () => (await listEffectiveAgents(null)).agents,
   createWorktree: (repoPath, branch) => addWorktree(repoPath, branch, true),
 });
-_kanbanTurnEnd = (sessionId) => kanbanRunner.onTurnEnd(sessionId);
+turnEndListeners.push((sessionId) => kanbanRunner.onTurnEnd(sessionId));
 
 
 const sidecarRuntime = createSidecarRuntime({
@@ -1277,6 +1277,12 @@ function registerIpc() {
       onBoardMutation: emitKanbanMutation,
       bindInvoke: bindKanbanInvoke,
     },
+    fanout: {
+      createSession: startWorkerSession,
+      prompt: promptWorkerSession,
+      releaseWorker: releaseWorkerSession,
+      onTurnEnd: (listener) => turnEndListeners.push(listener),
+    },
   });
 }
 
@@ -1336,6 +1342,7 @@ registerApplicationStartup({
   activeTurns,
   isSessionBusy,
   getHost: () => host,
+  getBrowserHost: () => browserHost,
   getMainWindow: () => mainWindow,
   sendToRenderer,
   applyDevelopmentBranding,

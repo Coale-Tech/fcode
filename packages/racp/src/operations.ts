@@ -99,6 +99,27 @@ const TerminalResizeParams = Type.Object({
 });
 const TerminalIdParams = Type.Object({ terminalId: Type.String({ minLength: 1 }) });
 const PairParams = Type.Object({ deviceLabel: Type.Optional(Type.String()) });
+const WorktreeAddParams = Type.Object({
+  repoPath: Type.String({ minLength: 1 }),
+  branch: Type.String({ minLength: 1 }),
+  create: Type.Optional(Type.Boolean()),
+});
+const WorktreeRemoveParams = Type.Object({
+  path: Type.String({ minLength: 1 }),
+  force: Type.Optional(Type.Boolean()),
+});
+const BenchRunParams = Type.Object({
+  benchPath: Type.String({ minLength: 1 }),
+  site: Type.Optional(Type.String()),
+  verb: Type.String({ minLength: 1 }),
+  args: Type.Optional(Type.Array(Type.String())),
+});
+const CanvasActParams = Type.Object({
+  action: Type.Union([Type.Literal("navigate"), Type.Literal("reload"), Type.Literal("click"), Type.Literal("fill")]),
+  url: Type.Optional(Type.String()),
+  uid: Type.Optional(Type.String()),
+  text: Type.Optional(Type.String()),
+});
 
 function check<T extends Type.TSchema>(schema: T, params: unknown): Type.Static<T> {
   if (!Value.Check(schema, params)) {
@@ -114,6 +135,24 @@ function requireTerminal(context: OperationContext) {
     throw new RacpError("CAPABILITY_UNAVAILABLE", "this Host does not offer terminals");
   }
   return terminal;
+}
+
+function requireWorktrees(context: OperationContext) {
+  const wt = context.operations.worktrees;
+  if (!wt) throw new RacpError("CAPABILITY_UNAVAILABLE", "worktrees is not offered by this Host");
+  return wt;
+}
+
+function requireBench(context: OperationContext) {
+  const bench = context.operations.bench;
+  if (!bench) throw new RacpError("CAPABILITY_UNAVAILABLE", "bench is not offered by this Host");
+  return bench;
+}
+
+function requireCanvas(context: OperationContext) {
+  const canvas = context.operations.canvas;
+  if (!canvas) throw new RacpError("CAPABILITY_UNAVAILABLE", "canvas is not offered by this Host");
+  return canvas;
 }
 
 function unavailable(capability: string): OperationHandler {
@@ -364,6 +403,30 @@ export function createOperations(): Map<RacpOperation, OperationHandler> {
     context.connection.terminals.delete(input.terminalId);
     await requireTerminal(context).close(input.terminalId);
     return { ok: true };
+  });
+
+  handlers.set("worktree/list", async (context) => requireWorktrees(context).list());
+  handlers.set("worktree/add", async (context, params) => {
+    const input = check(WorktreeAddParams, params);
+    return requireWorktrees(context).add(input);
+  });
+  handlers.set("worktree/remove", async (context, params) => {
+    const input = check(WorktreeRemoveParams, params);
+    return requireWorktrees(context).remove(input);
+  });
+
+  handlers.set("bench/list", async (context) => requireBench(context).list());
+  handlers.set("bench/status", async (context) => requireBench(context).status());
+  handlers.set("bench/run", async (context, params) => {
+    const input = check(BenchRunParams, params);
+    return requireBench(context).run(input);
+  });
+
+  handlers.set("canvas/snapshot", async (context) => requireCanvas(context).snapshot());
+  handlers.set("canvas/screenshot", async (context) => requireCanvas(context).screenshot());
+  handlers.set("canvas/act", async (context, params) => {
+    const input = check(CanvasActParams, params);
+    return requireCanvas(context).act(input);
   });
 
   return handlers;

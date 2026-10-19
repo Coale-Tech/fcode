@@ -184,20 +184,34 @@ export const ChatSurface = memo(function ChatSurface({
       {sidecarFatal ? (
         <div className="chat-sidecar-fatal" role="alert" aria-live="assertive">
           <div className="chat-sidecar-fatal-inner">
-            <h2>{t("errors.sidecarFatal.title", "Fcode agent not found")}</h2>
-            <p>
-              {t(
-                "errors.sidecarFatal.detail",
-                "The omp binary could not be located. Probed paths:",
-              )}
-            </p>
-            <ul>
-              {sidecarFatal.paths.map((p) => (
-                <li key={p}>
-                  <code>{p}</code>
-                </li>
-              ))}
-            </ul>
+            {sidecarFatal.code === "HANDSHAKE_TIMEOUT" ? (
+              <>
+                <h2>{t("errors.sidecarFatal.timeoutTitle", "Fcode agent is not responding")}</h2>
+                <p>
+                  {t(
+                    "errors.sidecarFatal.timeoutDetail",
+                    "The agent binary started but did not become ready in time. The first launch after an update can be slow; restart Fcode to retry.",
+                  )}
+                </p>
+              </>
+            ) : (
+              <>
+                <h2>{t("errors.sidecarFatal.title", "Fcode agent not found")}</h2>
+                <p>
+                  {t(
+                    "errors.sidecarFatal.detail",
+                    "The omp binary could not be located. Probed paths:",
+                  )}
+                </p>
+                <ul>
+                  {sidecarFatal.paths.map((p) => (
+                    <li key={p}>
+                      <code>{p}</code>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
             {sidecarFatal.detail ? (
               <p className="chat-sidecar-fatal-detail">{sidecarFatal.detail}</p>
             ) : null}

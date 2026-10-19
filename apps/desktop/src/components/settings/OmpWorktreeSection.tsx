@@ -9,7 +9,7 @@
  */
 import { useEffect, useReducer, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { OmpWorktreeEntry } from "@pi-desktop/shared";
+import type { OmpWorktreeEntry, OmpWorktreeProvisionEntry } from "@pi-desktop/shared";
 import { api } from "../../lib/api";
 import { Badge, Button } from "../ui";
 import { SettingsCard } from "../../features/settings/primitives";
@@ -43,6 +43,7 @@ export function OmpWorktreeSection() {
   const [addBranch, setAddBranch] = useState("");
   const [addError, setAddError] = useState<string | null>(null);
   const [addBusy, setAddBusy] = useState(false);
+  const [addLastProvisioned, setAddLastProvisioned] = useState<OmpWorktreeProvisionEntry[] | null>(null);
 
   const load = () => {
     dispatch({ type: "reload" });
@@ -107,12 +108,14 @@ export function OmpWorktreeSection() {
     if (!repo || !branch) return;
     setAddBusy(true);
     setAddError(null);
+    setAddLastProvisioned(null);
     api.ompWorktreeAdd(repo, branch).then((res) => {
       setAddBusy(false);
       if (res.ok) {
         setShowAdd(false);
         setAddRepoPath("");
         setAddBranch("");
+        setAddLastProvisioned(res.provisioned ?? null);
         load();
       } else {
         setAddError(t("settings.ompWorktreeAddError", { error: res.error ?? "" }));
@@ -145,7 +148,7 @@ export function OmpWorktreeSection() {
         <Button
           type="button"
           size="sm"
-          onClick={() => setShowAdd((v) => !v)}
+          onClick={() => { setShowAdd((v) => !v); setAddLastProvisioned(null); }}
         >
           {t("settings.ompWorktreeAdd")}
         </Button>
@@ -158,6 +161,34 @@ export function OmpWorktreeSection() {
           {t("settings.ompWorktreePrune")}
         </Button>
       </div>
+
+      {/* Provisioned summary (shown after a successful add, cleared on next add attempt) */}
+      {addLastProvisioned && addLastProvisioned.length > 0 && (
+        <div className="omp-worktree-provision-summary settings-row-desc">
+          <span>
+            {t("settings.ompWorktreeProvisionSummary", {
+              linked: addLastProvisioned.filter((e) => e.mode === "link" && e.status === "done").length,
+              copied: addLastProvisioned.filter((e) => e.mode === "copy" && e.status === "done").length,
+            })}
+          </span>
+          {addLastProvisioned.some((e) => e.status === "skipped") && (
+            <details>
+              <summary>
+                {t("settings.ompWorktreeProvisionSkipped", {
+                  count: addLastProvisioned.filter((e) => e.status === "skipped").length,
+                })}
+              </summary>
+              <ul>
+                {addLastProvisioned.filter((e) => e.status === "skipped").map((e) => (
+                  <li key={e.path} className="font-mono text-xs">
+                    {e.path}{e.reason ? ` — ${e.reason}` : ""}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </div>
+      )}
 
       {/* Add form */}
       {showAdd && (

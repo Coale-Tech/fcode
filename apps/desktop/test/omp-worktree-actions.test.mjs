@@ -8,6 +8,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { register, registerHooks } from "node:module";
+import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -27,6 +28,8 @@ const fsPromisesStub = `data:text/javascript,${encodeURIComponent(`
   export async function rename(a, b) { return; }
   export async function writeFile(p, d) { return; }
   export async function stat(p) { throw Object.assign(new Error("ENOENT"), { code: "ENOENT" }); }
+  export async function cp(a, b, opts) { return; }
+  export async function symlink(a, b) { return; }
 `)}`;
 
 registerHooks({
@@ -85,10 +88,11 @@ test("ompWorktreeClear: missing path returns INVALID_ARGUMENT", async () => {
   );
 });
 
-test("ompWorktreeClear: valid path proceeds (git may fail on fake path → not dirty → rm succeeds)", async () => {
+test("ompWorktreeClear: valid path inside worktree root proceeds (git may fail → not dirty → rm succeeds)", async () => {
   const handlers = setup();
-  // /fake/wt/path doesn't exist; git status errors → not dirty; rm stub succeeds
-  const result = await handlers[IPC.invoke.ompWorktreeClear]({ path: "/fake/wt/path", force: false });
+  // path inside the default worktree root; git status errors → not dirty; rm stub succeeds
+  const validPath = join(homedir(), ".omp", "wt", "fake-branch");
+  const result = await handlers[IPC.invoke.ompWorktreeClear]({ path: validPath, force: false });
   assert.equal(result.ok, true);
 });
 

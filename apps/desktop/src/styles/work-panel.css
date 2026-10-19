@@ -1710,3 +1710,86 @@
 .wp-hunk-line.add .sigil { color: var(--ink-green-7, #15803d); font-weight: 700; }
 .wp-hunk-line.del .sigil { color: var(--ink-red-7, #b91c1c); font-weight: 700; }
 .wp-review-file.is-collapsed .wp-diff-hunk { display: none; }
+/* Note gutter affordance — + button revealed on line hover */
+.wp-hunk-line.is-annotatable .ln { position: relative; width: 44px; }
+.wp-hunk-note-add {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  line-height: 14px;
+  font-size: 10px;
+  text-align: center;
+  border: none;
+  background: var(--surface-blue-1, color-mix(in srgb, var(--blue-500, #3b82f6) 8%, transparent));
+  color: var(--ink-blue-6, #2563eb);
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 80ms;
+}
+.wp-hunk-line.is-annotatable:hover .wp-hunk-note-add { opacity: 1; }
+/* Note composer */
+.wp-hunk-note-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 8px 6px;
+  background: var(--surface-gray-2);
+  border-left: 2px solid var(--blue-500, #3b82f6);
+}
+.wp-hunk-note-textarea {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  line-height: var(--leading-chat);
+  padding: 4px 6px;
+  border: 1px solid var(--outline-elevation-1);
+  border-radius: var(--radius-2);
+  background: var(--surface-gray-1);
+  color: var(--ink-gray-8);
+  resize: vertical;
+  width: 100%;
+  box-sizing: border-box;
+}
+.wp-hunk-note-composer-actions { display: flex; gap: 4px; }
+/* Saved note row */
+.wp-hunk-note {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 8px 3px 44px;
+  font-size: var(--text-xs);
+  font-family: var(--font-sans);
+  background: var(--surface-gray-2);
+  border-left: 2px solid var(--blue-500, #3b82f6);
+  flex-wrap: wrap;
+}
+.wp-hunk-note.is-resolved {
+  background: transparent;
+  border-left-color: var(--outline-elevation-1);
+  color: var(--ink-gray-3);
+}
+.wp-hunk-note.is-outdated { border-left-color: var(--yellow-500, #eab308); }
+.wp-hunk-note-outdated-badge {
+  font-size: var(--text-3xs);
+  background: color-mix(in srgb, var(--yellow-500, #eab308) 15%, transparent);
+  color: var(--ink-amber-7, #92400e);
+  border-radius: 3px;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+.wp-hunk-note-body { flex: 1; color: var(--ink-gray-8); }
+.wp-hunk-note-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.wp-hunk-note-resolved-label { display: flex; align-items: center; gap: 4px; color: var(--ink-gray-3); }
+.wp-hunk-note-action {
+  font-size: var(--text-3xs);
+  color: var(--ink-blue-6, #2563eb);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+.wp-hunk-note-action.is-danger { color: var(--ink-red-7, #b91c1c); }

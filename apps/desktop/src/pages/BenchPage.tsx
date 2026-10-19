@@ -130,6 +130,7 @@ export function BenchPage() {
   const followTail = useAppStore((s) => s.benchLogFollowTail);
   const setFollowTail = useAppStore((s) => s.setBenchLogFollowTail);
   const setViewedBench = useAppStore((s) => s.setViewedBench);
+  const workspacePath = useAppStore((s) => s.workspace?.path);
 
   // Gap 1 / T6: bench-start failure from supervisor
   const [startFailure, setStartFailure] = useState<StartFailureState | null>(null);
@@ -208,6 +209,36 @@ export function BenchPage() {
     loadBenches();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ── Follow the workspace ──────────────────────────────────────────────────
+  // A workspace change resolves its bench (a worktree resolves via its parent repo) and
+  // queues it; the queue is applied once discovery has that bench, so a late `benchList`
+  // still lands. Opening another tab by hand afterwards is not overridden: nothing re-queues
+  // until the workspace changes again.
+  const wantedBenchPath = useRef<string | null>(null);
+  const openWantedBench = useCallback(() => {
+    const wanted = wantedBenchPath.current;
+    const match = wanted ? benches.find((b) => b.path === wanted) : undefined;
+    if (!match) return;
+    wantedBenchPath.current = null;
+    openBench(match.id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [benches]);
+  // The async lookup below must call the latest closure: the bench list can finish loading first.
+  const openWantedBenchRef = useRef(openWantedBench);
+  openWantedBenchRef.current = openWantedBench;
+  useEffect(() => {
+    if (!workspacePath) return;
+    let cancelled = false;
+    void api.benchForPath(workspacePath).then(({ benchPath }) => {
+      if (cancelled) return;
+      wantedBenchPath.current = benchPath;
+      openWantedBenchRef.current();
+    }).catch(() => { /* best-effort */ });
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workspacePath]);
+  useEffect(openWantedBench, [openWantedBench]);
 
   // ── Bench status polling ──────────────────────────────────────────────────
 

@@ -7,7 +7,8 @@ export type WorkPanelTabKind =
   | "session-tree"
   | "tools"
   | "activity"
-  | "worktree";
+  | "worktree"
+  | "fanout";
 
 export type WorkPanelTab = {
   id: string;
@@ -229,7 +230,8 @@ export function isKnownWorkPanelTab(tab: WorkPanelTab): boolean {
     (tab.kind === "new" || tab.kind === "review" ||
       tab.kind === "file" || tab.kind === "plugin" ||
       tab.kind === "session-tree" || tab.kind === "subagent" ||
-      tab.kind === "activity" || tab.kind === "tools" || tab.kind === "worktree")
+      tab.kind === "activity" || tab.kind === "tools" || tab.kind === "worktree" ||
+      tab.kind === "fanout")
   );
 }
 
@@ -243,6 +245,8 @@ export const ACTIVITY_TAB: WorkPanelTab = { id: "activity", kind: "activity" };
 export const TOOLS_TAB: WorkPanelTab = { id: "tools", kind: "tools" };
 /** The agent-managed worktree management tab. Singleton id. */
 export const WORKTREE_TAB: WorkPanelTab = { id: "worktree", kind: "worktree" };
+/** Fan-out tab: run N agent variants on the same prompt; compare and adopt. */
+export const FANOUT_TAB: WorkPanelTab = { id: "fanout", kind: "fanout" };
 
 export function sanitizeWorkPanelTabsState(
   state: WorkPanelTabsState,

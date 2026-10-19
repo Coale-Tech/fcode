@@ -51,6 +51,7 @@ import { registerFileBirdIpc } from "./filebird-ipc";
 import { registerRavenIpc } from "./raven-ipc";
 import { registerOmpCliIpc } from "./omp-cli-ipc";
 import { registerOmpNonRpcIpc } from "./omp-acp";
+import { registerFanoutIpc } from "./fanout-ipc";
 
 export type RegisterIpcDependencies = {
   isQuitting: () => boolean;
@@ -76,6 +77,13 @@ export type RegisterIpcDependencies = {
   /** Optional kanban board deps; absent when kanban runner is not wired yet. */
   kanban?: Omit<KanbanIpcDependencies, "registrar"> & {
     bindInvoke: (invoke: (channel: string, args: readonly unknown[]) => Promise<unknown>) => void;
+  };
+  /** Fan-out deps; absent until kanban-wiring is constructed. */
+  fanout?: {
+    createSession: (input: { title: string; projectPath: string; providerId?: string; modelId?: string }) => Promise<string>;
+    prompt: (sessionId: string, content: string) => Promise<void>;
+    releaseWorker: (sessionId: string) => void;
+    onTurnEnd: (listener: (sessionId: string) => void) => void;
   };
   /** Owned by index.ts so shutdown can dispose it. */
   ravenPane: BrowserPane;
@@ -584,6 +592,10 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
   });
 
   registerOmpCliIpc({ registrar, sendToRenderer });
+  if (dependencies.fanout) {
+    registerFanoutIpc({ registrar, ...dependencies.fanout });
+  }
+
 
 
   return async (channel: string, args: readonly unknown[] = []) => {

@@ -12,6 +12,7 @@ import { shouldAutoApproveVerb } from "@pi-desktop/host-runtime";
 import { benchSupervisor } from "../bench/supervisor";
 import type { IpcRegistrar } from "./types";
 import type { BrowserWindow } from "electron";
+import { benchForPath } from "../bench/bench-for-path";
 
 export type BenchIpcDependencies = {
   registrar: IpcRegistrar;
@@ -35,6 +36,89 @@ function readSavedRoots(dataDir: string | undefined): string[] {
   } catch {
     return [];
   }
+}
+
+export type BenchControlDeps = {
+  discover?: typeof discoverBenches;
+  dataDir?: string;
+};
+
+/**
+ * Pure bench capability: list/status/run with no IPC coupling.
+ * Used by both `registerBenchIpc` (IPC layer) and the desktop RACP adapter.
+ */
+export function createBenchControl({ discover: discoverFn, dataDir }: BenchControlDeps = {}): {
+  list(): Promise<object>;
+  status(): Promise<unknown>;
+  run(input: { benchPath: string; site?: string; verb: string; args?: string[] }): Promise<unknown>;
+} {
+  const discover = discoverFn ?? ((options = {}) => discoverBenches({ roots: defaultRoots(readSavedRoots(dataDir)), ...options }));
+
+  return {
+    async list() {
+      return { ...(await discover()), roots: defaultRoots(readSavedRoots(dataDir)) };
+    },
+    async status() {
+      const s = benchSupervisor.getStatus();
+      return {
+        running: s === "running",
+        status: s,
+        benchPath: benchSupervisor.activeBenchPath,
+        site: benchSupervisor.activeSite,
+        startedAt: benchSupervisor.startedAt,
+        logs: benchSupervisor.startedAt !== null ? benchSupervisor.getLog("start") : [],
+      };
+    },
+    async run({ benchPath, site, verb, args = [] }) {
+      if (!shouldAutoApproveVerb(verb)) {
+        throw Object.assign(
+          new Error(`bench verb "${verb}" is not on the allow-list; use benchStart/benchStop for lifecycle`),
+          { errorCode: ErrorCodes.FORBIDDEN },
+        );
+      }
+
+      const needsDiscovery =
+        resolve(benchPath) !== resolve(benchSupervisor.activeBenchPath ?? "") ||
+        verb === "migrate";
+
+      if (needsDiscovery) {
+        const { benches } = await discover();
+        const resolvedPath = resolve(benchPath);
+        const bench = benches.find((b) => resolve(b.path) === resolvedPath);
+
+        if (!bench) {
+          throw Object.assign(
+            new Error(`bench "${benchPath}" was not found in discovered benches`),
+            { errorCode: ErrorCodes.NOT_FOUND },
+          );
+        }
+
+        if (verb === "migrate") {
+          if (!site || !bench.sites.some((s) => s.name === site)) {
+            throw Object.assign(
+              new Error(`migrate requires a site that exists in bench "${benchPath}"${site ? ` (got "${site}")` : ""}`),
+              { errorCode: ErrorCodes.INVALID_ARGUMENT },
+            );
+          }
+        }
+      }
+
+      const SAFE_ARG_RE = /^[a-zA-Z0-9@_\-.\/]+$/;
+      const invalidArg = args.find((a) => typeof a !== "string" || !SAFE_ARG_RE.test(a));
+      if (invalidArg !== undefined) {
+        throw Object.assign(new Error(`invalid arg element: ${JSON.stringify(invalidArg)}`), {
+          errorCode: ErrorCodes.INVALID_ARGUMENT,
+        });
+      }
+
+      return benchSupervisor.runOneShot({
+        benchPath,
+        site: site ?? null,
+        verb,
+        args: args as string[],
+      });
+    },
+  };
 }
 
 export function registerBenchIpc({
@@ -69,9 +153,10 @@ export function registerBenchIpc({
     mainWindow()?.webContents.send(IPC.event.benchWarning, payload);
   });
 
+  const bench = createBenchControl({ discover, dataDir });
   // Gap 4 / T6: failedRoots lets the renderer show PARTIAL/ERROR state; roots
   // names the folders scanned, for the empty state.
-  const list = async () => ({ ...(await discover()), roots: defaultRoots(readSavedRoots(dataDir)) });
+  const list = bench.list;
   handle(IPC.invoke.benchList, list);
 
   // A new install has no ~/ERPNext: let the user point Fcode at their benches.
@@ -83,17 +168,7 @@ export function registerBenchIpc({
     return { canceled: false, ...(await list()) };
   });
 
-  handle(IPC.invoke.benchStatus, async () => {
-    const status = benchSupervisor.getStatus();
-    return {
-      running: status === "running",
-      status,
-      benchPath: benchSupervisor.activeBenchPath,
-      site: benchSupervisor.activeSite,
-      startedAt: benchSupervisor.startedAt,
-      logs: benchSupervisor.startedAt !== null ? benchSupervisor.getLog("start") : [],
-    };
-  });
+  handle(IPC.invoke.benchStatus, bench.status);
 
   handle(IPC.invoke.benchStart, async (input: { benchPath?: string; site?: string } = {}) => {
     const benchPath = String(input.benchPath ?? "").trim();
@@ -158,70 +233,15 @@ export function registerBenchIpc({
   handle(
     IPC.invoke.benchRun,
     async (input: { benchPath?: string; site?: string; verb?: string; args?: string[] } = {}) => {
-      const explicitPath = input.benchPath != null ? String(input.benchPath).trim() : null;
-      const benchPath = (explicitPath ?? benchSupervisor.activeBenchPath ?? "").trim();
-      const site = input.site != null ? String(input.site).trim() : benchSupervisor.activeSite;
+      const benchPath = (input.benchPath != null ? String(input.benchPath).trim() : benchSupervisor.activeBenchPath ?? "").trim();
+      const site = input.site != null ? String(input.site).trim() : benchSupervisor.activeSite ?? undefined;
       const verb = String(input.verb ?? "").trim();
-
       if (!benchPath || !verb) {
         throw Object.assign(new Error("benchPath and verb are required"), {
           errorCode: ErrorCodes.INVALID_ARGUMENT,
         });
       }
-
-      if (!shouldAutoApproveVerb(verb)) {
-        throw Object.assign(
-          new Error(`bench verb "${verb}" is not on the allow-list; use benchStart/benchStop for lifecycle`),
-          { errorCode: ErrorCodes.FORBIDDEN },
-        );
-      }
-
-      // B10(d): validate an explicitly-provided path that differs from the active bench.
-      // Paths that default to activeBenchPath were already validated through benchStart.
-      const needsDiscovery =
-        (explicitPath !== null && resolve(explicitPath) !== resolve(benchSupervisor.activeBenchPath ?? "")) ||
-        verb === "migrate";
-
-      if (needsDiscovery) {
-        const { benches } = await discover();
-        const resolvedPath = resolve(benchPath);
-        const bench = benches.find((b) => resolve(b.path) === resolvedPath);
-
-        if (explicitPath !== null && resolve(explicitPath) !== resolve(benchSupervisor.activeBenchPath ?? "") && !bench) {
-          throw Object.assign(
-            new Error(`bench "${benchPath}" was not found in discovered benches`),
-            { errorCode: ErrorCodes.NOT_FOUND },
-          );
-        }
-
-        if (verb === "migrate") {
-          // `bench migrate` without a valid --site touches every site (or fails
-          // opaquely); demand one that this bench actually has.
-          if (!site || !bench?.sites.some((s) => s.name === site)) {
-            throw Object.assign(
-              new Error(`migrate requires a site that exists in bench "${benchPath}"${site ? ` (got "${site}")` : ""}`),
-              { errorCode: ErrorCodes.INVALID_ARGUMENT },
-            );
-          }
-        }
-      }
-
-      const rawArgs = Array.isArray(input.args) ? input.args : [];
-      const SAFE_ARG_RE = /^[a-zA-Z0-9@_\-.\/]+$/;
-      const invalidArg = rawArgs.find((a) => typeof a !== "string" || !SAFE_ARG_RE.test(a));
-      if (invalidArg !== undefined) {
-        throw Object.assign(new Error(`invalid arg element: ${JSON.stringify(invalidArg)}`), {
-          errorCode: ErrorCodes.INVALID_ARGUMENT,
-        });
-      }
-      const result = await benchSupervisor.runOneShot({
-        benchPath,
-        site: site ?? null,
-        verb,
-        args: rawArgs as string[],
-      });
-
-      return result;
+      return bench.run({ benchPath, site, verb, args: input.args });
     },
   );
 
@@ -273,5 +293,14 @@ export function registerBenchIpc({
     if (!isBenchRoot) return { ok: false as const, error: "Path is not a known bench root" };
     revealPath?.(benchPath);
     return { ok: true as const };
+  });
+
+  // Resolve which bench (apps/+sites/ ancestor) contains a given path — used by
+  // the Bench page to auto-select the right bench when workspace switches.
+  handle(IPC.invoke.benchForPath, async (input: { path?: unknown } = {}) => {
+    const p = typeof input?.path === "string" ? input.path.trim() : "";
+    if (!p) return { benchPath: null };
+    const benchPath = await benchForPath(p);
+    return { benchPath };
   });
 }

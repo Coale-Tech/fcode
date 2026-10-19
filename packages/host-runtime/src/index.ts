@@ -20,3 +20,4 @@ export * from "./bench-run-tests.js";
 export * from "./bench-studio-actions.js";
 export * from "./kanban-core.js";
 export * from "./kanban-store.js";
+export * from "./racp-host-operations.js";

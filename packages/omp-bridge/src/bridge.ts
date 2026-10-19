@@ -754,6 +754,9 @@ const KANBAN_TOOL_SCHEMAS = [
   },
 ] as const;
 
+/** How long omp may take to print its `ready` frame after spawn. */
+const HANDSHAKE_TIMEOUT_MS = 120_000;
+
 
 export class OmpBridge {
   private config: BridgeConfig | null = null;
@@ -1875,16 +1878,18 @@ export class OmpBridge {
     this.ompProcess = child;
 
     // Handshake timeout — reject pending calls and emit sidecar.fatal if omp never says "ready".
+    // A freshly built or updated binary is scanned by the OS and side-installs its runtime on
+    // first launch, which can take well over 30 s; the later 'ready' still completes the handshake.
     this.readyTimer = setTimeout(() => {
       this.readyTimer = null;
       this.notify("sidecar.fatal", {
         code: "HANDSHAKE_TIMEOUT",
         paths: ompBinaryCandidates(opts.resourcesPath),
-        detail: "omp process did not emit 'ready' within 30 s",
+        detail: `omp process did not emit 'ready' within ${HANDSHAKE_TIMEOUT_MS / 1000} s`,
       });
       for (const [, { reject }] of this.ompPending) reject(new Error("handshake timeout"));
       this.ompPending.clear();
-    }, 30_000);
+    }, HANDSHAKE_TIMEOUT_MS);
     this.readyTimer.unref();
 
     child.on("error", (err) => {

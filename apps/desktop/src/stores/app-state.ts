@@ -48,6 +48,7 @@ import type {
 } from "../lib/composer-smart-stop";
 import type { SidebarSessionOutcome } from "../lib/sidebar-session-status";
 import type { WorkPanelContext, WorkPanelTab } from "../lib/work-panel-tabs";
+import type { ReviewNote } from "../lib/review-notes-prompt";
 
 export type { WorkPanelTab } from "../lib/work-panel-tabs";
 
@@ -221,6 +222,14 @@ export type AppState = {
    * Managed as local state in ChatSurface via IPC.event.sidecarFatal.
    */
   sidecarFatal?: { code: string; paths: string[]; detail: string } | null;
+  /** In-memory review notes, keyed by ReviewChange.snapshotId. */
+  reviewNotes: Record<string, ReviewNote[]>;
+  addReviewNote: (note: Omit<ReviewNote, "id" | "resolved" | "createdAt">) => string;
+  updateReviewNote: (id: string, body: string) => void;
+  resolveReviewNote: (id: string, resolved: boolean) => void;
+  removeReviewNote: (id: string) => void;
+  /** Compose one prompt from all unresolved notes and send it. Returns false when there are none. */
+  sendReviewNotes: (snapshotIds: string[]) => Promise<boolean>;
   refreshMemoryStatus: () => Promise<void>;
   bootstrap: () => Promise<void>;
   refreshSessions: (options?: RefreshSessionsOptions) => Promise<void>;
