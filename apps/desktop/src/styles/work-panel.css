@@ -1719,13 +1719,13 @@
   transform: translateY(-50%);
   width: 14px;
   height: 14px;
-  line-height: 14px;
-  font-size: 10px;
+  line-height: var(--leading-px-14);
+  font-size: var(--text-4xs);
   text-align: center;
   border: none;
   background: var(--surface-blue-1, color-mix(in srgb, var(--blue-500, #3b82f6) 8%, transparent));
   color: var(--ink-blue-6, #2563eb);
-  border-radius: 3px;
+  border-radius: var(--radius-4xs);
   cursor: pointer;
   padding: 0;
   opacity: 0;
@@ -1777,7 +1777,7 @@
   font-size: var(--text-3xs);
   background: color-mix(in srgb, var(--yellow-500, #eab308) 15%, transparent);
   color: var(--ink-amber-7, #92400e);
-  border-radius: 3px;
+  border-radius: var(--radius-4xs);
   padding: 0 4px;
   flex-shrink: 0;
 }
