@@ -1260,3 +1260,163 @@ Linux 保留淡入淡出和滑动退出。
   以及一个列表，其分组标题是安静的标签行、候选项是独立磁贴。没有按类型划分的
   扫描卡片、没有着色的分组条带，也没有第二份设置行脚手架副本
 - 浅色目的地卡使用白色高架板（不是平坦的灰色填充）
+
+## Direction D — shell 外框与导航布局
+
+Direction D 用三种用户可选的导航变体取代旧的固定侧栏布局。该选择持久化为
+`AppSettings.navLayout`，并在启动时通过在 `<html>` 上写入 `data-nav-layout` 生效。
+
+### D-shell 令牌约定
+
+所有 Direction D 的取值都来自 `kit-d/D.css` 变量，不得在组件 CSS 中硬编码。
+
+| Token | Light | Dark | Usage |
+|-------|-------|------|-------|
+| `--da` | `#2578ab` | `#42a2d9` | 主强调色（FileBird 蓝） |
+| `--da-sub` | `--da` 的透明色调 | 透明色调 | 选中项背景填充 |
+| `--da-txt` | `#165a88` | `#92d2f8` | 选中色调（`--da-sub`）上的文字 |
+| `--da-bdr` | 透明色调 | 透明色调 | 强调环 / 焦点轮廓 |
+| `--d-border` | `#e5e7eb` | `#2a2a2a` | 面板/卡片分隔线 |
+| `--d-border-ctrl` | `#d1d5db` | `#3a3a3a` | 控件边框（输入框、选择框） |
+| `--d-canvas-bg` | `#f0f2f5` | `#111111` | 面板后方的应用画布 |
+| `--d-r-ctrl` | `8px` | `8px` | 控件圆角 |
+| `--d-text` | `13px` | `13px` | shell 外框中的基础字号 |
+| `--d-navbar-h` | `48px` | `48px` | Shell 导航栏高度 |
+| `--surface-elevation-1` | `#ffffff` | `#1c1c1c` | 面板 / 设置卡片表面 |
+| `--surface-gray-1` | `#f8f9fa` | `#242424` | 面板标题栏填充 |
+| `--ink-gray-8` | `#1a1a1a` | `#e8e8e8` | 主要标签文字 |
+| `--ink-gray-5` | `#6b7280` | `#8a8a8a` | 次要 / 说明文字 |
+| `--ink-gray-4` | `#9ca3af` | `#666666` | 占位符 / 图标填充 |
+
+> **令牌说明**：Espresso 紫色色阶已重映射为 FileBird 蓝；没有使用任何紫色
+> 默认值。深色强调色 `--da = #42a2d9`；`--da-txt` 用于选中色调（`--da-sub`）上的文字，
+> 而不是实心强调色填充上的文字 —— 强调色填充上的文字使用
+> `--ds-accent-foreground`（浅色 `#ffffff` / 深色 `#0a1f2e`，为获得
+> 5.93:1 对比度而批准的偏差）。深色开关旋钮的开启态遵循 `--ds-accent-foreground`。
+
+### 布局变体
+
+共提供三种变体。`navLayout` 设置会即时切换当前变体；该值写入 `<html>` 的
+`data-nav-layout`，由 CSS 选择器和 `resolveNavLayout()` 辅助函数读取。
+
+| Value | Name | Rail width | Description |
+|-------|------|-----------|-------------|
+| `tabs` | D1 — 顶部标签页 | 0px 轨道 | 48px 导航栏承载品牌标志、完整的 `<NavTabs>` 标签条、居中的地址栏式搜索框和右侧集群。没有常驻侧栏；页面占满全宽。 |
+| `rail` | D2 — 图标轨道 | 50px | 48px 导航栏显示面包屑；左边缘 50px 图标轨道放置页面图标，底部为通知铃铛。右侧集群（bench 标签 + 铃铛 + 设置 + 头像）位于导航栏。 |
+| `island` | D3 — 岛式侧栏 | 60px + 256px | 同样的 50px 轨道，加上一块 256px 的岛式面板，以卡片形式浮于画布之内。设置页在岛式空间内渲染自己的导航；内容窗格收窄到约 820px。 |
+
+#### Shell 外框尺寸（来自 `nav-layout.ts`）
+
+| Layout | Traffic-light reserve | Shell navbar | Rail width | Island width |
+|--------|----------------------|-------------|-----------|-------------|
+| `tabs` | 78px | 48px | — | — |
+| `rail` | 56px | 48px | 50px | — |
+| `island` | 56px | 48px | 60px | 256px |
+
+### Shell 导航栏右侧集群
+
+三种布局在 `ShellNavbar` 中渲染相同的右端集群：
+
+1. **Bench 标签** —— 仅当 `useBenchContext().kind !== "empty"` 时显示；
+   显示 bench 名称、运行/停止圆点和 `IconChevronDown`；点击后跳转到
+   Bench 页面。
+2. **通知铃铛** —— `<NotificationCenter>` 组件。
+3. **设置按钮** —— `IconSettings`，跳转到设置页面。
+4. **用户头像** —— `shell-navbar-avatar`，24×24 按钮，显示由 `displayName`
+   （IPC `appGetUserInfo`）派生的两个字母缩写，缺省时使用操作系统登录名。
+   截图装置通过 `ensureVisualFixtures` 预置 `userInitials: "JK"`。
+
+D1（`tabs`）还会在起始槽位显示品牌标志和 `<NavTabs>`。
+D2/D3（`rail`/`island`）显示面包屑：`Fcode / PageName / TabName`。
+
+### 设置导航面板（所有布局）
+
+无论当前 shell 布局如何，设置页始终渲染自己的 240px 导航面板。
+在 D3（island）中，该面板与 256px 的全局岛式侧栏并排。
+
+#### 导航分组与条目（Direction D 参考）
+
+| Group | Items |
+|-------|-------|
+| **Preferences** | General · Shortcuts · Voice *(Beta)* |
+| **AI** | AI Defaults · Instructions · Models & Providers · Memory · AI Agents · AI Tools · Extensions · Kanban · Raven · Advanced omp · omp Tools |
+| **Workspace** | Import · Projects |
+| **System** | About |
+
+云同步和远程主机为 `developerOnly`，除非
+`AppSettings.developerMode === true`，否则隐藏。
+
+语音对所有用户可见（experimentalBadge: "Beta"）。
+
+### 字号预设
+
+外观部分通过分段控件提供四个字体缩放预设。
+标签与向用户显示的数值 px 一致：
+
+| Key | Value | Scale |
+|-----|-------|-------|
+| `settings.fontSizeSmall` | `"12"` | `FONT_SCALE_PRESETS.small` |
+| `settings.fontSizeDefault` | `"13"` | `FONT_SCALE_PRESETS.default` |
+| `settings.fontSizeLarge` | `"14"` | `FONT_SCALE_PRESETS.large` |
+| `settings.fontSizeXl` | `"15"` | `FONT_SCALE_PRESETS.xl` |
+
+D 之前版本中的滑块和百分比读数已移除；
+分段控件是唯一的字号控件（`FontSizeRow.tsx`）。
+
+### 截图装置 API（capture-rig.ts）
+
+与设置和 shell 夹具相关的 `window.__PI_DESKTOP__` 关键方法：
+
+| Method | Effect |
+|--------|--------|
+| `seedOmpSettings()` | 模拟 `api.ompSettingsManifest`、`ompSettingsGet`、`ompAgentList`、`ompWorktreeList`，使「高级 omp」页面无需真实 sidecar 即可进入 "ready" 状态。伪造的清单使用标签页 `general / tools / agents / memory / features`，分组为 `Core / Startup & Lifecycle / Storage / Network / Experimental` —— 这些是经设计批准的截图分组，并非真实 omp 二进制清单的结构。 |
+| `seedBenchStatus(opts)` | 通过 `pi:bench-update` 事件预置 bench 标签和状态栏。 |
+| `clearOpenProjects()` | 清空 `openProjectPaths: []`，使 PROJECTS 区段折叠。 |
+| `ensureVisualFixtures()` | 预置英文会话标题、`userInitials: "JK"`、已启用的 kanban/raven，以及 3 条通知。每个 Electron 会话必须运行一次。 |
+| `seedEmptyHome()` | 清空会话和已打开项目路径；为空首页截图设置 `onboarding.showChecklist: true`。 |
+| `seedCommandPaletteExtras()` | 在命令面板中预置 FILES、BENCHES、COMMANDS 区段（仅用于截图）。 |
+
+> **高级 omp 清单与真实 omp 分组**：omp 二进制生成的真实 `omp-settings-manifest.json`
+> 使用与截图装置伪造清单不同的分组名
+> （例如基于领域的分组 `task / eval / browser / collab`）。产品代码
+> （`OmpAdvancedSettings.tsx`）渲染实时清单提供的任意标签页/分组；
+> 伪造清单仅用于截图还原度。若已安装 omp 二进制且存在
+> `omp-settings-manifest.json`，则会显示真实分组。
+
+### 引导流程（pages-d/onboarding）
+
+#### 第 1 步 —— 连接提供方
+
+设计参考：`pages-d/onboarding/variant-D1.png`、`variant-D2.png`、`variant-D3.png`。
+
+完整的第 1 步向导截图（第 1 步共 4 步，Back / Continue → 按钮、带 "Verify" 的 API 密钥字段）
+见上述设计参考。截图装置的
+`seedOnboardingChecklist()` 也可触发清单覆盖层（`.ob-wrap`），
+作为截图用途的另一个入口。
+
+#### 第 2–4 步与旧版迁移对话框 —— 需要设计评审
+
+> **⚠ 需要设计评审**：第 2–4 步引导以及冗长的迁移（旧版首次运行）对话框
+> 均没有获批的设计稿。这些仍未决。
+> 以下条目仅使用 Direction D 令牌重新设计了样式，等待最终设计
+> 签字后才会锁定实现细节。
+>
+> - **第 2 步 —— 选择 bench**：选择或创建 Frappe bench；bench 列表面板。
+>   已应用令牌：`--da`、`--da-sub`、`--d-panel`、`--d-border`、`--surface-elevation-1`。
+>   布局：同样的 4 步向导外框；内容面板待设计确定。
+>
+> - **第 3 步 —— 权限模式**：选择 Ask / Auto / Plan 模式。
+>   已应用令牌：与第 1 步相同的 shell 外框。
+>   内容：三张模式卡片（`Ask every time` / `Auto-approve read-only` / `Agent plan`）。
+>   布局：同样的 4 步向导外框；卡片视觉待设计确定。
+>
+> - **第 4 步 —— 准备就绪**：带 "Start coding" 行动按钮的完成页。
+>   已应用令牌：相同外框。
+>   内容：成功插图、bench 与提供方摘要。
+>   布局：待设计确定。
+>
+> - **旧版迁移对话框**：由 D 之前版本迁移而来的冗长首次运行对话框
+>   没有获批的 Direction D 设计稿。仅重新应用了令牌；视觉结构待签字。
+>
+> 所需行动：UX 团队需为第 2–4 步和迁移对话框交付获批设计稿，
+> 在此之前这些界面不能视为实现完成。
