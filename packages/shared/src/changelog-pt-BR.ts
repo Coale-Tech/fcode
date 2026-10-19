@@ -2,6 +2,16 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const ptBREntries: ChangelogEntry[] = [
   {
+    "version": "0.21.1",
+    "date": "2026-10-19",
+    "highlights": [
+      "O seletor de modelo e o nível de raciocínio do chat agora mostram o que o omp está realmente executando, incluindo os provedores próprios do omp. O chip ficava em \"Modelo\" e no nível antigo.",
+      "Auto e Aceitar edições agora funcionam: Auto aprova toda solicitação de ferramenta, Aceitar edições aprova `edit` e `write`, e o resto continua perguntando. Um chat em Auto antes ficava esperando em um card de permissão.",
+      "O texto de status das extensões do omp (por exemplo ponytail) não mostra mais códigos de cor brutos no rodapé.",
+      "Uma sondagem de PATH do shell de login que expirava na inicialização não deixa mais um processo `zsh -lic` rodando para sempre.",
+    ],
+  },
+  {
     "version": "0.21.0",
     "date": "2026-10-18",
     "highlights": [

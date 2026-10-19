@@ -2,6 +2,16 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const frEntries: ChangelogEntry[] = [
   {
+    "version": "0.21.1",
+    "date": "2026-10-19",
+    "highlights": [
+      "Le sélecteur de modèle et le niveau de raisonnement du chat affichent désormais ce que omp exécute réellement, y compris les fournisseurs propres à omp. La pastille restait sur « Modèle » et sur l'ancien niveau.",
+      "Auto et Accepter les modifications fonctionnent désormais : Auto approuve toute demande d'outil, Accepter les modifications approuve `edit` et `write`, le reste est toujours demandé. Un chat en Auto attendait auparavant sur une carte d'autorisation.",
+      "Le texte d'état des extensions omp (par exemple ponytail) n'affiche plus de codes couleur bruts dans le pied de page.",
+      "Une sonde PATH du shell de connexion expirée au démarrage ne laisse plus un processus `zsh -lic` tourner indéfiniment.",
+    ],
+  },
+  {
     "version": "0.21.0",
     "date": "2026-10-18",
     "highlights": [

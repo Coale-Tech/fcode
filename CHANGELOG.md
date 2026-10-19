@@ -8,7 +8,13 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) on Fc
 The two early previews used `0.15.7-fcode.N` (PI-Desktop 0.15.7 plus a prerelease suffix). That scheme sorted below upstream 0.15.7 and was always a prerelease, so the in-app updater (stable releases only) never offered it.
 The PI-Desktop release each version is based on is listed in its Compatibility table.
 
-## [Unreleased]
+## [0.21.1] — 2026-10-19
+
+### Compatibility
+
+| Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
+|-------|-----------------|-----------|-----------------|--------|
+| 0.21.1 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
 
 ### Fixed
 
@@ -345,6 +351,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Security: YAML injection via `agentModelOverrides` key fixed (agent key now `JSON.stringify`-quoted in overlay); `validateOmpSettings` rejects keys with non-identifier chars (newlines, colons, spaces); `file:`/`git+file:`/`svn+`/`hg+` URI schemes blocked in `validateInstallSpec`; collab panel only renders `<a>` for http(s) URLs; Hindsight supervisor strips raw process output from IPC state message; port validated 1024–65535 in `hindsightLocalStart`; `benchRun` validates each `args` element against an identifier-safe regex.
 - `inflight-checkpoint.test.mjs` flaky timing fixed (freeze `Date.now()` via `t.mock.timers`); `plugin-mcp.test.mjs` `connectTimeoutMs` 20 → 300.
 
+[0.21.1]: https://github.com/Coale-Tech/fcode/releases/tag/v0.21.1
 [0.21.0]: https://github.com/Coale-Tech/fcode/releases/tag/v0.21.0
 [0.20.0]: https://github.com/Coale-Tech/fcode/releases/tag/v0.20.0
 [0.19.0]: https://github.com/Coale-Tech/fcode/releases/tag/v0.19.0

@@ -2,6 +2,16 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const koEntries: ChangelogEntry[] = [
   {
+    "version": "0.21.1",
+    "date": "2026-10-19",
+    "highlights": [
+      "채팅의 모델 선택기와 추론 수준이 이제 omp가 실제로 실행 중인 값을 보여줍니다(omp 자체 제공자 포함). 이전에는 칩이 \"모델\"과 예전 수준에 머물렀습니다.",
+      "자동과 편집 수락이 이제 제대로 동작합니다. 자동은 모든 도구 요청을 승인하고, 편집 수락은 `edit`와 `write`를 승인하며, 나머지는 계속 묻습니다. 자동으로 설정한 채팅이 예전에는 권한 카드에서 멈춰 있었습니다.",
+      "omp 확장 기능의 상태 텍스트(예: ponytail)가 푸터에 원시 색상 코드를 더 이상 표시하지 않습니다.",
+      "시작 시 로그인 셸 PATH 탐색이 시간 초과되어도 `zsh -lic` 프로세스가 계속 남아 실행되지 않습니다.",
+    ],
+  },
+  {
     "version": "0.21.0",
     "date": "2026-10-18",
     "highlights": [

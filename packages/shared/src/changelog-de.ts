@@ -2,6 +2,16 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const deEntries: ChangelogEntry[] = [
   {
+    "version": "0.21.1",
+    "date": "2026-10-19",
+    "highlights": [
+      "Modellauswahl und Denkstufe im Chat zeigen jetzt, was omp tatsächlich ausführt, auch bei den eigenen Anbietern von omp. Die Anzeige blieb zuvor bei „Modell“ und der alten Stufe.",
+      "Auto und Änderungen akzeptieren funktionieren jetzt: Auto genehmigt jede Tool-Anfrage, Änderungen akzeptieren genehmigt `edit` und `write`, alles andere wird weiter erfragt. Ein Chat auf Auto wartete zuvor auf eine Berechtigungskarte.",
+      "Statustext von omp-Erweiterungen (zum Beispiel ponytail) zeigt in der Fußzeile keine rohen Farbcodes mehr.",
+      "Eine beim Start abgelaufene PATH-Abfrage der Login-Shell hinterlässt keinen dauerhaft laufenden `zsh -lic`-Prozess mehr.",
+    ],
+  },
+  {
     "version": "0.21.0",
     "date": "2026-10-18",
     "highlights": [

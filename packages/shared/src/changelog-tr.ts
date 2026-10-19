@@ -2,6 +2,16 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const trEntries: ChangelogEntry[] = [
   {
+    "version": "0.21.1",
+    "date": "2026-10-19",
+    "highlights": [
+      "Sohbetteki model seçici ve akıl yürütme düzeyi artık omp'nin gerçekten çalıştırdığını gösteriyor; omp'nin kendi sağlayıcıları da dahil. Etiket daha önce \"Model\" ve eski düzeyde kalıyordu.",
+      "Otomatik ve Düzenlemeleri kabul et artık çalışıyor: Otomatik her araç isteğini onaylar, Düzenlemeleri kabul et `edit` ve `write` isteklerini onaylar, gerisi yine sorar. Otomatiğe ayarlı bir sohbet daha önce bir izin kartında bekliyordu.",
+      "omp uzantılarının durum metni (örneğin ponytail) altbilgide artık ham renk kodlarını göstermiyor.",
+      "Açılışta zaman aşımına uğrayan oturum açma kabuğu PATH yoklaması artık sonsuza dek çalışan bir `zsh -lic` işlemi bırakmıyor.",
+    ],
+  },
+  {
     "version": "0.21.0",
     "date": "2026-10-18",
     "highlights": [

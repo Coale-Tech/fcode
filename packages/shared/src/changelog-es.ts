@@ -2,6 +2,16 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const esEntries: ChangelogEntry[] = [
   {
+    "version": "0.21.1",
+    "date": "2026-10-19",
+    "highlights": [
+      "El selector de modelo y el nivel de razonamiento del chat ahora muestran lo que omp está ejecutando de verdad, incluidos los proveedores propios de omp. La etiqueta se quedaba en «Modelo» y en el nivel anterior.",
+      "Auto y Aceptar ediciones ahora funcionan: Auto aprueba toda solicitud de herramienta, Aceptar ediciones aprueba `edit` y `write`, y lo demás sigue preguntando. Un chat en Auto antes se quedaba esperando en una tarjeta de permiso.",
+      "El texto de estado de las extensiones de omp (por ejemplo ponytail) ya no muestra códigos de color sin procesar en el pie.",
+      "Una sonda de PATH del shell de inicio de sesión que agotaba el tiempo al arrancar ya no deja un proceso `zsh -lic` en ejecución para siempre.",
+    ],
+  },
+  {
     "version": "0.21.0",
     "date": "2026-10-18",
     "highlights": [

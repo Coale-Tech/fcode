@@ -30,6 +30,16 @@ export type ChangelogEntry = {
 
 const enEntries: ChangelogEntry[] = [
   {
+    version: "0.21.1",
+    date: "2026-10-19",
+    highlights: [
+      "The chat model picker and reasoning level now show what omp is actually running, including omp's own providers. The chip used to stay on \"Model\" and the old level.",
+      "Auto and Accept edits now work: Auto approves every tool request, Accept edits approves `edit` and `write`, and anything else still asks. A chat set to Auto used to wait on a permission card.",
+      "Extension status text from omp (for example ponytail) no longer shows raw colour codes in the footer.",
+      "A login-shell PATH probe that timed out at startup no longer leaves a `zsh -lic` process running forever.",
+    ],
+  },
+  {
     version: "0.21.0",
     date: "2026-10-18",
     highlights: [
@@ -968,6 +978,16 @@ const enEntries: ChangelogEntry[] = [
 
 const zhCNEntries: ChangelogEntry[] = [
   {
+    version: "0.21.1",
+    date: "2026-10-19",
+    highlights: [
+      "聊天的模型选择器和推理等级现在显示 omp 实际运行的值，包括 omp 自带的提供商；此前标签一直停在“模型”和旧的等级上。",
+      "“自动”和“接受编辑”现在真正生效：“自动”批准所有工具请求，“接受编辑”批准 `edit` 和 `write`，其余仍会询问。此前设为“自动”的对话会一直停在权限卡片上等待。",
+      "omp 扩展的状态文字（例如 ponytail）不再在底部栏显示原始颜色代码。",
+      "启动时登录 shell 的 PATH 探测超时后，不再遗留一个永远运行的 `zsh -lic` 进程。",
+    ],
+  },
+  {
     version: "0.21.0",
     date: "2026-10-18",
     highlights: [
@@ -1904,6 +1924,16 @@ const zhCNEntries: ChangelogEntry[] = [
 ];
 
 const zhTWEntries: ChangelogEntry[] = [
+  {
+    version: "0.21.1",
+    date: "2026-10-19",
+    highlights: [
+      "聊天的模型選擇器與推理等級現在顯示 omp 實際執行的值，包括 omp 自帶的提供者；先前標籤一直停在「模型」與舊的等級。",
+      "「自動」與「接受編輯」現在真正生效：「自動」核准所有工具請求，「接受編輯」核准 `edit` 與 `write`，其餘仍會詢問。先前設為「自動」的對話會一直停在權限卡片上等待。",
+      "omp 擴充功能的狀態文字（例如 ponytail）不再於底部列顯示原始顏色代碼。",
+      "啟動時登入 shell 的 PATH 探測逾時後，不再遺留一個永遠執行的 `zsh -lic` 行程。",
+    ],
+  },
   {
     version: "0.21.0",
     date: "2026-10-18",
