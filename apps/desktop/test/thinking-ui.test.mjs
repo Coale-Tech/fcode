@@ -154,7 +154,7 @@ test("switching to a provider without reasoning resets the session level", () =>
   // Composer owns both the reasoning-level guard and its session write.
   assert.match(
     composerSource,
-    /const thinkingLevel = thinkingLevelForProvider\(\s*thinkingProvider,\s*configuredThinkingLevel,\s*\)/,
+    /const chatThinkingLevel = thinkingLevelForProvider\(\s*thinkingProvider,\s*configuredThinkingLevel,\s*\)/,
   );
   assert.match(composerSource, /thinkingLevel:\s*level/);
 });

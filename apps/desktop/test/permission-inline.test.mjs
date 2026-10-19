@@ -258,7 +258,9 @@ test("background permission events update only session-scoped state", () => {
     /if \(envelope\.sessionId !== get\(\)\.activeSessionId\)[\s\S]*?return;/,
   )?.[0];
   assert.ok(backgroundBlock);
-  assert.match(backgroundBlock, /enqueuePermission/);
+  // Background requests go through admitPermission, which queues them.
+  assert.match(backgroundBlock, /admitPermission/);
+  assert.match(eventsSource, /admitPermission = \([\s\S]*?enqueuePermission/);
   assert.doesNotMatch(
     backgroundBlock,
     /selectSession|activeSessionId:\s*|messages:\s*|page:\s*/,

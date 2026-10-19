@@ -193,9 +193,9 @@
   flex: 1;
   min-width: 0;
   font-size: var(--d-text-xs);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
-  letter-spacing: .05em;
+  letter-spacing: var(--tracking-caps);
   color: var(--ink-gray-6);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -211,7 +211,7 @@
   background: var(--surface-gray-2);
   color: var(--ink-gray-4);
   font-size: var(--d-text-xs);
-  line-height: 16px;
+  line-height: var(--leading-px-16);
   font-variant-numeric: tabular-nums;
 }
 
@@ -349,7 +349,7 @@
 .kanban-card-id {
   font-family: var(--font-mono);
   font-size: var(--d-kd-chip-font);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--ink-gray-5);
   flex-shrink: 0;
 }
@@ -361,8 +361,8 @@
   background: var(--surface-gray-2);
   color: var(--ink-gray-6);
   font-size: var(--d-kd-chip-font);
-  font-weight: 500;
-  line-height: 16px;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--leading-px-16);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -395,7 +395,7 @@
 .kanban-card-title {
   margin-bottom: 5px;
   font-size: var(--d-text-sm);
-  line-height: 1.4;
+  line-height: var(--leading-normal);
   color: var(--ink-gray-8);
   overflow-wrap: anywhere;
 }
@@ -547,7 +547,7 @@
 .kanban-drawer-id {
   font-family: var(--font-mono);
   font-size: var(--d-text-xs);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--ink-gray-5);
   flex-shrink: 0;
 }
@@ -570,7 +570,7 @@
   min-width: 0;
   margin: 0;
   font-size: var(--text-md);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--ink-gray-9);
   white-space: nowrap;
   overflow: hidden;
@@ -651,9 +651,9 @@
   flex: 1;
   margin: 0;
   font-size: var(--d-text-xs);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
-  letter-spacing: .05em;
+  letter-spacing: var(--tracking-caps);
   color: var(--ink-gray-5);
 }
 
@@ -677,7 +677,7 @@
 
 .kanban-md {
   font-size: var(--text-md);
-  line-height: 1.6;
+  line-height: var(--leading-prose);
   color: var(--ink-gray-7);
 }
 .kanban-md > :first-child { margin-top: 0; }
@@ -797,7 +797,7 @@
   color: var(--ink-gray-6);
 }
 .kanban-run-status {
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   text-transform: lowercase;
 }
 /* Only the latest run reads in its outcome colour (fragment-drawer.html:398-408). */
@@ -850,7 +850,7 @@
 .kanban-event-kind {
   flex: 1;
   min-width: 0;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--ink-gray-7);
   text-transform: capitalize;
 }
@@ -879,7 +879,7 @@
   color: var(--ink-gray-5);
 }
 .kanban-comment-meta strong {
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--ink-gray-7);
 }
 

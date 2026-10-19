@@ -259,15 +259,6 @@ function DescriptorRow({
     onSave({ ...advanced, [descriptor.id]: next });
   };
 
-
-
-  const defaultDisplay =
-    descriptor.default === undefined
-      ? null
-      : typeof descriptor.default === "object"
-      ? JSON.stringify(descriptor.default)
-      : String(descriptor.default);
-
   return (
     <SettingsRow
       className="omp-advanced-row"

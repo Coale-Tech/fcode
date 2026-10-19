@@ -74,7 +74,7 @@
   padding: 8px 6px 3px;
   font-size: var(--d-text-xs);
   font-weight: var(--font-weight-medium);
-  letter-spacing: .04em;
+  letter-spacing: var(--tracking-label);
 }
 
 /* ── D3 pinned pages: hairline + tighter rows ── */
@@ -153,18 +153,18 @@
 :root:is([data-nav-layout="tabs"], [data-nav-layout="rail"]) .sidebar-standalone-sessions .sidebar-list-label {
   flex: 1;
   font-size: var(--d-text);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--ink-gray-8);
 }
 :root:is([data-nav-layout="tabs"], [data-nav-layout="rail"]) .sidebar-standalone-sessions .sidebar-session-count {
   margin: 0;
   height: 16px;
   padding: 0 5px;
-  border-radius: 8px;
+  border-radius: var(--radius-xs);
   background: var(--surface-gray-2);
   color: var(--ink-gray-4);
   font-size: var(--d-text-xs);
-  line-height: 16px;
+  line-height: var(--leading-px-16);
   font-variant-numeric: tabular-nums;
 }
 :root:is([data-nav-layout="tabs"], [data-nav-layout="rail"]) .sidebar-standalone-sessions .sidebar-session-search {
@@ -173,7 +173,7 @@
   gap: 6px;
   margin: 6px 6px 2px;
   padding: 0 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-2xs);
 }
 :root:is([data-nav-layout="tabs"], [data-nav-layout="rail"]) .sidebar-session-search-input {
   font-size: var(--d-text-sm);
@@ -184,8 +184,8 @@
 :root:is([data-nav-layout="tabs"], [data-nav-layout="rail"]) .sidebar-time-group-header {
   padding: 8px 4px 3px;
   font-size: var(--d-text-xs);
-  font-weight: 600;
-  letter-spacing: .04em;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-label);
 }
 
 /* Session rows (D.css .d-session-item) — all layouts */
@@ -291,7 +291,7 @@
 .wp-mini-head { padding: 0 8px 0 10px; }
 .wp-mini-title {
   font-size: var(--d-text);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--ink-gray-8);
 }
 .wp-mini-acts { opacity: 0; transition: opacity var(--motion-duration-fast) var(--motion-ease-out); }
@@ -302,7 +302,7 @@
 .composer-enhance-btn { display: none !important; }
 .composer-enhance-undo { display: none !important; }
 .composer-permission .mode-chip .text-sm {
-  font-size: 11px;
+  font-size: var(--text-2xs);
   max-width: 140px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -359,14 +359,14 @@
   gap: 6px;
   color: var(--ink-amber-9);
   font-size: var(--d-text);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   margin: 0;
 }
 .permission-card-reason {
   margin: 0;
   color: var(--ink-amber-8);
   font-size: var(--d-text-sm);
-  line-height: 1.45;
+  line-height: var(--leading-body);
 }
 .permission-card-reason code {
   font-family: var(--font-mono);
@@ -417,11 +417,11 @@
   margin: 0;
   padding: 0 5px;
   border: 1px solid var(--d-border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--surface-gray-2);
   color: var(--ink-gray-6);
-  font-size: 10px;
-  font-weight: 500;
+  font-size: var(--text-4xs);
+  font-weight: var(--font-weight-medium);
   text-transform: lowercase;
 }
 .tool-row-name-line .tool-row-state.is-done {
@@ -464,7 +464,7 @@
   background: var(--surface-gray-2);
   color: var(--ink-gray-5);
   font-size: var(--d-text-xs);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 .turn-run-output .d-code-block-head .copy-btn {
   min-height: 22px;
@@ -477,7 +477,7 @@
   color: var(--ink-gray-8);
   font-family: var(--font-mono);
   font-size: var(--d-text-sm);
-  line-height: 1.6;
+  line-height: var(--leading-prose);
 }
 
 /* ── D Composer footer overrides ─────────────────────────────────────── */

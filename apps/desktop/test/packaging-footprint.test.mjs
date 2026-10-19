@@ -243,6 +243,11 @@ test("packaging keeps only shipped locales and excludes non-runtime artifacts", 
       from: "resources/skill-packs",
       to: "skill-packs",
     },
+    // omp's language-server defaults (Fcode ships ruff) are read as a plain file.
+    {
+      from: "resources/omp-lsp-defaults.json",
+      to: "omp-lsp-defaults.json",
+    },
     // FileBird's own preload and renderer load as file:// pages in its view (ADR 0309).
     {
       from: "../filebird/out/preload",

@@ -66,7 +66,7 @@
   background: transparent;
   color: var(--ink-gray-9);
   /* R11i: 14px items means search input larger: D.css says 15px */
-  font-size: 15px;
+  font-size: var(--text-base-plus);
   font-family: inherit;
   outline: none;
 }
@@ -85,8 +85,8 @@
   padding: 8px 8px 4px;
   color: var(--ink-gray-4);
   font-size: var(--d-text-xs);
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-label);
   text-transform: uppercase;
   border-top: 1px dashed var(--d-border);
   margin-top: 2px;
@@ -106,7 +106,7 @@
   /* R11i: 14px */
   color: var(--ink-gray-7);
   font-size: var(--d-text-chat);
-  line-height: 1;
+  line-height: var(--leading-none);
   text-align: left;
   transition: background var(--motion-duration-fast) var(--motion-ease-out), color var(--motion-duration-fast) var(--motion-ease-out);
 }
@@ -137,7 +137,7 @@
 .search-hit {
   background: transparent;
   color: var(--da);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .search-item-meta {
@@ -167,7 +167,7 @@
 
 .search-item-badge {
   flex: 0 0 auto;
-  border-radius: 3px;
+  border-radius: var(--radius-4xs);
   background: var(--surface-gray-2);
   padding: 1px 4px;
   font-size: var(--d-text-xs);
@@ -214,8 +214,8 @@
   border-radius: var(--d-r-sm);
   border: 1px solid var(--d-border-ctrl);
   background: var(--surface-gray-1);
-  font-size: 10px;
-  font-weight: 500;
+  font-size: var(--text-4xs);
+  font-weight: var(--font-weight-medium);
   color: var(--ink-gray-5);
   font-family: inherit;
 }

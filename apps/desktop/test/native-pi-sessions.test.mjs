@@ -4,13 +4,8 @@ import { readFile } from "node:fs/promises";
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 const agent = await read("../electron/main/ipc/agent-ipc.ts");
 
-const composer = await read("../src/components/Composer.tsx");
 const transcript = await read("../src/stores/slices/transcript-slice.ts");
 const events = await read("../src/stores/slices/events-slice.ts");
-
-test("native model readiness uses capability instead of Desktop secrets", () => {
-  assert.match(composer, /const modelReady\s*=\s*nativeSession\s*\?\s*activeSessionSummary\??\.capabilities\?\.canPrompt === true\s*:/);
-});
 
 test("native abort bypasses smart-stop rewrite and refreshes source detail", () => {
   const abort = transcript.slice(transcript.indexOf("abort: async"));
@@ -39,7 +34,7 @@ test("native compact and session-addressed queue endpoints reject before host or
 // Real slices/IPC with synthetic state; no Electron process or native home.
 const { register } = await import("node:module");
 register(new URL("./helpers/ts-import-hooks.mjs", import.meta.url));
-const { IPC, isImageGenerationModel, imageGenerationBindings } = await import("@pi-desktop/shared");
+const { IPC, imageGenerationBindings } = await import("@pi-desktop/shared");
 const { registerAgentIpc } = await import("../electron/main/ipc/agent-ipc.ts");
 const { searchSessionsAcrossSources } = await import("../electron/main/services/session-search.ts");
 const { createEventsSlice } = await import("../src/stores/slices/events-slice.ts");
@@ -148,11 +143,16 @@ test("native prompt only dispatches sidecar and cannot create a host queue entry
 });
 
 
-test("native model readiness never depends on a Desktop provider but read-only fails closed", () => {
-  const expression = composer.match(/const modelReady = ([\s\S]*?);/)[1];
-  const evaluateReady = new Function("isImageGenerationModel", "imageGenerationCandidates", "settings", "nativeSession", "activeSessionSummary", "provider", "modelId", `return ${expression}`);
+test("native model readiness never depends on a Desktop provider but read-only fails closed", async () => {
+  const { isComposerModelReady } = await import("../src/features/chat/composer/model.ts");
   const ready = (nativeSession, activeSessionSummary, provider, modelId, settings) =>
-    evaluateReady(isImageGenerationModel, imageGenerationBindings(settings?.imageGenerationModels, settings?.imageGeneration), settings, nativeSession, activeSessionSummary, provider, modelId);
+    isComposerModelReady({
+      nativeSession,
+      canPrompt: activeSessionSummary?.capabilities?.canPrompt,
+      provider,
+      modelId,
+      imageGenerationCandidates: imageGenerationBindings(settings?.imageGenerationModels, settings?.imageGeneration),
+    });
   assert.equal(ready(true, { capabilities: { canPrompt: true } }, undefined, undefined), true);
   assert.equal(ready(true, { capabilities: { canPrompt: false } }, { enabled: true, hasSecret: true }, "model"), false);
   assert.equal(ready(true, {}, undefined, undefined), false);

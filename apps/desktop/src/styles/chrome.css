@@ -580,7 +580,7 @@
 /* D design: running pill inside the topbar title area */
 .ct-running-pill {
   flex-shrink: 0;
-  font-size: 11px !important;
+  font-size: var(--text-2xs) !important;
   height: 18px !important;
   padding: 0 6px !important;
   -webkit-app-region: no-drag;
@@ -598,7 +598,7 @@
   border-radius: var(--d-r-ctrl, 6px);
   background: transparent;
   color: var(--ds-text-secondary);
-  font-size: 12px;
+  font-size: var(--text-xs);
   cursor: pointer;
   transition: background var(--motion-duration-fast) var(--motion-ease-out);
   -webkit-app-region: no-drag;
@@ -1168,7 +1168,7 @@
 /* Label text — 13px (D.css:406 var(--d-text)) */
 .nav-rail-label {
   font-size: var(--d-text);                     /* 13px — was var(--text-tiny)=11px */
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   line-height: var(--leading-tighter);
 }
 

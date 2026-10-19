@@ -300,6 +300,8 @@
   --text-md-plus:   calc(13.5px * var(--font-scale));
   --text-base-plus: calc(15px   * var(--font-scale));
   --text-lg-plus:   calc(18px   * var(--font-scale));
+  --text-4xs:       10px;
+  --text-5xs:       9px;
 
   /*
     Font weights: Espresso owns --font-weight-medium (500) and --font-weight-semibold (600).
@@ -322,10 +324,32 @@
   --leading-chat:         1.55;
   --leading-prose:        1.6;
   --leading-row:          calc(18px * var(--font-scale));
+  --leading-px-14:        14px;
+  --leading-px-16:        16px;
+  --leading-px-18:        18px;
+  --leading-px-24:        24px;
 
   /* Letter-spacing tokens */
   --tracking-tighter: -0.03em;
   --tracking-tight:   -0.02em;
   --tracking-normal:  0em;
   --tracking-wide:    0.02em;
+  --tracking-subtle:    0.01em;
+  --tracking-label:     0.04em;
+  --tracking-caps:      0.05em;
+  --tracking-caps-wide: 0.06em;
+
+  /* Radii between the Espresso steps, kept at their literal sizes */
+  --radius-4xs:      3px;
+  --radius-2xs-plus: 7px;
+}
+
+/* Dark log terminal (workbench Build/Bench logs): a dark plate in both themes. */
+:root {
+  --wb-log-term-bg: #1a1c1f;
+  --wb-log-term-border: rgba(255,255,255,.08);
+}
+:root[data-theme="dark"] {
+  --wb-log-term-bg: #0e0f11;
+  --wb-log-term-border: rgba(255,255,255,.06);
 }

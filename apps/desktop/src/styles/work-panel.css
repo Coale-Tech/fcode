@@ -1207,7 +1207,7 @@
   font-size: var(--d-text-xs); /* D: cf-act-sec 11px */
   font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
-  letter-spacing: 0.06em;      /* D: cf-act-sec letter-spacing .06em */
+  letter-spacing: var(--tracking-caps-wide);      /* D: cf-act-sec letter-spacing .06em */
 }
 
 .activity-decision {
@@ -1451,7 +1451,7 @@
   min-width: 16px;
   height: 14px;
   padding: 0 4px;
-  border-radius: 7px;
+  border-radius: var(--radius-2xs-plus);
   background: color-mix(in oklab, var(--ds-text-muted) 18%, transparent);
   color: var(--ds-text-muted);
   font-size: var(--d-text-xs);
@@ -1617,8 +1617,8 @@
   border-radius: var(--radius-full);
   background: var(--surface-accent-1);
   color: var(--ink-accent-8);
-  font-size: 10px;
-  font-weight: 600;
+  font-size: var(--text-4xs);
+  font-weight: var(--font-weight-semibold);
 }
 
 /* ── lane T11-r2: Direction D Review diff — bordered file cards, numbered diff ── */
@@ -1629,7 +1629,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 8px;
-  font-size: 11px;
+  font-size: var(--text-2xs);
   color: var(--ink-gray-5);
   flex-shrink: 0;
 }
@@ -1653,7 +1653,7 @@
   padding: 5px 8px;
   background: var(--ds-bg-dock-raised);
   border-bottom: 1px solid var(--outline-elevation-1);
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 .wp-review-file-path {
   flex: 1;
@@ -1664,14 +1664,14 @@
   text-align: left;
   color: var(--ink-gray-7);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--text-2xs);
 }
 .wp-review-file-head .badge {
-  font-size: 10px;
+  font-size: var(--text-4xs);
   font-variant-numeric: tabular-nums;
   padding: 1px 5px;
-  border-radius: 4px;
-  font-weight: 600;
+  border-radius: var(--radius-3xs);
+  font-weight: var(--font-weight-semibold);
   flex-shrink: 0;
 }
 .wp-review-file-head .badge.badge-add { background: var(--surface-green-2); color: var(--ink-green-8); }
@@ -1681,16 +1681,16 @@
 /* Diff hunk with numbered gutters */
 .wp-diff-hunk {
   font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 1.55;
+  font-size: var(--text-2xs);
+  line-height: var(--leading-chat);
   overflow-x: auto;
 }
 .wp-hunk-meta {
   background: var(--surface-blue-1, color-mix(in srgb, var(--blue-500, #3b82f6) 8%, transparent));
   color: var(--ink-blue-6, #2563eb);
   padding: 2px 10px;
-  font-size: 10.5px;
-  letter-spacing: .01em;
+  font-size: var(--text-3xs);
+  letter-spacing: var(--tracking-subtle);
 }
 .wp-hunk-line { display: flex; overflow: hidden; }
 .wp-hunk-line .ln {

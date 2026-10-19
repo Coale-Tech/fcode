@@ -622,7 +622,7 @@
 .composer-perm-icon {
   width: 22px;
   height: 22px;
-  border-radius: 5px;
+  border-radius: var(--radius-2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -642,17 +642,17 @@
   gap: 1px;
 }
 .composer-perm-name {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
   color: var(--ds-text-primary);
 }
 .composer-perm-item.active .composer-perm-name {
   color: var(--da-txt);
 }
 .composer-perm-desc {
-  font-size: 11px;
+  font-size: var(--text-2xs);
   color: var(--ds-text-secondary);
-  line-height: 1.35;
+  line-height: var(--leading-compact-plus);
 }
 .composer-perm-item.active .composer-perm-desc {
   color: var(--da-txt);

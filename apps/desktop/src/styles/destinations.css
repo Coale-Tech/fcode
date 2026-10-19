@@ -37,8 +37,8 @@
   height: 24px;
   color: var(--ink-gray-6);
   font-size: var(--d-text-sm);
-  font-weight: 500;
-  line-height: 24px;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--leading-px-24);
   transition:
     background var(--motion-duration-fast) var(--motion-ease-out),
     color var(--motion-duration-fast) var(--motion-ease-out);
@@ -87,7 +87,7 @@
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
+  border-radius: var(--radius-2xs);
   background: var(--surface-gray-2);
   border: 1px solid var(--d-border);
   color: var(--ink-gray-5);
@@ -113,7 +113,7 @@
   gap: 6px;
   color: var(--ink-gray-9);
   font-size: var(--d-text);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   margin-bottom: 2px;
 }
 
@@ -124,7 +124,7 @@
 .dest-row-meta {
   font-size: var(--d-text-xs);
   color: var(--ink-gray-4);
-  line-height: 1.4;
+  line-height: var(--leading-normal);
   margin-top: 1px;
 }
 
@@ -150,8 +150,8 @@
   margin: 4px 0 8px;
   color: var(--ds-text-tertiary);
   font-size: var(--d-text-xs);
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-label);
   text-transform: uppercase;
   padding: 0 12px;
 }
@@ -216,10 +216,10 @@
 /* Detail field labels (fragment.html:37-40) */
 .sch-detail-label {
   font-size: var(--d-text-xs);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--ink-gray-4);
   text-transform: uppercase;
-  letter-spacing: .04em;
+  letter-spacing: var(--tracking-label);
   margin-bottom: 3px;
 }
 .sch-detail-value { font-size: var(--d-text); color: var(--ink-gray-8); line-height: 1.45; }
@@ -264,7 +264,7 @@
   font-size: var(--d-text-sm);
   color: var(--ink-gray-6);
   margin-top: 3px;
-  line-height: 1.4;
+  line-height: var(--leading-normal);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -375,7 +375,7 @@
 .pr-repo-chip {
   display: inline-flex; align-items: center; gap: 5px;
   height: 20px; padding: 0 8px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--surface-gray-2); border: 1px solid var(--d-border);
   font-family: var(--font-mono);
   font-size: var(--d-text-xs); color: var(--ink-gray-6);
@@ -468,7 +468,7 @@
 .pr-branch-pill {
   display: inline-flex; align-items: center; gap: 4px;
   height: 20px; padding: 0 8px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--surface-gray-2); border: 1px solid var(--d-border);
   font-size: var(--d-text-xs); color: var(--ink-gray-6);
 }
@@ -498,7 +498,7 @@
   font-family: var(--font-mono);
   font-size: var(--d-text-xs);
   background: var(--surface-gray-2); border: 1px solid var(--d-border);
-  border-radius: 3px; padding: 0 4px;
+  border-radius: var(--radius-4xs); padding: 0 4px;
   color: var(--ink-gray-7);
 }
 /* Changes row: file icon alignment */
