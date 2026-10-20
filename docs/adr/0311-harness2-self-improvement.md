@@ -1,6 +1,6 @@
 # ADR 0311: Adopt Harness² techniques in skill self-improvement
 
-- Status: Implemented
+- Status: Accepted
 - Date: 2026-10-20
 - Deciders: Fcode core
 

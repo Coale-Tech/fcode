@@ -341,6 +341,7 @@ Each ADR includes:
 | 0308 | [Memory backends: Mnemopi default, Hindsight connect-only, session-model LLM](0308-memory-backends.md) | Accepted for implementation |
 | 0309 | [Embed FileBird and restore an integrated terminal](0309-filebird-and-integrated-terminal.md) | Accepted (supersedes ADR 0108) |
 | 0310 | [Kanban routes cards to agents and runs extra workers in worktrees](0310-kanban-agent-routing-and-worktree-workers.md) | Accepted |
+| 0311 | [Adopt Harness² techniques in skill self-improvement](0311-harness2-self-improvement.md) | Accepted |
 | turn-process-and-thinking-display | [Turn process and thinking presentation](turn-process-and-thinking-display.md) | Accepted |
 | provider-display-order | [Provider display order](provider-display-order.md) | Accepted |
 | registry-header-variable-spelling | [Remote header variables accept the registry's `{name}` spelling](registry-header-variable-spelling.md) | Proposed |
