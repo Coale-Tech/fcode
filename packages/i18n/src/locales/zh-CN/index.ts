@@ -916,6 +916,7 @@ export const zhCN = {
     memoryProjectMemoryLabel: "项目记忆（MEMORY.md）",
     memoryProjectMemoryDesc: "当前项目中 .omp/MEMORY.md 的内容，在会话开始时注入",
     memoryProjectMemoryCounter: "{{count}} / {{max}} 字符",
+    memoryFrozenOverflow: "末尾 {{over}} 个字符不会传给智能体：个人资料与项目记忆共用 {{max}} 字符的预算（设置 > 记忆 > 固定记忆上限）。项目文本先被截断。不会删除任何内容。",
     memoryProjectMemorySaving: "保存中…",
     memoryProjectMemorySave: "保存",
     memoryProjectMemorySaved: "已保存",

@@ -921,6 +921,7 @@ export const tr = {
     memoryProjectMemoryLabel: "Proje belleği (MEMORY.md)",
     memoryProjectMemoryDesc: "Geçerli projedeki .omp/MEMORY.md içeriği, oturum başlangıcında enjekte edilir",
     memoryProjectMemoryCounter: "{{count}} / {{max}} karakter",
+    memoryFrozenOverflow: "Sondaki {{over}} karakter ajana ulaşmayacak: profiliniz ve proje belleği {{max}} karakterlik tek bir bütçeyi paylaşır (Ayarlar > Bellek > sabit bellek sınırı). Önce proje metni kesilir. Hiçbir şey silinmez.",
     memoryProjectMemorySaving: "Kaydediliyor…",
     memoryProjectMemorySave: "Kaydet",
     memoryProjectMemorySaved: "Kaydedildi",

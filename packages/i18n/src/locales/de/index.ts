@@ -912,6 +912,7 @@ export const de = {
     "memoryProjectMemoryLabel": "Projektgedächtnis (MEMORY.md)",
     "memoryProjectMemoryDesc": "Inhalt von .omp/MEMORY.md im aktuellen Projekt, beim Sitzungsstart injiziert",
     "memoryProjectMemoryCounter": "{{count}} / {{max}} Zeichen",
+    "memoryFrozenOverflow": "{{over}} Zeichen am Ende erreichen den Agenten nicht: Profil und Projektgedächtnis teilen sich ein Budget von {{max}} Zeichen (Einstellungen > Gedächtnis > Limit für eingefrorenes Gedächtnis). Projekttext wird zuerst gekürzt. Es wird nichts gelöscht.",
     "memoryProjectMemorySaving": "Wird gespeichert…",
     "memoryProjectMemorySave": "Speichern",
     "memoryProjectMemorySaved": "Gespeichert",

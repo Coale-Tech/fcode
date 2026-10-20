@@ -910,6 +910,7 @@ export const ptBR = {
     memoryProjectMemoryLabel: "Memória do projeto (MEMORY.md)",
     memoryProjectMemoryDesc: "Conteúdo de .omp/MEMORY.md no projeto atual, injetado ao iniciar a sessão",
     memoryProjectMemoryCounter: "{{count}} / {{max}} caracteres",
+    memoryFrozenOverflow: "{{over}} caracteres do final não chegarão ao agente: seu perfil e a memória do projeto compartilham um orçamento de {{max}} caracteres (Configurações > Memória > limite da memória fixa). O texto do projeto é cortado primeiro. Nada é apagado.",
     memoryProjectMemorySaving: "Salvando…",
     memoryProjectMemorySave: "Salvar",
     memoryProjectMemorySaved: "Salvo",

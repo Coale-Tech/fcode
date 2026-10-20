@@ -43,3 +43,19 @@ export const FCODE_OWNED_OMP_KEYS: Readonly<Record<string, true>> = {
   "memory.backend": true,
   "browser.screenshotDir": true,
 };
+
+/**
+ * Characters omp's `loadFrozenMemory` will cut from the session-start memory block.
+ * Mirrors `omp/.../memory-backend/frozen.ts`: the user-profile and project files are
+ * trimmed, wrapped in `<memories>` tags, joined with a blank line, and the COMBINED
+ * block is cut to `cap` from the end (so project text goes first). 0 = nothing cut.
+ */
+export function frozenMemoryOverflow(userText: string, projectText: string, cap: number): number {
+  if (cap <= 0) return 0;
+  const parts: string[] = [];
+  const user = userText.trim();
+  const project = projectText.trim();
+  if (user) parts.push(`<memories source="user-profile">\n${user}\n</memories>`);
+  if (project) parts.push(`<memories source="project">\n${project}\n</memories>`);
+  return Math.max(0, parts.join("\n\n").length - cap);
+}

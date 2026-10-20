@@ -921,6 +921,7 @@ export const ko = {
     memoryProjectMemoryLabel: "프로젝트 메모리 (MEMORY.md)",
     memoryProjectMemoryDesc: "현재 프로젝트의 .omp/MEMORY.md 내용으로, 세션 시작 시 주입됩니다",
     memoryProjectMemoryCounter: "{{count}} / {{max}} 문자",
+    memoryFrozenOverflow: "끝부분 {{over}}자는 에이전트에 전달되지 않습니다. 프로필과 프로젝트 메모리가 {{max}}자 예산을 함께 사용합니다(설정 > 메모리 > 고정 메모리 한도). 프로젝트 텍스트가 먼저 잘립니다. 삭제되는 것은 없습니다.",
     memoryProjectMemorySaving: "저장 중…",
     memoryProjectMemorySave: "저장",
     memoryProjectMemorySaved: "저장됨",

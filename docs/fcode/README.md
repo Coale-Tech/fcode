@@ -312,7 +312,7 @@ Fcode exposes omp's memory backends through the **Settings → Memory** tab (Age
 | `local` | omp's local rollout summarisation pipeline (`memory_summary.md`). | — |
 | `off` | No memory subsystem runs. | — |
 
-Frozen files (`<project>/.omp/MEMORY.md`, `USER.md`) are separate from the backend and load at session start whichever backend is selected. omp injects at most `memory.frozen.maxChars` (default 2000) of each, so the Settings editors stop accepting text at that cap.
+Frozen files (`<project>/.omp/MEMORY.md`, `USER.md`) are separate from the backend and load at session start whichever backend is selected. omp wraps each in `<memories>` tags, joins them (user profile first, then project) and cuts the **combined** block to `memory.frozen.maxChars` (default 2000) from the end, so the project text is dropped first. The Settings editors keep their own storage limits (1 KiB profile, 16 KiB project) and show a warning, without truncating anything, when the two together exceed the budget.
 
 Changing the backend restarts the active omp session (same path as other overlay changes).
 
