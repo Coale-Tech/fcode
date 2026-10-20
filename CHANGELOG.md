@@ -17,9 +17,14 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - **Restart agent.** Settings > AI Agents has a Restart agent button that restarts the omp agent process on demand; before, it only restarted on a crash or a settings change.
 - **Standard Frappe process.** A bundled `fcode-workflow` skill gives agents one seven-phase process (Orient, Spec, Plan, Build, Verify, Review, Accept) with approval gates, an evidence table, and a named Frappe agent for each phase.
 
+### Changed
+
+- Updated the vendored omp from `ba344f5e69` to oh-my-pi v18.12.3 (`53a0377db6`), keeping Fcode's memory, status-RPC, models-config, skill-list and subagent host-tool changes. `open_session` now accepts both `cwd` and upstream's `provider`/`modelId`.
+
 ### Fixed
 
 - **Review note prompt format.** Multi-line notes keep their list indentation and anchors containing backticks no longer break the code span.
+- Tool approvals still reach the permission card when omp offers "Approve for this session" or directory/file grants; the bridge answers with the matching "Approve Once" label.
 
 ## [0.22.0] — 2026-10-20
 

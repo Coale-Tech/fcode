@@ -53,7 +53,7 @@ describe("skills.listMode compact", () => {
 				cwd: temp.path(),
 				skills,
 				skillsSettings: { listMode, pinned, compactMaxChars: maxChars },
-				skillDescriptions: new SkillDescriptionCatalog({ dbPath: temp.join(`${listMode}.db`) }),
+				skillDescriptions: new SkillDescriptionCatalog(),
 				contextFiles: [],
 			});
 		const full = skillsSection((await build("full")).systemPrompt);
@@ -83,7 +83,7 @@ describe("skills.listMode compact", () => {
 	});
 
 	it("never exceeds the cap even when names alone overflow it", () => {
-		using temp = TempDir.createSync("omp-skill-list-tiny-");
+		// The shared store is disabled under bun:test, so no database is touched.
 		const skills = Array.from({ length: 61 }, (_, i) => ({
 			name: `skill-${i}`,
 			description: longDescription(i),
@@ -91,9 +91,7 @@ describe("skills.listMode compact", () => {
 			baseDir: `/s/${i}`,
 			source: "test",
 		}));
-		const rendered = new SkillDescriptionCatalog({ dbPath: temp.join("d.db") }).renderCompact(skills, {
-			maxChars: 200,
-		});
+		const rendered = new SkillDescriptionCatalog().renderCompact(skills, { maxChars: 200 });
 		const total = rendered.reduce((sum, s) => sum + s.name.length + s.description.length + 5, 0);
 		expect(total).toBeLessThanOrEqual(200);
 	});
