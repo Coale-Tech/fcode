@@ -28,6 +28,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Settings > Raven: the enable switch stayed disabled, and ignored clicks, until the site URL field had lost focus and saved. It now enables as soon as the typed URL is a valid http(s) address and saves the URL together with the switch.
 - Settings: Theme, navigation layout, font family and font size appeared twice, in General > Appearance and in a collapsible "Theme & Display" block on the AI defaults tab. The AI copy is gone; General > Appearance is the only place.
 - Settings > Memory: text past `memory.frozen.maxChars` (default 2000) was saved and silently never reached the agent. omp cuts the combined user-profile and project `MEMORY.md` block to that budget, project text first. The profile and project boxes now show how many characters will be cut, and nothing is truncated or deleted. The memory docs list all five backends (`mnemopi`, `hindsight`, `sharpshooter`, `local`, `off`).
+- Tests: the harness rollout cleanup test could fail when another rollout ran at the same time, because it flagged any new `fcode-rollout-*` directory in the shared temp folder. It now checks only the directories its own run used. The proposer fallback test now asserts the fallback tree and error, instead of reading a `fell_back` field that does not exist.
 
 ## [0.22.0] — 2026-10-20
 
