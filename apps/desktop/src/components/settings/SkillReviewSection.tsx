@@ -6,7 +6,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { OmpSettingsValues, OmpSkillProposal } from "@pi-desktop/shared";
+import { ompSetting, type OmpSettingsValues, type OmpSkillProposal } from "@pi-desktop/shared";
 import { api } from "../../lib/api";
 import { Badge, Button, Input, Select, SettingsToggle } from "../ui";
 import { SettingsCard, SettingsRow } from "../../features/settings/primitives";
@@ -52,9 +52,10 @@ export function SkillReviewSection() {
 
   if (!loaded) return null;
 
-  const requireApproval = omp["skills.review.requireApproval"] !== false;
-  const passes = omp["skills.review.passes"] ?? "single";
-  const harnessEnabled = omp["skills.harness.enabled"] === true;
+  const requireApproval = ompSetting(omp, "skills.review.requireApproval");
+  const passes = ompSetting(omp, "skills.review.passes");
+  const harnessEnabled = ompSetting(omp, "skills.harness.enabled");
+  const reviewEnabled = ompSetting(omp, "skills.review.enabled");
 
   return (
     <SettingsCard title={t("settings.skillReviewTitle")}>
@@ -64,10 +65,10 @@ export function SkillReviewSection() {
         description={t("settings.skillReviewEnabledDesc")}
       >
         <SettingsToggle
-          checked={omp["skills.review.enabled"] === true}
+          checked={reviewEnabled}
           label={t("settings.skillReviewEnabled")}
           onChange={() =>
-            save({ "skills.review.enabled": !(omp["skills.review.enabled"] === true) })
+            save({ "skills.review.enabled": !reviewEnabled })
           }
         />
       </SettingsRow>
@@ -89,7 +90,7 @@ export function SkillReviewSection() {
           type="number"
           min={1}
           max={100}
-          value={String(omp["skills.review.intervalTurns"] ?? 10)}
+          value={String(ompSetting(omp, "skills.review.intervalTurns"))}
           onChange={(e) => {
             const n = parseInt(e.target.value, 10);
             if (Number.isFinite(n) && n >= 1 && n <= 100) {
@@ -104,7 +105,7 @@ export function SkillReviewSection() {
       >
         <Input
           type="text"
-          value={omp["skills.review.model"] ?? ""}
+          value={ompSetting(omp, "skills.review.model")}
           placeholder={t("settings.skillReviewModelPlaceholder")}
           onChange={(e) =>
             save({ "skills.review.model": e.target.value || undefined })
@@ -119,7 +120,7 @@ export function SkillReviewSection() {
           type="number"
           min={1000}
           max={32000}
-          value={String(omp["skills.review.maxInputTokens"] ?? 8000)}
+          value={String(ompSetting(omp, "skills.review.maxInputTokens"))}
           onChange={(e) => {
             const n = parseInt(e.target.value, 10);
             if (Number.isFinite(n) && n >= 1000 && n <= 32000) {
@@ -162,7 +163,7 @@ export function SkillReviewSection() {
               type="number"
               min={1}
               max={4}
-              value={String(omp["skills.harness.k"] ?? 1)}
+              value={String(ompSetting(omp, "skills.harness.k"))}
               onChange={(e) => {
                 const n = parseInt(e.target.value, 10);
                 if (Number.isFinite(n) && n >= 1 && n <= 4) {
@@ -176,7 +177,7 @@ export function SkillReviewSection() {
             description={t("settings.skillHarnessModeDesc")}
           >
             <Select
-              value={omp["skills.harness.mode"] ?? "parallel"}
+              value={ompSetting(omp, "skills.harness.mode")}
               onChange={(e) =>
                 save({ "skills.harness.mode": e.target.value as "parallel" | "sequential" })
               }
@@ -191,7 +192,7 @@ export function SkillReviewSection() {
           >
             <Input
               type="text"
-              value={omp["skills.harness.model"] ?? ""}
+              value={ompSetting(omp, "skills.harness.model")}
               placeholder={t("settings.skillHarnessModelPlaceholder")}
               onChange={(e) =>
                 save({ "skills.harness.model": e.target.value || undefined })

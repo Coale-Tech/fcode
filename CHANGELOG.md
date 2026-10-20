@@ -18,6 +18,8 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 ### Fixed
 
 - Approving a `kind:'fact'` proposal now persists the fact instead of discarding it.
+- Advanced settings no longer wipe Fcode's own config. An Advanced setting such as `tools.format`, `skills.enableSkillCommands`, `bash.enabled`, `memory.backend` or `task.isolation.merge` used to append a second top-level block that replaced Fcode's (tool approval rules, skill-pack directories, bash patterns, memory backend, isolation). It is now merged into the existing block, and Fcode's own keys win. `tools.approvalMode`, `memory.backend` and `browser.screenshotDir` are hidden from Advanced because Fcode sets them.
+- The skill curator settings showed 30 / 90 days while the curator ran with 14 / 30. Defaults of the Fcode-owned settings (curator, skill review, harness, memory injection) now live in one place, `FCODE_SETTING_DEFAULTS` in `packages/shared`, and the UI and bridge both read it.
 
 ## [0.22.0] — 2026-10-20
 

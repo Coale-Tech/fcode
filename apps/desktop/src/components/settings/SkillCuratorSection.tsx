@@ -5,7 +5,7 @@
  */
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { OmpSettingsValues, OmpSkillCuratorEntry } from "@pi-desktop/shared";
+import { ompSetting, type OmpSettingsValues, type OmpSkillCuratorEntry } from "@pi-desktop/shared";
 import { api } from "../../lib/api";
 import { Badge, Button, Input, SettingsToggle } from "../ui";
 import { SettingsCard, SettingsRow } from "../../features/settings/primitives";
@@ -48,7 +48,7 @@ export function SkillCuratorSection() {
     finally { setBusy(null); await load(); }
   };
 
-  const curatorEnabled = omp["skills.curator.enabled"] !== false;
+  const curatorEnabled = ompSetting(omp, "skills.curator.enabled");
 
   return (
     <SettingsCard title={t("settings.skillCuratorTitle")}>
@@ -73,7 +73,7 @@ export function SkillCuratorSection() {
           type="number"
           min={1}
           max={365}
-          value={String(omp["skills.curator.staleDays"] ?? 30)}
+          value={String(ompSetting(omp, "skills.curator.staleDays"))}
           onChange={(e) => {
             const n = parseInt(e.target.value, 10);
             if (Number.isFinite(n) && n >= 1 && n <= 365) save({ "skills.curator.staleDays": n });
@@ -88,7 +88,7 @@ export function SkillCuratorSection() {
           type="number"
           min={1}
           max={365}
-          value={String(omp["skills.curator.archiveDays"] ?? 90)}
+          value={String(ompSetting(omp, "skills.curator.archiveDays"))}
           onChange={(e) => {
             const n = parseInt(e.target.value, 10);
             if (Number.isFinite(n) && n >= 1 && n <= 365) save({ "skills.curator.archiveDays": n });

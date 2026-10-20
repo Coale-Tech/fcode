@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type {
-  BenchBootstrapResult,
-  HindsightLocalState,
-  HindsightMentalModelSummary,
-  MemoryConfig,
-  MemoryConfigView,
-  OmpMemoryBudgetResult,
-  OmpMemoryStatusResult,
-  OmpSettingsValues,
+import {
+  ompSetting,
+  type BenchBootstrapResult,
+  type HindsightLocalState,
+  type HindsightMentalModelSummary,
+  type MemoryConfig,
+  type MemoryConfigView,
+  type OmpMemoryBudgetResult,
+  type OmpMemoryStatusResult,
+  type OmpSettingsValues,
 } from "@pi-desktop/shared";
 import { api } from "../../lib/api";
 import { useAppStore } from "../../stores/app-store";
@@ -315,7 +316,7 @@ export function MemoryTab() {
             type="number"
             min={0}
             max={200000}
-            value={String(omp["memory.injectMaxChars"] ?? 6000)}
+            value={String(ompSetting(omp, "memory.injectMaxChars"))}
             onChange={(e) => setOmp((prev) => ({ ...prev, "memory.injectMaxChars": Number(e.target.value) }))}
             onBlur={(e) => void saveOmp({ "memory.injectMaxChars": Number(e.target.value) })}
             onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
@@ -329,7 +330,7 @@ export function MemoryTab() {
             type="number"
             min={0}
             max={200000}
-            value={String(omp["memory.frozen.maxChars"] ?? 2000)}
+            value={String(ompSetting(omp, "memory.frozen.maxChars"))}
             onChange={(e) => setOmp((prev) => ({ ...prev, "memory.frozen.maxChars": Number(e.target.value) }))}
             onBlur={(e) => void saveOmp({ "memory.frozen.maxChars": Number(e.target.value) })}
             onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
