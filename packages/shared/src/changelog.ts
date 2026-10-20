@@ -30,6 +30,17 @@ export type ChangelogEntry = {
 
 const enEntries: ChangelogEntry[] = [
   {
+    version: "0.22.0",
+    date: "2026-10-20",
+    highlights: [
+      "Worktrees Fcode creates are runnable straight away: a repo-root `.worktreeinclude` (copied) and `.worktreeshare` (symlinked) list gitignored paths such as `.env` or `node_modules`. A sidebar Worktrees section switches between the active project's worktrees, Bench follows the active one, and list/prune honour `OMP_WORKTREE_DIR`.",
+      "Review tab: add notes to single lines, ranges or a whole file, then send every unresolved note to the agent as one prompt.",
+      "A new Fan-out tab runs one prompt in 2-5 variants, each in its own worktree, compares their diffs side by side, and can open or adopt (no-ff merge) a variant.",
+      "A new `fcode` command line (`worktree`, `session`, `bench`, `canvas`) drives the running app over a loopback-only endpoint, and is on `PATH` in Fcode's integrated terminal.",
+      "When omp does not answer at start-up, chat now says \"Fcode agent is not responding\" after 120 s instead of showing a generic start-up failure.",
+    ],
+  },
+  {
     version: "0.21.1",
     date: "2026-10-19",
     highlights: [
@@ -37,11 +48,6 @@ const enEntries: ChangelogEntry[] = [
       "Auto and Accept edits now work: Auto approves every tool request, Accept edits approves `edit` and `write`, and anything else still asks. A chat set to Auto used to wait on a permission card.",
       "Extension status text from omp (for example ponytail) no longer shows raw colour codes in the footer.",
       "A login-shell PATH probe that timed out at startup no longer leaves a `zsh -lic` process running forever.",
-      "Worktrees Fcode creates are runnable straight away: a repo-root `.worktreeinclude` (copied) and `.worktreeshare` (symlinked) list gitignored paths such as `.env` or `node_modules`. A sidebar Worktrees section switches between the active project's worktrees, Bench follows the active one, and list/prune honour `OMP_WORKTREE_DIR`.",
-      "Review tab: add notes to single lines, ranges or a whole file, then send every unresolved note to the agent as one prompt.",
-      "A new Fan-out tab runs one prompt in 2-5 variants, each in its own worktree, compares their diffs side by side, and can open or adopt (no-ff merge) a variant.",
-      "A new `fcode` command line (`worktree`, `session`, `bench`, `canvas`) drives the running app over a loopback-only endpoint, and is on `PATH` in Fcode's integrated terminal.",
-      "When omp does not answer at start-up, chat now says \"Fcode agent is not responding\" after 120 s instead of showing a generic start-up failure.",
     ],
   },
   {
@@ -983,6 +989,17 @@ const enEntries: ChangelogEntry[] = [
 
 const zhCNEntries: ChangelogEntry[] = [
   {
+    version: "0.22.0",
+    date: "2026-10-20",
+    highlights: [
+      "Fcode 创建的 worktree 开箱即用：仓库根目录的 `.worktreeinclude`（复制）和 `.worktreeshare`（符号链接）列出被 gitignore 的路径，如 `.env` 或 `node_modules`。侧栏的“Worktrees”区可在当前项目的 worktree 间切换，Bench 跟随当前 worktree，列表与清理遵循 `OMP_WORKTREE_DIR`。",
+      "“审阅”标签页：可对单行、行范围或整个文件添加批注，再把所有未解决的批注作为一条提示发送给智能体。",
+      "新的“扇出”标签页用一条提示在 2-5 个变体中运行，每个变体各用独立的 worktree，并排比较差异，可打开或采纳（no-ff 合并）某个变体。",
+      "新的 `fcode` 命令行（`worktree`、`session`、`bench`、`canvas`）通过仅限本机回环的端点驱动正在运行的应用，并已加入 Fcode 集成终端的 `PATH`。",
+      "启动时 omp 未响应，聊天现在会在 120 秒后显示“Fcode 智能体无响应”，而不是笼统的启动失败。",
+    ],
+  },
+  {
     version: "0.21.1",
     date: "2026-10-19",
     highlights: [
@@ -990,11 +1007,6 @@ const zhCNEntries: ChangelogEntry[] = [
       "“自动”和“接受编辑”现在真正生效：“自动”批准所有工具请求，“接受编辑”批准 `edit` 和 `write`，其余仍会询问。此前设为“自动”的对话会一直停在权限卡片上等待。",
       "omp 扩展的状态文字（例如 ponytail）不再在底部栏显示原始颜色代码。",
       "启动时登录 shell 的 PATH 探测超时后，不再遗留一个永远运行的 `zsh -lic` 进程。",
-      "Fcode 创建的 worktree 开箱即用：仓库根目录的 `.worktreeinclude`（复制）和 `.worktreeshare`（符号链接）列出被 gitignore 的路径，如 `.env` 或 `node_modules`。侧栏的“Worktrees”区可在当前项目的 worktree 间切换，Bench 跟随当前 worktree，列表与清理遵循 `OMP_WORKTREE_DIR`。",
-      "“审阅”标签页：可对单行、行范围或整个文件添加批注，再把所有未解决的批注作为一条提示发送给智能体。",
-      "新的“扇出”标签页用一条提示在 2-5 个变体中运行，每个变体各用独立的 worktree，并排比较差异，可打开或采纳（no-ff 合并）某个变体。",
-      "新的 `fcode` 命令行（`worktree`、`session`、`bench`、`canvas`）通过仅限本机回环的端点驱动正在运行的应用，并已加入 Fcode 集成终端的 `PATH`。",
-      "启动时 omp 未响应，聊天现在会在 120 秒后显示“Fcode 智能体无响应”，而不是笼统的启动失败。",
     ],
   },
   {
@@ -1935,6 +1947,17 @@ const zhCNEntries: ChangelogEntry[] = [
 
 const zhTWEntries: ChangelogEntry[] = [
   {
+    version: "0.22.0",
+    date: "2026-10-20",
+    highlights: [
+      "Fcode 建立的 worktree 開箱即用：儲存庫根目錄的 `.worktreeinclude`（複製）與 `.worktreeshare`（符號連結）列出被 gitignore 的路徑，如 `.env` 或 `node_modules`。側欄的「Worktrees」區可在目前專案的 worktree 之間切換，Bench 跟隨目前的 worktree，列表與清理遵循 `OMP_WORKTREE_DIR`。",
+      "「審閱」分頁：可對單行、行範圍或整個檔案新增註解，再把所有未解決的註解作為一則提示傳給代理。",
+      "新的「扇出」分頁以一則提示在 2-5 個變體中執行，每個變體各用獨立的 worktree，並排比較差異，可開啟或採用（no-ff 合併）某個變體。",
+      "新的 `fcode` 命令列（`worktree`、`session`、`bench`、`canvas`）透過僅限本機迴路的端點驅動執行中的應用程式，並已加入 Fcode 整合終端機的 `PATH`。",
+      "啟動時 omp 未回應，聊天現在會在 120 秒後顯示「Fcode 代理無回應」，而非籠統的啟動失敗。",
+    ],
+  },
+  {
     version: "0.21.1",
     date: "2026-10-19",
     highlights: [
@@ -1942,11 +1965,6 @@ const zhTWEntries: ChangelogEntry[] = [
       "「自動」與「接受編輯」現在真正生效：「自動」核准所有工具請求，「接受編輯」核准 `edit` 與 `write`，其餘仍會詢問。先前設為「自動」的對話會一直停在權限卡片上等待。",
       "omp 擴充功能的狀態文字（例如 ponytail）不再於底部列顯示原始顏色代碼。",
       "啟動時登入 shell 的 PATH 探測逾時後，不再遺留一個永遠執行的 `zsh -lic` 行程。",
-      "Fcode 建立的 worktree 開箱即用：儲存庫根目錄的 `.worktreeinclude`（複製）與 `.worktreeshare`（符號連結）列出被 gitignore 的路徑，如 `.env` 或 `node_modules`。側欄的「Worktrees」區可在目前專案的 worktree 之間切換，Bench 跟隨目前的 worktree，列表與清理遵循 `OMP_WORKTREE_DIR`。",
-      "「審閱」分頁：可對單行、行範圍或整個檔案新增註解，再把所有未解決的註解作為一則提示傳給代理。",
-      "新的「扇出」分頁以一則提示在 2-5 個變體中執行，每個變體各用獨立的 worktree，並排比較差異，可開啟或採用（no-ff 合併）某個變體。",
-      "新的 `fcode` 命令列（`worktree`、`session`、`bench`、`canvas`）透過僅限本機迴路的端點驅動執行中的應用程式，並已加入 Fcode 整合終端機的 `PATH`。",
-      "啟動時 omp 未回應，聊天現在會在 120 秒後顯示「Fcode 代理無回應」，而非籠統的啟動失敗。",
     ],
   },
   {

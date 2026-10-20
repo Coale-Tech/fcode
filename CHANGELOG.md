@@ -8,13 +8,15 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) on Fc
 The two early previews used `0.15.7-fcode.N` (PI-Desktop 0.15.7 plus a prerelease suffix). That scheme sorted below upstream 0.15.7 and was always a prerelease, so the in-app updater (stable releases only) never offered it.
 The PI-Desktop release each version is based on is listed in its Compatibility table.
 
-## [0.21.1] — 2026-10-19
+## [0.22.0] — 2026-10-20
 
 ### Compatibility
 
 | Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
 |-------|-----------------|-----------|-----------------|--------|
-| 0.21.1 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
+| 0.22.0 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
+
+The features below were already inside the 0.21.1 installers; 0.21.1's release notes and in-app changelog did not describe them, so this is the release that announces them.
 
 ### Added
 
@@ -26,10 +28,21 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ### Fixed
 
+- **Misleading agent handshake panel.** When omp did not answer in time, the chat showed a generic start-up failure. The handshake wait is now 120 s and a timeout shows "Fcode agent is not responding" instead.
+
+## [0.21.1] — 2026-10-19
+
+### Compatibility
+
+| Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
+|-------|-----------------|-----------|-----------------|--------|
+| 0.21.1 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
+
+### Fixed
+
 - **Chat model picker and reasoning level.** The chip now shows the model and reasoning level omp is actually running, including omp's own providers (it stayed on "Model" and the old level before). The level you pick applies and is shown immediately.
 - **Auto and Accept edits now do what they say.** omp always asks before a tool call, and nothing answered for you, so a chat set to Auto sat waiting on a permission card. Auto now approves every request and Accept edits approves `edit` and `write`; anything else still asks.
 - **Extension status text is plain.** The footer line from omp extensions (for example ponytail) showed raw colour codes such as `[38;2;107;114;128m`; they are stripped now.
-- **Misleading agent handshake panel.** When omp did not answer in time, the chat showed a generic start-up failure. The handshake wait is now 120 s and a timeout shows "Fcode agent is not responding" instead.
 - **Leaked login shells.** The PATH probe at startup could leave a `zsh -lic` process running forever when it timed out, because an interactive zsh ignores the default kill signal. It is now killed outright.
 
 ## [0.21.0] — 2026-10-18

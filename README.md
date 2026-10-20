@@ -17,7 +17,7 @@
 
 </div>
 
-> **Early preview.** The newest release is the unsigned [v0.21.1](https://github.com/Coale-Tech/fcode/releases/tag/v0.21.1) for macOS, Windows, and Linux. It ships the omp agent and the Code, Build, and Bench surfaces; it is not yet the completed Frappe IDE described by the project roadmap.
+> **Early preview.** The newest release is the unsigned [v0.22.0](https://github.com/Coale-Tech/fcode/releases/tag/v0.22.0) for macOS, Windows, and Linux. It ships the omp agent and the Code, Build, and Bench surfaces; it is not yet the completed Frappe IDE described by the project roadmap.
 
 ## Contents
 
@@ -221,7 +221,7 @@ Application identity: product name `Fcode`, bundle identifier `com.coaletech.fco
 
 ## Current status and limitations
 
-The current release line is 0.21.x. The newest release is the unsigned [v0.21.1](https://github.com/Coale-Tech/fcode/releases/tag/v0.21.1), which fixes the chat model and reasoning picker, makes Auto and Accept edits approve permission requests, strips raw colour codes from extension status text, and stops a timed-out PATH probe leaking `zsh -lic` shells. The 0.21.0 release added Kanban agent routing, real CI checks with Fix CI on Pull Requests, a Language servers settings card with bundled `ruff`, the redesigned desk workbench, and inline image forwarding to omp. See [CHANGELOG.md](CHANGELOG.md) for the full history.
+The current release line is 0.22.x. The newest release is the unsigned [v0.22.0](https://github.com/Coale-Tech/fcode/releases/tag/v0.22.0), which adds worktree provisioning (`.worktreeinclude` / `.worktreeshare`) and a sidebar Worktrees section, line notes on the review diff, a Fan-out compare tab, and the `fcode` command line for driving the running app, and shows a clear "Fcode agent is not responding" panel on a handshake timeout. The 0.21.1 release fixed the chat model and reasoning picker, made Auto and Accept edits approve permission requests, stripped raw colour codes from extension status text, and stopped a timed-out PATH probe leaking `zsh -lic` shells. The 0.21.0 release added Kanban agent routing, real CI checks with Fix CI on Pull Requests, a Language servers settings card with bundled `ruff`, the redesigned desk workbench, and inline image forwarding to omp. See [CHANGELOG.md](CHANGELOG.md) for the full history.
 
 The release pipeline builds macOS (arm64 and x64), Linux (x64) and Windows (x64). Known gaps:
 
@@ -232,7 +232,7 @@ The release pipeline builds macOS (arm64 and x64), Linux (x64) and Windows (x64)
 
 | Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
 | --- | --- | --- | --- | --- |
-| 0.21.1 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
+| 0.22.0 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
 
 ## Build from source
 

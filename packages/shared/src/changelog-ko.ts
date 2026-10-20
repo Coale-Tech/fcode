@@ -2,6 +2,17 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const koEntries: ChangelogEntry[] = [
   {
+    "version": "0.22.0",
+    "date": "2026-10-20",
+    "highlights": [
+      "Fcode가 만드는 worktree를 바로 실행할 수 있습니다. 저장소 루트의 `.worktreeinclude`(복사)와 `.worktreeshare`(심볼릭 링크)에 `.env`, `node_modules` 같은 gitignore 경로를 나열하면 됩니다. 사이드바의 Worktrees 섹션에서 활성 프로젝트의 worktree 사이를 전환할 수 있고, Bench는 활성 worktree를 따르며, 목록과 정리는 `OMP_WORKTREE_DIR`를 따릅니다.",
+      "리뷰 탭: 한 줄, 줄 범위 또는 파일 전체에 메모를 달고, 해결되지 않은 모든 메모를 하나의 프롬프트로 에이전트에 보낼 수 있습니다.",
+      "새 Fan-out 탭은 하나의 프롬프트를 2-5개 변형에서 각자의 worktree로 실행하고, diff를 나란히 비교하며, 변형을 열거나 채택(no-ff 병합)할 수 있습니다.",
+      "새 `fcode` 명령줄(`worktree`, `session`, `bench`, `canvas`)이 루프백 전용 엔드포인트로 실행 중인 앱을 제어하며, Fcode 통합 터미널의 `PATH`에 포함됩니다.",
+      "시작 시 omp가 응답하지 않으면 채팅이 일반적인 시작 실패 대신 120초 후 \"Fcode 에이전트가 응답하지 않습니다\"를 표시합니다.",
+    ],
+  },
+  {
     "version": "0.21.1",
     "date": "2026-10-19",
     "highlights": [
@@ -9,11 +20,6 @@ export const koEntries: ChangelogEntry[] = [
       "자동과 편집 수락이 이제 제대로 동작합니다. 자동은 모든 도구 요청을 승인하고, 편집 수락은 `edit`와 `write`를 승인하며, 나머지는 계속 묻습니다. 자동으로 설정한 채팅이 예전에는 권한 카드에서 멈춰 있었습니다.",
       "omp 확장 기능의 상태 텍스트(예: ponytail)가 푸터에 원시 색상 코드를 더 이상 표시하지 않습니다.",
       "시작 시 로그인 셸 PATH 탐색이 시간 초과되어도 `zsh -lic` 프로세스가 계속 남아 실행되지 않습니다.",
-      "Fcode가 만드는 worktree를 바로 실행할 수 있습니다. 저장소 루트의 `.worktreeinclude`(복사)와 `.worktreeshare`(심볼릭 링크)에 `.env`, `node_modules` 같은 gitignore 경로를 나열하면 됩니다. 사이드바의 Worktrees 섹션에서 활성 프로젝트의 worktree 사이를 전환할 수 있고, Bench는 활성 worktree를 따르며, 목록과 정리는 `OMP_WORKTREE_DIR`를 따릅니다.",
-      "리뷰 탭: 한 줄, 줄 범위 또는 파일 전체에 메모를 달고, 해결되지 않은 모든 메모를 하나의 프롬프트로 에이전트에 보낼 수 있습니다.",
-      "새 Fan-out 탭은 하나의 프롬프트를 2-5개 변형에서 각자의 worktree로 실행하고, diff를 나란히 비교하며, 변형을 열거나 채택(no-ff 병합)할 수 있습니다.",
-      "새 `fcode` 명령줄(`worktree`, `session`, `bench`, `canvas`)이 루프백 전용 엔드포인트로 실행 중인 앱을 제어하며, Fcode 통합 터미널의 `PATH`에 포함됩니다.",
-      "시작 시 omp가 응답하지 않으면 채팅이 일반적인 시작 실패 대신 120초 후 \"Fcode 에이전트가 응답하지 않습니다\"를 표시합니다.",
     ],
   },
   {
