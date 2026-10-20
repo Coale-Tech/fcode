@@ -8,6 +8,17 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) on Fc
 The two early previews used `0.15.7-fcode.N` (PI-Desktop 0.15.7 plus a prerelease suffix). That scheme sorted below upstream 0.15.7 and was always a prerelease, so the in-app updater (stable releases only) never offered it.
 The PI-Desktop release each version is based on is listed in its Compatibility table.
 
+## [Unreleased]
+
+### Added
+
+- **Review notes reach every diff.** The Review tab now fills from omp `edit`/`write` turns, and can also review Unstaged, Staged and Branch git diffs and markdown Docs. Notes survive a reload, accept markdown, and show a Sent badge once delivered (editing a sent note queues it again). Add a note with `c`, send with Cmd/Ctrl-Enter or the rebindable "Send review notes" shortcut (`Mod+Shift+R`), and drag to select a line range. Send to the current session or a new one from the split send button.
+- **Design Mode in the Browser tab.** Pick an element on the page (hover highlight, rebindable `Mod+Shift+E`, which also works while the page or the browser view has focus) and it lands in an annotation tray with a cropped screenshot, a selector and path, computed styles, nearby text, and the React component (plus file and line on React 18 and older dev builds). Give each annotation an intent (change, fix, question), mark up the screenshot with pen, rectangle and arrow, then send the tray to the current or a new session. Captured HTML is redacted (secret attributes, link query strings) and re-clamped in the main process.
+
+### Fixed
+
+- **Review note prompt format.** Multi-line notes keep their list indentation and anchors containing backticks no longer break the code span.
+
 ## [0.22.0] — 2026-10-20
 
 ### Compatibility
