@@ -9,6 +9,11 @@ export const ptBREntries: ChangelogEntry[] = [
       "Auto e Aceitar edições agora funcionam: Auto aprova toda solicitação de ferramenta, Aceitar edições aprova `edit` e `write`, e o resto continua perguntando. Um chat em Auto antes ficava esperando em um card de permissão.",
       "O texto de status das extensões do omp (por exemplo ponytail) não mostra mais códigos de cor brutos no rodapé.",
       "Uma sondagem de PATH do shell de login que expirava na inicialização não deixa mais um processo `zsh -lic` rodando para sempre.",
+      "Os worktrees criados pelo Fcode já nascem executáveis: um `.worktreeinclude` (copiado) e um `.worktreeshare` (link simbólico) na raiz do repositório listam caminhos ignorados pelo git, como `.env` ou `node_modules`. Uma seção Worktrees na barra lateral alterna entre os worktrees do projeto ativo, o Bench acompanha o ativo, e listar/limpar respeitam `OMP_WORKTREE_DIR`.",
+      "Aba Revisão: adicione notas a linhas, intervalos ou a um arquivo inteiro e envie todas as notas não resolvidas ao agente como um único prompt.",
+      "A nova aba Fan-out executa um prompt em 2-5 variantes, cada uma em seu próprio worktree, compara os diffs lado a lado e permite abrir ou adotar (merge no-ff) uma variante.",
+      "Uma nova linha de comando `fcode` (`worktree`, `session`, `bench`, `canvas`) controla o app em execução por um endpoint somente de loopback e está no `PATH` do terminal integrado do Fcode.",
+      "Se o omp não responder na inicialização, o chat agora mostra \"O agente do Fcode não está respondendo\" após 120 s, em vez de uma falha de inicialização genérica.",
     ],
   },
   {

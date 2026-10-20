@@ -9,6 +9,11 @@ export const deEntries: ChangelogEntry[] = [
       "Auto und Änderungen akzeptieren funktionieren jetzt: Auto genehmigt jede Tool-Anfrage, Änderungen akzeptieren genehmigt `edit` und `write`, alles andere wird weiter erfragt. Ein Chat auf Auto wartete zuvor auf eine Berechtigungskarte.",
       "Statustext von omp-Erweiterungen (zum Beispiel ponytail) zeigt in der Fußzeile keine rohen Farbcodes mehr.",
       "Eine beim Start abgelaufene PATH-Abfrage der Login-Shell hinterlässt keinen dauerhaft laufenden `zsh -lic`-Prozess mehr.",
+      "Von Fcode angelegte Worktrees sind sofort lauffähig: Eine `.worktreeinclude` (kopiert) und eine `.worktreeshare` (per Symlink) im Repo-Stamm listen ignorierte Pfade wie `.env` oder `node_modules`. Ein Worktrees-Bereich in der Seitenleiste wechselt zwischen den Worktrees des aktiven Projekts, Bench folgt dem aktiven, und Liste/Bereinigung beachten `OMP_WORKTREE_DIR`.",
+      "Review-Tab: Notizen zu einzelnen Zeilen, Bereichen oder ganzen Dateien anlegen und alle offenen Notizen als einen Prompt an den Agenten senden.",
+      "Der neue Fan-out-Tab führt einen Prompt in 2-5 Varianten aus, jede in einem eigenen Worktree, vergleicht deren Diffs nebeneinander und kann eine Variante öffnen oder übernehmen (no-ff-Merge).",
+      "Eine neue `fcode`-Kommandozeile (`worktree`, `session`, `bench`, `canvas`) steuert die laufende App über einen nur lokalen Loopback-Endpunkt und liegt im integrierten Terminal von Fcode im `PATH`.",
+      "Antwortet omp beim Start nicht, meldet der Chat nach 120 s „Fcode-Agent antwortet nicht“ statt eines allgemeinen Startfehlers.",
     ],
   },
   {

@@ -16,11 +16,20 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 |-------|-----------------|-----------|-----------------|--------|
 | 0.21.1 | 0.15.7 | `ad66aa91e6e7` | v2 (v1 read-only fallback) | v15, v16 |
 
+### Added
+
+- **Worktrees that are ready to run.** A repo-root `.worktreeinclude` (copied) and `.worktreeshare` (symlinked) list gitignored paths such as `.env` or `node_modules`; every worktree Fcode creates gets them, so it needs no manual install. Worktree list and prune now follow omp's `OMP_WORKTREE_DIR` instead of a hardcoded `~/.omp/wt`.
+- **Worktrees are workspaces.** A Worktrees section in the sidebar lists the active project's worktrees by branch; click one to switch the workspace to it, and Bench follows to that worktree's bench. Create worktrees from Settings > Worktrees.
+- **Line notes on the review diff.** In the Review tab, add notes to single lines, ranges or a whole file, then send all unresolved notes to the agent as one prompt.
+- **Fan-out and compare.** A new Fan-out work-panel tab runs one prompt in 2-5 variants, each in its own worktree and session, shows their diffs side by side, and can open a variant or adopt it with a no-ff merge (refused when the main checkout is dirty).
+- **`fcode` command line.** Fcode now serves a loopback-only RACP endpoint with a per-launch token, and the `fcode` CLI (`worktree`, `session`, `bench`, `canvas`) drives the running app. It is on `PATH` in Fcode's integrated terminal; it exits 2 when the app is not running.
+
 ### Fixed
 
 - **Chat model picker and reasoning level.** The chip now shows the model and reasoning level omp is actually running, including omp's own providers (it stayed on "Model" and the old level before). The level you pick applies and is shown immediately.
 - **Auto and Accept edits now do what they say.** omp always asks before a tool call, and nothing answered for you, so a chat set to Auto sat waiting on a permission card. Auto now approves every request and Accept edits approves `edit` and `write`; anything else still asks.
 - **Extension status text is plain.** The footer line from omp extensions (for example ponytail) showed raw colour codes such as `[38;2;107;114;128m`; they are stripped now.
+- **Misleading agent handshake panel.** When omp did not answer in time, the chat showed a generic start-up failure. The handshake wait is now 120 s and a timeout shows "Fcode agent is not responding" instead.
 - **Leaked login shells.** The PATH probe at startup could leave a `zsh -lic` process running forever when it timed out, because an interactive zsh ignores the default kill signal. It is now killed outright.
 
 ## [0.21.0] — 2026-10-18

@@ -9,6 +9,11 @@ export const trEntries: ChangelogEntry[] = [
       "Otomatik ve Düzenlemeleri kabul et artık çalışıyor: Otomatik her araç isteğini onaylar, Düzenlemeleri kabul et `edit` ve `write` isteklerini onaylar, gerisi yine sorar. Otomatiğe ayarlı bir sohbet daha önce bir izin kartında bekliyordu.",
       "omp uzantılarının durum metni (örneğin ponytail) altbilgide artık ham renk kodlarını göstermiyor.",
       "Açılışta zaman aşımına uğrayan oturum açma kabuğu PATH yoklaması artık sonsuza dek çalışan bir `zsh -lic` işlemi bırakmıyor.",
+      "Fcode'un oluşturduğu worktree'ler hemen çalışır durumda: depo kökündeki `.worktreeinclude` (kopyalanır) ve `.worktreeshare` (sembolik bağ) dosyaları `.env` veya `node_modules` gibi gitignore'daki yolları listeler. Kenar çubuğundaki Worktrees bölümü etkin projenin worktree'leri arasında geçiş yapar, Bench etkin olanı izler, liste/temizleme `OMP_WORKTREE_DIR` değerine uyar.",
+      "İnceleme sekmesi: tek satıra, satır aralığına veya tüm dosyaya not ekleyin, çözülmemiş tüm notları tek bir istem olarak ajana gönderin.",
+      "Yeni Fan-out sekmesi tek bir istemi 2-5 varyantta, her biri kendi worktree'sinde çalıştırır, diff'lerini yan yana karşılaştırır ve bir varyantı açmanıza veya benimsemenize (no-ff birleştirme) izin verir.",
+      "Yeni `fcode` komut satırı (`worktree`, `session`, `bench`, `canvas`) çalışan uygulamayı yalnızca loopback'e açık bir uç nokta üzerinden yönetir ve Fcode'un entegre terminalinde `PATH` üzerindedir.",
+      "Başlangıçta omp yanıt vermezse sohbet artık genel bir başlatma hatası yerine 120 sn sonra \"Fcode ajanı yanıt vermiyor\" gösterir.",
     ],
   },
   {
