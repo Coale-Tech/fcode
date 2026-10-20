@@ -65,14 +65,16 @@ export function MemoryTab() {
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
-  const USER_PROFILE_MAX = 1024;
+  // omp injects at most `memory.frozen.maxChars` of each file; typing past that is silently ignored by the agent.
+  const frozenCap = ompSetting(omp, "memory.frozen.maxChars");
+  const USER_PROFILE_MAX = frozenCap > 0 ? Math.min(1024, frozenCap) : 1024;
   // ── Project memory state (G8) ─────────────────────────────────────────────
   const [projectMemory, setProjectMemory] = useState("");
   const [projectMemoryDraft, setProjectMemoryDraft] = useState("");
   const [projectMemorySaving, setProjectMemorySaving] = useState(false);
   const [projectMemorySaved, setProjectMemorySaved] = useState(false);
   const [projectMemoryError, setProjectMemoryError] = useState<string | null>(null);
-  const PROJECT_MEMORY_MAX = 16 * 1024;
+  const PROJECT_MEMORY_MAX = frozenCap > 0 ? Math.min(16 * 1024, frozenCap) : 16 * 1024;
   const activeProjectPath = useAppStore((s) => s.activeProjectPath);
 
 

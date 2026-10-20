@@ -300,7 +300,7 @@ Restart Fcode after changing the omp config. The model menu is populated from `o
 
 ## Memory
 
-Fcode exposes omp's two memory backends through the **Settings → Memory** tab (Agent group).
+Fcode exposes omp's memory backends through the **Settings → Memory** tab (Agent group).
 
 ### Backends
 
@@ -308,6 +308,11 @@ Fcode exposes omp's two memory backends through the **Settings → Memory** tab 
 | --- | --- | --- |
 | `mnemopi` | Local SQLite + vector store, runs inside the omp child process. No external service required. | ✓ |
 | `hindsight` | Remote HTTP service (connect-only; no managed local server in this phase). Requires a URL, optional bank name, and an auth token. | — |
+| `sharpshooter` | Friction-gated project decision files (architecture, product, style), consolidated in the background. | — |
+| `local` | omp's local rollout summarisation pipeline (`memory_summary.md`). | — |
+| `off` | No memory subsystem runs. | — |
+
+Frozen files (`<project>/.omp/MEMORY.md`, `USER.md`) are separate from the backend and load at session start whichever backend is selected. omp injects at most `memory.frozen.maxChars` (default 2000) of each, so the Settings editors stop accepting text at that cap.
 
 Changing the backend restarts the active omp session (same path as other overlay changes).
 
@@ -323,7 +328,7 @@ The Memory settings page shows a live status card polled every **15 s** (60 s wh
 
 | State | Meaning |
 | --- | --- |
-| `off` | Backend is `none` or not configured |
+| `off` | Backend is `off` or not configured |
 | `starting` | First poll in progress |
 | `ok` | Active, writable, searchable, latency ≤ 2 s |
 | `degraded` | Active but not writable/searchable, or latency > 2 s |
