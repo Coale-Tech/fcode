@@ -12,6 +12,8 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ### Added
 
+- Skill review adopts [Harness²](https://github.com/google-research/harness2) techniques ([ADR 0311](docs/adr/0311-harness2-self-improvement.md)): evidence-discipline prompts, tree validation with one retry, verdicts and lessons, split procedure/domain passes (`skills.review.passes`), and facts staged for the project's `AGENTS.md` instead of global skills.
+- On-demand probe loop `skills.harness.run` (off by default, `skills.harness.*`): contrastive propose–probe–compose rollouts in isolated git worktrees with blind selection that includes the unmodified baseline. Stages changed skills for approval; never applies anything.
 - **Review notes reach every diff.** The Review tab now fills from omp `edit`/`write` turns, and can also review Unstaged, Staged and Branch git diffs and markdown Docs. Notes survive a reload, accept markdown, and show a Sent badge once delivered (editing a sent note queues it again). Add a note with `c`, send with Cmd/Ctrl-Enter or the rebindable "Send review notes" shortcut (`Mod+Shift+R`), and drag to select a line range. Send to the current session or a new one from the split send button.
 - **Design Mode in the Browser tab.** Pick an element on the page (hover highlight, rebindable `Mod+Shift+E`, which also works while the page or the browser view has focus) and it lands in an annotation tray with a cropped screenshot, a selector and path, computed styles, nearby text, and the React component (plus file and line on React 18 and older dev builds). Give each annotation an intent (change, fix, question), mark up the screenshot with pen, rectangle and arrow, then send the tray to the current or a new session. Captured HTML is redacted (secret attributes, link query strings) and re-clamped in the main process.
 - **Restart agent.** Settings > AI Agents has a Restart agent button that restarts the omp agent process on demand; before, it only restarted on a crash or a settings change.
@@ -25,6 +27,7 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 - **Review note prompt format.** Multi-line notes keep their list indentation and anchors containing backticks no longer break the code span.
 - Tool approvals still reach the permission card when omp offers "Approve for this session" or directory/file grants; the bridge answers with the matching "Approve Once" label.
+- Approving a `kind:'fact'` proposal now persists the fact instead of discarding it.
 
 ## [0.22.0] — 2026-10-20
 

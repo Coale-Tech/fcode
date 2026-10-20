@@ -8,7 +8,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { OmpSettingsValues, OmpSkillProposal } from "@pi-desktop/shared";
 import { api } from "../../lib/api";
-import { Badge, Button, Input, SettingsToggle } from "../ui";
+import { Badge, Button, Input, Select, SettingsToggle } from "../ui";
 import { SettingsCard, SettingsRow } from "../../features/settings/primitives";
 
 export function SkillReviewSection() {
@@ -53,6 +53,8 @@ export function SkillReviewSection() {
   if (!loaded) return null;
 
   const requireApproval = omp["skills.review.requireApproval"] !== false;
+  const passes = omp["skills.review.passes"] ?? "single";
+  const harnessEnabled = omp["skills.harness.enabled"] === true;
 
   return (
     <SettingsCard title={t("settings.skillReviewTitle")}>
@@ -126,6 +128,78 @@ export function SkillReviewSection() {
           }}
         />
       </SettingsRow>
+      <SettingsRow
+        title={t("settings.skillReviewPasses")}
+        description={t("settings.skillReviewPassesDesc")}
+      >
+        <Select
+          value={passes}
+          onChange={(e) =>
+            save({ "skills.review.passes": e.target.value as "single" | "split" })
+          }
+        >
+          <option value="single">{t("settings.skillReviewPassesSingle")}</option>
+          <option value="split">{t("settings.skillReviewPassesSplit")}</option>
+        </Select>
+      </SettingsRow>
+      <SettingsRow
+        title={t("settings.skillHarnessTitle")}
+        description={t("settings.skillHarnessDesc")}
+      >
+        <SettingsToggle
+          checked={harnessEnabled}
+          label={t("settings.skillHarnessEnabled")}
+          onChange={() => save({ "skills.harness.enabled": !harnessEnabled })}
+        />
+      </SettingsRow>
+      {harnessEnabled && (
+        <>
+          <SettingsRow
+            title={t("settings.skillHarnessK")}
+            description={t("settings.skillHarnessKDesc")}
+          >
+            <Input
+              type="number"
+              min={1}
+              max={4}
+              value={String(omp["skills.harness.k"] ?? 1)}
+              onChange={(e) => {
+                const n = parseInt(e.target.value, 10);
+                if (Number.isFinite(n) && n >= 1 && n <= 4) {
+                  save({ "skills.harness.k": n });
+                }
+              }}
+            />
+          </SettingsRow>
+          <SettingsRow
+            title={t("settings.skillHarnessMode")}
+            description={t("settings.skillHarnessModeDesc")}
+          >
+            <Select
+              value={omp["skills.harness.mode"] ?? "parallel"}
+              onChange={(e) =>
+                save({ "skills.harness.mode": e.target.value as "parallel" | "sequential" })
+              }
+            >
+              <option value="parallel">{t("settings.skillHarnessModeParallel")}</option>
+              <option value="sequential">{t("settings.skillHarnessModeSequential")}</option>
+            </Select>
+          </SettingsRow>
+          <SettingsRow
+            title={t("settings.skillHarnessModel")}
+            description={t("settings.skillHarnessModelDesc")}
+          >
+            <Input
+              type="text"
+              value={omp["skills.harness.model"] ?? ""}
+              placeholder={t("settings.skillHarnessModelPlaceholder")}
+              onChange={(e) =>
+                save({ "skills.harness.model": e.target.value || undefined })
+              }
+            />
+          </SettingsRow>
+        </>
+      )}
       {proposals.length > 0 && (
         <>
           <p className="settings-row-desc" style={{ marginTop: 12, fontWeight: 600 }}>

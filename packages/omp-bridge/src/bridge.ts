@@ -42,10 +42,11 @@ import { adaptMessageFrame } from "./messages.js";
 import { PROMPT_BASH_PATTERNS, READ_ONLY_BASH_PATTERNS } from "./read-only-commands.js";
 import type { CuratorConfig } from "./skill-curator.js";
 import { DEFAULT_CURATOR_CONFIG, extractSkillName, promptPinnedSkills, recordSkillUse } from "./skill-curator.js";
-import { SkillReviewTrigger } from "./skill-review.js";
+import { SkillReviewTrigger, type SkillReviewConfig } from "./skill-review.js";
 import { buildReviewDetails, readFileText } from "./review-change.js";
 import { overlayAdvancedLines } from "./overlay-advanced.js";
 import { SESSION_RPC_FORWARD } from "./session-rpc.js";
+import { createHarnessRpcHandler, type HarnessRunParams } from "./harness-rpc.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Binary resolution (T7 / DX6)
@@ -796,6 +797,13 @@ export class OmpBridge {
   private pendingCommandOutput: Array<(text: string) => void> = [];
   /** Background skill review trigger; undefined when feature is disabled. */
   private skillReviewTrigger?: SkillReviewTrigger;
+  /** Harness (probe-loop) config; consumed by slice C's harness-rpc handler. */
+  #harnessConfig: { enabled: boolean; k: number; mode: "parallel" | "sequential"; model: string } = {
+    enabled: false, k: 1, mode: "parallel", model: "",
+  };
+  /** omp binary path, stored from start() for background harness runs. */
+  #ompBinary = "omp";
+
 
   /** Enable raw-frame tracing to a file (FCODE_BRIDGE_TRACE=1). */
   setTracer(fn: (dir: string, line: string) => void): void {
@@ -804,6 +812,14 @@ export class OmpBridge {
   /** Enable background skill review (skills.review.enabled). */
   setSkillReviewTrigger(trigger: SkillReviewTrigger | undefined): void {
     this.skillReviewTrigger = trigger;
+  }
+  /** Store harness (probe-loop) config for slice C's handler. Called from main(). */
+  setHarnessConfig(cfg: { enabled: boolean; k: number; mode: "parallel" | "sequential"; model: string }): void {
+    this.#harnessConfig = cfg;
+  }
+  /** Return the current harness (probe-loop) config. */
+  getHarnessConfig(): { enabled: boolean; k: number; mode: "parallel" | "sequential"; model: string } {
+    return this.#harnessConfig;
   }
   /** Write a JSON-RPC response to the PI host on stdout. */
   private respond(id: string, result: unknown): void {
@@ -1273,6 +1289,21 @@ export class OmpBridge {
         this.ompCallAndForward(id, { type: "prompt", message });
         break;
       }
+      case "skills.harness.run": {
+        const cfg = this.getHarnessConfig();
+        if (!this.config) { this.respondError(id, "sidecar not configured"); break; }
+        const handler = createHarnessRpcHandler({
+          ompBinary: this.#ompBinary,
+          dataDir: this.config.dataDir,
+          harnessSettings: cfg,
+          log: (msg) => process.stderr.write(`[omp-bridge] ${msg}\n`),
+        });
+        handler(p as unknown as HarnessRunParams)
+          .then((result) => this.respond(id, result))
+          .catch((e: unknown) => this.respondError(id, String((e as Error)?.message ?? e)));
+        break;
+      }
+
 
       default:
         this.respondError(id, `Unknown method: ${method}`, -32601);
@@ -1677,7 +1708,7 @@ export class OmpBridge {
             if (text.trim()) this.skillReviewTrigger.appendTurn(sessionId, "assistant", text.trim());
           }
         } else if (eventType === "agent_end") {
-          this.skillReviewTrigger.onAgentEnd(sessionId);
+          this.skillReviewTrigger.onAgentEnd(sessionId, this.sessions.get(sessionId)?.projectPath);
         }
       }
 
@@ -1890,6 +1921,7 @@ export class OmpBridge {
     env: NodeJS.ProcessEnv;
   }): Promise<void> {
     process.stderr.write(`[omp-bridge] starting: binary=${opts.ompBinary}\n`);
+    this.#ompBinary = opts.ompBinary;
     this.state.cwd = opts.cwd;
 
     const ompArgs = ["--mode", "rpc", "--approval-mode", opts.approvalMode ?? "always-ask", "--config", opts.overlayPath];
@@ -2083,7 +2115,7 @@ async function main(): Promise<void> {
       curatorCfg,
     });
     if (s["skills.review.enabled"] === true) {
-      bridge.setSkillReviewTrigger(new SkillReviewTrigger({
+      const reviewBase: SkillReviewConfig = {
         ompBinary,
         dataDir,
         intervalTurns: s["skills.review.intervalTurns"] ?? 10,
@@ -2091,8 +2123,18 @@ async function main(): Promise<void> {
         model: s["skills.review.model"] ?? "",
         requireApproval: s["skills.review.requireApproval"] !== false,
         log: (line) => console.error(`[omp-bridge] ${line}`),
-      }));
+      };
+      // passes is added to SkillReviewConfig by slice A; Object.assign avoids excess-property error until then.
+      bridge.setSkillReviewTrigger(new SkillReviewTrigger(
+        Object.assign(reviewBase, { passes: s["skills.review.passes"] ?? "single" }),
+      ));
     }
+    bridge.setHarnessConfig({
+      enabled: s["skills.harness.enabled"] === true,
+      k: s["skills.harness.k"] ?? 1,
+      mode: s["skills.harness.mode"] ?? "parallel",
+      model: s["skills.harness.model"] ?? "",
+    });
   } catch (e) {
     // DX3: overlay write failure is fatal — settle with a system message.
     process.stdout.write(
