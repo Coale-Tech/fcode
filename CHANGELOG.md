@@ -15,9 +15,14 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Skill review adopts [Harness²](https://github.com/google-research/harness2) techniques ([ADR 0311](docs/adr/0311-harness2-self-improvement.md)): evidence-discipline prompts, tree validation with one retry, verdicts and lessons, split procedure/domain passes (`skills.review.passes`), and facts staged for the project's `AGENTS.md` instead of global skills.
 - On-demand probe loop `skills.harness.run` (off by default, `skills.harness.*`): contrastive propose–probe–compose rollouts in isolated git worktrees with blind selection that includes the unmodified baseline. Stages changed skills for approval; never applies anything.
 
+### Changed
+
+- Updated the vendored omp from `ba344f5e69` to oh-my-pi v18.12.3 (`53a0377db6`), keeping Fcode's memory, status-RPC, models-config, skill-list and subagent host-tool changes. `open_session` now accepts both `cwd` and upstream's `provider`/`modelId`.
+
 ### Fixed
 
 - Approving a `kind:'fact'` proposal now persists the fact instead of discarding it.
+- Tool approvals still reach the permission card when omp offers "Approve for this session" or directory/file grants; the bridge answers with the matching "Approve Once" label.
 - Advanced settings no longer wipe Fcode's own config. An Advanced setting such as `tools.format`, `skills.enableSkillCommands`, `bash.enabled`, `memory.backend` or `task.isolation.merge` used to append a second top-level block that replaced Fcode's (tool approval rules, skill-pack directories, bash patterns, memory backend, isolation). It is now merged into the existing block, and Fcode's own keys win. `tools.approvalMode`, `memory.backend` and `browser.screenshotDir` are hidden from Advanced because Fcode sets them.
 - The skill curator settings showed 30 / 90 days while the curator ran with 14 / 30. Defaults of the Fcode-owned settings (curator, skill review, harness, memory injection) now live in one place, `FCODE_SETTING_DEFAULTS` in `packages/shared`, and the UI and bridge both read it.
 - Settings > Raven: the enable switch stayed disabled, and ignored clicks, until the site URL field had lost focus and saved. It now enables as soon as the typed URL is a valid http(s) address and saves the URL together with the switch.
