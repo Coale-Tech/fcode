@@ -524,6 +524,8 @@ export const IPC = {
     ompAgentList: "pi-desktop/omp/agents/list",
     /** Open a native file picker to choose the omp binary; saves override and restarts sidecar. */
     ompPickBinaryPath: "pi-desktop/omp/pickBinaryPath",
+    /** Restart the omp agent sidecar (same supervised restart settings changes trigger). */
+    agentSidecarRestart: "pi-desktop/omp/sidecar-restart",
     /** Kanban board: list all tasks, links, comments, runs. */
     kanbanList: "pi-desktop/kanban/list",
     /** Kanban board: create a user card (lands in triage/todo/ready per rules). */

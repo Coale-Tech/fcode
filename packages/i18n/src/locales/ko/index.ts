@@ -1980,6 +1980,10 @@ sklm: {
     ompAutoresearchDisable: "비활성화",
     ompAutoresearchSent: "활성 세션으로 전송됨.",
     ompAutoresearchNoSession: "활성 세션이 없습니다.",
+    agentRestartTitle: "에이전트 다시 시작",
+    agentRestartDesc: "omp 에이전트 프로세스를 다시 시작합니다. 에이전트가 응답하지 않을 때 사용하세요.",
+    agentRestartRun: "에이전트 다시 시작",
+    agentRestartDone: "다시 시작을 요청했습니다.",
     closeBehaviorTitle: "닫기 동작",
     closeBehaviorDesc:
       "주 창을 닫을 때의 동작입니다. macOS에서는 앱이 항상 Dock에 유지됩니다.",

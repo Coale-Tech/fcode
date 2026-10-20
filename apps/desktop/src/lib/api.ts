@@ -1936,6 +1936,8 @@ export const api = {
   kanbanArchive: (taskId: string, archived: boolean) =>
     invoke<{ board: KanbanBoard }>(IPC.invoke.kanbanArchive, { taskId, archived }),
   /** G15: open native file picker to choose omp binary; saves path, restarts sidecar. */
+  /** Restart the omp agent sidecar. */
+  agentSidecarRestart: () => invoke<{ ok: boolean }>(IPC.invoke.agentSidecarRestart),
   ompPickBinaryPath: () =>
     invoke<{ picked: boolean; path?: string }>(IPC.invoke.ompPickBinaryPath),
   /** Kanban: get current settings (enabled, caps). */

@@ -439,6 +439,10 @@ export function registerIpcHandlers(dependencies: RegisterIpcDependencies) {
     dataDir,
     restartSidecar: async () => dependencies.onProviderMutation?.(),
   });
+  handle(IPC.invoke.agentSidecarRestart, async () => {
+    await dependencies.onProviderMutation?.();
+    return { ok: true };
+  });
   // G15: native binary picker — saves override path to disk and restarts sidecar.
   handle(IPC.invoke.ompPickBinaryPath, async () => {
     const owner = getMainWindow();

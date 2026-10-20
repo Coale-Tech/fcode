@@ -1970,6 +1970,10 @@ sklm: {
     ompAutoresearchDisable: "Devre dışı bırak",
     ompAutoresearchSent: "Aktif oturuma gönderildi.",
     ompAutoresearchNoSession: "Aktif oturum yok.",
+    agentRestartTitle: "Aracıyı yeniden başlat",
+    agentRestartDesc: "omp aracı işlemini yeniden başlatır. Araç yanıt vermeyi bırakırsa kullanın.",
+    agentRestartRun: "Aracıyı yeniden başlat",
+    agentRestartDone: "Yeniden başlatma istendi.",
     closeBehaviorTitle: "Kapatma davranışı",
     closeBehaviorDesc:
       "Ana pencereyi kapattığınızda ne olur. macOS uygulamayı her zaman Dock’ta tutar.",

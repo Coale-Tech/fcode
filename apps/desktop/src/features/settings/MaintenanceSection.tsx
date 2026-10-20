@@ -149,14 +149,50 @@ function AutoresearchSubsection() {
   );
 }
 
+// ── Restart agent ─────────────────────────────────────────────────────────────
+
+function RestartAgentSubsection() {
+  const { t } = useTranslation();
+  const [status, setStatus] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const restart = useCallback(async () => {
+    setBusy(true);
+    try {
+      await api.agentSidecarRestart();
+      setStatus(t("settings.agentRestartDone"));
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  }, [t]);
+
+  return (
+    <SettingsCard title={t("settings.agentRestartTitle")}>
+      <SettingsRow title={t("settings.agentRestartTitle")} description={t("settings.agentRestartDesc")}>
+        <Button onClick={() => void restart()} disabled={busy}>
+          {t("settings.agentRestartRun")}
+        </Button>
+      </SettingsRow>
+      {status && (
+        <SettingsRow title="" description="">
+          <span style={{ fontSize: "0.75rem", opacity: 0.7 }}>{status}</span>
+        </SettingsRow>
+      )}
+    </SettingsCard>
+  );
+}
+
 // ── Combined section ──────────────────────────────────────────────────────────
 
-/** Maintenance actions: Cleanse Workspace and Autoresearch Mode. */
+/** Maintenance actions: Cleanse Workspace, Autoresearch Mode and Restart agent. */
 export function MaintenanceSection() {
   return (
     <>
       <CleanseSubsection />
       <AutoresearchSubsection />
+      <RestartAgentSubsection />
     </>
   );
 }

@@ -1986,6 +1986,10 @@ sklm: {
     ompAutoresearchDisable: "Disable",
     ompAutoresearchSent: "Sent to active session.",
     ompAutoresearchNoSession: "No active session.",
+    agentRestartTitle: "Restart agent",
+    agentRestartDesc: "Restarts the omp agent process. Use it if the agent stops responding.",
+    agentRestartRun: "Restart agent",
+    agentRestartDone: "Restart requested.",
     closeBehaviorTitle: "Close behavior",
     closeBehaviorDesc:
       "What happens when you close the main window. macOS always keeps the app in the Dock.",
