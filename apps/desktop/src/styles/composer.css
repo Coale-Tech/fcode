@@ -1008,7 +1008,7 @@
 .screenshot-markup-swatch {
   width: 18px;
   height: 18px;
-  border-radius: 50%;
+  border-radius: var(--radius-round);
   border: 2px solid transparent;
   cursor: pointer;
   padding: 0;
