@@ -2,6 +2,18 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const deEntries: ChangelogEntry[] = [
   {
+    "version": "0.23.0",
+    "date": "2026-10-20",
+    "highlights": [
+      "Der Review-Tab füllt sich jetzt aus Agent-Änderungen und prüft auch ungestagte, gestagte und Branch-Git-Diffs sowie Markdown-Dokumente. Notizen überstehen ein Neuladen, akzeptieren Markdown und zeigen nach der Zustellung ein „Gesendet“-Badge. Notiz mit `c` anlegen, mit Cmd/Strg-Enter senden, Zeilenbereich per Ziehen wählen, an die aktuelle oder eine neue Sitzung senden.",
+      "Design-Modus im Browser-Tab: Ein Element auf der Seite wählen (`Mod+Shift+E`), und es landet in einer Annotationsablage mit zugeschnittenem Screenshot, Selektor, berechneten Stilen, Text in der Nähe und der React-Komponente. Den Screenshot mit Stift, Rechteck oder Pfeil markieren, eine Absicht (Änderung, Fix, Frage) setzen und die Ablage an eine Sitzung senden. Erfasstes HTML wird geschwärzt.",
+      "Einstellungen > KI-Agenten hat eine Schaltfläche „Agent neu starten“, die den omp-Agentenprozess bei Bedarf neu startet.",
+      "Ein mitgelieferter Skill `fcode-workflow` gibt Agenten einen einzigen siebenstufigen Frappe-Prozess (Orient, Spec, Plan, Build, Verify, Review, Accept) mit Freigabe-Gates, Belegtabelle und einem benannten Agenten je Phase.",
+      "Die Skill-Selbstprüfung übernimmt Harness²-Techniken: Validierung mit einem Wiederholungsversuch, Urteile und Lehren, getrennte Prozedur-/Domänendurchläufe und Fakten, die für die `AGENTS.md` des Projekts vorgemerkt werden. Eine standardmäßig deaktivierte Probe-Schleife (`skills.harness.run`) testet Skill-Änderungen in isolierten Worktrees und stellt sie zur Freigabe bereit.",
+      "Das mitgelieferte omp ist auf oh-my-pi v18.12.3 aktualisiert. Tool-Freigaben erreichen die Berechtigungskarte weiterhin, wenn omp „Für diese Sitzung genehmigen“ oder Verzeichnis-/Dateifreigaben anbietet, und das Genehmigen eines Fakt-Vorschlags speichert ihn jetzt.",
+    ]
+  },
+  {
     "version": "0.22.0",
     "date": "2026-10-20",
     "highlights": [

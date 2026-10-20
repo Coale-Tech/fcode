@@ -10,6 +10,14 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 
+## [0.23.0] — 2026-10-20
+
+### Compatibility
+
+| Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
+|-------|-----------------|-----------|-----------------|--------|
+| 0.23.0 | 0.15.7 | `53a0377db6` | v2 (v1 read-only fallback) | v15, v16 |
+
 ### Added
 
 - Skill review adopts [Harness²](https://github.com/google-research/harness2) techniques ([ADR 0311](docs/adr/0311-harness2-self-improvement.md)): evidence-discipline prompts, tree validation with one retry, verdicts and lessons, split procedure/domain passes (`skills.review.passes`), and facts staged for the project's `AGENTS.md` instead of global skills.

@@ -2,6 +2,18 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const ptBREntries: ChangelogEntry[] = [
   {
+    "version": "0.23.0",
+    "date": "2026-10-20",
+    "highlights": [
+      "A aba Revisão agora é preenchida com as edições do agente e também revisa diffs git não preparados, preparados e de branch, além de documentos Markdown. As notas sobrevivem a um recarregamento, aceitam Markdown e mostram um selo «Enviada» quando entregues. Adicione uma nota com `c`, envie com Cmd/Ctrl-Enter, arraste para escolher um intervalo de linhas e envie para a sessão atual ou uma nova.",
+      "Modo Design na aba Navegador: escolha um elemento da página (`Mod+Shift+E`) e ele vai para uma bandeja de anotações com captura recortada, seletor, estilos computados, texto próximo e o componente React. Marque a captura com caneta, retângulo ou seta, defina uma intenção (mudança, correção, pergunta) e envie a bandeja a uma sessão. O HTML capturado é redigido.",
+      "Configurações > Agentes de IA tem um botão «Reiniciar agente» que reinicia o processo do agente omp sob demanda.",
+      "Uma skill incluída, `fcode-workflow`, dá aos agentes um único processo Frappe de sete fases (Orient, Spec, Plan, Build, Verify, Review, Accept) com portões de aprovação, uma tabela de evidências e um agente nomeado para cada fase.",
+      "A autorrevisão de skills adota técnicas do Harness²: validação com uma nova tentativa, veredictos e lições, passes separados de procedimento/domínio e fatos preparados para o `AGENTS.md` do projeto. Um laço de sondagem desativado por padrão (`skills.harness.run`) testa mudanças de skills em worktrees isolados e as deixa prontas para aprovação.",
+      "O omp incluído foi atualizado para oh-my-pi v18.12.3. As aprovações de ferramentas continuam chegando ao cartão de permissão quando o omp oferece «Aprovar para esta sessão» ou concessões de diretório/arquivo, e aprovar uma proposta de fato agora a salva.",
+    ]
+  },
+  {
     "version": "0.22.0",
     "date": "2026-10-20",
     "highlights": [

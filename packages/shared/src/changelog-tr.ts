@@ -2,6 +2,18 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const trEntries: ChangelogEntry[] = [
   {
+    "version": "0.23.0",
+    "date": "2026-10-20",
+    "highlights": [
+      "İnceleme sekmesi artık ajanın düzenlemeleriyle doluyor; ayrıca hazırlanmamış, hazırlanmış ve dal git farklarını ile Markdown belgelerini de inceleyebilir. Notlar yeniden yüklemeden sonra korunur, Markdown kabul eder ve iletildiğinde bir «Gönderildi» rozeti gösterir. `c` ile not ekleyin, Cmd/Ctrl-Enter ile gönderin, sürükleyerek satır aralığı seçin ve mevcut ya da yeni bir oturuma gönderin.",
+      "Tarayıcı sekmesinde Tasarım Modu: sayfadaki bir öğeyi seçin (`Mod+Shift+E`); kırpılmış ekran görüntüsü, seçici, hesaplanmış stiller, yakındaki metin ve React bileşeniyle bir not tepsisine düşer. Ekran görüntüsünü kalem, dikdörtgen veya okla işaretleyin, bir niyet (değişiklik, düzeltme, soru) belirleyin ve tepsiyi bir oturuma gönderin. Yakalanan HTML'deki hassas veriler maskelenir.",
+      "Ayarlar > Yapay Zekâ Ajanları bölümünde omp ajan sürecini isteğe bağlı yeniden başlatan bir «Ajanı yeniden başlat» düğmesi var.",
+      "Pakete dahil `fcode-workflow` becerisi, ajanlara onay kapıları, kanıt tablosu ve her aşama için adlandırılmış bir ajanla tek bir yedi aşamalı Frappe süreci (Orient, Spec, Plan, Build, Verify, Review, Accept) sunar.",
+      "Beceri kendi kendine incelemesi Harness² tekniklerini benimsedi: bir kez yeniden denemeli doğrulama, kararlar ve dersler, ayrı yordam/alan geçişleri ve projenin `AGENTS.md` dosyası için sıraya alınan olgular. Varsayılan olarak kapalı bir yoklama döngüsü (`skills.harness.run`) beceri değişikliklerini yalıtılmış worktree'lerde dener ve onay için sıraya alır.",
+      "Pakete dahil omp, oh-my-pi v18.12.3'e güncellendi. omp «Bu oturum için onayla» veya dizin/dosya izinleri sunduğunda araç onayları izin kartına ulaşmaya devam eder; bir olgu önerisini onaylamak artık onu kaydeder.",
+    ]
+  },
+  {
     "version": "0.22.0",
     "date": "2026-10-20",
     "highlights": [

@@ -2,6 +2,18 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const frEntries: ChangelogEntry[] = [
   {
+    "version": "0.23.0",
+    "date": "2026-10-20",
+    "highlights": [
+      "L'onglet Revue se remplit désormais à partir des modifications de l'agent et permet aussi de relire les diffs git non indexés, indexés et de branche, ainsi que les documents Markdown. Les notes survivent à un rechargement, acceptent le Markdown et affichent un badge « Envoyée » une fois remises. Ajoutez une note avec `c`, envoyez avec Cmd/Ctrl-Entrée, faites glisser pour choisir une plage de lignes et envoyez vers la session courante ou une nouvelle.",
+      "Mode Design dans l'onglet Navigateur : choisissez un élément de la page (`Mod+Shift+E`) et il arrive dans un plateau d'annotations avec capture recadrée, sélecteur, styles calculés, texte voisin et composant React. Annotez la capture au stylo, au rectangle ou à la flèche, définissez une intention (modification, correctif, question) et envoyez le plateau à une session. Le HTML capturé est expurgé.",
+      "Paramètres > Agents IA propose un bouton « Redémarrer l'agent » qui relance le processus de l'agent omp à la demande.",
+      "Un skill intégré, `fcode-workflow`, donne aux agents un processus Frappe unique en sept phases (Orient, Spec, Plan, Build, Verify, Review, Accept) avec des points d'approbation, un tableau de preuves et un agent nommé par phase.",
+      "L'auto-revue des skills adopte les techniques de Harness² : validation avec une nouvelle tentative, verdicts et leçons, passes séparées procédure/domaine et faits mis en attente pour l'`AGENTS.md` du projet. Une boucle de sondage désactivée par défaut (`skills.harness.run`) essaie des changements de skills dans des worktrees isolés et les met en attente d'approbation.",
+      "L'omp intégré passe à oh-my-pi v18.12.3. Les approbations d'outils atteignent toujours la carte d'autorisation quand omp propose « Approuver pour cette session » ou des autorisations de répertoire/fichier, et approuver une proposition de fait l'enregistre désormais.",
+    ]
+  },
+  {
     "version": "0.22.0",
     "date": "2026-10-20",
     "highlights": [

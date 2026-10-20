@@ -2,6 +2,18 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const esEntries: ChangelogEntry[] = [
   {
+    "version": "0.23.0",
+    "date": "2026-10-20",
+    "highlights": [
+      "La pestaña Revisión ahora se llena con las ediciones del agente y también revisa diffs de git sin preparar, preparados y de rama, además de documentos Markdown. Las notas sobreviven a una recarga, aceptan Markdown y muestran una insignia «Enviada» al entregarse. Añade una nota con `c`, envía con Cmd/Ctrl-Enter, arrastra para elegir un rango de líneas y envía a la sesión actual o a una nueva.",
+      "Modo de diseño en la pestaña Navegador: elige un elemento de la página (`Mod+Shift+E`) y pasa a una bandeja de anotaciones con captura recortada, selector, estilos calculados, texto cercano y el componente React. Marca la captura con lápiz, rectángulo o flecha, define una intención (cambio, arreglo, pregunta) y envía la bandeja a una sesión. El HTML capturado se redacta.",
+      "Ajustes > Agentes de IA tiene un botón «Reiniciar agente» que reinicia el proceso del agente omp cuando quieras.",
+      "Una skill incluida, `fcode-workflow`, da a los agentes un único proceso Frappe de siete fases (Orient, Spec, Plan, Build, Verify, Review, Accept) con puertas de aprobación, una tabla de evidencias y un agente con nombre para cada fase.",
+      "La autorrevisión de skills adopta técnicas de Harness²: validación con un reintento, veredictos y lecciones, pasadas separadas de procedimiento/dominio y hechos preparados para el `AGENTS.md` del proyecto. Un bucle de sondeo desactivado por defecto (`skills.harness.run`) prueba cambios de skills en worktrees aislados y los deja listos para aprobación.",
+      "El omp incluido se actualiza a oh-my-pi v18.12.3. Las aprobaciones de herramientas siguen llegando a la tarjeta de permisos cuando omp ofrece «Aprobar para esta sesión» o permisos de directorio/archivo, y aprobar una propuesta de hecho ahora la guarda.",
+    ]
+  },
+  {
     "version": "0.22.0",
     "date": "2026-10-20",
     "highlights": [

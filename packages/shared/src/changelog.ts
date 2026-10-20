@@ -30,6 +30,18 @@ export type ChangelogEntry = {
 
 const enEntries: ChangelogEntry[] = [
   {
+    version: "0.23.0",
+    date: "2026-10-20",
+    highlights: [
+      "The Review tab now fills from agent edits and can also review Unstaged, Staged and Branch git diffs and markdown Docs. Notes survive a reload, accept markdown and show a Sent badge once delivered. Add a note with `c`, send with Cmd/Ctrl-Enter, drag to select a line range, and send to the current or a new session.",
+      "Design Mode in the Browser tab: pick an element on the page (`Mod+Shift+E`) and it lands in an annotation tray with a cropped screenshot, selector, computed styles, nearby text and the React component. Mark up the screenshot with pen, rectangle or arrow, set an intent (change, fix, question) and send the tray to a session. Captured HTML is redacted.",
+      "Settings > AI Agents has a Restart agent button that restarts the omp agent process on demand.",
+      "A bundled `fcode-workflow` skill gives agents one seven-phase Frappe process (Orient, Spec, Plan, Build, Verify, Review, Accept) with approval gates, an evidence table and a named agent for each phase.",
+      "Skill self-review adopts Harness² techniques: validation with one retry, verdicts and lessons, split procedure/domain passes, and facts staged for the project's `AGENTS.md`. An off-by-default probe loop (`skills.harness.run`) tries skill changes in isolated worktrees and stages them for approval.",
+      "The bundled omp is updated to oh-my-pi v18.12.3. Tool approvals still reach the permission card when omp offers \"Approve for this session\" or directory/file grants, and approving a fact proposal now saves it.",
+    ],
+  },
+  {
     version: "0.22.0",
     date: "2026-10-20",
     highlights: [
@@ -989,6 +1001,18 @@ const enEntries: ChangelogEntry[] = [
 
 const zhCNEntries: ChangelogEntry[] = [
   {
+    version: "0.23.0",
+    date: "2026-10-20",
+    highlights: [
+      "“审阅”标签页现在会从智能体的编辑中自动填充，还可审阅未暂存、已暂存和分支的 git 差异以及 Markdown 文档。批注在刷新后保留，支持 Markdown，送达后显示“已发送”标记。按 `c` 添加批注，Cmd/Ctrl-Enter 发送，拖动可选择行范围，并可发送到当前或新的会话。",
+      "浏览器标签页新增设计模式：在页面上选取元素（`Mod+Shift+E`），它会进入批注托盘，附带裁剪截图、选择器、计算样式、附近文本和 React 组件。可用画笔、矩形或箭头标注截图，设定意图（修改、修复、提问），再把托盘发送到会话。捕获的 HTML 会被脱敏。",
+      "设置 > AI 智能体新增“重启智能体”按钮，可按需重启 omp 智能体进程。",
+      "内置的 `fcode-workflow` 技能为智能体提供统一的七阶段 Frappe 流程（定位、规格、计划、构建、验证、审阅、验收），含审批关卡、证据表和每个阶段对应的专用智能体。",
+      "技能自我审阅采用 Harness² 技术：校验并重试一次、结论与经验、流程/领域分开的审阅轮次，以及暂存到项目 `AGENTS.md` 的事实。默认关闭的探测循环（`skills.harness.run`）会在隔离的 worktree 中试验技能改动，并暂存等待批准。",
+      "内置 omp 更新到 oh-my-pi v18.12.3。omp 提供“本次会话批准”或目录/文件授权时，工具批准仍会到达权限卡片；批准事实提案现在会真正保存。",
+    ],
+  },
+  {
     version: "0.22.0",
     date: "2026-10-20",
     highlights: [
@@ -1946,6 +1970,18 @@ const zhCNEntries: ChangelogEntry[] = [
 ];
 
 const zhTWEntries: ChangelogEntry[] = [
+  {
+    version: "0.23.0",
+    date: "2026-10-20",
+    highlights: [
+      "「審閱」分頁現在會從代理的編輯自動填入，也可審閱未暫存、已暫存與分支的 git 差異以及 Markdown 文件。註解在重新載入後保留，支援 Markdown，送達後顯示「已傳送」標記。按 `c` 新增註解，Cmd/Ctrl-Enter 傳送，拖曳可選取行範圍，並可傳到目前或新的工作階段。",
+      "瀏覽器分頁新增設計模式：在頁面上選取元素（`Mod+Shift+E`），它會進入註解匣，附帶裁切截圖、選擇器、計算樣式、附近文字與 React 元件。可用畫筆、矩形或箭頭標註截圖，設定意圖（修改、修復、提問），再把註解匣傳到工作階段。擷取的 HTML 會經過遮蔽。",
+      "設定 > AI 代理新增「重新啟動代理」按鈕，可依需求重新啟動 omp 代理程序。",
+      "內建的 `fcode-workflow` 技能為代理提供統一的七階段 Frappe 流程（定位、規格、計畫、建置、驗證、審閱、驗收），含核准關卡、證據表與每個階段對應的專用代理。",
+      "技能自我審閱採用 Harness² 技術：驗證並重試一次、結論與心得、流程/領域分開的審閱回合，以及暫存到專案 `AGENTS.md` 的事實。預設關閉的探測迴圈（`skills.harness.run`）會在隔離的 worktree 中試驗技能變更，並暫存等待核准。",
+      "內建 omp 更新到 oh-my-pi v18.12.3。omp 提供「本次工作階段核准」或目錄/檔案授權時，工具核准仍會送達權限卡片；核准事實提案現在會真正儲存。",
+    ],
+  },
   {
     version: "0.22.0",
     date: "2026-10-20",
