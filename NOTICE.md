@@ -113,3 +113,12 @@ the snapshots are used only until the first clone succeeds.
   `11ff8758a412a8906859e6215c674dc9c1358115`. Its own `NOTICE` credits frappe/skills and
   [lubusIN/frappe-skills](https://github.com/lubusIN/frappe-skills), the latter under the MIT License
   (full text in `frappeskills/LICENSES/frappe-skills-lubusIN-MIT.txt`).
+
+### Harness²
+
+The self-improvement review prompts in `packages/omp-bridge/src/skill-review.ts`, `harness-recursion.ts`
+and `harness-select.ts` are adapted from [google-research/harness2](https://github.com/google-research/harness2),
+Copyright Google LLC, licensed under the Apache License, Version 2.0
+(https://www.apache.org/licenses/LICENSE-2.0). Fcode changes: prompts reworded for Fcode's
+surface (`AGENTS.md`, `CLAUDE.md`, `<name>/SKILL.md`), baseline-inclusive blind selection, git-worktree
+rollouts through `omp -p`, and approval-gated staging. See `docs/adr/0311-harness2-self-improvement.md`.

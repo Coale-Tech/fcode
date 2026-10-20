@@ -8,6 +8,17 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) on Fc
 The two early previews used `0.15.7-fcode.N` (PI-Desktop 0.15.7 plus a prerelease suffix). That scheme sorted below upstream 0.15.7 and was always a prerelease, so the in-app updater (stable releases only) never offered it.
 The PI-Desktop release each version is based on is listed in its Compatibility table.
 
+## [Unreleased]
+
+### Added
+
+- Skill review adopts [Harness²](https://github.com/google-research/harness2) techniques ([ADR 0311](docs/adr/0311-harness2-self-improvement.md)): evidence-discipline prompts, tree validation with one retry, verdicts and lessons, split procedure/domain passes (`skills.review.passes`), and facts staged for the project's `AGENTS.md` instead of global skills.
+- On-demand probe loop `skills.harness.run` (off by default, `skills.harness.*`): contrastive propose–probe–compose rollouts in isolated git worktrees with blind selection that includes the unmodified baseline. Stages changed skills for approval; never applies anything.
+
+### Fixed
+
+- Approving a `kind:'fact'` proposal now persists the fact instead of discarding it.
+
 ## [0.22.0] — 2026-10-20
 
 ### Compatibility

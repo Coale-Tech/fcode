@@ -33,6 +33,8 @@ const HINDSIGHT_SCOPING_MODES = ["global", "per-project", "per-project-tagged"] 
 const MNEMOPI_EMBEDDING_VARIANTS = ["en", "multilingual"] as const;
 const HINDSIGHT_RECALL_BUDGETS = ["low", "mid", "high"] as const;
 const SKILL_LIST_MODES = ["full", "compact"] as const;
+const SKILL_REVIEW_PASSES = ["single", "split"] as const;
+const HARNESS_MODES = ["parallel", "sequential"] as const;
 
 const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   // Task / isolation (omp/packages/coding-agent/src/task/settings.ts)
@@ -97,6 +99,12 @@ const SCHEMA: Record<keyof OmpSettingsValues, FieldSchema> = {
   "skills.review.model":           { type: "string" },
   "skills.review.maxInputTokens":  { type: "number", min: 1000, max: 32000 },
   "skills.review.requireApproval": { type: "boolean" },
+  "skills.review.passes":          { type: "enum", values: SKILL_REVIEW_PASSES },
+  // Probe loop / harness (Fcode-owned; offline contrastive evaluation)
+  "skills.harness.enabled":         { type: "boolean" },
+  "skills.harness.k":               { type: "number", min: 1, max: 4 },
+  "skills.harness.mode":            { type: "enum", values: HARNESS_MODES },
+  "skills.harness.model":           { type: "string" },
   // Extensions (omp/packages/coding-agent/src/extensibility/settings.ts)
   extensions:                   { type: "array" },
   disabledExtensions:           { type: "array" },

@@ -387,8 +387,15 @@ export interface OmpSettingsValues {
   "skills.review.intervalTurns"?: number;
   "skills.review.model"?: string;
   "skills.review.maxInputTokens"?: number;
-  /** When true (default), validated skills are staged as proposals awaiting approval. */
+  /** When true (default), validated skills are staged as pending proposals awaiting approval. */
   "skills.review.requireApproval"?: boolean;
+  /** Two-pass review: separates procedure (INV) from domain knowledge (DOM). Default: single. */
+  "skills.review.passes"?: "single" | "split";
+  // Probe loop / harness (Fcode-owned; offline contrastive evaluation)
+  "skills.harness.enabled"?: boolean;
+  "skills.harness.k"?: number;
+  "skills.harness.mode"?: "parallel" | "sequential";
+  "skills.harness.model"?: string;
   // Opt-in tools (omp/packages/coding-agent/src/tools/settings.ts; default: false)
   "astGrep.enabled"?: boolean;
   "checkpoint.enabled"?: boolean;
@@ -514,6 +521,11 @@ const _curatedCheck = {
   "skills.review.model": true,
   "skills.review.maxInputTokens": true,
   "skills.review.requireApproval": true,
+  "skills.review.passes": true,
+  "skills.harness.enabled": true,
+  "skills.harness.k": true,
+  "skills.harness.mode": true,
+  "skills.harness.model": true,
   "astGrep.enabled": true,
   "checkpoint.enabled": true,
   "github.enabled": true,
