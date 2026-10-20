@@ -1004,7 +1004,6 @@ sklm: {
     "models": "Modelle",
     "permissions": "Berechtigungen",
     "appearance": "Aussehen",
-    "themeDisplay": "Design & Anzeige",
     "about": "Info",
     "addProvider": "Anbieter hinzufügen",
     "apiKey": "API-Schlüssel",

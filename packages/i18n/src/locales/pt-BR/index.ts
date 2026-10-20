@@ -991,7 +991,6 @@ export const ptBR = {
     models: "Modelos",
     permissions: "Permissões",
     appearance: "Aparência",
-    themeDisplay: "Tema e exibição",
     about: "Informação",
     addProvider: "Adicionar provedor",
     apiKey: "Chave API",
