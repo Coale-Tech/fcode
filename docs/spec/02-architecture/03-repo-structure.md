@@ -79,7 +79,7 @@ It is excluded from the Cargo workspace (`exclude = ["omp"]`), absent from
 `pnpm-workspace.yaml`, and installs with Bun. `scripts/build-omp.mjs` compiles
 it (Bun `--compile`, one binary per target) into
 `apps/desktop/resources/bin/omp-<platform>-<arch>`, which electron-builder
-ships as `bin/omp`. The snapshot diverged from oh-my-pi `ba344f5e69` and is not
+ships as `bin/omp`. The snapshot diverged from oh-my-pi v18.12.3 (`53a0377db6`, re-snapshotted from `ba344f5e69`) and is not
 synced upstream; after changing it, re-run `build-omp.mjs`.
 
 Linked `git worktree` checkouts — for example the `fcode-worktrees/`,

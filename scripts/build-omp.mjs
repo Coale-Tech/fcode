@@ -5,7 +5,7 @@
  * Wired as apps/desktop/package.json "bundle:runtime" so it runs alongside the
  * agent-runtime bundle step before electron-builder packages the app.
  *
- * Source: vendored snapshot in omp/ (diverged from oh-my-pi ba344f5e69; no upstream sync).
+ * Source: vendored snapshot in omp/ (diverged from oh-my-pi v18.12.3 / 53a0377db6; no upstream sync).
  * After changing omp/, re-run this script; the protocol smoke test
  * (apps/desktop/test/omp-protocol-smoke.test.mjs) detects a stale binary and
  * confirms protocol v2 is still negotiated.

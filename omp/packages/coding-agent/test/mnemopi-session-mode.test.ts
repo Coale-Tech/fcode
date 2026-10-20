@@ -28,7 +28,7 @@ describe("mnemopi llmMode=session", () => {
 				return { replyText: "  ok \n" };
 			},
 		};
-		const opts = await resolveMnemopiProviderOptions(config("session"), {} as never, registry, "s1", session as never);
+		const opts = await resolveMnemopiProviderOptions(config("session"), {} as never, registry, "s1", {}, session as never);
 		expect(await complete(opts.llm, "hello")).toBe("ok");
 		expect(calls[0]).toMatchObject({ promptText: "hello", history: [], tools: false });
 		expect(typeof calls[0].maxContextBytes).toBe("number");
@@ -40,7 +40,7 @@ describe("mnemopi llmMode=session", () => {
 				throw new Error("No active model on session");
 			},
 		};
-		const opts = await resolveMnemopiProviderOptions(config("session"), {} as never, registry, "s1", session as never);
+		const opts = await resolveMnemopiProviderOptions(config("session"), {} as never, registry, "s1", {}, session as never);
 		expect(await complete(opts.llm, "hello")).toBeNull();
 	});
 });

@@ -22,6 +22,11 @@ function sessionOver(manager: SessionManager): { session: RpcOpenSessionSession;
 		get messages(): AgentMessage[] {
 			return manager.getEntries().flatMap(entry => (entry.type === "message" ? [entry.message] : []));
 		},
+		model: undefined,
+		async setModel() {
+			transitions.push("setModel");
+			return { switched: true };
+		},
 		async newSession(options) {
 			transitions.push("new");
 			await manager.newSession(options);
@@ -107,7 +112,7 @@ describe("openRpcSession", () => {
 		const { session, transitions } = sessionOver(manager);
 		const moves: string[] = [];
 		try {
-			const opened = await openRpcSession(session, threadDir, undefined, {
+			const opened = await openRpcSession(session, threadDir, undefined, undefined, {
 				path: project,
 				rescope: async dir => {
 					moves.push(dir);
@@ -140,7 +145,7 @@ describe("openRpcSession", () => {
 		const { session, transitions } = sessionOver(manager);
 		const moves: string[] = [];
 		const open = (project: string) =>
-			openRpcSession(session, threadDir, undefined, {
+			openRpcSession(session, threadDir, undefined, undefined, {
 				path: project,
 				rescope: async dir => {
 					moves.push(dir);
@@ -169,7 +174,7 @@ describe("openRpcSession", () => {
 		const startFile = manager.getSessionFile();
 		const { session, transitions } = sessionOver(manager);
 		try {
-			const opened = await openRpcSession(session, threadDir, undefined, {
+			const opened = await openRpcSession(session, threadDir, undefined, undefined, {
 				path: path.join(root, "missing-project"),
 				rescope: async () => false,
 			});

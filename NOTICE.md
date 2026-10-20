@@ -38,7 +38,7 @@ A full list of changed files is available via `git log` in this repository.
 
 The `omp` binary bundled in the release artifacts is built from source vendored at `omp/`.
 It is a pruned snapshot of the [oh-my-pi](https://github.com/can1357/oh-my-pi) project at
-commit `ba344f5e69f28535e7e9a2cf09e5af3643861b73`, modified by Fcode and no longer synced
+release v18.12.3 (commit `53a0377db6`, imported from `ba344f5e69f28535e7e9a2cf09e5af3643861b73` and re-snapshotted), modified by Fcode and no longer synced
 with upstream. oh-my-pi is distributed under the MIT License (full text in `omp/LICENSE`).
 
 ```

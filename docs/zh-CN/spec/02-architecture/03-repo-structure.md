@@ -74,7 +74,7 @@ fcode/                        # 仓库根目录（GitHub Coale-Tech/fcode；本�
 └── README.md · README.zh-CN.md
 ```
 
-`omp/` 是 oh-my-pi 代理引擎的内置快照（vendored），不是依赖项。它被排除在 Cargo 工作区之外（`exclude = ["omp"]`），也不在 `pnpm-workspace.yaml` 中，使用 Bun 安装。`scripts/build-omp.mjs` 把它编译（Bun `--compile`，每个目标一个二进制文件）为 `apps/desktop/resources/bin/omp-<platform>-<arch>`，electron-builder 再把它作为 `bin/omp` 发布。该快照已偏离 oh-my-pi `ba344f5e69`，不再与上游同步；修改后需重新运行 `build-omp.mjs`。
+`omp/` 是 oh-my-pi 代理引擎的内置快照（vendored），不是依赖项。它被排除在 Cargo 工作区之外（`exclude = ["omp"]`），也不在 `pnpm-workspace.yaml` 中，使用 Bun 安装。`scripts/build-omp.mjs` 把它编译（Bun `--compile`，每个目标一个二进制文件）为 `apps/desktop/resources/bin/omp-<platform>-<arch>`，electron-builder 再把它作为 `bin/omp` 发布。该快照已偏离 oh-my-pi v18.12.3（`53a0377db6`，由 `ba344f5e69` 重新快照），不再与上游同步；修改后需重新运行 `build-omp.mjs`。
 
 关联的 `git worktree` 检出——例如维护者工作站上的 `fcode-worktrees/`、`fcode-wt/` 以及被 git 忽略的 `PI-Desktop-worktrees/` 目录——都是本仓库的其他工作副本：每个目录里的 `.git` 文件指向主检出的 `.git/worktrees/`，共用其对象库与引用，不含独立源码。进行全仓扫描时应排除它们。
 

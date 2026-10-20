@@ -141,7 +141,7 @@ describe("tool_permission.resolve answers omp's select-style approval", () => {
     process.stdout.write = orig;
   });
 
-  function resolveWith(decision: string): Record<string, unknown> {
+  function resolveWith(decision: string, options = ["Approve", "Deny"]): Record<string, unknown> {
     const bridge = new OmpBridge();
     (bridge as unknown as { activeTurn: unknown }).activeTurn = { sessionId: "s1", turnId: "t1" };
     const sent: Record<string, unknown>[] = [];
@@ -149,7 +149,7 @@ describe("tool_permission.resolve answers omp's select-style approval", () => {
     process.stdout.write = (() => true) as typeof process.stdout.write;
     bridge.handleOmpFrame(JSON.stringify({ type: "tool_execution_start", toolCallId: "c1", toolName: "bash", args: {} }));
     bridge.handleOmpFrame(
-      JSON.stringify({ type: "extension_ui_request", id: "u1", method: "select", title: "Allow tool: bash\nCommand: ls", options: ["Approve", "Deny"] }),
+      JSON.stringify({ type: "extension_ui_request", id: "u1", method: "select", title: "Allow tool: bash\nCommand: ls", options }),
     );
     bridge.handleHostFrame({ jsonrpc: "2.0", id: "h1", method: "tool_permission.resolve", params: { requestId: "u1", decision } });
     return sent[0];
@@ -158,6 +158,12 @@ describe("tool_permission.resolve answers omp's select-style approval", () => {
   it("Approve / Deny values, not a boolean", () => {
     expect(resolveWith("allow_once")).toEqual({ type: "extension_ui_response", id: "u1", value: "Approve" });
     expect(resolveWith("deny")).toEqual({ type: "extension_ui_response", id: "u1", value: "Deny" });
+  });
+
+  it("answers with the once label when omp also offers session and grant choices", () => {
+    const options = ["Approve Directory: /tmp", "Always Approve Directory: /tmp", "Approve Once", "Approve bash for this session", "Deny"];
+    expect(resolveWith("allow_once", options)).toEqual({ type: "extension_ui_response", id: "u1", value: "Approve Once" });
+    expect(resolveWith("deny", options)).toEqual({ type: "extension_ui_response", id: "u1", value: "Deny" });
   });
 
   it("an id the bridge never issued reports handled:false and sends nothing to omp", () => {

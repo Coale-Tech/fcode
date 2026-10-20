@@ -767,7 +767,7 @@ export class OmpBridge {
   private sessions = new Map<string, SessionBinding>();
   private state = createBridgeState(homedir());
   /** Map of omp request id → PI pending request info */
-  private pendingUiRequests = new Map<string, { sessionId: string; toolCallId: string; toolName: string; viaSelect: boolean }>();
+  private pendingUiRequests = new Map<string, { sessionId: string; toolCallId: string; toolName: string; viaSelect: boolean; approveLabel: string }>();
   /** Per-session most-recent open tool_execution_start (args kept for risk classification) */
   private openTools = new Map<string, { toolCallId: string; toolName: string; args?: unknown }>();
   /** Delegates between lifecycle `started` and a terminal status, by omp subagent id. */
@@ -1040,8 +1040,8 @@ export class OmpBridge {
           break;
         }
         const approved = String(p.decision ?? "") !== "deny";
-        // omp asks tool approval as a select ["Approve","Deny"]; older confirm requests want a boolean.
-        const answer = pending.viaSelect ? { value: approved ? "Approve" : "Deny" } : { confirmed: approved };
+        // omp asks tool approval as a select; "Approve" (or "Approve Once" beside grants) is this call only.
+        const answer = pending.viaSelect ? { value: approved ? pending.approveLabel : "Deny" } : { confirmed: approved };
         this.sendToOmp({ type: "extension_ui_response", id: requestId, ...answer });
         this.pendingUiRequests.delete(requestId);
         this.respond(id, { handled: true });
@@ -1735,6 +1735,7 @@ export class OmpBridge {
       toolCallId: openTool?.toolCallId ?? req.id,
       toolName: openTool?.toolName ?? req.title ?? "tool",
       viaSelect: req.method === "select",
+      approveLabel: (req.options ?? []).map((o) => (typeof o === "string" ? o : o.value)).includes("Approve Once") ? "Approve Once" : "Approve",
     });
 
     const { type, ...request } = mapped;

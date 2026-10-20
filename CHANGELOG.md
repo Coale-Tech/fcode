@@ -8,6 +8,16 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) on Fc
 The two early previews used `0.15.7-fcode.N` (PI-Desktop 0.15.7 plus a prerelease suffix). That scheme sorted below upstream 0.15.7 and was always a prerelease, so the in-app updater (stable releases only) never offered it.
 The PI-Desktop release each version is based on is listed in its Compatibility table.
 
+## [Unreleased]
+
+### Changed
+
+- Updated the vendored omp from `ba344f5e69` to oh-my-pi v18.12.3 (`53a0377db6`), keeping Fcode's memory, status-RPC, models-config, skill-list and subagent host-tool changes. `open_session` now accepts both `cwd` and upstream's `provider`/`modelId`.
+
+### Fixed
+
+- Tool approvals still reach the permission card when omp offers "Approve for this session" or directory/file grants; the bridge answers with the matching "Approve Once" label.
+
 ## [0.22.0] — 2026-10-20
 
 ### Compatibility

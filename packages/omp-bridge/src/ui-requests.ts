@@ -184,8 +184,9 @@ export function mapExtensionUiRequest(
     case "select":
     case "input": {
       const options = req.options?.map((o) => (typeof o === "string" ? o : o.value)) ?? [];
-      // omp asks tool approval as select ["Approve","Deny"] titled "Allow tool: <name>\n<details>".
-      const approval = req.method === "select" && options.join() === "Approve,Deny"
+      // omp asks tool approval as a select titled "Allow tool: <name>\n<details>", ending in "Deny"; it may also
+      // offer "Approve <tool> for this session" and always-ask-cached grants between "Approve" and "Deny".
+      const approval = req.method === "select" && options.at(-1) === "Deny" && options.some((o) => o.startsWith("Approve"))
         ? /^Allow tool: ([^\n]+)\n?([\s\S]*)$/.exec(req.title ?? "")
         : null;
       if (approval) {

@@ -40,7 +40,7 @@ describe("I.1 memory_summary.md injection hardening", () => {
 				`Normal line.\n${INJECTION_LINE}\nAnother normal line.`,
 			);
 
-			const instructions = await buildMemoryToolDeveloperInstructions(agentDir, settings);
+			const instructions = await buildMemoryToolDeveloperInstructions(agentDir, settings.getCwd(), settings);
 			expect(instructions).toBeDefined();
 			// angle brackets stripped
 			expect(instructions).not.toContain("<system>");
@@ -61,7 +61,7 @@ describe("I.1 memory_summary.md injection hardening", () => {
 				`Deploy token is ${FAKE_TOKEN} and must stay secret.`,
 			);
 
-			const instructions = await buildMemoryToolDeveloperInstructions(agentDir, settings);
+			const instructions = await buildMemoryToolDeveloperInstructions(agentDir, settings.getCwd(), settings);
 			expect(instructions).not.toContain(FAKE_TOKEN);
 			expect(instructions).toContain("[REDACTED]");
 		});
@@ -74,7 +74,7 @@ describe("I.1 memory_summary.md injection hardening", () => {
 			await fs.mkdir(memoryRoot, { recursive: true });
 			await Bun.write(path.join(memoryRoot, "memory_summary.md"), BACKTICK_FENCE);
 
-			const instructions = await buildMemoryToolDeveloperInstructions(agentDir, settings);
+			const instructions = await buildMemoryToolDeveloperInstructions(agentDir, settings.getCwd(), settings);
 			expect(instructions).toBeDefined();
 			// backticks stripped
 			expect(instructions).not.toContain("```");
@@ -92,7 +92,7 @@ describe("I.2 USER.md user profile injection", () => {
 			await Bun.write(path.join(memoryRoot, "memory_summary.md"), "Project uses bun test.");
 			await Bun.write(getUserProfilePath(agentDir), "I prefer concise commit messages and TDD.");
 
-			const instructions = await buildMemoryToolDeveloperInstructions(agentDir, settings);
+			const instructions = await buildMemoryToolDeveloperInstructions(agentDir, settings.getCwd(), settings);
 			expect(instructions).toBeDefined();
 			expect(instructions).toContain("I prefer concise commit messages and TDD");
 		});
@@ -103,7 +103,7 @@ describe("I.2 USER.md user profile injection", () => {
 			const settings = Settings.isolated({ "memories.enabled": true });
 			await Bun.write(getUserProfilePath(agentDir), "I always prefer TypeScript over JavaScript.");
 
-			const instructions = await buildMemoryToolDeveloperInstructions(agentDir, settings);
+			const instructions = await buildMemoryToolDeveloperInstructions(agentDir, settings.getCwd(), settings);
 			expect(instructions).toBeDefined();
 			expect(instructions).toContain("TypeScript over JavaScript");
 		});
@@ -117,7 +117,7 @@ describe("I.2 USER.md user profile injection", () => {
 				`Friendly developer.\n${INJECTION_LINE}\nUse tabs for indentation.`,
 			);
 
-			const instructions = await buildMemoryToolDeveloperInstructions(agentDir, settings);
+			const instructions = await buildMemoryToolDeveloperInstructions(agentDir, settings.getCwd(), settings);
 			expect(instructions).not.toContain("<system>");
 			expect(instructions).not.toContain("</system>");
 			expect(instructions).toContain("Friendly developer");
@@ -130,7 +130,7 @@ describe("I.2 USER.md user profile injection", () => {
 			const settings = Settings.isolated({ "memories.enabled": true });
 			await Bun.write(getUserProfilePath(agentDir), `My deploy token is ${FAKE_TOKEN}.`);
 
-			const instructions = await buildMemoryToolDeveloperInstructions(agentDir, settings);
+			const instructions = await buildMemoryToolDeveloperInstructions(agentDir, settings.getCwd(), settings);
 			expect(instructions).not.toContain(FAKE_TOKEN);
 			expect(instructions).toContain("[REDACTED]");
 		});
@@ -142,7 +142,7 @@ describe("I.2 USER.md user profile injection", () => {
 			// 2000 chars of 'a' — well above 1024
 			await Bun.write(getUserProfilePath(agentDir), "a".repeat(2000));
 
-			const instructions = await buildMemoryToolDeveloperInstructions(agentDir, settings);
+			const instructions = await buildMemoryToolDeveloperInstructions(agentDir, settings.getCwd(), settings);
 			expect(instructions).toBeDefined();
 			// The truncated content (1024 'a's) should be present; the extra 976 chars should not
 			// We verify the full 2000-char string is not in the output.
