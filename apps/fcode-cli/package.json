@@ -1,6 +1,6 @@
 {
   "name": "@pi-desktop/fcode-cli",
-  "version": "0.22.0",
+  "version": "0.23.0",
   "private": true,
   "type": "module",
   "description": "fcode CLI: drive the running Fcode desktop from an agent terminal",
