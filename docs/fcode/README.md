@@ -77,6 +77,26 @@ Each agent file is validated by `apps/desktop/test/fcode-agents.test.mjs` (part 
 ---
 
 
+## Standard process (`fcode-workflow` skill)
+
+Every Frappe build/change task follows one process, defined in the bundled skill
+`apps/desktop/resources/fcode-skills/fcode-workflow/SKILL.md` (loaded through the overlay
+`customDirectories`, listed to the model by its description, invocable as `/skill:fcode-workflow`):
+
+| # | Phase | Owner | Gate |
+|---|---|---|---|
+| 1 | Orient | main agent, `frappe-scout` | bench, site, app, version and existing code named |
+| 2 | Spec (`docs/specs/<slug>.md`) | main agent | testable acceptance criteria; user approves when data, permissions or APIs change |
+| 3 | Plan | main agent | each criterion maps to a task and a verification |
+| 4 | Build | `frappe-tester` then `frappe-dev` | `fcode_bench_run run-tests` passes |
+| 5 | Verify | `frappe-bench-ops`, `frappe-ui-verifier` | green tests, clean migrate, screenshots for UI |
+| 6 | Review | `frappe-reviewer` | no open Critical/High (max two rounds) |
+| 7 | Accept | main agent | evidence table, one proof per criterion; unproven = "Not verified" |
+
+Small fixes skip phases 2, 3 and 6. The process is prompt-level: nothing in the host enforces the order.
+
+---
+
 ## Bridge architecture
 
 ```
