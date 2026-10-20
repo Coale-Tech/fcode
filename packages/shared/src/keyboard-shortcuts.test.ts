@@ -205,6 +205,37 @@ describe("keyboard shortcut mapping", () => {
     expect(keybindingDisplayParts("Mod+Shift+P", "darwin")).toEqual(["⌘", "⇧", "P"]);
     expect(keybindingDisplayParts("Mod+Comma", "win32")).toEqual(["Ctrl", ","]);
   });
+
+  it("registers sendReviewNotes as an agent-group shortcut with Mod+Shift+R default", () => {
+    const shortcut = KEYBOARD_SHORTCUTS.find((s) => s.id === "sendReviewNotes");
+    expect(shortcut).toBeDefined();
+    expect(shortcut!.group).toBe("agent");
+    expect(resolveKeybinding(shortcut!, undefined, "darwin")).toBe("Mod+Shift+R");
+    expect(resolveKeybinding(shortcut!, undefined, "win32")).toBe("Mod+Shift+R");
+    // Overrides are honoured.
+    expect(resolveKeybinding(shortcut!, { sendReviewNotes: "Mod+Shift+F" }, "darwin")).toBe("Mod+Shift+F");
+  });
+
+  it("registers toggleElementPicker as an agent-group shortcut with Mod+Shift+E default", () => {
+    const shortcut = KEYBOARD_SHORTCUTS.find((s) => s.id === "toggleElementPicker");
+    expect(shortcut).toBeDefined();
+    expect(shortcut!.group).toBe("agent");
+    expect(resolveKeybinding(shortcut!, undefined, "darwin")).toBe("Mod+Shift+E");
+    expect(resolveKeybinding(shortcut!, undefined, "linux")).toBe("Mod+Shift+E");
+  });
+
+  it("has no duplicate default bindings across all shortcuts on any platform", () => {
+    for (const platform of ["darwin", "win32", "linux"] as const) {
+      const defaults = KEYBOARD_SHORTCUTS
+        .map((s) => resolveKeybinding(s, undefined, platform))
+        .filter(Boolean) as string[];
+      const seen = new Set<string>();
+      for (const binding of defaults) {
+        expect(seen.has(binding), `duplicate default binding ${binding} on ${platform}`).toBe(false);
+        seen.add(binding);
+      }
+    }
+  });
 });
 
 describe("retired window keybindings migrate into the toggle (D438, D439)", () => {

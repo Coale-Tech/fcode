@@ -1,6 +1,7 @@
 import type { AppState, AppStateData } from "../app-state";
 import { projectWorkspaceFromPath } from "../../lib/sidebar-preferences";
 import { loadSidebarPreferences } from "../../lib/sidebar-preferences";
+import { loadReviewNotes } from "../../lib/review-notes-storage";
 import { loadWorkPanelWidth } from "./work-panel-slice";
 
 export const initialSidebarPreferences = loadSidebarPreferences();
@@ -99,6 +100,7 @@ export function createInitialState(): AppStateData {
     userInitials: undefined,
     terminalOpen: false,
     pendingTuiCommand: null,
-    reviewNotes: {},
+    reviewNotes: loadReviewNotes(),
+    designAnnotations: [],
   };
 }

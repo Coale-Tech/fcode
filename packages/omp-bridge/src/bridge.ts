@@ -43,6 +43,7 @@ import { PROMPT_BASH_PATTERNS, READ_ONLY_BASH_PATTERNS } from "./read-only-comma
 import type { CuratorConfig } from "./skill-curator.js";
 import { DEFAULT_CURATOR_CONFIG, extractSkillName, promptPinnedSkills, recordSkillUse } from "./skill-curator.js";
 import { SkillReviewTrigger } from "./skill-review.js";
+import { buildReviewDetails, readFileText } from "./review-change.js";
 import { overlayAdvancedLines } from "./overlay-advanced.js";
 import { SESSION_RPC_FORWARD } from "./session-rpc.js";
 
@@ -770,6 +771,8 @@ export class OmpBridge {
   private pendingUiRequests = new Map<string, { sessionId: string; toolCallId: string; toolName: string; viaSelect: boolean }>();
   /** Per-session most-recent open tool_execution_start (args kept for risk classification) */
   private openTools = new Map<string, { toolCallId: string; toolName: string; args?: unknown }>();
+  /** Prior text of the file an in-flight omp `write` replaces, by toolCallId (for the Review tab diff). */
+  private writeBefore = new Map<string, { path: string; before: string | null | undefined }>();
   /** Delegates between lifecycle `started` and a terminal status, by omp subagent id. */
   private runningSubagents = new Map<string, { agent: string; parentToolCallId?: string }>();
   /** Whether the kanban tools are currently registered with omp. */
@@ -1660,6 +1663,7 @@ export class OmpBridge {
         const skillName = extractSkillName(toolPath);
         if (skillName) recordSkillUse(this.config.dataDir, skillName);
       }
+      this.attachReview(sessionId, eventType, frame);
       if (eventType === "tool_end") this.openTools.delete(sessionId);
       // skill-review: capture assistant text and count agent turns.
       if (this.skillReviewTrigger && sessionId) {
@@ -1686,6 +1690,32 @@ export class OmpBridge {
         event,
       });
     }
+  }
+
+  /**
+   * omp's write/edit results carry no Review-tab evidence. Stash a write's prior
+   * text at tool_start, then add the host-core-shaped `details.review` at tool_end.
+   */
+  private attachReview(sessionId: string, eventType: string, frame: Record<string, any>): void {
+    const id = String(frame.toolCallId ?? "");
+    const root = this.sessions.get(sessionId)?.projectPath ?? this.state.cwd;
+    if (eventType === "tool_start" && frame.toolName === "write") {
+      const path = frame.args?.path;
+      if (typeof path === "string" && id) this.writeBefore.set(id, { path, before: readFileText(root, path) });
+      return;
+    }
+    if (eventType !== "tool_end") return;
+    const prior = this.writeBefore.get(id);
+    this.writeBefore.delete(id);
+    const details = frame.result?.details;
+    if (frame.isError || !details || typeof details !== "object") return;
+    const patch =
+      frame.toolName === "write" && prior && prior.before !== undefined
+        ? buildReviewDetails({ root, path: prior.path, toolCallId: id, operation: "write", before: prior.before, after: readFileText(root, prior.path) })
+        : frame.toolName === "edit" && typeof details.path === "string" && typeof details.oldText === "string" && typeof details.newText === "string"
+          ? buildReviewDetails({ root, path: details.path, toolCallId: id, operation: "edit", before: details.oldText, after: details.newText })
+          : null;
+    if (patch) frame.result.details = { ...details, ...patch };
   }
 
   private handleUiRequest(req: OmpExtensionUiRequest): void {

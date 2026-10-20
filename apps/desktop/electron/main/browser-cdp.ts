@@ -224,11 +224,26 @@ export class BrowserCdp {
 
   async screenshot(
     wc: WebContents,
-    input: { fullPage?: boolean } = {},
+    input: {
+      fullPage?: boolean;
+      /** Crop to this viewport rect. Takes precedence over `fullPage`. */
+      clip?: { x: number; y: number; width: number; height: number; scale?: number };
+    } = {},
   ): Promise<{ mimeType: string; data: string }> {
     await this.attach(wc);
     let clip: { x: number; y: number; width: number; height: number; scale: number } | undefined;
-    if (input.fullPage) {
+    if (input.clip) {
+      const c = input.clip;
+      const x = Number(c.x ?? 0);
+      const y = Number(c.y ?? 0);
+      const w = Number(c.width);
+      const h = Number(c.height);
+      const s = Number(c.scale ?? 1);
+      if (!isFinite(x) || !isFinite(y) || !isFinite(w) || !isFinite(h) || !isFinite(s) || w <= 0 || h <= 0 || s <= 0) {
+        throw Object.assign(new Error("screenshot clip dimensions are invalid"), { code: "INVALID_ARGUMENT" });
+      }
+      clip = { x: Math.max(0, x), y: Math.max(0, y), width: w, height: h, scale: s };
+    } else if (input.fullPage) {
       const metrics = (await wc.debugger.sendCommand("Page.getLayoutMetrics")) as {
         contentSize?: { width?: number; height?: number };
         cssContentSize?: { width?: number; height?: number };
@@ -239,10 +254,11 @@ export class BrowserCdp {
       const scale = width > SCREENSHOT_MAX_WIDTH ? SCREENSHOT_MAX_WIDTH / width : 1;
       clip = { x: 0, y: 0, width, height, scale };
     }
+    const captureBeyondViewport = clip !== undefined && !input.clip; // only for fullPage
     const result = (await wc.debugger.sendCommand("Page.captureScreenshot", {
       format: "jpeg",
       quality: 70,
-      ...(clip ? { clip, captureBeyondViewport: true } : {}),
+      ...(clip ? { clip, captureBeyondViewport } : {}),
     })) as { data?: string };
     if (typeof result?.data !== "string" || !result.data) {
       throw new Error("screenshot produced no data");

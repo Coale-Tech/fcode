@@ -889,6 +889,10 @@ export function useAppShellRuntime() {
           case "cycleOmpThinking":
             void api.ompCycleThinkingLevel().catch(() => undefined);
             break;
+          case "toggleElementPicker":
+            void api.toggleElementPicker();
+            break;
+          // sendReviewNotes: preventDefault is called above; useShortcut in ReviewTab handles the action.
         }
       };
       runShortcut(shortcut.id);

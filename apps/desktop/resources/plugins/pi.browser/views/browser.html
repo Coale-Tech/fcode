@@ -73,6 +73,7 @@
         color: var(--muted);
       }
       .icon-btn:hover:not(:disabled) { background: color-mix(in oklab, var(--fg) 6%, transparent); }
+      .icon-btn[aria-pressed="true"] { background: color-mix(in oklab, var(--fg) 12%, transparent); color: var(--fg); }
       form.url {
         display: flex;
         flex: 1;
@@ -131,6 +132,9 @@
         <button type="button" class="icon-btn" id="external" disabled title="Open externally" aria-label="Open externally">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5h5v5"/><path d="M19 5l-9 9"/><path d="M5 9v10h10"/></svg>
         </button>
+        <button type="button" class="icon-btn" id="pick" disabled title="Pick element" aria-label="Pick element" aria-pressed="false">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l7 18 3-7 7-3z"/><path d="M14.5 14.5l5 5"/></svg>
+        </button>
       </div>
       <div class="guest" id="guest">
         <div class="empty" id="empty">
@@ -145,6 +149,8 @@
       const forward = document.getElementById("forward");
       const reload = document.getElementById("reload");
       const external = document.getElementById("external");
+      const pick = document.getElementById("pick");
+      let pickArmed = false;
       const form = document.getElementById("form");
       const input = document.getElementById("url");
       const guest = document.getElementById("guest");
@@ -162,6 +168,8 @@
           reload: "Reload",
           stop: "Stop",
           external: "Open externally",
+          pickElement: "Pick element",
+          cancelPick: "Cancel picking",
           placeholder: "Search or enter a URL",
           emptyTitle: "No page open",
           emptyBody: "Enter an address, or preview an HTML file from the conversation.",
@@ -172,6 +180,8 @@
           reload: "重新加载",
           stop: "停止",
           external: "在外部打开",
+          pickElement: "选取元素",
+          cancelPick: "取消选取",
           placeholder: "搜索或输入网址",
           emptyTitle: "尚未打开页面",
           emptyBody: "输入地址，或从对话预览 HTML 文件。",
@@ -187,6 +197,8 @@
         forward.setAttribute("aria-label", t("forward"));
         external.title = t("external");
         external.setAttribute("aria-label", t("external"));
+        pick.title = pickArmed ? t("cancelPick") : t("pickElement");
+        pick.setAttribute("aria-label", pick.title);
         input.placeholder = t("placeholder");
         emptyTitle.textContent = t("emptyTitle");
         emptyBody.textContent = t("emptyBody");
@@ -211,6 +223,7 @@
         forward.disabled = !state?.canGoForward;
         reload.disabled = !started;
         external.disabled = !state?.url;
+        pick.disabled = !state?.url;
         reload.title = state?.isLoading ? t("stop") : t("reload");
         reload.setAttribute("aria-label", reload.title);
         if (!inputFocused && state?.url) input.value = state.url;
@@ -243,6 +256,37 @@
         void bridge.invoke("browser.action", { action: reload.title === t("stop") ? "stop" : "reload" });
       });
       external.addEventListener("click", () => void bridge.invoke("browser.openExternal"));
+      const setPickArmed = (armed) => {
+        pickArmed = armed;
+        pick.setAttribute("aria-pressed", String(armed));
+        pick.title = armed ? t("cancelPick") : t("pickElement");
+        pick.setAttribute("aria-label", pick.title);
+      };
+      const startPick = () => {
+        setPickArmed(true);
+        bridge.invoke("browser.pickElement").then((grab) => {
+          setPickArmed(false);
+          if (grab) void bridge.invoke("browser.announceAnnotation", grab);
+        }).catch(() => setPickArmed(false));
+      };
+      const cancelPickAction = () => {
+        setPickArmed(false);
+        void bridge.invoke("browser.cancelPick");
+      };
+      pick.addEventListener("click", () => {
+        if (pickArmed) cancelPickAction(); else if (!pick.disabled) startPick();
+      });
+      // Main renderer shortcut (toggleElementPicker) broadcasts this event to arm/cancel the picker.
+      bridge.on("browser:togglePick", () => {
+        if (pickArmed) cancelPickAction(); else if (!pick.disabled) startPick();
+      });
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && pickArmed) {
+          e.preventDefault();
+          setPickArmed(false);
+          void bridge.invoke("browser.cancelPick");
+        }
+      });
       input.addEventListener("focus", () => {
         inputFocused = true;
         input.select();

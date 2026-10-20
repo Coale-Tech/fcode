@@ -140,7 +140,7 @@ function cap<T>(arr: readonly T[], max: number): readonly T[] {
 }
 
 function truncateOutput(text: string): string {
-  if (Buffer.byteLength(text, "utf-8") <= MAX_OUTPUT_BYTES) return text;
+  if (new TextEncoder().encode(text).length <= MAX_OUTPUT_BYTES) return text;
   const head = text.slice(0, MAX_OUTPUT_BYTES);
   return `${head}\n[…output truncated]`;
 }

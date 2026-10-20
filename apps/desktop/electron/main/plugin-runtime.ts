@@ -419,6 +419,11 @@ export type PluginHostServices = {
     evaluate: (expression: string) => Promise<unknown>;
     console: (limit?: number) => unknown;
     cdp: (method: string, params?: unknown) => Promise<unknown>;
+    /** Design Mode: arm a single-shot element picker; resolves with grabbed element or null. */
+    pickElement: () => Promise<unknown>;
+    cancelPick: () => void;
+    /** Deliver a picked element to the renderer via sendToRenderer. */
+    announceAnnotation: (grab: unknown) => void;
   };
   onPluginUnload?: (pluginId: string) => void;
   listModels?: () => Promise<PluginModelInfo[]>;
@@ -514,6 +519,9 @@ const HOST_API_ALLOWLIST = new Set([
   "audio.stopOutput",
   "audio.closeOutput",
   "browser.cdp",
+  "browser.pickElement",
+  "browser.cancelPick",
+  "browser.announceAnnotation",
   "models.list",
   "session.getLlmContext",
   "session.list",
@@ -2162,6 +2170,12 @@ export class PluginRuntime {
         return this.invokeBrowser(loaded, "console", payload);
       case "browser.cdp":
         return this.invokeBrowser(loaded, "cdp", payload);
+      case "browser.pickElement":
+        return this.invokeBrowser(loaded, "pickElement", payload);
+      case "browser.cancelPick":
+        return this.invokeBrowser(loaded, "cancelPick", payload);
+      case "browser.announceAnnotation":
+        return this.invokeBrowser(loaded, "announceAnnotation", payload);
       default:
         // The panel is the plugin's own UI: any channel the host does not
         // implement itself is forwarded to the plugin's onPanelInvoke so
@@ -4091,6 +4105,14 @@ export class PluginRuntime {
         );
       case "cdp":
         return api.cdp(String(payload?.method ?? ""), payload?.params);
+      case "pickElement":
+        return api.pickElement();
+      case "cancelPick":
+        api.cancelPick();
+        return { ok: true };
+      case "announceAnnotation":
+        api.announceAnnotation(payload);
+        return { ok: true };
       default:
         throw apiError("UNSUPPORTED", `host api not available: browser.${method}`);
     }
@@ -5629,6 +5651,27 @@ export class PluginRuntime {
             method,
           });
           return this.services.browser.cdp(method, params);
+        },
+        pickElement: async () => {
+          this.assertPermission(loaded, "browser.cdp");
+          if (!this.services.browser) {
+            throw apiError("UNAVAILABLE", "browser host missing");
+          }
+          return this.services.browser.pickElement();
+        },
+        cancelPick: () => {
+          this.assertPermission(loaded, "browser.cdp");
+          if (!this.services.browser) {
+            throw apiError("UNAVAILABLE", "browser host missing");
+          }
+          this.services.browser.cancelPick();
+        },
+        announceAnnotation: (grab: unknown) => {
+          this.assertPermission(loaded, "browser.cdp");
+          if (!this.services.browser) {
+            throw apiError("UNAVAILABLE", "browser host missing");
+          }
+          this.services.browser.announceAnnotation(grab);
         },
       },
     };

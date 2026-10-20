@@ -76,6 +76,13 @@ function message(overrides = {}) {
   };
 }
 
+test("omp's lowercase write/edit tool rows reach the Review tab", () => {
+  for (const toolName of ["write", "edit"]) {
+    const change = reviewChangeFromMessage(message({ toolName }));
+    assert.equal(change?.path, "src/a.ts", toolName);
+  }
+});
+
 test("review evidence is read from the successful message, not Git", () => {
   const change = reviewChangeFromMessage(message());
   assert.equal(change?.path, "src/a.ts");

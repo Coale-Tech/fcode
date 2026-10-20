@@ -523,6 +523,53 @@ describe("OmpBridge.setTracer — traces in-omp and out-omp frames (FCODE_BRIDGE
   });
 });
 
+describe("OmpBridge.handleOmpFrame — Review-tab evidence for omp write/edit", () => {
+  const run = (frames: Record<string, unknown>[], between?: () => void) => {
+    const bridge = new OmpBridge();
+    const b = bridge as unknown as { sessions: Map<string, unknown>; activeTurn: unknown };
+    b.sessions.set("s1", { projectPath: dir, inputModalities: [] });
+    b.activeTurn = { sessionId: "s1", turnId: "t1" };
+    const out: string[] = [];
+    const orig = process.stdout.write.bind(process.stdout);
+    process.stdout.write = ((chunk: string) => (out.push(String(chunk)), true)) as typeof process.stdout.write;
+    try {
+      frames.forEach((frame, index) => {
+        if (index === 1) between?.();
+        bridge.handleOmpFrame(JSON.stringify(frame));
+      });
+    } finally {
+      process.stdout.write = orig;
+    }
+    return out.flatMap((l) => l.split("\n")).filter(Boolean).map((l) => JSON.parse(l)).filter((m) => m.method === "agent.event");
+  };
+
+  it("diffs an overwriting write against the file's text at tool_start", () => {
+    writeFileSync(join(dir, "a.txt"), "alpha\nbeta\n");
+    const events = run(
+      [
+        { type: "tool_execution_start", toolCallId: "c1", toolName: "write", args: { path: "a.txt", content: "alpha\nBETA\n" } },
+        { type: "tool_execution_end", toolCallId: "c1", toolName: "write", isError: false, result: { content: [], details: { resolvedPath: join(dir, "a.txt") } } },
+      ],
+      () => writeFileSync(join(dir, "a.txt"), "alpha\nBETA\n"),
+    );
+    const end = events.find((e) => e.params.event.type === "tool_end").params.event;
+    expect(end.result.details.root).toBe("workspace");
+    expect(end.result.details.review).toMatchObject({ path: "a.txt", status: "modified", additions: 1, deletions: 1, operation: "write" });
+    expect(end.result.details.resolvedPath).toBe(join(dir, "a.txt"));
+  });
+
+  it("uses omp's own before/after text for edit and leaves failures untouched", () => {
+    const ok = run([
+      { type: "tool_execution_end", toolCallId: "c2", toolName: "edit", isError: false, result: { content: [], details: { path: join(dir, "b.txt"), oldText: "x\n", newText: "y\n" } } },
+    ]);
+    expect(ok[0].params.event.result.details.review).toMatchObject({ path: "b.txt", operation: "edit", additions: 1, deletions: 1 });
+    const failed = run([
+      { type: "tool_execution_end", toolCallId: "c3", toolName: "edit", isError: true, result: { content: [], details: { path: join(dir, "b.txt"), oldText: "x\n", newText: "y\n" } } },
+    ]);
+    expect(failed[0].params.event.result.details.review).toBeUndefined();
+  });
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // T7 — host tool dispatch (fcode_ tools via host_tool_call / set_host_tools)
 // ─────────────────────────────────────────────────────────────────────────────

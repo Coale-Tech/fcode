@@ -26,7 +26,7 @@ import {
   consumeComposerPickerSelection,
   rememberComposerPickerSelection,
 } from "../composer-picker";
-import { collectWorkspaceDiff } from "@pi-desktop/host-runtime";
+import { collectWorkspaceDiff, collectGitReviewDiff, collectDocReview } from "@pi-desktop/host-runtime";
 import { parseAllowedExternalUrl } from "../safe-open-external";
 import {
   isAttachmentBlobRef,
@@ -637,6 +637,41 @@ export function registerWorkspaceIpc({
     if (!cwd) return { repo: false, clean: true, files: [] };
     return collectWorkspaceDiff(cwd);
   });
+  handle(
+    IPC.invoke.workspaceGitReviewDiff,
+    async (input: { scope?: unknown; path?: unknown } = {}) => {
+      const scope = typeof input.scope === "string" &&
+        (input.scope === "unstaged" || input.scope === "staged" || input.scope === "branch")
+          ? input.scope
+          : "unstaged";
+      const overrideCwd = typeof input.path === "string" && input.path ? input.path : null;
+      let cwd: string | null;
+      if (overrideCwd) {
+        cwd = overrideCwd;
+      } else {
+        if (!host) throw new Error("host unavailable");
+        const res = (await host.call("workspace.get")) as {
+          workspace: { path: string } | null;
+        };
+        cwd = res.workspace?.path ?? null;
+      }
+      if (!cwd) return { changes: [] };
+      return collectGitReviewDiff(cwd, scope);
+    },
+  );
+  handle(
+    IPC.invoke.workspaceDocReview,
+    async (input: { path?: unknown } = {}) => {
+      const relPath = typeof input.path === "string" ? input.path : "";
+      if (!host) throw new Error("host unavailable");
+      const res = (await host.call("workspace.get")) as {
+        workspace: { path: string } | null;
+      };
+      const cwd = res.workspace?.path ?? null;
+      if (!cwd) return { changes: [] };
+      return collectDocReview(cwd, relPath);
+    },
+  );
   handle(
     IPC.invoke.workspaceReviewRollback,
     async (input: { sessionId: string; snapshotId: string }) => {

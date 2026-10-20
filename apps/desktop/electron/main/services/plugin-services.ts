@@ -56,6 +56,12 @@ import type { HostProcess } from "../host-process";
 import type { Logger } from "../logger";
 import type { PluginAppearance } from "../../shared/plugin-panel-chrome";
 
+/** BrowserHost once DesignMain adds pickElement/cancelPick (bridge-cast named const). */
+type PickableBrowserHost = BrowserHost & {
+  pickElement(): Promise<unknown>;
+  cancelPick(): void;
+};
+
 export type PluginServicesDependencies = {
   dataDir: string;
   logger: Logger;
@@ -586,6 +592,8 @@ export function createPluginServices({
   pluginViews.onSurface = (surface) => {
     browserHost.setChromeSurface(surface);
   };
+  // Named-const bridge: PickableBrowserHost is satisfied once DesignMain adds the methods.
+  const pickable = browserHost as unknown as PickableBrowserHost;
   plugins.setServices({
     /**
      * The richer workspace payload, so `pi.workspace.get` and the
@@ -614,6 +622,10 @@ export function createPluginServices({
       evaluate: (expression) => browserHost.evaluate(expression),
       console: (limit) => browserHost.console(limit),
       cdp: (method, params) => browserHost.cdpCommand(method, params),
+      // Design Mode: pickElement/cancelPick added by DesignMain to BrowserHost.
+      pickElement: () => pickable.pickElement(),
+      cancelPick: () => pickable.cancelPick(),
+      announceAnnotation: (grab) => sendToRenderer(IPC.event.designAnnotationAdded, grab),
     },
     onPluginUnload: (pluginId) => {
       if (pluginId === BROWSER_PLUGIN_ID) browserHost.disposeGuest();

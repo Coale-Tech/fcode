@@ -30,6 +30,7 @@ import type { HostProcess } from "../host-process";
 import { syncPluginDisplayLocale } from "../plugin-display-locale";
 import { createPowerSaveBlockerController } from "../keep-awake";
 import type { PluginAppearance } from "../../shared/plugin-panel-chrome";
+import { applyPickerShortcut } from "../picker-shortcut";
 
 export type ApplicationLifecycleState = {
   windowCreationPromise: Promise<void> | null;
@@ -604,6 +605,7 @@ export function createApplicationLifecycle({
     );
     applyPluginLauncherShortcut(keybindings);
     applyToggleWindowShortcut(keybindings);
+    applyPickerShortcut(keybindings);
     const devMode = settings?.developerMode === true;
     const signature = JSON.stringify({ locale, keybindings, devMode });
     if (appState.appliedMenuSettings === signature) return;

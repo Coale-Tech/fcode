@@ -15,8 +15,18 @@ export type ReviewNote = {
   anchorText: string | null;
   body: string;
   resolved: boolean;
+  /** Timestamp (ms) when this note was successfully delivered; cleared on body edit. */
+  sentAt?: number;
   createdAt: number;
 };
+
+/** Markdown inline code that survives backticks in the text (fence longer than any run inside). */
+function inlineCode(text: string): string {
+  const longest = Math.max(0, ...(text.match(/`+/g) ?? []).map((run) => run.length));
+  const fence = "`".repeat(longest + 1);
+  const pad = text.startsWith("`") || text.endsWith("`") ? " " : "";
+  return `${fence}${pad}${text}${pad}${fence}`;
+}
 
 /**
  * Compose one batched prompt from all unresolved notes.
@@ -55,7 +65,7 @@ export function composeReviewNotesPrompt(notes: ReviewNote[]): string {
   for (const path of fileOrder) {
     lines.push(`### ${path}`);
     for (const note of byPath[path]!) {
-      const anchor = note.anchorText ? ` \`${note.anchorText}\`` : "";
+      const anchor = note.anchorText ? ` ${inlineCode(note.anchorText)}` : "";
       let prefix: string;
       if (note.line === null) {
         prefix = "- (whole file)";
@@ -65,7 +75,7 @@ export function composeReviewNotesPrompt(notes: ReviewNote[]): string {
         prefix = `- L${note.line}${anchor}`;
       }
       lines.push(prefix);
-      lines.push(`  ${note.body}`);
+      for (const bodyLine of note.body.split(/\r?\n/)) lines.push(`  ${bodyLine}`);
     }
   }
 

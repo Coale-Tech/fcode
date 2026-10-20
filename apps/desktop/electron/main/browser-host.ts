@@ -1,6 +1,9 @@
 import type { BrowserState } from "@pi-desktop/shared";
 import type { BrowserPane } from "./browser-view";
+import type { ElementPickResult } from "../../src/lib/element-grab.ts";
 import { BrowserCdp } from "./browser-cdp";
+import { buildPickerScript, clampElementGrab } from "./browser-grab";
+import { ELEMENT_GRAB_BUDGETS } from "../../src/lib/element-grab.ts";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 
@@ -149,6 +152,8 @@ export class BrowserHost {
   private chromeSessionId: string | null = null;
   private started = false;
   private navigationEpoch = 0;
+  private pickNonce = 0;
+  private currentPick: { nonce: number; cancel: () => void } | null = null;
 
   constructor(deps: BrowserHostDeps) {
     this.deps = deps;
@@ -334,7 +339,88 @@ export class BrowserHost {
     return { ok: true };
   }
 
+  /**
+   * Arm a single-shot element picker in the guest page. The user hovers to
+   * highlight elements and clicks to capture one. Esc or a call to
+   * `cancelPick()` resolves null. Re-calling while a pick is in progress
+   * cancels the previous pick (the new PICKER_SCRIPT handles guest
+   * re-entrancy via the nonce; main marks the previous result as stale).
+   *
+   * Does NOT acquire canvas ownership — this is a user-initiated action, not
+   * an agent tool call (E13).
+   */
+  async pickElement(): Promise<ElementPickResult> {
+    const prev = this.currentPick;
+    if (prev) {
+      prev.cancel(); // mark stale; PICKER_SCRIPT cancels the guest picker itself
+      this.currentPick = null;
+    }
+    const wc = this.requireWebContents();
+    const nonce = ++this.pickNonce;
+    let cancelled = false;
+    this.currentPick = { nonce, cancel: () => { cancelled = true; } };
+
+    let raw: unknown;
+    try {
+      // awaitPromise:true — blocks in CDP until the user clicks or cancels.
+      // The PICKER_SCRIPT IIFE cancels any existing guest picker on entry.
+      raw = await this.cdp.evaluate(wc, buildPickerScript(nonce));
+    } catch {
+      return null; // navigation / context destroyed
+    } finally {
+      if (this.currentPick?.nonce === nonce) this.currentPick = null;
+    }
+
+    if (cancelled || raw === null || raw === undefined) return null;
+
+    const grab = clampElementGrab(raw);
+    if (!grab) return null;
+
+    // Clipped screenshot — optional; failure returns the grab without image.
+    const PAD = 8;
+    const { x, y, width, height } = grab.rect;
+    try {
+      const shot = await this.cdp.screenshot(wc, {
+        clip: {
+          x: Math.max(0, Math.floor(x - PAD)),
+          y: Math.max(0, Math.floor(y - PAD)),
+          width: Math.max(1, Math.ceil(width + PAD * 2)),
+          height: Math.max(1, Math.ceil(height + PAD * 2)),
+        },
+      });
+      if (shot.data.length <= ELEMENT_GRAB_BUDGETS.screenshotBase64) {
+        grab.screenshot = { mimeType: shot.mimeType as "image/jpeg" | "image/png", dataBase64: shot.data };
+      }
+    } catch {
+      // screenshot is optional
+    }
+
+    return grab;
+  }
+
+  /**
+   * Cancel any in-progress pick, resolving it to null. Also sends a
+   * nonce-keyed cancel signal to the guest so the picker overlay is cleaned
+   * up immediately. No-op when no pick is in progress.
+   */
+  cancelPick(): void {
+    const pick = this.currentPick;
+    if (!pick) return;
+    pick.cancel();
+    this.currentPick = null;
+    const wc = this.pane.getWebContents();
+    if (!wc || wc.isDestroyed()) return;
+    // Nonce-keyed so a stale cancel cannot kill a freshly armed picker.
+    void wc.debugger
+      .sendCommand("Runtime.evaluate", {
+        expression: `if(window.__PI_PICK&&window.__PI_PICK.n===${pick.nonce})window.__PI_PICK.cancel()`,
+        returnByValue: true,
+      })
+      .catch(() => {});
+  }
+
   disposeGuest(): void {
+    this.cancelPick(); // resolve any pending pick before tearing down CDP
     this.navigationEpoch += 1;
     this.cdp.detach(this.pane.getWebContents() ?? undefined);
     this.pane.dispose();

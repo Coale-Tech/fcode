@@ -145,6 +145,7 @@ import { createWorkPanelRuntime } from "./bootstrap/work-panel";
 import { createCloseBehaviorRuntime } from "./bootstrap/close-behavior";
 import { registerShutdownHandlers, type ShutdownState } from "./bootstrap/shutdown";
 import { BrowserPane } from "./browser-view";
+import { watchPickerShortcut } from "./picker-shortcut";
 import { registerDiagnosticsIpc } from "./ipc/diagnostics-ipc";
 import { registerMarketIpc } from "./ipc/market-ipc";
 import { registerMcpIpc } from "./ipc/mcp-ipc";
@@ -1295,6 +1296,7 @@ app.on("web-contents-created", (_event, contents) => {
   contents.on("will-attach-webview", (event) => {
     event.preventDefault();
   });
+  watchPickerShortcut(contents, () => pluginViews.broadcast("browser:togglePick", {}));
 });
 
 const startupState: StartupState = {

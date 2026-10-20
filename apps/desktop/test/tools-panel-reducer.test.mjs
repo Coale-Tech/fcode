@@ -215,6 +215,18 @@ describe("output truncation", () => {
     assert.ok(result.output.length < bigText.length);
     assert.ok(result.output.includes("[…output truncated]"));
   });
+
+  it("does not need Node's Buffer (sandboxed renderer has none)", () => {
+    const { Buffer: nodeBuffer } = globalThis;
+    delete globalThis.Buffer;
+    try {
+      const action = parseEvalToolEnd(evalEndEvent([makeCell(0, { output: "x".repeat(MAX_OUTPUT_BYTES + 1) })]), { current: 0 });
+      assert.ok(action);
+      assert.ok(toolsPanelReducer(EMPTY_TOOLS_STATE, action).eval.cells[0].output.includes("[…output truncated]"));
+    } finally {
+      globalThis.Buffer = nodeBuffer;
+    }
+  });
 });
 
 // ─── missing fields ───────────────────────────────────────────────────────────

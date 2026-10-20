@@ -112,6 +112,24 @@ test("within a file notes sorted by line ascending, whole-file first", () => {
   assert.ok(idx5 < idx20, "line 5 must come before line 20");
 });
 
+test("every line of a multi-line body stays inside its note", () => {
+  const result = composeReviewNotesPrompt([
+    note({ body: "first\n### not a file\n- not a note" }),
+    note({ id: "n2", line: 9, body: "windows\r\nline" }),
+  ]);
+  assert.match(result, /\n {2}first\n {2}### not a file\n {2}- not a note/);
+  assert.match(result, /\n {2}windows\n {2}line/);
+  assert.equal((result.match(/^### /gm) ?? []).length, 1);
+  assert.equal((result.match(/^- /gm) ?? []).length, 2);
+});
+
+test("anchors containing backticks use a longer fence", () => {
+  const result = composeReviewNotesPrompt([note({ anchorText: "const s = `a${b}`;", body: "x" })]);
+  assert.match(result, /- L\d+ `` const s = `a\$\{b\}`; ``|- L\d+ ``const s = `a\$\{b\}`;``/);
+  const edge = composeReviewNotesPrompt([note({ anchorText: "`tick`", body: "x" })]);
+  assert.match(edge, /`` `tick` ``/);
+});
+
 test("prompt starts with the fixed preamble", () => {
   const result = composeReviewNotesPrompt([note()]);
   assert.ok(
@@ -281,18 +299,21 @@ test("sendReviewNotes returns false when all notes resolved", async () => {
   assert.equal(result, false);
 });
 
-test("sendReviewNotes marks sent notes resolved and returns true", async () => {
+test("sendReviewNotes sets sentAt on sent notes and returns true", async () => {
   const { get, actions } = makeStore();
   actions.addReviewNote({
     snapshotId: "snap-F", path: "foo.ts", line: 2, lineIsOld: false,
     endLine: null, anchorText: "b", body: "send me",
   });
+  const before = Date.now();
   const result = await actions.sendReviewNotes(["snap-F"]);
   assert.equal(result, true);
-  assert.equal(get().reviewNotes["snap-F"][0].resolved, true);
+  const n = get().reviewNotes["snap-F"][0];
+  assert.ok(typeof n.sentAt === "number" && n.sentAt >= before, "sentAt is a recent timestamp");
+  assert.equal(n.resolved, false, "resolved stays false after send (sentAt tracks delivery)");
 });
 
-test("second sendReviewNotes after all resolved returns false", async () => {
+test("second sendReviewNotes after all sent returns false", async () => {
   const { actions } = makeStore();
   actions.addReviewNote({
     snapshotId: "snap-G", path: "foo.ts", line: 3, lineIsOld: false,
@@ -302,6 +323,53 @@ test("second sendReviewNotes after all resolved returns false", async () => {
   const second = await actions.sendReviewNotes(["snap-G"]);
   assert.equal(second, false);
 });
+
+test("sendReviewNotes returns false when all notes already sent", async () => {
+  const { get, actions } = makeStore();
+  actions.addReviewNote({
+    snapshotId: "snap-SA", path: "foo.ts", line: 1, lineIsOld: false,
+    endLine: null, anchorText: "a", body: "already sent",
+  });
+  await actions.sendReviewNotes(["snap-SA"]); // first send sets sentAt
+  assert.ok(get().reviewNotes["snap-SA"][0].sentAt, "sentAt set after first send");
+  const result = await actions.sendReviewNotes(["snap-SA"]);
+  assert.equal(result, false, "second send returns false (note is counted as sent)");
+});
+
+test("edit with changed body clears sentAt and re-queues note", async () => {
+  const { get, actions } = makeStore();
+  actions.addReviewNote({
+    snapshotId: "snap-RE", path: "foo.ts", line: 1, lineIsOld: false,
+    endLine: null, anchorText: "a", body: "initial",
+  });
+  await actions.sendReviewNotes(["snap-RE"]);
+  assert.ok(get().reviewNotes["snap-RE"][0].sentAt, "sentAt set after send");
+
+  // Edit with a NEW body — should clear sentAt and allow re-send.
+  const id = get().reviewNotes["snap-RE"][0].id;
+  actions.updateReviewNote(id, "updated body");
+  const updated = get().reviewNotes["snap-RE"][0];
+  assert.equal(updated.sentAt, undefined, "sentAt cleared after body edit");
+  assert.equal(updated.resolved, false, "resolved stays false");
+
+  const second = await actions.sendReviewNotes(["snap-RE"]);
+  assert.equal(second, true, "note is re-sent after edit");
+  assert.ok(get().reviewNotes["snap-RE"][0].sentAt, "sentAt re-set after second send");
+});
+
+test("edit with UNCHANGED body does not clear sentAt", async () => {
+  const { get, actions } = makeStore();
+  actions.addReviewNote({
+    snapshotId: "snap-UE", path: "foo.ts", line: 2, lineIsOld: false,
+    endLine: null, anchorText: "b", body: "same",
+  });
+  await actions.sendReviewNotes(["snap-UE"]);
+  const id = get().reviewNotes["snap-UE"][0].id;
+  const sentAtBefore = get().reviewNotes["snap-UE"][0].sentAt;
+  actions.updateReviewNote(id, "same"); // same body
+  assert.equal(get().reviewNotes["snap-UE"][0].sentAt, sentAtBefore, "sentAt preserved when body unchanged");
+});
+
 
 test("sendReviewNotes calls sendPrompt with correct content", async () => {
   let capturedContent = null;
@@ -325,4 +393,122 @@ test("sendReviewNotes calls sendPrompt with correct content", async () => {
   assert.match(capturedContent, /### src\/bar\.ts/);
   assert.match(capturedContent, /L10/);
   assert.match(capturedContent, /Use const properly/);
+});
+
+test("sendReviewNotes does not resolve a note added or edited while the send was in flight", async () => {
+  const mk = (id, body) => ({
+    id, snapshotId: "snap-R", path: "a.ts", line: 1, lineIsOld: false, endLine: 1,
+    anchorText: "x", body, resolved: false, createdAt: 1,
+  });
+  let state;
+  const get = () => state;
+  const set = (u) => { state = { ...state, ...(typeof u === "function" ? u(state) : u) }; };
+  state = {
+    reviewNotes: { "snap-R": [mk("sent", "ok"), mk("edited", "before")] },
+    sendPrompt: async () => {
+      // user keeps typing while the prompt is being accepted
+      state.reviewNotes["snap-R"] = [
+        mk("sent", "ok"), mk("edited", "after"), mk("late", "new note"),
+      ];
+      return true;
+    },
+  };
+  state = { ...state, ...createReviewNotesSlice({ get, set }) };
+  await state.sendReviewNotes(["snap-R"]);
+  const byId = Object.fromEntries(state.reviewNotes["snap-R"].map((n) => [n.id, { sentAt: !!n.sentAt, resolved: n.resolved }]));
+  assert.deepEqual(byId, {
+    sent: { sentAt: true, resolved: false },  // composed note: gets sentAt
+    edited: { sentAt: false, resolved: false }, // body changed in-flight: not marked
+    late: { sentAt: false, resolved: false },   // added in-flight: not marked
+  });
+});
+
+// ---------------------------------------------------------------------------
+// A4: sendReviewNotes target='new' — new session routing
+// ---------------------------------------------------------------------------
+
+function makeNewSessionStore(overrides = {}) {
+  let state = {
+    reviewNotes: {},
+    activeSessionId: "session-old",
+    workspace: { path: "/project" },
+    newSession: async () => { state.activeSessionId = "session-new"; },
+    sendPrompt: async () => true,
+    ...overrides,
+  };
+  const get = () => state;
+  const set = (u) => { state = { ...state, ...(typeof u === "function" ? u(state) : u) }; };
+  state = { ...state, ...createReviewNotesSlice({ get, set }) };
+  return { get, state };
+}
+
+test("sendReviewNotes 'new' calls newSession and passes the new activeSessionId to sendPrompt", async () => {
+  let capturedSessionId;
+  const { get, state } = makeNewSessionStore({
+    sendPrompt: async (_content, _draft, sid) => { capturedSessionId = sid; return true; },
+  });
+  state.addReviewNote({ snapshotId: "snap-N1", path: "a.ts", line: 1, lineIsOld: false, endLine: null, anchorText: "x", body: "note" });
+  const result = await state.sendReviewNotes(["snap-N1"], "new");
+  assert.equal(result, true);
+  assert.equal(capturedSessionId, "session-new");
+  assert.notEqual(capturedSessionId, "session-old");
+  assert.ok(get().reviewNotes["snap-N1"][0].sentAt, "sentAt set after send to new session");
+});
+
+test("sendReviewNotes 'new' leaves notes unresolved when newSession throws", async () => {
+  const { get, state } = makeNewSessionStore({
+    newSession: async () => { throw new Error("offline"); },
+  });
+  state.addReviewNote({ snapshotId: "snap-N2", path: "b.ts", line: 2, lineIsOld: false, endLine: null, anchorText: "y", body: "note" });
+  const result = await state.sendReviewNotes(["snap-N2"], "new");
+  assert.equal(result, false);
+  assert.equal(get().reviewNotes["snap-N2"][0].resolved, false);
+});
+
+test("sendReviewNotes 'new' leaves notes unresolved when sendPrompt returns false", async () => {
+  const { get, state } = makeNewSessionStore({ sendPrompt: async () => false });
+  state.addReviewNote({ snapshotId: "snap-N3", path: "c.ts", line: 3, lineIsOld: false, endLine: null, anchorText: "z", body: "note" });
+  const result = await state.sendReviewNotes(["snap-N3"], "new");
+  assert.equal(result, false);
+  assert.equal(get().reviewNotes["snap-N3"][0].resolved, false);
+});
+
+test("sendReviewNotes 'current' does not call newSession", async () => {
+  let newSessionCalled = false;
+  const { state } = makeNewSessionStore({ newSession: async () => { newSessionCalled = true; } });
+  state.addReviewNote({ snapshotId: "snap-N4", path: "d.ts", line: 1, lineIsOld: false, endLine: null, anchorText: "a", body: "note" });
+  await state.sendReviewNotes(["snap-N4"], "current");
+  assert.equal(newSessionCalled, false);
+});
+
+// ---------------------------------------------------------------------------
+// A6: drag range — extendNoteRange covers the drag semantic
+// ---------------------------------------------------------------------------
+
+test("drag downward from line 5 to 8 produces line=5 endLine=8 same anchor", () => {
+  const r = extendNoteRange({ line: 5, endLine: null, anchorText: "first" }, 8, "last");
+  assert.equal(r.line, 5);
+  assert.equal(r.endLine, 8);
+  assert.equal(r.anchorText, "first");
+});
+
+test("drag upward from line 8 to line 5 re-anchors to the new start line", () => {
+  const r = extendNoteRange({ line: 8, endLine: null, anchorText: "eighth" }, 5, "fifth");
+  assert.equal(r.line, 5);
+  assert.equal(r.endLine, 8);
+  assert.equal(r.anchorText, "fifth");
+});
+
+test("drag to the same line as start leaves endLine null (single-line)", () => {
+  const r = extendNoteRange({ line: 4, endLine: null, anchorText: "line4" }, 4, "line4");
+  assert.equal(r.line, 4);
+  assert.equal(r.endLine, null);
+  assert.equal(r.anchorText, "line4");
+});
+
+test("drag never shrinks an existing range below the start line", () => {
+  // Start range is 5-8; trying to drag to line 6 (inside) should not shrink to 5-6.
+  const r = extendNoteRange({ line: 5, endLine: 8, anchorText: "fifth" }, 6, "sixth");
+  assert.equal(r.line, 5);
+  assert.equal(r.endLine, 8);
 });

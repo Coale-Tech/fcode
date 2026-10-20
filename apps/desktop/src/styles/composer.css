@@ -808,3 +808,243 @@
 .composer-directory-drop-action:hover {
   background: var(--ds-tile-hover);
 }
+
+/* Design Mode annotation tray — shown above the composer when picks are queued */
+.design-annotation-tray {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  background: var(--ds-bg-composer);
+  box-shadow: var(--ds-shadow-composer);
+}
+.design-annotation-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.design-annotation-count {
+  font-size: var(--text-xs-plus);
+  font-weight: var(--font-weight-strong);
+  color: var(--ds-text-secondary);
+}
+.design-annotation-clear {
+  font-size: var(--text-xs);
+  color: var(--ds-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: var(--radius-3xs);
+  line-height: var(--leading-compact);
+}
+.design-annotation-clear:hover { color: var(--ds-text-primary); background: var(--ds-bg-hover); }
+.design-annotation-list { display: flex; flex-direction: column; gap: 4px; }
+.design-annotation-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+.design-annotation-thumb {
+  width: 40px;
+  height: 30px;
+  object-fit: cover;
+  border-radius: var(--radius-3xs);
+  flex-shrink: 0;
+  border: 1px solid var(--ds-border-subtle);
+}
+.design-annotation-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+.design-annotation-selector {
+  font-size: var(--text-xs);
+  color: var(--ds-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  line-height: var(--leading-compact);
+}
+.design-annotation-comment {
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--ds-text-primary);
+  background: none;
+  border: 1px solid var(--ds-border-subtle);
+  border-radius: var(--radius-3xs);
+  padding: 2px 6px;
+  width: 100%;
+}
+.design-annotation-comment:focus-visible { outline: 2px solid var(--ds-focus-ring); outline-offset: -1px; }
+.design-annotation-remove {
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+.design-annotation-remove:hover { opacity: 1; }
+.design-annotation-send {
+  align-self: flex-end;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-strong);
+  line-height: var(--leading-compact);
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--ds-bg-active);
+  color: var(--ds-text-primary);
+  border: none;
+  cursor: pointer;
+}
+.design-annotation-send:hover { background: var(--ds-bg-hover); }
+/* Intent selector inside annotation row */
+.design-annotation-intent {
+  font-size: var(--text-xs);
+  padding: 1px 4px;
+  height: 20px;
+  margin-top: 2px;
+  width: max-content;
+  max-width: 100%;
+}
+
+/* Thumbnail is now a button so it can be clicked to open the markup editor */
+.design-annotation-thumb-btn {
+  flex-shrink: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--radius-3xs);
+}
+.design-annotation-thumb-btn:focus-visible {
+  outline: 2px solid var(--ds-focus-ring);
+  outline-offset: 1px;
+}
+.design-annotation-thumb-btn:hover .design-annotation-thumb {
+  opacity: 0.85;
+}
+
+/* Chevron half of the split-send button */
+.design-annotation-send-chevron {
+  padding: 5px 7px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.design-annotation-send:not(.design-annotation-send-chevron) {
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+/* Send-target dropdown */
+.design-send-menu {
+  min-width: 160px;
+  background: var(--ds-bg-elevated);
+  border: 1px solid var(--ds-border-default);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--ds-shadow-md, 0 4px 12px rgba(0,0,0,.15));
+  overflow: hidden;
+}
+.design-send-menu-item {
+  display: block;
+  width: 100%;
+  padding: 7px 12px;
+  text-align: left;
+  font-size: var(--text-sm);
+  color: var(--ds-text-primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.design-send-menu-item:hover { background: var(--ds-bg-hover); }
+
+/* Screenshot markup dialog */
+.screenshot-markup-dialog {
+  width: min(90vw, 860px);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+.screenshot-markup-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.screenshot-markup-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--ds-border-subtle);
+  flex-wrap: wrap;
+}
+.screenshot-markup-tools {
+  display: flex;
+  gap: 2px;
+}
+.screenshot-markup-tool {
+  padding: 3px 8px;
+  font-size: var(--text-xs-plus);
+  border-radius: var(--radius-3xs);
+  background: none;
+  border: 1px solid var(--ds-border-subtle);
+  color: var(--ds-text-secondary);
+  cursor: pointer;
+}
+.screenshot-markup-tool.active,
+.screenshot-markup-tool:hover {
+  background: var(--ds-bg-hover);
+  color: var(--ds-text-primary);
+}
+.screenshot-markup-tool.active {
+  border-color: var(--ds-accent);
+}
+.screenshot-markup-colors {
+  display: flex;
+  gap: 4px;
+}
+.screenshot-markup-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+.screenshot-markup-swatch.active {
+  border-color: var(--ds-text-primary);
+  outline: 2px solid var(--ds-focus-ring);
+  outline-offset: 1px;
+}
+.screenshot-markup-action {
+  font-size: var(--text-xs);
+  color: var(--ds-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-3xs);
+}
+.screenshot-markup-action:hover:not(:disabled) { color: var(--ds-text-primary); background: var(--ds-bg-hover); }
+.screenshot-markup-action:disabled { opacity: 0.4; cursor: default; }
+.screenshot-markup-canvas-wrap {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  background: var(--ds-bg-inset, var(--ds-bg-secondary));
+}
+.screenshot-markup-canvas {
+  max-width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+  display: block;
+}
+.screenshot-markup-loading {
+  color: var(--ds-text-muted);
+  font-size: var(--text-sm);
+}

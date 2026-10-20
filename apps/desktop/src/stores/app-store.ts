@@ -176,6 +176,7 @@ import { createCatalogSlice } from "./slices/catalog-slice";
 import { createEventsSlice } from "./slices/events-slice";
 import { createInteractionSlice } from "./slices/interaction-slice";
 import { createReviewNotesSlice } from "./slices/review-notes-slice";
+import { createDesignAnnotationsSlice } from "./slices/design-annotations-slice";
 import {
   createCatalogRuntime,
   type CatalogRuntime,
@@ -540,6 +541,7 @@ export const useAppStore = create<AppState>((set, get) => {
   }),
 
   ...createReviewNotesSlice({ get, set }),
+  ...createDesignAnnotationsSlice({ get, set }),
 
   bootstrap: async () => {
     // Only the newest attempt may publish; an older in-flight one returns

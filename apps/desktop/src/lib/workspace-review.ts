@@ -6,7 +6,7 @@ import type {
   UiMessage,
 } from "@pi-desktop/shared";
 
-const REVIEW_CHANGE_TOOLS = new Set(["Write", "Edit"]);
+const REVIEW_CHANGE_TOOLS = new Set(["Write", "Edit", "write", "edit"]);
 const REVIEW_CHANGE_STATUSES = new Set<ReviewChangeStatus>([
   "added",
   "modified",

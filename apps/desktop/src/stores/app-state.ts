@@ -49,6 +49,8 @@ import type {
 import type { SidebarSessionOutcome } from "../lib/sidebar-session-status";
 import type { WorkPanelContext, WorkPanelTab } from "../lib/work-panel-tabs";
 import type { ReviewNote } from "../lib/review-notes-prompt";
+import type { DesignAnnotation } from "./slices/design-annotations-slice";
+import type { AnnotationIntent, ElementGrab } from "../lib/element-grab";
 
 export type { WorkPanelTab } from "../lib/work-panel-tabs";
 
@@ -228,8 +230,18 @@ export type AppState = {
   updateReviewNote: (id: string, body: string) => void;
   resolveReviewNote: (id: string, resolved: boolean) => void;
   removeReviewNote: (id: string) => void;
-  /** Compose one prompt from all unresolved notes and send it. Returns false when there are none. */
-  sendReviewNotes: (snapshotIds: string[]) => Promise<boolean>;
+  /** Compose one prompt from all unresolved notes and send it. Returns false when there are none or on error. */
+  sendReviewNotes: (snapshotIds: string[], target?: "current" | "new") => Promise<boolean>;
+  /** In-memory Design Mode annotations; cleared after send, not persisted across reload. */
+  designAnnotations: DesignAnnotation[];
+  addDesignAnnotation: (grab: ElementGrab) => void;
+  updateAnnotationComment: (id: string, comment: string) => void;
+  updateAnnotationIntent: (id: string, intent: AnnotationIntent) => void;
+  updateAnnotationScreenshot: (id: string, dataBase64: string) => void;
+  removeDesignAnnotation: (id: string) => void;
+  clearDesignAnnotations: () => void;
+  /** Compose one prompt from all annotations (+ screenshots if model supports images). Clears only what was sent. */
+  sendDesignAnnotations: (supportsImages: boolean, target?: "current" | "new") => Promise<boolean>;
   refreshMemoryStatus: () => Promise<void>;
   bootstrap: () => Promise<void>;
   refreshSessions: (options?: RefreshSessionsOptions) => Promise<void>;

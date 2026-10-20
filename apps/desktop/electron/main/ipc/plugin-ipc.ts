@@ -377,6 +377,15 @@ export function registerPluginIpc({
     },
   );
 
+  // Broadcast a toggle-pick event to the browser plugin view so the shortcut
+  // registered in the main renderer can arm/cancel the element picker even
+  // when the browser view has focus. The pick result flows through the existing
+  // bridge.invoke("browser.announceAnnotation") path in browser.html.
+  handle(IPC.invoke.browserTogglePick, async () => {
+    pluginViews.broadcast("browser:togglePick", {});
+    return { ok: true };
+  });
+
   // --- MCP servers the user owns -------------------------------------------
   // host-core persists and validates; this side owns the connections, so every
   // mutation is followed by a refresh that drops stale ones.

@@ -18,6 +18,7 @@ import { headPermission } from "../lib/pending-permissions";
 import { headAsk } from "../lib/pending-asks";
 import { IPC } from "@pi-desktop/shared";
 import { api } from "../lib/api";
+import { DesignAnnotationTray } from "./DesignAnnotationTray";
 
 const StableComposer = memo(Composer);
 
@@ -93,6 +94,8 @@ export const ChatSurface = memo(function ChatSurface({
       if (status.ok && status.component === "sidecar") setSidecarFatal(null);
     });
   }, []);
+  const addDesignAnnotation = useAppStore((state) => state.addDesignAnnotation);
+  useEffect(() => api.onDesignAnnotationAdded(addDesignAnnotation), [addDesignAnnotation]);
   const providers = useAppStore((state) => state.providers);
   const activeSession = useAppStore((state) =>
     state.activeSessionId
@@ -277,6 +280,7 @@ export const ChatSurface = memo(function ChatSurface({
           </div>
           {!showChecklist && (
             <div className="home-composer-wrap">
+              <DesignAnnotationTray supportsImages />
               <StableComposer variant="home" />
             </div>
           )}
@@ -295,6 +299,7 @@ export const ChatSurface = memo(function ChatSurface({
           {activePendingPlan ? (
             <PlanApprovalBar proposal={activePendingPlan} />
           ) : null}
+          <DesignAnnotationTray supportsImages />
           <StableComposer variant="docked" />
         </>
       )}

@@ -91,6 +91,7 @@ import type {
   ToolPermissionResolution,
   UserSkillInput,
   UserSkillRecord,
+  ReviewChange,
   WorkspaceDiff,
   AppMenuCommand,
   AppNotification,
@@ -218,6 +219,7 @@ import type {
   ModelConfigImportCandidate,
   ModelConfigImportSource,
 } from "@pi-desktop/shared";
+import type { ElementGrab } from "./element-grab";
 export type { ModelConfigImportCandidate, ModelConfigImportSource };
 
 export interface ImportCandidate {
@@ -1330,6 +1332,18 @@ export const api = {
     invoke<{ open: boolean }>(IPC.invoke.devtoolsToggle, { open }),
   /** Diff of the active workspace, or of `path` (e.g. a fan-out worktree) when given. */
   workspaceDiff: (path?: string) => invoke<WorkspaceDiff>(IPC.invoke.workspaceDiff, path ? { path } : undefined),
+  /** Git working-tree diff for the active workspace, scoped by scope. */
+  gitReviewDiff: (scope: "unstaged" | "staged" | "branch", path?: string) =>
+    invoke<{ changes: ReviewChange[]; base?: string; error?: string }>(
+      IPC.invoke.workspaceGitReviewDiff,
+      path ? { scope, path } : { scope },
+    ),
+  /** Review a single markdown file in the active workspace. */
+  docReview: (path: string) =>
+    invoke<{ changes: ReviewChange[]; error?: string }>(
+      IPC.invoke.workspaceDocReview,
+      { path },
+    ),
   gitScanDoctypes: (benchPath: string) =>
     invoke<{ path: string; app: string; module: string; name: string; dirty: boolean }[]>(
       IPC.invoke.gitScanDoctypes,
@@ -1355,6 +1369,7 @@ export const api = {
     invoke(IPC.invoke.browserOpenExternal, url ? { url } : {}),
   browserGetState: () =>
     invoke<BrowserState | null>(IPC.invoke.browserGetState),
+  toggleElementPicker: () => invoke(IPC.invoke.browserTogglePick),
   fsList: (path?: string) =>
     invoke<{ entries: FsEntry[] }>(IPC.invoke.fsList, { path: path ?? "" }),
   fsRead: (path: string, mimeType?: string) =>
@@ -1480,6 +1495,12 @@ export const api = {
     if (!window.piDesktop?.on) return () => undefined;
     return window.piDesktop.on(IPC.event.browserPreview, (payload) =>
       listener(payload as { sessionId: string; path?: string; url?: string }),
+    );
+  },
+  onDesignAnnotationAdded: (listener: (grab: ElementGrab) => void) => {
+    if (!window.piDesktop?.on) return () => undefined;
+    return window.piDesktop.on(IPC.event.designAnnotationAdded, (payload) =>
+      listener(payload as ElementGrab),
     );
   },
   onAgentEvent: (listener: (event: AgentEventEnvelope) => void) => {

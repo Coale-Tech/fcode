@@ -11,6 +11,7 @@ import { extendNoteRange, isNoteOutdated, type ReviewNote } from "../lib/review-
 import { useAppStore } from "../stores/app-store";
 import { cx, Button } from "./ui";
 import { IconCheck, IconChevronRight, IconSnapshot } from "./icons";
+import { Markdown } from "./Markdown";
 
 /* Git-status letters carry the status without relying on color alone; the
    localized word stays in the row's accessible name. */
@@ -66,6 +67,29 @@ export const ReviewChangeCard = memo(function ReviewChangeCard({
   const [rollbackStatus, setRollbackStatus] = useState<ReviewRollbackStatus | null>(null);
   const [composing, setComposing] = useState<ComposingState | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // Track hovered line for the 'c' keyboard shortcut (hover + key, no DOM focus needed).
+  const hoveredLineRef = useRef<{ lineNo: number; isOldSide: boolean; hunkIndex: number; anchorText: string } | null>(null);
+  // Stable ref to composing so the document listener reads the live value without re-registering.
+  const composingRef = useRef(composing);
+  composingRef.current = composing;
+
+  useEffect(() => {
+    if (!annotatable) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "c" || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+      const active = document.activeElement;
+      if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) return;
+      const h = hoveredLineRef.current;
+      if (!h) return;
+      e.preventDefault(); // else the "c" is typed into the autofocused composer
+      const c = composingRef.current;
+      const isHere = c !== null && c.line === h.lineNo && c.lineIsOld === h.isOldSide && c.hunkIndex === h.hunkIndex;
+      setComposing({ line: h.lineNo, lineIsOld: h.isOldSide, hunkIndex: h.hunkIndex, endLine: null, anchorText: h.anchorText, body: isHere && c!.body ? c!.body : "" });
+      requestAnimationFrame(() => textareaRef.current?.focus());
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [annotatable]);
 
   const rollback = useAppStore((state) => state.rollbackWorkspaceChange);
   const notes = useAppStore((state) => state.reviewNotes[change?.snapshotId ?? ""] ?? NO_NOTES);
@@ -299,7 +323,18 @@ export const ReviewChangeCard = memo(function ReviewChangeCard({
 
                       return (
                         <Fragment key={lineIndex}>
-                          <div className={cx("wp-hunk-line", line.type, annotatable && "is-annotatable")}>
+                          <div
+                            className={cx("wp-hunk-line", line.type, annotatable && "is-annotatable")}
+                            onMouseEnter={(e) => {
+                              if (!annotatable) return;
+                              hoveredLineRef.current = { lineNo, isOldSide, hunkIndex, anchorText: line.text };
+                              // Drag range extension: mouse held while entering a new line on the same side.
+                              if (!(e.buttons & 1) || composing === null || composing.line === null) return;
+                              if (composing.lineIsOld !== isOldSide || composing.hunkIndex !== hunkIndex) return;
+                              setComposing({ ...composing, ...extendNoteRange({ line: composing.line, endLine: composing.endLine, anchorText: composing.anchorText }, lineNo, line.text) });
+                            }}
+                            onMouseLeave={() => { if (annotatable) hoveredLineRef.current = null; }}
+                          >
                             <span className="ln" aria-hidden>
                               {annotatable && (
                                 <button
@@ -425,7 +460,7 @@ function NoteComposer({
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Escape") { onCancel(); return; }
-          if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSave(); }
+          if (e.key === "Enter" && (e.metaKey || e.ctrlKey || !e.shiftKey)) { e.preventDefault(); onSave(); }
         }}
       />
       <div className="wp-hunk-note-composer-actions">
@@ -454,9 +489,9 @@ function NoteRow({
   onRemove: () => void;
 }) {
   const { t } = useTranslation();
-  return (
-    <div className={cx("wp-hunk-note", note.resolved && "is-resolved", outdated && "is-outdated")}>
-      {note.resolved ? (
+  if (note.resolved) {
+    return (
+      <div className="wp-hunk-note is-resolved">
         <span className="wp-hunk-note-resolved-label">
           <IconCheck size={10} />
           {t("panel.review.noteResolved")}
@@ -468,29 +503,38 @@ function NoteRow({
             {t("panel.review.noteReopen")}
           </button>
         </span>
-      ) : (
-        <>
-          {outdated && <span className="wp-hunk-note-outdated-badge">{t("panel.review.noteOutdated")}</span>}
-          <span className="wp-hunk-note-body">{note.body}</span>
-          <span className="wp-hunk-note-actions">
-            <button type="button" className="wp-hunk-note-action" onClick={onEdit}>
-              {t("panel.review.noteEdit")}
-            </button>
-            <button type="button" className="wp-hunk-note-action" onClick={() => onResolve(true)}>
-              {t("panel.review.noteResolve")}
-            </button>
-            <button
-              type="button"
-              className="wp-hunk-note-action is-danger"
-              onClick={onRemove}
-              aria-label={t("panel.review.noteRemove")}
-              title={t("panel.review.noteRemove")}
-            >
-              ×
-            </button>
-          </span>
-        </>
+      </div>
+    );
+  }
+  return (
+    <div className={cx("wp-hunk-note", note.sentAt !== undefined && "is-sent", outdated && "is-outdated")}>
+      {note.sentAt && (
+        <span className="wp-hunk-note-sent-badge">
+          <IconCheck size={10} />
+          {t("panel.review.noteSent")}
+        </span>
       )}
+      {outdated && <span className="wp-hunk-note-outdated-badge">{t("panel.review.noteOutdated")}</span>}
+      <div className="wp-hunk-note-body prose-chat">
+        <Markdown source={note.body} />
+      </div>
+      <span className="wp-hunk-note-actions">
+        <button type="button" className="wp-hunk-note-action" onClick={onEdit}>
+          {t("panel.review.noteEdit")}
+        </button>
+        <button type="button" className="wp-hunk-note-action" onClick={() => onResolve(true)}>
+          {t("panel.review.noteResolve")}
+        </button>
+        <button
+          type="button"
+          className="wp-hunk-note-action is-danger"
+          onClick={onRemove}
+          aria-label={t("panel.review.noteRemove")}
+          title={t("panel.review.noteRemove")}
+        >
+          ×
+        </button>
+      </span>
     </div>
   );
 }

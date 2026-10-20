@@ -314,12 +314,15 @@ export const IPC = {
     composerCommands: "pi-desktop/composer/commands",
     workspaceDiff: "pi-desktop/workspace/diff",
     workspaceReviewRollback: "pi-desktop/workspace/review/rollback",
+    workspaceGitReviewDiff: "pi-desktop/workspace/git-review-diff",
+    workspaceDocReview: "pi-desktop/workspace/doc-review",
     browserNavigate: "pi-desktop/browser/navigate",
     browserAction: "pi-desktop/browser/action",
     browserSetBounds: "pi-desktop/browser/setBounds",
     browserSetVisible: "pi-desktop/browser/setVisible",
     browserOpenExternal: "pi-desktop/browser/openExternal",
     browserGetState: "pi-desktop/browser/getState",
+    browserTogglePick: "pi-desktop/browser/togglePick",
     fsList: "pi-desktop/fs/list",
     fsRead: "pi-desktop/fs/read",
     fsReadImageDataUrl: "pi-desktop/fs/readImageDataUrl",
@@ -682,6 +685,8 @@ export const IPC = {
     ompCliDone: "pi-desktop/omp/cli/done",
     /** FileBird SFTP service status change (`{ status: "connected"|"idle"|"disconnected" }`). */
     fileBirdStatus: "pi-desktop/filebird/event/status",
+    /** Design Mode: element picked in the browser guest; payload is `ElementGrab`. */
+    designAnnotationAdded: "pi-desktop/design/annotationAdded",
   },
 } as const;
 
