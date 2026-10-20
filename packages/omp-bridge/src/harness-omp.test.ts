@@ -11,8 +11,6 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
-  readdirSync,
-  readFileSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -62,6 +60,7 @@ function makeOmpShim(): string {
     shimPath,
     `#!/bin/sh
 echo "omp-cwd: $(pwd)"
+echo "omp-home: $HOME"
 if [ -f AGENTS.md ]; then echo "agents-found: $(cat AGENTS.md)"; fi
 if [ -d .claude/skills ]; then
   for f in .claude/skills/*/SKILL.md; do [ -f "$f" ] && echo "sees-skill: $f"; done
@@ -126,32 +125,25 @@ describe("makeOmpRollout (smoke)", () => {
     const shim = makeOmpShim();
     const realCwd = process.cwd();
 
-    // Collect scratch dirs created during the run by watching tmpdir listing
-    const tmpBefore = new Set(readdirSync(tmpdir()));
-
     const rollout = makeOmpRollout(
       { ompBinary: shim, dataDir, model: "", timeoutMs: 10_000, cwd: gitDir },
       "test task",
     );
     const result = await rollout({ "AGENTS.md": "test-agent-content" }, "test-label");
 
-    // Run completed without error
     expect(result.label).toBe("test-label");
-    // The shim printed its cwd — it should NOT be the real project cwd
-    if (result.trajectory.includes("omp-cwd:")) {
-      const cwdLine = result.trajectory.split("\n").find((l) => l.startsWith("omp-cwd:")) ?? "";
-      const shimCwd = cwdLine.replace("omp-cwd:", "").trim();
-      expect(shimCwd).not.toBe(realCwd);
-      // The shim cwd should be inside tmpdir (worktree scratch isolation)
-      expect(shimCwd).toContain("fcode-rollout-");
-    }
+    // Dirs are taken from the shim's own output, so a concurrent rollout in the shared tmpdir cannot affect this test.
+    const field = (name: string) =>
+      result.trajectory.split("\n").find((l) => l.startsWith(`${name}:`))?.slice(name.length + 1).trim() ?? "";
+    const shimCwd = field("omp-cwd");
+    const shimHome = field("omp-home");
+    expect(shimCwd).toContain("fcode-rollout-");
+    expect(shimCwd).not.toBe(realCwd);
+    expect(shimHome).toContain("fcode-rollout-env-");
 
-    // Scratch dirs from this run should be cleaned up
-    const tmpAfter = new Set(readdirSync(tmpdir()));
-    const leaked = [...tmpAfter].filter(
-      (name) => name.startsWith("fcode-rollout-") && !tmpBefore.has(name),
-    );
-    expect(leaked).toHaveLength(0);
+    // The scratch dirs this run used are gone
+    expect(existsSync(shimCwd)).toBe(false);
+    expect(existsSync(shimHome)).toBe(false);
   });
 
   it("returns ok=true when shim produces output", async () => {
@@ -275,7 +267,8 @@ describe("makeOmpProposer", () => {
       const fallback: HarnessTree = { "AGENTS.md": "fallback-content" };
       const result = await proposer(evDir, "inv1.a1", "edit the harness", fallback);
       // Shim doesn't edit files → should fall back
-      expect(result.fell_back ?? result.error).toBeTruthy();
+      expect(result.tree).toEqual(fallback);
+      expect(result.error).toBe("harness directory empty after session");
     } finally {
       rmSync(evDir, { recursive: true, force: true });
     }
