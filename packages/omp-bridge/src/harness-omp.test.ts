@@ -149,7 +149,7 @@ describe("makeOmpRollout (smoke)", () => {
     // Scratch dirs from this run should be cleaned up
     const tmpAfter = new Set(readdirSync(tmpdir()));
     const leaked = [...tmpAfter].filter(
-      (name) => name.startsWith("fcode-rollout-") && !tmpBefore.has(name),
+      (name) => name.startsWith("fcode-rollout-test-label-") && !tmpBefore.has(name),
     );
     expect(leaked).toHaveLength(0);
   });

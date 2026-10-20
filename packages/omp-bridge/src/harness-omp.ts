@@ -106,6 +106,9 @@ function runOmpP(
     resolve({ stdout, ok: code === 0 || stdout.trim().length > 0 });
   });
 
+  // A child that exits before reading the prompt makes the write fail with EPIPE;
+  // `close` above already resolves the run, so swallow it instead of crashing the bridge.
+  child.stdin?.on("error", () => undefined);
   child.stdin?.write(prompt, "utf8");
   child.stdin?.end();
   return promise;
