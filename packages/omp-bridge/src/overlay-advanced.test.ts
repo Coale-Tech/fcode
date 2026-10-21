@@ -1,27 +1,20 @@
 /**
- * Behaviour tests for overlayAdvancedLines (dotted id → nested YAML).
- *
- * Acceptance criteria from slice A:
- *   - round trip for retry.maxRetries (number)
- *   - round trip for edit.mode (enum / string)
- *   - array and record (object) values use inline JSON
- *   - strings needing JSON quoting are quoted
- *   - curated-wins collision: a key present in curatedIds is not emitted
+ * Behaviour tests for mergeAdvancedIntoOverlay (dotted id → nested YAML merged into
+ * the Fcode overlay). The key invariant: an Advanced id never drops or replaces
+ * anything the Fcode overlay already wrote (duplicate top-level YAML keys would).
  */
 import { describe, expect, it } from "vitest";
 import { parse as parseYaml } from "yaml";
-import { overlayAdvancedLines } from "./overlay-advanced.js";
+import { makeOmpOverlay } from "./bridge.js";
+import { mergeAdvancedIntoOverlay } from "./overlay-advanced.js";
 
-/** Join lines and parse as YAML, returning the top-level object (or empty). */
 function parse(lines: string[]): Record<string, unknown> {
   const result: unknown = parseYaml(lines.join("\n"));
-  if (result !== null && typeof result === "object" && !Array.isArray(result)) {
-    return result as Record<string, unknown>;
-  }
-  return {};
+  return result !== null && typeof result === "object" && !Array.isArray(result)
+    ? (result as Record<string, unknown>)
+    : {};
 }
 
-/** Navigate an unknown value through a sequence of keys without `as any`. */
 function nav(obj: unknown, ...keys: string[]): unknown {
   let cur: unknown = obj;
   for (const k of keys) {
@@ -31,80 +24,97 @@ function nav(obj: unknown, ...keys: string[]): unknown {
   return cur;
 }
 
-describe("overlayAdvancedLines", () => {
-  it("returns empty array when advanced is empty", () => {
-    expect(overlayAdvancedLines({}, {})).toEqual([]);
+describe("mergeAdvancedIntoOverlay", () => {
+  it("returns the base lines unchanged when advanced is empty", () => {
+    expect(mergeAdvancedIntoOverlay(["a:", "  b: 1"], {})).toEqual(["a:", "  b: 1"]);
   });
 
-  it("round-trips retry.maxRetries (number)", () => {
-    const lines = overlayAdvancedLines({ "retry.maxRetries": 5 }, {});
-    expect(lines.length).toBeGreaterThan(0);
-    expect(nav(parse(lines), "retry", "maxRetries")).toBe(5);
-  });
-
-  it("round-trips edit.mode (enum string)", () => {
-    const lines = overlayAdvancedLines({ "edit.mode": "hashline" }, {});
-    expect(nav(parse(lines), "edit", "mode")).toBe("hashline");
-  });
-
-  it("round-trips an array value as inline JSON", () => {
-    const lines = overlayAdvancedLines({ "tools.disabled": ["github", "ast_grep"] }, {});
-    expect(nav(parse(lines), "tools", "disabled")).toEqual(["github", "ast_grep"]);
-  });
-
-  it("round-trips a record (object) value as inline JSON", () => {
-    const val = { task: "anthropic/claude-sonnet-4-5", smol: "openai/gpt-4o-mini" };
-    const lines = overlayAdvancedLines({ "task.agentModelOverrides": val }, {});
-    expect(nav(parse(lines), "task", "agentModelOverrides")).toEqual(val);
-  });
-
-  it("quotes strings containing YAML-special characters", () => {
-    const lines = overlayAdvancedLines({ "collab.relayUrl": "https://relay.example.com:8080" }, {});
-    expect(nav(parse(lines), "collab", "relayUrl")).toBe("https://relay.example.com:8080");
-  });
-
-  it("quotes a string starting with a comment character", () => {
-    const lines = overlayAdvancedLines({ "commit.message": "# initial" }, {});
-    expect(nav(parse(lines), "commit", "message")).toBe("# initial");
-  });
-
-  it("curated-wins collision: curated key is entirely omitted", () => {
-    const curatedIds = { "retry.maxRetries": true as const };
-    // advanced says 99; curated writer will emit 3 elsewhere — advanced must be suppressed.
-    const lines = overlayAdvancedLines({ "retry.maxRetries": 99 }, curatedIds);
-    if (lines.length > 0) {
-      expect(nav(parse(lines), "retry", "maxRetries")).not.toBe(99);
-    } else {
-      expect(lines).toEqual([]);
-    }
-  });
-
-  it("emits non-curated key while skipping curated one (mixed)", () => {
-    const curatedIds = { "retry.maxRetries": true as const };
-    const lines = overlayAdvancedLines(
-      { "retry.maxRetries": 99, "edit.mode": "patch" },
-      curatedIds,
+  it("round-trips number, enum, array, record and quoted-string values", () => {
+    const record = { task: "anthropic/claude-sonnet-4-5", smol: "openai/gpt-4o-mini" };
+    const parsed = parse(
+      mergeAdvancedIntoOverlay([], {
+        "retry.maxRetries": 5,
+        "edit.mode": "hashline",
+        "tools.disabled": ["github", "ast_grep"],
+        "task.agentModelOverrides": record,
+        "collab.relayUrl": "https://relay.example.com:8080",
+        "commit.message": "# initial",
+        "task.isolation.enabled": true,
+      }),
     );
-    const parsed = parse(lines);
-    expect(nav(parsed, "edit", "mode")).toBe("patch");
-    expect(nav(parsed, "retry", "maxRetries")).not.toBe(99);
+    expect(nav(parsed, "retry", "maxRetries")).toBe(5);
+    expect(nav(parsed, "edit", "mode")).toBe("hashline");
+    expect(nav(parsed, "tools", "disabled")).toEqual(["github", "ast_grep"]);
+    expect(nav(parsed, "task", "agentModelOverrides")).toEqual(record);
+    expect(nav(parsed, "collab", "relayUrl")).toBe("https://relay.example.com:8080");
+    expect(nav(parsed, "commit", "message")).toBe("# initial");
+    expect(nav(parsed, "task", "isolation", "enabled")).toBe(true);
   });
 
-  it("handles three-level dotted paths", () => {
-    const lines = overlayAdvancedLines({ "task.isolation.enabled": true }, {});
-    expect(nav(parse(lines), "task", "isolation", "enabled")).toBe(true);
-  });
-
-  it("groups multiple keys under the same parent section", () => {
-    const lines = overlayAdvancedLines(
-      { "retry.maxRetries": 3, "retry.backoffMs": 500 },
-      {},
-    );
-    const raw = lines.join("\n");
-    // Exactly one "retry:" header — settings grouped, not duplicated.
-    expect((raw.match(/^retry:/gm) ?? []).length).toBe(1);
+  it("groups keys under one section, adds siblings to an existing section, keeps existing keys", () => {
+    const base = ["retry:", "  maxRetries: 3", "other: 1"];
+    const lines = mergeAdvancedIntoOverlay(base, {
+      "retry.maxRetries": 99, // already set by the overlay → ignored
+      "retry.backoffMs": 500,
+      "retry.jitter": true,
+    });
+    expect(lines.filter((l) => l === "retry:")).toHaveLength(1);
     const parsed = parse(lines);
     expect(nav(parsed, "retry", "maxRetries")).toBe(3);
     expect(nav(parsed, "retry", "backoffMs")).toBe(500);
+    expect(nav(parsed, "retry", "jitter")).toBe(true);
+    expect(nav(parsed, "other")).toBe(1);
+  });
+
+  it("ignores Fcode-owned ids", () => {
+    const parsed = parse(
+      mergeAdvancedIntoOverlay([], { "tools.approvalMode": "yolo", "memory.backend": "off" }),
+    );
+    expect(parsed).toEqual({});
+  });
+});
+
+describe("makeOmpOverlay with colliding Advanced ids", () => {
+  const base = {
+    dataDir: "/tmp/fcode-test-data",
+    resourcesPath: "/app/resources",
+    screenshotsDir: "/tmp/fcode-test-data/screenshots",
+    approvalMode: "write" as const,
+    memory: { backend: "mnemopi" as const },
+  };
+
+  it("never drops Fcode-owned blocks (single top-level key each, content intact)", () => {
+    const overlay = makeOmpOverlay({
+      ...base,
+      ompSettings: {
+        "task.isolation.enabled": true,
+        advanced: {
+          "tools.format": "json",
+          "tools.approvalMode": "yolo",
+          "skills.enableSkillCommands": false,
+          "bash.enabled": false,
+          "bash.timeoutMs": 1000,
+          "memory.backend": "off",
+          "task.isolation.merge": "branch",
+          "retry.maxRetries": 7,
+        },
+      },
+    });
+    const topKeys = overlay.split("\n").filter((l) => /^[A-Za-z]/.test(l) && l.includes(":"));
+    const names = topKeys.map((l) => l.slice(0, l.indexOf(":")));
+    expect(new Set(names).size).toBe(names.length); // no duplicate top-level key
+    const parsed = parse(overlay.split("\n"));
+    expect(nav(parsed, "tools", "approvalMode")).toBe("write"); // Fcode's, not Advanced "yolo"
+    expect(nav(parsed, "tools", "format")).toBe("json");
+    expect(nav(parsed, "tools", "approval")).toBeDefined();
+    expect(nav(parsed, "skills", "enableSkillCommands")).toBe(false);
+    expect(nav(parsed, "skills", "customDirectories") ?? nav(parsed, "skills", "directories")).toBeDefined();
+    expect(nav(parsed, "bash", "enabled")).toBe(false); // added beside the overlay's patterns
+    expect(nav(parsed, "bash", "timeoutMs")).toBe(1000);
+    expect(nav(parsed, "bash", "patterns")).toBeDefined();
+    expect(nav(parsed, "memory", "backend")).toBe("mnemopi");
+    expect(nav(parsed, "task", "isolation", "enabled")).toBe(true);
+    expect(nav(parsed, "task", "isolation", "merge")).toBe("branch");
+    expect(nav(parsed, "retry", "maxRetries")).toBe(7);
   });
 });

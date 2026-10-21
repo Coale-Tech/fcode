@@ -44,7 +44,8 @@ vi.mock("./skill-lint.js", () => ({
 }));
 
 // Stub validateHarnessTree from @pi-desktop/shared; tests control validation via _validateTree seam.
-vi.mock("@pi-desktop/shared", () => ({
+vi.mock("@pi-desktop/shared", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   validateHarnessTree: () => ({ ok: true, errors: [], census: { alwaysOnChars: 0, files: 0, skills: 0, scripts: 0 } }),
 }));
 

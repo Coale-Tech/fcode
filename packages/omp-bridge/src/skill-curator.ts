@@ -25,6 +25,7 @@ import {
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { homedir } from "node:os";
+import { FCODE_SETTING_DEFAULTS } from "@pi-desktop/shared";
 import { join } from "node:path";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -54,9 +55,9 @@ export interface CuratorConfig {
 }
 
 export const DEFAULT_CURATOR_CONFIG: CuratorConfig = {
-  enabled: true,
-  staleDays: 14,
-  archiveDays: 30,
+  enabled: FCODE_SETTING_DEFAULTS["skills.curator.enabled"],
+  staleDays: FCODE_SETTING_DEFAULTS["skills.curator.staleDays"],
+  archiveDays: FCODE_SETTING_DEFAULTS["skills.curator.archiveDays"],
   minIdleHours: 2,
   intervalHours: 168, // 7 days
 };

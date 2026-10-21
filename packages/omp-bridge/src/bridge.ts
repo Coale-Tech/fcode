@@ -29,7 +29,7 @@ import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSyn
 import { homedir, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { ErrorCodes, readNdjsonLines, type OmpSettingsValues } from "@pi-desktop/shared";
+import { ErrorCodes, ompSetting, readNdjsonLines, type OmpSettingsValues } from "@pi-desktop/shared";
 import { capNdjsonLine, reassembleChunk } from "./chunks.js";
 import { resolveSkillPackDirs, syncSkillPacksInBackground } from "./skill-packs.js";
 import { createBridgeState } from "./state.js";
@@ -44,7 +44,7 @@ import type { CuratorConfig } from "./skill-curator.js";
 import { DEFAULT_CURATOR_CONFIG, extractSkillName, promptPinnedSkills, recordSkillUse } from "./skill-curator.js";
 import { SkillReviewTrigger, type SkillReviewConfig } from "./skill-review.js";
 import { buildReviewDetails, readFileText } from "./review-change.js";
-import { overlayAdvancedLines } from "./overlay-advanced.js";
+import { mergeAdvancedIntoOverlay } from "./overlay-advanced.js";
 import { SESSION_RPC_FORWARD } from "./session-rpc.js";
 import { createHarnessRpcHandler, type HarnessRunParams } from "./harness-rpc.js";
 
@@ -187,7 +187,7 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
   // Skills: fcode-skills dir first (host tools), then the Frappe packs, then user dirs.
   const userSkillDirs = s["skills.customDirectories"] ?? [];
   // Compact skill list by default; pinned/recently used skills keep their full description.
-  const pinnedSkills = promptPinnedSkills(opts.dataDir, s["skills.curator.staleDays"] ?? DEFAULT_CURATOR_CONFIG.staleDays);
+  const pinnedSkills = promptPinnedSkills(opts.dataDir, ompSetting(s, "skills.curator.staleDays"));
 
   // Hindsight: collect all lines so we emit exactly one hindsight: block.
   const hindsightLines: string[] = [];
@@ -216,7 +216,8 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
   if (s["hindsight.mentalModelMaxRenderChars"]    !== undefined) hindsightLines.push(`  mentalModelMaxRenderChars: ${s["hindsight.mentalModelMaxRenderChars"]}`);
 
   // ponytail: YAML by hand — avoids a yaml dep for a ~20-line config file.
-  return [
+  // Advanced ids are merged INTO these lines (overlay-set keys win) — never appended as a second block.
+  return mergeAdvancedIntoOverlay([
     "# omp overlay for Fcode — generated on each launch, do not edit.",
     `# DX3: approvalMode ${mode} — controlled by Fcode Settings > AI > Tool approval mode.`,
     "tools:",
@@ -266,7 +267,7 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
           // Frozen per-session memory files ON by default in Fcode (2000 chars each).
           // User can override via Settings; 0 disables the feature.
           `  frozen:`,
-          `    maxChars: ${s["memory.frozen.maxChars"] ?? 2000}`,
+          `    maxChars: ${ompSetting(s, "memory.frozen.maxChars")}`,
           "mnemopi:",
           "  llmMode: session",
           ...(s["mnemopi.scoping"]           !== undefined ? [`  scoping: ${s["mnemopi.scoping"]}`]                                 : []),
@@ -315,18 +316,7 @@ export function makeOmpOverlay(opts: OverlayOptions): string {
     ...(s["extensions"] ?? []).map((e) => `  - ${JSON.stringify(e)}`),
     // Task / isolation / eval / collab / LSP / IDA / MCP / commands settings
     ...ompSettingsYaml(s),
-    // Generic advanced settings: dotted ids not handled by the curated writer above.
-    // Curated keys (anything configured in s except "advanced") are skipped to prevent
-    // duplicate YAML keys; the curated writer always wins for those.
-    ...overlayAdvancedLines(
-      s.advanced ?? {},
-      Object.fromEntries(
-        (Object.keys(s) as string[])
-          .filter((k) => k !== "advanced")
-          .map((k) => [k, true as const]),
-      ),
-    ),
-  ].join("\n");
+  ], s.advanced ?? {}).join("\n");
 }
 
 /**
@@ -2090,9 +2080,9 @@ async function main(): Promise<void> {
     const s = parseOmpSettings(process.env.FCODE_OMP_SETTINGS);
     const curatorCfg: CuratorConfig = {
       ...DEFAULT_CURATOR_CONFIG,
-      enabled: s["skills.curator.enabled"] !== false,
-      staleDays: s["skills.curator.staleDays"] ?? DEFAULT_CURATOR_CONFIG.staleDays,
-      archiveDays: s["skills.curator.archiveDays"] ?? DEFAULT_CURATOR_CONFIG.archiveDays,
+      enabled: ompSetting(s, "skills.curator.enabled"),
+      staleDays: ompSetting(s, "skills.curator.staleDays"),
+      archiveDays: ompSetting(s, "skills.curator.archiveDays"),
     };
     overlayPath = writeOmpOverlay({
       dataDir,
@@ -2114,26 +2104,23 @@ async function main(): Promise<void> {
       getLastActivity: () => lastActivityMs,
       curatorCfg,
     });
-    if (s["skills.review.enabled"] === true) {
-      const reviewBase: SkillReviewConfig = {
+    if (ompSetting(s, "skills.review.enabled")) {
+      bridge.setSkillReviewTrigger(new SkillReviewTrigger({
         ompBinary,
         dataDir,
-        intervalTurns: s["skills.review.intervalTurns"] ?? 10,
-        maxInputTokens: s["skills.review.maxInputTokens"] ?? 8000,
-        model: s["skills.review.model"] ?? "",
-        requireApproval: s["skills.review.requireApproval"] !== false,
+        intervalTurns: ompSetting(s, "skills.review.intervalTurns"),
+        maxInputTokens: ompSetting(s, "skills.review.maxInputTokens"),
+        model: ompSetting(s, "skills.review.model"),
+        requireApproval: ompSetting(s, "skills.review.requireApproval"),
+        passes: ompSetting(s, "skills.review.passes"),
         log: (line) => console.error(`[omp-bridge] ${line}`),
-      };
-      // passes is added to SkillReviewConfig by slice A; Object.assign avoids excess-property error until then.
-      bridge.setSkillReviewTrigger(new SkillReviewTrigger(
-        Object.assign(reviewBase, { passes: s["skills.review.passes"] ?? "single" }),
-      ));
+      }));
     }
     bridge.setHarnessConfig({
-      enabled: s["skills.harness.enabled"] === true,
-      k: s["skills.harness.k"] ?? 1,
-      mode: s["skills.harness.mode"] ?? "parallel",
-      model: s["skills.harness.model"] ?? "",
+      enabled: ompSetting(s, "skills.harness.enabled"),
+      k: ompSetting(s, "skills.harness.k"),
+      mode: ompSetting(s, "skills.harness.mode"),
+      model: ompSetting(s, "skills.harness.model"),
     });
   } catch (e) {
     // DX3: overlay write failure is fatal — settle with a system message.

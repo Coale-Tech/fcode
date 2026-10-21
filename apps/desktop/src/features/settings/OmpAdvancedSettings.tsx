@@ -13,7 +13,7 @@ import type {
   OmpSettingDescriptor,
   OmpSettingsValues,
 } from "@pi-desktop/shared";
-import { CURATED_OMP_KEYS } from "@pi-desktop/shared";
+import { CURATED_OMP_KEYS, FCODE_OWNED_OMP_KEYS } from "@pi-desktop/shared";
 import { api } from "../../lib/api";
 import {
   Button,
@@ -53,9 +53,9 @@ const GROUP_ICONS: Record<string, ReactNode> = {
 
 // ── Pure helpers (exported so unit tests can import directly) ─────────────────
 
-/** True when `id` is covered by a curated key in OmpSettingsValues. */
+/** True when `id` is covered by a curated key or written by Fcode itself (not editable here). */
 export function isCuratedKey(id: string): boolean {
-  return id in CURATED_OMP_KEYS;
+  return id in CURATED_OMP_KEYS || id in FCODE_OWNED_OMP_KEYS;
 }
 
 /**
