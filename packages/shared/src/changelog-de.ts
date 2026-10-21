@@ -2,6 +2,17 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const deEntries: ChangelogEntry[] = [
   {
+    "version": "0.23.1",
+    "date": "2026-10-21",
+    "highlights": [
+      "Erweiterte Einstellungen überschreiben Fcodes eigene Konfiguration nicht mehr: Wer z. B. `tools.format`, `memory.backend` oder `bash.enabled` setzte, ersetzte damit bisher Fcodes Tool-Freigabe- und weitere Einstellungen.",
+      "Einstellungen > Raven: Der Aktivieren-Schalter funktioniert, sobald die URL gültig ist. Theme-, Layout- und Schrifteinstellungen erscheinen nicht mehr doppelt, und der Skill-Kurator zeigt die Werte, mit denen er tatsächlich läuft.",
+      "Einstellungen > Speicher warnt, wenn Profil- und Projekttext das Budget des eingefrorenen Speichers überschreiten, statt dass omp sie stillschweigend kürzt.",
+      "Bench: Frappe-v16-Benches erreichen jetzt „Läuft“, Stopp funktioniert während des Starts, das Beenden der App stoppt den Bench-Prozessbaum, und die gewählte Site erreicht Build und die Bench-Tools. Die Migrationsbestätigung ist ein richtiger Dialog, und das Log mischt keine Zeilen mehr zwischen Benches.",
+      "Bench-Sicherheit: `frappe.utils.*` wird nicht mehr automatisch als schreibgeschützt freigegeben, Start/Ausführen lehnen nicht erkannte Bench-Pfade ab, und Sites ohne `site_config.json` werden nicht aufgelistet.",
+    ]
+  },
+  {
     "version": "0.23.0",
     "date": "2026-10-20",
     "highlights": [

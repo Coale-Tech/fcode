@@ -2,6 +2,17 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const esEntries: ChangelogEntry[] = [
   {
+    "version": "0.23.1",
+    "date": "2026-10-21",
+    "highlights": [
+      "Los ajustes avanzados ya no borran la configuración propia de Fcode: ajustar algo como `tools.format`, `memory.backend` o `bash.enabled` antes reemplazaba la aprobación de herramientas y otros ajustes de Fcode.",
+      "Ajustes > Raven: el interruptor de activación funciona en cuanto la URL es válida. Los ajustes de tema, diseño y fuente ya no aparecen dos veces, y el curador de skills muestra los valores con los que realmente funciona.",
+      "Ajustes > Memoria avisa cuando el texto de perfil y de proyecto supera el presupuesto de memoria congelada, en lugar de dejar que omp lo recorte en silencio.",
+      "Bench: los benches de Frappe v16 ya llegan a «En ejecución», Detener funciona durante el arranque, al cerrar la app se detiene el árbol de procesos del bench y el sitio elegido llega a Build y a las herramientas de bench. La confirmación de migración es un modal en regla y el registro ya no mezcla líneas entre benches.",
+      "Seguridad de Bench: `frappe.utils.*` ya no se aprueba automáticamente como solo lectura, iniciar/ejecutar rechazan rutas que no son benches detectados y los sitios sin `site_config.json` no se listan.",
+    ]
+  },
+  {
     "version": "0.23.0",
     "date": "2026-10-20",
     "highlights": [

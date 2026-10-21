@@ -2,6 +2,17 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const koEntries: ChangelogEntry[] = [
   {
+    "version": "0.23.1",
+    "date": "2026-10-21",
+    "highlights": [
+      "고급 설정이 더 이상 Fcode 자체 설정을 지우지 않습니다. `tools.format`, `memory.backend`, `bash.enabled` 같은 항목을 설정하면 이전에는 Fcode의 도구 승인 등 설정이 대체되었습니다.",
+      "설정 > Raven: URL이 올바르면 바로 활성화 스위치를 사용할 수 있습니다. 테마, 레이아웃, 글꼴 설정이 더 이상 두 번 나타나지 않으며, 스킬 큐레이터는 실제로 사용하는 값을 표시합니다.",
+      "설정 > 메모리: 프로필과 프로젝트 텍스트가 고정 메모리 예산을 넘으면 omp가 조용히 잘라 내는 대신 경고를 표시합니다.",
+      "Bench: Frappe v16 bench가 이제 '실행 중'에 도달하고, 시작 중에도 중지할 수 있으며, 앱을 종료하면 bench 프로세스 트리가 중지되고, 선택한 사이트가 Build와 bench 도구에 전달됩니다. 마이그레이션 확인은 제대로 된 모달이 되었고, 로그에 다른 bench의 줄이 섞이지 않습니다.",
+      "Bench 보안: `frappe.utils.*`는 더 이상 읽기 전용으로 자동 승인되지 않고, 시작/실행은 발견되지 않은 bench 경로를 거부하며, `site_config.json`이 없는 사이트는 목록에 나타나지 않습니다.",
+    ]
+  },
+  {
     "version": "0.23.0",
     "date": "2026-10-20",
     "highlights": [

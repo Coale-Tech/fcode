@@ -2,6 +2,17 @@ import type { ChangelogEntry } from "./changelog.js";
 
 export const trEntries: ChangelogEntry[] = [
   {
+    "version": "0.23.1",
+    "date": "2026-10-21",
+    "highlights": [
+      "Gelişmiş ayarlar artık Fcode'un kendi yapılandırmasını silmiyor: `tools.format`, `memory.backend` veya `bash.enabled` gibi bir ayarı değiştirmek daha önce Fcode'un araç onayı ve diğer ayarlarının yerine geçiyordu.",
+      "Ayarlar > Raven: URL geçerli olur olmaz etkinleştirme anahtarı çalışır. Tema, düzen ve yazı tipi ayarları artık iki kez görünmez ve beceri küratörü gerçekten çalıştığı değerleri gösterir.",
+      "Ayarlar > Bellek, profil ve proje metni dondurulmuş bellek bütçesini aştığında omp'nin sessizce kesmesi yerine uyarı verir.",
+      "Bench: Frappe v16 bench'leri artık «Çalışıyor» durumuna ulaşır, Durdur başlatma sırasında da çalışır, uygulamadan çıkmak bench süreç ağacını durdurur ve seçilen site Build ile bench araçlarına iletilir. Taşıma onayı düzgün bir modal oldu ve günlük artık bench'ler arasında satır karıştırmaz.",
+      "Bench güvenliği: `frappe.utils.*` artık otomatik olarak salt okunur onaylanmaz, başlat/çalıştır keşfedilmemiş bench yollarını reddeder ve `site_config.json` olmayan siteler listelenmez.",
+    ]
+  },
+  {
     "version": "0.23.0",
     "date": "2026-10-20",
     "highlights": [

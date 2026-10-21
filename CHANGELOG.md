@@ -10,6 +10,14 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 
 ## [Unreleased]
 
+## [0.23.1] — 2026-10-21
+
+### Compatibility
+
+| Fcode | PI-Desktop base | omp commit | Bridge protocol | Frappe |
+|-------|-----------------|-----------|-----------------|--------|
+| 0.23.1 | 0.15.7 | `53a0377db6` | v2 (v1 read-only fallback) | v15, v16 |
+
 ### Fixed
 
 - Advanced settings no longer wipe Fcode's own config. An Advanced setting such as `tools.format`, `skills.enableSkillCommands`, `bash.enabled`, `memory.backend` or `task.isolation.merge` used to append a second top-level block that replaced Fcode's (tool approval rules, skill-pack directories, bash patterns, memory backend, isolation). It is now merged into the existing block, and Fcode's own keys win. `tools.approvalMode`, `memory.backend` and `browser.screenshotDir` are hidden from Advanced because Fcode sets them.
@@ -18,7 +26,9 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Settings: Theme, navigation layout, font family and font size appeared twice, in General > Appearance and in a collapsible "Theme & Display" block on the AI defaults tab. The AI copy is gone; General > Appearance is the only place.
 - Settings > Memory: text past `memory.frozen.maxChars` (default 2000) was saved and silently never reached the agent. omp cuts the combined user-profile and project `MEMORY.md` block to that budget, project text first. The profile and project boxes now show how many characters will be cut, and nothing is truncated or deleted. The memory docs list all five backends (`mnemopi`, `hindsight`, `sharpshooter`, `local`, `off`).
 - Tests: the harness rollout cleanup test could fail when another rollout ran at the same time, because it flagged any new `fcode-rollout-*` directory in the shared temp folder. It now checks only the directories its own run used. The proposer fallback test now asserts the fallback tree and error, instead of reading a `fell_back` field that does not exist.
-- Bench safety: `frappe.utils.*` is no longer auto-approved as read-only (only `now`, `today`, `get_url`); the security fix now lives in `packages/host-runtime/src/bench-approval.ts` which uses whole-string matching only.
+- Bench: Frappe v16 benches now reach "Running" (the supervisor recognises `Running on http://…`) and Stop works while starting. The chosen site is passed to Build and the `fcode_bench_*` tools. Quitting the app stops the bench tree instead of orphaning it. Redis port conflicts are no longer reported as the web port.
+- Bench safety: `frappe.utils.*` is no longer auto-approved as read-only (only `now`, `today`, `get_url`; whole-string matching in `packages/host-runtime/src/bench-approval.ts`); start/run reject paths that are not discovered benches; site folders without `site_config.json` are not listed. Discovery roots can be set with `FCODE_BENCH_ROOTS`.
+- Bench UI: the migrate confirmation is a styled modal (focus trap, Escape, backdrop); list keyboard navigation moves focus and scrolls; selection, log and timer survive leaving the page; ANSI codes are stripped from the log; low-contrast labels fixed.
 - Bench log: lines from one bench no longer appear under another bench after switching selection; the log is tied to the bench that produced it.
 
 ## [0.23.0] — 2026-10-20

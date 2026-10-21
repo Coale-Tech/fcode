@@ -30,6 +30,17 @@ export type ChangelogEntry = {
 
 const enEntries: ChangelogEntry[] = [
   {
+    version: "0.23.1",
+    date: "2026-10-21",
+    highlights: [
+      "Advanced settings no longer wipe Fcode's own config: setting something like `tools.format`, `memory.backend` or `bash.enabled` used to replace Fcode's tool-approval and related settings.",
+      "Settings > Raven: the enable switch works as soon as the URL is valid. Theme, layout and font settings no longer appear twice, and the skill curator shows the values it actually runs with.",
+      "Settings > Memory warns when the profile and project text exceed the frozen-memory budget instead of letting omp silently cut it.",
+      "Bench: Frappe v16 benches now reach \"Running\", Stop works while starting, quitting the app stops the bench tree, and the chosen site reaches Build and the bench tools. The migrate confirmation is a proper modal, and the log no longer mixes lines between benches.",
+      "Bench safety: `frappe.utils.*` is no longer auto-approved as read-only, start/run reject paths that are not discovered benches, and sites without `site_config.json` are not listed.",
+    ],
+  },
+  {
     version: "0.23.0",
     date: "2026-10-20",
     highlights: [
@@ -1001,6 +1012,17 @@ const enEntries: ChangelogEntry[] = [
 
 const zhCNEntries: ChangelogEntry[] = [
   {
+    version: "0.23.1",
+    date: "2026-10-21",
+    highlights: [
+      "高级设置不再清除 Fcode 自身的配置：设置 `tools.format`、`memory.backend` 或 `bash.enabled` 之类的项，以前会替换 Fcode 的工具批准等设置。",
+      "设置 > Raven：URL 有效后启用开关立即可用。主题、布局和字体设置不再出现两次，技能整理器显示的是它实际使用的值。",
+      "设置 > 记忆：当用户资料与项目文本超出冻结记忆预算时会给出提示，而不是让 omp 悄悄截断。",
+      "Bench：Frappe v16 的 bench 现在能进入“运行中”，启动过程中可以停止，退出应用会停止 bench 进程树，所选站点会传给 Build 和 bench 工具。迁移确认改为规范的模态框，日志不再混入其他 bench 的行。",
+      "Bench 安全：`frappe.utils.*` 不再被自动批准为只读，启动/运行会拒绝未被发现的 bench 路径，没有 `site_config.json` 的站点不再列出。",
+    ],
+  },
+  {
     version: "0.23.0",
     date: "2026-10-20",
     highlights: [
@@ -1970,6 +1992,17 @@ const zhCNEntries: ChangelogEntry[] = [
 ];
 
 const zhTWEntries: ChangelogEntry[] = [
+  {
+    version: "0.23.1",
+    date: "2026-10-21",
+    highlights: [
+      "進階設定不再清除 Fcode 自身的設定：設定 `tools.format`、`memory.backend` 或 `bash.enabled` 之類的項目，以前會取代 Fcode 的工具核准等設定。",
+      "設定 > Raven：URL 有效後啟用開關立即可用。主題、版面與字型設定不再出現兩次，技能整理器顯示的是它實際使用的值。",
+      "設定 > 記憶：當使用者資料與專案文字超出凍結記憶預算時會提示，而不是讓 omp 悄悄截斷。",
+      "Bench：Frappe v16 的 bench 現在能進入「執行中」，啟動過程中可以停止，結束應用程式會停止 bench 程序樹，所選站台會傳給 Build 與 bench 工具。遷移確認改為標準的模態視窗，記錄不再混入其他 bench 的行。",
+      "Bench 安全：`frappe.utils.*` 不再被自動核准為唯讀，啟動/執行會拒絕未被偵測到的 bench 路徑，沒有 `site_config.json` 的站台不再列出。",
+    ],
+  },
   {
     version: "0.23.0",
     date: "2026-10-20",
