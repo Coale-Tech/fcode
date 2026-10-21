@@ -50,6 +50,7 @@ export function nextFocusIndex(
   return shiftKey ? (current - 1 + count) % count : (current + 1) % count;
 }
 
+
 export function DestructiveActionDialog({
   site,
   command,

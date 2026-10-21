@@ -1170,6 +1170,9 @@
   font-size: var(--d-text);                     /* 13px — was var(--text-tiny)=11px */
   font-weight: var(--font-weight-medium);
   line-height: var(--leading-tighter);
+  /* B10(e): 11px text needs >=4.5:1; --ink-gray-5 gives 3.93:1 on light sidebar.
+     --ink-gray-6 gives 7.35:1 light (#525252 on #f8f8f8) / 7.37:1 dark (#999999 on #000). */
+  color: var(--ink-gray-6);
 }
 
 .nav-rail-btn:hover,

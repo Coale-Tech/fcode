@@ -18,6 +18,8 @@ The PI-Desktop release each version is based on is listed in its Compatibility t
 - Settings: Theme, navigation layout, font family and font size appeared twice, in General > Appearance and in a collapsible "Theme & Display" block on the AI defaults tab. The AI copy is gone; General > Appearance is the only place.
 - Settings > Memory: text past `memory.frozen.maxChars` (default 2000) was saved and silently never reached the agent. omp cuts the combined user-profile and project `MEMORY.md` block to that budget, project text first. The profile and project boxes now show how many characters will be cut, and nothing is truncated or deleted. The memory docs list all five backends (`mnemopi`, `hindsight`, `sharpshooter`, `local`, `off`).
 - Tests: the harness rollout cleanup test could fail when another rollout ran at the same time, because it flagged any new `fcode-rollout-*` directory in the shared temp folder. It now checks only the directories its own run used. The proposer fallback test now asserts the fallback tree and error, instead of reading a `fell_back` field that does not exist.
+- Bench safety: `frappe.utils.*` is no longer auto-approved as read-only (only `now`, `today`, `get_url`); the security fix now lives in `packages/host-runtime/src/bench-approval.ts` which uses whole-string matching only.
+- Bench log: lines from one bench no longer appear under another bench after switching selection; the log is tied to the bench that produced it.
 
 ## [0.23.0] — 2026-10-20
 

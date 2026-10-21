@@ -175,7 +175,6 @@ test("discoverBenches treats a missing root as empty, not failed", async () => {
   assert.deepEqual(benches, []);
   assert.deepEqual(failedRoots, []);
 });
-
 // B10(a): dirs without site_config.json must not appear as sites
 test("readSites excludes dirs without site_config.json (B10a)", async (t) => {
   const root = mkdtempSync(join(tmpdir(), "bench-disc-sites-"));

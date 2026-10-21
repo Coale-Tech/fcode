@@ -42,4 +42,5 @@
 @import "./workbench.css";
 @import "./kanban.css";
 @import "./fanout.css";
+@import "./destructive-dialog.css";
 @import "./responsive.css";

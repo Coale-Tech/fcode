@@ -94,6 +94,7 @@ export function classifyBenchFailure(
     (out.includes("failed listening on port") || out.includes("could not create server tcp listening socket")) &&
     (out.includes("address already in use") || out.includes("bind:"));
   if (isRedisPortConflict) {
+    // Extract one or more port numbers from the output (redis ports are 4–5 digits)
     const foundPorts: string[] = [];
     for (const m of output.matchAll(/(?:port |:)(\d{4,5})\b/gi)) {
       if (!foundPorts.includes(m[1])) foundPorts.push(m[1]);
@@ -336,7 +337,7 @@ export class BenchSupervisor extends EventEmitter {
         const logLine = proc.buffer.push(line);
         this.emit("log", { process: "start", line: logLine });
 
-        // Heuristic: Frappe prints "Starting watchdog" or serves requests once ready
+
         // Heuristic: Frappe v15 prints "Serving on" / "Watching files";
         // Frappe v16 prints "Running on http://…" (B1).
         if (this.status === "starting" && (

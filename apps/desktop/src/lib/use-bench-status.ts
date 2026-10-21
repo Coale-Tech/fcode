@@ -20,6 +20,7 @@ export interface BenchStatusSnapshot {
  * Note: chat-shell.css only defines `.is-running` and `.is-stopped` on
  * `.workspace-bar-run-state`. "starting" and "failed" map to is-stopped
  * visually; the text label conveys the semantic difference.
+
  */
 export function benchStatusDisplay(status: BenchStatus): { label: string; cls: string } {
   switch (status) {
@@ -47,3 +48,4 @@ export function deriveBenchOnboarding(
     start: status === "running",
   };
 }
+

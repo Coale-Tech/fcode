@@ -49,7 +49,7 @@ export interface SiteConfigAllowed {
   developerMode?: boolean;
 }
 
-/** Default discovery roots when none are configured. */
+/** Static fallback when FCODE_BENCH_ROOTS env is absent. */
 export const DEFAULT_ROOTS = [join(homedir(), "ERPNext")];
 
 /**

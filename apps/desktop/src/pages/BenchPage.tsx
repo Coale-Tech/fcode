@@ -103,8 +103,6 @@ async function invoke<T>(channel: string, args?: unknown): Promise<T> {
 
 const NO_LOGS: LogLine[] = [];
 
-// ── Component ─────────────────────────────────────────────────────────────────
-
 export function BenchPage() {
   // Discovery
   const [benches, setBenches] = useState<BenchSummary[]>([]);
@@ -125,6 +123,10 @@ export function BenchPage() {
   const [status, setStatus] = useState<BenchStatus>("stopped");
   const [activeBenchPath, setActiveBenchPath] = useState<string | null>(null);
   const [logLines, setLogLines] = useState<LogLine[]>([]);
+  // Bench the buffered logLines belong to; events carry no path, so scope by this.
+  const [logPath, setLogPath] = useState<string | null>(null);
+  const logPathRef = useRef<string | null>(null);
+  logPathRef.current = logPath;
   // Bench log follow-tail is shell-global state (toggleFollowLog / Mod+Shift+B
   // must reach it from useAppShellRuntime, outside this component).
   const followTail = useAppStore((s) => s.benchLogFollowTail);
@@ -159,11 +161,6 @@ export function BenchPage() {
 
   // T16: cross-fade key for bench selection transition
   const [detailKey, setDetailKey] = useState(0);
-
-  // Bench whose log is in logLines; ref tracks it synchronously for the status poll.
-  const [logPath, setLogPath] = useState<string | null>(null);
-  const logPathRef = useRef<string | null>(null);
-  logPathRef.current = logPath;
 
   // ── Load bench list ───────────────────────────────────────────────────────
 
@@ -244,6 +241,7 @@ export function BenchPage() {
 
   useEffect(() => {
     let cancelled = false;
+    let seeded = false;
     const poll = async () => {
       if (cancelled) return;
       // Capture mode: read bench-status override set by seedBenchStatus() (mirrors use-bench-context).
@@ -376,7 +374,6 @@ export function BenchPage() {
   const openBenches = openIds
     .map((id) => benches.find((b) => b.id === id))
     .filter((b): b is BenchSummary => b !== undefined);
-
 
   useEffect(() => {
     if (!selectedBench) {
